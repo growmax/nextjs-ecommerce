@@ -1,0 +1,10 @@
+# Global owner - all files require approval from you
+* @your-github-username
+
+# Specific patterns (examples)
+*.ts @your-github-username
+*.tsx @your-github-username
+*.js @your-github-username
+*.jsx @your-github-username
+package.json @your-github-username
+tsconfig.json @your-github-username
