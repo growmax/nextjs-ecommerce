@@ -16,10 +16,13 @@ const eslintConfig = [
       "no-console": "error",
       "no-debugger": "error",
       "no-unused-vars": "off",
-      "@typescript-eslint/no-unused-vars": ["error", { 
-        "argsIgnorePattern": "^_",
-        "varsIgnorePattern": "^_" 
-      }],
+      "@typescript-eslint/no-unused-vars": [
+        "error",
+        {
+          argsIgnorePattern: "^_",
+          varsIgnorePattern: "^_",
+        },
+      ],
       "@typescript-eslint/no-explicit-any": "error",
       "@typescript-eslint/no-var-requires": "error",
       "prefer-const": "error",
@@ -32,7 +35,7 @@ const eslintConfig = [
       "jsx-a11y/alt-text": "error",
       "jsx-a11y/anchor-is-valid": "error",
       "@next/next/no-html-link-for-pages": "error",
-      "@next/next/no-img-element": "error"
+      "@next/next/no-img-element": "error",
     },
     ignores: [
       "node_modules/**",
