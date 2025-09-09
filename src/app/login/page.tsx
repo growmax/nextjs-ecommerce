@@ -1,9 +1,9 @@
-'use client';
+"use client";
 
-import { useForm } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
-import * as z from 'zod';
-import { Button } from '@/components/ui/button';
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import * as z from "zod";
+import { Button } from "@/components/ui/button";
 import {
   Form,
   FormControl,
@@ -11,8 +11,8 @@ import {
   FormItem,
   FormLabel,
   FormMessage,
-} from '@/components/ui/form';
-import { Input } from '@/components/ui/input';
+} from "@/components/ui/form";
+import { Input } from "@/components/ui/input";
 import {
   Card,
   CardContent,
@@ -20,32 +20,29 @@ import {
   CardFooter,
   CardHeader,
   CardTitle,
-} from '@/components/ui/card';
-import { useState } from 'react';
-import { Eye, EyeOff } from 'lucide-react';
-import { toast, Toaster } from 'sonner';
+} from "@/components/ui/card";
+import { useState } from "react";
+import { Eye, EyeOff } from "lucide-react";
+import { toast, Toaster } from "sonner";
 
-const initialSchema = z.object({
+const loginSchema = z.object({
   emailOrPhone: z
     .string()
-    .min(1, 'Email or phone number is required')
+    .min(1, "Email or phone number is required")
     .refine(
-      (value) => {
+      value => {
         const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
         const phoneRegex = /^[\d\s\-\+\(\)]+$/;
         return emailRegex.test(value) || phoneRegex.test(value);
       },
       {
-        message: 'Please enter a valid email or phone number',
+        message: "Please enter a valid email or phone number",
       }
     ),
+  password: z.string().optional(),
 });
 
-const passwordSchema = initialSchema.extend({
-  password: z.string().min(1, 'Password is required'),
-});
-
-type PasswordFormData = z.infer<typeof passwordSchema>;
+type LoginFormData = z.infer<typeof loginSchema>;
 
 interface UserInfo {
   isNewUser: boolean;
@@ -58,41 +55,51 @@ export default function LoginPage() {
   const [showPassword, setShowPassword] = useState(false);
   const [showPasswordField, setShowPasswordField] = useState(false);
   const [_userInfo, setUserInfo] = useState<UserInfo | null>(null);
-  const [currentUsername, setCurrentUsername] = useState('');
+  const [currentUsername, setCurrentUsername] = useState("");
 
-  const form = useForm<PasswordFormData>({
-    resolver: zodResolver(showPasswordField ? passwordSchema : initialSchema),
+  const form = useForm<LoginFormData>({
+    resolver: zodResolver(loginSchema),
     defaultValues: {
-      emailOrPhone: '',
-      password: '',
+      emailOrPhone: "",
+      password: "",
     },
   });
 
-  const onSubmit = async (data: PasswordFormData) => {
+  const onSubmit = async (data: LoginFormData) => {
     setIsLoading(true);
-    
+
+    // Validate password if password field is shown
+    if (showPasswordField && !data.password) {
+      form.setError("password", {
+        type: "manual",
+        message: "Password is required",
+      });
+      setIsLoading(false);
+      return;
+    }
+
     try {
       // Step 1: Check username if we haven't already
       if (!showPasswordField) {
-        const response = await fetch('/api/auth/check-username', {
-          method: 'POST',
+        const response = await fetch("/api/auth/check-username", {
+          method: "POST",
           headers: {
-            'Content-Type': 'application/json',
-            'Cache-Control': 'no-cache',
+            "Content-Type": "application/json",
+            "Cache-Control": "no-cache",
           },
-          cache: 'no-store',
+          cache: "no-store",
           body: JSON.stringify({
             UserName: data.emailOrPhone,
           }),
         });
 
         const responseData = await response.json();
-        
+
         if (response.ok && responseData.data) {
           const userData = responseData.data;
           setUserInfo(userData);
           setCurrentUsername(data.emailOrPhone);
-          
+
           // Check if password is required
           if (userData.hasPassword === true) {
             setShowPasswordField(true);
@@ -102,13 +109,13 @@ export default function LoginPage() {
         }
       } else {
         // Step 2: Submit with password
-        const loginResponse = await fetch('/api/auth/login', {
-          method: 'POST',
+        const loginResponse = await fetch("/api/auth/login", {
+          method: "POST",
           headers: {
-            'Content-Type': 'application/json',
-            'Cache-Control': 'no-cache',
+            "Content-Type": "application/json",
+            "Cache-Control": "no-cache",
           },
-          cache: 'no-store',
+          cache: "no-store",
           body: JSON.stringify({
             username: currentUsername,
             password: data.password,
@@ -116,14 +123,14 @@ export default function LoginPage() {
         });
 
         const loginData = await loginResponse.json();
-        
+
         if (loginResponse.ok) {
           // Show success toast
           toast.success("Login Successful!", {
             description: "Welcome back! You have been logged in successfully.",
             duration: 4000,
           });
-          
+
           // Check if OTP is still required after password
           if (loginData.data && loginData.data.reqOtp === true) {
             toast.info("OTP Required", {
@@ -137,21 +144,24 @@ export default function LoginPage() {
         } else {
           // Show error toast
           toast.error("Login Failed", {
-            description: loginData.message || 'Invalid email or password. Please try again.',
+            description:
+              loginData.message ||
+              "Invalid email or password. Please try again.",
             duration: 4000,
           });
-          
+
           // Show error message to user
-          form.setError('password', {
-            type: 'manual',
-            message: loginData.message || 'Invalid password',
+          form.setError("password", {
+            type: "manual",
+            message: loginData.message || "Invalid password",
           });
         }
       }
     } catch {
       // Show network error toast
       toast.error("Connection Error", {
-        description: "Unable to connect to the server. Please check your internet connection.",
+        description:
+          "Unable to connect to the server. Please check your internet connection.",
         duration: 4000,
       });
     } finally {
@@ -166,12 +176,12 @@ export default function LoginPage() {
         <CardHeader className="text-center">
           <CardTitle className="text-3xl font-bold">Sign in</CardTitle>
           <CardDescription>
-            {showPasswordField 
+            {showPasswordField
               ? `Enter your password for ${currentUsername}`
-              : 'Enter your email or phone number to continue'}
+              : "Enter your email or phone number to continue"}
           </CardDescription>
         </CardHeader>
-        
+
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)}>
             <CardContent className="space-y-4">
@@ -204,7 +214,7 @@ export default function LoginPage() {
                       <FormControl>
                         <div className="relative">
                           <Input
-                            type={showPassword ? 'text' : 'password'}
+                            type={showPassword ? "text" : "password"}
                             placeholder="Enter your password"
                             {...field}
                             disabled={isLoading}
@@ -230,14 +240,14 @@ export default function LoginPage() {
                 />
               )}
             </CardContent>
-            
+
             <CardFooter className="pt-6">
-              <Button
-                type="submit"
-                className="w-full"
-                disabled={isLoading}
-              >
-                {isLoading ? 'Loading...' : showPasswordField ? 'Sign In' : 'Continue'}
+              <Button type="submit" className="w-full" disabled={isLoading}>
+                {isLoading
+                  ? "Loading..."
+                  : showPasswordField
+                    ? "Sign In"
+                    : "Continue"}
               </Button>
             </CardFooter>
           </form>
