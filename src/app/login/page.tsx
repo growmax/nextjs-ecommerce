@@ -21,9 +21,11 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Eye, EyeOff } from "lucide-react";
 import { toast, Toaster } from "sonner";
+import { useAuth } from "@/contexts/AuthContext";
+import { useRouter } from "next/navigation";
 
 const loginSchema = z.object({
   emailOrPhone: z
@@ -56,6 +58,8 @@ export default function LoginPage() {
   const [showPasswordField, setShowPasswordField] = useState(false);
   const [_userInfo, setUserInfo] = useState<UserInfo | null>(null);
   const [currentUsername, setCurrentUsername] = useState("");
+  const { login, isAuthenticated } = useAuth();
+  const router = useRouter();
 
   const form = useForm<LoginFormData>({
     resolver: zodResolver(loginSchema),
@@ -64,6 +68,12 @@ export default function LoginPage() {
       password: "",
     },
   });
+
+  useEffect(() => {
+    if (isAuthenticated) {
+      router.push("/dashboard");
+    }
+  }, [isAuthenticated, router]);
 
   const onSubmit = async (data: LoginFormData) => {
     setIsLoading(true);
@@ -139,7 +149,39 @@ export default function LoginPage() {
             });
             // TODO: Redirect to OTP page with session token
           } else {
-            // TODO: Store auth token and redirect to dashboard
+            // Store auth token and user data, then redirect to dashboard
+            if (loginData.tokens && loginData.tokens.accessToken) {
+              const payload = loginData.tokens.payload;
+              const userData = {
+                id: payload.id || payload.sub || "",
+                email: payload.email || currentUsername,
+                phone: payload.phoneNumber,
+                name: payload.displayName || "",
+                role: payload.accountRole || payload.roleName || "user",
+                companyName: payload.companyName,
+                companyId: payload.companyId,
+                picture: payload.picture,
+              };
+
+              // Calculate expiresIn from JWT exp claim
+              const expiresIn = payload.exp
+                ? payload.exp - Math.floor(Date.now() / 1000)
+                : 3600;
+
+              login(
+                {
+                  accessToken: loginData.tokens.accessToken,
+                  refreshToken: loginData.tokens.refreshToken,
+                  expiresIn,
+                },
+                userData
+              );
+            } else {
+              toast.error("Authentication Error", {
+                description: "No access token received. Please try again.",
+                duration: 4000,
+              });
+            }
           }
         } else {
           // Show error toast
