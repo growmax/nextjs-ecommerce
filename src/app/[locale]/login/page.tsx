@@ -21,7 +21,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { Eye, EyeOff } from "lucide-react";
 import { toast, Toaster } from "sonner";
 import { useAuth } from "@/contexts/AuthContext";
@@ -64,7 +64,7 @@ export default function LoginPage() {
   const [showPasswordField, setShowPasswordField] = useState(false);
   const [_userInfo, setUserInfo] = useState<UserInfo | null>(null);
   const [currentUsername, setCurrentUsername] = useState("");
-  const { login, isAuthenticated } = useAuth();
+  const { login } = useAuth();
   const router = useRouter();
 
   const loginSchema = createLoginSchema(t);
@@ -76,12 +76,6 @@ export default function LoginPage() {
       password: "",
     },
   });
-
-  useEffect(() => {
-    if (isAuthenticated) {
-      router.push("/dashboard");
-    }
-  }, [isAuthenticated, router]);
 
   const onSubmit = async (data: LoginFormData) => {
     setIsLoading(true);
@@ -176,6 +170,10 @@ export default function LoginPage() {
                 ? payload.exp - Math.floor(Date.now() / 1000)
                 : 3600;
 
+              // Get redirect URL from query params if available
+              const searchParams = new URLSearchParams(window.location.search);
+              const from = searchParams.get("from");
+
               login(
                 {
                   accessToken: loginData.tokens.accessToken,
@@ -184,6 +182,13 @@ export default function LoginPage() {
                 },
                 userData
               );
+
+              // Redirect to 'from' URL or dashboard
+              if (from) {
+                router.replace(from);
+              } else {
+                router.replace("/dashboard");
+              }
             } else {
               toast.error(t("auth.authError"), {
                 description: t("auth.tokenError"),

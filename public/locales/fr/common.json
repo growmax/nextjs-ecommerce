@@ -21,7 +21,7 @@
     "emailPhone": "Email ou Téléphone",
     "emailPlaceholder": "Entrez email ou téléphone",
     "passwordPlaceholder": "Entrez votre mot de passe",
-    "enterPassword": "Entrez votre mot de passe pour {{username}}",
+    "enterPassword": "Entrez votre mot de passe pour {username}",
     "enterEmailPhone": "Entrez votre email ou téléphone pour continuer",
     "emailRequired": "L'email ou le téléphone est requis",
     "emailInvalid": "Veuillez entrer un email ou téléphone valide",

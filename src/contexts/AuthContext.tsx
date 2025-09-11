@@ -6,6 +6,7 @@ import React, {
   useEffect,
   useState,
   useCallback,
+  useMemo,
 } from "react";
 import { useRouter } from "@/i18n/navigation";
 import { AuthStorage } from "@/lib/auth";
@@ -36,9 +37,23 @@ interface AuthContextType {
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
-  const [user, setUser] = useState<User | null>(null);
+  const [user, setUser] = useState<User | null>(() => {
+    // Initialize user from localStorage on mount (client-side only)
+    if (typeof window !== "undefined") {
+      return AuthStorage.getUserData();
+    }
+    return null;
+  });
+
   const [isLoading, setIsLoading] = useState(true);
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [isAuthenticated, setIsAuthenticated] = useState(() => {
+    // Initialize auth state from localStorage on mount
+    if (typeof window !== "undefined") {
+      return AuthStorage.isAuthenticated();
+    }
+    return false;
+  });
+
   const router = useRouter();
 
   const checkAuth = useCallback(() => {
@@ -55,10 +70,26 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     return authenticated;
   }, []);
 
+  // Only run once on mount
   useEffect(() => {
-    checkAuth();
+    // Quick validation on mount
+    const isAuth = checkAuth();
     setIsLoading(false);
-  }, [checkAuth]);
+
+    // If not authenticated and trying to access protected route
+    if (!isAuth && typeof window !== "undefined") {
+      const pathname = window.location.pathname;
+      const protectedRoutes = ["/dashboard", "/orders", "/profile"];
+      const isProtectedRoute = protectedRoutes.some(route =>
+        pathname.includes(route)
+      );
+
+      if (isProtectedRoute) {
+        router.push("/login");
+      }
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []); // Empty dependency array - only run once
 
   const login = useCallback(
     (
@@ -73,7 +104,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       AuthStorage.setUserData(userData);
       setUser(userData);
       setIsAuthenticated(true);
-      router.push("/dashboard");
+
+      // Use replace instead of push for better navigation
+      router.replace("/dashboard");
     },
     [router]
   );
@@ -82,22 +115,24 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     AuthStorage.clearAuth();
     setUser(null);
     setIsAuthenticated(false);
-    router.push("/login");
+    router.replace("/login");
   }, [router]);
 
+  // Memoize the context value to prevent unnecessary re-renders
+  const contextValue = useMemo(
+    () => ({
+      user,
+      isLoading,
+      isAuthenticated,
+      login,
+      logout,
+      checkAuth,
+    }),
+    [user, isLoading, isAuthenticated, login, logout, checkAuth]
+  );
+
   return (
-    <AuthContext.Provider
-      value={{
-        user,
-        isLoading,
-        isAuthenticated,
-        login,
-        logout,
-        checkAuth,
-      }}
-    >
-      {children}
-    </AuthContext.Provider>
+    <AuthContext.Provider value={contextValue}>{children}</AuthContext.Provider>
   );
 }
 

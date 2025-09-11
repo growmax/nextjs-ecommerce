@@ -1,6 +1,5 @@
 "use client";
 
-import { useEffect } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
 import {
@@ -10,20 +9,14 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { useRouter } from "@/i18n/navigation";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { LogOut, User, Building2, Mail, Phone } from "lucide-react";
 
 export default function DashboardPage() {
-  const { user, logout, isLoading, isAuthenticated } = useAuth();
-  const router = useRouter();
+  const { user, logout, isLoading } = useAuth();
 
-  useEffect(() => {
-    if (!isLoading && !isAuthenticated) {
-      router.push("/login");
-    }
-  }, [isLoading, isAuthenticated, router]);
-
+  // Show loading state while checking auth
+  // The middleware will handle redirects, so we don't need useEffect here
   if (isLoading) {
     return (
       <div className="flex min-h-screen items-center justify-center">
@@ -35,8 +28,16 @@ export default function DashboardPage() {
     );
   }
 
+  // If no user after loading, middleware will handle redirect
   if (!user) {
-    return null;
+    return (
+      <div className="flex min-h-screen items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto"></div>
+          <p className="mt-4 text-muted-foreground">Redirecting...</p>
+        </div>
+      </div>
+    );
   }
 
   const getInitials = (name?: string) => {
