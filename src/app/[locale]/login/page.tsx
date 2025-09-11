@@ -25,15 +25,14 @@ import { useState, useEffect } from "react";
 import { Eye, EyeOff } from "lucide-react";
 import { toast, Toaster } from "sonner";
 import { useAuth } from "@/contexts/AuthContext";
-import { useRouter } from "next/navigation";
-import { useTranslation } from "react-i18next";
-import { useLocale } from "@/hooks/use-locale";
+import { useRouter } from "@/i18n/navigation";
+import { useTranslations } from "next-intl";
 
 const createLoginSchema = (t: (key: string) => string) =>
   z.object({
     emailOrPhone: z
       .string()
-      .min(1, t("auth.emailRequired") || "Email or phone number is required")
+      .min(1, t("auth.emailRequired"))
       .refine(
         value => {
           const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -41,9 +40,7 @@ const createLoginSchema = (t: (key: string) => string) =>
           return emailRegex.test(value) || phoneRegex.test(value);
         },
         {
-          message:
-            t("auth.emailInvalid") ||
-            "Please enter a valid email or phone number",
+          message: t("auth.emailInvalid"),
         }
       ),
     password: z.string().optional(),
@@ -61,8 +58,7 @@ interface UserInfo {
 }
 
 export default function LoginPage() {
-  const { t } = useTranslation();
-  const locale = useLocale();
+  const t = useTranslations();
   const [isLoading, setIsLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [showPasswordField, setShowPasswordField] = useState(false);
@@ -83,9 +79,9 @@ export default function LoginPage() {
 
   useEffect(() => {
     if (isAuthenticated) {
-      router.push(`/${locale}/dashboard`);
+      router.push("/dashboard");
     }
-  }, [isAuthenticated, router, locale]);
+  }, [isAuthenticated, router]);
 
   const onSubmit = async (data: LoginFormData) => {
     setIsLoading(true);
@@ -94,7 +90,7 @@ export default function LoginPage() {
     if (showPasswordField && !data.password) {
       form.setError("password", {
         type: "manual",
-        message: t("auth.passwordRequired") || "Password is required",
+        message: t("auth.passwordRequired"),
       });
       setIsLoading(false);
       return;

@@ -1,10 +1,6 @@
 import type { Metadata } from "next";
 // import { Geist, Geist_Mono, Inter } from "next/font/google";
 import "./globals.css";
-import { AuthProvider } from "@/contexts/AuthContext";
-import NavBar from "./Components/nav-bar";
-import Footer from "./Components/footer";
-import { I18nProvider } from "@/components/i18n-provider";
 
 // const geistSans = Geist({
 //   variable: "--font-geist-sans",
@@ -38,11 +34,7 @@ export default function RootLayout({
       // className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       // suppressHydrationWarning={true}
       >
-        <I18nProvider>
-          <NavBar />
-          <AuthProvider>{children}</AuthProvider>
-          <Footer />
-        </I18nProvider>
+        {children}
       </body>
     </html>
   );

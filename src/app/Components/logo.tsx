@@ -1,20 +1,18 @@
 "use client";
 
 import { cn } from "@/lib/utils";
-import { useLocale } from "@/hooks/use-locale";
-import { useSafeTranslation } from "@/hooks/use-safe-translation";
+import { useTranslations } from "next-intl";
 import Link from "next/link";
 
 export default function Logo() {
-  const { t } = useSafeTranslation();
-  const locale = useLocale();
+  const t = useTranslations();
 
   return (
     <Link
-      href={`/${locale}`}
+      href="/"
       className={cn("font-bold text-xl text-foreground hover:opacity-80")}
     >
-      {t("navigation.home", "Home")}
+      {t("navigation.home")}
     </Link>
   );
 }

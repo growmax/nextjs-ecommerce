@@ -1,16 +1,14 @@
 "use client";
 
 import React from "react";
-import { useSafeTranslation } from "@/hooks/use-safe-translation";
+import { useTranslations } from "next-intl";
 
 export default function OrdersPage() {
-  const { t } = useSafeTranslation();
+  const t = useTranslations();
 
   return (
     <div className="container mx-auto px-4 py-8">
-      <h1 className="text-3xl font-bold mb-6">
-        {t("ecommerce.orders", "Orders")}
-      </h1>
+      <h1 className="text-3xl font-bold mb-6">{t("ecommerce.orders")}</h1>
 
       <div className="space-y-4">
         <div className="border rounded-lg p-4 bg-white shadow-sm">
@@ -22,21 +20,17 @@ export default function OrdersPage() {
           </div>
           <div className="grid grid-cols-2 gap-4 text-sm">
             <div>
-              <span className="text-gray-600">
-                {t("ecommerce.quantity", "Quantity")}:
-              </span>
+              <span className="text-gray-600">{t("ecommerce.quantity")}:</span>
               <span className="ml-2">2</span>
             </div>
             <div>
-              <span className="text-gray-600">
-                {t("ecommerce.price", "Price")}:
-              </span>
+              <span className="text-gray-600">{t("ecommerce.price")}:</span>
               <span className="ml-2">$99.99</span>
             </div>
           </div>
           <div className="mt-3 pt-3 border-t">
             <div className="flex justify-between font-semibold">
-              <span>{t("ecommerce.total", "Total")}:</span>
+              <span>{t("ecommerce.total")}:</span>
               <span>$199.98</span>
             </div>
           </div>
@@ -51,21 +45,17 @@ export default function OrdersPage() {
           </div>
           <div className="grid grid-cols-2 gap-4 text-sm">
             <div>
-              <span className="text-gray-600">
-                {t("ecommerce.quantity", "Quantity")}:
-              </span>
+              <span className="text-gray-600">{t("ecommerce.quantity")}:</span>
               <span className="ml-2">1</span>
             </div>
             <div>
-              <span className="text-gray-600">
-                {t("ecommerce.price", "Price")}:
-              </span>
+              <span className="text-gray-600">{t("ecommerce.price")}:</span>
               <span className="ml-2">$49.99</span>
             </div>
           </div>
           <div className="mt-3 pt-3 border-t">
             <div className="flex justify-between font-semibold">
-              <span>{t("ecommerce.total", "Total")}:</span>
+              <span>{t("ecommerce.total")}:</span>
               <span>$49.99</span>
             </div>
           </div>

@@ -1,49 +1,29 @@
-import { NextResponse } from "next/server";
-import type { NextRequest } from "next/server";
+import createMiddleware from "next-intl/middleware";
+import { locales, defaultLocale } from "./i18n/config";
 
-const locales = ["en", "es", "fr"];
-const defaultLocale = "en";
+export default createMiddleware({
+  // A list of all locales that are supported
+  locales,
 
-function getLocale(request: NextRequest): string {
-  const pathname = request.nextUrl.pathname;
-  const pathnameLocale = locales.find(
-    locale => pathname.startsWith(`/${locale}/`) || pathname === `/${locale}`
-  );
+  // Used when no locale matches
+  defaultLocale,
 
-  if (pathnameLocale) return pathnameLocale;
-
-  // Check Accept-Language header
-  const acceptLanguage = request.headers.get("accept-language");
-  if (acceptLanguage) {
-    const detectedLocale = locales.find(locale =>
-      acceptLanguage.toLowerCase().includes(locale)
-    );
-    if (detectedLocale) return detectedLocale;
-  }
-
-  return defaultLocale;
-}
-
-export function middleware(request: NextRequest) {
-  const pathname = request.nextUrl.pathname;
-
-  // Check if pathname already has a locale
-  const pathnameHasLocale = locales.some(
-    locale => pathname.startsWith(`/${locale}/`) || pathname === `/${locale}`
-  );
-
-  if (!pathnameHasLocale) {
-    const locale = getLocale(request);
-    const newUrl = new URL(`/${locale}${pathname}`, request.url);
-    return NextResponse.redirect(newUrl);
-  }
-
-  return NextResponse.next();
-}
+  // Always use a locale prefix in the URL
+  localePrefix: "always",
+});
 
 export const config = {
+  // Match only internationalized pathnames
   matcher: [
-    // Skip all internal paths (_next, api, static files)
-    "/((?!_next|api|favicon.ico|.*\\..*).*)",
+    // Enable a redirect to a matching locale at the root
+    "/",
+
+    // Set a cookie to remember the previous locale for
+    // all requests that have a locale prefix
+    "/(en|es|fr)/:path*",
+
+    // Enable redirects that add missing locales
+    // Exclude API routes, _next, _vercel, and files with extensions
+    "/((?!api|_next|_vercel|.*\\..*).*)",
   ],
 };
