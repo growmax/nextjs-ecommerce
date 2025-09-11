@@ -1,31 +1,41 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 
-const protectedRoutes = ["/dashboard", "/profile", "/settings"];
-const authRoutes = ["/login", "/register", "/forgot-password"];
+const locales = ["en", "es", "fr"];
+const defaultLocale = "en";
 
-export function middleware(request: NextRequest) {
-  const { pathname } = request.nextUrl;
-  const authToken = request.cookies.get("auth-token")?.value;
-
-  // Check if the current route is protected
-  const isProtectedRoute = protectedRoutes.some(route =>
-    pathname.startsWith(route)
+function getLocale(request: NextRequest): string {
+  const pathname = request.nextUrl.pathname;
+  const pathnameLocale = locales.find(
+    locale => pathname.startsWith(`/${locale}/`) || pathname === `/${locale}`
   );
 
-  // Check if the current route is an auth route
-  const isAuthRoute = authRoutes.some(route => pathname.startsWith(route));
+  if (pathnameLocale) return pathnameLocale;
 
-  // Redirect to login if accessing protected route without auth
-  if (isProtectedRoute && !authToken) {
-    const loginUrl = new URL("/login", request.url);
-    loginUrl.searchParams.set("from", pathname);
-    return NextResponse.redirect(loginUrl);
+  // Check Accept-Language header
+  const acceptLanguage = request.headers.get("accept-language");
+  if (acceptLanguage) {
+    const detectedLocale = locales.find(locale =>
+      acceptLanguage.toLowerCase().includes(locale)
+    );
+    if (detectedLocale) return detectedLocale;
   }
 
-  // Redirect to dashboard if accessing auth routes while logged in
-  if (isAuthRoute && authToken) {
-    return NextResponse.redirect(new URL("/dashboard", request.url));
+  return defaultLocale;
+}
+
+export function middleware(request: NextRequest) {
+  const pathname = request.nextUrl.pathname;
+
+  // Check if pathname already has a locale
+  const pathnameHasLocale = locales.some(
+    locale => pathname.startsWith(`/${locale}/`) || pathname === `/${locale}`
+  );
+
+  if (!pathnameHasLocale) {
+    const locale = getLocale(request);
+    const newUrl = new URL(`/${locale}${pathname}`, request.url);
+    return NextResponse.redirect(newUrl);
   }
 
   return NextResponse.next();
@@ -33,14 +43,7 @@ export function middleware(request: NextRequest) {
 
 export const config = {
   matcher: [
-    /*
-     * Match all request paths except for the ones starting with:
-     * - api (API routes)
-     * - _next/static (static files)
-     * - _next/image (image optimization files)
-     * - favicon.ico (favicon file)
-     * - public files
-     */
-    "/((?!api|_next/static|_next/image|favicon.ico|.*\\..*).)",
+    // Skip all internal paths (_next, api, static files)
+    "/((?!_next|api|favicon.ico|.*\\..*).*)",
   ],
 };

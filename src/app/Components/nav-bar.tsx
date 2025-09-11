@@ -7,6 +7,7 @@ import SearchBox from "./search";
 import NotificationButton from "./notifications";
 import AddCardButton from "./add-card";
 import ProfileButton from "./profile";
+import { LanguageSwitcher } from "@/components/language-switcher";
 
 export default function NavBar() {
   return (
@@ -26,6 +27,7 @@ export default function NavBar() {
 
       {/* Right section */}
       <div className="flex items-center gap-2">
+        <LanguageSwitcher />
         <NotificationButton />
         <AddCardButton />
         <ProfileButton />

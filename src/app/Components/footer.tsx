@@ -1,10 +1,16 @@
+"use client";
+
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { cn } from "@/lib/utils";
+import { useSafeTranslation } from "@/hooks/use-safe-translation";
+import { useLocale } from "@/hooks/use-locale";
 
 export default function Footer() {
   const currentYear = new Date().getFullYear();
+  const { t } = useSafeTranslation();
+  const locale = useLocale();
 
   return (
     <footer className={cn("border-t bg-background")}>
@@ -18,31 +24,45 @@ export default function Footer() {
           {/* Middle section - Links using Button component */}
           <div className="flex items-center gap-2">
             <Button variant="link" size="sm" asChild>
-              <Link href="/about">About</Link>
+              <Link href={`/${locale}/about`}>
+                {t("navigation.about", "About")}
+              </Link>
             </Button>
             <Separator orientation="vertical" className="h-4" />
             <Button variant="link" size="sm" asChild>
-              <Link href="/privacy">Privacy</Link>
+              <Link href={`/${locale}/privacy`}>
+                {t("navigation.privacy", "Privacy")}
+              </Link>
             </Button>
             <Separator orientation="vertical" className="h-4" />
             <Button variant="link" size="sm" asChild>
-              <Link href="/terms">Terms</Link>
+              <Link href={`/${locale}/terms`}>
+                {t("navigation.terms", "Terms")}
+              </Link>
             </Button>
             <Separator orientation="vertical" className="h-4" />
             <Button variant="link" size="sm" asChild>
-              <Link href="/contact">Contact</Link>
+              <Link href={`/${locale}/contact`}>
+                {t("navigation.contact", "Contact")}
+              </Link>
             </Button>
             <Separator orientation="vertical" className="h-4" />
             <Button variant="link" size="sm" asChild>
-              <Link href="/check_out">checkout</Link>
+              <Link href={`/${locale}/check_out`}>
+                {t("ecommerce.checkout", "Checkout")}
+              </Link>
             </Button>
             <Separator orientation="vertical" className="h-4" />
             <Button variant="link" size="sm" asChild>
-              <Link href="/card_page">card_page</Link>
+              <Link href={`/${locale}/cart_page`}>
+                {t("ecommerce.cart", "Cart")}
+              </Link>
             </Button>
             <Separator orientation="vertical" className="h-4" />
             <Button variant="link" size="sm" asChild>
-              <Link href="/orders">orders</Link>
+              <Link href={`/${locale}/orders`}>
+                {t("ecommerce.orders", "Orders")}
+              </Link>
             </Button>
           </div>
 
