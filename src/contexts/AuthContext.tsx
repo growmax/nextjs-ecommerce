@@ -3,12 +3,10 @@
 import React, {
   createContext,
   useContext,
-  useEffect,
   useState,
   useCallback,
   useMemo,
 } from "react";
-import { useRouter } from "@/i18n/navigation";
 import { AuthStorage } from "@/lib/auth";
 
 interface User {
@@ -45,7 +43,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     return null;
   });
 
-  const [isLoading, setIsLoading] = useState(true);
+  const [isLoading] = useState(false);
   const [isAuthenticated, setIsAuthenticated] = useState(() => {
     // Initialize auth state from localStorage on mount
     if (typeof window !== "undefined") {
@@ -53,8 +51,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
     return false;
   });
-
-  const router = useRouter();
 
   const checkAuth = useCallback(() => {
     const authenticated = AuthStorage.isAuthenticated();
@@ -70,26 +66,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     return authenticated;
   }, []);
 
-  // Only run once on mount
-  useEffect(() => {
-    // Quick validation on mount
-    const isAuth = checkAuth();
-    setIsLoading(false);
-
-    // If not authenticated and trying to access protected route
-    if (!isAuth && typeof window !== "undefined") {
-      const pathname = window.location.pathname;
-      const protectedRoutes = ["/dashboard", "/orders", "/profile"];
-      const isProtectedRoute = protectedRoutes.some(route =>
-        pathname.includes(route)
-      );
-
-      if (isProtectedRoute) {
-        router.push("/login");
-      }
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []); // Empty dependency array - only run once
+  // No useEffect needed - middleware handles auth checks
 
   const login = useCallback(
     (
@@ -105,18 +82,18 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       setUser(userData);
       setIsAuthenticated(true);
 
-      // Use replace instead of push for better navigation
-      router.replace("/dashboard");
+      // Don't redirect here - let the login page handle it
     },
-    [router]
+    []
   );
 
   const logout = useCallback(() => {
     AuthStorage.clearAuth();
     setUser(null);
     setIsAuthenticated(false);
-    router.replace("/login");
-  }, [router]);
+    // Use window.location for logout to ensure clean redirect
+    window.location.href = "/en/login";
+  }, []);
 
   // Memoize the context value to prevent unnecessary re-renders
   const contextValue = useMemo(

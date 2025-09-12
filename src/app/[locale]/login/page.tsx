@@ -25,7 +25,6 @@ import { useState } from "react";
 import { Eye, EyeOff } from "lucide-react";
 import { toast, Toaster } from "sonner";
 import { useAuth } from "@/contexts/AuthContext";
-import { useRouter } from "@/i18n/navigation";
 import { useTranslations } from "next-intl";
 
 const createLoginSchema = (t: (key: string) => string) =>
@@ -65,7 +64,6 @@ export default function LoginPage() {
   const [_userInfo, setUserInfo] = useState<UserInfo | null>(null);
   const [currentUsername, setCurrentUsername] = useState("");
   const { login } = useAuth();
-  const router = useRouter();
 
   const loginSchema = createLoginSchema(t);
 
@@ -174,6 +172,7 @@ export default function LoginPage() {
               const searchParams = new URLSearchParams(window.location.search);
               const from = searchParams.get("from");
 
+              // Store auth data first
               login(
                 {
                   accessToken: loginData.tokens.accessToken,
@@ -183,12 +182,9 @@ export default function LoginPage() {
                 userData
               );
 
-              // Redirect to 'from' URL or dashboard
-              if (from) {
-                router.replace(from);
-              } else {
-                router.replace("/dashboard");
-              }
+              // Use window.location for faster redirect
+              const redirectUrl = from || "/dashboard";
+              window.location.href = redirectUrl;
             } else {
               toast.error(t("auth.authError"), {
                 description: t("auth.tokenError"),

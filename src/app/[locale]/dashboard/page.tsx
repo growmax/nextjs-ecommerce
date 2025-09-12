@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
 import {
@@ -13,11 +14,16 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { LogOut, User, Building2, Mail, Phone } from "lucide-react";
 
 export default function DashboardPage() {
-  const { user, logout, isLoading } = useAuth();
+  const { user, logout } = useAuth();
+  const [mounted, setMounted] = useState(false);
 
-  // Show loading state while checking auth
-  // The middleware will handle redirects, so we don't need useEffect here
-  if (isLoading) {
+  // Prevent hydration mismatch
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  // Show loading state until mounted (prevents hydration issues)
+  if (!mounted) {
     return (
       <div className="flex min-h-screen items-center justify-center">
         <div className="text-center">
@@ -28,7 +34,7 @@ export default function DashboardPage() {
     );
   }
 
-  // If no user after loading, middleware will handle redirect
+  // If no user after mounting, show loading (middleware will redirect)
   if (!user) {
     return (
       <div className="flex min-h-screen items-center justify-center">
