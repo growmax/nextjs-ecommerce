@@ -24,25 +24,32 @@ import {
 import { useState } from "react";
 import { Eye, EyeOff } from "lucide-react";
 import { toast, Toaster } from "sonner";
+import { useAuth } from "@/contexts/AuthContext";
+import { useRouter } from "@/i18n/navigation";
+import { useTranslations } from "next-intl";
 
-const loginSchema = z.object({
-  emailOrPhone: z
-    .string()
-    .min(1, "Email or phone number is required")
-    .refine(
-      value => {
-        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-        const phoneRegex = /^[\d\s\-\+\(\)]+$/;
-        return emailRegex.test(value) || phoneRegex.test(value);
-      },
-      {
-        message: "Please enter a valid email or phone number",
-      }
-    ),
-  password: z.string().optional(),
-});
+const createLoginSchema = (t: (key: string) => string) =>
+  z.object({
+    emailOrPhone: z
+      .string()
+      .min(1, t("auth.emailRequired"))
+      .refine(
+        value => {
+          const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+          const phoneRegex = /^[\d\s\-\+\(\)]+$/;
+          return emailRegex.test(value) || phoneRegex.test(value);
+        },
+        {
+          message: t("auth.emailInvalid"),
+        }
+      ),
+    password: z.string().optional(),
+  });
 
-type LoginFormData = z.infer<typeof loginSchema>;
+type LoginFormData = {
+  emailOrPhone: string;
+  password?: string | undefined;
+};
 
 interface UserInfo {
   isNewUser: boolean;
@@ -51,11 +58,16 @@ interface UserInfo {
 }
 
 export default function LoginPage() {
+  const t = useTranslations();
   const [isLoading, setIsLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [showPasswordField, setShowPasswordField] = useState(false);
   const [_userInfo, setUserInfo] = useState<UserInfo | null>(null);
   const [currentUsername, setCurrentUsername] = useState("");
+  const { login } = useAuth();
+  const router = useRouter();
+
+  const loginSchema = createLoginSchema(t);
 
   const form = useForm<LoginFormData>({
     resolver: zodResolver(loginSchema),
@@ -72,7 +84,7 @@ export default function LoginPage() {
     if (showPasswordField && !data.password) {
       form.setError("password", {
         type: "manual",
-        message: "Password is required",
+        message: t("auth.passwordRequired"),
       });
       setIsLoading(false);
       return;
@@ -126,42 +138,82 @@ export default function LoginPage() {
 
         if (loginResponse.ok) {
           // Show success toast
-          toast.success("Login Successful!", {
-            description: "Welcome back! You have been logged in successfully.",
+          toast.success(t("messages.success"), {
+            description: t("auth.loginSuccess"),
             duration: 4000,
           });
 
           // Check if OTP is still required after password
           if (loginData.data && loginData.data.reqOtp === true) {
-            toast.info("OTP Required", {
-              description: "Please check your phone for the verification code.",
+            toast.info(t("auth.otpRequired"), {
+              description: t("auth.otpDescription"),
               duration: 5000,
             });
             // TODO: Redirect to OTP page with session token
           } else {
-            // TODO: Store auth token and redirect to dashboard
+            // Store auth token and user data, then redirect to dashboard
+            if (loginData.tokens && loginData.tokens.accessToken) {
+              const payload = loginData.tokens.payload;
+              const userData = {
+                id: payload.id || payload.sub || "",
+                email: payload.email || currentUsername,
+                phone: payload.phoneNumber,
+                name: payload.displayName || "",
+                role: payload.accountRole || payload.roleName || "user",
+                companyName: payload.companyName,
+                companyId: payload.companyId,
+                picture: payload.picture,
+              };
+
+              // Calculate expiresIn from JWT exp claim
+              const expiresIn = payload.exp
+                ? payload.exp - Math.floor(Date.now() / 1000)
+                : 3600;
+
+              // Get redirect URL from query params if available
+              const searchParams = new URLSearchParams(window.location.search);
+              const from = searchParams.get("from");
+
+              login(
+                {
+                  accessToken: loginData.tokens.accessToken,
+                  refreshToken: loginData.tokens.refreshToken,
+                  expiresIn,
+                },
+                userData
+              );
+
+              // Redirect to 'from' URL or dashboard
+              if (from) {
+                router.replace(from);
+              } else {
+                router.replace("/dashboard");
+              }
+            } else {
+              toast.error(t("auth.authError"), {
+                description: t("auth.tokenError"),
+                duration: 4000,
+              });
+            }
           }
         } else {
           // Show error toast
-          toast.error("Login Failed", {
-            description:
-              loginData.message ||
-              "Invalid email or password. Please try again.",
+          toast.error(t("auth.loginFailed"), {
+            description: loginData.message || t("auth.invalidCredentials"),
             duration: 4000,
           });
 
           // Show error message to user
           form.setError("password", {
             type: "manual",
-            message: loginData.message || "Invalid password",
+            message: loginData.message || t("auth.invalidPassword"),
           });
         }
       }
     } catch {
       // Show network error toast
-      toast.error("Connection Error", {
-        description:
-          "Unable to connect to the server. Please check your internet connection.",
+      toast.error(t("messages.error"), {
+        description: t("auth.connectionError"),
         duration: 4000,
       });
     } finally {
@@ -174,11 +226,13 @@ export default function LoginPage() {
       <Toaster richColors position="top-right" />
       <Card className="w-full max-w-md">
         <CardHeader className="text-center">
-          <CardTitle className="text-3xl font-bold">Sign in</CardTitle>
+          <CardTitle className="text-3xl font-bold">
+            {t("auth.signIn")}
+          </CardTitle>
           <CardDescription>
             {showPasswordField
-              ? `Enter your password for ${currentUsername}`
-              : "Enter your email or phone number to continue"}
+              ? t("auth.enterPassword", { username: currentUsername })
+              : t("auth.enterEmailPhone")}
           </CardDescription>
         </CardHeader>
 
@@ -190,10 +244,10 @@ export default function LoginPage() {
                 name="emailOrPhone"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Email or Phone Number</FormLabel>
+                    <FormLabel>{t("auth.emailPhone")}</FormLabel>
                     <FormControl>
                       <Input
-                        placeholder="Enter email or phone number"
+                        placeholder={t("auth.emailPlaceholder")}
                         {...field}
                         disabled={isLoading || showPasswordField}
                         readOnly={showPasswordField}
@@ -210,12 +264,12 @@ export default function LoginPage() {
                   name="password"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Password</FormLabel>
+                      <FormLabel>{t("auth.password")}</FormLabel>
                       <FormControl>
                         <div className="relative">
                           <Input
                             type={showPassword ? "text" : "password"}
-                            placeholder="Enter your password"
+                            placeholder={t("auth.passwordPlaceholder")}
                             {...field}
                             disabled={isLoading}
                           />
@@ -244,10 +298,10 @@ export default function LoginPage() {
             <CardFooter className="pt-6">
               <Button type="submit" className="w-full" disabled={isLoading}>
                 {isLoading
-                  ? "Loading..."
+                  ? t("messages.loading")
                   : showPasswordField
-                    ? "Sign In"
-                    : "Continue"}
+                    ? t("auth.signIn")
+                    : t("buttons.continue")}
               </Button>
             </CardFooter>
           </form>

@@ -1,0 +1,105 @@
+{
+  "navigation": {
+    "home": "Home",
+    "about": "About",
+    "contact": "Contact",
+    "privacy": "Privacy",
+    "terms": "Terms",
+    "menu": "Menu"
+  },
+  "auth": {
+    "login": "Login",
+    "logout": "Logout",
+    "register": "Register",
+    "welcome": "Welcome",
+    "signIn": "Sign In",
+    "signUp": "Sign Up",
+    "forgotPassword": "Forgot Password?",
+    "rememberMe": "Remember Me",
+    "password": "Password",
+    "email": "Email",
+    "emailPhone": "Email or Phone Number",
+    "emailPlaceholder": "Enter email or phone number",
+    "passwordPlaceholder": "Enter your password",
+    "enterPassword": "Enter your password for {username}",
+    "enterEmailPhone": "Enter your email or phone number to continue",
+    "emailRequired": "Email or phone number is required",
+    "emailInvalid": "Please enter a valid email or phone number",
+    "passwordRequired": "Password is required",
+    "loginSuccess": "Welcome back! You have been logged in successfully.",
+    "loginFailed": "Login Failed",
+    "invalidCredentials": "Invalid email or password. Please try again.",
+    "invalidPassword": "Invalid password",
+    "authError": "Authentication Error",
+    "tokenError": "No access token received. Please try again.",
+    "connectionError": "Unable to connect to the server. Please check your internet connection.",
+    "otpRequired": "OTP Required",
+    "otpDescription": "Please check your phone for the verification code."
+  },
+  "ecommerce": {
+    "cart": "Cart",
+    "checkout": "Checkout",
+    "orders": "Orders",
+    "addToCart": "Add to Cart",
+    "buyNow": "Buy Now",
+    "price": "Price",
+    "quantity": "Quantity",
+    "total": "Total",
+    "subtotal": "Subtotal",
+    "shipping": "Shipping",
+    "tax": "Tax"
+  },
+  "search": {
+    "placeholder": "Search products...",
+    "button": "Search",
+    "noResults": "No results found"
+  },
+  "profile": {
+    "myAccount": "My Account",
+    "settings": "Settings",
+    "viewProfile": "View Profile",
+    "editProfile": "Edit Profile"
+  },
+  "notifications": {
+    "title": "Notifications",
+    "markAsRead": "Mark as read",
+    "noNotifications": "No new notifications"
+  },
+  "buttons": {
+    "save": "Save",
+    "cancel": "Cancel",
+    "delete": "Delete",
+    "edit": "Edit",
+    "submit": "Submit",
+    "confirm": "Confirm",
+    "back": "Back",
+    "next": "Next",
+    "previous": "Previous",
+    "close": "Close",
+    "viewAll": "View All",
+    "loadMore": "Load More",
+    "continue": "Continue"
+  },
+  "messages": {
+    "loading": "Loading...",
+    "error": "Something went wrong",
+    "success": "Success!",
+    "welcome": "Welcome to our store",
+    "thankYou": "Thank you for your purchase"
+  },
+  "footer": {
+    "copyright": "© {{year}} Your Company. All rights reserved.",
+    "madeWith": "Made with",
+    "love": "❤️"
+  },
+  "demo": {
+    "components": "Component Demos",
+    "searchDemo": "Search Demo",
+    "carouselDemo": "Carousel Demo",
+    "cardDemo": "Card Demo",
+    "buttonDemo": "Button Demo",
+    "accordionDemo": "Accordion Demo",
+    "tabsDemo": "Tabs Demo",
+    "notificationDemo": "Notification Demo"
+  }
+}

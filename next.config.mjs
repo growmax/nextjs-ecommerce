@@ -1,5 +1,8 @@
-import { fileURLToPath } from 'url';
+import createNextIntlPlugin from "next-intl/plugin";
 import { dirname } from 'path';
+import { fileURLToPath } from 'url';
+
+const withNextIntl = createNextIntlPlugin("./src/i18n/request.ts");
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -14,6 +17,12 @@ const nextConfig = {
   images: {
     formats: ["image/avif", "image/webp"],
     minimumCacheTTL: 31536000,
+    remotePatterns: [
+      {
+        protocol: "https",
+        hostname: "picsum.photos",
+      },
+    ],
   },
   headers: async () => [
     {
@@ -49,4 +58,4 @@ const nextConfig = {
   ],
 };
 
-export default nextConfig;
+export default withNextIntl(nextConfig);
