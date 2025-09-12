@@ -42,7 +42,7 @@ export default function Footer() {
             </Button>
             <Separator orientation="vertical" className="h-4" />
             <Button variant="link" size="sm" asChild>
-              <Link href="/cart_page">{t("ecommerce.cart")}</Link>
+              <Link href="/card_page">{t("ecommerce.cart")}</Link>
             </Button>
             <Separator orientation="vertical" className="h-4" />
             <Button variant="link" size="sm" asChild>

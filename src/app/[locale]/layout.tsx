@@ -5,8 +5,10 @@ import { headers } from "next/headers";
 import { locales } from "@/i18n/config";
 import { TenantProvider } from "@/contexts/TenantContext";
 import { AuthProvider } from "@/contexts/AuthContext";
+import { UserSessionProvider } from "@/contexts/UserSessionContext";
 import LayoutWrapper from "@/components/layout-wrapper";
 import { fetchTenantFromExternalAPI } from "@/lib/tenant";
+import { ServerUserService } from "@/lib/services/ServerUserService";
 
 export default async function LocaleLayout({
   children,
@@ -42,11 +44,22 @@ export default async function LocaleLayout({
     }
   }
 
+  // Fetch user data server-side
+  const serverUserService = ServerUserService.getInstance();
+  let userData = null;
+  try {
+    userData = await serverUserService.fetchUserDataServerSide();
+  } catch {
+    userData = null;
+  }
+
   return (
     <NextIntlClientProvider messages={messages}>
       <TenantProvider initialData={tenantData}>
         <AuthProvider>
-          <LayoutWrapper>{children}</LayoutWrapper>
+          <UserSessionProvider initialUserData={userData?.data || null}>
+            <LayoutWrapper>{children}</LayoutWrapper>
+          </UserSessionProvider>
         </AuthProvider>
       </TenantProvider>
     </NextIntlClientProvider>

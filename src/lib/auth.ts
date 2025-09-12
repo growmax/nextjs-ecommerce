@@ -38,7 +38,9 @@ export class AuthStorage {
       const cookieValue = encodeURIComponent(tokens.accessToken);
       const maxAge = tokens.expiresIn || 86400;
 
+      // Set both cookies for compatibility
       document.cookie = `auth-token=${cookieValue}; path=/; max-age=${maxAge}; SameSite=Strict${isProduction ? "; Secure" : ""}`;
+      document.cookie = `access_token=${cookieValue}; path=/; max-age=${maxAge}; SameSite=Strict${isProduction ? "; Secure" : ""}`;
     }
   }
 
@@ -77,9 +79,10 @@ export class AuthStorage {
       localStorage.removeItem(USER_DATA_KEY);
       localStorage.removeItem("token-expiry");
 
-      // Clear auth cookie with all security attributes
+      // Clear both auth cookies with all security attributes
       const isProduction = process.env.NODE_ENV === "production";
       document.cookie = `auth-token=; path=/; expires=Thu, 01 Jan 1970 00:00:00 UTC; SameSite=Strict${isProduction ? "; Secure" : ""}`;
+      document.cookie = `access_token=; path=/; expires=Thu, 01 Jan 1970 00:00:00 UTC; SameSite=Strict${isProduction ? "; Secure" : ""}`;
     }
   }
 

@@ -12,11 +12,11 @@ export function extractTenantFromHost(host: string): {
 
   // Handle localhost development
   if (host.includes("localhost")) {
-    // For development, you can use a default tenant or extract from query params
+    // For development, use environment variables
     return {
-      domainUrl: "schwingstetter.myapptino.com", // Default for testing
-      origin: "schwingstetterindia.myapptino.com",
-      tenantCode: "schwingstetter",
+      domainUrl: process.env.DEFAULT_TENANT_DOMAIN!,
+      origin: process.env.DEFAULT_TENANT_ORIGIN!,
+      tenantCode: process.env.DEFAULT_TENANT_CODE!,
     };
   }
 
@@ -31,7 +31,7 @@ export async function fetchTenantFromExternalAPI(
   domainUrl: string,
   origin: string
 ): Promise<TenantApiResponse> {
-  const url = `https://api.myapptino.com/homepagepublic/getTenantCodeCurrencyCompany?domainUrl=${domainUrl}`;
+  const url = `${process.env.API_BASE_URL}/homepagepublic/getTenantCodeCurrencyCompany?domainUrl=${domainUrl}`;
 
   const response = await fetch(url, {
     headers: {

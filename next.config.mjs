@@ -14,6 +14,20 @@ const nextConfig = {
   },
   poweredByHeader: false,
   compress: true,
+  // Windows-specific optimizations for development
+  webpack: (config, { dev }) => {
+    if (dev) {
+      config.watchOptions = {
+        poll: 1000,
+        aggregateTimeout: 300,
+        ignored: /node_modules/,
+      };
+      config.infrastructureLogging = {
+        level: 'error',
+      };
+    }
+    return config;
+  },
   images: {
     formats: ["image/avif", "image/webp"],
     minimumCacheTTL: 31536000,

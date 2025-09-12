@@ -151,8 +151,16 @@ export default function LoginPage() {
             // TODO: Redirect to OTP page with session token
           } else {
             // Store auth token and user data, then redirect to dashboard
-            if (loginData.tokens && loginData.tokens.accessToken) {
-              const payload = loginData.tokens.payload;
+            // Check for both possible response structures
+            const accessToken =
+              loginData.accessToken ||
+              (loginData.tokens && loginData.tokens.accessToken);
+
+            if (accessToken) {
+              // For direct accessToken response
+              const payload = loginData.tokens
+                ? loginData.tokens.payload
+                : loginData;
               const userData = {
                 id: payload.id || payload.sub || "",
                 email: payload.email || currentUsername,
@@ -173,11 +181,13 @@ export default function LoginPage() {
               const searchParams = new URLSearchParams(window.location.search);
               const from = searchParams.get("from");
 
-              // Store auth data first
-              login(
+              // Store auth data and token
+              await login(
                 {
-                  accessToken: loginData.tokens.accessToken,
-                  refreshToken: loginData.tokens.refreshToken,
+                  accessToken,
+                  refreshToken:
+                    loginData.refreshToken ||
+                    (loginData.tokens && loginData.tokens.refreshToken),
                   expiresIn,
                 },
                 userData
