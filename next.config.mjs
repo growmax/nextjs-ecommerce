@@ -1,14 +1,16 @@
-import type { NextConfig } from "next";
 import createNextIntlPlugin from "next-intl/plugin";
+import { dirname } from 'path';
+import { fileURLToPath } from 'url';
 
 const withNextIntl = createNextIntlPlugin("./src/i18n/request.ts");
 
-const nextConfig: NextConfig = {
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
+
+/** @type {import('next').NextConfig} */
+const nextConfig = {
   experimental: {
     optimizePackageImports: ["lucide-react", "@/components/ui"],
-  },
-  turbopack: {
-    root: __dirname,
   },
   poweredByHeader: false,
   compress: true,
