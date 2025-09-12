@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 import createIntlMiddleware from "next-intl/middleware";
 import { locales, defaultLocale } from "./i18n/config";
+import { extractTenantFromHost } from "./lib/tenant";
 
 // Routes that require authentication
 const protectedRoutes = ["/dashboard", "/orders", "/profile", "/settings"];
@@ -9,8 +10,33 @@ const protectedRoutes = ["/dashboard", "/orders", "/profile", "/settings"];
 // Routes that should redirect to dashboard if already authenticated
 const authRoutes = ["/login", "/register", "/forgot-password"];
 
-// Public routes that don't require authentication (kept for reference)
-// const publicRoutes = ['/', '/about', '/contact', '/products'];
+class TenantMiddleware {
+  private request: NextRequest;
+
+  constructor(request: NextRequest) {
+    this.request = request;
+  }
+
+  public handle(): NextResponse {
+    const host = this.request.headers.get("host") || "";
+    const { domainUrl, origin, tenantCode } = extractTenantFromHost(host);
+
+    const response = NextResponse.next();
+
+    // Always set tenant headers (use default for localhost)
+    const finalTenantCode = tenantCode || "schwingstetter";
+    const finalDomain = tenantCode ? domainUrl : "schwingstetter.myapptino.com";
+    const finalOrigin = tenantCode
+      ? origin
+      : "schwingstetterindia.myapptino.com";
+
+    response.headers.set("x-tenant-code", finalTenantCode);
+    response.headers.set("x-tenant-domain", finalDomain);
+    response.headers.set("x-tenant-origin", finalOrigin);
+
+    return response;
+  }
+}
 
 class AuthMiddleware {
   private request: NextRequest;
@@ -91,11 +117,13 @@ class IntlMiddleware {
 
 class MiddlewareHandler {
   private request: NextRequest;
+  private tenantMiddleware: TenantMiddleware;
   private authMiddleware: AuthMiddleware;
   private intlMiddleware: IntlMiddleware;
 
   constructor(request: NextRequest) {
     this.request = request;
+    this.tenantMiddleware = new TenantMiddleware(request);
     this.authMiddleware = new AuthMiddleware(request);
     this.intlMiddleware = new IntlMiddleware();
   }
@@ -119,14 +147,39 @@ class MiddlewareHandler {
       return NextResponse.next();
     }
 
-    // First apply authentication middleware
+    // First apply tenant middleware (sets headers)
+    const tenantResponse = this.tenantMiddleware.handle();
+
+    // Then apply authentication middleware
     const authResponse = this.authMiddleware.handle();
     if (authResponse) {
+      // Copy tenant headers to auth response
+      const tenantCode = tenantResponse.headers.get("x-tenant-code");
+      const tenantDomain = tenantResponse.headers.get("x-tenant-domain");
+      const tenantOrigin = tenantResponse.headers.get("x-tenant-origin");
+
+      if (tenantCode) authResponse.headers.set("x-tenant-code", tenantCode);
+      if (tenantDomain)
+        authResponse.headers.set("x-tenant-domain", tenantDomain);
+      if (tenantOrigin)
+        authResponse.headers.set("x-tenant-origin", tenantOrigin);
+
       return authResponse;
     }
 
-    // Then apply internationalization middleware
-    return this.intlMiddleware.handle(this.request);
+    // Finally apply internationalization middleware
+    const intlResponse = this.intlMiddleware.handle(this.request);
+
+    // Copy tenant headers to intl response
+    const tenantCode = tenantResponse.headers.get("x-tenant-code");
+    const tenantDomain = tenantResponse.headers.get("x-tenant-domain");
+    const tenantOrigin = tenantResponse.headers.get("x-tenant-origin");
+
+    if (tenantCode) intlResponse.headers.set("x-tenant-code", tenantCode);
+    if (tenantDomain) intlResponse.headers.set("x-tenant-domain", tenantDomain);
+    if (tenantOrigin) intlResponse.headers.set("x-tenant-origin", tenantOrigin);
+
+    return intlResponse;
   }
 }
 
