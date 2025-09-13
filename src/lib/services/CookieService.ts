@@ -18,11 +18,8 @@ export class CookieService {
     try {
       const cookieStore = await cookies();
 
-      // Try both cookie names
-      let tokenCookie = cookieStore.get(this.tokenKey); // access_token
-      if (!tokenCookie) {
-        tokenCookie = cookieStore.get("auth-token");
-      }
+      // Get access_token cookie only
+      const tokenCookie = cookieStore.get(this.tokenKey); // access_token
 
       if (tokenCookie?.value) {
         // Decode URL-encoded cookie value

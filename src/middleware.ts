@@ -62,7 +62,7 @@ class AuthMiddleware {
   }
 
   private isAuthenticated(): boolean {
-    const token = this.request.cookies.get("auth-token");
+    const token = this.request.cookies.get("access_token");
     return !!token?.value;
   }
 

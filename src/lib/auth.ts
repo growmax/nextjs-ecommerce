@@ -15,7 +15,7 @@ interface UserData {
   picture?: string;
 }
 
-const AUTH_TOKEN_KEY = "auth-token";
+const AUTH_TOKEN_KEY = "access_token";
 const REFRESH_TOKEN_KEY = "refresh-token";
 const USER_DATA_KEY = "user-data";
 
@@ -38,8 +38,7 @@ export class AuthStorage {
       const cookieValue = encodeURIComponent(tokens.accessToken);
       const maxAge = tokens.expiresIn || 86400;
 
-      // Set both cookies for compatibility
-      document.cookie = `auth-token=${cookieValue}; path=/; max-age=${maxAge}; SameSite=Strict${isProduction ? "; Secure" : ""}`;
+      // Set single cookie for consistency
       document.cookie = `access_token=${cookieValue}; path=/; max-age=${maxAge}; SameSite=Strict${isProduction ? "; Secure" : ""}`;
     }
   }
@@ -79,10 +78,11 @@ export class AuthStorage {
       localStorage.removeItem(USER_DATA_KEY);
       localStorage.removeItem("token-expiry");
 
-      // Clear both auth cookies with all security attributes
+      // Clear auth cookie with all security attributes
       const isProduction = process.env.NODE_ENV === "production";
-      document.cookie = `auth-token=; path=/; expires=Thu, 01 Jan 1970 00:00:00 UTC; SameSite=Strict${isProduction ? "; Secure" : ""}`;
       document.cookie = `access_token=; path=/; expires=Thu, 01 Jan 1970 00:00:00 UTC; SameSite=Strict${isProduction ? "; Secure" : ""}`;
+      // Also clear legacy auth-token if it exists
+      document.cookie = `auth-token=; path=/; expires=Thu, 01 Jan 1970 00:00:00 UTC; SameSite=Strict${isProduction ? "; Secure" : ""}`;
     }
   }
 
