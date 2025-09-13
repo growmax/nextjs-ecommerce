@@ -26,7 +26,6 @@ import { Eye, EyeOff } from "lucide-react";
 import { toast, Toaster } from "sonner";
 import { useAuth } from "@/contexts/AuthContext";
 import { useTranslations } from "next-intl";
-import { TenantDebug } from "@/components/TenantInfo";
 
 const createLoginSchema = (t: (key: string) => string) =>
   z.object({
@@ -233,9 +232,6 @@ export default function LoginPage() {
       <Toaster richColors position="top-right" />
 
       {/* Tenant Debug - Fixed Position */}
-      <div className="fixed top-4 left-4 z-10">
-        <TenantDebug />
-      </div>
 
       <Card className="w-full max-w-md">
         <CardHeader className="text-center">

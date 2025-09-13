@@ -12,7 +12,6 @@ import {
 } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { LogOut, User, Building2, Mail, Phone } from "lucide-react";
-import { TenantInfo } from "@/components/TenantInfo";
 
 export default function DashboardPage() {
   const { user, logout } = useAuth();
@@ -84,11 +83,6 @@ export default function DashboardPage() {
       </header>
 
       <main className="container mx-auto px-4 py-8">
-        {/* Tenant Information - For Testing */}
-        <div className="mb-6">
-          <TenantInfo />
-        </div>
-
         <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
           {/* User Profile Card */}
           <Card className="md:col-span-2 lg:col-span-1">

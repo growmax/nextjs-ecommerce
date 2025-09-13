@@ -1,6 +1,16 @@
 "use client";
 
-import { User, Settings, Building2, IdCard } from "lucide-react";
+import {
+  User,
+  Home,
+  LayoutDashboard,
+  ShoppingBag,
+  Settings,
+  Building2,
+  IdCard,
+  ShoppingCart,
+  FileText,
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -13,9 +23,11 @@ import {
   DropdownMenuSubContent,
   DropdownMenuSubTrigger,
 } from "@/components/ui/dropdown-menu";
-import Link from "next/link";
+import { useRouter } from "next/navigation";
 
 export default function ProfileButton() {
+  const router = useRouter();
+
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
@@ -28,26 +40,58 @@ export default function ProfileButton() {
         <DropdownMenuLabel>My Account</DropdownMenuLabel>
         <DropdownMenuSeparator />
 
-        {/* Nested Settings Menu */}
+        {/* Home */}
+        <DropdownMenuItem onClick={() => router.push("/")}>
+          <Home className="mr-2 h-4 w-4" />
+          Home
+        </DropdownMenuItem>
+
+        {/* Dashboard */}
+        <DropdownMenuItem onClick={() => router.push("/dashboard")}>
+          <LayoutDashboard className="mr-2 h-4 w-4" />
+          Dashboard
+        </DropdownMenuItem>
+
+        {/* Sales Submenu */}
         <DropdownMenuSub>
           <DropdownMenuSubTrigger>
-            <Settings className="mr-2 h-4 w-4" />
-            <span>Settings</span>
+            <ShoppingBag className="mr-2 h-4 w-4" />
+            Sales
           </DropdownMenuSubTrigger>
 
           <DropdownMenuSubContent className="w-48">
-            <DropdownMenuItem asChild>
-              <Link href="/company" className="flex items-center gap-2">
-                <Building2 className="h-4 w-4" />
-                Company
-              </Link>
+            <DropdownMenuItem
+              onClick={() => router.push("/landing/orderslanding")}
+            >
+              <ShoppingCart className="mr-2 h-4 w-4" />
+              Orders
             </DropdownMenuItem>
 
-            <DropdownMenuItem asChild>
-              <Link href="/profile" className="flex items-center gap-2">
-                <IdCard className="h-4 w-4" />
-                Profile
-              </Link>
+            <DropdownMenuItem
+              onClick={() => router.push("/landing/quoteslanding")}
+            >
+              <FileText className="mr-2 h-4 w-4" />
+              Quotes
+            </DropdownMenuItem>
+          </DropdownMenuSubContent>
+        </DropdownMenuSub>
+
+        {/* Settings Submenu */}
+        <DropdownMenuSub>
+          <DropdownMenuSubTrigger>
+            <Settings className="mr-2 h-4 w-4" />
+            Settings
+          </DropdownMenuSubTrigger>
+
+          <DropdownMenuSubContent className="w-48">
+            <DropdownMenuItem onClick={() => router.push("/profilesettings")}>
+              <IdCard className="mr-2 h-4 w-4" />
+              Profile
+            </DropdownMenuItem>
+
+            <DropdownMenuItem onClick={() => router.push("/companysettings")}>
+              <Building2 className="mr-2 h-4 w-4" />
+              Company
             </DropdownMenuItem>
           </DropdownMenuSubContent>
         </DropdownMenuSub>

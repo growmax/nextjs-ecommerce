@@ -3,6 +3,13 @@
 omg/
 .idea/
 
+
+# Package managers
+/package-lock.json
+/yarn.lock
+/pnpm-lock.yaml
+/bun.lockb
+
 # dependencies
 /node_modules
 /.pnp
@@ -19,9 +26,11 @@ omg/
 # next.js
 /.next/
 /out/
+.next
 
 # production
 /build
+/dist
 
 # misc
 .DS_Store
@@ -43,5 +52,28 @@ yarn-error.log*
 *.tsbuildinfo
 next-env.d.ts
 
+# cache directories
+.cache/
+.parcel-cache/
+.vscode/
+.swc/
+.turbo/
+
+# logs
+*.log
 *storybook.log
+
+# build outputs
 storybook-static
+
+# OS generated files
+Thumbs.db
+.DS_Store
+*.swp
+*.swo
+
+# IDE files
+*.sublime-project
+*.sublime-workspace
+.vscode/
+.idea/

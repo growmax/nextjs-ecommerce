@@ -9,7 +9,6 @@ import { CardDemo } from "../Components/card_template";
 import SearchInput from "../Components/search_box";
 import MenubarDemo from "../Components/menu";
 import { CarouselDemo } from "../Components/media_card";
-import { TenantDebug } from "@/components/TenantInfo";
 
 export default function Home() {
   const t = useTranslations();
@@ -17,11 +16,6 @@ export default function Home() {
   return (
     <div className="min-h-screen bg-background">
       <div className="container mx-auto px-4 py-8">
-        {/* Tenant Debug Info */}
-        <div className="mb-4">
-          <TenantDebug />
-        </div>
-
         <h1 className="text-4xl font-bold text-center mb-8">
           {t("messages.welcome")}
         </h1>
