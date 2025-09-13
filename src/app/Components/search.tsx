@@ -1,7 +1,7 @@
 "use client";
 
 import { Search } from "lucide-react";
-import { Input } from "@/components/ui/input";
+import { Input } from "@/components/ui/input"; // ✅
 import { useTranslations } from "next-intl";
 
 export default function SearchBox() {

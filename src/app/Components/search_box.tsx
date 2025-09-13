@@ -1,6 +1,6 @@
-"use client"
+"use client";
 
-import { SearchInput } from "@/components/ui/input"
+import { Input } from "@/components/ui/input";
 
 export default function Page() {
   return (
@@ -8,15 +8,16 @@ export default function Page() {
       <h1 className="text-xl font-bold">Search Demo</h1>
 
       {/* Simple Usage */}
-      {/* <SearchInput /> */}
+      {/* <Input /> */}
 
       {/* With custom callback */}
-      <SearchInput
+
+      <Input
         placeholder="Search products..."
-        onSearch={() => {
-          // Search triggered
+        onChange={_e => {
+          // Handle search functionality here
         }}
       />
     </div>
-  )
+  );
 }

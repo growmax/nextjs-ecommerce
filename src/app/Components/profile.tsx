@@ -1,20 +1,57 @@
 "use client";
 
-import { User } from "lucide-react";
+import { User, Settings, Building2, IdCard } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { useTranslations } from "next-intl";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+  DropdownMenuSub,
+  DropdownMenuSubContent,
+  DropdownMenuSubTrigger,
+} from "@/components/ui/dropdown-menu";
+import Link from "next/link";
 
 export default function ProfileButton() {
-  const t = useTranslations();
-
   return (
-    <Button
-      variant="ghost"
-      size="icon"
-      title={t("profile.myAccount")}
-      aria-label={t("profile.viewProfile")}
-    >
-      <User className="h-5 w-5" />
-    </Button>
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild>
+        <Button variant="ghost" size="icon">
+          <User className="h-5 w-5" />
+        </Button>
+      </DropdownMenuTrigger>
+
+      <DropdownMenuContent align="end" className="w-56">
+        <DropdownMenuLabel>My Account</DropdownMenuLabel>
+        <DropdownMenuSeparator />
+
+        {/* Nested Settings Menu */}
+        <DropdownMenuSub>
+          <DropdownMenuSubTrigger>
+            <Settings className="mr-2 h-4 w-4" />
+            <span>Settings</span>
+          </DropdownMenuSubTrigger>
+
+          <DropdownMenuSubContent className="w-48">
+            <DropdownMenuItem asChild>
+              <Link href="/company" className="flex items-center gap-2">
+                <Building2 className="h-4 w-4" />
+                Company
+              </Link>
+            </DropdownMenuItem>
+
+            <DropdownMenuItem asChild>
+              <Link href="/profile" className="flex items-center gap-2">
+                <IdCard className="h-4 w-4" />
+                Profile
+              </Link>
+            </DropdownMenuItem>
+          </DropdownMenuSubContent>
+        </DropdownMenuSub>
+      </DropdownMenuContent>
+    </DropdownMenu>
   );
 }

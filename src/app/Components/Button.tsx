@@ -1,15 +1,15 @@
-"use client"
-import { Button } from "@/components/ui/button"
-import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card"
-import { IconZodiacSagittarius } from "@tabler/icons-react"
-import { useRef } from "react"
+"use client";
+import { Button } from "@/components/ui/button";
+import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
+import { IconStar } from "@tabler/icons-react";
+import { useRef } from "react";
 
 export function ButtonDemo() {
-  const buttonRef = useRef<HTMLButtonElement>(null)
+  const buttonRef = useRef<HTMLButtonElement>(null);
 
   const handleClick = () => {
     // Button clicked
-  }
+  };
 
   return (
     <Card className="w-96 h-auto">
@@ -23,13 +23,13 @@ export function ButtonDemo() {
           onClick={handleClick}
           onMouseEnter={() => {
             if (buttonRef.current) {
-              buttonRef.current.click()
+              buttonRef.current.click();
             }
           }}
         >
           Hover Auto-Click
         </Button>
-        
+
         <Button variant="secondary">Secondary Button</Button>
 
         <Button variant="outline" className="cursor-pointer">
@@ -37,19 +37,23 @@ export function ButtonDemo() {
         </Button>
 
         <Button variant="ghost" className="flex items-center gap-2">
-          <IconZodiacSagittarius stroke={2} className="text-accent-foreground" />
+          <IconStar stroke={2} className="text-accent-foreground" />
           Button with Icon
         </Button>
-        
+
         <Button variant="destructive">Destructive Button</Button>
-        
+
         <Button variant="link">Link Button</Button>
-        
+
         <div className="grid grid-cols-2 gap-2">
-          <Button size="sm" variant="outline">Small</Button>
-          <Button size="lg" variant="secondary">Large</Button>
+          <Button size="sm" variant="outline">
+            Small
+          </Button>
+          <Button size="lg" variant="secondary">
+            Large
+          </Button>
         </div>
       </CardContent>
     </Card>
-  )
+  );
 }
