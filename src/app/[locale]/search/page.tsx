@@ -31,91 +31,79 @@ export default function SearchPage() {
 
   if (!mounted) {
     return (
-      <Card className="container mx-auto px-4 py-8">
-        <CardContent>
-          <CardTitle className="text-2xl font-bold">Search</CardTitle>
-        </CardContent>
-      </Card>
+      <div className="container mx-auto px-4 py-8">
+        <Card className="max-w-2xl mx-auto">
+          <CardContent className="p-6">
+            <CardTitle>Search</CardTitle>
+          </CardContent>
+        </Card>
+      </div>
     );
   }
 
   return (
-    <Card className="container mx-auto px-4 py-8">
-      <CardContent>
-        <Card className="mb-6">
-          <CardContent className="pt-6">
-            <Button variant="ghost" asChild>
+    <div className="container mx-auto px-4 py-8">
+      <Card className="max-w-2xl mx-auto">
+        <CardHeader>
+          <div className="flex items-center justify-between">
+            <CardTitle>Search</CardTitle>
+            <Button variant="ghost" size="sm" asChild>
               <Link href="/" className="flex items-center gap-2">
                 <ArrowLeft className="h-4 w-4" />
-                Back to Home
+                Back
               </Link>
             </Button>
-          </CardContent>
-        </Card>
+          </div>
+        </CardHeader>
 
-        <Card className="mb-8">
-          <CardHeader>
-            <CardTitle>Search</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <form onSubmit={handleSearch} className="flex gap-2">
-              <Card className="flex-1 relative border-0 p-0">
-                <CardContent className="p-0 relative">
-                  <Input
-                    type="text"
-                    placeholder="Search products..."
-                    value={searchQuery}
-                    onChange={e => setSearchQuery(e.target.value)}
-                    className="pr-10"
-                  />
-                  <Button
-                    type="submit"
-                    size="sm"
-                    variant="ghost"
-                    className="absolute right-1 top-1/2 -translate-y-1/2 h-7 w-7 p-0"
-                  >
-                    <Search className="h-4 w-4" />
-                  </Button>
-                </CardContent>
-              </Card>
-            </form>
-          </CardContent>
-        </Card>
+        <CardContent className="space-y-6">
+          <form onSubmit={handleSearch} className="relative">
+            <Input
+              type="text"
+              placeholder="Search products..."
+              value={searchQuery}
+              onChange={e => setSearchQuery(e.target.value)}
+              className="pr-12"
+            />
+            <Button
+              type="submit"
+              size="sm"
+              variant="ghost"
+              className="absolute right-2 top-1/2 -translate-y-1/2"
+            >
+              <Search className="h-4 w-4" />
+            </Button>
+          </form>
 
-        {query ? (
-          <Card>
-            <CardHeader>
-              <CardTitle>Search Results</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <p className="text-muted-foreground mb-4">
+          {query ? (
+            <div className="space-y-4">
+              <p className="text-muted-foreground">
                 Showing results for:{" "}
                 <span className="font-semibold">&quot;{query}&quot;</span>
               </p>
-              <Card className="text-center py-8 border-0">
-                <CardContent>
-                  <Search className="h-12 w-12 text-muted-foreground mx-auto mb-3" />
-                  <CardTitle className="text-muted-foreground font-normal text-base">
-                    No results found
-                  </CardTitle>
-                  <CardTitle className="text-sm text-muted-foreground font-normal">
-                    Try searching for something else
-                  </CardTitle>
-                </CardContent>
-              </Card>
-            </CardContent>
-          </Card>
-        ) : (
-          <Card>
-            <CardContent className="text-center py-8">
-              <Search className="h-12 w-12 text-muted-foreground mx-auto mb-3" />
+              <div className="text-center py-12">
+                <Search className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+                <CardTitle className="text-muted-foreground mb-2">
+                  No results found
+                </CardTitle>
+                <p className="text-sm text-muted-foreground">
+                  Try searching for something else
+                </p>
+              </div>
+            </div>
+          ) : (
+            <div className="text-center py-12">
+              <Search className="h-16 w-16 text-muted-foreground mx-auto mb-4" />
+              <CardTitle className="text-muted-foreground mb-2">
+                Start searching
+              </CardTitle>
               <p className="text-muted-foreground">
-                Enter a search term to get started
+                Enter a search term to find products
               </p>
-            </CardContent>
-          </Card>
-        )}
-      </CardContent>
-    </Card>
+            </div>
+          )}
+        </CardContent>
+      </Card>
+    </div>
   );
 }
