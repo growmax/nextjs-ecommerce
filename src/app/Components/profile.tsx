@@ -14,7 +14,7 @@ import {
   LogOut,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardTitle } from "@/components/ui/card";
+import { CardContent, CardTitle } from "@/components/ui/card";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -435,26 +435,24 @@ export default function ProfileButton() {
         {/* User Profile Section */}
         {userProfile && (
           <DropdownMenuLabel className="font-normal">
-            <Card className="border-0 p-0">
-              <CardContent className="p-0 space-y-1">
-                <CardTitle className="text-sm font-semibold">
-                  {userProfile.displayName}{" "}
-                  {userProfile.role &&
-                    `(${userProfile.role} ${userProfile.accountRole || ""})`}
-                </CardTitle>
-                <CardContent className="text-sm text-muted-foreground p-0">
-                  {userProfile.email}
-                </CardContent>
-                <CardContent className="text-sm p-0">
-                  {userProfile.companyName}
-                </CardContent>
-                {userProfile.lastLogin && (
-                  <CardContent className="text-xs text-muted-foreground p-0">
-                    Last Login : {userProfile.lastLogin}
-                  </CardContent>
-                )}
+            <CardContent className="p-0 space-y-1">
+              <CardTitle className="text-sm font-semibold">
+                {userProfile.displayName}{" "}
+                {userProfile.role &&
+                  `(${userProfile.role} ${userProfile.accountRole || ""})`}
+              </CardTitle>
+              <CardContent className="text-sm text-muted-foreground p-0">
+                {userProfile.email}
               </CardContent>
-            </Card>
+              <CardContent className="text-sm p-0">
+                {userProfile.companyName}
+              </CardContent>
+              {userProfile.lastLogin && (
+                <CardContent className="text-xs text-muted-foreground p-0">
+                  Last Login : {userProfile.lastLogin}
+                </CardContent>
+              )}
+            </CardContent>
           </DropdownMenuLabel>
         )}
 

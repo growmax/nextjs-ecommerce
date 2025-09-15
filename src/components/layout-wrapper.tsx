@@ -1,6 +1,7 @@
 "use client";
 
 import { usePathname } from "@/i18n/navigation";
+import { cn } from "@/lib/utils";
 import NavBar from "../app/Components/nav-bar";
 import Footer from "../app/Components/footer";
 
@@ -17,7 +18,9 @@ export default function LayoutWrapper({ children }: LayoutWrapperProps) {
   return (
     <>
       {!hideNavAndFooter && <NavBar />}
-      {children}
+      <main className={cn("min-h-screen", !hideNavAndFooter && "pt-4 pb-8")}>
+        {children}
+      </main>
       {!hideNavAndFooter && <Footer />}
     </>
   );
