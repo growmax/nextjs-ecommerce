@@ -2,22 +2,26 @@
 
 import { Input } from "@/components/ui/input";
 
-export default function Page() {
+export default function SearchInput() {
   return (
-    <div className="p-6 space-y-4 w-2/6">
-      <h1 className="text-xl font-bold">Search Demo</h1>
+    <div className="w-full px-4 py-6 sm:px-6 lg:px-8">
+      {/* Mobile-First Container */}
+      <div className="mx-auto max-w-md sm:max-w-lg lg:max-w-2xl">
+        <h1 className="mb-4 text-lg font-bold sm:text-xl lg:text-2xl">
+          Search Demo
+        </h1>
 
-      {/* Simple Usage */}
-      {/* <Input /> */}
-
-      {/* With custom callback */}
-
-      <Input
-        placeholder="Search products..."
-        onChange={_e => {
-          // Handle search functionality here
-        }}
-      />
+        {/* Mobile-First Search Input */}
+        <div className="w-full">
+          <Input
+            placeholder="Search products..."
+            className="w-full min-h-[44px] text-base sm:text-sm"
+            onChange={_e => {
+              // Handle search functionality here
+            }}
+          />
+        </div>
+      </div>
     </div>
   );
 }

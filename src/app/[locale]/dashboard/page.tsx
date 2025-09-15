@@ -58,21 +58,23 @@ export default function DashboardPage() {
 
   return (
     <div className="min-h-screen bg-background">
+      {/* Mobile-First Header */}
       <header className="border-b">
-        <div className="container mx-auto px-4 py-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-4">
-              <h1 className="text-2xl font-bold">Dashboard</h1>
+        <div className="container mx-auto px-4 py-3 sm:py-4">
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+            {/* Mobile: Stack vertically, Desktop: Side by side */}
+            <div className="flex items-center">
+              <h1 className="text-xl font-bold sm:text-2xl">Dashboard</h1>
             </div>
-            <div className="flex items-center space-x-4">
-              <span className="text-sm text-muted-foreground">
+            <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:gap-4">
+              <span className="text-xs text-muted-foreground sm:text-sm">
                 Welcome back, {user.name || user.email}!
               </span>
               <Button
                 variant="outline"
                 size="sm"
                 onClick={logout}
-                className="flex items-center gap-2"
+                className="flex w-full items-center justify-center gap-2 sm:w-auto"
               >
                 <LogOut className="h-4 w-4" />
                 Logout
@@ -82,49 +84,61 @@ export default function DashboardPage() {
         </div>
       </header>
 
-      <main className="container mx-auto px-4 py-8">
-        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-          {/* User Profile Card */}
-          <Card className="md:col-span-2 lg:col-span-1">
+      {/* Mobile-First Main Content */}
+      <main className="container mx-auto px-4 py-6 sm:py-8">
+        {/* Mobile: Single column, Tablet: 2 cols, Desktop: 3 cols */}
+        <div className="grid gap-4 sm:gap-6 sm:grid-cols-2 lg:grid-cols-3">
+          {/* User Profile Card - Mobile-First */}
+          <Card className="sm:col-span-2 lg:col-span-1">
             <CardHeader>
               <CardTitle>Profile Information</CardTitle>
               <CardDescription>Your account details</CardDescription>
             </CardHeader>
             <CardContent>
-              <div className="flex flex-col items-center space-y-4">
-                <Avatar className="h-24 w-24">
+              <div className="flex flex-col items-center space-y-3 sm:space-y-4">
+                {/* Mobile-First Avatar Sizing */}
+                <Avatar className="h-16 w-16 sm:h-20 sm:w-20 lg:h-24 lg:w-24">
                   <AvatarImage src={user.picture} alt={user.name} />
-                  <AvatarFallback className="text-lg">
+                  <AvatarFallback className="text-sm sm:text-base lg:text-lg">
                     {getInitials(user.name)}
                   </AvatarFallback>
                 </Avatar>
 
-                <div className="w-full space-y-3">
-                  <div className="flex items-center space-x-2 text-sm">
-                    <User className="h-4 w-4 text-muted-foreground" />
-                    <span className="font-medium">Name:</span>
-                    <span>{user.name || "Not set"}</span>
+                {/* Mobile-First Profile Details */}
+                <div className="w-full space-y-2 sm:space-y-3">
+                  <div className="flex flex-col gap-1 text-sm sm:flex-row sm:items-center sm:gap-2">
+                    <div className="flex items-center gap-2">
+                      <User className="h-4 w-4 text-muted-foreground" />
+                      <span className="font-medium">Name:</span>
+                    </div>
+                    <span className="break-all">{user.name || "Not set"}</span>
                   </div>
 
                   {user.email && (
-                    <div className="flex items-center space-x-2 text-sm">
-                      <Mail className="h-4 w-4 text-muted-foreground" />
-                      <span className="font-medium">Email:</span>
-                      <span>{user.email}</span>
+                    <div className="flex flex-col gap-1 text-sm sm:flex-row sm:items-center sm:gap-2">
+                      <div className="flex items-center gap-2">
+                        <Mail className="h-4 w-4 text-muted-foreground" />
+                        <span className="font-medium">Email:</span>
+                      </div>
+                      <span className="break-all">{user.email}</span>
                     </div>
                   )}
 
                   {user.phone && (
-                    <div className="flex items-center space-x-2 text-sm">
-                      <Phone className="h-4 w-4 text-muted-foreground" />
-                      <span className="font-medium">Phone:</span>
+                    <div className="flex flex-col gap-1 text-sm sm:flex-row sm:items-center sm:gap-2">
+                      <div className="flex items-center gap-2">
+                        <Phone className="h-4 w-4 text-muted-foreground" />
+                        <span className="font-medium">Phone:</span>
+                      </div>
                       <span>{user.phone}</span>
                     </div>
                   )}
 
-                  <div className="flex items-center space-x-2 text-sm">
-                    <Building2 className="h-4 w-4 text-muted-foreground" />
-                    <span className="font-medium">Company:</span>
+                  <div className="flex flex-col gap-1 text-sm sm:flex-row sm:items-center sm:gap-2">
+                    <div className="flex items-center gap-2">
+                      <Building2 className="h-4 w-4 text-muted-foreground" />
+                      <span className="font-medium">Company:</span>
+                    </div>
                     <span>{user.companyName || "Not set"}</span>
                   </div>
 
@@ -145,18 +159,23 @@ export default function DashboardPage() {
               <CardDescription>Your activity overview</CardDescription>
             </CardHeader>
             <CardContent>
-              <div className="space-y-4">
-                <div>
-                  <p className="text-2xl font-bold">0</p>
-                  <p className="text-sm text-muted-foreground">Total Orders</p>
+              {/* Mobile-First Stats Layout */}
+              <div className="grid grid-cols-2 gap-3 sm:grid-cols-1 sm:space-y-4">
+                <div className="text-center sm:text-left">
+                  <p className="text-xl font-bold sm:text-2xl">0</p>
+                  <p className="text-xs text-muted-foreground sm:text-sm">
+                    Total Orders
+                  </p>
                 </div>
-                <div>
-                  <p className="text-2xl font-bold">0</p>
-                  <p className="text-sm text-muted-foreground">Pending Tasks</p>
+                <div className="text-center sm:text-left">
+                  <p className="text-xl font-bold sm:text-2xl">0</p>
+                  <p className="text-xs text-muted-foreground sm:text-sm">
+                    Pending Tasks
+                  </p>
                 </div>
-                <div>
-                  <p className="text-2xl font-bold">Active</p>
-                  <p className="text-sm text-muted-foreground">
+                <div className="col-span-2 text-center sm:col-span-1 sm:text-left">
+                  <p className="text-xl font-bold sm:text-2xl">Active</p>
+                  <p className="text-xs text-muted-foreground sm:text-sm">
                     Account Status
                   </p>
                 </div>
@@ -171,8 +190,9 @@ export default function DashboardPage() {
               <CardDescription>Your latest actions</CardDescription>
             </CardHeader>
             <CardContent>
-              <div className="space-y-3">
-                <div className="text-sm">
+              {/* Mobile-First Activity List */}
+              <div className="space-y-2 sm:space-y-3">
+                <div className="rounded-lg bg-muted/30 p-3 text-sm">
                   <p className="font-medium">Logged in successfully</p>
                   <p className="text-xs text-muted-foreground">Just now</p>
                 </div>
@@ -184,16 +204,18 @@ export default function DashboardPage() {
           </Card>
         </div>
 
-        {/* Main Content Area */}
-        <Card className="mt-6">
+        {/* Mobile-First Main Welcome Card */}
+        <Card className="mt-4 sm:mt-6">
           <CardHeader>
-            <CardTitle>Welcome to Your Dashboard</CardTitle>
-            <CardDescription>
+            <CardTitle className="text-lg sm:text-xl">
+              Welcome to Your Dashboard
+            </CardTitle>
+            <CardDescription className="text-sm">
               Manage your account and access all features from here
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <p className="text-muted-foreground">
+            <p className="text-sm text-muted-foreground sm:text-base">
               This is your personal dashboard where you can view your profile
               information, track your activities, and manage your account
               settings. Use the navigation menu to explore different sections of

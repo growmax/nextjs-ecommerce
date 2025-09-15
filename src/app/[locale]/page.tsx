@@ -9,70 +9,140 @@ import { CardDemo } from "../Components/card_template";
 import SearchInput from "../Components/search_box";
 import MenubarDemo from "../Components/menu";
 import { CarouselDemo } from "../Components/media_card";
+import { ThemeTestComponent } from "../Components/theme-test";
+import { ResponsiveTestComponent } from "../Components/responsive-test";
 
 export default function Home() {
   const t = useTranslations();
 
   return (
     <div className="min-h-screen bg-background">
-      <div className="container mx-auto px-4 py-8">
-        <h1 className="text-4xl font-bold text-center mb-8">
+      {/* Mobile-First Hero Section */}
+      <div className="container mx-auto px-4 py-6 sm:py-8 lg:py-12">
+        <h1 className="mb-6 text-center text-2xl font-bold sm:mb-8 sm:text-3xl lg:text-4xl">
           {t("messages.welcome")}
         </h1>
 
-        <div className="text-center mb-8">
-          <h2 className="text-2xl font-semibold mb-4">
+        <div className="mb-6 text-center sm:mb-8">
+          <h2 className="mb-3 text-lg font-semibold sm:mb-4 sm:text-xl lg:text-2xl">
             {t("demo.components")}
           </h2>
         </div>
       </div>
 
-      <MenubarDemo />
-      <br />
+      {/* Mobile-First Demo Sections */}
+      <div className="space-y-6 sm:space-y-8">
+        {/* Menu Demo */}
+        <section className="container mx-auto px-4">
+          <MenubarDemo />
+        </section>
 
-      <div className="container mx-auto px-4">
-        <h3 className="text-lg font-medium mb-2">{t("demo.searchDemo")}</h3>
-      </div>
-      <SearchInput />
-      <br />
+        {/* Search Demo */}
+        <section>
+          <div className="container mx-auto px-4">
+            <h3 className="mb-3 text-base font-medium sm:mb-4 sm:text-lg">
+              {t("demo.searchDemo")}
+            </h3>
+          </div>
+          <SearchInput />
+        </section>
 
-      <div className="container mx-auto px-4">
-        <h3 className="text-lg font-medium mb-2">{t("demo.carouselDemo")}</h3>
-      </div>
-      <CarouselDemo />
-      <br />
+        {/* Carousel Demo */}
+        <section>
+          <div className="container mx-auto px-4">
+            <h3 className="mb-3 text-base font-medium sm:mb-4 sm:text-lg">
+              {t("demo.carouselDemo")}
+            </h3>
+          </div>
+          <div className="overflow-hidden">
+            <CarouselDemo />
+          </div>
+        </section>
 
-      <div className="container mx-auto px-4">
-        <h3 className="text-lg font-medium mb-2">{t("demo.cardDemo")}</h3>
-      </div>
-      <CardDemo />
-      <br />
+        {/* Card Demo */}
+        <section>
+          <div className="container mx-auto px-4">
+            <h3 className="mb-3 text-base font-medium sm:mb-4 sm:text-lg">
+              {t("demo.cardDemo")}
+            </h3>
+          </div>
+          <div className="container mx-auto px-4">
+            <CardDemo />
+          </div>
+        </section>
 
-      <div className="container mx-auto px-4">
-        <h3 className="text-lg font-medium mb-2">{t("demo.buttonDemo")}</h3>
-      </div>
-      <ButtonDemo />
-      <br />
+        {/* Button Demo */}
+        <section>
+          <div className="container mx-auto px-4">
+            <h3 className="mb-3 text-base font-medium sm:mb-4 sm:text-lg">
+              {t("demo.buttonDemo")}
+            </h3>
+          </div>
+          <div className="container mx-auto px-4">
+            <ButtonDemo />
+          </div>
+        </section>
 
-      <div className="container mx-auto px-4">
-        <h3 className="text-lg font-medium mb-2">{t("demo.accordionDemo")}</h3>
-      </div>
-      <AccordionDemo />
-      <br />
+        {/* Accordion Demo */}
+        <section>
+          <div className="container mx-auto px-4">
+            <h3 className="mb-3 text-base font-medium sm:mb-4 sm:text-lg">
+              {t("demo.accordionDemo")}
+            </h3>
+          </div>
+          <div className="container mx-auto px-4">
+            <AccordionDemo />
+          </div>
+        </section>
 
-      <div className="container mx-auto px-4">
-        <h3 className="text-lg font-medium mb-2">{t("demo.tabsDemo")}</h3>
-      </div>
-      <TabsDemo />
-      <br />
+        {/* Tabs Demo */}
+        <section>
+          <div className="container mx-auto px-4">
+            <h3 className="mb-3 text-base font-medium sm:mb-4 sm:text-lg">
+              {t("demo.tabsDemo")}
+            </h3>
+          </div>
+          <div className="container mx-auto px-4">
+            <TabsDemo />
+          </div>
+        </section>
 
-      <div className="container mx-auto px-4">
-        <h3 className="text-lg font-medium mb-2">
-          {t("demo.notificationDemo")}
-        </h3>
+        {/* Notification Demo */}
+        <section>
+          <div className="container mx-auto px-4">
+            <h3 className="mb-3 text-base font-medium sm:mb-4 sm:text-lg">
+              {t("demo.notificationDemo")}
+            </h3>
+          </div>
+          <div className="container mx-auto px-4">
+            <Sonner />
+          </div>
+        </section>
+
+        {/* TweakCN Theme Test */}
+        <section>
+          <div className="container mx-auto px-4">
+            <h3 className="mb-3 text-base font-medium sm:mb-4 sm:text-lg">
+              Theme Customization Test
+            </h3>
+          </div>
+          <div className="container mx-auto px-4">
+            <ThemeTestComponent />
+          </div>
+        </section>
+
+        {/* Mobile-First Responsive Test */}
+        <section className="pb-6 sm:pb-8">
+          <div className="container mx-auto px-4">
+            <h3 className="mb-3 text-base font-medium sm:mb-4 sm:text-lg">
+              Mobile-First Responsive Test
+            </h3>
+          </div>
+          <div className="container mx-auto px-4">
+            <ResponsiveTestComponent />
+          </div>
+        </section>
       </div>
-      <Sonner />
-      <br />
     </div>
   );
 }
