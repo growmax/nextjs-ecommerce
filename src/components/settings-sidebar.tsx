@@ -35,7 +35,6 @@ export default function SettingsSidebar({
           </CardTitle>
           <Separator />
         </CardHeader>
-
         <CardContent className="space-y-2">
           <nav className="flex flex-col gap-1">
             {items.map(item => (
