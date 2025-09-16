@@ -79,7 +79,7 @@ export default function SimpleDataTable() {
             onDrop={e => handleDrop(e, col.id)}
           >
             <div className="grid grid-cols-3 gap-0.5">
-              {[...Array(6)].map((_, i) => (
+              {Array.from({ length: 6 }, (_, i) => (
                 <div
                   key={`dot-${col.id}-${i}`}
                   className="w-1 h-1 bg-gray-400 rounded-full"
