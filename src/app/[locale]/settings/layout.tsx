@@ -6,7 +6,7 @@ const SettingsLayout = ({ children }: { children: React.ReactNode }) => {
     <div className="flex h-screen bg-background">
       <SettingsSidebar />
 
-      <main className="flex-1 overflow-auto">{children}</main>
+      <div className="flex-1 flex flex-col h-screen">{children}</div>
     </div>
   );
 };
