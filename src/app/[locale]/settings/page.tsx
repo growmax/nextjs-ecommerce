@@ -3,8 +3,7 @@
 import { useState } from "react";
 import { Settings } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import Sidebar from "@/app/Components/sidebar";
-// import Sidebar from "./sidebar"; // adjust path
+import Sidebar from "@/components/sidebar";
 
 export default function SettingsButton() {
   const [open, setOpen] = useState(false);

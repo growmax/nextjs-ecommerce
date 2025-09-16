@@ -1,7 +1,7 @@
-"use client"
+"use client";
 
-import React from "react"
-import Link from "next/link"
+import React from "react";
+import Link from "next/link";
 import {
   Menubar,
   MenubarContent,
@@ -10,8 +10,8 @@ import {
   MenubarSeparator,
   MenubarShortcut,
   MenubarTrigger,
-} from "@/components/ui/menubar"
-import { Button } from "@/components/ui/button"
+} from "@/components/ui/menubar";
+import { Button } from "@/components/ui/button";
 
 const MenubarDemo = () => {
   return (
@@ -41,7 +41,7 @@ const MenubarDemo = () => {
           </MenubarContent>
         </MenubarMenu>
       </Menubar>
-      
+
       <div className="flex gap-2">
         <Link href="/login">
           <Button variant="outline" size="sm">
@@ -49,13 +49,11 @@ const MenubarDemo = () => {
           </Button>
         </Link>
         <Link href="/register">
-          <Button size="sm">
-            Register
-          </Button>
+          <Button size="sm">Register</Button>
         </Link>
       </div>
     </div>
-  )
-}
+  );
+};
 
-export default MenubarDemo
+export default MenubarDemo;

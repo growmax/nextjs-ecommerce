@@ -1,5 +1,5 @@
 import React from "react";
-import SettingsSidebar from "@/app/Components/settings-sidebar";
+import SettingsSidebar from "@/components/settings-sidebar";
 
 const SettingsLayout = ({ children }: { children: React.ReactNode }) => {
   return (

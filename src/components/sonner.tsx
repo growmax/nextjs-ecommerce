@@ -1,8 +1,8 @@
 // "use client" required because toast runs in the browser
-"use client"
+"use client";
 
-import { Toaster, toast } from "sonner"
-import { Button } from "@/components/ui/button"
+import { Toaster, toast } from "sonner";
+import { Button } from "@/components/ui/button";
 
 export default function SonnerRichBuiltin() {
   return (
@@ -17,7 +17,9 @@ export default function SonnerRichBuiltin() {
             // optional: you can pass action, duration, onDismiss etc.
             action: {
               label: "Undo",
-              onClick: () => {/* Undo clicked */},
+              onClick: () => {
+                /* Undo clicked */
+              },
             },
           })
         }
@@ -25,5 +27,5 @@ export default function SonnerRichBuiltin() {
         Show rich success toast
       </Button>
     </div>
-  )
+  );
 }

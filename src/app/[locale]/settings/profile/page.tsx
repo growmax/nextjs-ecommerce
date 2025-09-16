@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import SectionCard from "@/app/Components/SectionCard";
+import SectionCard from "@/components/SectionCard";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { User } from "lucide-react";

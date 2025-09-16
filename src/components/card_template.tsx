@@ -1,4 +1,4 @@
-import { Button } from "@/components/ui/button"
+import { Button } from "@/components/ui/button";
 import {
   Card,
   CardContent,
@@ -6,9 +6,9 @@ import {
   CardFooter,
   CardHeader,
   CardTitle,
-} from "@/components/ui/card"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
+} from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 
 export function CardDemo() {
   return (
@@ -19,7 +19,9 @@ export function CardDemo() {
           Enter your email below to login to your account
         </CardDescription>
         <div className="pt-2">
-          <Button variant="link" className="p-0 h-auto">Sign Up</Button>
+          <Button variant="link" className="p-0 h-auto">
+            Sign Up
+          </Button>
         </div>
       </CardHeader>
       <CardContent>
@@ -37,10 +39,7 @@ export function CardDemo() {
             <div className="grid gap-2">
               <div className="flex items-center">
                 <Label htmlFor="password">Password</Label>
-                <Button
-                  variant="link"
-                  className="ml-auto p-0 h-auto text-sm"
-                >
+                <Button variant="link" className="ml-auto p-0 h-auto text-sm">
                   Forgot your password?
                 </Button>
               </div>
@@ -58,5 +57,5 @@ export function CardDemo() {
         </Button>
       </CardFooter>
     </Card>
-  )
+  );
 }

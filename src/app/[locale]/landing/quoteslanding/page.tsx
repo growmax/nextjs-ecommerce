@@ -1,5 +1,5 @@
-// import DataTable from "@/app/Components/DataTable";
-import SimpleDataTable from "@/app/Components/DataTable";
+// import DataTable from "@/components/DataTable";
+import SimpleDataTable from "@/components/DataTable";
 
 export default function QuotesLandingPage() {
   return (

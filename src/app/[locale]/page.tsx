@@ -1,16 +1,16 @@
 "use client";
 
 import { useTranslations } from "next-intl";
-import { ButtonDemo } from "@/app/Components/Button";
-import TabsDemo from "../Components/TabButton";
-import { AccordionDemo } from "@/app/Components/accordion";
-import Sonner from "@/app/Components/sonner";
-import { CardDemo } from "../Components/card_template";
-import SearchInput from "../Components/search_box";
-import MenubarDemo from "../Components/menu";
-import { CarouselDemo } from "../Components/media_card";
-import { ThemeTestComponent } from "../Components/theme-test";
-import { ResponsiveTestComponent } from "../Components/responsive-test";
+import { ButtonDemo } from "@/components/Button";
+import TabsDemo from "@/components/TabButton";
+import { AccordionDemo } from "@/components/accordion";
+import Sonner from "@/components/sonner";
+import { CardDemo } from "@/components/card_template";
+import SearchInput from "@/components/search_box";
+import MenubarDemo from "@/components/menu";
+import { CarouselDemo } from "@/components/media_card";
+import { ThemeTestComponent } from "@/components/theme-test";
+import { ResponsiveTestComponent } from "@/components/responsive-test";
 
 export default function Home() {
   const t = useTranslations();

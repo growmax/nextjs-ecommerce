@@ -2,8 +2,8 @@
 
 import { usePathname } from "@/i18n/navigation";
 import { cn } from "@/lib/utils";
-import NavBar from "../app/Components/nav-bar";
-import Footer from "../app/Components/footer";
+import NavBar from "./nav-bar";
+import Footer from "./footer";
 
 interface LayoutWrapperProps {
   children: React.ReactNode;
