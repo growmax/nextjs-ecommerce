@@ -2,7 +2,6 @@
 
 import { useEffect, useState } from "react";
 import { useAuth } from "@/contexts/AuthContext";
-import { Button } from "@/components/ui/button";
 import {
   Card,
   CardContent,
@@ -11,10 +10,10 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { LogOut, User, Building2, Mail, Phone } from "lucide-react";
+import { User, Building2, Mail, Phone } from "lucide-react";
 
 export default function DashboardPage() {
-  const { user, logout } = useAuth();
+  const { user } = useAuth();
   const [mounted, setMounted] = useState(false);
 
   // Prevent hydration mismatch
@@ -58,32 +57,6 @@ export default function DashboardPage() {
 
   return (
     <div className="min-h-screen bg-background">
-      {/* Mobile-First Header */}
-      <header className="border-b">
-        <div className="container mx-auto px-4 py-3 sm:py-4">
-          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-            {/* Mobile: Stack vertically, Desktop: Side by side */}
-            <div className="flex items-center">
-              <h1 className="text-xl font-bold sm:text-2xl">Dashboard</h1>
-            </div>
-            <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:gap-4">
-              <span className="text-xs text-muted-foreground sm:text-sm">
-                Welcome back, {user.name || user.email}!
-              </span>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={logout}
-                className="flex w-full items-center justify-center gap-2 sm:w-auto"
-              >
-                <LogOut className="h-4 w-4" />
-                Logout
-              </Button>
-            </div>
-          </div>
-        </div>
-      </header>
-
       {/* Mobile-First Main Content */}
       <main className="container mx-auto px-4 py-6 sm:py-8">
         {/* Mobile: Single column, Tablet: 2 cols, Desktop: 3 cols */}

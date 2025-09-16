@@ -7,7 +7,7 @@ import Logo from "./logo";
 import SearchBox from "./search";
 import NotificationButton from "./notifications";
 import AddCardButton from "./add-card";
-import ProfileButton from "./profile";
+import ProfileButton from "./profile/ProfileButton";
 import Sidebar from "./sidebar";
 
 export default function NavBar() {

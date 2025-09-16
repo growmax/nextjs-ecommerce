@@ -1,8 +1,11 @@
 "use client";
 
-import { Building2, IdCard, X } from "lucide-react";
+import { useState } from "react";
+import { X, ChevronDown, ChevronRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import Link from "next/link";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import SidebarButton from "./sidebar/SidebarButton";
+import sidebarMenuItems from "./sidebar/menuItems";
 
 export default function Sidebar({
   open,
@@ -11,40 +14,90 @@ export default function Sidebar({
   open: boolean;
   onClose: () => void;
 }) {
+  const [expandedItems, setExpandedItems] = useState<string[]>([]);
+
+  const toggleExpanded = (itemId: string) => {
+    setExpandedItems(prev =>
+      prev.includes(itemId)
+        ? prev.filter(id => id !== itemId)
+        : [...prev, itemId]
+    );
+  };
+
   return (
-    <div
-      className={`fixed top-0 left-0 h-full w-64 bg-white shadow-lg z-50 transform transition-transform duration-300 ${
-        open ? "translate-x-0" : "-translate-x-full"
-      }`}
-    >
-      {/* Header */}
-      <div className="flex items-center justify-between p-4 border-b">
-        <h2 className="text-lg font-bold">Settings</h2>
-        <Button variant="ghost" size="icon" onClick={onClose}>
-          <X className="h-5 w-5" />
-        </Button>
+    <>
+      {/* Overlay */}
+      {open && (
+        <div className="fixed inset-0 bg-black/50 z-40" onClick={onClose} />
+      )}
+
+      {/* Sidebar */}
+      <div
+        className={`fixed top-0 left-0 h-full w-64 bg-background shadow-lg z-50 transform transition-transform duration-300 ${
+          open ? "translate-x-0" : "-translate-x-full"
+        }`}
+      >
+        <Card className="h-full rounded-none border-0 flex flex-col">
+          <CardHeader className="flex flex-row items-center justify-between border-b shrink-0">
+            <CardTitle>Menu</CardTitle>
+            <Button variant="ghost" size="icon" onClick={onClose}>
+              <X className="h-5 w-5" />
+            </Button>
+          </CardHeader>
+
+          <CardContent className="flex-1 overflow-y-auto p-2">
+            <nav className="flex flex-col gap-1">
+              {sidebarMenuItems.map(item => (
+                <div key={item.id}>
+                  {item.submenu ? (
+                    <>
+                      {/* Parent item with submenu */}
+                      <Button
+                        variant="ghost"
+                        className="w-full justify-start"
+                        onClick={() => toggleExpanded(item.id)}
+                      >
+                        <span className="flex items-center gap-2 flex-1">
+                          {item.icon}
+                          <span>{item.label}</span>
+                        </span>
+                        {expandedItems.includes(item.id) ? (
+                          <ChevronDown className="h-4 w-4" />
+                        ) : (
+                          <ChevronRight className="h-4 w-4" />
+                        )}
+                      </Button>
+
+                      {/* Submenu items */}
+                      {expandedItems.includes(item.id) && (
+                        <div className="ml-4 mt-1 space-y-1">
+                          {item.submenu.map(subitem => (
+                            <SidebarButton
+                              key={subitem.id}
+                              href={subitem.href}
+                              icon={subitem.icon}
+                              label={subitem.label}
+                              onClick={onClose}
+                            />
+                          ))}
+                        </div>
+                      )}
+                    </>
+                  ) : (
+                    /* Regular item without submenu */
+                    <SidebarButton
+                      href={item.href}
+                      icon={item.icon}
+                      label={item.label}
+                      onClick={onClose}
+                    />
+                  )}
+                </div>
+              ))}
+            </nav>
+          </CardContent>
+        </Card>
       </div>
-
-      {/* Menu Items */}
-      <nav className="p-4 space-y-3">
-        <Link
-          href="/company"
-          onClick={onClose}
-          className="flex items-center gap-2 p-2 rounded hover:bg-gray-100"
-        >
-          <Building2 className="h-5 w-5" />
-          Company
-        </Link>
-
-        <Link
-          href="/profile"
-          onClick={onClose}
-          className="flex items-center gap-2 p-2 rounded hover:bg-gray-100"
-        >
-          <IdCard className="h-5 w-5" />
-          Profile
-        </Link>
-      </nav>
-    </div>
+    </>
   );
 }

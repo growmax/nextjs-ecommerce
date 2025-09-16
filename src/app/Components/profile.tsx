@@ -502,12 +502,12 @@ export default function ProfileButton() {
           </DropdownMenuSubTrigger>
 
           <DropdownMenuSubContent className="w-48">
-            <DropdownMenuItem onClick={() => router.push("/profilesettings")}>
+            <DropdownMenuItem onClick={() => router.push("/settings/profile")}>
               <IdCard className="mr-2 h-4 w-4" />
               Profile
             </DropdownMenuItem>
 
-            <DropdownMenuItem onClick={() => router.push("/companysettings")}>
+            <DropdownMenuItem onClick={() => router.push("/settings/company")}>
               <Building2 className="mr-2 h-4 w-4" />
               Company
             </DropdownMenuItem>
