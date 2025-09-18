@@ -742,7 +742,6 @@ src/
 ├── lib/
 │   ├── utils.ts                  # cn() utility
 │   └── theme-integration.ts      # TweakCN utilities
-└── stories/                      # Storybook documentation
 ```
 
 ### Component Creation Rules (MANDATORY)

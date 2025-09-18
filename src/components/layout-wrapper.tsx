@@ -15,13 +15,19 @@ export default function LayoutWrapper({ children }: LayoutWrapperProps) {
   // Hide navbar and footer on auth pages
   const hideNavAndFooter = pathname === "/login" || pathname === "/register";
 
+  // Hide footer on auth pages and settings pages
+  const hideFooter =
+    pathname === "/login" ||
+    pathname === "/register" ||
+    pathname.startsWith("/settings");
+
   return (
     <>
       {!hideNavAndFooter && <NavBar />}
       <main className={cn("min-h-screen", !hideNavAndFooter && "pt-4 pb-8")}>
         {children}
       </main>
-      {!hideNavAndFooter && <Footer />}
+      {!hideFooter && <Footer />}
     </>
   );
 }

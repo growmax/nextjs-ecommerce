@@ -71,7 +71,7 @@
 /* Mobile-First Base Styles */
 @layer base {
   * {
-    @apply outline-ring/50;
+    @apply border-border;
   }
 
   body {

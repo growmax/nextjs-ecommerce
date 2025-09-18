@@ -2,6 +2,10 @@
 
 import HeaderBar from "@/app/Components/reusable/nameconversion/PageHeader";
 import SectionCard from "@/components/custom/SectionCard";
+import {
+  CenteredLayout,
+  FullWidthLayout,
+} from "@/components/layout/PageContent";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { AuthStorage } from "@/lib/auth";
@@ -191,14 +195,16 @@ export default function CompanyPage() {
           title="Company Settings"
           icon={<User className="w-6 h-6" />}
         />
-        <div className="space-y-6 p-6">
-          <SectionCard title="Loading Company Data">
-            <div className="flex items-center justify-center p-8">
-              <Loader2 className="h-8 w-8 animate-spin" />
-              <span className="ml-2">Loading company data...</span>
-            </div>
-          </SectionCard>
-        </div>
+        <FullWidthLayout>
+          <div className="max-w-6xl mx-auto space-y-6 p-6">
+            <SectionCard title="Loading Company Data">
+              <div className="flex items-center justify-center p-8">
+                <Loader2 className="h-8 w-8 animate-spin" />
+                <span className="ml-2">Loading company data...</span>
+              </div>
+            </SectionCard>
+          </div>
+        </FullWidthLayout>
       </>
     );
   }
@@ -210,13 +216,15 @@ export default function CompanyPage() {
           title="Company Settings"
           icon={<User className="w-6 h-6" />}
         />
-        <div className="space-y-6 p-6">
-          <SectionCard title="Error">
-            <div className="text-center text-red-600 p-8">
-              <p>Error: {error}</p>
-            </div>
-          </SectionCard>
-        </div>
+        <FullWidthLayout>
+          <div className="max-w-6xl mx-auto space-y-6 p-6">
+            <SectionCard title="Error">
+              <div className="text-center text-red-600 p-8">
+                <p>Error: {error}</p>
+              </div>
+            </SectionCard>
+          </div>
+        </FullWidthLayout>
       </>
     );
   }
@@ -228,13 +236,15 @@ export default function CompanyPage() {
           title="Company Settings"
           icon={<User className="w-6 h-6" />}
         />
-        <div className="space-y-6 p-6">
-          <SectionCard title="No Data">
-            <div className="text-center text-gray-600 p-8">
-              <p>No company data available</p>
-            </div>
-          </SectionCard>
-        </div>
+        <FullWidthLayout>
+          <div className="max-w-6xl mx-auto space-y-6 p-6">
+            <SectionCard title="No Data">
+              <div className="text-center text-gray-600 p-8">
+                <p>No company data available</p>
+              </div>
+            </SectionCard>
+          </div>
+        </FullWidthLayout>
       </>
     );
   }
@@ -257,172 +267,175 @@ export default function CompanyPage() {
   return (
     <>
       <HeaderBar title="Company Settings" icon={<User className="w-6 h-6" />} />
-      <div className="space-y-6 p-6">
-        <SectionCard title={`Welcome ${data.name}`}>
-          <form onSubmit={handleSubmit(onSubmit)}>
-            {/* Mobile-first responsive grid */}
-            <div className="flex flex-col lg:flex-row gap-6">
-              {/* Profile Image Upload - Top on mobile, left on desktop */}
-              <div className="flex-shrink-0">
-                <Label
-                  htmlFor="profile-image"
-                  className="block text-sm font-medium mb-2"
-                >
-                  Company Logo
-                </Label>
-                <div className="relative">
-                  <div className="w-32 h-32 border-2 border-dashed border-muted-foreground rounded-lg flex items-center justify-center">
-                    {profileImage ? (
-                      <>
-                        {/* eslint-disable-next-line @next/next/no-img-element */}
-                        <img
-                          src={profileImage}
-                          alt="Company Logo"
-                          width={128}
-                          height={128}
-                          className="w-full h-full object-cover rounded-lg"
-                          onError={e => {
-                            e.currentTarget.style.display = "none";
-                            const sibling = e.currentTarget
-                              .nextElementSibling as HTMLElement;
-                            if (sibling) {
-                              sibling.style.setProperty("display", "flex");
-                            }
-                          }}
-                        />
-                      </>
-                    ) : null}
-                    <div
-                      className="text-center"
-                      style={{
-                        display: profileImage ? "none" : "flex",
-                        flexDirection: "column",
-                        alignItems: "center",
-                      }}
-                    >
-                      <User className="mx-auto h-8 w-8 text-muted-foreground mb-2" />
-                      <span className="text-xs text-muted-foreground">
-                        {profileImage ? "Image Error" : "No Logo"}
-                      </span>
+      <CenteredLayout>
+        <div className="space-y-6 p-6">
+          <SectionCard title={`Welcome ${data.name}`}>
+            <form onSubmit={handleSubmit(onSubmit)}>
+              {/* Mobile-first responsive grid */}
+              <div className="flex flex-col lg:flex-row gap-6">
+                {/* Profile Image Upload - Top on mobile, left on desktop */}
+                <div className="flex-shrink-0">
+                  <Label
+                    htmlFor="profile-image"
+                    className="block text-sm font-medium mb-2"
+                  >
+                    Company Logo
+                  </Label>
+                  <div className="relative">
+                    <div className="w-32 h-32 border-2 border-dashed border-muted-foreground rounded-lg flex items-center justify-center">
+                      {profileImage ? (
+                        <>
+                          {/* eslint-disable-next-line @next/next/no-img-element */}
+                          <img
+                            src={profileImage}
+                            alt="Company Logo"
+                            width={128}
+                            height={128}
+                            className="w-full h-full object-cover rounded-lg"
+                            onError={e => {
+                              e.currentTarget.style.display = "none";
+                              const sibling = e.currentTarget
+                                .nextElementSibling as HTMLElement;
+                              if (sibling) {
+                                sibling.style.setProperty("display", "flex");
+                              }
+                            }}
+                          />
+                        </>
+                      ) : null}
+                      <div
+                        className="text-center"
+                        style={{
+                          display: profileImage ? "none" : "flex",
+                          flexDirection: "column",
+                          alignItems: "center",
+                        }}
+                      >
+                        <User className="mx-auto h-8 w-8 text-muted-foreground mb-2" />
+                        <span className="text-xs text-muted-foreground">
+                          {profileImage ? "Image Error" : "No Logo"}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Form Fields - Mobile-first stacked, then responsive */}
+                <div className="flex-1 space-y-4">
+                  {/* First Line - Company Name & Website */}
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="company-name">Company Name</Label>
+                      <Input
+                        id="company-name"
+                        {...register("name")}
+                        placeholder={data.name}
+                        className="border border-gray-300 focus:border-blue-500"
+                      />
+                      {errors.name && (
+                        <p className="text-sm text-red-600">
+                          {errors.name.message}
+                        </p>
+                      )}
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="website">Website Link</Label>
+                      <Input
+                        id="website"
+                        {...register("website")}
+                        type="url"
+                        placeholder={data.website || "No website available"}
+                        className="border border-gray-300 focus:border-blue-500"
+                      />
+                      {errors.website && (
+                        <p className="text-sm text-red-600">
+                          {errors.website.message}
+                        </p>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Second Line - Tax ID/GST & Business Type */}
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="tax-id">Tax ID/GST</Label>
+                      <Input
+                        id="tax-id"
+                        {...register("gst")}
+                        placeholder={data.addressId.gst}
+                        className="border border-gray-300 focus:border-blue-500"
+                      />
+                      {errors.gst && (
+                        <p className="text-sm text-red-600">
+                          {errors.gst.message}
+                        </p>
+                      )}
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="business-type">Business Type</Label>
+                      <Input
+                        id="business-type"
+                        value={data.businessTypeId.name}
+                        readOnly
+                        className="bg-muted border border-gray-300"
+                      />
+                    </div>
+                  </div>
+
+                  {/* Third Line - Account Type & Default Currency */}
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="account-type">Account Type</Label>
+                      <Input
+                        id="account-type"
+                        value={data.accountTypeId.name}
+                        readOnly
+                        className="bg-muted border border-gray-300"
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="default-currency">Default Currency</Label>
+                      <Input
+                        id="default-currency"
+                        value={data.currencyId.currencyCode}
+                        readOnly
+                        className="bg-muted border border-gray-300"
+                      />
+                    </div>
+                  </div>
+
+                  {/* Fourth Line - Sub Industry & Industry Description */}
+                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="sub-industry">Sub Industry</Label>
+                      <Input
+                        id="sub-industry"
+                        {...register("subIndustry")}
+                        placeholder={data.subIndustryId.industryId.name}
+                        className="border border-gray-300 focus:border-blue-500"
+                      />
+                      {errors.subIndustry && (
+                        <p className="text-sm text-red-600">
+                          {errors.subIndustry.message}
+                        </p>
+                      )}
+                    </div>
+                    <div className="space-y-2">
+                      <Label className="text-sm font-bold">
+                        Industry Description:{" "}
+                        {data.subIndustryId.industryId.name}
+                      </Label>
+                      <p className="text-sm text-muted-foreground mt-2">
+                        {data.subIndustryId.description}
+                      </p>
                     </div>
                   </div>
                 </div>
               </div>
-
-              {/* Form Fields - Mobile-first stacked, then responsive */}
-              <div className="flex-1 space-y-4">
-                {/* First Line - Company Name & Website */}
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="company-name">Company Name</Label>
-                    <Input
-                      id="company-name"
-                      {...register("name")}
-                      placeholder={data.name}
-                      className="border border-gray-300 focus:border-blue-500"
-                    />
-                    {errors.name && (
-                      <p className="text-sm text-red-600">
-                        {errors.name.message}
-                      </p>
-                    )}
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="website">Website Link</Label>
-                    <Input
-                      id="website"
-                      {...register("website")}
-                      type="url"
-                      placeholder={data.website || "No website available"}
-                      className="border border-gray-300 focus:border-blue-500"
-                    />
-                    {errors.website && (
-                      <p className="text-sm text-red-600">
-                        {errors.website.message}
-                      </p>
-                    )}
-                  </div>
-                </div>
-
-                {/* Second Line - Tax ID/GST & Business Type */}
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="tax-id">Tax ID/GST</Label>
-                    <Input
-                      id="tax-id"
-                      {...register("gst")}
-                      placeholder={data.addressId.gst}
-                      className="border border-gray-300 focus:border-blue-500"
-                    />
-                    {errors.gst && (
-                      <p className="text-sm text-red-600">
-                        {errors.gst.message}
-                      </p>
-                    )}
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="business-type">Business Type</Label>
-                    <Input
-                      id="business-type"
-                      value={data.businessTypeId.name}
-                      readOnly
-                      className="bg-muted border border-gray-300"
-                    />
-                  </div>
-                </div>
-
-                {/* Third Line - Account Type & Default Currency */}
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="account-type">Account Type</Label>
-                    <Input
-                      id="account-type"
-                      value={data.accountTypeId.name}
-                      readOnly
-                      className="bg-muted border border-gray-300"
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="default-currency">Default Currency</Label>
-                    <Input
-                      id="default-currency"
-                      value={data.currencyId.currencyCode}
-                      readOnly
-                      className="bg-muted border border-gray-300"
-                    />
-                  </div>
-                </div>
-
-                {/* Fourth Line - Sub Industry & Industry Description */}
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="sub-industry">Sub Industry</Label>
-                    <Input
-                      id="sub-industry"
-                      {...register("subIndustry")}
-                      placeholder={data.subIndustryId.industryId.name}
-                      className="border border-gray-300 focus:border-blue-500"
-                    />
-                    {errors.subIndustry && (
-                      <p className="text-sm text-red-600">
-                        {errors.subIndustry.message}
-                      </p>
-                    )}
-                  </div>
-                  <div className="space-y-2">
-                    <Label className="text-sm font-bold">
-                      Industry Description: {data.subIndustryId.industryId.name}
-                    </Label>
-                    <p className="text-sm text-muted-foreground mt-2">
-                      {data.subIndustryId.description}
-                    </p>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </form>
-        </SectionCard>
-      </div>
+            </form>
+          </SectionCard>
+        </div>
+      </CenteredLayout>
     </>
   );
 }

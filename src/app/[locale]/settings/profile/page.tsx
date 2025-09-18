@@ -12,6 +12,7 @@ import {
 } from "@/components/ui/popover";
 import { Command, CommandGroup, CommandItem } from "@/components/ui/command";
 import { Button } from "@/components/ui/button";
+import { FullWidthLayout } from "@/components/layout/PageContent";
 
 // ----------------------
 // Types
@@ -316,66 +317,68 @@ export default function ProfilePage() {
   return (
     <>
       <HeaderBar title="Profile Settings" icon={<User className="w-6 h-6" />} />
-      <main className="flex-1 p-6">
-        <div className="max-w-6xl mx-auto space-y-6">
-          <ProfileCard profile={profile} />
+      <FullWidthLayout>
+        <main className="flex-1 p-6">
+          <div className="max-w-6xl mx-auto space-y-6">
+            <ProfileCard profile={profile} />
 
-          {/* User Preference Card */}
-          <div className="w-full md:w-1/2 rounded-lg border border-gray-200 shadow-sm bg-white">
-            <div className="flex items-center justify-between px-4 py-2 border-b">
-              <h2 className="text-base font-semibold">User Preference</h2>
-              {isEditing && (
-                <div className="flex space-x-2">
-                  <Button variant="outline" size="sm" onClick={handleCancel}>
-                    Cancel
-                  </Button>
-                  <Button variant="default" size="sm" onClick={handleSave}>
-                    Save
-                  </Button>
-                </div>
-              )}
-            </div>
+            {/* User Preference Card */}
+            <div className="w-full md:w-1/2 rounded-lg border border-gray-200 shadow-sm bg-white">
+              <div className="flex items-center justify-between px-4 py-2 border-b">
+                <h2 className="text-base font-semibold">User Preference</h2>
+                {isEditing && (
+                  <div className="flex space-x-2">
+                    <Button variant="outline" size="sm" onClick={handleCancel}>
+                      Cancel
+                    </Button>
+                    <Button variant="default" size="sm" onClick={handleSave}>
+                      Save
+                    </Button>
+                  </div>
+                )}
+              </div>
 
-            <div className="p-3 space-y-2.5">
-              <AutoCompleteField
-                label="Time Zone"
-                value={selectedTimeZone}
-                setValue={setSelectedTimeZone}
-                options={userPrefData.timeZoneOptions.map(t => ({
-                  value: t.value,
-                  label: t.key,
-                }))}
-                placeholder="Select Time Zone"
-                onChange={() => setIsEditing(true)}
-              />
+              <div className="p-3 space-y-2.5">
+                <AutoCompleteField
+                  label="Time Zone"
+                  value={selectedTimeZone}
+                  setValue={setSelectedTimeZone}
+                  options={userPrefData.timeZoneOptions.map(t => ({
+                    value: t.value,
+                    label: t.key,
+                  }))}
+                  placeholder="Select Time Zone"
+                  onChange={() => setIsEditing(true)}
+                />
 
-              <AutoCompleteField
-                label="Date Display Format"
-                value={selectedDateFormat}
-                setValue={setSelectedDateFormat}
-                options={userPrefData.dateFormatOptions.map(d => ({
-                  value: d.value,
-                  label: d.dateFormatName,
-                }))}
-                placeholder="Select Date Format"
-                onChange={() => setIsEditing(true)}
-              />
+                <AutoCompleteField
+                  label="Date Display Format"
+                  value={selectedDateFormat}
+                  setValue={setSelectedDateFormat}
+                  options={userPrefData.dateFormatOptions.map(d => ({
+                    value: d.value,
+                    label: d.dateFormatName,
+                  }))}
+                  placeholder="Select Date Format"
+                  onChange={() => setIsEditing(true)}
+                />
 
-              <AutoCompleteField
-                label="Time Format"
-                value={selectedTimeFormat}
-                setValue={setSelectedTimeFormat}
-                options={userPrefData.timeFormatOptions.map(t => ({
-                  value: t.value,
-                  label: t.display,
-                }))}
-                placeholder="Select Time Format"
-                onChange={() => setIsEditing(true)}
-              />
+                <AutoCompleteField
+                  label="Time Format"
+                  value={selectedTimeFormat}
+                  setValue={setSelectedTimeFormat}
+                  options={userPrefData.timeFormatOptions.map(t => ({
+                    value: t.value,
+                    label: t.display,
+                  }))}
+                  placeholder="Select Time Format"
+                  onChange={() => setIsEditing(true)}
+                />
+              </div>
             </div>
           </div>
-        </div>
-      </main>
+        </main>
+      </FullWidthLayout>
     </>
   );
 }

@@ -78,7 +78,6 @@ src/
 ├── components/            # Reusable components
 │   └── ui/               # UI primitives
 ├── lib/                  # Utility functions
-└── stories/              # Storybook stories
 ```
 
 ## Code Review Checklist

@@ -35,7 +35,6 @@
 - **Vitest 3.2.4** - Unit testing
 - **@vitest/browser** - Browser testing
 - **Playwright 1.55.0** - E2E testing
-- **Storybook 9.1.5** - Component documentation
 
 ## Areas for Future Consistency Updates 📋
 
@@ -238,7 +237,6 @@ src/
 ├── components/             # Reusable components ✅
 │   └── ui/                # shadcn/ui components ✅
 ├── lib/                   # Utilities ✅
-└── stories/               # Storybook ✅
 ```
 
 ### Recommended Additions 📋

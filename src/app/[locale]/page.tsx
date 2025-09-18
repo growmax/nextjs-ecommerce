@@ -9,13 +9,14 @@ import { CarouselDemo } from "@/components/sample/media_card";
 import { ResponsiveTestComponent } from "@/components/sample/responsive-test";
 import SearchInput from "@/components/sample/search_box";
 import Sonner from "@/components/sample/sonner";
+import { CenteredLayout } from "@/components/layout/PageContent";
 import { useTranslations } from "next-intl";
 
 export default function Home() {
   const t = useTranslations();
 
   return (
-    <div className="min-h-screen bg-background">
+    <CenteredLayout className="min-h-screen bg-background">
       {/* Mobile-First Hero Section */}
       <div className="container mx-auto px-4 py-6 sm:py-8 lg:py-12">
         <h1 className="mb-6 text-center text-2xl font-bold sm:mb-8 sm:text-3xl lg:text-4xl">
@@ -130,6 +131,6 @@ export default function Home() {
           </div>
         </section>
       </div>
-    </div>
+    </CenteredLayout>
   );
 }

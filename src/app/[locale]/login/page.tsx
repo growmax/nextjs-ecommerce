@@ -26,6 +26,7 @@ import { useEffect, useRef, useState } from "react";
 import { useForm } from "react-hook-form";
 import { toast, Toaster } from "sonner";
 import * as z from "zod";
+import { CenteredLayout } from "@/components/layout/PageContent";
 
 const createLoginSchema = (t: (key: string) => string) =>
   z.object({
@@ -252,112 +253,114 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-background">
-      <Toaster richColors position="top-right" />
+    <CenteredLayout>
+      <div className="flex min-h-screen items-center justify-center bg-background">
+        <Toaster richColors position="top-right" />
 
-      {/* Tenant Debug - Fixed Position */}
+        {/* Tenant Debug - Fixed Position */}
 
-      <Card className="w-full max-w-md">
-        <CardHeader className="text-center">
-          <CardTitle className="text-3xl font-bold">
-            {t("auth.signIn")}
-          </CardTitle>
-          <CardDescription>
-            {showPasswordField
-              ? t("auth.enterPassword", { username: currentUsername })
-              : t("auth.enterEmailPhone")}
-          </CardDescription>
-        </CardHeader>
+        <Card className="w-full max-w-md">
+          <CardHeader className="text-center">
+            <CardTitle className="text-3xl font-bold">
+              {t("auth.signIn")}
+            </CardTitle>
+            <CardDescription>
+              {showPasswordField
+                ? t("auth.enterPassword", { username: currentUsername })
+                : t("auth.enterEmailPhone")}
+            </CardDescription>
+          </CardHeader>
 
-        <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)}>
-            <CardContent className="space-y-4">
-              <FormField
-                control={form.control}
-                name="emailOrPhone"
-                render={({ field }) => {
-                  const { ...fieldProps } = field;
-                  return (
-                    <FormItem>
-                      <FormLabel>{t("auth.emailPhone")}</FormLabel>
-                      <FormControl>
-                        <div className="relative">
-                          <Input
-                            placeholder={t("auth.emailPlaceholder")}
-                            {...fieldProps}
-                            disabled={isLoading || showPasswordField}
-                            readOnly={showPasswordField}
-                            autoFocus={!showPasswordField}
-                          />
-                          {showPasswordField && (
+          <Form {...form}>
+            <form onSubmit={form.handleSubmit(onSubmit)}>
+              <CardContent className="space-y-4">
+                <FormField
+                  control={form.control}
+                  name="emailOrPhone"
+                  render={({ field }) => {
+                    const { ...fieldProps } = field;
+                    return (
+                      <FormItem>
+                        <FormLabel>{t("auth.emailPhone")}</FormLabel>
+                        <FormControl>
+                          <div className="relative">
+                            <Input
+                              placeholder={t("auth.emailPlaceholder")}
+                              {...fieldProps}
+                              disabled={isLoading || showPasswordField}
+                              readOnly={showPasswordField}
+                              autoFocus={!showPasswordField}
+                            />
+                            {showPasswordField && (
+                              <Button
+                                type="button"
+                                variant="ghost"
+                                size="sm"
+                                className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent"
+                                onClick={handleChangeEmail}
+                                disabled={isLoading}
+                              >
+                                <Edit className="h-4 w-4" />
+                              </Button>
+                            )}
+                          </div>
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    );
+                  }}
+                />
+
+                {showPasswordField && (
+                  <FormField
+                    control={form.control}
+                    name="password"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>{t("auth.password")}</FormLabel>
+                        <FormControl>
+                          <div className="relative">
+                            <Input
+                              type={showPassword ? "text" : "password"}
+                              placeholder={t("auth.passwordPlaceholder")}
+                              {...field}
+                              disabled={isLoading}
+                            />
                             <Button
                               type="button"
                               variant="ghost"
                               size="sm"
                               className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent"
-                              onClick={handleChangeEmail}
-                              disabled={isLoading}
+                              onClick={() => setShowPassword(!showPassword)}
                             >
-                              <Edit className="h-4 w-4" />
+                              {showPassword ? (
+                                <EyeOff className="h-4 w-4" />
+                              ) : (
+                                <Eye className="h-4 w-4" />
+                              )}
                             </Button>
-                          )}
-                        </div>
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  );
-                }}
-              />
+                          </div>
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                )}
+              </CardContent>
 
-              {showPasswordField && (
-                <FormField
-                  control={form.control}
-                  name="password"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>{t("auth.password")}</FormLabel>
-                      <FormControl>
-                        <div className="relative">
-                          <Input
-                            type={showPassword ? "text" : "password"}
-                            placeholder={t("auth.passwordPlaceholder")}
-                            {...field}
-                            disabled={isLoading}
-                          />
-                          <Button
-                            type="button"
-                            variant="ghost"
-                            size="sm"
-                            className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent"
-                            onClick={() => setShowPassword(!showPassword)}
-                          >
-                            {showPassword ? (
-                              <EyeOff className="h-4 w-4" />
-                            ) : (
-                              <Eye className="h-4 w-4" />
-                            )}
-                          </Button>
-                        </div>
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-              )}
-            </CardContent>
-
-            <CardFooter className="pt-6">
-              <Button type="submit" className="w-full" disabled={isLoading}>
-                {isLoading
-                  ? t("messages.loading")
-                  : showPasswordField
-                    ? t("auth.signIn")
-                    : t("buttons.continue")}
-              </Button>
-            </CardFooter>
-          </form>
-        </Form>
-      </Card>
-    </div>
+              <CardFooter className="pt-6">
+                <Button type="submit" className="w-full" disabled={isLoading}>
+                  {isLoading
+                    ? t("messages.loading")
+                    : showPasswordField
+                      ? t("auth.signIn")
+                      : t("buttons.continue")}
+                </Button>
+              </CardFooter>
+            </form>
+          </Form>
+        </Card>
+      </div>
+    </CenteredLayout>
   );
 }

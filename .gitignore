@@ -61,10 +61,7 @@ next-env.d.ts
 
 # logs
 *.log
-*storybook.log
 
-# build outputs
-storybook-static
 
 # OS generated files
 Thumbs.db
