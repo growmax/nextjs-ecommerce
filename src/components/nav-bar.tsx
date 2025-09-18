@@ -5,7 +5,7 @@ import { Menu } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import Logo from "./custom/logo";
 import SearchBox from "./custom/search";
-import NotificationButton from "./sample/notifications";
+import NotificationButton from "./notifications";
 import AddCardButton from "./sample/add-card";
 import ProfileButton from "./profile/ProfileButton";
 import Sidebar from "./sidebar";

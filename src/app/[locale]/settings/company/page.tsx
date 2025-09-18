@@ -4,12 +4,19 @@ import HeaderBar from "@/app/Components/reusable/nameconversion/PageHeader";
 import SectionCard from "@/components/custom/SectionCard";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { AuthStorage } from "@/lib/auth";
 import { JWTService } from "@/lib/services/JWTService";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Loader2, User } from "lucide-react";
 import { useEffect, useState } from "react";
-import { useForm } from "react-hook-form";
+import { useForm, Controller } from "react-hook-form";
 import { z } from "zod";
 
 // Form validation schema
@@ -62,6 +69,22 @@ interface CompanyData {
   };
 }
 
+// Sample industry options - in a real app, this would come from an API
+const industryOptions = [
+  { value: "technology", label: "Technology" },
+  { value: "healthcare", label: "Healthcare" },
+  { value: "finance", label: "Finance" },
+  { value: "education", label: "Education" },
+  { value: "retail", label: "Retail" },
+  { value: "manufacturing", label: "Manufacturing" },
+  { value: "construction", label: "Construction" },
+  { value: "transportation", label: "Transportation" },
+  { value: "food-beverage", label: "Food & Beverage" },
+  { value: "entertainment", label: "Entertainment" },
+  { value: "consulting", label: "Consulting" },
+  { value: "other", label: "Other" },
+];
+
 export default function CompanyPage() {
   const [companyData, setCompanyData] = useState<CompanyData | null>(null);
   const [loading, setLoading] = useState(true);
@@ -72,6 +95,7 @@ export default function CompanyPage() {
   const {
     register,
     handleSubmit,
+    control,
     formState: { errors },
     reset,
   } = useForm<CompanyFormData>({
@@ -166,11 +190,20 @@ export default function CompanyPage() {
         setProfileImage(data.data.logo || null);
 
         // Initialize form with API response data
+        // Try to match the industry name with our predefined options
+        const currentIndustryName =
+          data.data.subIndustryId.industryId.name?.toLowerCase();
+        const matchingOption = industryOptions.find(
+          option =>
+            currentIndustryName?.includes(option.value.toLowerCase()) ||
+            option.label.toLowerCase().includes(currentIndustryName)
+        );
+
         reset({
           name: data.data.name || "",
           website: data.data.website || "",
           gst: data.data.addressId.gst || "",
-          subIndustry: data.data.subIndustryId.industryId.name || "",
+          subIndustry: matchingOption?.value || "other",
         });
       } catch (err) {
         setError(
@@ -397,11 +430,50 @@ export default function CompanyPage() {
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
                   <div className="space-y-2">
                     <Label htmlFor="sub-industry">Sub Industry</Label>
-                    <Input
-                      id="sub-industry"
-                      {...register("subIndustry")}
-                      placeholder={data.subIndustryId.industryId.name}
-                      className="border border-gray-300 focus:border-blue-500"
+                    <Controller
+                      name="subIndustry"
+                      control={control}
+                      render={({ field }) => (
+                        <Select
+                          onValueChange={field.onChange}
+                          value={field.value}
+                          defaultValue={field.value}
+                        >
+                          <SelectTrigger className="w-full h-10 border border-gray-300 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 bg-background">
+                            <SelectValue
+                              placeholder="Select an industry"
+                              className="text-sm"
+                            />
+                          </SelectTrigger>
+                          <SelectContent
+                            position="popper"
+                            className="w-full min-w-[var(--radix-select-trigger-width)] max-h-60 overflow-auto bg-white border border-gray-200 shadow-lg rounded-md"
+                            sideOffset={4}
+                          >
+                            <SelectItem
+                              value="current"
+                              className="text-muted-foreground italic"
+                              disabled
+                            >
+                              Current: {data.subIndustryId.industryId.name}
+                            </SelectItem>
+                            {industryOptions.map(option => (
+                              <SelectItem
+                                key={option.value}
+                                value={option.value}
+                                className="cursor-pointer hover:bg-gray-50 focus:bg-gray-50 px-3 py-2"
+                              >
+                                <span className="flex items-center">
+                                  {option.label}
+                                  {field.value === option.value && (
+                                    <span className="ml-2 text-blue-600"></span>
+                                  )}
+                                </span>
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      )}
                     />
                     {errors.subIndustry && (
                       <p className="text-sm text-red-600">

@@ -1,6 +1,6 @@
 "use client";
 
-import { Bell } from "lucide-react";
+import { Bell, ChevronRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -11,9 +11,15 @@ import {
   DropdownMenuItem,
 } from "@/components/ui/dropdown-menu";
 import { useTranslations } from "next-intl";
+import { useRouter } from "next/navigation";
 
 export default function NotificationButton() {
   const t = useTranslations();
+  const router = useRouter();
+
+  const handleMoreClick = () => {
+    router.push("/notification");
+  };
 
   return (
     <DropdownMenu>
@@ -36,6 +42,16 @@ export default function NotificationButton() {
         </DropdownMenuItem>
         <DropdownMenuItem className="justify-center focus:bg-transparent">
           No notifications
+        </DropdownMenuItem>
+        <DropdownMenuSeparator />
+        <DropdownMenuItem
+          onClick={handleMoreClick}
+          className="justify-center cursor-pointer hover:bg-muted focus:bg-muted py-3 text-sm font-medium text-primary"
+        >
+          <span className="flex items-center gap-1">
+            View all notifications
+            <ChevronRight className="h-4 w-4" />
+          </span>
         </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>
