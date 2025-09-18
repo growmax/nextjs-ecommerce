@@ -6,12 +6,21 @@ import {
   CenteredLayout,
   FullWidthLayout,
 } from "@/components/layout/PageContent";
+import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 import { AuthStorage } from "@/lib/auth";
 import { JWTService } from "@/lib/services/JWTService";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Loader2, User } from "lucide-react";
+import { Loader2, Trash2, User } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
@@ -65,6 +74,22 @@ interface CompanyData {
     };
   };
 }
+
+// Sample industry options - in a real app, this would come from an API
+const industryOptions = [
+  { value: "technology", label: "Technology" },
+  { value: "healthcare", label: "Healthcare" },
+  { value: "finance", label: "Finance" },
+  { value: "education", label: "Education" },
+  { value: "retail", label: "Retail" },
+  { value: "manufacturing", label: "Manufacturing" },
+  { value: "construction", label: "Construction" },
+  { value: "transportation", label: "Transportation" },
+  { value: "food-beverage", label: "Food & Beverage" },
+  { value: "entertainment", label: "Entertainment" },
+  { value: "consulting", label: "Consulting" },
+  { value: "other", label: "Other" },
+];
 
 export default function CompanyPage() {
   const [companyData, setCompanyData] = useState<CompanyData | null>(null);
@@ -170,11 +195,20 @@ export default function CompanyPage() {
         setProfileImage(data.data.logo || null);
 
         // Initialize form with API response data
+        // Try to match the industry name with our predefined options
+        const currentIndustryName =
+          data.data.subIndustryId.industryId.name?.toLowerCase();
+        const matchingOption = industryOptions.find(
+          option =>
+            currentIndustryName?.includes(option.value.toLowerCase()) ||
+            option.label.toLowerCase().includes(currentIndustryName)
+        );
+
         reset({
           name: data.data.name || "",
           website: data.data.website || "",
           gst: data.data.addressId.gst || "",
-          subIndustry: data.data.subIndustryId.industryId.name || "",
+          subIndustry: matchingOption?.value || "other",
         });
       } catch (err) {
         setError(
@@ -268,173 +302,240 @@ export default function CompanyPage() {
     <>
       <HeaderBar title="Company Settings" icon={<User className="w-6 h-6" />} />
       <CenteredLayout>
-        <div className="space-y-6 p-6">
-          <SectionCard title={`Welcome ${data.name}`}>
-            <form onSubmit={handleSubmit(onSubmit)}>
-              {/* Mobile-first responsive grid */}
-              <div className="flex flex-col lg:flex-row gap-6">
-                {/* Profile Image Upload - Top on mobile, left on desktop */}
-                <div className="flex-shrink-0">
-                  <Label
-                    htmlFor="profile-image"
-                    className="block text-sm font-medium mb-2"
-                  >
-                    Company Logo
-                  </Label>
-                  <div className="relative">
-                    <div className="w-32 h-32 border-2 border-dashed border-muted-foreground rounded-lg flex items-center justify-center">
-                      {profileImage ? (
-                        <>
-                          {/* eslint-disable-next-line @next/next/no-img-element */}
-                          <img
-                            src={profileImage}
-                            alt="Company Logo"
-                            width={128}
-                            height={128}
-                            className="w-full h-full object-cover rounded-lg"
-                            onError={e => {
-                              e.currentTarget.style.display = "none";
-                              const sibling = e.currentTarget
-                                .nextElementSibling as HTMLElement;
-                              if (sibling) {
-                                sibling.style.setProperty("display", "flex");
-                              }
-                            }}
-                          />
-                        </>
-                      ) : null}
-                      <div
-                        className="text-center"
-                        style={{
-                          display: profileImage ? "none" : "flex",
-                          flexDirection: "column",
-                          alignItems: "center",
-                        }}
-                      >
-                        <User className="mx-auto h-8 w-8 text-muted-foreground mb-2" />
-                        <span className="text-xs text-muted-foreground">
-                          {profileImage ? "Image Error" : "No Logo"}
-                        </span>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Form Fields - Mobile-first stacked, then responsive */}
-                <div className="flex-1 space-y-4">
-                  {/* First Line - Company Name & Website */}
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <div className="space-y-2">
-                      <Label htmlFor="company-name">Company Name</Label>
-                      <Input
-                        id="company-name"
-                        {...register("name")}
-                        placeholder={data.name}
-                        className="border border-gray-300 focus:border-blue-500"
-                      />
-                      {errors.name && (
-                        <p className="text-sm text-red-600">
-                          {errors.name.message}
-                        </p>
-                      )}
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="website">Website Link</Label>
-                      <Input
-                        id="website"
-                        {...register("website")}
-                        type="url"
-                        placeholder={data.website || "No website available"}
-                        className="border border-gray-300 focus:border-blue-500"
-                      />
-                      {errors.website && (
-                        <p className="text-sm text-red-600">
-                          {errors.website.message}
-                        </p>
-                      )}
-                    </div>
-                  </div>
-
-                  {/* Second Line - Tax ID/GST & Business Type */}
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <div className="space-y-2">
-                      <Label htmlFor="tax-id">Tax ID/GST</Label>
-                      <Input
-                        id="tax-id"
-                        {...register("gst")}
-                        placeholder={data.addressId.gst}
-                        className="border border-gray-300 focus:border-blue-500"
-                      />
-                      {errors.gst && (
-                        <p className="text-sm text-red-600">
-                          {errors.gst.message}
-                        </p>
-                      )}
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="business-type">Business Type</Label>
-                      <Input
-                        id="business-type"
-                        value={data.businessTypeId.name}
-                        readOnly
-                        className="bg-muted border border-gray-300"
-                      />
-                    </div>
-                  </div>
-
-                  {/* Third Line - Account Type & Default Currency */}
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <div className="space-y-2">
-                      <Label htmlFor="account-type">Account Type</Label>
-                      <Input
-                        id="account-type"
-                        value={data.accountTypeId.name}
-                        readOnly
-                        className="bg-muted border border-gray-300"
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="default-currency">Default Currency</Label>
-                      <Input
-                        id="default-currency"
-                        value={data.currencyId.currencyCode}
-                        readOnly
-                        className="bg-muted border border-gray-300"
-                      />
-                    </div>
-                  </div>
-
-                  {/* Fourth Line - Sub Industry & Industry Description */}
-                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-                    <div className="space-y-2">
-                      <Label htmlFor="sub-industry">Sub Industry</Label>
-                      <Input
-                        id="sub-industry"
-                        {...register("subIndustry")}
-                        placeholder={data.subIndustryId.industryId.name}
-                        className="border border-gray-300 focus:border-blue-500"
-                      />
-                      {errors.subIndustry && (
-                        <p className="text-sm text-red-600">
-                          {errors.subIndustry.message}
-                        </p>
-                      )}
-                    </div>
-                    <div className="space-y-2">
-                      <Label className="text-sm font-bold">
-                        Industry Description:{" "}
-                        {data.subIndustryId.industryId.name}
-                      </Label>
-                      <p className="text-sm text-muted-foreground mt-2">
-                        {data.subIndustryId.description}
-                      </p>
+        <SectionCard title={`Welcome ${data.name}`}>
+          <form onSubmit={handleSubmit(onSubmit)}>
+            {/* Mobile-first responsive grid */}
+            <div className="flex flex-col lg:flex-row gap-6">
+              {/* Profile Image Upload - Top on mobile, left on desktop */}
+              <div className="flex-shrink-0">
+                <Label
+                  htmlFor="profile-image"
+                  className="block text-sm font-medium mb-2"
+                >
+                  Company Logo
+                </Label>
+                <div className="relative">
+                  <div className="w-32 h-32 border-2 border-dashed border-muted-foreground rounded-lg flex items-center justify-center">
+                    {profileImage ? (
+                      <>
+                        {/* eslint-disable-next-line @next/next/no-img-element */}
+                        <img
+                          src={profileImage}
+                          alt="Company Logo"
+                          width={128}
+                          height={128}
+                          className="w-full h-full object-cover rounded-lg"
+                          onError={e => {
+                            e.currentTarget.style.display = "none";
+                            const sibling = e.currentTarget
+                              .nextElementSibling as HTMLElement;
+                            if (sibling) {
+                              sibling.style.setProperty("display", "flex");
+                            }
+                          }}
+                        />
+                      </>
+                    ) : null}
+                    <div
+                      className="text-center"
+                      style={{
+                        display: profileImage ? "none" : "flex",
+                        flexDirection: "column",
+                        alignItems: "center",
+                      }}
+                    >
+                      <User className="mx-auto h-8 w-8 text-muted-foreground mb-2" />
+                      <span className="text-xs text-muted-foreground">
+                        {profileImage ? "Image Error" : "No Logo"}
+                      </span>
                     </div>
                   </div>
                 </div>
               </div>
-            </form>
-          </SectionCard>
-        </div>
+
+              {/* Form Fields - Mobile-first stacked, then responsive */}
+              <div className="flex-1 space-y-4">
+                {/* First Line - Company Name & Website */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="company-name">Company Name</Label>
+                    <Input
+                      id="company-name"
+                      {...register("name")}
+                      placeholder={data.name}
+                      className="border border-gray-300 focus:border-blue-500"
+                    />
+                    {errors.name && (
+                      <p className="text-sm text-red-600">
+                        {errors.name.message}
+                      </p>
+                    )}
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="website">Website Link</Label>
+                    <Input
+                      id="website"
+                      {...register("website")}
+                      type="url"
+                      placeholder={data.website || "No website available"}
+                      className="border border-gray-300 focus:border-blue-500"
+                    />
+                    {errors.website && (
+                      <p className="text-sm text-red-600">
+                        {errors.website.message}
+                      </p>
+                    )}
+                  </div>
+                </div>
+
+                {/* Second Line - Tax ID/GST & Business Type */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="tax-id">Tax ID/GST</Label>
+                    <Input
+                      id="tax-id"
+                      {...register("gst")}
+                      placeholder={data.addressId.gst}
+                      className="border border-gray-300 focus:border-blue-500"
+                    />
+                    {errors.gst && (
+                      <p className="text-sm text-red-600">
+                        {errors.gst.message}
+                      </p>
+                    )}
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="business-type">Business Type</Label>
+                    <Input
+                      id="business-type"
+                      value={data.businessTypeId.name}
+                      readOnly
+                      className="bg-muted border border-gray-300"
+                    />
+                  </div>
+                </div>
+
+                {/* Third Line - Account Type & Default Currency */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="account-type">Account Type</Label>
+                    <Input
+                      id="account-type"
+                      value={data.accountTypeId.name}
+                      readOnly
+                      className="bg-muted border border-gray-300"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="default-currency">Default Currency</Label>
+                    <Input
+                      id="default-currency"
+                      value={data.currencyId.currencyCode}
+                      readOnly
+                      className="bg-muted border border-gray-300"
+                    />
+                  </div>
+                </div>
+
+                {/* Fourth Line - Sub Industry & Industry Description */}
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="sub-industry">Sub Industry</Label>
+                    <Input
+                      id="sub-industry"
+                      {...register("subIndustry")}
+                      placeholder={data.subIndustryId.industryId.name}
+                      className="border border-gray-300 focus:border-blue-500"
+                    />
+                    {errors.subIndustry && (
+                      <p className="text-sm text-red-600">
+                        {errors.subIndustry.message}
+                      </p>
+                    )}
+                  </div>
+                  <div className="space-y-2">
+                    <Label className="text-sm font-bold">
+                      Industry Description: {data.subIndustryId.industryId.name}
+                    </Label>
+                    <p className="text-sm text-muted-foreground mt-2">
+                      {data.subIndustryId.description}
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </form>
+        </SectionCard>
+
+        <SectionCard title="Address Information">
+          <div className="overflow-x-auto ">
+            <Table>
+              <TableHeader className="bg-accent">
+                <TableRow className="hover:bg-transparent">
+                  <TableHead className="w-12 text-center">Action</TableHead>
+                  <TableHead className="min-w-[200px]">Address</TableHead>
+                  <TableHead className="min-w-[120px]">Tax ID</TableHead>
+                  <TableHead className="min-w-[120px]">
+                    Contact Person
+                  </TableHead>
+                  <TableHead className="min-w-[120px]">Phone</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                <TableRow className="hover:bg-muted/50">
+                  <TableCell className="text-center">
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-8 w-8 text-red-500 hover:text-red-700 hover:bg-red-50"
+                      onClick={() => {
+                        // Handle delete action for first address
+                        // console.log("Delete address entry 1");
+                      }}
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
+                  </TableCell>
+                  <TableCell className="font-medium">
+                    <div className="space-y-1">
+                      <div>123 Business Street</div>
+                      <div>Suite 100</div>
+                      <div>New York, NY 10001</div>
+                    </div>
+                  </TableCell>
+                  <TableCell>TAX123456789</TableCell>
+                  <TableCell>John Doe</TableCell>
+                  <TableCell>+1 (555) 123-4567</TableCell>
+                </TableRow>
+                <TableRow className="hover:bg-muted/50">
+                  <TableCell className="text-center">
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-8 w-8 text-red-500 hover:text-red-700 hover:bg-red-50"
+                      onClick={() => {
+                        // Handle delete action for second address
+                        // console.log("Delete address entry 2");
+                      }}
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
+                  </TableCell>
+                  <TableCell className="font-medium">
+                    <div className="space-y-1">
+                      <div>456 Corporate Avenue</div>
+                      <div>Building B, Floor 3</div>
+                      <div>Los Angeles, CA 90210</div>
+                    </div>
+                  </TableCell>
+                  <TableCell>TAX987654321</TableCell>
+                  <TableCell>Jane Smith</TableCell>
+                  <TableCell>+1 (555) 987-6543</TableCell>
+                </TableRow>
+              </TableBody>
+            </Table>
+          </div>
+        </SectionCard>
       </CenteredLayout>
     </>
   );

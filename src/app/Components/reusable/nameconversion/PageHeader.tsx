@@ -19,7 +19,7 @@ export default function HeaderBar({
   return (
     <header
       className={cn(
-        "flex-shrink-0 bg-white shadow-md border-b z-10",
+        "flex-shrink-0 bg-white shadow-md border-b z-10 mb-8",
         className
       )}
       style={{
