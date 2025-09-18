@@ -1,19 +1,46 @@
 "use client";
 
+import HeaderBar from "@/app/Components/reusable/nameconversion/PageHeader";
+import SectionCard from "@/components/custom/SectionCard";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
-import { Building2, Loader2 } from "lucide-react";
-import HeaderBar from "@/app/Components/reusable/nameconversion/PageHeader";
-import { useEffect, useState } from "react";
 import { AuthStorage } from "@/lib/auth";
 import { JWTService } from "@/lib/services/JWTService";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { Loader2, User } from "lucide-react";
+import { useEffect, useState } from "react";
+import { useForm } from "react-hook-form";
+import { z } from "zod";
+
+// Form validation schema
+const companyFormSchema = z.object({
+  name: z
+    .string()
+    .min(1, "Company name is required")
+    .max(100, "Company name must be less than 100 characters"),
+  website: z
+    .string()
+    .url("Please enter a valid URL")
+    .optional()
+    .or(z.literal("")),
+  gst: z
+    .string()
+    .min(1, "GST number is required")
+    .max(20, "GST number must be less than 20 characters"),
+  subIndustry: z
+    .string()
+    .min(1, "Sub industry is required")
+    .max(50, "Sub industry must be less than 50 characters"),
+});
+
+type CompanyFormData = z.infer<typeof companyFormSchema>;
 
 interface CompanyData {
   data: {
     id: number;
     name: string;
     website?: string;
+    logo?: string;
     addressId: {
       gst: string;
     };
@@ -39,12 +66,35 @@ export default function CompanyPage() {
   const [companyData, setCompanyData] = useState<CompanyData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [profileImage, setProfileImage] = useState<string | null>(null);
+
+  // React Hook Form setup
+  const {
+    register,
+    handleSubmit,
+    formState: { errors },
+    reset,
+  } = useForm<CompanyFormData>({
+    resolver: zodResolver(companyFormSchema),
+    defaultValues: {
+      name: "",
+      website: "",
+      gst: "",
+      subIndustry: "",
+    },
+  });
 
   useEffect(() => {
     const fetchCompanyData = async () => {
       try {
         setLoading(true);
         setError(null);
+
+        // Check if user is authenticated first
+        if (!AuthStorage.isAuthenticated()) {
+          setError("Authentication required. Please log in again.");
+          return;
+        }
 
         // Get token from storage
         const accessToken = AuthStorage.getAccessToken();
@@ -53,8 +103,16 @@ export default function CompanyPage() {
           return;
         }
 
-        // Decode JWT to get company ID and tenant
+        // Check if token is expired using JWT service
         const jwtService = JWTService.getInstance();
+        if (jwtService.isTokenExpired(accessToken)) {
+          setError("Session expired. Please log in again.");
+          // Clear expired token from storage
+          AuthStorage.clearAuth();
+          return;
+        }
+
+        // Decode JWT to get company ID and tenant
         const payload = jwtService.decodeToken(accessToken);
         if (!payload || !payload.companyId || !payload.iss) {
           setError("Invalid token or missing company data");
@@ -71,11 +129,49 @@ export default function CompanyPage() {
         });
 
         if (!response.ok) {
+          // Log error response
+          // eslint-disable-next-line no-console
+          console.error(
+            "API Error Response:",
+            response.status,
+            response.statusText
+          );
+
+          // Handle token expiration specifically
+          if (response.status === 401) {
+            const errorData = await response.json().catch(() => null);
+            if (errorData?.tokenExpired) {
+              setError("Session expired. Please log in again.");
+              AuthStorage.clearAuth();
+              return;
+            }
+          }
+
           throw new Error(`Failed to fetch company data: ${response.status}`);
         }
 
         const data = await response.json();
+
+        // Log successful API response
+        // eslint-disable-next-line no-console
+        console.log("=== API Response Success ===");
+        // eslint-disable-next-line no-console
+        console.log("Status:", response.status);
+        // eslint-disable-next-line no-console
+        console.log("Response Data:", JSON.stringify(data, null, 2));
+        // eslint-disable-next-line no-console
+        console.log("============================");
+
         setCompanyData(data);
+        setProfileImage(data.data.logo || null);
+
+        // Initialize form with API response data
+        reset({
+          name: data.data.name || "",
+          website: data.data.website || "",
+          gst: data.data.addressId.gst || "",
+          subIndustry: data.data.subIndustryId.industryId.name || "",
+        });
       } catch (err) {
         setError(
           err instanceof Error ? err.message : "Failed to fetch company data"
@@ -86,25 +182,23 @@ export default function CompanyPage() {
     };
 
     fetchCompanyData();
-  }, []);
+  }, [reset]);
 
   if (loading) {
     return (
       <>
         <HeaderBar
           title="Company Settings"
-          icon={<Building2 className="w-5 h-5" />}
+          icon={<User className="w-6 h-6" />}
         />
-        <main className="flex-1 overflow-auto bg-gray-50 p-6">
-          <div className="max-w-4xl mx-auto space-y-6">
-            <Card>
-              <CardContent className="flex items-center justify-center p-8">
-                <Loader2 className="h-8 w-8 animate-spin" />
-                <span className="ml-2">Loading company data...</span>
-              </CardContent>
-            </Card>
-          </div>
-        </main>
+        <div className="space-y-6 p-6">
+          <SectionCard title="Loading Company Data">
+            <div className="flex items-center justify-center p-8">
+              <Loader2 className="h-8 w-8 animate-spin" />
+              <span className="ml-2">Loading company data...</span>
+            </div>
+          </SectionCard>
+        </div>
       </>
     );
   }
@@ -114,19 +208,15 @@ export default function CompanyPage() {
       <>
         <HeaderBar
           title="Company Settings"
-          icon={<Building2 className="w-5 h-5" />}
+          icon={<User className="w-6 h-6" />}
         />
-        <main className="flex-1 overflow-auto bg-gray-50 p-6">
-          <div className="max-w-4xl mx-auto space-y-6">
-            <Card>
-              <CardContent className="p-8">
-                <div className="text-center text-red-600">
-                  <p>Error: {error}</p>
-                </div>
-              </CardContent>
-            </Card>
-          </div>
-        </main>
+        <div className="space-y-6 p-6">
+          <SectionCard title="Error">
+            <div className="text-center text-red-600 p-8">
+              <p>Error: {error}</p>
+            </div>
+          </SectionCard>
+        </div>
       </>
     );
   }
@@ -136,81 +226,139 @@ export default function CompanyPage() {
       <>
         <HeaderBar
           title="Company Settings"
-          icon={<Building2 className="w-5 h-5" />}
+          icon={<User className="w-6 h-6" />}
         />
-        <main className="flex-1 overflow-auto bg-gray-50 p-6">
-          <div className="max-w-4xl mx-auto space-y-6">
-            <Card>
-              <CardContent className="p-8">
-                <div className="text-center text-gray-600">
-                  <p>No company data available</p>
-                </div>
-              </CardContent>
-            </Card>
-          </div>
-        </main>
+        <div className="space-y-6 p-6">
+          <SectionCard title="No Data">
+            <div className="text-center text-gray-600 p-8">
+              <p>No company data available</p>
+            </div>
+          </SectionCard>
+        </div>
       </>
     );
   }
 
   const data = companyData.data;
 
+  // Form submit handler
+  const onSubmit = async (formData: CompanyFormData) => {
+    try {
+      // Here you would typically send the data to your API
+      // eslint-disable-next-line no-console
+      console.log("Form submitted:", formData);
+      // Add API call to save the form data
+    } catch (err) {
+      // eslint-disable-next-line no-console
+      console.error("Error saving form:", err);
+    }
+  };
+
   return (
     <>
-      {/* ✅ Fixed Header */}
-      <HeaderBar
-        title="Company Settings"
-        icon={<Building2 className="w-5 h-5" />}
-      />
+      <HeaderBar title="Company Settings" icon={<User className="w-6 h-6" />} />
+      <div className="space-y-6 p-6">
+        <SectionCard title={`Welcome ${data.name}`}>
+          <form onSubmit={handleSubmit(onSubmit)}>
+            {/* Mobile-first responsive grid */}
+            <div className="flex flex-col lg:flex-row gap-6">
+              {/* Profile Image Upload - Top on mobile, left on desktop */}
+              <div className="flex-shrink-0">
+                <Label
+                  htmlFor="profile-image"
+                  className="block text-sm font-medium mb-2"
+                >
+                  Company Logo
+                </Label>
+                <div className="relative">
+                  <div className="w-32 h-32 border-2 border-dashed border-muted-foreground rounded-lg flex items-center justify-center">
+                    {profileImage ? (
+                      <>
+                        {/* eslint-disable-next-line @next/next/no-img-element */}
+                        <img
+                          src={profileImage}
+                          alt="Company Logo"
+                          width={128}
+                          height={128}
+                          className="w-full h-full object-cover rounded-lg"
+                          onError={e => {
+                            e.currentTarget.style.display = "none";
+                            const sibling = e.currentTarget
+                              .nextElementSibling as HTMLElement;
+                            if (sibling) {
+                              sibling.style.setProperty("display", "flex");
+                            }
+                          }}
+                        />
+                      </>
+                    ) : null}
+                    <div
+                      className="text-center"
+                      style={{
+                        display: profileImage ? "none" : "flex",
+                        flexDirection: "column",
+                        alignItems: "center",
+                      }}
+                    >
+                      <User className="mx-auto h-8 w-8 text-muted-foreground mb-2" />
+                      <span className="text-xs text-muted-foreground">
+                        {profileImage ? "Image Error" : "No Logo"}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              </div>
 
-      <main className="flex-1 overflow-auto bg-gray-50 p-6">
-        <div className="max-w-4xl mx-auto space-y-6">
-          {/* Company Info Card */}
-          <Card>
-            <CardHeader>
-              <CardTitle>Company Page (English)</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <p className="mb-4">
-                Welcome to our company! Here you can add company information,
-                team members, or any content you like.
-              </p>
-
-              {/* Form Fields - Mobile-first stacked, responsive */}
+              {/* Form Fields - Mobile-first stacked, then responsive */}
               <div className="flex-1 space-y-4">
-                {/* Company Name & Website */}
+                {/* First Line - Company Name & Website */}
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div className="space-y-2">
                     <Label htmlFor="company-name">Company Name</Label>
                     <Input
                       id="company-name"
-                      value={data.name}
-                      readOnly
-                      className="bg-muted"
+                      {...register("name")}
+                      placeholder={data.name}
+                      className="border border-gray-300 focus:border-blue-500"
                     />
+                    {errors.name && (
+                      <p className="text-sm text-red-600">
+                        {errors.name.message}
+                      </p>
+                    )}
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="website">Website Link</Label>
                     <Input
                       id="website"
-                      value={data.website || ""}
+                      {...register("website")}
                       type="url"
-                      readOnly
-                      className="bg-muted"
+                      placeholder={data.website || "No website available"}
+                      className="border border-gray-300 focus:border-blue-500"
                     />
+                    {errors.website && (
+                      <p className="text-sm text-red-600">
+                        {errors.website.message}
+                      </p>
+                    )}
                   </div>
                 </div>
 
-                {/* Tax ID/GST & Business Type */}
+                {/* Second Line - Tax ID/GST & Business Type */}
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div className="space-y-2">
                     <Label htmlFor="tax-id">Tax ID/GST</Label>
                     <Input
                       id="tax-id"
-                      value={data.addressId.gst}
-                      readOnly
-                      className="bg-muted"
+                      {...register("gst")}
+                      placeholder={data.addressId.gst}
+                      className="border border-gray-300 focus:border-blue-500"
                     />
+                    {errors.gst && (
+                      <p className="text-sm text-red-600">
+                        {errors.gst.message}
+                      </p>
+                    )}
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="business-type">Business Type</Label>
@@ -218,12 +366,12 @@ export default function CompanyPage() {
                       id="business-type"
                       value={data.businessTypeId.name}
                       readOnly
-                      className="bg-muted"
+                      className="bg-muted border border-gray-300"
                     />
                   </div>
                 </div>
 
-                {/* Account Type & Default Currency */}
+                {/* Third Line - Account Type & Default Currency */}
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div className="space-y-2">
                     <Label htmlFor="account-type">Account Type</Label>
@@ -231,7 +379,7 @@ export default function CompanyPage() {
                       id="account-type"
                       value={data.accountTypeId.name}
                       readOnly
-                      className="bg-muted"
+                      className="bg-muted border border-gray-300"
                     />
                   </div>
                   <div className="space-y-2">
@@ -240,24 +388,29 @@ export default function CompanyPage() {
                       id="default-currency"
                       value={data.currencyId.currencyCode}
                       readOnly
-                      className="bg-muted"
+                      className="bg-muted border border-gray-300"
                     />
                   </div>
                 </div>
 
-                {/* Sub Industry & Industry Description */}
+                {/* Fourth Line - Sub Industry & Industry Description */}
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
                   <div className="space-y-2">
                     <Label htmlFor="sub-industry">Sub Industry</Label>
                     <Input
                       id="sub-industry"
-                      value={data.subIndustryId.industryId.name}
-                      readOnly
-                      className="bg-muted"
+                      {...register("subIndustry")}
+                      placeholder={data.subIndustryId.industryId.name}
+                      className="border border-gray-300 focus:border-blue-500"
                     />
+                    {errors.subIndustry && (
+                      <p className="text-sm text-red-600">
+                        {errors.subIndustry.message}
+                      </p>
+                    )}
                   </div>
                   <div className="space-y-2">
-                    <Label className="text-sm font-medium">
+                    <Label className="text-sm font-bold">
                       Industry Description: {data.subIndustryId.industryId.name}
                     </Label>
                     <p className="text-sm text-muted-foreground mt-2">
@@ -266,10 +419,10 @@ export default function CompanyPage() {
                   </div>
                 </div>
               </div>
-            </CardContent>
-          </Card>
-        </div>
-      </main>
+            </div>
+          </form>
+        </SectionCard>
+      </div>
     </>
   );
 }
