@@ -49,4 +49,40 @@ export class UserApiService {
       return null;
     }
   }
+
+  public async fetchCompanyDetails(
+    companyId: string,
+    tenantCode: string,
+    accessToken: string
+  ): Promise<unknown> {
+    const url = `${this.baseUrl}/companys/${companyId}`;
+
+    const response = await fetch(url, {
+      method: "GET",
+      headers: {
+        "x-tenant": tenantCode,
+        Authorization: `Bearer ${accessToken}`,
+        "Content-Type": "application/json",
+      },
+      cache: "no-store",
+    });
+
+    if (!response.ok) {
+      throw new Error(`Failed to fetch company details: ${response.status}`);
+    }
+
+    return response.json();
+  }
+
+  public async fetchCompanyDetailsServerSide(
+    companyId: string,
+    tenantCode: string,
+    accessToken: string
+  ): Promise<unknown | null> {
+    try {
+      return await this.fetchCompanyDetails(companyId, tenantCode, accessToken);
+    } catch {
+      return null;
+    }
+  }
 }

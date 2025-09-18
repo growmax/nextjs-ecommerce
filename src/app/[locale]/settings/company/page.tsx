@@ -3,12 +3,157 @@
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
-import { Building2 } from "lucide-react";
-import { ProfileData } from "../../../../../dummyData";
+import { Building2, Loader2 } from "lucide-react";
 import HeaderBar from "@/app/Components/reusable/nameconversion/PageHeader";
+import { useEffect, useState } from "react";
+import { AuthStorage } from "@/lib/auth";
+import { JWTService } from "@/lib/services/JWTService";
+
+interface CompanyData {
+  data: {
+    id: number;
+    name: string;
+    website?: string;
+    addressId: {
+      gst: string;
+    };
+    businessTypeId: {
+      name: string;
+    };
+    accountTypeId: {
+      name: string;
+    };
+    currencyId: {
+      currencyCode: string;
+    };
+    subIndustryId: {
+      description: string;
+      industryId: {
+        name: string;
+      };
+    };
+  };
+}
 
 export default function CompanyPage() {
-  const data = ProfileData.data;
+  const [companyData, setCompanyData] = useState<CompanyData | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    const fetchCompanyData = async () => {
+      try {
+        setLoading(true);
+        setError(null);
+
+        // Get token from storage
+        const accessToken = AuthStorage.getAccessToken();
+        if (!accessToken) {
+          setError("No access token found");
+          return;
+        }
+
+        // Decode JWT to get company ID and tenant
+        const jwtService = JWTService.getInstance();
+        const payload = jwtService.decodeToken(accessToken);
+        if (!payload || !payload.companyId || !payload.iss) {
+          setError("Invalid token or missing company data");
+          return;
+        }
+
+        // Fetch company data from API
+        const response = await fetch(`/api/company/${payload.companyId}`, {
+          headers: {
+            "x-tenant": payload.iss,
+            Authorization: `Bearer ${accessToken}`,
+            "Content-Type": "application/json",
+          },
+        });
+
+        if (!response.ok) {
+          throw new Error(`Failed to fetch company data: ${response.status}`);
+        }
+
+        const data = await response.json();
+        setCompanyData(data);
+      } catch (err) {
+        setError(
+          err instanceof Error ? err.message : "Failed to fetch company data"
+        );
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchCompanyData();
+  }, []);
+
+  if (loading) {
+    return (
+      <>
+        <HeaderBar
+          title="Company Settings"
+          icon={<Building2 className="w-5 h-5" />}
+        />
+        <main className="flex-1 overflow-auto bg-gray-50 p-6">
+          <div className="max-w-4xl mx-auto space-y-6">
+            <Card>
+              <CardContent className="flex items-center justify-center p-8">
+                <Loader2 className="h-8 w-8 animate-spin" />
+                <span className="ml-2">Loading company data...</span>
+              </CardContent>
+            </Card>
+          </div>
+        </main>
+      </>
+    );
+  }
+
+  if (error) {
+    return (
+      <>
+        <HeaderBar
+          title="Company Settings"
+          icon={<Building2 className="w-5 h-5" />}
+        />
+        <main className="flex-1 overflow-auto bg-gray-50 p-6">
+          <div className="max-w-4xl mx-auto space-y-6">
+            <Card>
+              <CardContent className="p-8">
+                <div className="text-center text-red-600">
+                  <p>Error: {error}</p>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        </main>
+      </>
+    );
+  }
+
+  if (!companyData) {
+    return (
+      <>
+        <HeaderBar
+          title="Company Settings"
+          icon={<Building2 className="w-5 h-5" />}
+        />
+        <main className="flex-1 overflow-auto bg-gray-50 p-6">
+          <div className="max-w-4xl mx-auto space-y-6">
+            <Card>
+              <CardContent className="p-8">
+                <div className="text-center text-gray-600">
+                  <p>No company data available</p>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        </main>
+      </>
+    );
+  }
+
+  const data = companyData.data;
 
   return (
     <>
