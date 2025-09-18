@@ -1,9 +1,14 @@
 "use client";
 
-import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import * as z from "zod";
 import { Button } from "@/components/ui/button";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import {
   Form,
   FormControl,
@@ -13,19 +18,14 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardFooter,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
-import { useState, useEffect, useRef } from "react";
-import { Eye, EyeOff, Edit } from "lucide-react";
-import { toast, Toaster } from "sonner";
 import { useAuth } from "@/contexts/AuthContext";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { Edit, Eye, EyeOff } from "lucide-react";
 import { useTranslations } from "next-intl";
+import { useEffect, useRef, useState } from "react";
+import { useForm } from "react-hook-form";
+import { toast, Toaster } from "sonner";
+import * as z from "zod";
 
 const createLoginSchema = (t: (key: string) => string) =>
   z.object({
@@ -88,6 +88,7 @@ export default function LoginPage() {
 
       return () => clearTimeout(timer);
     }
+    return undefined;
   }, [showPasswordField, currentUsername]);
 
   const onSubmit = async (data: LoginFormData) => {
@@ -274,36 +275,38 @@ export default function LoginPage() {
               <FormField
                 control={form.control}
                 name="emailOrPhone"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>{t("auth.emailPhone")}</FormLabel>
-                    <FormControl>
-                      <div className="relative">
-                        <Input
-                          ref={emailInputRef}
-                          placeholder={t("auth.emailPlaceholder")}
-                          {...field}
-                          disabled={isLoading || showPasswordField}
-                          readOnly={showPasswordField}
-                          autoFocus={!showPasswordField}
-                        />
-                        {showPasswordField && (
-                          <Button
-                            type="button"
-                            variant="ghost"
-                            size="sm"
-                            className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent"
-                            onClick={handleChangeEmail}
-                            disabled={isLoading}
-                          >
-                            <Edit className="h-4 w-4" />
-                          </Button>
-                        )}
-                      </div>
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
+                render={({ field }) => {
+                  const { ...fieldProps } = field;
+                  return (
+                    <FormItem>
+                      <FormLabel>{t("auth.emailPhone")}</FormLabel>
+                      <FormControl>
+                        <div className="relative">
+                          <Input
+                            placeholder={t("auth.emailPlaceholder")}
+                            {...fieldProps}
+                            disabled={isLoading || showPasswordField}
+                            readOnly={showPasswordField}
+                            autoFocus={!showPasswordField}
+                          />
+                          {showPasswordField && (
+                            <Button
+                              type="button"
+                              variant="ghost"
+                              size="sm"
+                              className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent"
+                              onClick={handleChangeEmail}
+                              disabled={isLoading}
+                            >
+                              <Edit className="h-4 w-4" />
+                            </Button>
+                          )}
+                        </div>
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  );
+                }}
               />
 
               {showPasswordField && (

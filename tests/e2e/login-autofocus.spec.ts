@@ -1,4 +1,4 @@
-import { test, expect } from "@playwright/test";
+import { expect, test } from "@playwright/test";
 
 test.describe("Login Page Auto-focus", () => {
   test("should auto-focus email input field on page load", async ({ page }) => {
@@ -23,26 +23,6 @@ test.describe("Login Page Auto-focus", () => {
 
     // Verify the input exists
     await expect(emailInput).toBeVisible();
-
-    // Debug: Check what element is currently focused BEFORE manual focus
-    const _activeElementBefore = await page.evaluate(() => {
-      const active = document.activeElement;
-      return {
-        tagName: active?.tagName,
-        name: active?.getAttribute("name"),
-        placeholder: active?.getAttribute("placeholder"),
-        className: `${active?.className?.substring(0, 50)}...`, // Truncate long className
-        id: active?.id,
-      };
-    });
-
-    // Currently focused element BEFORE manual focus: _activeElementBefore
-
-    // Check if auto-focus worked
-    const _isAutoFocused = await emailInput.evaluate(
-      el => document.activeElement === el
-    );
-    // Is auto-focused: _isAutoFocused
 
     // For now, expect auto-focus to work (this should pass if our fix works)
     await expect(emailInput).toBeFocused();
