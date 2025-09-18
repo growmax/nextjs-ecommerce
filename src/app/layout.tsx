@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { ABeeZee, Alegreya_SC, JetBrains_Mono } from "next/font/google";
 import "./globals.css";
+import { ServerThemeAPI } from "@/lib/theme-server";
 
 // Load TweakCN Custom Fonts - Updated with ABeeZee
 const abeeZee = ABeeZee({
@@ -29,15 +30,30 @@ export const metadata: Metadata = {
   description: "Multi-tenant e-commerce platform",
 };
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  // Fetch theme CSS on the server
+  const themeResult = await ServerThemeAPI.fetchThemeCSS();
+  const themeCSS = themeResult.success
+    ? themeResult.css
+    : ServerThemeAPI.getFallbackCSS();
+
   return (
     <html
       className={`${abeeZee.variable} ${alegreyaSC.variable} ${jetBrainsMono.variable}`}
     >
+      <head>
+        {/* Inject theme CSS directly into HTML head for perfect SSR */}
+        <style
+          id="ssr-theme-styles"
+          dangerouslySetInnerHTML={{
+            __html: themeCSS,
+          }}
+        />
+      </head>
       <body
         className={`${abeeZee.className} antialiased`}
         suppressHydrationWarning={true}
