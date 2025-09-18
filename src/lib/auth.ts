@@ -99,4 +99,59 @@ export class AuthStorage {
   static isAuthenticated(): boolean {
     return !!this.getAccessToken() && !this.isTokenExpired();
   }
+
+  static async refreshToken(): Promise<{
+    accessToken: string;
+    refreshToken?: string;
+    expiresIn?: number;
+  } | null> {
+    const refreshToken = this.getRefreshToken();
+    if (!refreshToken) {
+      return null;
+    }
+
+    try {
+      const response = await fetch(
+        `${process.env.NEXT_PUBLIC_API_BASE_URL}/auth/refresh`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ refreshToken }),
+        }
+      );
+
+      if (!response.ok) {
+        // Refresh token is invalid, clear all auth data
+        this.clearAuth();
+        return null;
+      }
+
+      const tokens = await response.json();
+      this.setTokens(tokens);
+      return tokens;
+    } catch {
+      // Network error or other issues, clear auth data
+      this.clearAuth();
+      return null;
+    }
+  }
+
+  static async getValidAccessToken(): Promise<string | null> {
+    const token = this.getAccessToken();
+
+    if (!token) {
+      return null;
+    }
+
+    // If token is not expired, return it
+    if (!this.isTokenExpired()) {
+      return token;
+    }
+
+    // Try to refresh the token
+    const refreshed = await this.refreshToken();
+    return refreshed ? refreshed.accessToken : null;
+  }
 }

@@ -23,13 +23,21 @@ export async function GET(
     // Extract access token from authorization header
     const accessToken = authorization.replace("Bearer ", "");
 
-    // Decode JWT to get the actual company ID
+    // Decode JWT to get the actual company ID and check expiration
     const jwtService = JWTService.getInstance();
     const payload = jwtService.decodeToken(accessToken);
 
     if (!payload || !payload.companyId) {
       return NextResponse.json(
         { error: "Invalid token or missing company ID" },
+        { status: 401 }
+      );
+    }
+
+    // Check if token is expired
+    if (jwtService.isTokenExpired(accessToken)) {
+      return NextResponse.json(
+        { error: "Access token has expired. Please refresh your session." },
         { status: 401 }
       );
     }
