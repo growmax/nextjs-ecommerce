@@ -1,5 +1,6 @@
 "use client";
 
+import { CenteredLayout } from "@/components/layout/PageContent";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -26,7 +27,6 @@ import { useEffect, useRef, useState } from "react";
 import { useForm } from "react-hook-form";
 import { toast, Toaster } from "sonner";
 import * as z from "zod";
-import { CenteredLayout } from "@/components/layout/PageContent";
 
 const createLoginSchema = (t: (key: string) => string) =>
   z.object({
@@ -66,6 +66,7 @@ export default function LoginPage() {
   const [currentUsername, setCurrentUsername] = useState("");
   const { login } = useAuth();
   const emailInputRef = useRef<HTMLInputElement>(null);
+  const passwordInputRef = useRef<HTMLInputElement>(null);
 
   const loginSchema = createLoginSchema(t);
 
@@ -91,6 +92,22 @@ export default function LoginPage() {
     }
     return undefined;
   }, [showPasswordField, currentUsername]);
+
+  // Auto-focus password input when password field appears
+  useEffect(() => {
+    if (showPasswordField) {
+      const timer = setTimeout(() => {
+        if (passwordInputRef.current) {
+          passwordInputRef.current.focus();
+        }
+      }, 100);
+
+      return () => clearTimeout(timer);
+    }
+
+    // Return undefined for the else case
+    return undefined;
+  }, [showPasswordField]);
 
   const onSubmit = async (data: LoginFormData) => {
     setIsLoading(true);
@@ -315,35 +332,39 @@ export default function LoginPage() {
                   <FormField
                     control={form.control}
                     name="password"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>{t("auth.password")}</FormLabel>
-                        <FormControl>
-                          <div className="relative">
-                            <Input
-                              type={showPassword ? "text" : "password"}
-                              placeholder={t("auth.passwordPlaceholder")}
-                              {...field}
-                              disabled={isLoading}
-                            />
-                            <Button
-                              type="button"
-                              variant="ghost"
-                              size="sm"
-                              className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent"
-                              onClick={() => setShowPassword(!showPassword)}
-                            >
-                              {showPassword ? (
-                                <EyeOff className="h-4 w-4" />
-                              ) : (
-                                <Eye className="h-4 w-4" />
-                              )}
-                            </Button>
-                          </div>
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
+                    render={({ field }) => {
+                      const { ...fieldProps } = field;
+                      return (
+                        <FormItem>
+                          <FormLabel>{t("auth.password")}</FormLabel>
+                          <FormControl>
+                            <div className="relative">
+                              <Input
+                                type={showPassword ? "text" : "password"}
+                                placeholder={t("auth.passwordPlaceholder")}
+                                {...fieldProps}
+                                ref={passwordInputRef}
+                                disabled={isLoading}
+                              />
+                              <Button
+                                type="button"
+                                variant="ghost"
+                                size="sm"
+                                className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent"
+                                onClick={() => setShowPassword(!showPassword)}
+                              >
+                                {showPassword ? (
+                                  <EyeOff className="h-4 w-4" />
+                                ) : (
+                                  <Eye className="h-4 w-4" />
+                                )}
+                              </Button>
+                            </div>
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      );
+                    }}
                   />
                 )}
               </CardContent>

@@ -16,7 +16,7 @@ export default function NavBar() {
   return (
     <>
       {/* Mobile-First Top Navigation */}
-      <nav className="border-b bg-background px-3 py-2 sm:px-4 sm:py-3">
+      <nav className="bg-background px-3 py-2 sm:px-4 sm:py-3">
         {/* Mobile Layout: Stack search below on small screens */}
         <div className="flex flex-col gap-3 sm:hidden">
           {/* Mobile Top Row */}
