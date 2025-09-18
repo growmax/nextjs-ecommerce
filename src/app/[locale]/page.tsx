@@ -1,16 +1,15 @@
 "use client";
 
-import { useTranslations } from "next-intl";
+import MenubarDemo from "@/components/menu";
 import { ButtonDemo } from "@/components/sample/Button";
 import TabsDemo from "@/components/sample/TabButton";
 import { AccordionDemo } from "@/components/sample/accordion";
-import Sonner from "@/components/sample/sonner";
 import { CardDemo } from "@/components/sample/card_template";
-import SearchInput from "@/components/sample/search_box";
-import MenubarDemo from "@/components/menu";
 import { CarouselDemo } from "@/components/sample/media_card";
-import { ThemeTestComponent } from "@/components/sample/theme-test";
 import { ResponsiveTestComponent } from "@/components/sample/responsive-test";
+import SearchInput from "@/components/sample/search_box";
+import Sonner from "@/components/sample/sonner";
+import { useTranslations } from "next-intl";
 
 export default function Home() {
   const t = useTranslations();
@@ -116,18 +115,6 @@ export default function Home() {
           </div>
           <div className="container mx-auto px-4">
             <Sonner />
-          </div>
-        </section>
-
-        {/* TweakCN Theme Test */}
-        <section>
-          <div className="container mx-auto px-4">
-            <h3 className="mb-3 text-base font-medium sm:mb-4 sm:text-lg">
-              Theme Customization Test
-            </h3>
-          </div>
-          <div className="container mx-auto px-4">
-            <ThemeTestComponent />
           </div>
         </section>
 

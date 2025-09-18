@@ -21,8 +21,8 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { useState } from "react";
-import { Eye, EyeOff } from "lucide-react";
+import { useState, useEffect, useRef } from "react";
+import { Eye, EyeOff, Edit } from "lucide-react";
 import { toast, Toaster } from "sonner";
 import { useAuth } from "@/contexts/AuthContext";
 import { useTranslations } from "next-intl";
@@ -64,6 +64,7 @@ export default function LoginPage() {
   const [_userInfo, setUserInfo] = useState<UserInfo | null>(null);
   const [currentUsername, setCurrentUsername] = useState("");
   const { login } = useAuth();
+  const emailInputRef = useRef<HTMLInputElement>(null);
 
   const loginSchema = createLoginSchema(t);
 
@@ -74,6 +75,20 @@ export default function LoginPage() {
       password: "",
     },
   });
+
+  // Auto-focus email input when returning to email step (handled by autoFocus prop on initial load)
+  useEffect(() => {
+    if (!showPasswordField && currentUsername) {
+      // Only focus when returning from password step (currentUsername exists)
+      const timer = setTimeout(() => {
+        if (emailInputRef.current) {
+          emailInputRef.current.focus();
+        }
+      }, 100);
+
+      return () => clearTimeout(timer);
+    }
+  }, [showPasswordField, currentUsername]);
 
   const onSubmit = async (data: LoginFormData) => {
     setIsLoading(true);
@@ -227,6 +242,14 @@ export default function LoginPage() {
     }
   };
 
+  const handleChangeEmail = () => {
+    setShowPasswordField(false);
+    setUserInfo(null);
+    setCurrentUsername("");
+    form.setValue("password", "");
+    form.clearErrors();
+  };
+
   return (
     <div className="flex min-h-screen items-center justify-center bg-background">
       <Toaster richColors position="top-right" />
@@ -255,12 +278,28 @@ export default function LoginPage() {
                   <FormItem>
                     <FormLabel>{t("auth.emailPhone")}</FormLabel>
                     <FormControl>
-                      <Input
-                        placeholder={t("auth.emailPlaceholder")}
-                        {...field}
-                        disabled={isLoading || showPasswordField}
-                        readOnly={showPasswordField}
-                      />
+                      <div className="relative">
+                        <Input
+                          ref={emailInputRef}
+                          placeholder={t("auth.emailPlaceholder")}
+                          {...field}
+                          disabled={isLoading || showPasswordField}
+                          readOnly={showPasswordField}
+                          autoFocus={!showPasswordField}
+                        />
+                        {showPasswordField && (
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="sm"
+                            className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent"
+                            onClick={handleChangeEmail}
+                            disabled={isLoading}
+                          >
+                            <Edit className="h-4 w-4" />
+                          </Button>
+                        )}
+                      </div>
                     </FormControl>
                     <FormMessage />
                   </FormItem>
