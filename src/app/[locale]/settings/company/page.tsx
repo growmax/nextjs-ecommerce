@@ -4,6 +4,15 @@ import HeaderBar from "@/app/Components/reusable/nameconversion/PageHeader";
 import SectionCard from "@/components/custom/SectionCard";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Button } from "@/components/ui/button";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 import {
   Select,
   SelectContent,
@@ -14,7 +23,7 @@ import {
 import { AuthStorage } from "@/lib/auth";
 import { JWTService } from "@/lib/services/JWTService";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Loader2, User } from "lucide-react";
+import { Loader2, User, Trash2 } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useForm, Controller } from "react-hook-form";
 import { z } from "zod";
@@ -493,6 +502,76 @@ export default function CompanyPage() {
               </div>
             </div>
           </form>
+        </SectionCard>
+
+        <SectionCard title="Address Information">
+          <div className="overflow-x-auto ">
+            <Table>
+              <TableHeader className="bg-accent">
+                <TableRow className="hover:bg-transparent">
+                  <TableHead className="w-12 text-center">Action</TableHead>
+                  <TableHead className="min-w-[200px]">Address</TableHead>
+                  <TableHead className="min-w-[120px]">Tax ID</TableHead>
+                  <TableHead className="min-w-[120px]">
+                    Contact Person
+                  </TableHead>
+                  <TableHead className="min-w-[120px]">Phone</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                <TableRow className="hover:bg-muted/50">
+                  <TableCell className="text-center">
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-8 w-8 text-red-500 hover:text-red-700 hover:bg-red-50"
+                      onClick={() => {
+                        // Handle delete action for first address
+                        // console.log("Delete address entry 1");
+                      }}
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
+                  </TableCell>
+                  <TableCell className="font-medium">
+                    <div className="space-y-1">
+                      <div>123 Business Street</div>
+                      <div>Suite 100</div>
+                      <div>New York, NY 10001</div>
+                    </div>
+                  </TableCell>
+                  <TableCell>TAX123456789</TableCell>
+                  <TableCell>John Doe</TableCell>
+                  <TableCell>+1 (555) 123-4567</TableCell>
+                </TableRow>
+                <TableRow className="hover:bg-muted/50">
+                  <TableCell className="text-center">
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-8 w-8 text-red-500 hover:text-red-700 hover:bg-red-50"
+                      onClick={() => {
+                        // Handle delete action for second address
+                        // console.log("Delete address entry 2");
+                      }}
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
+                  </TableCell>
+                  <TableCell className="font-medium">
+                    <div className="space-y-1">
+                      <div>456 Corporate Avenue</div>
+                      <div>Building B, Floor 3</div>
+                      <div>Los Angeles, CA 90210</div>
+                    </div>
+                  </TableCell>
+                  <TableCell>TAX987654321</TableCell>
+                  <TableCell>Jane Smith</TableCell>
+                  <TableCell>+1 (555) 987-6543</TableCell>
+                </TableRow>
+              </TableBody>
+            </Table>
+          </div>
         </SectionCard>
       </div>
     </>

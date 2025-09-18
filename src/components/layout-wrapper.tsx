@@ -12,16 +12,23 @@ interface LayoutWrapperProps {
 export default function LayoutWrapper({ children }: LayoutWrapperProps) {
   const pathname = usePathname();
 
-  // Hide navbar and footer on auth pages
+  // Hide navbar and footer on auth pages and settings pages
   const hideNavAndFooter = pathname === "/login" || pathname === "/register";
+  const hideFooterOnly = pathname.startsWith("/settings");
 
   return (
     <>
       {!hideNavAndFooter && <NavBar />}
-      <main className={cn("min-h-screen", !hideNavAndFooter && "pt-4 pb-8")}>
+      <main
+        className={cn(
+          "min-h-screen",
+          !hideNavAndFooter && "pt-4",
+          !(hideNavAndFooter || hideFooterOnly) && "pb-8"
+        )}
+      >
         {children}
       </main>
-      {!hideNavAndFooter && <Footer />}
+      {!hideNavAndFooter && !hideFooterOnly && <Footer />}
     </>
   );
 }
