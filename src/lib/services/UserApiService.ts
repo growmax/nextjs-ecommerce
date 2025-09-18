@@ -57,6 +57,18 @@ export class UserApiService {
   ): Promise<unknown> {
     const url = `${this.baseUrl}/companys/${companyId}`;
 
+    // Log request details in development
+    if (process.env.NODE_ENV === "development") {
+      // eslint-disable-next-line no-console
+      console.log("Fetching company data:", {
+        url,
+        tenantCode,
+        companyId,
+        baseUrl: this.baseUrl,
+        apiBaseUrl: process.env.API_BASE_URL,
+      });
+    }
+
     const response = await fetch(url, {
       method: "GET",
       headers: {
@@ -68,7 +80,10 @@ export class UserApiService {
     });
 
     if (!response.ok) {
-      throw new Error(`Failed to fetch company details: ${response.status}`);
+      const errorText = await response.text();
+      throw new Error(
+        `Failed to fetch company details: ${response.status} - ${errorText}`
+      );
     }
 
     return response.json();

@@ -1,12 +1,13 @@
 import { NextRequest, NextResponse } from "next/server";
 import { UserApiService } from "@/lib/services/UserApiService";
+import { JWTService } from "@/lib/services/JWTService";
 
 export async function GET(
   request: NextRequest,
   { params }: { params: Promise<{ companyId: string }> }
 ) {
   try {
-    const { companyId } = await params;
+    const { companyId: requestedCompanyId } = await params;
 
     // Extract headers from request
     const tenantCode = request.headers.get("x-tenant");
@@ -21,6 +22,31 @@ export async function GET(
 
     // Extract access token from authorization header
     const accessToken = authorization.replace("Bearer ", "");
+
+    // Decode JWT to get the actual company ID
+    const jwtService = JWTService.getInstance();
+    const payload = jwtService.decodeToken(accessToken);
+
+    if (!payload || !payload.companyId) {
+      return NextResponse.json(
+        { error: "Invalid token or missing company ID" },
+        { status: 401 }
+      );
+    }
+
+    // Use company ID from token (not from URL parameter)
+    const companyId = payload.companyId.toString();
+
+    // Log for debugging in development
+    if (process.env.NODE_ENV === "development") {
+      // eslint-disable-next-line no-console
+      console.log("Company API Request:", {
+        requestedCompanyId,
+        tokenCompanyId: companyId,
+        tenantCode,
+        accessToken: `${accessToken.substring(0, 20)}...`,
+      });
+    }
 
     // Use service layer to fetch company data
     const userApiService = UserApiService.getInstance();
@@ -39,9 +65,18 @@ export async function GET(
         Expires: "0",
       },
     });
-  } catch {
+  } catch (error) {
+    // Log the error for debugging (only in development)
+    if (process.env.NODE_ENV === "development") {
+      // eslint-disable-next-line no-console
+      console.error("Company API Error:", error);
+    }
+
     return NextResponse.json(
-      { error: "Failed to fetch company data" },
+      {
+        error: "Failed to fetch company data",
+        details: error instanceof Error ? error.message : "Unknown error",
+      },
       { status: 500 }
     );
   }
