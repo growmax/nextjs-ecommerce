@@ -3,6 +3,7 @@ import type { NextRequest } from "next/server";
 import createIntlMiddleware from "next-intl/middleware";
 import { locales, defaultLocale } from "./i18n/config";
 import { extractTenantFromHost } from "./lib/tenant";
+import { SessionValidator } from "./lib/services/SessionValidator";
 
 // Routes that require authentication
 const protectedRoutes = ["/dashboard", "/orders", "/profile", "/settings"];
@@ -63,7 +64,11 @@ class AuthMiddleware {
 
   private isAuthenticated(): boolean {
     const token = this.request.cookies.get("access_token");
-    return !!token?.value;
+    if (!token?.value) return false;
+
+    const validator = SessionValidator.getInstance();
+    const validation = validator.validateToken(token.value);
+    return validation.isValid;
   }
 
   private getLocale(): string {

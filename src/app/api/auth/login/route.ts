@@ -31,14 +31,19 @@ export async function POST(request: NextRequest) {
       },
     });
 
-    // Set secure cookie if login successful
+    // Set secure cookies if login successful
     let accessToken = null;
+    let refreshToken = null;
+
     if (data.accessToken) {
       accessToken = data.accessToken;
+      refreshToken = data.refreshToken;
     } else if (data.tokens && data.tokens.accessToken) {
       accessToken = data.tokens.accessToken;
+      refreshToken = data.tokens.refreshToken;
     } else if (data.data && data.data.accessToken) {
       accessToken = data.data.accessToken;
+      refreshToken = data.data.refreshToken;
     }
 
     if (response.ok && accessToken) {
@@ -49,6 +54,16 @@ export async function POST(request: NextRequest) {
         maxAge: 7 * 24 * 60 * 60, // 7 days
         path: "/",
       });
+
+      if (refreshToken) {
+        nextResponse.cookies.set("refresh_token", refreshToken, {
+          httpOnly: true,
+          secure: process.env.NODE_ENV === "production",
+          sameSite: "strict",
+          maxAge: 30 * 24 * 60 * 60, // 30 days
+          path: "/",
+        });
+      }
     }
 
     return nextResponse;

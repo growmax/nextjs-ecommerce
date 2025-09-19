@@ -16,7 +16,6 @@ interface UserData {
 }
 
 const AUTH_TOKEN_KEY = "access_token";
-const REFRESH_TOKEN_KEY = "refresh-token";
 const USER_DATA_KEY = "user-data";
 
 export class AuthStorage {
@@ -24,35 +23,23 @@ export class AuthStorage {
     if (typeof window !== "undefined") {
       localStorage.setItem(AUTH_TOKEN_KEY, tokens.accessToken);
 
-      if (tokens.refreshToken) {
-        localStorage.setItem(REFRESH_TOKEN_KEY, tokens.refreshToken);
-      }
-
       if (tokens.expiresIn) {
         const expiryTime = new Date().getTime() + tokens.expiresIn * 1000;
         localStorage.setItem("token-expiry", expiryTime.toString());
       }
 
-      // Set cookie for middleware to check (with security flags)
+      // Set client-side cookie for synchronization (non-HttpOnly for client access)
       const isProduction = process.env.NODE_ENV === "production";
       const cookieValue = encodeURIComponent(tokens.accessToken);
       const maxAge = tokens.expiresIn || 86400;
 
-      // Set single cookie for consistency
-      document.cookie = `access_token=${cookieValue}; path=/; max-age=${maxAge}; SameSite=Strict${isProduction ? "; Secure" : ""}`;
+      document.cookie = `access_token_client=${cookieValue}; path=/; max-age=${maxAge}; SameSite=Strict${isProduction ? "; Secure" : ""}`;
     }
   }
 
   static getAccessToken(): string | null {
     if (typeof window !== "undefined") {
       return localStorage.getItem(AUTH_TOKEN_KEY);
-    }
-    return null;
-  }
-
-  static getRefreshToken(): string | null {
-    if (typeof window !== "undefined") {
-      return localStorage.getItem(REFRESH_TOKEN_KEY);
     }
     return null;
   }
@@ -79,11 +66,10 @@ export class AuthStorage {
   static clearAuth(): void {
     if (typeof window !== "undefined") {
       localStorage.removeItem(AUTH_TOKEN_KEY);
-      localStorage.removeItem(REFRESH_TOKEN_KEY);
       localStorage.removeItem(USER_DATA_KEY);
       localStorage.removeItem("token-expiry");
 
-      // Clear all auth cookies with all security attributes
+      // Clear auth cookie with all security attributes
       const isProduction = process.env.NODE_ENV === "production";
       const secureFlag = isProduction ? "; Secure" : "";
 
@@ -114,22 +100,14 @@ export class AuthStorage {
     refreshToken?: string;
     expiresIn?: number;
   } | null> {
-    const refreshToken = this.getRefreshToken();
-    if (!refreshToken) {
-      return null;
-    }
-
     try {
-      const response = await fetch(
-        `${process.env.NEXT_PUBLIC_API_BASE_URL}/auth/refresh`,
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({ refreshToken }),
-        }
-      );
+      const response = await fetch("/api/auth/refresh", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        credentials: "include", // Include HttpOnly cookies
+      });
 
       if (!response.ok) {
         // Refresh token is invalid, clear all auth data
@@ -138,7 +116,17 @@ export class AuthStorage {
       }
 
       const tokens = await response.json();
-      this.setTokens(tokens);
+
+      // Update localStorage with new tokens
+      if (tokens.accessToken) {
+        localStorage.setItem(AUTH_TOKEN_KEY, tokens.accessToken);
+
+        if (tokens.expiresIn) {
+          const expiryTime = new Date().getTime() + tokens.expiresIn * 1000;
+          localStorage.setItem("token-expiry", expiryTime.toString());
+        }
+      }
+
       return tokens;
     } catch {
       // Network error or other issues, clear auth data

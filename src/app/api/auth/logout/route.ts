@@ -22,7 +22,9 @@ export async function POST(request: NextRequest) {
     const response = await fetch("https://api.myapptino.com/auth/auth/logout", {
       method: "POST",
       headers: {
-        origin: "schwingstetter.myapptino.com",
+        origin:
+          request.headers.get("x-tenant-origin") ||
+          process.env.DEFAULT_TENANT_ORIGIN!,
         "Content-Type": "application/json",
         Authorization: `Bearer ${currentToken.value}`,
         "Cache-Control": "no-cache, no-store, must-revalidate",
@@ -65,7 +67,17 @@ export async function POST(request: NextRequest) {
         expires: new Date(0),
       });
 
-      // Clear any other auth-related cookies
+      // Clear refresh token cookie
+      nextResponse.cookies.set("refresh_token", "", {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === "production",
+        sameSite: "strict",
+        maxAge: 0,
+        path: "/",
+        expires: new Date(0),
+      });
+
+      // Clear legacy auth-token if exists
       nextResponse.cookies.set("auth-token", "", {
         httpOnly: true,
         secure: process.env.NODE_ENV === "production",
