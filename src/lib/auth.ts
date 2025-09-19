@@ -60,6 +60,11 @@ export class AuthStorage {
   static setUserData(userData: UserData): void {
     if (typeof window !== "undefined") {
       localStorage.setItem(USER_DATA_KEY, JSON.stringify(userData));
+
+      // Also set user data cookie for server-side access
+      const isProduction = process.env.NODE_ENV === "production";
+      const userDataString = encodeURIComponent(JSON.stringify(userData));
+      document.cookie = `user_data=${userDataString}; path=/; max-age=604800; SameSite=Strict${isProduction ? "; Secure" : ""}`;
     }
   }
 
@@ -78,11 +83,15 @@ export class AuthStorage {
       localStorage.removeItem(USER_DATA_KEY);
       localStorage.removeItem("token-expiry");
 
-      // Clear auth cookie with all security attributes
+      // Clear all auth cookies with all security attributes
       const isProduction = process.env.NODE_ENV === "production";
-      document.cookie = `access_token=; path=/; expires=Thu, 01 Jan 1970 00:00:00 UTC; SameSite=Strict${isProduction ? "; Secure" : ""}`;
+      const secureFlag = isProduction ? "; Secure" : "";
+
+      document.cookie = `access_token=; path=/; expires=Thu, 01 Jan 1970 00:00:00 UTC; SameSite=Strict${secureFlag}`;
+      document.cookie = `user_data=; path=/; expires=Thu, 01 Jan 1970 00:00:00 UTC; SameSite=Strict${secureFlag}`;
+      document.cookie = `refresh_token=; path=/; expires=Thu, 01 Jan 1970 00:00:00 UTC; SameSite=Strict${secureFlag}`;
       // Also clear legacy auth-token if it exists
-      document.cookie = `auth-token=; path=/; expires=Thu, 01 Jan 1970 00:00:00 UTC; SameSite=Strict${isProduction ? "; Secure" : ""}`;
+      document.cookie = `auth-token=; path=/; expires=Thu, 01 Jan 1970 00:00:00 UTC; SameSite=Strict${secureFlag}`;
     }
   }
 

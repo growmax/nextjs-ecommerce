@@ -1,6 +1,7 @@
-import { GlobalLoaderWrapper } from "@/components/ui/global-loader-wrapper";
+import { GlobalLoaderWrapper } from "@/components/custom/global-loader-wrapper";
 import { LoadingProvider } from "@/contexts/LoadingContext";
 import { ServerThemeAPI } from "@/lib/theme-server";
+import { ServerAuth } from "@/lib/auth-server";
 import type { Metadata } from "next";
 import "./globals.css";
 
@@ -20,6 +21,9 @@ export default async function RootLayout({
     ? themeResult.css
     : ServerThemeAPI.getFallbackCSS();
 
+  // Get authentication state on the server
+  const authState = await ServerAuth.getAuthState();
+
   return (
     <html>
       <head>
@@ -30,6 +34,8 @@ export default async function RootLayout({
             __html: themeCSS,
           }}
         />
+        {/* Pass auth state to client via meta tags */}
+        <meta name="auth-state" content={JSON.stringify(authState)} />
       </head>
       <body suppressHydrationWarning={true}>
         <LoadingProvider>
