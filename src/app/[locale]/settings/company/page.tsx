@@ -26,6 +26,8 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { SaveCancelToolbar } from "@/components/custom/save-cancel-toolbar";
+import { toast } from "sonner";
 import { AuthStorage } from "@/lib/auth";
 import { JWTService } from "@/lib/services/JWTService";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -140,7 +142,7 @@ export default function CompanyPage() {
     register,
     handleSubmit,
     control,
-    formState: { errors },
+    formState: { errors, isDirty },
     reset,
   } = useForm<CompanyFormData>({
     resolver: zodResolver(companyFormSchema),
@@ -151,6 +153,8 @@ export default function CompanyPage() {
       subIndustry: "",
     },
   });
+
+  const [isSaving, setIsSaving] = useState(false);
 
   // Fetch sub-industries from API
   const fetchSubIndustries = async (currentCompanyData?: CompanyData) => {
@@ -505,19 +509,60 @@ export default function CompanyPage() {
   // Form submit handler
   const onSubmit = async (formData: CompanyFormData) => {
     try {
-      // Here you would typically send the data to your API
+      setIsSaving(true);
+
+      // Log the updated form data
       // eslint-disable-next-line no-console
-      console.log("Form submitted:", formData);
-      // Add API call to save the form data
+      console.log("=== UPDATED FORM DATA ===");
+      // eslint-disable-next-line no-console
+      console.log("Name:", formData.name);
+      // eslint-disable-next-line no-console
+      console.log("Website:", formData.website);
+      // eslint-disable-next-line no-console
+      console.log("GST:", formData.gst);
+      // eslint-disable-next-line no-console
+      console.log("Sub Industry ID:", formData.subIndustry);
+      // eslint-disable-next-line no-console
+      console.log("Full Data:", JSON.stringify(formData, null, 2));
+      // eslint-disable-next-line no-console
+      console.log("=========================");
+
+      // Simulate API call delay
+      await new Promise(resolve => setTimeout(resolve, 1500));
+
+      // After successful save, update the form's default values
+      reset(formData);
+
+      toast.success("Company settings saved successfully!");
     } catch (err) {
       // eslint-disable-next-line no-console
       console.error("Error saving form:", err);
+      toast.error("Failed to save company settings");
+    } finally {
+      setIsSaving(false);
     }
+  };
+
+  // Handle cancel - reset to original values
+  const handleCancel = () => {
+    reset();
+    toast.info("Changes cancelled");
   };
 
   return (
     <>
       <HeaderBar title="Company Settings" icon={<User className="w-2 h-2" />} />
+
+      {/* SaveCancelToolbar - Positioned at top below header */}
+      <SaveCancelToolbar
+        show={isDirty}
+        onSave={handleSubmit(onSubmit)}
+        onCancel={handleCancel}
+        isLoading={isSaving}
+        saveText="Save Changes"
+        cancelText="Cancel"
+        className="!top-[64px] !left-0 !fixed"
+      />
       <FullWidthLayout>
         {/* Flexible Layout with Natural Heights */}
         <div className="min-h-screen bg-background">
