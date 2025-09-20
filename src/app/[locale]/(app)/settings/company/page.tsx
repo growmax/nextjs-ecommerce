@@ -959,7 +959,7 @@ export default function CompanyPage() {
                           <div className="space-y-0.5">
                             {item.address.map((line, idx) => (
                               <div
-                                key={`${item.id}-address-${idx}`}
+                                key={`${item.id}-address-${line.replace(/\s+/g, "-")}`}
                                 className={
                                   idx === 0
                                     ? "font-semibold text-xs sm:text-sm"

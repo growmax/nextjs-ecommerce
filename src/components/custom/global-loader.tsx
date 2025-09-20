@@ -82,7 +82,7 @@ export function GlobalLoader({
             fill="none"
           >
             {/* Create 8 spokes for the spinner */}
-            {Array.from({ length: 8 }).map((_, i) => (
+            {Array.from({ length: 8 }, (_, i) => i).map(i => (
               <line
                 key={`spinner-line-${i}`}
                 x1="12"
