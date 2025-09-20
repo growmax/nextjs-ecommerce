@@ -1,14 +1,14 @@
+import Footer from "@/components/footer";
+import NavBar from "@/components/nav-bar";
+import { AuthProvider } from "@/contexts/AuthContext";
+import { TenantProvider } from "@/contexts/TenantContext";
+import { UserSessionProvider } from "@/contexts/UserSessionContext";
+import { ServerUserService } from "@/lib/services/ServerUserService";
+import { fetchTenantFromExternalAPI } from "@/lib/tenant";
+import { cn } from "@/lib/utils";
 import { NextIntlClientProvider } from "next-intl";
 import { getMessages } from "next-intl/server";
 import { headers } from "next/headers";
-import { TenantProvider } from "@/contexts/TenantContext";
-import { AuthProvider } from "@/contexts/AuthContext";
-import { UserSessionProvider } from "@/contexts/UserSessionContext";
-import { fetchTenantFromExternalAPI } from "@/lib/tenant";
-import { ServerUserService } from "@/lib/services/ServerUserService";
-import NavBar from "@/components/nav-bar";
-import Footer from "@/components/footer";
-import { cn } from "@/lib/utils";
 
 export default async function AppLayout({
   children,

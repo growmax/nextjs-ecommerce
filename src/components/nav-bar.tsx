@@ -1,23 +1,23 @@
 "use client";
 
-import { useState } from "react";
-import { Menu } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Menu, Search } from "lucide-react";
+import { useState } from "react";
 import Logo from "./custom/logo";
 import SearchBox from "./custom/search";
 import NotificationButton from "./notifications";
-import AddCardButton from "./sample/add-card";
 import ProfileButton from "./profile/ProfileButton";
+import AddCardButton from "./sample/add-card";
 import Sidebar from "./sidebar";
+import SearchDrawer from "@/components/custom/search-drawer";
 
 export default function NavBar() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [searchDrawerOpen, setSearchDrawerOpen] = useState(false);
 
   return (
     <>
-      {/* Mobile-First Top Navigation */}
       <nav className="bg-background border-b">
-        {/* Mobile Layout: Optimized single row */}
         <div className="sm:hidden">
           <div className="flex items-center gap-2 px-2 py-2">
             {/* Menu Button */}
@@ -30,14 +30,23 @@ export default function NavBar() {
             >
               <Menu className="h-5 w-5" />
             </Button>
-
-            {/* Search - Takes available space */}
-            <div className="flex-1">
-              <SearchBox size="sm" />
+            {/* Logo - Center */}
+            <div className="flex-1 flex justify-center">
+              <Logo />
             </div>
 
-            {/* Actions - Compact */}
+            {/* Actions - Right */}
             <div className="flex items-center gap-0.5 flex-shrink-0">
+              {/* Search Icon */}
+              <Button
+                variant="ghost"
+                size="icon"
+                aria-label="Open search"
+                onClick={() => setSearchDrawerOpen(true)}
+                className="h-9 w-9"
+              >
+                <Search className="h-5 w-5" />
+              </Button>
               <NotificationButton />
               <ProfileButton />
             </div>
@@ -105,6 +114,12 @@ export default function NavBar() {
 
       {/* Mobile-First Sidebar */}
       <Sidebar open={sidebarOpen} onClose={() => setSidebarOpen(false)} />
+
+      {/* Mobile Search Drawer */}
+      <SearchDrawer
+        open={searchDrawerOpen}
+        onClose={() => setSearchDrawerOpen(false)}
+      />
     </>
   );
 }
