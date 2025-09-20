@@ -3,16 +3,16 @@
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
-import { Badge } from "@/components/ui/badge";
 import { Link } from "@/i18n/navigation";
 import { Building2, User, Settings } from "lucide-react";
+import { usePathname } from "next/navigation";
+import { cn } from "@/lib/utils";
 
 const defaultItems = [
   {
     title: "Company",
     href: "/settings/company",
     icon: <Building2 />,
-    badge: "Admin",
   },
   {
     title: "Profile",
@@ -25,6 +25,8 @@ export default function SettingsSidebar({
   title = "Settings",
   items = defaultItems,
 }) {
+  const pathname = usePathname();
+
   return (
     <div className="w-64 h-screen border-r bg-background">
       <Card className="h-full rounded-none border-0">
@@ -37,22 +39,25 @@ export default function SettingsSidebar({
         </CardHeader>
         <CardContent className="space-y-2">
           <nav className="flex flex-col gap-1">
-            {items.map(item => (
-              <Button
-                key={item.href}
-                variant="ghost"
-                className="justify-start w-full"
-                asChild
-              >
-                <Link href={item.href} className="flex items-center gap-2">
-                  {item.icon}
-                  <span className="flex-1">{item.title}</span>
-                  {item.badge && (
-                    <Badge variant="secondary">{item.badge}</Badge>
+            {items.map(item => {
+              const isActive = pathname.includes(item.href);
+              return (
+                <Button
+                  key={item.href}
+                  variant={isActive ? "default" : "ghost"}
+                  className={cn(
+                    "justify-start w-full",
+                    isActive && "bg-primary text-primary-foreground"
                   )}
-                </Link>
-              </Button>
-            ))}
+                  asChild
+                >
+                  <Link href={item.href} className="flex items-center gap-2">
+                    {item.icon}
+                    <span className="flex-1">{item.title}</span>
+                  </Link>
+                </Button>
+              );
+            })}
           </nav>
         </CardContent>
       </Card>

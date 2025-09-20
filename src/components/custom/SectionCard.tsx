@@ -9,6 +9,7 @@ interface SectionCardProps {
   className?: string;
   headerClassName?: string;
   contentClassName?: string;
+  headerActions?: React.ReactNode;
 }
 
 export default function SectionCard({
@@ -17,12 +18,18 @@ export default function SectionCard({
   className,
   headerClassName,
   contentClassName,
+  headerActions,
 }: SectionCardProps) {
   return (
     <Card className={className}>
       <CardHeader className={headerClassName}>
-        <CardTitle>{title}</CardTitle>
-        <Separator />
+        <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3">
+          <CardTitle className="text-base sm:text-lg">{title}</CardTitle>
+          {headerActions && (
+            <div className="flex items-center gap-2">{headerActions}</div>
+          )}
+        </div>
+        <Separator className="mt-2" />
       </CardHeader>
 
       <CardContent className={contentClassName}>{children}</CardContent>

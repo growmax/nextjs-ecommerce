@@ -19,7 +19,7 @@ export default function HeaderBar({
   return (
     <header
       className={cn(
-        "flex-shrink-0 bg-white shadow-md border-b z-10 mb-8",
+        "flex-shrink-0 bg-blue border-b border-white shadow-md z-10 mb-8",
         className
       )}
       style={{
@@ -34,7 +34,7 @@ export default function HeaderBar({
           <div className="flex items-center gap-2 truncate">
             <div className="flex items-center">
               <h4
-                className="text-sm font-normal truncate text-foreground" // smaller font
+                className="text-sm font-normal truncate text-black" // force white text
                 title={title}
                 style={{
                   fontFamily: '"Roboto", "Helvetica", "Arial", sans-serif',
@@ -56,7 +56,9 @@ export default function HeaderBar({
         </div>
 
         {/* Right: optional actions */}
-        {actions && <div className="flex items-center gap-2">{actions}</div>}
+        {actions && (
+          <div className="flex items-center gap-2 text-black">{actions}</div>
+        )}
       </div>
     </header>
   );

@@ -2,6 +2,8 @@
 
 ## User Experience (UX) Best Practices
 
+Always to be follow the .claude\instructions.md this file given rules.
+
 ### Form Interactions
 
 - **Auto-focus primary input fields**: Always auto-focus the main input field on forms (e.g., email on login, search on search pages) to reduce user friction

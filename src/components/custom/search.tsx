@@ -79,26 +79,27 @@ const SearchBox = forwardRef<HTMLInputElement, SearchBoxProps>(
     const [searchQuery, setSearchQuery] = useState(defaultValue);
     const [isSearching, setIsSearching] = useState(false);
 
-    // Size variants
+    // Size variants - mobile-first responsive
     const sizeClasses = useMemo(() => {
       const sizes = {
         sm: {
-          container: "max-w-sm",
-          input: "h-8 text-sm pr-8",
+          container: "w-full",
+          input: "h-8 text-sm pr-8 px-3",
           button: "h-6 w-6 right-1",
-          icon: "h-3 w-3",
+          icon: "h-3.5 w-3.5",
         },
         md: {
-          container: "max-w-xl",
-          input: "h-10 pr-10",
+          container: "w-full",
+          input: "h-9 sm:h-10 text-sm sm:text-base pr-9 sm:pr-10 px-3 sm:px-4",
           button: "h-7 w-7 right-1.5",
           icon: "h-4 w-4",
         },
         lg: {
-          container: "max-w-2xl",
-          input: "h-12 text-lg pr-12",
+          container: "w-full",
+          input:
+            "h-10 sm:h-11 lg:h-12 text-base lg:text-lg pr-10 sm:pr-12 px-4",
           button: "h-8 w-8 right-2",
-          icon: "h-5 w-5",
+          icon: "h-4 w-4 sm:h-5 sm:w-5",
         },
       };
       return sizes[size];
@@ -196,7 +197,7 @@ const SearchBox = forwardRef<HTMLInputElement, SearchBoxProps>(
     return (
       <form
         onSubmit={handleSearch}
-        className={cn("relative flex-1", sizeClasses.container, className)}
+        className={cn("relative", sizeClasses.container, className)}
         {...formProps}
       >
         <Input
@@ -212,9 +213,10 @@ const SearchBox = forwardRef<HTMLInputElement, SearchBoxProps>(
           className={cn(
             sizeClasses.input,
             variantClasses,
-            showClearButton && "pr-16",
-            "transition-all duration-200",
-            hasValue && "ring-1 ring-primary/20"
+            showClearButton && "pr-14 sm:pr-16",
+            "transition-all duration-200 w-full",
+            hasValue && "ring-1 ring-primary/20",
+            "focus:ring-2 focus:ring-primary/30"
           )}
           aria-label={placeholder || t("search.button")}
           {...inputProps}
