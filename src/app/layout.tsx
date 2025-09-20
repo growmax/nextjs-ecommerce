@@ -1,7 +1,8 @@
 import { GlobalLoaderWrapper } from "@/components/custom/global-loader-wrapper";
 import { LoadingProvider } from "@/contexts/LoadingContext";
-import { ServerThemeAPI } from "@/lib/theme-server";
 import { ServerAuth } from "@/lib/auth-server";
+import { ServerThemeAPI } from "@/lib/theme-server";
+import { QueryProvider } from "@/providers/QueryProvider";
 import type { Metadata } from "next";
 import "./globals.css";
 
@@ -38,10 +39,12 @@ export default async function RootLayout({
         <meta name="auth-state" content={JSON.stringify(authState)} />
       </head>
       <body suppressHydrationWarning={true}>
-        <LoadingProvider>
-          {children}
-          <GlobalLoaderWrapper />
-        </LoadingProvider>
+        <QueryProvider>
+          <LoadingProvider>
+            {children}
+            <GlobalLoaderWrapper />
+          </LoadingProvider>
+        </QueryProvider>
       </body>
     </html>
   );
