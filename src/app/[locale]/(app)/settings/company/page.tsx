@@ -1,8 +1,5 @@
 "use client";
 
-import HeaderBar from "@/app/Components/reusable/nameconversion/PageHeader";
-import SectionCard from "@/components/custom/SectionCard";
-import { FullWidthLayout } from "@/components/layout/PageContent";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -26,15 +23,26 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { SaveCancelToolbar } from "@/components/custom/save-cancel-toolbar";
 import { toast } from "sonner";
 import { AuthStorage } from "@/lib/auth";
 import { JWTService } from "@/lib/services/JWTService";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Loader2, Plus, Trash2, User } from "lucide-react";
+import {
+  Loader2,
+  Plus,
+  Trash2,
+  User,
+  ChevronLeft,
+  ChevronRight,
+} from "lucide-react";
 import { useEffect, useState, useMemo } from "react";
 import { useForm, Controller } from "react-hook-form";
 import { z } from "zod";
+import HeaderBar from "@/app/Components/reusable/nameconversion/PageHeader";
+import { FullWidthLayout } from "@/components/layout/PageContent";
+import SectionCard from "@/components/custom/SectionCard";
+import { SaveCancelToolbar } from "@/components/custom/save-cancel-toolbar";
+import { AddAddressDialog } from "@/components/dialogs";
 
 // Form validation schema
 const companyFormSchema = z.object({
@@ -57,7 +65,34 @@ const companyFormSchema = z.object({
     .max(50, "Sub industry must be less than 50 characters"),
 });
 
+// Address search form schema
+const addressSearchSchema = z.object({
+  searchTerm: z.string().optional(),
+  pageSize: z.number().min(5).max(100),
+});
+
 type CompanyFormData = z.infer<typeof companyFormSchema>;
+type AddressSearchData = z.infer<typeof addressSearchSchema>;
+
+// Type for address dialog data
+type AddressDialogData = {
+  companyName?: string;
+  branch: string;
+  address: string;
+  locality?: string;
+  country: string;
+  state: string;
+  district?: string;
+  postalCode: string;
+  city?: string;
+  latitude?: string;
+  longitude?: string;
+  isBilling?: boolean;
+  isShipping?: boolean;
+  taxId?: string;
+  contactName?: string;
+  contactNumber?: string;
+};
 
 interface SubIndustryItem {
   id: number;
@@ -96,6 +131,37 @@ interface CompanyData {
   };
 }
 
+interface BranchAddress {
+  id: number;
+  name: string;
+  addressId: {
+    id: number;
+    addressLine: string;
+    branchName: string;
+    locality?: string;
+    city: string;
+    state: string;
+    country: string;
+    district?: string;
+    pinCodeId: string;
+    latitude?: string;
+    longitude?: string;
+    gst: string;
+    primaryContact: string;
+    phone: string;
+    mobileNo: string;
+    nationalMobileNum: string;
+    email: string | null;
+    isBilling: boolean;
+    isShipping: boolean;
+  };
+  zoneId?: {
+    zoneId?: {
+      zoneName: string;
+    };
+  };
+}
+
 export default function CompanyPage() {
   const [companyData, setCompanyData] = useState<CompanyData | null>(null);
   const [loading, setLoading] = useState(true);
@@ -113,14 +179,68 @@ export default function CompanyPage() {
       fullData?: unknown;
     }>
   >([]);
-  const [selectedSubIndustry, setSelectedSubIndustry] =
-    useState<SubIndustryItem | null>(null);
+  const [, setSelectedSubIndustry] = useState<SubIndustryItem | null>(null);
+  const [showAddAddressDialog, setShowAddAddressDialog] = useState(false);
+  const [selectedAddress, setSelectedAddress] =
+    useState<AddressDialogData | null>(null);
+  const [dialogMode, setDialogMode] = useState<"add" | "edit">("add");
+
+  // Map address data from API to dialog format
+  const mapAddressDataToDialog = (
+    branchData: BranchAddress
+  ): AddressDialogData => {
+    const addressData =
+      branchData.addressId || ({} as BranchAddress["addressId"]);
+    return {
+      branch: branchData.name || addressData.branchName || "",
+      address: addressData.addressLine || "",
+      locality: addressData.locality || "",
+      country: addressData.country || "",
+      state: addressData.state || "",
+      district: addressData.district || "",
+      postalCode: addressData.pinCodeId || "",
+      city: addressData.city || "",
+      latitude: addressData.latitude || "",
+      longitude: addressData.longitude || "",
+      isBilling: addressData.isBilling || false,
+      isShipping: addressData.isShipping || false,
+      taxId: addressData.gst || "",
+      contactName: addressData.primaryContact || "",
+      contactNumber:
+        addressData.mobileNo && addressData.nationalMobileNum
+          ? `+${addressData.nationalMobileNum} ${addressData.mobileNo}`
+          : addressData.phone || "",
+    };
+  };
+
+  // Handle row click to edit address
+  const handleEditAddress = (branchData: BranchAddress) => {
+    const mappedData = mapAddressDataToDialog(branchData);
+    setSelectedAddress(mappedData);
+    setDialogMode("edit");
+    setShowAddAddressDialog(true);
+  };
+
+  // Handle add new address
+  const handleAddAddress = () => {
+    setSelectedAddress(null);
+    setDialogMode("add");
+    setShowAddAddressDialog(true);
+  };
+
+  // Address section state
+  const [addresses, setAddresses] = useState<BranchAddress[]>([]);
+  const [totalAddresses, setTotalAddresses] = useState(0);
+  const [loadingAddresses, setLoadingAddresses] = useState(false);
+  const [currentPage, setCurrentPage] = useState(0);
+  const [addressError, setAddressError] = useState<string | null>(null);
+  const [isSearching, setIsSearching] = useState(false);
+
+  // Page size options
+  const pageSizeOptions = [5, 10, 25, 50, 100];
 
   // Group sub-industries by parent industry
   const groupedOptions = useMemo(() => {
-    // console.log('Creating grouped options...');
-    // console.log('subIndustryOptions length:', subIndustryOptions.length);
-
     if (subIndustryOptions.length === 0) {
       return {};
     }
@@ -137,13 +257,14 @@ export default function CompanyPage() {
     return groups;
   }, [subIndustryOptions]);
 
-  // React Hook Form setup
+  // React Hook Form setup for company data
   const {
     register,
     handleSubmit,
     control,
     formState: { errors, isDirty },
     reset,
+    watch,
   } = useForm<CompanyFormData>({
     resolver: zodResolver(companyFormSchema),
     defaultValues: {
@@ -154,7 +275,49 @@ export default function CompanyPage() {
     },
   });
 
+  // React Hook Form setup for address search
+  const {
+    control: controlSearch,
+    watch: watchSearch,
+    setValue: setValueSearch,
+  } = useForm<AddressSearchData>({
+    resolver: zodResolver(addressSearchSchema),
+    defaultValues: {
+      searchTerm: "",
+      pageSize: 10,
+    },
+  });
+
   const [isSaving, setIsSaving] = useState(false);
+
+  // Watch form values for real-time updates
+  const searchTerm = watchSearch("searchTerm") || "";
+  const pageSize = watchSearch("pageSize") || 10;
+
+  // Watch the subIndustry field for real-time updates
+  const watchedSubIndustry = watch("subIndustry");
+
+  // Get current industry description based on selected value
+  const getCurrentIndustryInfo = () => {
+    if (watchedSubIndustry) {
+      const selected = subIndustryOptions.find(
+        opt => opt.value === watchedSubIndustry
+      );
+      if (selected && selected.fullData) {
+        const industryData = selected.fullData as SubIndustryItem;
+        return {
+          industryName: industryData.industryId.name,
+          description: industryData.description,
+        };
+      }
+    }
+    // Fallback to original data
+    return {
+      industryName: data?.subIndustryId?.industryId?.name || "Unknown Industry",
+      description:
+        data?.subIndustryId?.description || "No description available",
+    };
+  };
 
   // Fetch sub-industries from API
   const fetchSubIndustries = async (currentCompanyData?: CompanyData) => {
@@ -164,7 +327,6 @@ export default function CompanyPage() {
       const payload = jwtService.decodeToken(accessToken!);
 
       if (!accessToken || !payload) {
-        // console.error("No valid token for fetching sub-industries");
         return;
       }
 
@@ -178,7 +340,6 @@ export default function CompanyPage() {
 
       if (response.ok) {
         const data = await response.json();
-        // console.log('Fetched sub-industries:', data);
 
         // Format the data for select options with full information
         if (Array.isArray(data)) {
@@ -234,11 +395,8 @@ export default function CompanyPage() {
             }
           }
         }
-      } else {
-        // console.error('Failed to fetch sub-industries:', response.status);
       }
     } catch {
-      // console.error('Error fetching sub-industries:', err);
       // Set default options as fallback
       setSubIndustryOptions([
         { value: "software-development", label: "Software Development" },
@@ -252,6 +410,104 @@ export default function CompanyPage() {
     const selected = subIndustryOptions.find(opt => opt.value === value);
     if (selected && selected.fullData) {
       setSelectedSubIndustry(selected.fullData as SubIndustryItem);
+    }
+  };
+
+  // Fetch branch addresses from API
+  const fetchBranchAddresses = async (
+    search: string = "",
+    page: number = 0,
+    clearDataFirst: boolean = false
+  ) => {
+    try {
+      // Clear data immediately if requested (for new searches)
+      if (clearDataFirst) {
+        setAddresses([]);
+        setTotalAddresses(0);
+      }
+
+      setLoadingAddresses(true);
+      setAddressError(null);
+
+      const accessToken = AuthStorage.getAccessToken();
+      const jwtService = JWTService.getInstance();
+      const payload = jwtService.decodeToken(accessToken!);
+
+      if (!payload || !payload.companyId || !payload.userId) {
+        throw new Error("Missing authentication data");
+      }
+
+      const offset = page * pageSize;
+      const url =
+        `/api/branches/readBranchwithPagination/${payload.userId}?` +
+        `companyId=${payload.companyId}&` +
+        `offset=${offset}&` +
+        `limit=${pageSize}&` +
+        `searchString=${encodeURIComponent(search)}`;
+
+      const response = await fetch(url, {
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+          "x-tenant": payload.iss,
+          "Content-Type": "application/json",
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error(`Failed to fetch addresses: ${response.status}`);
+      }
+
+      const result = await response.json();
+
+      if (result.status === "success" && result.data) {
+        setAddresses(result.data.branchResponse || []);
+        setTotalAddresses(result.data.totalCount || 0);
+      } else {
+        throw new Error(result.message || "Failed to fetch addresses");
+      }
+    } catch (err) {
+      setAddressError(
+        err instanceof Error ? err.message : "Failed to load addresses"
+      );
+      setAddresses([]);
+      setTotalAddresses(0);
+    } finally {
+      setLoadingAddresses(false);
+      setIsSearching(false); // Reset searching state
+    }
+  };
+
+  // Handle pagination
+  const handlePageChange = (newPage: number) => {
+    setCurrentPage(newPage);
+    fetchBranchAddresses(searchTerm, newPage);
+  };
+
+  // Handle page size change
+  const handlePageSizeChange = (newPageSize: number) => {
+    setValueSearch("pageSize", newPageSize);
+    setCurrentPage(0); // Reset to first page when changing page size
+
+    // Clear existing data immediately when page size changes
+    setAddresses([]); // Clear current data
+    setTotalAddresses(0); // Reset count
+    setLoadingAddresses(true); // Show loading state
+    setAddressError(null); // Clear any errors
+
+    fetchBranchAddresses(searchTerm, 0);
+  };
+
+  // Handle search term change
+  const handleSearchChange = (newSearchTerm: string) => {
+    setValueSearch("searchTerm", newSearchTerm);
+    setCurrentPage(0); // Reset to first page when searching
+
+    // Clear existing data immediately when search starts
+    if (newSearchTerm !== searchTerm) {
+      setAddresses([]); // Clear current data
+      setTotalAddresses(0); // Reset count
+      setLoadingAddresses(true); // Show loading state
+      setAddressError(null); // Clear any errors
     }
   };
 
@@ -300,14 +556,6 @@ export default function CompanyPage() {
         });
 
         if (!response.ok) {
-          // Log error response
-          // eslint-disable-next-line no-console
-          console.error(
-            "API Error Response:",
-            response.status,
-            response.statusText
-          );
-
           // Handle token expiration specifically
           if (response.status === 401) {
             const errorData = await response.json().catch(() => null);
@@ -322,16 +570,6 @@ export default function CompanyPage() {
         }
 
         const data = await response.json();
-
-        // Log successful API response
-        // eslint-disable-next-line no-console
-        console.log("=== API Response Success ===");
-        // eslint-disable-next-line no-console
-        console.log("Status:", response.status);
-        // eslint-disable-next-line no-console
-        console.log("Response Data:", JSON.stringify(data, null, 2));
-        // eslint-disable-next-line no-console
-        console.log("============================");
 
         setCompanyData(data);
         setProfileImage(data.data.logo || null);
@@ -358,6 +596,36 @@ export default function CompanyPage() {
 
     fetchCompanyData();
   }, [reset]);
+
+  // Fetch addresses after company data is loaded
+  useEffect(() => {
+    if (companyData && companyData.data) {
+      fetchBranchAddresses("", 0);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [companyData]);
+
+  // Handle search with debounce
+  useEffect(() => {
+    // Clear data immediately when search term changes
+    if (companyData && searchTerm !== undefined) {
+      setAddresses([]);
+      setTotalAddresses(0);
+      setLoadingAddresses(true);
+      setAddressError(null);
+      setIsSearching(true);
+    }
+
+    const timer = setTimeout(() => {
+      if (searchTerm !== undefined && companyData) {
+        setCurrentPage(0);
+        fetchBranchAddresses(searchTerm, 0, false); // Don't clear again, already cleared above
+      }
+    }, 500);
+
+    return () => clearTimeout(timer);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [searchTerm, pageSize]); // Watch form values
 
   if (loading) {
     return (
@@ -511,22 +779,6 @@ export default function CompanyPage() {
     try {
       setIsSaving(true);
 
-      // Log the updated form data
-      // eslint-disable-next-line no-console
-      console.log("=== UPDATED FORM DATA ===");
-      // eslint-disable-next-line no-console
-      console.log("Name:", formData.name);
-      // eslint-disable-next-line no-console
-      console.log("Website:", formData.website);
-      // eslint-disable-next-line no-console
-      console.log("GST:", formData.gst);
-      // eslint-disable-next-line no-console
-      console.log("Sub Industry ID:", formData.subIndustry);
-      // eslint-disable-next-line no-console
-      console.log("Full Data:", JSON.stringify(formData, null, 2));
-      // eslint-disable-next-line no-console
-      console.log("=========================");
-
       // Simulate API call delay
       await new Promise(resolve => setTimeout(resolve, 1500));
 
@@ -534,9 +786,7 @@ export default function CompanyPage() {
       reset(formData);
 
       toast.success("Company settings saved successfully!");
-    } catch (err) {
-      // eslint-disable-next-line no-console
-      console.error("Error saving form:", err);
+    } catch {
       toast.error("Failed to save company settings");
     } finally {
       setIsSaving(false);
@@ -551,7 +801,10 @@ export default function CompanyPage() {
 
   return (
     <>
-      <HeaderBar title="Company Settings" icon={<User className="w-2 h-2" />} />
+      <HeaderBar
+        title="Company Settings"
+        icon={<User className="w-5 h-5 sm:w-6 sm:h-6" />}
+      />
 
       {/* SaveCancelToolbar - Positioned at top below header */}
       <SaveCancelToolbar
@@ -564,28 +817,28 @@ export default function CompanyPage() {
         className="!top-[64px] !left-0 !fixed"
       />
       <FullWidthLayout>
-        {/* Flexible Layout with Natural Heights */}
+        {/* Mobile-First Responsive Layout */}
         <div className="min-h-screen bg-background">
-          <div className="flex flex-col gap-4 sm:gap-6 p-4 sm:p-6 min-h-screen">
-            {/* Main Company Form Card - Flexible Sizing */}
+          <div className="flex flex-col gap-3 sm:gap-4 lg:gap-6 p-2 sm:p-4 lg:p-6 min-h-screen max-w-full overflow-x-hidden">
+            {/* Main Company Form Card - Mobile Responsive */}
             <SectionCard
               title={`Welcome ${data.name}`}
               className="
                 w-full max-w-7xl mx-auto
-                min-h-[600px] max-h-none
+                min-h-[400px] sm:min-h-[500px] lg:min-h-[600px] max-h-none
                 overflow-hidden flex flex-col
               "
-              contentClassName="pt-2"
+              contentClassName="pt-2 px-2 sm:px-4 lg:px-6"
             >
               <div className="flex-1 overflow-y-auto">
                 <form
                   onSubmit={handleSubmit(onSubmit)}
                   className="flex-1 flex flex-col"
                 >
-                  {/* Flexible Layout Grid */}
-                  <div className="flex flex-col lg:flex-row gap-6 lg:gap-8 flex-1">
-                    {/* Company Logo Upload - Flexible positioning */}
-                    <div className="flex-shrink-0 self-center lg:self-start">
+                  {/* Mobile-First Responsive Layout Grid */}
+                  <div className="flex flex-col lg:flex-row gap-4 sm:gap-6 lg:gap-8 flex-1">
+                    {/* Company Logo Upload - Mobile Responsive */}
+                    <div className="flex-shrink-0 self-center lg:self-start order-1 lg:order-none">
                       <Label
                         htmlFor="profile-image"
                         className="block text-sm font-medium mb-2"
@@ -601,7 +854,7 @@ export default function CompanyPage() {
                           className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
                           disabled={isUploading}
                         />
-                        <div className="w-20 h-20 sm:w-24 sm:h-24 lg:w-32 lg:h-32 xl:w-36 xl:h-36 border-2 border-dashed border-muted-foreground rounded-lg flex items-center justify-center relative overflow-hidden bg-muted/5 hover:bg-muted/10 transition-colors">
+                        <div className="w-24 h-24 sm:w-28 sm:h-28 md:w-32 md:h-32 lg:w-32 lg:h-32 xl:w-36 xl:h-36 border-2 border-dashed border-muted-foreground rounded-lg flex items-center justify-center relative overflow-hidden bg-muted/5 hover:bg-muted/10 transition-colors">
                           {profileImage ? (
                             <div className="relative w-full h-full">
                               {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -658,11 +911,11 @@ export default function CompanyPage() {
                       </div>
                     </div>
 
-                    {/* Form Fields - Flexible Grid */}
-                    <div className="flex-1 flex flex-col">
-                      <div className="flex-1 space-y-4 sm:space-y-6">
+                    {/* Form Fields - Mobile Responsive Grid */}
+                    <div className="flex-1 flex flex-col order-2 lg:order-none">
+                      <div className="flex-1 space-y-3 sm:space-y-4 lg:space-y-6">
                         {/* First Line - Company Name & Website */}
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-3 sm:gap-4">
+                        <div className="grid grid-cols-1 sm:grid-cols-1 md:grid-cols-2 gap-3 sm:gap-4">
                           <div className="space-y-1.5 sm:space-y-2">
                             <Label
                               htmlFor="company-name"
@@ -674,7 +927,7 @@ export default function CompanyPage() {
                               id="company-name"
                               {...register("name")}
                               placeholder={data.name}
-                              className="border border-gray-300 focus:border-blue-500 h-9 sm:h-10"
+                              className="border border-gray-300 focus:border-blue-500 h-10 sm:h-10 md:h-11 text-sm sm:text-base"
                             />
                             {errors.name && (
                               <p className="text-xs sm:text-sm text-red-600">
@@ -696,7 +949,7 @@ export default function CompanyPage() {
                               placeholder={
                                 data.website || "No website available"
                               }
-                              className="border border-gray-300 focus:border-blue-500 h-9 sm:h-10"
+                              className="border border-gray-300 focus:border-blue-500 h-10 sm:h-10 md:h-11 text-sm sm:text-base"
                             />
                             {errors.website && (
                               <p className="text-xs sm:text-sm text-red-600">
@@ -707,7 +960,7 @@ export default function CompanyPage() {
                         </div>
 
                         {/* Second Line - Tax ID/GST & Business Type */}
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-3 sm:gap-4">
+                        <div className="grid grid-cols-1 sm:grid-cols-1 md:grid-cols-2 gap-3 sm:gap-4">
                           <div className="space-y-1.5 sm:space-y-2">
                             <Label
                               htmlFor="tax-id"
@@ -719,7 +972,7 @@ export default function CompanyPage() {
                               id="tax-id"
                               {...register("gst")}
                               placeholder={data.addressId.gst}
-                              className="border border-gray-300 focus:border-blue-500 h-9 sm:h-10"
+                              className="border border-gray-300 focus:border-blue-500 h-10 sm:h-10 md:h-11 text-sm sm:text-base"
                             />
                             {errors.gst && (
                               <p className="text-xs sm:text-sm text-red-600">
@@ -738,13 +991,13 @@ export default function CompanyPage() {
                               id="business-type"
                               value={data.businessTypeId.name}
                               readOnly
-                              className="bg-muted border border-gray-300 h-9 sm:h-10"
+                              className="bg-muted border border-gray-300 h-10 sm:h-10 md:h-11 text-sm sm:text-base"
                             />
                           </div>
                         </div>
 
                         {/* Third Line - Account Type & Default Currency */}
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-3 sm:gap-4">
+                        <div className="grid grid-cols-1 sm:grid-cols-1 md:grid-cols-2 gap-3 sm:gap-4">
                           <div className="space-y-1.5 sm:space-y-2">
                             <Label
                               htmlFor="account-type"
@@ -756,7 +1009,7 @@ export default function CompanyPage() {
                               id="account-type"
                               value={data.accountTypeId.name}
                               readOnly
-                              className="bg-muted border border-gray-300 h-9 sm:h-10"
+                              className="bg-muted border border-gray-300 h-10 sm:h-10 md:h-11 text-sm sm:text-base"
                             />
                           </div>
                           <div className="space-y-1.5 sm:space-y-2">
@@ -770,13 +1023,13 @@ export default function CompanyPage() {
                               id="default-currency"
                               value={data.currencyId.currencyCode}
                               readOnly
-                              className="bg-muted border border-gray-300 h-9 sm:h-10"
+                              className="bg-muted border border-gray-300 h-10 sm:h-10 md:h-11 text-sm sm:text-base"
                             />
                           </div>
                         </div>
 
                         {/* Fourth Line - Sub Industry & Industry Description */}
-                        <div className="grid grid-cols-1 lg:grid-cols-2 gap-3 sm:gap-4">
+                        <div className="grid grid-cols-1 lg:grid-cols-2 gap-3 sm:gap-4 lg:gap-6">
                           <div className="space-y-1.5 sm:space-y-2">
                             <Label
                               htmlFor="sub-industry"
@@ -796,7 +1049,7 @@ export default function CompanyPage() {
                                       handleSubIndustryChange(value);
                                     }}
                                   >
-                                    <SelectTrigger className="border border-gray-300 focus:border-blue-500 h-9 sm:h-10">
+                                    <SelectTrigger className="border border-gray-300 focus:border-blue-500 h-10 sm:h-10 md:h-11 text-sm sm:text-base">
                                       <SelectValue placeholder="Select sub industry" />
                                     </SelectTrigger>
                                     <SelectContent className="max-h-48 sm:max-h-60">
@@ -861,14 +1114,10 @@ export default function CompanyPage() {
                           </div>
                           <div className="space-y-1.5 sm:space-y-2">
                             <div className="text-sm font-bold text-foreground">
-                              {selectedSubIndustry
-                                ? selectedSubIndustry.industryId.name
-                                : data.subIndustryId.industryId.name}
+                              {getCurrentIndustryInfo().industryName}
                             </div>
                             <p className="text-xs sm:text-sm text-muted-foreground leading-relaxed">
-                              {selectedSubIndustry
-                                ? selectedSubIndustry.description
-                                : data.subIndustryId.description}
+                              {getCurrentIndustryInfo().description}
                             </p>
                           </div>
                         </div>
@@ -879,322 +1128,413 @@ export default function CompanyPage() {
               </div>
             </SectionCard>
 
-            {/* Address Information Card - Flexible Sizing */}
+            {/* Address Information Card - Mobile Responsive */}
             <SectionCard
               title="Address Information"
               className="
                 w-full max-w-7xl mx-auto
-                 min-h-[400px] max-h-none
+                min-h-[300px] sm:min-h-[400px] max-h-none
                 overflow-hidden flex flex-col
               "
-              contentClassName="pt-2"
+              contentClassName="pt-2 px-2 sm:px-4 lg:px-6"
               headerActions={
-                <div className="flex gap-2 w-full sm:w-auto">
-                  <Input
-                    placeholder="Search..."
-                    className="flex-1 sm:flex-none sm:w-32 md:w-40 text-sm h-8 sm:h-9"
+                <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
+                  <Controller
+                    name="searchTerm"
+                    control={controlSearch}
+                    render={({ field }) => (
+                      <Input
+                        placeholder="Search addresses..."
+                        className="flex-1 sm:flex-none sm:w-40 md:w-48 lg:w-56 text-sm h-9 sm:h-9 md:h-10"
+                        value={field.value || ""}
+                        onChange={e => {
+                          field.onChange(e.target.value);
+                          handleSearchChange(e.target.value);
+                        }}
+                      />
+                    )}
                   />
                   <Button
                     size="sm"
-                    className="h-8 sm:h-9 px-2 sm:px-3 flex items-center gap-1 flex-shrink-0 text-xs sm:text-sm"
+                    className="h-9 sm:h-9 md:h-10 px-3 sm:px-4 flex items-center gap-2 flex-shrink-0 text-sm"
+                    onClick={handleAddAddress}
                   >
-                    <Plus className="h-3 w-3 sm:h-4 sm:w-4" />
-                    <span className="hidden sm:inline">Add</span>
+                    <Plus className="h-4 w-4" />
+                    <span>Add Address</span>
                   </Button>
                 </div>
               }
             >
-              <div className="flex-1 overflow-hidden">
-                {/* Mobile: Card view with flexible height */}
-                <div className="block md:hidden flex-1 overflow-y-auto">
-                  <div className="space-y-3 p-2">
-                    {[
-                      {
-                        id: 1,
-                        address: [
-                          "123 Business Street",
-                          "Suite 100",
-                          "New York, NY 10001",
-                        ],
-                        taxId: "TAX123456789",
-                        contact: "John Doe",
-                        phone: "+1 (555) 123-4567",
-                      },
-                      {
-                        id: 2,
-                        address: [
-                          "456 Corporate Avenue",
-                          "Building B, Floor 3",
-                          "Los Angeles, CA 90210",
-                        ],
-                        taxId: "TAX987654321",
-                        contact: "Jane Smith",
-                        phone: "+1 (555) 987-6543",
-                      },
-                      {
-                        id: 3,
-                        address: [
-                          "789 Industrial Park",
-                          "Warehouse District",
-                          "Chicago, IL 60601",
-                        ],
-                        taxId: "TAX456789123",
-                        contact: "Michael Johnson",
-                        phone: "+1 (555) 456-7890",
-                      },
-                      {
-                        id: 4,
-                        address: [
-                          "321 Tech Boulevard",
-                          "Innovation Center",
-                          "San Francisco, CA 94105",
-                        ],
-                        taxId: "TAX654321789",
-                        contact: "Sarah Williams",
-                        phone: "+1 (555) 321-9876",
-                      },
-                    ].map(item => (
-                      <Card key={item.id} className="p-3 sm:p-4 flex-shrink-0">
-                        <div className="space-y-3">
-                          <div className="space-y-0.5">
-                            {item.address.map((line, idx) => (
-                              <div
-                                key={`${item.id}-address-${line.replace(/\s+/g, "-")}`}
-                                className={
-                                  idx === 0
-                                    ? "font-semibold text-xs sm:text-sm"
-                                    : "text-xs sm:text-sm text-muted-foreground"
-                                }
-                              >
-                                {line}
+              <div className="flex-1 overflow-hidden flex flex-col">
+                {/* Loading state */}
+                {loadingAddresses && (
+                  <div className="flex items-center justify-center p-8">
+                    <Loader2 className="h-8 w-8 animate-spin mr-2" />
+                    <span>
+                      {isSearching
+                        ? `Searching addresses${searchTerm ? ` for "${searchTerm}"` : ""}...`
+                        : "Loading addresses..."}
+                    </span>
+                  </div>
+                )}
+
+                {/* Error state */}
+                {addressError && !loadingAddresses && (
+                  <div className="text-center text-red-600 p-8">
+                    <p>Error: {addressError}</p>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() =>
+                        fetchBranchAddresses(searchTerm, currentPage)
+                      }
+                      className="mt-4"
+                    >
+                      Retry
+                    </Button>
+                  </div>
+                )}
+
+                {/* Empty state */}
+                {!loadingAddresses &&
+                  !addressError &&
+                  addresses.length === 0 && (
+                    <div className="text-center text-gray-600 p-8">
+                      <p>No addresses found</p>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={handleAddAddress}
+                        className="mt-4"
+                      >
+                        <Plus className="h-4 w-4 mr-1" />
+                        Add First Address
+                      </Button>
+                    </div>
+                  )}
+
+                {/* Data display */}
+                {!loadingAddresses && !addressError && addresses.length > 0 && (
+                  <>
+                    {/* Mobile: Card view */}
+                    <div className="block md:hidden flex-1 overflow-y-auto">
+                      <div className="space-y-3 p-1 sm:p-2">
+                        {addresses.map(branch => (
+                          <Card
+                            key={branch.id}
+                            className="p-4 sm:p-5 flex-shrink-0 shadow-sm hover:shadow-md transition-shadow cursor-pointer"
+                            onClick={() => handleEditAddress(branch)}
+                          >
+                            <div className="space-y-4">
+                              <div className="space-y-0.5">
+                                <div className="font-semibold text-xs sm:text-sm">
+                                  {branch.name ||
+                                    branch.addressId?.branchName ||
+                                    "-"}
+                                </div>
+                                <div className="text-xs sm:text-sm text-muted-foreground">
+                                  {branch.addressId?.addressLine || "-"}
+                                </div>
+                                <div className="text-xs sm:text-sm text-muted-foreground">
+                                  {[
+                                    branch.addressId?.city,
+                                    branch.addressId?.state,
+                                    branch.addressId?.pinCodeId,
+                                  ]
+                                    .filter(Boolean)
+                                    .join(", ") || "-"}
+                                </div>
+                                <div className="text-xs sm:text-sm text-muted-foreground">
+                                  {branch.addressId?.country || "-"}
+                                </div>
                               </div>
-                            ))}
+                              <div className="grid grid-cols-2 gap-2 sm:gap-3 text-xs sm:text-sm">
+                                <div className="space-y-0.5">
+                                  <span className="text-xs font-medium text-muted-foreground">
+                                    Tax ID/GST
+                                  </span>
+                                  <div className="font-medium text-xs sm:text-sm">
+                                    {branch.addressId?.gst || "-"}
+                                  </div>
+                                </div>
+                                <div className="space-y-0.5">
+                                  <span className="text-xs font-medium text-muted-foreground">
+                                    Contact
+                                  </span>
+                                  <div className="font-medium text-xs sm:text-sm">
+                                    {branch.addressId?.primaryContact || "-"}
+                                  </div>
+                                </div>
+                                <div className="col-span-2 space-y-0.5">
+                                  <span className="text-xs font-medium text-muted-foreground">
+                                    Phone
+                                  </span>
+                                  <div className="font-medium text-xs sm:text-sm">
+                                    {branch.addressId?.mobileNo &&
+                                    branch.addressId?.nationalMobileNum
+                                      ? `+${branch.addressId.nationalMobileNum} ${branch.addressId.mobileNo}`
+                                      : branch.addressId?.phone || "-"}
+                                  </div>
+                                </div>
+                              </div>
+                              <Separator />
+                              <div className="flex gap-3">
+                                <Button
+                                  variant="outline"
+                                  size="default"
+                                  className="flex-1 h-10 text-sm font-medium"
+                                  onClick={() => {
+                                    // TODO: Implement edit functionality
+                                  }}
+                                >
+                                  Edit
+                                </Button>
+                                <Button
+                                  variant="destructive"
+                                  size="default"
+                                  className="flex-1 h-10 text-sm font-medium"
+                                  onClick={() => {
+                                    // TODO: Implement delete functionality
+                                  }}
+                                >
+                                  <Trash2 className="h-4 w-4 mr-2" />
+                                  Delete
+                                </Button>
+                              </div>
+                            </div>
+                          </Card>
+                        ))}
+                      </div>
+                    </div>
+
+                    {/* Desktop: Table view */}
+                    <div className="hidden md:block flex-1 overflow-auto">
+                      <Table>
+                        <TableHeader className="bg-accent sticky top-0">
+                          <TableRow className="hover:bg-transparent">
+                            <TableHead className="w-12 text-center text-xs sm:text-sm">
+                              Action
+                            </TableHead>
+                            <TableHead className="min-w-[100px] text-xs sm:text-sm">
+                              Branch
+                            </TableHead>
+                            <TableHead className="min-w-[250px] text-xs sm:text-sm">
+                              Address
+                            </TableHead>
+                            <TableHead className="min-w-[120px] text-xs sm:text-sm">
+                              Tax ID / GST
+                            </TableHead>
+                            <TableHead className="min-w-[120px] text-xs sm:text-sm">
+                              Contact Person
+                            </TableHead>
+                            <TableHead className="min-w-[150px] text-xs sm:text-sm">
+                              Phone
+                            </TableHead>
+                            <TableHead className="min-w-[100px] text-xs sm:text-sm">
+                              Zone
+                            </TableHead>
+                          </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                          {addresses.map(branch => (
+                            <TableRow
+                              key={branch.id}
+                              className="hover:bg-muted/50 cursor-pointer"
+                              onClick={() => handleEditAddress(branch)}
+                            >
+                              <TableCell className="text-center">
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  className="h-7 w-7 text-red-500 hover:text-red-700 hover:bg-red-50"
+                                  onClick={() => {
+                                    // TODO: Implement delete functionality
+                                  }}
+                                >
+                                  <Trash2 className="h-3 w-3" />
+                                </Button>
+                              </TableCell>
+                              <TableCell className="font-medium text-xs sm:text-sm">
+                                {branch.name ||
+                                  branch.addressId?.branchName ||
+                                  "-"}
+                              </TableCell>
+                              <TableCell className="font-medium">
+                                <div className="space-y-0.5">
+                                  <div className="text-xs sm:text-sm">
+                                    {branch.addressId?.addressLine || "-"}
+                                  </div>
+                                  <div className="text-xs sm:text-sm text-muted-foreground">
+                                    {[
+                                      branch.addressId?.city,
+                                      branch.addressId?.state,
+                                      branch.addressId?.pinCodeId,
+                                    ]
+                                      .filter(Boolean)
+                                      .join(", ") || "-"}
+                                  </div>
+                                  <div className="text-xs sm:text-sm text-muted-foreground">
+                                    {branch.addressId?.country || "-"}
+                                  </div>
+                                </div>
+                              </TableCell>
+                              <TableCell className="text-xs sm:text-sm">
+                                {branch.addressId?.gst || "-"}
+                              </TableCell>
+                              <TableCell className="text-xs sm:text-sm">
+                                {branch.addressId?.primaryContact || "-"}
+                              </TableCell>
+                              <TableCell className="text-xs sm:text-sm">
+                                {branch.addressId?.mobileNo &&
+                                branch.addressId?.nationalMobileNum
+                                  ? `+${branch.addressId.nationalMobileNum} ${branch.addressId.mobileNo}`
+                                  : branch.addressId?.phone || "-"}
+                              </TableCell>
+                              <TableCell className="text-xs sm:text-sm">
+                                {branch.zoneId?.zoneId?.zoneName || "-"}
+                              </TableCell>
+                            </TableRow>
+                          ))}
+                        </TableBody>
+                      </Table>
+                    </div>
+
+                    {/* Enhanced Pagination Controls */}
+                    <div className="border-t bg-background">
+                      <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4 p-4 sm:p-6">
+                        {/* Left side: Results info and page size selector */}
+                        <div className="flex flex-col sm:flex-row sm:items-center gap-4">
+                          <div className="text-sm text-muted-foreground order-2 sm:order-1">
+                            Showing{" "}
+                            <span className="font-semibold text-foreground">
+                              {currentPage * pageSize + 1}
+                            </span>{" "}
+                            to{" "}
+                            <span className="font-semibold text-foreground">
+                              {Math.min(
+                                (currentPage + 1) * pageSize,
+                                totalAddresses
+                              )}
+                            </span>{" "}
+                            of{" "}
+                            <span className="font-semibold text-foreground">
+                              {totalAddresses}
+                            </span>{" "}
+                            addresses
                           </div>
-                          <div className="grid grid-cols-2 gap-2 sm:gap-3 text-xs sm:text-sm">
-                            <div className="space-y-0.5">
-                              <span className="text-xs font-medium text-muted-foreground">
-                                Tax ID
-                              </span>
-                              <div className="font-medium text-xs sm:text-sm">
-                                {item.taxId}
-                              </div>
-                            </div>
-                            <div className="space-y-0.5">
-                              <span className="text-xs font-medium text-muted-foreground">
-                                Contact
-                              </span>
-                              <div className="font-medium text-xs sm:text-sm">
-                                {item.contact}
-                              </div>
-                            </div>
-                            <div className="col-span-2 space-y-0.5">
-                              <span className="text-xs font-medium text-muted-foreground">
-                                Phone
-                              </span>
-                              <div className="font-medium text-xs sm:text-sm">
-                                {item.phone}
-                              </div>
-                            </div>
+
+                          {/* Page Size Selector */}
+                          <div className="flex items-center gap-2 order-1 sm:order-2">
+                            <Label
+                              htmlFor="page-size"
+                              className="text-sm text-muted-foreground whitespace-nowrap"
+                            >
+                              Show:
+                            </Label>
+                            <Controller
+                              name="pageSize"
+                              control={controlSearch}
+                              render={({ field }) => (
+                                <Select
+                                  value={field.value.toString()}
+                                  onValueChange={value => {
+                                    const newSize = parseInt(value);
+                                    field.onChange(newSize);
+                                    handlePageSizeChange(newSize);
+                                  }}
+                                >
+                                  <SelectTrigger
+                                    className="w-20 h-9 border-input"
+                                    id="page-size"
+                                  >
+                                    <SelectValue />
+                                  </SelectTrigger>
+                                  <SelectContent>
+                                    {pageSizeOptions.map(size => (
+                                      <SelectItem
+                                        key={size}
+                                        value={size.toString()}
+                                      >
+                                        {size}
+                                      </SelectItem>
+                                    ))}
+                                  </SelectContent>
+                                </Select>
+                              )}
+                            />
+                            <span className="text-sm text-muted-foreground whitespace-nowrap">
+                              per page
+                            </span>
                           </div>
-                          <Separator />
-                          <div className="flex gap-2">
+                        </div>
+
+                        {/* Right side: Navigation controls */}
+                        <div className="flex items-center justify-center lg:justify-end">
+                          <nav
+                            className="flex items-center gap-1"
+                            aria-label="Pagination Navigation"
+                          >
                             <Button
                               variant="outline"
                               size="sm"
-                              className="flex-1 h-8 text-xs"
+                              onClick={() => handlePageChange(currentPage - 1)}
+                              disabled={currentPage === 0}
+                              className="h-9 px-3 gap-1"
+                              aria-label="Go to previous page"
                             >
-                              Edit
+                              <ChevronLeft className="h-4 w-4" />
+                              <span className="hidden sm:inline">Previous</span>
                             </Button>
-                            <Button
-                              variant="destructive"
-                              size="sm"
-                              className="flex-1 h-8 text-xs"
-                            >
-                              <Trash2 className="h-3 w-3 mr-1" />
-                              Delete
-                            </Button>
-                          </div>
-                        </div>
-                      </Card>
-                    ))}
-                  </div>
-                </div>
 
-                {/* Desktop: Table view with flexible height */}
-                <div className="hidden md:block flex-1 overflow-auto">
-                  <Table>
-                    <TableHeader className="bg-accent sticky top-0">
-                      <TableRow className="hover:bg-transparent">
-                        <TableHead className="w-12 text-center text-xs sm:text-sm">
-                          Action
-                        </TableHead>
-                        <TableHead className="min-w-[200px] text-xs sm:text-sm">
-                          Address
-                        </TableHead>
-                        <TableHead className="min-w-[120px] text-xs sm:text-sm">
-                          Tax ID
-                        </TableHead>
-                        <TableHead className="min-w-[120px] text-xs sm:text-sm">
-                          Contact Person
-                        </TableHead>
-                        <TableHead className="min-w-[120px] text-xs sm:text-sm">
-                          Phone
-                        </TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      <TableRow className="hover:bg-muted/50">
-                        <TableCell className="text-center">
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            className="h-7 w-7 text-red-500 hover:text-red-700 hover:bg-red-50"
-                            onClick={() => {
-                              // Handle delete action for first address
-                              // console.log("Delete address entry 1");
-                            }}
-                          >
-                            <Trash2 className="h-3 w-3" />
-                          </Button>
-                        </TableCell>
-                        <TableCell className="font-medium">
-                          <div className="space-y-0.5">
-                            <div className="text-xs sm:text-sm">
-                              123 Business Street
+                            <div className="flex items-center gap-1 px-4 py-2 text-sm font-medium bg-muted/50 rounded-md mx-2">
+                              <span className="text-muted-foreground">
+                                Page
+                              </span>
+                              <span className="text-foreground">
+                                {currentPage + 1}
+                              </span>
+                              <span className="text-muted-foreground">of</span>
+                              <span className="text-foreground">
+                                {Math.ceil(totalAddresses / pageSize)}
+                              </span>
                             </div>
-                            <div className="text-xs sm:text-sm text-muted-foreground">
-                              Suite 100
-                            </div>
-                            <div className="text-xs sm:text-sm text-muted-foreground">
-                              New York, NY 10001
-                            </div>
-                          </div>
-                        </TableCell>
-                        <TableCell className="text-xs sm:text-sm">
-                          TAX123456789
-                        </TableCell>
-                        <TableCell className="text-xs sm:text-sm">
-                          John Doe
-                        </TableCell>
-                        <TableCell className="text-xs sm:text-sm">
-                          +1 (555) 123-4567
-                        </TableCell>
-                      </TableRow>
-                      <TableRow className="hover:bg-muted/50">
-                        <TableCell className="text-center">
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            className="h-7 w-7 text-red-500 hover:text-red-700 hover:bg-red-50"
-                            onClick={() => {
-                              // Handle delete action
-                            }}
-                          >
-                            <Trash2 className="h-3 w-3" />
-                          </Button>
-                        </TableCell>
-                        <TableCell className="font-medium">
-                          <div className="space-y-0.5">
-                            <div className="text-xs sm:text-sm">
-                              456 Corporate Avenue
-                            </div>
-                            <div className="text-xs sm:text-sm text-muted-foreground">
-                              Building B, Floor 3
-                            </div>
-                            <div className="text-xs sm:text-sm text-muted-foreground">
-                              Los Angeles, CA 90210
-                            </div>
-                          </div>
-                        </TableCell>
-                        <TableCell className="text-xs sm:text-sm">
-                          TAX987654321
-                        </TableCell>
-                        <TableCell className="text-xs sm:text-sm">
-                          Jane Smith
-                        </TableCell>
-                        <TableCell className="text-xs sm:text-sm">
-                          +1 (555) 987-6543
-                        </TableCell>
-                      </TableRow>
-                      <TableRow className="hover:bg-muted/50">
-                        <TableCell className="text-center">
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            className="h-7 w-7 text-red-500 hover:text-red-700 hover:bg-red-50"
-                            onClick={() => {
-                              // Handle delete action
-                            }}
-                          >
-                            <Trash2 className="h-3 w-3" />
-                          </Button>
-                        </TableCell>
-                        <TableCell className="font-medium">
-                          <div className="space-y-0.5">
-                            <div className="text-xs sm:text-sm">
-                              789 Industrial Park
-                            </div>
-                            <div className="text-xs sm:text-sm text-muted-foreground">
-                              Warehouse District
-                            </div>
-                            <div className="text-xs sm:text-sm text-muted-foreground">
-                              Chicago, IL 60601
-                            </div>
-                          </div>
-                        </TableCell>
-                        <TableCell className="text-xs sm:text-sm">
-                          TAX456789123
-                        </TableCell>
-                        <TableCell className="text-xs sm:text-sm">
-                          Michael Johnson
-                        </TableCell>
-                        <TableCell className="text-xs sm:text-sm">
-                          +1 (555) 456-7890
-                        </TableCell>
-                      </TableRow>
-                      <TableRow className="hover:bg-muted/50">
-                        <TableCell className="text-center">
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            className="h-7 w-7 text-red-500 hover:text-red-700 hover:bg-red-50"
-                            onClick={() => {
-                              // Handle delete action
-                            }}
-                          >
-                            <Trash2 className="h-3 w-3" />
-                          </Button>
-                        </TableCell>
-                        <TableCell className="font-medium">
-                          <div className="space-y-0.5">
-                            <div className="text-xs sm:text-sm">
-                              321 Tech Boulevard
-                            </div>
-                            <div className="text-xs sm:text-sm text-muted-foreground">
-                              Innovation Center
-                            </div>
-                            <div className="text-xs sm:text-sm text-muted-foreground">
-                              San Francisco, CA 94105
-                            </div>
-                          </div>
-                        </TableCell>
-                        <TableCell className="text-xs sm:text-sm">
-                          TAX654321789
-                        </TableCell>
-                        <TableCell className="text-xs sm:text-sm">
-                          Sarah Williams
-                        </TableCell>
-                        <TableCell className="text-xs sm:text-sm">
-                          +1 (555) 321-9876
-                        </TableCell>
-                      </TableRow>
-                    </TableBody>
-                  </Table>
-                </div>
+
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => handlePageChange(currentPage + 1)}
+                              disabled={
+                                (currentPage + 1) * pageSize >= totalAddresses
+                              }
+                              className="h-9 px-3 gap-1"
+                              aria-label="Go to next page"
+                            >
+                              <span className="hidden sm:inline">Next</span>
+                              <ChevronRight className="h-4 w-4" />
+                            </Button>
+                          </nav>
+                        </div>
+                      </div>
+                    </div>
+                  </>
+                )}
               </div>
             </SectionCard>
           </div>
         </div>
+
+        {/* Add Address Dialog */}
+        {showAddAddressDialog && (
+          <AddAddressDialog
+            open={showAddAddressDialog}
+            onOpenChange={setShowAddAddressDialog}
+            mode={dialogMode}
+            {...(selectedAddress ? { initialData: selectedAddress } : {})}
+            onSuccess={() => {
+              fetchBranchAddresses(searchTerm, currentPage);
+            }}
+          />
+        )}
       </FullWidthLayout>
     </>
   );
