@@ -1,7 +1,7 @@
 "use client";
 
 import { Button } from "@/components/ui/button";
-import { Menu, Search } from "lucide-react";
+import { Menu, Search, LogIn } from "lucide-react";
 import { useState } from "react";
 import Logo from "./custom/logo";
 import SearchBox from "./custom/search";
@@ -10,6 +10,11 @@ import ProfileButton from "./profile/ProfileButton";
 import AddCardButton from "./sample/add-card";
 import Sidebar from "./sidebar";
 import SearchDrawer from "@/components/custom/search-drawer";
+import {
+  AuthenticatedOnly,
+  UnauthenticatedOnly,
+} from "@/components/auth/AuthGuard";
+import Link from "next/link";
 
 export default function NavBar() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -47,8 +52,21 @@ export default function NavBar() {
               >
                 <Search className="h-5 w-5" />
               </Button>
-              <NotificationButton />
-              <ProfileButton />
+
+              {/* Authenticated Actions */}
+              <AuthenticatedOnly>
+                <NotificationButton />
+                <ProfileButton />
+              </AuthenticatedOnly>
+
+              {/* Unauthenticated Actions */}
+              <UnauthenticatedOnly>
+                <Button variant="ghost" size="icon" asChild>
+                  <Link href="/login">
+                    <LogIn className="h-5 w-5" />
+                  </Link>
+                </Button>
+              </UnauthenticatedOnly>
             </div>
           </div>
         </div>
@@ -76,9 +94,21 @@ export default function NavBar() {
 
           {/* Right: Actions */}
           <div className="flex items-center gap-1">
-            <NotificationButton />
-            <AddCardButton />
-            <ProfileButton />
+            {/* Authenticated Actions */}
+            <AuthenticatedOnly>
+              <NotificationButton />
+              <AddCardButton />
+              <ProfileButton />
+            </AuthenticatedOnly>
+
+            {/* Unauthenticated Actions */}
+            <UnauthenticatedOnly>
+              <Button variant="ghost" size="icon" asChild>
+                <Link href="/login">
+                  <LogIn className="h-5 w-5" />
+                </Link>
+              </Button>
+            </UnauthenticatedOnly>
           </div>
         </div>
 
@@ -105,9 +135,22 @@ export default function NavBar() {
 
           {/* Right Section - Desktop */}
           <div className="flex items-center gap-2 flex-shrink-0">
-            <NotificationButton />
-            <AddCardButton />
-            <ProfileButton />
+            {/* Authenticated Actions */}
+            <AuthenticatedOnly>
+              <NotificationButton />
+              <AddCardButton />
+              <ProfileButton />
+            </AuthenticatedOnly>
+
+            {/* Unauthenticated Actions */}
+            <UnauthenticatedOnly>
+              <Button variant="default" asChild>
+                <Link href="/login">
+                  <LogIn className="mr-2 h-4 w-4" />
+                  Login
+                </Link>
+              </Button>
+            </UnauthenticatedOnly>
           </div>
         </div>
       </nav>

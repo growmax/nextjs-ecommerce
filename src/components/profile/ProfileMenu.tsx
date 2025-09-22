@@ -11,6 +11,7 @@ import {
   ShoppingCart,
   FileText,
   LogOut,
+  Loader2,
 } from "lucide-react";
 import {
   DropdownMenuItem,
@@ -121,7 +122,11 @@ export default function ProfileMenu() {
         disabled={isLoggingOut}
         className="text-red-600 focus:text-red-600"
       >
-        <LogOut className="mr-2 h-4 w-4" />
+        {isLoggingOut ? (
+          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+        ) : (
+          <LogOut className="mr-2 h-4 w-4" />
+        )}
         {isLoggingOut ? "Logging out..." : "Logout"}
       </DropdownMenuItem>
     </>

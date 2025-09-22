@@ -1,13 +1,14 @@
 "use client";
 
+import { AuthStorage } from "@/lib/auth";
 import React, {
   createContext,
-  useContext,
-  useState,
   useCallback,
+  useContext,
+  useEffect,
   useMemo,
+  useState,
 } from "react";
-import { AuthStorage } from "@/lib/auth";
 
 interface User {
   id: string;
@@ -28,26 +29,36 @@ interface AuthContextType {
     tokens: { accessToken: string; refreshToken?: string; expiresIn?: number },
     userData: User
   ) => void;
-  logout: () => void;
+  logout: () => Promise<void>;
   checkAuth: () => boolean;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-export function AuthProvider({ children }: { children: React.ReactNode }) {
+interface AuthProviderProps {
+  children: React.ReactNode;
+  initialAuthState?: boolean;
+  initialUser?: User | null;
+}
+
+export function AuthProvider({
+  children,
+  initialAuthState,
+  initialUser,
+}: AuthProviderProps) {
   const [user, setUser] = useState<User | null>(() => {
-    // Initialize user from localStorage on mount (client-side only)
-    if (typeof window !== "undefined") {
-      return AuthStorage.getUserData();
+    // Always use server-side initial data when available
+    if (initialUser !== undefined) {
+      return initialUser;
     }
     return null;
   });
 
   const [isLoading] = useState(false);
   const [isAuthenticated, setIsAuthenticated] = useState(() => {
-    // Initialize auth state from localStorage on mount
-    if (typeof window !== "undefined") {
-      return AuthStorage.isAuthenticated();
+    // Always use server-side initial state when available
+    if (initialAuthState !== undefined) {
+      return initialAuthState;
     }
     return false;
   });
@@ -57,8 +68,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     setIsAuthenticated(authenticated);
 
     if (authenticated) {
-      const userData = AuthStorage.getUserData();
-      setUser(userData);
+      // User data should be fetched from server, not stored locally
+      // Components should make authenticated API calls to get user data
+      setUser(null); // Will be populated by server-side props or API calls
     } else {
       setUser(null);
     }
@@ -66,19 +78,32 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     return authenticated;
   }, []);
 
-  // No useEffect needed - middleware handles auth checks
+  // Sync client-side state with cookies after hydration
+  useEffect(() => {
+    // Only run on client-side after initial render
+    if (typeof window !== "undefined") {
+      // If no initial state was provided from server, check client-side auth
+      if (initialAuthState === undefined && initialUser === undefined) {
+        const clientAuth = AuthStorage.isAuthenticated();
+        // Don't get user from localStorage - use server-provided initial user or fetch from API
+
+        setIsAuthenticated(clientAuth);
+        setUser(null); // User data should come from server
+      }
+    }
+  }, [initialAuthState, initialUser]);
 
   const login = useCallback(
     (
-      tokens: {
+      _tokens: {
         accessToken: string;
         refreshToken?: string;
         expiresIn?: number;
       },
       userData: User
     ) => {
-      AuthStorage.setTokens(tokens);
-      AuthStorage.setUserData(userData);
+      // Tokens are set by server-side login API as HttpOnly cookies
+      // Just update local state with user data from server response
       setUser(userData);
       setIsAuthenticated(true);
 
@@ -87,12 +112,25 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     []
   );
 
-  const logout = useCallback(() => {
-    AuthStorage.clearAuth();
-    setUser(null);
-    setIsAuthenticated(false);
-    // Use window.location for logout to ensure clean redirect
-    window.location.href = "/en/login";
+  const logout = useCallback(async () => {
+    try {
+      // Call server-side logout API
+      await AuthStorage.logout();
+
+      // Clear local state regardless of server response
+      setUser(null);
+      setIsAuthenticated(false);
+
+      // Redirect to login page
+      window.location.href = "/en/login";
+    } catch {
+      AuthStorage.clearAuth();
+      setUser(null);
+      setIsAuthenticated(false);
+
+      // Redirect even on error
+      window.location.href = "/en/login";
+    }
   }, []);
 
   // Memoize the context value to prevent unnecessary re-renders

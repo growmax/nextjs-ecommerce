@@ -11,7 +11,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const response = await fetch(`${process.env.AUTH_BASE_URL}/auth/refresh`, {
+    const response = await fetch(`${process.env.AUTH_URL}/refresh`, {
       method: "POST",
       headers: {
         origin:
@@ -48,6 +48,15 @@ export async function POST(request: NextRequest) {
         expires: new Date(0),
       });
 
+      nextResponse.cookies.set("access_token_client", "", {
+        httpOnly: false,
+        secure: process.env.NODE_ENV === "production",
+        sameSite: "strict",
+        maxAge: 0,
+        path: "/",
+        expires: new Date(0),
+      });
+
       return nextResponse;
     }
 
@@ -65,6 +74,15 @@ export async function POST(request: NextRequest) {
     if (tokens.accessToken) {
       nextResponse.cookies.set("access_token", tokens.accessToken, {
         httpOnly: true,
+        secure: process.env.NODE_ENV === "production",
+        sameSite: "strict",
+        maxAge: 7 * 24 * 60 * 60, // 7 days
+        path: "/",
+      });
+
+      // Also update client-accessible token for state management
+      nextResponse.cookies.set("access_token_client", tokens.accessToken, {
+        httpOnly: false,
         secure: process.env.NODE_ENV === "production",
         sameSite: "strict",
         maxAge: 7 * 24 * 60 * 60, // 7 days

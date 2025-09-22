@@ -21,6 +21,8 @@ export interface ServerAuthResult {
   isAuthenticated: boolean;
   user: ServerUser | null;
   accessToken: string | null;
+  hasAnonymousToken: boolean;
+  tokenType: "access" | "anonymous" | "none";
 }
 
 /**
@@ -31,8 +33,8 @@ export interface ServerAuthResult {
  */
 export class ServerAuth {
   private static readonly ACCESS_TOKEN_COOKIE = "access_token";
-  private static readonly USER_DATA_COOKIE = "user_data";
   private static readonly REFRESH_TOKEN_COOKIE = "refresh_token";
+  private static readonly ANONYMOUS_TOKEN_COOKIE = "anonymous_token";
 
   /**
    * Check if user is authenticated (server-side)
@@ -73,16 +75,11 @@ export class ServerAuth {
       const isAuth = await this.isAuthenticated();
       if (!isAuth) return null;
 
-      const cookieStore = await cookies();
-      const userDataString = cookieStore.get(
-        ServerAuth.USER_DATA_COOKIE
-      )?.value;
-
-      if (!userDataString) return null;
-
-      // Decode URL-encoded user data
-      const decodedUserData = decodeURIComponent(userDataString);
-      return JSON.parse(decodedUserData);
+      // User data should be fetched from your user API using access_token
+      // This is more secure than storing user data in cookies
+      // Implementation would depend on your user service API
+      // getUserData: User data should be fetched from API, not cookies
+      return null;
     } catch (error) {
       // eslint-disable-next-line no-console
       console.error("[ServerAuth] Error getting user data:", error);
@@ -107,6 +104,23 @@ export class ServerAuth {
   }
 
   /**
+   * Check if anonymous token exists (server-side)
+   *
+   * @returns Promise<boolean> - Whether anonymous token exists
+   */
+  static async hasAnonymousToken(): Promise<boolean> {
+    try {
+      const cookieStore = await cookies();
+      const anonymousToken = cookieStore.get(
+        this.ANONYMOUS_TOKEN_COOKIE
+      )?.value;
+      return !!anonymousToken;
+    } catch {
+      return false;
+    }
+  }
+
+  /**
    * Get complete authentication state (server-side)
    *
    * @returns Promise<ServerAuthResult> - Complete auth state
@@ -118,19 +132,51 @@ export class ServerAuth {
       const accessToken = isAuthenticated
         ? await ServerAuth.getAccessToken()
         : null;
+      const hasAnonymousToken = await this.hasAnonymousToken();
+
+      let tokenType: "access" | "anonymous" | "none" = "none";
+      if (isAuthenticated) {
+        tokenType = "access";
+      } else if (hasAnonymousToken) {
+        tokenType = "anonymous";
+      }
 
       return {
         isAuthenticated,
         user,
         accessToken,
+        hasAnonymousToken,
+        tokenType,
       };
     } catch {
       return {
         isAuthenticated: false,
         user: null,
         accessToken: null,
+        hasAnonymousToken: false,
+        tokenType: "none",
       };
     }
+  }
+
+  /**
+   * Check if user should see authenticated UI elements
+   * Main function for conditional rendering based on authentication
+   *
+   * @returns Promise<boolean> - Whether to show authenticated UI
+   */
+  static async shouldShowAuthenticatedUI(): Promise<boolean> {
+    return await this.isAuthenticated();
+  }
+
+  /**
+   * Check if user should see unauthenticated UI elements
+   *
+   * @returns Promise<boolean> - Whether to show unauthenticated UI
+   */
+  static async shouldShowUnauthenticatedUI(): Promise<boolean> {
+    const isAuth = await this.isAuthenticated();
+    return !isAuth;
   }
 
   /**
@@ -207,8 +253,15 @@ export class ServerAuth {
 
     return [
       `${this.ACCESS_TOKEN_COOKIE}=; path=/; expires=Thu, 01 Jan 1970 00:00:00 UTC; SameSite=Strict${secureFlag}`,
-      `${this.USER_DATA_COOKIE}=; path=/; expires=Thu, 01 Jan 1970 00:00:00 UTC; SameSite=Strict${secureFlag}`,
       `${this.REFRESH_TOKEN_COOKIE}=; path=/; expires=Thu, 01 Jan 1970 00:00:00 UTC; SameSite=Strict${secureFlag}`,
     ];
   }
 }
+
+// Convenience functions for common authentication checks
+export const isServerAuthenticated = () => ServerAuth.isAuthenticated();
+export const getServerAuthState = () => ServerAuth.getAuthState();
+export const shouldShowAuthenticatedUI = () =>
+  ServerAuth.shouldShowAuthenticatedUI();
+export const shouldShowUnauthenticatedUI = () =>
+  ServerAuth.shouldShowUnauthenticatedUI();

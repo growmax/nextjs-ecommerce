@@ -4,12 +4,14 @@ export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
 
-    const response = await fetch(`${process.env.AUTH_BASE_URL}/loginNew`, {
+    const response = await fetch(`${process.env.AUTH_URL}/loginNew`, {
       method: "POST",
       headers: {
         Origin:
           request.headers.get("x-tenant-origin") ||
-          process.env.DEFAULT_TENANT_ORIGIN!,
+          (process.env.NODE_ENV === "development"
+            ? process.env.DEFAULT_ORIGIN
+            : process.env.DEFAULT_TENANT_ORIGIN)!,
         "Content-Type": "application/json",
         "Cache-Control": "no-cache, no-store, must-revalidate",
       },
@@ -46,9 +48,31 @@ export async function POST(request: NextRequest) {
       refreshToken = data.data.refreshToken;
     }
 
+    // eslint-disable-next-line no-console
+    console.log(accessToken, "accessToken");
+
     if (response.ok && accessToken) {
+      // Remove anonymous token since user is now authenticated
+      nextResponse.cookies.set("anonymous_token", "", {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === "production",
+        sameSite: "strict",
+        maxAge: 0, // Expire immediately
+        path: "/",
+      });
+
+      // Set access token (HttpOnly for security)
       nextResponse.cookies.set("access_token", accessToken, {
         httpOnly: true,
+        secure: process.env.NODE_ENV === "production",
+        sameSite: "strict",
+        maxAge: 7 * 24 * 60 * 60, // 7 days
+        path: "/",
+      });
+
+      // Set client-accessible token for client-side auth state sync
+      nextResponse.cookies.set("access_token_client", accessToken, {
+        httpOnly: false, // Client-accessible for auth state management
         secure: process.env.NODE_ENV === "production",
         sameSite: "strict",
         maxAge: 7 * 24 * 60 * 60, // 7 days
