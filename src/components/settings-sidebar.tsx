@@ -28,7 +28,7 @@ export default function SettingsSidebar({
   const pathname = usePathname();
 
   return (
-    <div className="w-64 h-screen border-r bg-background">
+    <div className="w-60 lg:w-64 h-screen border-r bg-background">
       <Card className="h-full rounded-none border-0">
         <CardHeader>
           <CardTitle className="flex items-center gap-2">

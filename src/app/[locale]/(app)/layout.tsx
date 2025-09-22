@@ -64,11 +64,15 @@ export default async function AppLayout({
         >
           <UserSessionProvider initialUserData={userData?.data || null}>
             {/* App pages: Always show nav, conditionally show footer */}
-            <NavBar />
-            <main className={cn("min-h-screen pt-4", !hideFooter && "pb-8")}>
-              {children}
-            </main>
-            {!hideFooter && <Footer />}
+            <div className="min-h-screen flex flex-col">
+              <NavBar />
+              <main className={cn("flex-1 pt-4")}>{children}</main>
+              {!hideFooter && (
+                <div className="mt-auto">
+                  <Footer />
+                </div>
+              )}
+            </div>
           </UserSessionProvider>
         </AuthProvider>
       </TenantProvider>
