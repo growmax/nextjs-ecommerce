@@ -1,7 +1,6 @@
 "use client";
 
 import { Button } from "@/components/ui/button";
-import { Separator } from "@/components/ui/separator";
 import { cn } from "@/lib/utils";
 import { useTranslations } from "next-intl";
 import { Link } from "@/i18n/navigation";
@@ -11,47 +10,84 @@ export default function Footer() {
   const t = useTranslations();
 
   return (
-    <footer className={cn("border-t bg-background")}>
+    <footer className={cn("border-t bg-background overflow-x-hidden")}>
       <div className="container mx-auto px-4 py-6">
-        <div className="flex flex-col md:flex-row justify-between items-center gap-4">
-          {/* Left section */}
-          <div className="text-sm text-muted-foreground">
+        <div className="flex flex-col gap-4">
+          {/* Copyright section */}
+          <div className="text-sm text-muted-foreground text-center">
             © {currentYear} Your Company. All rights reserved.
           </div>
 
-          {/* Middle section - Links using Button component */}
-          <div className="flex items-center gap-2">
-            <Button variant="link" size="sm" asChild>
+          {/* Links section - Responsive grid */}
+          <div className="flex flex-wrap justify-center items-center gap-x-2 gap-y-1">
+            <Button
+              variant="link"
+              size="sm"
+              asChild
+              className="h-auto py-1 px-2"
+            >
               <Link href="/about">{t("navigation.about")}</Link>
             </Button>
-            <Separator orientation="vertical" className="h-4" />
-            <Button variant="link" size="sm" asChild>
+            <span className="hidden sm:inline text-muted-foreground">•</span>
+            <Button
+              variant="link"
+              size="sm"
+              asChild
+              className="h-auto py-1 px-2"
+            >
               <Link href="/privacy">{t("navigation.privacy")}</Link>
             </Button>
-            <Separator orientation="vertical" className="h-4" />
-            <Button variant="link" size="sm" asChild>
+            <span className="hidden sm:inline text-muted-foreground">•</span>
+            <Button
+              variant="link"
+              size="sm"
+              asChild
+              className="h-auto py-1 px-2"
+            >
               <Link href="/terms">{t("navigation.terms")}</Link>
             </Button>
-            <Separator orientation="vertical" className="h-4" />
-            <Button variant="link" size="sm" asChild>
+            <span className="hidden sm:inline text-muted-foreground">•</span>
+            <Button
+              variant="link"
+              size="sm"
+              asChild
+              className="h-auto py-1 px-2"
+            >
               <Link href="/contact">{t("navigation.contact")}</Link>
             </Button>
-            <Separator orientation="vertical" className="h-4" />
-            <Button variant="link" size="sm" asChild>
+            <span className="hidden sm:inline text-muted-foreground">•</span>
+            <Button
+              variant="link"
+              size="sm"
+              asChild
+              className="h-auto py-1 px-2"
+            >
               <Link href="/check_out">{t("ecommerce.checkout")}</Link>
             </Button>
-            <Separator orientation="vertical" className="h-4" />
-            <Button variant="link" size="sm" asChild>
+            <span className="hidden sm:inline text-muted-foreground">•</span>
+            <Button
+              variant="link"
+              size="sm"
+              asChild
+              className="h-auto py-1 px-2"
+            >
               <Link href="/card_page">{t("ecommerce.cart")}</Link>
             </Button>
-            <Separator orientation="vertical" className="h-4" />
-            <Button variant="link" size="sm" asChild>
+            <span className="hidden sm:inline text-muted-foreground">•</span>
+            <Button
+              variant="link"
+              size="sm"
+              asChild
+              className="h-auto py-1 px-2"
+            >
               <Link href="/orders">{t("ecommerce.orders")}</Link>
             </Button>
           </div>
 
-          {/* Right section */}
-          <div className="text-sm text-muted-foreground">Made with ❤️</div>
+          {/* Made with love section */}
+          <div className="text-sm text-muted-foreground text-center">
+            Made with ❤️
+          </div>
         </div>
       </div>
     </footer>

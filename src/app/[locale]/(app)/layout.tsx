@@ -8,7 +8,6 @@ import { fetchTenantFromExternalAPI } from "@/lib/tenant";
 import { ServerUserService } from "@/lib/services/ServerUserService";
 import NavBar from "@/components/nav-bar";
 import Footer from "@/components/footer";
-import { cn } from "@/lib/utils";
 
 export default async function AppLayout({
   children,
@@ -22,7 +21,6 @@ export default async function AppLayout({
   const tenantCode = headersList.get("x-tenant-code");
   const tenantDomain = headersList.get("x-tenant-domain");
   const tenantOrigin = headersList.get("x-tenant-origin");
-  const pathname = headersList.get("x-pathname") || "";
 
   // Fetch tenant data server-side
   let tenantData = null;
@@ -43,26 +41,18 @@ export default async function AppLayout({
     userData = null;
   }
 
-  // Server-side logic for footer visibility
-  // Extract locale from pathname for accurate detection
-  const pathWithoutLocale =
-    pathname.replace(/^\/[a-z]{2}(-[A-Z]{2})?/, "") || "/";
-  const hideFooter = pathWithoutLocale.startsWith("/settings");
-
   return (
     <NextIntlClientProvider messages={messages}>
       <TenantProvider initialData={tenantData}>
         <AuthProvider>
           <UserSessionProvider initialUserData={userData?.data || null}>
-            {/* App pages: Always show nav, conditionally show footer */}
-            <div className="min-h-screen flex flex-col">
+            <div className="overflow-x-hidden">
+              {/* App pages: Always show nav and footer */}
               <NavBar />
-              <main className={cn("flex-1 pt-4")}>{children}</main>
-              {!hideFooter && (
-                <div className="mt-auto">
-                  <Footer />
-                </div>
-              )}
+              <main className="min-h-screen pt-4 pb-8 overflow-x-hidden">
+                {children}
+              </main>
+              <Footer />
             </div>
           </UserSessionProvider>
         </AuthProvider>

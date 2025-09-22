@@ -87,3 +87,27 @@ export async function GET() {
     timeZoneOptions,
   });
 }
+
+// 📝 PUT handler to save preferences
+export async function PUT(request: Request) {
+  try {
+    const body = await request.json();
+
+    // Here you would typically save to a database
+    // For now, we'll return success
+    // In production, save to your backend/database
+
+    return NextResponse.json({
+      success: true,
+      data: body,
+    });
+  } catch (error) {
+    return NextResponse.json(
+      {
+        error: "Failed to save preferences",
+        details: error instanceof Error ? error.message : "Unknown error",
+      },
+      { status: 500 }
+    );
+  }
+}

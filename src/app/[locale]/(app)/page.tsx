@@ -4,6 +4,7 @@ import {
   SaveCancelToolbarExample,
 } from "@/components/examples/save-cancel-examples";
 import { CenteredLayout } from "@/components/layout/PageContent";
+import CartPriceDetails from "@/components/custom/CartPriceDetails";
 
 export default async function Home() {
   return (
@@ -18,18 +19,28 @@ export default async function Home() {
           </div>
         </div>
 
-        <div className="max-w-4xl mx-auto space-y-8">
-          <div className="grid gap-8 md:grid-cols-1">
-            <div className="bg-card border rounded-lg p-6">
-              <SaveCancelToolbarExample />
+        <div className="max-w-7xl mx-auto">
+          <div className="grid gap-8 grid-cols-1 lg:grid-cols-3">
+            {/* Left side content - spans 2 columns on large screens */}
+            <div className="lg:col-span-2 space-y-8">
+              <div className="bg-card border rounded-lg p-6">
+                <SaveCancelToolbarExample />
+              </div>
+
+              <div className="bg-card border rounded-lg p-6">
+                <SaveCancelDialogExample />
+              </div>
+
+              <div className="bg-card border rounded-lg p-6">
+                <SaveCancelAlertExample />
+              </div>
             </div>
 
-            <div className="bg-card border rounded-lg p-6">
-              <SaveCancelDialogExample />
-            </div>
-
-            <div className="bg-card border rounded-lg p-6">
-              <SaveCancelAlertExample />
+            {/* Right side - CartPriceDetails */}
+            <div className="lg:col-span-1">
+              <div className="sticky top-6">
+                <CartPriceDetails />
+              </div>
             </div>
           </div>
         </div>

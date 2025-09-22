@@ -89,7 +89,7 @@ function AutoCompleteField({
           <Button
             variant="outline"
             role="combobox"
-            className="w-full justify-between border rounded-lg px-2.5 py-1.5 text-sm text-left font-normal hover:border-gray-400 hover:ring-1 hover:ring-gray-400"
+            className="w-full justify-between border rounded-lg px-2.5 py-1.5 text-sm text-left font-normal hover:bg-accent hover:text-accent-foreground"
             ref={triggerRef}
           >
             <span className="truncate">{value || placeholder}</span>
@@ -110,7 +110,7 @@ function AutoCompleteField({
                     setOpen(false);
                     onChange?.();
                   }}
-                  className="flex justify-between px-2 py-1.5 text-sm cursor-pointer select-none rounded-md hover:bg-gray-100 hover:text-gray-700"
+                  className="flex justify-between px-2 py-1.5 text-sm cursor-pointer select-none rounded-md hover:bg-accent hover:text-accent-foreground"
                 >
                   {option.label}
                   {value === option.label && (
@@ -261,7 +261,7 @@ function ProfileCard({
         {/* Avatar */}
         <div className="flex justify-center sm:justify-start sm:flex-shrink-0">
           <label htmlFor="logo-upload" className="cursor-pointer block">
-            <div className="w-20 h-20 sm:w-28 sm:h-28 rounded-xl bg-white flex items-center justify-center relative overflow-hidden border border-gray-200 hover:border-gray-400 transition-colors shadow-sm hover:shadow">
+            <div className="w-20 h-20 sm:w-28 sm:h-28 rounded-xl bg-white flex items-center justify-center relative overflow-hidden border border-gray-200 hover:bg-accent/50 transition-colors shadow-sm">
               {logo ? (
                 <Image
                   src={logo}
@@ -310,7 +310,7 @@ function ProfileCard({
                 setName(e.target.value);
                 onFieldChange();
               }}
-              className="w-full px-2 py-1.5 border border-gray-300 rounded-lg focus:ring-1 focus:ring-gray-400 focus:border-gray-400"
+              className="w-full px-2 py-1.5 border border-gray-300 rounded-lg hover:bg-muted/50 focus:border-gray-400 transition-colors"
             />
           </div>
 
@@ -321,7 +321,7 @@ function ProfileCard({
               type="email"
               value={profile.email}
               disabled
-              className="w-full px-2 py-1.5 border border-gray-300 rounded-lg bg-white text-gray-500 cursor-not-allowed"
+              className="w-full px-2 py-1.5 border border-gray-300 rounded-lg bg-muted/30 text-gray-500 cursor-not-allowed"
             />
           </div>
 
@@ -341,14 +341,14 @@ function ProfileCard({
                       .slice(0, 10);
                     handlePhoneChange(value);
                   }}
-                  className={`w-full px-3 py-2 border rounded-lg text-sm pr-20 ${
+                  className={`w-full px-3 py-2 border rounded-lg text-sm pr-20 hover:bg-muted/50 focus:border-blue-500 transition-colors ${
                     phoneError ? "border-red-500" : "border-gray-300"
                   }`}
                   placeholder="Enter 10-digit number"
                 />
                 {phoneNumber.length === 10 && !phoneVerified && (
                   <button
-                    className="MuiButtonBase-root MuiButton-root MuiButton-text MuiButton-textPrimary MuiButton-sizeSmall MuiButton-textSizeSmall MuiButton-colorPrimary MuiButton-root MuiButton-text MuiButton-textPrimary MuiButton-sizeSmall MuiButton-textSizeSmall MuiButton-colorPrimary css-17xlhhi absolute right-1 top-1/2 -translate-y-1/2 text-xs h-5 px-2"
+                    className="MuiButtonBase-root MuiButton-root MuiButton-text MuiButton-textPrimary MuiButton-sizeSmall MuiButton-textSizeSmall MuiButton-colorPrimary MuiButton-root MuiButton-text MuiButton-textPrimary MuiButton-sizeSmall MuiButton-textSizeSmall MuiButton-colorPrimary css-17xlhhi absolute right-1 top-1/2 -translate-y-1/2 text-xs h-5 px-2 hover:bg-muted/50 transition-colors rounded"
                     tabIndex={0}
                     type="button"
                     id="verify-phone"
@@ -383,7 +383,7 @@ function ProfileCard({
                   const value = e.target.value.replace(/\D/g, "").slice(0, 10);
                   handleAltPhoneChange(value);
                 }}
-                className={`w-full px-3 py-2 border rounded-lg text-sm ${
+                className={`w-full px-3 py-2 border rounded-lg text-sm hover:bg-muted/50 focus:border-blue-500 transition-colors ${
                   altPhoneError ? "border-red-500" : "border-gray-300"
                 }`}
                 placeholder="Enter 10-digit number"
@@ -404,7 +404,7 @@ function ProfileCard({
                 type="email"
                 value={altEmail}
                 onChange={e => handleAltEmailChange(e.target.value)}
-                className={`w-full px-2 py-1.5 border rounded-lg text-sm bg-white ${
+                className={`w-full px-2 py-1.5 border rounded-lg text-sm hover:bg-muted/50 focus:border-blue-500 transition-colors ${
                   altEmailError ? "border-red-500" : "border-gray-300"
                 }`}
                 placeholder="Enter valid email address"
@@ -430,7 +430,7 @@ function ProfileCard({
               size="sm"
               onClick={sendOtp}
               disabled={isVerifying}
-              className="text-blue-600 border-blue-600 hover:bg-blue-50"
+              className="text-blue-600 border-blue-600 hover:bg-accent hover:text-accent-foreground"
             >
               Resend
             </Button>
@@ -451,7 +451,7 @@ function ProfileCard({
                   const value = e.target.value.replace(/\D/g, "").slice(0, 6);
                   setOtp(value);
                 }}
-                className="mt-1 w-full px-3 py-2 border border-gray-300 rounded-lg text-sm"
+                className="mt-1 w-full px-3 py-2 border border-gray-300 rounded-lg text-sm hover:bg-muted/50 focus:border-blue-500 transition-colors"
                 placeholder="Enter 6-digit OTP"
                 maxLength={6}
               />
@@ -526,11 +526,35 @@ export default function ProfilePage() {
   const handleSave = async () => {
     setIsLoading(true);
     try {
-      // Simulate save operation
-      await new Promise(resolve => setTimeout(resolve, 2000));
+      // Save to API
+      const response = await fetch("/api/profile", {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          "x-tenant": "schwingstetterdemo",
+        },
+        body: JSON.stringify({
+          name,
+          phoneNumber: phoneNumber ? `+91${phoneNumber}` : "",
+          altPhone,
+          altEmail,
+        }),
+      });
 
-      // Here you would save the profile data
-      // Saving profile data
+      if (!response.ok) {
+        throw new Error("Failed to save profile");
+      }
+
+      // Save to localStorage for persistence
+      localStorage.setItem(
+        "profileData",
+        JSON.stringify({
+          name,
+          phoneNumber,
+          altPhone,
+          altEmail,
+        })
+      );
 
       // Update original values
       setOriginalValues({
@@ -563,6 +587,10 @@ export default function ProfilePage() {
   useEffect(() => {
     async function fetchData() {
       try {
+        // First, try to load saved data from localStorage
+        const savedProfileData = localStorage.getItem("profileData");
+        const savedPreferences = localStorage.getItem("userPreferences");
+
         const profileRes = await fetch("/api/profile", {
           headers: {
             "x-tenant": "schwingstetterdemo",
@@ -583,12 +611,20 @@ export default function ProfilePage() {
         const profileData = profileJson as Profile;
         setProfile(profileData);
 
-        // Initialize form values
-        const nameValue = profileData.name || "";
-        const phoneValue =
+        // Use saved data if available, otherwise use API data
+        let nameValue = profileData.name || "";
+        let phoneValue =
           profileData.phone?.replace("+91", "").replace("+null", "") || "";
-        const altPhoneValue = profileData.altPhone || "";
-        const altEmailValue = profileData.altEmail || "";
+        let altPhoneValue = profileData.altPhone || "";
+        let altEmailValue = profileData.altEmail || "";
+
+        if (savedProfileData) {
+          const saved = JSON.parse(savedProfileData);
+          nameValue = saved.name || nameValue;
+          phoneValue = saved.phoneNumber || phoneValue;
+          altPhoneValue = saved.altPhone || altPhoneValue;
+          altEmailValue = saved.altEmail || altEmailValue;
+        }
 
         setName(nameValue);
         setPhoneNumber(phoneValue);
@@ -607,9 +643,17 @@ export default function ProfilePage() {
         const prefJson: UserPreferenceData = await prefRes.json();
         setUserPrefData(prefJson);
 
-        const defaultTimeZone = prefJson?.timeZoneOptions?.[0]?.key ?? "";
-        const defaultDateFormat = prefJson?.dateFormatOptions?.[0]?.value ?? "";
-        const defaultTimeFormat = prefJson?.timeFormatOptions?.[0]?.value ?? "";
+        let defaultTimeZone = prefJson?.timeZoneOptions?.[0]?.key ?? "";
+        let defaultDateFormat = prefJson?.dateFormatOptions?.[0]?.value ?? "";
+        let defaultTimeFormat = prefJson?.timeFormatOptions?.[0]?.value ?? "";
+
+        // Use saved preferences if available
+        if (savedPreferences) {
+          const saved = JSON.parse(savedPreferences);
+          defaultTimeZone = saved.timeZone || defaultTimeZone;
+          defaultDateFormat = saved.dateFormat || defaultDateFormat;
+          defaultTimeFormat = saved.timeFormat || defaultTimeFormat;
+        }
 
         setSelectedTimeZone(defaultTimeZone);
         setSelectedDateFormat(defaultDateFormat);
@@ -636,8 +680,32 @@ export default function ProfilePage() {
   const handlePrefSave = async () => {
     setIsLoading(true);
     try {
-      // Simulate save operation
-      await new Promise(resolve => setTimeout(resolve, 2000));
+      // Save to API
+      const response = await fetch("/api/userpreferences", {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          timeZone: selectedTimeZone,
+          dateFormat: selectedDateFormat,
+          timeFormat: selectedTimeFormat,
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error("Failed to save preferences");
+      }
+
+      // Save to localStorage for persistence
+      localStorage.setItem(
+        "userPreferences",
+        JSON.stringify({
+          timeZone: selectedTimeZone,
+          dateFormat: selectedDateFormat,
+          timeFormat: selectedTimeFormat,
+        })
+      );
 
       setOriginalPref({
         timeZone: selectedTimeZone,
@@ -659,8 +727,10 @@ export default function ProfilePage() {
   return (
     <>
       <HeaderBar title="Profile Settings" icon={<User className="w-6 h-6" />} />
-      <main className="flex-1 p-4">
-        <div className="max-w-5xl mx-auto space-y-4">
+      <main
+        className={`flex-1 p-4 overflow-x-hidden ${isProfileEditing || isPreferenceEditing ? "pb-32 md:pb-24" : "pb-16"}`}
+      >
+        <div className="max-w-5xl mx-auto space-y-4 w-full">
           <ProfileCard
             profile={profile}
             onFieldChange={handleProfileFieldChange}
@@ -691,7 +761,7 @@ export default function ProfilePage() {
                   </Button>
                   <Button
                     size="sm"
-                    className="bg-blue-600 hover:bg-blue-700 text-white rounded-lg"
+                    className="bg-blue-600 hover:bg-blue-600/90 text-white rounded-lg"
                     onClick={handlePrefSave}
                     disabled={isLoading}
                   >
