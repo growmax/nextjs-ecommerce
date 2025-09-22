@@ -17,23 +17,18 @@ export default function useUserProfile() {
 
   const fetchUserProfile = async () => {
     try {
-      let accessToken =
-        localStorage.getItem("access_token") ||
-        localStorage.getItem("accessToken");
-
-      if (!accessToken) {
-        const cookies = document.cookie.split(";").reduce(
-          (acc, cookie) => {
-            const [key, value] = cookie.trim().split("=");
-            if (key) {
-              acc[key] = value || "";
-            }
-            return acc;
-          },
-          {} as Record<string, string>
-        );
-        accessToken = cookies["access_token"] || null;
-      }
+      // Get access token from client-accessible cookie only
+      const cookies = document.cookie.split(";").reduce(
+        (acc, cookie) => {
+          const [key, value] = cookie.trim().split("=");
+          if (key) {
+            acc[key] = value || "";
+          }
+          return acc;
+        },
+        {} as Record<string, string>
+      );
+      const accessToken = cookies["access_token_client"] || null;
 
       if (!accessToken) {
         return;

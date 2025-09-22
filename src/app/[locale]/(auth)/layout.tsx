@@ -6,6 +6,7 @@ import { AuthProvider } from "@/contexts/AuthContext";
 import { UserSessionProvider } from "@/contexts/UserSessionContext";
 import { fetchTenantFromExternalAPI } from "@/lib/tenant";
 import { ServerUserService } from "@/lib/services/ServerUserService";
+import { getServerAuthState } from "@/lib/auth-server";
 
 export default async function AuthLayout({
   children,
@@ -30,19 +31,27 @@ export default async function AuthLayout({
     }
   }
 
-  // Fetch user data server-side
+  // Get server-side authentication state
+  const authState = await getServerAuthState();
+
+  // Fetch user data server-side only if authenticated
   const serverUserService = ServerUserService.getInstance();
   let userData = null;
-  try {
-    userData = await serverUserService.fetchUserDataServerSide();
-  } catch {
-    userData = null;
+  if (authState.isAuthenticated) {
+    try {
+      userData = await serverUserService.fetchUserDataServerSide();
+    } catch {
+      userData = null;
+    }
   }
 
   return (
     <NextIntlClientProvider messages={messages}>
       <TenantProvider initialData={tenantData}>
-        <AuthProvider>
+        <AuthProvider
+          initialAuthState={authState.isAuthenticated}
+          initialUser={authState.user}
+        >
           <UserSessionProvider initialUserData={userData?.data || null}>
             {/* Auth pages: No nav, no footer */}
             <main className="min-h-screen">{children}</main>

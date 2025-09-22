@@ -1,23 +1,28 @@
 "use client";
 
-import { useState } from "react";
-import { Menu } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Menu, Search, LogIn } from "lucide-react";
+import { useState } from "react";
 import Logo from "./custom/logo";
 import SearchBox from "./custom/search";
 import NotificationButton from "./notifications";
-import AddCardButton from "./sample/add-card";
 import ProfileButton from "./profile/ProfileButton";
+import AddCardButton from "./sample/add-card";
 import Sidebar from "./sidebar";
+import SearchDrawer from "@/components/custom/search-drawer";
+import {
+  AuthenticatedOnly,
+  UnauthenticatedOnly,
+} from "@/components/auth/AuthGuard";
+import Link from "next/link";
 
 export default function NavBar() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [searchDrawerOpen, setSearchDrawerOpen] = useState(false);
 
   return (
     <>
-      {/* Mobile-First Top Navigation */}
       <nav className="bg-background border-b">
-        {/* Mobile Layout: Optimized single row */}
         <div className="sm:hidden">
           <div className="flex items-center gap-2 px-2 py-2">
             {/* Menu Button */}
@@ -30,16 +35,38 @@ export default function NavBar() {
             >
               <Menu className="h-5 w-5" />
             </Button>
-
-            {/* Search - Takes available space */}
-            <div className="flex-1">
-              <SearchBox size="sm" />
+            {/* Logo - Center */}
+            <div className="flex-1 flex justify-center">
+              <Logo />
             </div>
 
-            {/* Actions - Compact */}
+            {/* Actions - Right */}
             <div className="flex items-center gap-0.5 flex-shrink-0">
-              <NotificationButton />
-              <ProfileButton />
+              {/* Search Icon */}
+              <Button
+                variant="ghost"
+                size="icon"
+                aria-label="Open search"
+                onClick={() => setSearchDrawerOpen(true)}
+                className="h-9 w-9"
+              >
+                <Search className="h-5 w-5" />
+              </Button>
+
+              {/* Authenticated Actions */}
+              <AuthenticatedOnly>
+                <NotificationButton />
+                <ProfileButton />
+              </AuthenticatedOnly>
+
+              {/* Unauthenticated Actions */}
+              <UnauthenticatedOnly>
+                <Button variant="ghost" size="icon" asChild>
+                  <Link href="/login">
+                    <LogIn className="h-5 w-5" />
+                  </Link>
+                </Button>
+              </UnauthenticatedOnly>
             </div>
           </div>
         </div>
@@ -67,9 +94,21 @@ export default function NavBar() {
 
           {/* Right: Actions */}
           <div className="flex items-center gap-1">
-            <NotificationButton />
-            <AddCardButton />
-            <ProfileButton />
+            {/* Authenticated Actions */}
+            <AuthenticatedOnly>
+              <NotificationButton />
+              <AddCardButton />
+              <ProfileButton />
+            </AuthenticatedOnly>
+
+            {/* Unauthenticated Actions */}
+            <UnauthenticatedOnly>
+              <Button variant="ghost" size="icon" asChild>
+                <Link href="/login">
+                  <LogIn className="h-5 w-5" />
+                </Link>
+              </Button>
+            </UnauthenticatedOnly>
           </div>
         </div>
 
@@ -96,15 +135,34 @@ export default function NavBar() {
 
           {/* Right Section - Desktop */}
           <div className="flex items-center gap-2 flex-shrink-0">
-            <NotificationButton />
-            <AddCardButton />
-            <ProfileButton />
+            {/* Authenticated Actions */}
+            <AuthenticatedOnly>
+              <NotificationButton />
+              <AddCardButton />
+              <ProfileButton />
+            </AuthenticatedOnly>
+
+            {/* Unauthenticated Actions */}
+            <UnauthenticatedOnly>
+              <Button variant="default" asChild>
+                <Link href="/login">
+                  <LogIn className="mr-2 h-4 w-4" />
+                  Login
+                </Link>
+              </Button>
+            </UnauthenticatedOnly>
           </div>
         </div>
       </nav>
 
       {/* Mobile-First Sidebar */}
       <Sidebar open={sidebarOpen} onClose={() => setSidebarOpen(false)} />
+
+      {/* Mobile Search Drawer */}
+      <SearchDrawer
+        open={searchDrawerOpen}
+        onClose={() => setSearchDrawerOpen(false)}
+      />
     </>
   );
 }

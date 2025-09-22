@@ -15,79 +15,131 @@ interface UserData {
   picture?: string;
 }
 
-const AUTH_TOKEN_KEY = "access_token";
-const USER_DATA_KEY = "user-data";
+// Authentication is now handled entirely through cookies
+// No localStorage constants needed
 
 export class AuthStorage {
-  static setTokens(tokens: AuthTokens): void {
-    if (typeof window !== "undefined") {
-      localStorage.setItem(AUTH_TOKEN_KEY, tokens.accessToken);
+  // Token management is now handled entirely by server-side cookies
+  // This class now only provides client-side access methods
 
-      if (tokens.expiresIn) {
-        const expiryTime = new Date().getTime() + tokens.expiresIn * 1000;
-        localStorage.setItem("token-expiry", expiryTime.toString());
-      }
-
-      // Set client-side cookie for synchronization (non-HttpOnly for client access)
-      const isProduction = process.env.NODE_ENV === "production";
-      const cookieValue = encodeURIComponent(tokens.accessToken);
-      const maxAge = tokens.expiresIn || 86400;
-
-      document.cookie = `access_token_client=${cookieValue}; path=/; max-age=${maxAge}; SameSite=Strict${isProduction ? "; Secure" : ""}`;
-    }
+  static setTokens(_tokens: AuthTokens): void {
+    // Tokens are set by server-side API routes as HttpOnly cookies
+    // This method is kept for backward compatibility but does nothing
+    // Client should rely on cookies set by login/refresh API endpoints
   }
 
   static getAccessToken(): string | null {
     if (typeof window !== "undefined") {
-      return localStorage.getItem(AUTH_TOKEN_KEY);
+      // Get token from client-accessible cookie
+      return this.getTokenFromCookie("access_token_client");
     }
     return null;
   }
 
-  static setUserData(userData: UserData): void {
-    if (typeof window !== "undefined") {
-      localStorage.setItem(USER_DATA_KEY, JSON.stringify(userData));
+  /**
+   * Helper method to read tokens from client-accessible cookies
+   */
+  private static getTokenFromCookie(cookieName: string): string | null {
+    if (typeof window === "undefined") return null;
 
-      // Also set user data cookie for server-side access
-      const isProduction = process.env.NODE_ENV === "production";
-      const userDataString = encodeURIComponent(JSON.stringify(userData));
-      document.cookie = `user_data=${userDataString}; path=/; max-age=604800; SameSite=Strict${isProduction ? "; Secure" : ""}`;
+    const name = `${cookieName}=`;
+    const decodedCookie = decodeURIComponent(document.cookie);
+    const ca = decodedCookie.split(";");
+
+    for (let i = 0; i < ca.length; i++) {
+      let c = ca[i];
+      if (!c) continue;
+      while (c.charAt(0) === " ") {
+        c = c.substring(1);
+      }
+      if (c.indexOf(name) === 0) {
+        return c.substring(name.length, c.length);
+      }
     }
+    return null;
+  }
+
+  // User data should be fetched from server using access_token
+  // These methods are deprecated but kept for backward compatibility
+  static setUserData(_userData: UserData): void {
+    // User data is no longer stored client-side for security
+    // Data should be fetched from server on each request using access_token
   }
 
   static getUserData(): UserData | null {
-    if (typeof window !== "undefined") {
-      const data = localStorage.getItem(USER_DATA_KEY);
-      return data ? JSON.parse(data) : null;
-    }
+    // User data is no longer stored client-side
+    // Components should fetch user data from server using authenticated API calls
     return null;
   }
 
   static clearAuth(): void {
     if (typeof window !== "undefined") {
-      localStorage.removeItem(AUTH_TOKEN_KEY);
-      localStorage.removeItem(USER_DATA_KEY);
-      localStorage.removeItem("token-expiry");
-
-      // Clear auth cookie with all security attributes
+      // Clear client-accessible cookies only
+      // Server-side HttpOnly cookies will be cleared by logout API
       const isProduction = process.env.NODE_ENV === "production";
       const secureFlag = isProduction ? "; Secure" : "";
+      const cookieClearString = `access_token_client=; path=/; expires=Thu, 01 Jan 1970 00:00:00 UTC; SameSite=Strict${secureFlag}`;
 
-      document.cookie = `access_token=; path=/; expires=Thu, 01 Jan 1970 00:00:00 UTC; SameSite=Strict${secureFlag}`;
-      document.cookie = `user_data=; path=/; expires=Thu, 01 Jan 1970 00:00:00 UTC; SameSite=Strict${secureFlag}`;
-      document.cookie = `refresh_token=; path=/; expires=Thu, 01 Jan 1970 00:00:00 UTC; SameSite=Strict${secureFlag}`;
-      // Also clear legacy auth-token if it exists
-      document.cookie = `auth-token=; path=/; expires=Thu, 01 Jan 1970 00:00:00 UTC; SameSite=Strict${secureFlag}`;
+      // Clear only client-accessible cookie
+      document.cookie = cookieClearString;
+      document.cookie = `access_token_client=; path=/; max-age=0; SameSite=Strict${secureFlag}`;
+    }
+  }
+
+  /**
+   * Performs server-side logout by calling the logout API
+   * @returns Promise that resolves to logout result
+   */
+  static async logout(): Promise<{ success: boolean; error?: string }> {
+    try {
+      // Both accessToken and refreshToken are stored as HttpOnly cookies
+      // The API will read them from cookies, but we should send them in body too if available
+      const accessToken = this.getAccessToken(); // Get from cookie
+
+      // Call server-side logout API
+      // The server will prioritize tokens from request body, then fallback to cookies
+      const response = await fetch("/api/auth/logout", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        credentials: "include", // Include HttpOnly cookies
+        body: JSON.stringify({
+          accessToken: accessToken || undefined,
+          refreshToken: undefined, // Let server read from cookie
+        }),
+      });
+
+      const data = await response.json();
+
+      if (response.ok && data.success) {
+        // Clear local storage and cookies
+        this.clearAuth();
+        return { success: true };
+      } else {
+        // Server logout failed, but still clear local data for security
+        this.clearAuth();
+        return {
+          success: false,
+          error: data.error || "Logout failed on server",
+        };
+      }
+    } catch (error) {
+      // Network error or other issues - still clear local data
+      this.clearAuth();
+      return {
+        success: false,
+        error:
+          error instanceof Error
+            ? error.message
+            : "Network error during logout",
+      };
     }
   }
 
   static isTokenExpired(): boolean {
-    if (typeof window !== "undefined") {
-      const expiry = localStorage.getItem("token-expiry");
-      if (expiry) {
-        return new Date().getTime() > parseInt(expiry);
-      }
-    }
+    // Token expiry is now handled server-side
+    // Client should attempt to use token and handle 401 responses
     return false;
   }
 
@@ -117,15 +169,8 @@ export class AuthStorage {
 
       const tokens = await response.json();
 
-      // Update localStorage with new tokens
-      if (tokens.accessToken) {
-        localStorage.setItem(AUTH_TOKEN_KEY, tokens.accessToken);
-
-        if (tokens.expiresIn) {
-          const expiryTime = new Date().getTime() + tokens.expiresIn * 1000;
-          localStorage.setItem("token-expiry", expiryTime.toString());
-        }
-      }
+      // Tokens are updated as cookies by the server-side refresh API
+      // No need to manually manage localStorage
 
       return tokens;
     } catch {

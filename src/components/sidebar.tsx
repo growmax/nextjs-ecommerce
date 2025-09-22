@@ -5,7 +5,7 @@ import { X, ChevronDown, ChevronRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import SidebarButton from "./sidebar/SidebarButton";
-import sidebarMenuItems from "./sidebar/menuItems";
+import { useFilteredMenuItems } from "./sidebar/menuItems";
 
 export default function Sidebar({
   open,
@@ -15,6 +15,7 @@ export default function Sidebar({
   onClose: () => void;
 }) {
   const [expandedItems, setExpandedItems] = useState<string[]>([]);
+  const filteredMenuItems = useFilteredMenuItems();
 
   const toggleExpanded = (itemId: string) => {
     setExpandedItems(prev =>
@@ -47,7 +48,7 @@ export default function Sidebar({
 
           <CardContent className="flex-1 overflow-y-auto p-2">
             <nav className="flex flex-col gap-1">
-              {sidebarMenuItems.map(item => (
+              {filteredMenuItems.map(item => (
                 <div key={item.id}>
                   {item.submenu ? (
                     <>
@@ -74,7 +75,7 @@ export default function Sidebar({
                           {item.submenu.map(subitem => (
                             <SidebarButton
                               key={subitem.id}
-                              href={subitem.href}
+                              href={subitem.href || ""}
                               icon={subitem.icon}
                               label={subitem.label}
                               onClick={onClose}
@@ -86,7 +87,7 @@ export default function Sidebar({
                   ) : (
                     /* Regular item without submenu */
                     <SidebarButton
-                      href={item.href}
+                      href={item.href || ""}
                       icon={item.icon}
                       label={item.label}
                       onClick={onClose}

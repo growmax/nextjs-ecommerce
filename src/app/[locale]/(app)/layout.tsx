@@ -1,13 +1,14 @@
+import Footer from "@/components/footer";
+import NavBar from "@/components/nav-bar";
+import { AuthProvider } from "@/contexts/AuthContext";
+import { TenantProvider } from "@/contexts/TenantContext";
+import { UserSessionProvider } from "@/contexts/UserSessionContext";
+import { ServerUserService } from "@/lib/services/ServerUserService";
+import { getServerAuthState } from "@/lib/auth-server";
+import { fetchTenantFromExternalAPI } from "@/lib/tenant";
 import { NextIntlClientProvider } from "next-intl";
 import { getMessages } from "next-intl/server";
 import { headers } from "next/headers";
-import { TenantProvider } from "@/contexts/TenantContext";
-import { AuthProvider } from "@/contexts/AuthContext";
-import { UserSessionProvider } from "@/contexts/UserSessionContext";
-import { fetchTenantFromExternalAPI } from "@/lib/tenant";
-import { ServerUserService } from "@/lib/services/ServerUserService";
-import NavBar from "@/components/nav-bar";
-import Footer from "@/components/footer";
 
 export default async function AppLayout({
   children,
@@ -32,19 +33,27 @@ export default async function AppLayout({
     }
   }
 
-  // Fetch user data server-side
+  // Get server-side authentication state
+  const authState = await getServerAuthState();
+
+  // Fetch user data server-side only if authenticated
   const serverUserService = ServerUserService.getInstance();
   let userData = null;
-  try {
-    userData = await serverUserService.fetchUserDataServerSide();
-  } catch {
-    userData = null;
+  if (authState.isAuthenticated) {
+    try {
+      userData = await serverUserService.fetchUserDataServerSide();
+    } catch {
+      userData = null;
+    }
   }
 
   return (
     <NextIntlClientProvider messages={messages}>
       <TenantProvider initialData={tenantData}>
-        <AuthProvider>
+        <AuthProvider
+          initialAuthState={authState.isAuthenticated}
+          initialUser={authState.user}
+        >
           <UserSessionProvider initialUserData={userData?.data || null}>
             <div className="overflow-x-hidden">
               {/* App pages: Always show nav and footer */}
