@@ -34,12 +34,12 @@ export default function HeaderBar({
           <div className="flex items-center gap-2 truncate">
             <div className="flex items-center">
               <h4
-                className="text-sm font-normal truncate text-black" // force white text
+                className="text-sm font-bold truncate text-black" // force white text
                 title={title}
                 style={{
                   fontFamily: '"Roboto", "Helvetica", "Arial", sans-serif',
-                  fontWeight: 400,
-                  lineHeight: 1.2,
+                  fontWeight: 700,
+                  lineHeight: 2.0,
                   letterSpacing: "0.00735em",
                 }}
               >

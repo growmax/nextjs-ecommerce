@@ -16,6 +16,7 @@ export interface SaveCancelToolbarProps
     SaveCancelTexts {
   show: boolean;
   className?: string;
+  style?: React.CSSProperties;
 }
 
 export interface SaveCancelDialogProps

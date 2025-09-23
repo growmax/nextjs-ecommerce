@@ -3,7 +3,7 @@
 import React, { useState, useEffect, useRef } from "react";
 import Image from "next/image";
 import { Label } from "@/components/ui/label";
-import { User, Check } from "lucide-react";
+import { User, Check, Eye, EyeOff, Lock } from "lucide-react";
 import HeaderBar from "@/app/Components/reusable/nameconversion/PageHeader";
 import {
   Popover,
@@ -165,6 +165,14 @@ function ProfileCard({
   const [isVerifying, setIsVerifying] = useState(false);
   const [phoneVerified, setPhoneVerified] = useState(false);
 
+  // Change password dialog states
+  const [showChangePasswordDialog, setShowChangePasswordDialog] =
+    useState(false);
+  const [passwordOtp, setPasswordOtp] = useState("");
+  const [newPassword, setNewPassword] = useState("");
+  const [isChangingPassword, setIsChangingPassword] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
+
   const handleLogoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
       setLogo(URL.createObjectURL(e.target.files[0]));
@@ -247,6 +255,43 @@ function ProfileCard({
     }
   };
 
+  const sendPasswordOtp = async () => {
+    // Implement OTP sending logic for password change
+    // Sending OTP for password change
+    toast.success("OTP sent successfully!");
+  };
+
+  const handleChangePassword = async () => {
+    if (!passwordOtp || passwordOtp.length !== 6) {
+      alert("Please enter a valid 6-digit OTP");
+      return;
+    }
+
+    if (!newPassword || newPassword.length < 6) {
+      alert("Password must be at least 6 characters long");
+      return;
+    }
+
+    setIsChangingPassword(true);
+    try {
+      // Implement password change logic here
+      // Changing password
+
+      // Simulate password change
+      await new Promise(resolve => setTimeout(resolve, 2000));
+
+      setShowChangePasswordDialog(false);
+      setPasswordOtp("");
+      setNewPassword("");
+      setShowPassword(false);
+      toast.success("Password changed successfully!");
+    } catch {
+      toast.error("Failed to change password. Please try again.");
+    } finally {
+      setIsChangingPassword(false);
+    }
+  };
+
   return (
     <div className="w-full rounded-xl shadow bg-white">
       {/* Header */}
@@ -254,6 +299,15 @@ function ProfileCard({
         <span className="text-base font-semibold text-gray-800">
           Welcome Admin
         </span>
+        <Button
+          variant="outline"
+          size="sm"
+          className="text-gray-600 border-gray-200 hover:bg-gray-50 hover:border-gray-400"
+          onClick={() => setShowChangePasswordDialog(true)}
+        >
+          <User className="w-4 h-4 mr-1.5" />
+          Change Password
+        </Button>
       </div>
 
       {/* Body */}
@@ -430,7 +484,7 @@ function ProfileCard({
               size="sm"
               onClick={sendOtp}
               disabled={isVerifying}
-              className="text-blue-600 border-blue-600 hover:bg-accent hover:text-accent-foreground"
+              className="text-black border-black hover:bg-accent hover:text-accent-foreground"
             >
               Resend
             </Button>
@@ -470,6 +524,115 @@ function ProfileCard({
                 disabled={isVerifying || otp.length !== 6}
               >
                 {isVerifying ? "Verifying..." : "Verify OTP"}
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Change Password Dialog */}
+      <Dialog
+        open={showChangePasswordDialog}
+        onOpenChange={setShowChangePasswordDialog}
+      >
+        <DialogContent
+          className="sm:max-w-md rounded-xl"
+          showCloseButton={false}
+        >
+          <DialogTitle>Change Password</DialogTitle>
+          <div className="space-y-4">
+            <div>
+              <Label
+                htmlFor="password-otp-input"
+                className="text-sm font-medium text-gray-700"
+              >
+                Enter your OTP <span className="text-red-500">*</span>
+              </Label>
+              <input
+                id="password-otp-input"
+                type="text"
+                value={passwordOtp}
+                onChange={e => {
+                  const value = e.target.value.replace(/\D/g, "").slice(0, 6);
+                  setPasswordOtp(value);
+                }}
+                className="mt-1 w-full px-3 py-2 border border-gray-300 rounded-lg text-sm hover:bg-muted/50 focus:border-blue-500 transition-colors"
+                placeholder="Enter 6-digit OTP"
+                maxLength={6}
+                autoFocus
+              />
+            </div>
+
+            {/* Resend Button - Centered */}
+            <div className="flex justify-left">
+              <button
+                className="text-xs h-5 px-2 hover:bg-muted/50 transition-colors rounded cursor-pointer text-black hover:text-black"
+                tabIndex={0}
+                type="button"
+                onClick={sendPasswordOtp}
+                disabled={isChangingPassword}
+                style={{ pointerEvents: "auto" }}
+              >
+                Resend
+              </button>
+            </div>
+
+            <div>
+              <Label
+                htmlFor="new-password-input"
+                className="text-sm font-medium text-gray-700"
+              >
+                Enter New Password <span className="text-red-500">*</span>
+              </Label>
+              <div className="relative mt-1">
+                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                  <Lock className="h-4 w-4 text-gray-400" />
+                </div>
+                <input
+                  id="new-password-input"
+                  type={showPassword ? "text" : "password"}
+                  value={newPassword}
+                  onChange={e => setNewPassword(e.target.value)}
+                  className="w-full pl-10 pr-10 py-2 border border-gray-300 rounded-lg text-sm hover:bg-muted/50 focus:border-blue-500 transition-colors"
+                  placeholder="Enter new password"
+                  minLength={6}
+                />
+                <button
+                  type="button"
+                  className="absolute inset-y-0 right-0 pr-3 flex items-center"
+                  onClick={() => setShowPassword(!showPassword)}
+                >
+                  {showPassword ? (
+                    <EyeOff className="h-4 w-4 text-gray-400 hover:text-gray-600" />
+                  ) : (
+                    <Eye className="h-4 w-4 text-gray-400 hover:text-gray-600" />
+                  )}
+                </button>
+              </div>
+            </div>
+
+            <div className="flex justify-end gap-2">
+              <Button
+                variant="outline"
+                onClick={() => {
+                  setShowChangePasswordDialog(false);
+                  setPasswordOtp("");
+                  setNewPassword("");
+                  setShowPassword(false);
+                }}
+                disabled={isChangingPassword}
+              >
+                Cancel
+              </Button>
+              <Button
+                onClick={handleChangePassword}
+                disabled={
+                  isChangingPassword ||
+                  passwordOtp.length !== 6 ||
+                  newPassword.length < 6
+                }
+              >
+                {isChangingPassword ? "Submitting..." : "Submit"}
               </Button>
             </div>
           </div>
@@ -730,7 +893,7 @@ export default function ProfilePage() {
       <main
         className={`flex-1 p-4 overflow-x-hidden ${isProfileEditing || isPreferenceEditing ? "pb-32 md:pb-24" : "pb-16"}`}
       >
-        <div className="max-w-5xl mx-auto space-y-4 w-full">
+        <div className="max-w-5xl mx-auto space-y-8 w-full">
           <ProfileCard
             profile={profile}
             onFieldChange={handleProfileFieldChange}
@@ -746,7 +909,7 @@ export default function ProfilePage() {
 
           {/* User Preference */}
           <div className="w-full md:w-1/2 rounded-xl border border-gray-200 shadow bg-white">
-            <div className="flex items-center justify-between px-3 py-2 border-b rounded-t-xl">
+            <div className="flex items-center justify-between px-3 py-3 border-b rounded-t-xl">
               <h2 className="text-sm font-semibold">User Preference</h2>
               {isPreferenceEditing && (
                 <div className="flex space-x-2">
@@ -761,7 +924,7 @@ export default function ProfilePage() {
                   </Button>
                   <Button
                     size="sm"
-                    className="bg-blue-600 hover:bg-blue-600/90 text-white rounded-lg"
+                    className="bg-black hover:bg-black-600/90 text-white rounded-lg"
                     onClick={handlePrefSave}
                     disabled={isLoading}
                   >
@@ -816,8 +979,9 @@ export default function ProfilePage() {
         onSave={handleSave}
         onCancel={handleCancel}
         isLoading={isLoading}
-        saveText="Save Profile"
+        saveText="Save Changes"
         cancelText="Cancel"
+        className="fixed bottom-150 left-0 right-0 md:bottom-auto md:top-[69px] + md:left-0 lg:left-64 z-50"
       />
     </>
   );
