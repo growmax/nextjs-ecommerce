@@ -1,6 +1,7 @@
 "use client";
 
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -35,14 +36,14 @@ import {
   ChevronLeft,
   ChevronRight,
 } from "lucide-react";
-import { useEffect, useState, useMemo } from "react";
+import { useEffect, useState, useMemo, useRef } from "react";
 import { useForm, Controller } from "react-hook-form";
 import { z } from "zod";
 import HeaderBar from "@/app/Components/reusable/nameconversion/PageHeader";
 import { FullWidthLayout } from "@/components/layout/PageContent";
 import SectionCard from "@/components/custom/SectionCard";
 import { SaveCancelToolbar } from "@/components/custom/save-cancel-toolbar";
-import { AddAddressDialog } from "@/components/dialogs";
+import { AddAddressDialog } from "@/components/dialogs/company";
 
 // Form validation schema
 const companyFormSchema = z.object({
@@ -185,6 +186,10 @@ export default function CompanyPage() {
     useState<AddressDialogData | null>(null);
   const [dialogMode, setDialogMode] = useState<"add" | "edit">("add");
 
+  // Dynamic spacing state
+  const [toolbarHeight, setToolbarHeight] = useState(0);
+  const contentRef = useRef<HTMLDivElement>(null);
+
   // Map address data from API to dialog format
   const mapAddressDataToDialog = (
     branchData: BranchAddress
@@ -228,6 +233,62 @@ export default function CompanyPage() {
     setShowAddAddressDialog(true);
   };
 
+  // Handle delete address with loading states
+  const handleDeleteAddress = async (addressId: number, branchName: string) => {
+    if (!confirm(`Are you sure you want to delete "${branchName}" address? This action cannot be undone.`)) {
+      return;
+    }
+
+    try {
+      // 🔄 STEP 1: Start loading state
+      setDeletingAddressId(addressId);
+      setAddressError(null);
+
+      // 🔄 STEP 2: API call to delete
+      const accessToken = AuthStorage.getAccessToken();
+      const jwtService = JWTService.getInstance();
+      const payload = jwtService.decodeToken(accessToken!);
+
+      if (!payload) {
+        throw new Error("Authentication required");
+      }
+
+      const response = await fetch(`/api/branches/delete-address/${addressId}`, {
+        method: "DELETE",
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+          "x-tenant": payload.iss,
+          "Content-Type": "application/json",
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error(`Failed to delete address: ${response.status}`);
+      }
+
+      const result = await response.json();
+
+      if (result.status !== "success") {
+        throw new Error(result.message || "Failed to delete address");
+      }
+
+      // 🎉 STEP 3: Success - Show success and refresh data
+      toast.success("Address deleted successfully!");
+      
+      // 🔄 STEP 4: Fetch fresh data from server
+      await fetchBranchAddresses(searchTerm, currentPage, false, pageSize);
+      
+    } catch (error) {
+      // 🚨 STEP 5: Handle errors
+      const errorMessage = error instanceof Error ? error.message : "Failed to delete address";
+      setAddressError(errorMessage);
+      toast.error(errorMessage);
+    } finally {
+      // 🔄 STEP 6: Always clear loading state
+      setDeletingAddressId(null);
+    }
+  };
+
   // Address section state
   const [addresses, setAddresses] = useState<BranchAddress[]>([]);
   const [totalAddresses, setTotalAddresses] = useState(0);
@@ -235,6 +296,8 @@ export default function CompanyPage() {
   const [currentPage, setCurrentPage] = useState(0);
   const [addressError, setAddressError] = useState<string | null>(null);
   const [isSearching, setIsSearching] = useState(false);
+  const [deletingAddressId, setDeletingAddressId] = useState<number | null>(null);
+  const [isAddingAddress, setIsAddingAddress] = useState(false);
 
   // Page size options
   const pageSizeOptions = [5, 10, 25, 50, 100];
@@ -417,7 +480,8 @@ export default function CompanyPage() {
   const fetchBranchAddresses = async (
     search: string = "",
     page: number = 0,
-    clearDataFirst: boolean = false
+    clearDataFirst: boolean = false,
+    pageSizeOverride?: number
   ) => {
     try {
       // Clear data immediately if requested (for new searches)
@@ -437,13 +501,27 @@ export default function CompanyPage() {
         throw new Error("Missing authentication data");
       }
 
-      const offset = page * pageSize;
+      const currentPageSize = pageSizeOverride || pageSize;
+      // API uses row-based offset, not page-based
+      // For page 2 with 7 total records and pageSize=5:
+      // We want records 6-7, so offset should be 5 (start from 6th record)
+      const offset = page * currentPageSize;
       const url =
         `/api/branches/readBranchwithPagination/${payload.userId}?` +
         `companyId=${payload.companyId}&` +
         `offset=${offset}&` +
-        `limit=${pageSize}&` +
+        `limit=${currentPageSize}&` +
         `searchString=${encodeURIComponent(search)}`;
+
+      // Debug logging
+      console.log("Fetching addresses with params:", {
+        page,
+        pageSize: currentPageSize,
+        offset,
+        limit: currentPageSize,
+        searchString: search,
+        url
+      });
 
       const response = await fetch(url, {
         headers: {
@@ -459,9 +537,28 @@ export default function CompanyPage() {
 
       const result = await response.json();
 
+      // Debug logging
+      console.log("API Response:", {
+        status: result.status,
+        totalCount: result.data?.totalCount,
+        branchResponseLength: result.data?.branchResponse?.length,
+        branchResponse: result.data?.branchResponse,
+        fullResult: result
+      });
+
       if (result.status === "success" && result.data) {
-        setAddresses(result.data.branchResponse || []);
-        setTotalAddresses(result.data.totalCount || 0);
+        const branchData = result.data.branchResponse || [];
+        const totalCount = result.data.totalCount || 0;
+        console.log("Setting state:", { 
+          branchDataLength: branchData.length, 
+          totalCount,
+          page,
+          offset,
+          firstItem: branchData[0]?.name,
+          lastItem: branchData[branchData.length - 1]?.name
+        });
+        setAddresses(branchData);
+        setTotalAddresses(totalCount);
       } else {
         throw new Error(result.message || "Failed to fetch addresses");
       }
@@ -479,8 +576,15 @@ export default function CompanyPage() {
 
   // Handle pagination
   const handlePageChange = (newPage: number) => {
+    console.log("handlePageChange called:", { 
+      currentPage, 
+      newPage, 
+      searchTerm, 
+      pageSize 
+    });
     setCurrentPage(newPage);
-    fetchBranchAddresses(searchTerm, newPage);
+    // Don't clear data when paginating
+    fetchBranchAddresses(searchTerm, newPage, false, pageSize);
   };
 
   // Handle page size change
@@ -494,7 +598,7 @@ export default function CompanyPage() {
     setLoadingAddresses(true); // Show loading state
     setAddressError(null); // Clear any errors
 
-    fetchBranchAddresses(searchTerm, 0);
+    fetchBranchAddresses(searchTerm, 0, false, newPageSize);
   };
 
   // Handle search term change
@@ -600,15 +704,17 @@ export default function CompanyPage() {
   // Fetch addresses after company data is loaded
   useEffect(() => {
     if (companyData && companyData.data) {
-      fetchBranchAddresses("", 0);
+      fetchBranchAddresses("", 0, false, pageSize);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [companyData]);
+  }, [companyData]); // Remove pageSize from dependencies to prevent duplicate calls
 
-  // Handle search with debounce
+  // Handle search with debounce (only for search term changes)
   useEffect(() => {
+    if (!companyData) return;
+    
     // Clear data immediately when search term changes
-    if (companyData && searchTerm !== undefined) {
+    if (searchTerm !== "") {
       setAddresses([]);
       setTotalAddresses(0);
       setLoadingAddresses(true);
@@ -617,15 +723,61 @@ export default function CompanyPage() {
     }
 
     const timer = setTimeout(() => {
-      if (searchTerm !== undefined && companyData) {
+      if (companyData) {
         setCurrentPage(0);
-        fetchBranchAddresses(searchTerm, 0, false); // Don't clear again, already cleared above
+        fetchBranchAddresses(searchTerm, 0, false, pageSize);
       }
     }, 500);
 
     return () => clearTimeout(timer);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [searchTerm, pageSize]); // Watch form values
+  }, [searchTerm]); // Only watch searchTerm to prevent conflicts
+
+  // Dynamic spacing calculation
+  useEffect(() => {
+    const calculateSpacing = () => {
+      // Only run on client side
+      if (typeof window === 'undefined') return;
+      
+      // Get actual header height for future use if needed
+      const header = document.querySelector('[data-header]') as HTMLElement;
+      if (header) {
+        // Header height available here if needed: header.offsetHeight
+      }
+
+      // Calculate toolbar height when visible
+      const toolbar = document.querySelector('[data-save-cancel-toolbar]') as HTMLElement;
+      if (toolbar && isDirty) {
+        setToolbarHeight(toolbar.offsetHeight);
+      } else {
+        setToolbarHeight(0);
+      }
+    };
+
+    calculateSpacing();
+    
+    // Recalculate on resize (only on client side)
+    if (typeof window !== 'undefined') {
+      window.addEventListener('resize', calculateSpacing);
+      return () => window.removeEventListener('resize', calculateSpacing);
+    }
+    
+    // Return undefined for server-side rendering
+    return undefined;
+  }, [isDirty]);
+
+  // Calculate dynamic margin top for content
+  const dynamicMarginTop = useMemo(() => {
+    // Check if we're on the client side
+    if (typeof window === 'undefined') {
+      return '-16px'; // Default for SSR
+    }
+    
+    const isMobile = window.innerWidth < 768;
+    const baseOffset = isMobile ? 8 : 16; // Less offset on mobile
+    const toolbarOffset = isDirty ? Math.min(toolbarHeight, 24) : 0; // Cap toolbar offset
+    return `-${baseOffset + toolbarOffset}px`;
+  }, [toolbarHeight, isDirty]);
 
   if (loading) {
     return (
@@ -801,10 +953,12 @@ export default function CompanyPage() {
 
   return (
     <>
-      <HeaderBar
-        title="Company Settings"
-        icon={<User className="w-5 h-5 sm:w-6 sm:h-6" />}
-      />
+      <div data-header="true">
+        <HeaderBar
+          title="Company Settings"
+          icon={<User className="w-5 h-5 sm:w-6 sm:h-6" />}
+        />
+      </div>
 
       {/* SaveCancelToolbar - Positioned at top below header */}
       <SaveCancelToolbar
@@ -814,31 +968,36 @@ export default function CompanyPage() {
         isLoading={isSaving}
         saveText="Save Changes"
         cancelText="Cancel"
-        className="!top-[64px] !left-0 !fixed"
+        className="!top-[56px] !left-0 !fixed"
+        data-save-cancel-toolbar="true"
       />
       <FullWidthLayout>
         {/* Mobile-First Responsive Layout */}
-        <div className="min-h-screen bg-background">
-          <div className="flex flex-col gap-3 sm:gap-4 lg:gap-6 p-2 sm:p-4 lg:p-6 min-h-screen max-w-full overflow-x-hidden">
+        <div 
+          className="min-h-screen bg-background"
+          style={{ marginTop: dynamicMarginTop }}
+          ref={contentRef}
+        >
+          <div className="flex flex-col gap-0 sm:gap-1 lg:gap-2 px-1 sm:px-3 lg:px-4 pt-2 sm:pt-3 lg:pt-4 pb-1 sm:pb-2 lg:pb-3 min-h-screen w-full max-w-full overflow-x-hidden">
             {/* Main Company Form Card - Mobile Responsive */}
             <SectionCard
               title={`Welcome ${data.name}`}
               className="
-                w-full max-w-7xl mx-auto
+                w-full max-w-full sm:max-w-7xl mx-auto mt-0
                 min-h-[400px] sm:min-h-[500px] lg:min-h-[600px] max-h-none
                 overflow-hidden flex flex-col
               "
-              contentClassName="pt-2 px-2 sm:px-4 lg:px-6"
+              contentClassName="pt-1 sm:pt-2 pb-1 sm:pb-2 px-1 sm:px-4 lg:px-6"
             >
               <div className="flex-1 overflow-y-auto">
                 <form
                   onSubmit={handleSubmit(onSubmit)}
-                  className="flex-1 flex flex-col"
+                  className="flex-1 flex flex-col pb-0"
                 >
                   {/* Mobile-First Responsive Layout Grid */}
-                  <div className="flex flex-col lg:flex-row gap-4 sm:gap-6 lg:gap-8 flex-1">
+                  <div className="flex flex-col lg:flex-row gap-2 sm:gap-3 lg:gap-4 flex-1 w-full overflow-hidden">
                     {/* Company Logo Upload - Mobile Responsive */}
-                    <div className="flex-shrink-0 self-center lg:self-start order-1 lg:order-none">
+                    <div className="flex-shrink-0 self-center lg:self-start order-1 lg:order-none w-full sm:w-auto">
                       <Label
                         htmlFor="profile-image"
                         className="block text-sm font-medium mb-2"
@@ -854,7 +1013,7 @@ export default function CompanyPage() {
                           className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
                           disabled={isUploading}
                         />
-                        <div className="w-24 h-24 sm:w-28 sm:h-28 md:w-32 md:h-32 lg:w-32 lg:h-32 xl:w-36 xl:h-36 border-2 border-dashed border-muted-foreground rounded-lg flex items-center justify-center relative overflow-hidden bg-muted/5 hover:bg-muted/10 transition-colors">
+                        <div className="w-20 h-20 sm:w-24 sm:h-24 md:w-28 md:h-28 lg:w-32 lg:h-32 mx-auto lg:mx-0 border-2 border-dashed border-muted-foreground rounded-lg flex items-center justify-center relative overflow-hidden bg-muted/5 hover:bg-muted/10 transition-colors">
                           {profileImage ? (
                             <div className="relative w-full h-full">
                               {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -912,11 +1071,11 @@ export default function CompanyPage() {
                     </div>
 
                     {/* Form Fields - Mobile Responsive Grid */}
-                    <div className="flex-1 flex flex-col order-2 lg:order-none">
-                      <div className="flex-1 space-y-3 sm:space-y-4 lg:space-y-6">
+                    <div className="flex-1 flex flex-col order-2 lg:order-none w-full min-w-0">
+                      <div className="flex-1 space-y-2 sm:space-y-3 lg:space-y-4 w-full">
                         {/* First Line - Company Name & Website */}
-                        <div className="grid grid-cols-1 sm:grid-cols-1 md:grid-cols-2 gap-3 sm:gap-4">
-                          <div className="space-y-1.5 sm:space-y-2">
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-2 md:gap-4 w-full">
+                          <div className="space-y-1.5 sm:space-y-2 w-full min-w-0">
                             <Label
                               htmlFor="company-name"
                               className="text-sm font-medium"
@@ -927,7 +1086,7 @@ export default function CompanyPage() {
                               id="company-name"
                               {...register("name")}
                               placeholder={data.name}
-                              className="border border-gray-300 focus:border-blue-500 h-10 sm:h-10 md:h-11 text-sm sm:text-base"
+                              className="w-full border border-gray-300 focus:border-blue-500 h-10 sm:h-10 md:h-11 text-sm sm:text-base"
                             />
                             {errors.name && (
                               <p className="text-xs sm:text-sm text-red-600">
@@ -935,7 +1094,7 @@ export default function CompanyPage() {
                               </p>
                             )}
                           </div>
-                          <div className="space-y-1.5 sm:space-y-2">
+                          <div className="space-y-1.5 sm:space-y-2 w-full min-w-0">
                             <Label
                               htmlFor="website"
                               className="text-sm font-medium"
@@ -949,7 +1108,7 @@ export default function CompanyPage() {
                               placeholder={
                                 data.website || "No website available"
                               }
-                              className="border border-gray-300 focus:border-blue-500 h-10 sm:h-10 md:h-11 text-sm sm:text-base"
+                              className="w-full border border-gray-300 focus:border-blue-500 h-10 sm:h-10 md:h-11 text-sm sm:text-base"
                             />
                             {errors.website && (
                               <p className="text-xs sm:text-sm text-red-600">
@@ -960,7 +1119,7 @@ export default function CompanyPage() {
                         </div>
 
                         {/* Second Line - Tax ID/GST & Business Type */}
-                        <div className="grid grid-cols-1 sm:grid-cols-1 md:grid-cols-2 gap-3 sm:gap-4">
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-3 md:gap-4">
                           <div className="space-y-1.5 sm:space-y-2">
                             <Label
                               htmlFor="tax-id"
@@ -997,7 +1156,7 @@ export default function CompanyPage() {
                         </div>
 
                         {/* Third Line - Account Type & Default Currency */}
-                        <div className="grid grid-cols-1 sm:grid-cols-1 md:grid-cols-2 gap-3 sm:gap-4">
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-3 md:gap-4">
                           <div className="space-y-1.5 sm:space-y-2">
                             <Label
                               htmlFor="account-type"
@@ -1132,11 +1291,11 @@ export default function CompanyPage() {
             <SectionCard
               title="Address Information"
               className="
-                w-full max-w-7xl mx-auto
+                w-full max-w-full sm:max-w-7xl mx-auto
                 min-h-[300px] sm:min-h-[400px] max-h-none
                 overflow-hidden flex flex-col
               "
-              contentClassName="pt-2 px-2 sm:px-4 lg:px-6"
+              contentClassName="pt-1 sm:pt-2 px-1 sm:px-3 lg:px-4"
               headerActions={
                 <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
                   <Controller
@@ -1145,7 +1304,7 @@ export default function CompanyPage() {
                     render={({ field }) => (
                       <Input
                         placeholder="Search addresses..."
-                        className="flex-1 sm:flex-none sm:w-40 md:w-48 lg:w-56 text-sm h-9 sm:h-9 md:h-10"
+                        className="flex-1 sm:flex-none sm:w-48 md:w-56 lg:w-64 text-sm h-9"
                         value={field.value || ""}
                         onChange={e => {
                           field.onChange(e.target.value);
@@ -1156,25 +1315,47 @@ export default function CompanyPage() {
                   />
                   <Button
                     size="sm"
-                    className="h-9 sm:h-9 md:h-10 px-3 sm:px-4 flex items-center gap-2 flex-shrink-0 text-sm"
+                    className="h-9 px-3 flex items-center gap-2 flex-shrink-0 text-sm"
                     onClick={handleAddAddress}
+                    disabled={isAddingAddress}
                   >
-                    <Plus className="h-4 w-4" />
-                    <span>Add Address</span>
+                    {isAddingAddress ? (
+                      <>
+                        <Loader2 className="h-4 w-4 animate-spin" />
+                        <span>Adding...</span>
+                      </>
+                    ) : (
+                      <>
+                        <Plus className="h-4 w-4" />
+                        <span>Add Address</span>
+                      </>
+                    )}
                   </Button>
                 </div>
               }
             >
-              <div className="flex-1 overflow-hidden flex flex-col">
+              <div className="flex-1 overflow-hidden flex flex-col relative">
                 {/* Loading state */}
-                {loadingAddresses && (
+                {(loadingAddresses || isAddingAddress) && (
                   <div className="flex items-center justify-center p-8">
                     <Loader2 className="h-8 w-8 animate-spin mr-2" />
                     <span>
-                      {isSearching
+                      {isAddingAddress
+                        ? "Adding address and refreshing list..."
+                        : isSearching
                         ? `Searching addresses${searchTerm ? ` for "${searchTerm}"` : ""}...`
                         : "Loading addresses..."}
                     </span>
+                  </div>
+                )}
+
+                {/* Adding address overlay */}
+                {isAddingAddress && addresses.length > 0 && (
+                  <div className="absolute inset-0 bg-background/80 backdrop-blur-sm z-10 flex items-center justify-center">
+                    <div className="bg-background border rounded-lg p-6 shadow-lg flex items-center gap-3">
+                      <Loader2 className="h-6 w-6 animate-spin text-primary" />
+                      <span className="text-sm font-medium">Adding address and refreshing list...</span>
+                    </div>
                   </div>
                 )}
 
@@ -1186,7 +1367,7 @@ export default function CompanyPage() {
                       variant="outline"
                       size="sm"
                       onClick={() =>
-                        fetchBranchAddresses(searchTerm, currentPage)
+                        fetchBranchAddresses(searchTerm, currentPage, false, pageSize)
                       }
                       className="mt-4"
                     >
@@ -1195,10 +1376,11 @@ export default function CompanyPage() {
                   </div>
                 )}
 
-                {/* Empty state */}
+                {/* Empty state - Only show when truly no data exists */}
                 {!loadingAddresses &&
                   !addressError &&
-                  addresses.length === 0 && (
+                  addresses.length === 0 &&
+                  totalAddresses === 0 && (
                     <div className="text-center text-gray-600 p-8">
                       <p>No addresses found</p>
                       <Button
@@ -1206,31 +1388,66 @@ export default function CompanyPage() {
                         size="sm"
                         onClick={handleAddAddress}
                         className="mt-4"
+                        disabled={isAddingAddress}
                       >
-                        <Plus className="h-4 w-4 mr-1" />
-                        Add First Address
+                        {isAddingAddress ? (
+                          <>
+                            <Loader2 className="h-4 w-4 mr-1 animate-spin" />
+                            Adding...
+                          </>
+                        ) : (
+                          <>
+                            <Plus className="h-4 w-4 mr-1" />
+                            Add First Address
+                          </>
+                        )}
                       </Button>
                     </div>
                   )}
 
-                {/* Data display */}
-                {!loadingAddresses && !addressError && addresses.length > 0 && (
+                {/* Data display - Show when we have total addresses even if current page is empty */}
+                {!loadingAddresses && !addressError && totalAddresses > 0 && (
                   <>
+                    {/* Show message if current page is empty but data exists */}
+                    {addresses.length === 0 && (
+                      <div className="text-center text-gray-600 p-8">
+                        <p>No addresses on this page</p>
+                        <p className="text-sm mt-2">
+                          Try navigating to a different page or adjusting the page size
+                        </p>
+                      </div>
+                    )}
+                    
                     {/* Mobile: Card view */}
-                    <div className="block md:hidden flex-1 overflow-y-auto">
-                      <div className="space-y-3 p-1 sm:p-2">
-                        {addresses.map(branch => (
+                    {addresses.length > 0 && (
+                      <div className="block md:hidden flex-1 overflow-y-auto">
+                        <div className="space-y-2 p-1">
+                          {addresses.map(branch => (
                           <Card
                             key={branch.id}
-                            className="p-4 sm:p-5 flex-shrink-0 shadow-sm hover:shadow-md transition-shadow cursor-pointer"
+                            className="p-3 flex-shrink-0 shadow-sm hover:shadow-md transition-shadow cursor-pointer"
                             onClick={() => handleEditAddress(branch)}
                           >
-                            <div className="space-y-4">
+                            <div className="space-y-3">
                               <div className="space-y-0.5">
-                                <div className="font-semibold text-xs sm:text-sm">
-                                  {branch.name ||
-                                    branch.addressId?.branchName ||
-                                    "-"}
+                                <div className="flex items-start justify-between gap-2">
+                                  <div className="font-semibold text-sm">
+                                    {branch.name ||
+                                      branch.addressId?.branchName ||
+                                      "-"}
+                                  </div>
+                                  <div className="flex gap-1 flex-shrink-0">
+                                    {branch.addressId?.isBilling && (
+                                      <Badge variant="secondary" className="text-xs px-2 py-0.5">
+                                        Billing
+                                      </Badge>
+                                    )}
+                                    {branch.addressId?.isShipping && (
+                                      <Badge variant="outline" className="text-xs px-2 py-0.5">
+                                        Shipping
+                                      </Badge>
+                                    )}
+                                  </div>
                                 </div>
                                 <div className="text-xs sm:text-sm text-muted-foreground">
                                   {branch.addressId?.addressLine || "-"}
@@ -1283,8 +1500,9 @@ export default function CompanyPage() {
                                   variant="outline"
                                   size="default"
                                   className="flex-1 h-10 text-sm font-medium"
-                                  onClick={() => {
-                                    // TODO: Implement edit functionality
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    handleEditAddress(branch);
                                   }}
                                 >
                                   Edit
@@ -1293,23 +1511,39 @@ export default function CompanyPage() {
                                   variant="destructive"
                                   size="default"
                                   className="flex-1 h-10 text-sm font-medium"
-                                  onClick={() => {
-                                    // TODO: Implement delete functionality
+                                  disabled={deletingAddressId === (branch.addressId?.id || branch.id)}
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    handleDeleteAddress(
+                                      branch.addressId?.id || branch.id,
+                                      branch.name || branch.addressId?.branchName || "Unknown"
+                                    );
                                   }}
                                 >
-                                  <Trash2 className="h-4 w-4 mr-2" />
-                                  Delete
+                                  {deletingAddressId === (branch.addressId?.id || branch.id) ? (
+                                    <>
+                                      <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                                      Deleting...
+                                    </>
+                                  ) : (
+                                    <>
+                                      <Trash2 className="h-4 w-4 mr-2" />
+                                      Delete
+                                    </>
+                                  )}
                                 </Button>
                               </div>
                             </div>
                           </Card>
-                        ))}
+                          ))}
+                        </div>
                       </div>
-                    </div>
+                    )}
 
                     {/* Desktop: Table view */}
-                    <div className="hidden md:block flex-1 overflow-auto">
-                      <Table>
+                    {addresses.length > 0 && (
+                      <div className="hidden md:block flex-1 overflow-auto">
+                        <Table>
                         <TableHeader className="bg-accent sticky top-0">
                           <TableRow className="hover:bg-transparent">
                             <TableHead className="w-12 text-center text-xs sm:text-sm">
@@ -1347,11 +1581,20 @@ export default function CompanyPage() {
                                   variant="ghost"
                                   size="sm"
                                   className="h-7 w-7 text-red-500 hover:text-red-700 hover:bg-red-50"
-                                  onClick={() => {
-                                    // TODO: Implement delete functionality
+                                  disabled={deletingAddressId === (branch.addressId?.id || branch.id)}
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    handleDeleteAddress(
+                                      branch.addressId?.id || branch.id,
+                                      branch.name || branch.addressId?.branchName || "Unknown"
+                                    );
                                   }}
                                 >
-                                  <Trash2 className="h-3 w-3" />
+                                  {deletingAddressId === (branch.addressId?.id || branch.id) ? (
+                                    <Loader2 className="h-3 w-3 animate-spin" />
+                                  ) : (
+                                    <Trash2 className="h-3 w-3" />
+                                  )}
                                 </Button>
                               </TableCell>
                               <TableCell className="font-medium text-xs sm:text-sm">
@@ -1360,7 +1603,7 @@ export default function CompanyPage() {
                                   "-"}
                               </TableCell>
                               <TableCell className="font-medium">
-                                <div className="space-y-0.5">
+                                <div className="space-y-1">
                                   <div className="text-xs sm:text-sm">
                                     {branch.addressId?.addressLine || "-"}
                                   </div>
@@ -1375,6 +1618,24 @@ export default function CompanyPage() {
                                   </div>
                                   <div className="text-xs sm:text-sm text-muted-foreground">
                                     {branch.addressId?.country || "-"}
+                                  </div>
+                                  <div className="flex gap-1.5 mt-2">
+                                    {branch.addressId?.isBilling && (
+                                      <Badge 
+                                        variant="secondary" 
+                                        className="text-xs font-medium px-2.5 py-0.5 bg-primary/10 text-primary hover:bg-primary/20 border-primary/20"
+                                      >
+                                        Billing
+                                      </Badge>
+                                    )}
+                                    {branch.addressId?.isShipping && (
+                                      <Badge 
+                                        variant="outline" 
+                                        className="text-xs font-medium px-2.5 py-0.5 hover:bg-accent/20"
+                                      >
+                                        Shipping
+                                      </Badge>
+                                    )}
                                   </div>
                                 </div>
                               </TableCell>
@@ -1398,29 +1659,42 @@ export default function CompanyPage() {
                         </TableBody>
                       </Table>
                     </div>
+                    )}
 
-                    {/* Enhanced Pagination Controls */}
+                    {/* Enhanced Pagination Controls - Always show when totalAddresses > 0 */}
                     <div className="border-t bg-background">
-                      <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4 p-4 sm:p-6">
+                      <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-3 p-3 sm:p-4">
                         {/* Left side: Results info and page size selector */}
                         <div className="flex flex-col sm:flex-row sm:items-center gap-4">
                           <div className="text-sm text-muted-foreground order-2 sm:order-1">
-                            Showing{" "}
-                            <span className="font-semibold text-foreground">
-                              {currentPage * pageSize + 1}
-                            </span>{" "}
-                            to{" "}
-                            <span className="font-semibold text-foreground">
-                              {Math.min(
-                                (currentPage + 1) * pageSize,
-                                totalAddresses
-                              )}
-                            </span>{" "}
-                            of{" "}
-                            <span className="font-semibold text-foreground">
-                              {totalAddresses}
-                            </span>{" "}
-                            addresses
+                            {addresses.length > 0 ? (
+                              <>
+                                Showing{" "}
+                                <span className="font-semibold text-foreground">
+                                  {currentPage * pageSize + 1}
+                                </span>{" "}
+                                to{" "}
+                                <span className="font-semibold text-foreground">
+                                  {Math.min(
+                                    (currentPage + 1) * pageSize,
+                                    totalAddresses
+                                  )}
+                                </span>{" "}
+                                of{" "}
+                                <span className="font-semibold text-foreground">
+                                  {totalAddresses}
+                                </span>{" "}
+                                addresses
+                              </>
+                            ) : (
+                              <>
+                                Total{" "}
+                                <span className="font-semibold text-foreground">
+                                  {totalAddresses}
+                                </span>{" "}
+                                addresses available
+                              </>
+                            )}
                           </div>
 
                           {/* Page Size Selector */}
@@ -1471,7 +1745,7 @@ export default function CompanyPage() {
                         {/* Right side: Navigation controls */}
                         <div className="flex items-center justify-center lg:justify-end">
                           <nav
-                            className="flex items-center gap-1"
+                            className="flex items-center gap-2"
                             aria-label="Pagination Navigation"
                           >
                             <Button
@@ -1479,14 +1753,14 @@ export default function CompanyPage() {
                               size="sm"
                               onClick={() => handlePageChange(currentPage - 1)}
                               disabled={currentPage === 0}
-                              className="h-9 px-3 gap-1"
+                              className="h-10 px-3 gap-1 min-w-[44px]"
                               aria-label="Go to previous page"
                             >
                               <ChevronLeft className="h-4 w-4" />
                               <span className="hidden sm:inline">Previous</span>
                             </Button>
 
-                            <div className="flex items-center gap-1 px-4 py-2 text-sm font-medium bg-muted/50 rounded-md mx-2">
+                            <div className="flex items-center gap-1 px-3 py-2 text-sm font-medium bg-muted/50 rounded-md mx-1">
                               <span className="text-muted-foreground">
                                 Page
                               </span>
@@ -1506,7 +1780,7 @@ export default function CompanyPage() {
                               disabled={
                                 (currentPage + 1) * pageSize >= totalAddresses
                               }
-                              className="h-9 px-3 gap-1"
+                              className="h-10 px-3 gap-1 min-w-[44px]"
                               aria-label="Go to next page"
                             >
                               <span className="hidden sm:inline">Next</span>
@@ -1530,8 +1804,19 @@ export default function CompanyPage() {
             onOpenChange={setShowAddAddressDialog}
             mode={dialogMode}
             {...(selectedAddress ? { initialData: selectedAddress } : {})}
-            onSuccess={() => {
-              fetchBranchAddresses(searchTerm, currentPage);
+            onSuccess={async () => {
+              // 🔄 Show loading state
+              setIsAddingAddress(true);
+              
+              try {
+                // 🔄 Fetch fresh data from server
+                await fetchBranchAddresses(searchTerm, currentPage, false, pageSize);
+                toast.success("Address added successfully!");
+              } catch (error) {
+                toast.error("Failed to refresh address list");
+              } finally {
+                setIsAddingAddress(false);
+              }
             }}
           />
         )}

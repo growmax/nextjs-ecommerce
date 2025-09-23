@@ -8,8 +8,9 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import ProfileMenu from "./ProfileMenu";
+import dynamic from "next/dynamic";
 
-export default function ProfileButton() {
+function ProfileDropdown() {
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
@@ -24,3 +25,8 @@ export default function ProfileButton() {
     </DropdownMenu>
   );
 }
+
+// Only load on client-side - fixes hydration
+export default dynamic(() => Promise.resolve(ProfileDropdown), {
+  ssr: false,
+});
