@@ -12,8 +12,9 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { useTranslations } from "next-intl";
 import { useRouter } from "next/navigation";
+import dynamic from "next/dynamic";
 
-export default function NotificationButton() {
+function NotificationDropdown() {
   const t = useTranslations();
   const router = useRouter();
 
@@ -57,3 +58,8 @@ export default function NotificationButton() {
     </DropdownMenu>
   );
 }
+
+// Only load on client-side - fixes hydration
+export default dynamic(() => Promise.resolve(NotificationDropdown), {
+  ssr: false,
+});
