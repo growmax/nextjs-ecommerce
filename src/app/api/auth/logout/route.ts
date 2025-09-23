@@ -64,6 +64,7 @@ export async function POST(request: NextRequest) {
     });
 
     // Always clear cookies regardless of external API response
+
     console.log("Clearing all authentication cookies");
 
     // Clear the access_token cookie (HttpOnly)

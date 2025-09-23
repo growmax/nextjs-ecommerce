@@ -235,7 +235,11 @@ export default function CompanyPage() {
 
   // Handle delete address with loading states
   const handleDeleteAddress = async (addressId: number, branchName: string) => {
-    if (!confirm(`Are you sure you want to delete "${branchName}" address? This action cannot be undone.`)) {
+    if (
+      !confirm(
+        `Are you sure you want to delete "${branchName}" address? This action cannot be undone.`
+      )
+    ) {
       return;
     }
 
@@ -253,14 +257,17 @@ export default function CompanyPage() {
         throw new Error("Authentication required");
       }
 
-      const response = await fetch(`/api/branches/delete-address/${addressId}`, {
-        method: "DELETE",
-        headers: {
-          Authorization: `Bearer ${accessToken}`,
-          "x-tenant": payload.iss,
-          "Content-Type": "application/json",
-        },
-      });
+      const response = await fetch(
+        `/api/branches/delete-address/${addressId}`,
+        {
+          method: "DELETE",
+          headers: {
+            Authorization: `Bearer ${accessToken}`,
+            "x-tenant": payload.iss,
+            "Content-Type": "application/json",
+          },
+        }
+      );
 
       if (!response.ok) {
         throw new Error(`Failed to delete address: ${response.status}`);
@@ -274,13 +281,13 @@ export default function CompanyPage() {
 
       // 🎉 STEP 3: Success - Show success and refresh data
       toast.success("Address deleted successfully!");
-      
+
       // 🔄 STEP 4: Fetch fresh data from server
       await fetchBranchAddresses(searchTerm, currentPage, false, pageSize);
-      
-    } catch (error) {
+    } catch {
       // 🚨 STEP 5: Handle errors
-      const errorMessage = error instanceof Error ? error.message : "Failed to delete address";
+      const errorMessage =
+        error instanceof Error ? error.message : "Failed to delete address";
       setAddressError(errorMessage);
       toast.error(errorMessage);
     } finally {
@@ -296,7 +303,9 @@ export default function CompanyPage() {
   const [currentPage, setCurrentPage] = useState(0);
   const [addressError, setAddressError] = useState<string | null>(null);
   const [isSearching, setIsSearching] = useState(false);
-  const [deletingAddressId, setDeletingAddressId] = useState<number | null>(null);
+  const [deletingAddressId, setDeletingAddressId] = useState<number | null>(
+    null
+  );
   const [isAddingAddress, setIsAddingAddress] = useState(false);
 
   // Page size options
@@ -514,13 +523,14 @@ export default function CompanyPage() {
         `searchString=${encodeURIComponent(search)}`;
 
       // Debug logging
+      // eslint-disable-next-line no-console
       console.log("Fetching addresses with params:", {
         page,
         pageSize: currentPageSize,
         offset,
         limit: currentPageSize,
         searchString: search,
-        url
+        url,
       });
 
       const response = await fetch(url, {
@@ -538,24 +548,26 @@ export default function CompanyPage() {
       const result = await response.json();
 
       // Debug logging
+      // eslint-disable-next-line no-console
       console.log("API Response:", {
         status: result.status,
         totalCount: result.data?.totalCount,
         branchResponseLength: result.data?.branchResponse?.length,
         branchResponse: result.data?.branchResponse,
-        fullResult: result
+        fullResult: result,
       });
 
       if (result.status === "success" && result.data) {
         const branchData = result.data.branchResponse || [];
         const totalCount = result.data.totalCount || 0;
-        console.log("Setting state:", { 
-          branchDataLength: branchData.length, 
+        // eslint-disable-next-line no-console
+        console.log("Setting state:", {
+          branchDataLength: branchData.length,
           totalCount,
           page,
           offset,
           firstItem: branchData[0]?.name,
-          lastItem: branchData[branchData.length - 1]?.name
+          lastItem: branchData[branchData.length - 1]?.name,
         });
         setAddresses(branchData);
         setTotalAddresses(totalCount);
@@ -576,11 +588,12 @@ export default function CompanyPage() {
 
   // Handle pagination
   const handlePageChange = (newPage: number) => {
-    console.log("handlePageChange called:", { 
-      currentPage, 
-      newPage, 
-      searchTerm, 
-      pageSize 
+    // eslint-disable-next-line no-console
+    console.log("handlePageChange called:", {
+      currentPage,
+      newPage,
+      searchTerm,
+      pageSize,
     });
     setCurrentPage(newPage);
     // Don't clear data when paginating
@@ -712,7 +725,7 @@ export default function CompanyPage() {
   // Handle search with debounce (only for search term changes)
   useEffect(() => {
     if (!companyData) return;
-    
+
     // Clear data immediately when search term changes
     if (searchTerm !== "") {
       setAddresses([]);
@@ -737,16 +750,18 @@ export default function CompanyPage() {
   useEffect(() => {
     const calculateSpacing = () => {
       // Only run on client side
-      if (typeof window === 'undefined') return;
-      
+      if (typeof window === "undefined") return;
+
       // Get actual header height for future use if needed
-      const header = document.querySelector('[data-header]') as HTMLElement;
+      const header = document.querySelector("[data-header]") as HTMLElement;
       if (header) {
         // Header height available here if needed: header.offsetHeight
       }
 
       // Calculate toolbar height when visible
-      const toolbar = document.querySelector('[data-save-cancel-toolbar]') as HTMLElement;
+      const toolbar = document.querySelector(
+        "[data-save-cancel-toolbar]"
+      ) as HTMLElement;
       if (toolbar && isDirty) {
         setToolbarHeight(toolbar.offsetHeight);
       } else {
@@ -755,13 +770,13 @@ export default function CompanyPage() {
     };
 
     calculateSpacing();
-    
+
     // Recalculate on resize (only on client side)
-    if (typeof window !== 'undefined') {
-      window.addEventListener('resize', calculateSpacing);
-      return () => window.removeEventListener('resize', calculateSpacing);
+    if (typeof window !== "undefined") {
+      window.addEventListener("resize", calculateSpacing);
+      return () => window.removeEventListener("resize", calculateSpacing);
     }
-    
+
     // Return undefined for server-side rendering
     return undefined;
   }, [isDirty]);
@@ -769,10 +784,10 @@ export default function CompanyPage() {
   // Calculate dynamic margin top for content
   const dynamicMarginTop = useMemo(() => {
     // Check if we're on the client side
-    if (typeof window === 'undefined') {
-      return '-16px'; // Default for SSR
+    if (typeof window === "undefined") {
+      return "-16px"; // Default for SSR
     }
-    
+
     const isMobile = window.innerWidth < 768;
     const baseOffset = isMobile ? 8 : 16; // Less offset on mobile
     const toolbarOffset = isDirty ? Math.min(toolbarHeight, 24) : 0; // Cap toolbar offset
@@ -973,7 +988,7 @@ export default function CompanyPage() {
       />
       <FullWidthLayout>
         {/* Mobile-First Responsive Layout */}
-        <div 
+        <div
           className="min-h-screen bg-background"
           style={{ marginTop: dynamicMarginTop }}
           ref={contentRef}
@@ -1343,8 +1358,8 @@ export default function CompanyPage() {
                       {isAddingAddress
                         ? "Adding address and refreshing list..."
                         : isSearching
-                        ? `Searching addresses${searchTerm ? ` for "${searchTerm}"` : ""}...`
-                        : "Loading addresses..."}
+                          ? `Searching addresses${searchTerm ? ` for "${searchTerm}"` : ""}...`
+                          : "Loading addresses..."}
                     </span>
                   </div>
                 )}
@@ -1354,7 +1369,9 @@ export default function CompanyPage() {
                   <div className="absolute inset-0 bg-background/80 backdrop-blur-sm z-10 flex items-center justify-center">
                     <div className="bg-background border rounded-lg p-6 shadow-lg flex items-center gap-3">
                       <Loader2 className="h-6 w-6 animate-spin text-primary" />
-                      <span className="text-sm font-medium">Adding address and refreshing list...</span>
+                      <span className="text-sm font-medium">
+                        Adding address and refreshing list...
+                      </span>
                     </div>
                   </div>
                 )}
@@ -1367,7 +1384,12 @@ export default function CompanyPage() {
                       variant="outline"
                       size="sm"
                       onClick={() =>
-                        fetchBranchAddresses(searchTerm, currentPage, false, pageSize)
+                        fetchBranchAddresses(
+                          searchTerm,
+                          currentPage,
+                          false,
+                          pageSize
+                        )
                       }
                       className="mt-4"
                     >
@@ -1413,198 +1435,50 @@ export default function CompanyPage() {
                       <div className="text-center text-gray-600 p-8">
                         <p>No addresses on this page</p>
                         <p className="text-sm mt-2">
-                          Try navigating to a different page or adjusting the page size
+                          Try navigating to a different page or adjusting the
+                          page size
                         </p>
                       </div>
                     )}
-                    
+
                     {/* Mobile: Card view */}
                     {addresses.length > 0 && (
                       <div className="block md:hidden flex-1 overflow-y-auto">
                         <div className="space-y-2 p-1">
                           {addresses.map(branch => (
-                          <Card
-                            key={branch.id}
-                            className="p-3 flex-shrink-0 shadow-sm hover:shadow-md transition-shadow cursor-pointer"
-                            onClick={() => handleEditAddress(branch)}
-                          >
-                            <div className="space-y-3">
-                              <div className="space-y-0.5">
-                                <div className="flex items-start justify-between gap-2">
-                                  <div className="font-semibold text-sm">
-                                    {branch.name ||
-                                      branch.addressId?.branchName ||
-                                      "-"}
-                                  </div>
-                                  <div className="flex gap-1 flex-shrink-0">
-                                    {branch.addressId?.isBilling && (
-                                      <Badge variant="secondary" className="text-xs px-2 py-0.5">
-                                        Billing
-                                      </Badge>
-                                    )}
-                                    {branch.addressId?.isShipping && (
-                                      <Badge variant="outline" className="text-xs px-2 py-0.5">
-                                        Shipping
-                                      </Badge>
-                                    )}
-                                  </div>
-                                </div>
-                                <div className="text-xs sm:text-sm text-muted-foreground">
-                                  {branch.addressId?.addressLine || "-"}
-                                </div>
-                                <div className="text-xs sm:text-sm text-muted-foreground">
-                                  {[
-                                    branch.addressId?.city,
-                                    branch.addressId?.state,
-                                    branch.addressId?.pinCodeId,
-                                  ]
-                                    .filter(Boolean)
-                                    .join(", ") || "-"}
-                                </div>
-                                <div className="text-xs sm:text-sm text-muted-foreground">
-                                  {branch.addressId?.country || "-"}
-                                </div>
-                              </div>
-                              <div className="grid grid-cols-2 gap-2 sm:gap-3 text-xs sm:text-sm">
-                                <div className="space-y-0.5">
-                                  <span className="text-xs font-medium text-muted-foreground">
-                                    Tax ID/GST
-                                  </span>
-                                  <div className="font-medium text-xs sm:text-sm">
-                                    {branch.addressId?.gst || "-"}
-                                  </div>
-                                </div>
-                                <div className="space-y-0.5">
-                                  <span className="text-xs font-medium text-muted-foreground">
-                                    Contact
-                                  </span>
-                                  <div className="font-medium text-xs sm:text-sm">
-                                    {branch.addressId?.primaryContact || "-"}
-                                  </div>
-                                </div>
-                                <div className="col-span-2 space-y-0.5">
-                                  <span className="text-xs font-medium text-muted-foreground">
-                                    Phone
-                                  </span>
-                                  <div className="font-medium text-xs sm:text-sm">
-                                    {branch.addressId?.mobileNo &&
-                                    branch.addressId?.nationalMobileNum
-                                      ? `+${branch.addressId.nationalMobileNum} ${branch.addressId.mobileNo}`
-                                      : branch.addressId?.phone || "-"}
-                                  </div>
-                                </div>
-                              </div>
-                              <Separator />
-                              <div className="flex gap-3">
-                                <Button
-                                  variant="outline"
-                                  size="default"
-                                  className="flex-1 h-10 text-sm font-medium"
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    handleEditAddress(branch);
-                                  }}
-                                >
-                                  Edit
-                                </Button>
-                                <Button
-                                  variant="destructive"
-                                  size="default"
-                                  className="flex-1 h-10 text-sm font-medium"
-                                  disabled={deletingAddressId === (branch.addressId?.id || branch.id)}
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    handleDeleteAddress(
-                                      branch.addressId?.id || branch.id,
-                                      branch.name || branch.addressId?.branchName || "Unknown"
-                                    );
-                                  }}
-                                >
-                                  {deletingAddressId === (branch.addressId?.id || branch.id) ? (
-                                    <>
-                                      <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                                      Deleting...
-                                    </>
-                                  ) : (
-                                    <>
-                                      <Trash2 className="h-4 w-4 mr-2" />
-                                      Delete
-                                    </>
-                                  )}
-                                </Button>
-                              </div>
-                            </div>
-                          </Card>
-                          ))}
-                        </div>
-                      </div>
-                    )}
-
-                    {/* Desktop: Table view */}
-                    {addresses.length > 0 && (
-                      <div className="hidden md:block flex-1 overflow-auto">
-                        <Table>
-                        <TableHeader className="bg-accent sticky top-0">
-                          <TableRow className="hover:bg-transparent">
-                            <TableHead className="w-12 text-center text-xs sm:text-sm">
-                              Action
-                            </TableHead>
-                            <TableHead className="min-w-[100px] text-xs sm:text-sm">
-                              Branch
-                            </TableHead>
-                            <TableHead className="min-w-[250px] text-xs sm:text-sm">
-                              Address
-                            </TableHead>
-                            <TableHead className="min-w-[120px] text-xs sm:text-sm">
-                              Tax ID / GST
-                            </TableHead>
-                            <TableHead className="min-w-[120px] text-xs sm:text-sm">
-                              Contact Person
-                            </TableHead>
-                            <TableHead className="min-w-[150px] text-xs sm:text-sm">
-                              Phone
-                            </TableHead>
-                            <TableHead className="min-w-[100px] text-xs sm:text-sm">
-                              Zone
-                            </TableHead>
-                          </TableRow>
-                        </TableHeader>
-                        <TableBody>
-                          {addresses.map(branch => (
-                            <TableRow
+                            <Card
                               key={branch.id}
-                              className="hover:bg-muted/50 cursor-pointer"
+                              className="p-3 flex-shrink-0 shadow-sm hover:shadow-md transition-shadow cursor-pointer"
                               onClick={() => handleEditAddress(branch)}
                             >
-                              <TableCell className="text-center">
-                                <Button
-                                  variant="ghost"
-                                  size="sm"
-                                  className="h-7 w-7 text-red-500 hover:text-red-700 hover:bg-red-50"
-                                  disabled={deletingAddressId === (branch.addressId?.id || branch.id)}
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    handleDeleteAddress(
-                                      branch.addressId?.id || branch.id,
-                                      branch.name || branch.addressId?.branchName || "Unknown"
-                                    );
-                                  }}
-                                >
-                                  {deletingAddressId === (branch.addressId?.id || branch.id) ? (
-                                    <Loader2 className="h-3 w-3 animate-spin" />
-                                  ) : (
-                                    <Trash2 className="h-3 w-3" />
-                                  )}
-                                </Button>
-                              </TableCell>
-                              <TableCell className="font-medium text-xs sm:text-sm">
-                                {branch.name ||
-                                  branch.addressId?.branchName ||
-                                  "-"}
-                              </TableCell>
-                              <TableCell className="font-medium">
-                                <div className="space-y-1">
-                                  <div className="text-xs sm:text-sm">
+                              <div className="space-y-3">
+                                <div className="space-y-0.5">
+                                  <div className="flex items-start justify-between gap-2">
+                                    <div className="font-semibold text-sm">
+                                      {branch.name ||
+                                        branch.addressId?.branchName ||
+                                        "-"}
+                                    </div>
+                                    <div className="flex gap-1 flex-shrink-0">
+                                      {branch.addressId?.isBilling && (
+                                        <Badge
+                                          variant="secondary"
+                                          className="text-xs px-2 py-0.5"
+                                        >
+                                          Billing
+                                        </Badge>
+                                      )}
+                                      {branch.addressId?.isShipping && (
+                                        <Badge
+                                          variant="outline"
+                                          className="text-xs px-2 py-0.5"
+                                        >
+                                          Shipping
+                                        </Badge>
+                                      )}
+                                    </div>
+                                  </div>
+                                  <div className="text-xs sm:text-sm text-muted-foreground">
                                     {branch.addressId?.addressLine || "-"}
                                   </div>
                                   <div className="text-xs sm:text-sm text-muted-foreground">
@@ -1619,46 +1493,213 @@ export default function CompanyPage() {
                                   <div className="text-xs sm:text-sm text-muted-foreground">
                                     {branch.addressId?.country || "-"}
                                   </div>
-                                  <div className="flex gap-1.5 mt-2">
-                                    {branch.addressId?.isBilling && (
-                                      <Badge 
-                                        variant="secondary" 
-                                        className="text-xs font-medium px-2.5 py-0.5 bg-primary/10 text-primary hover:bg-primary/20 border-primary/20"
-                                      >
-                                        Billing
-                                      </Badge>
-                                    )}
-                                    {branch.addressId?.isShipping && (
-                                      <Badge 
-                                        variant="outline" 
-                                        className="text-xs font-medium px-2.5 py-0.5 hover:bg-accent/20"
-                                      >
-                                        Shipping
-                                      </Badge>
-                                    )}
+                                </div>
+                                <div className="grid grid-cols-2 gap-2 sm:gap-3 text-xs sm:text-sm">
+                                  <div className="space-y-0.5">
+                                    <span className="text-xs font-medium text-muted-foreground">
+                                      Tax ID/GST
+                                    </span>
+                                    <div className="font-medium text-xs sm:text-sm">
+                                      {branch.addressId?.gst || "-"}
+                                    </div>
+                                  </div>
+                                  <div className="space-y-0.5">
+                                    <span className="text-xs font-medium text-muted-foreground">
+                                      Contact
+                                    </span>
+                                    <div className="font-medium text-xs sm:text-sm">
+                                      {branch.addressId?.primaryContact || "-"}
+                                    </div>
+                                  </div>
+                                  <div className="col-span-2 space-y-0.5">
+                                    <span className="text-xs font-medium text-muted-foreground">
+                                      Phone
+                                    </span>
+                                    <div className="font-medium text-xs sm:text-sm">
+                                      {branch.addressId?.mobileNo &&
+                                      branch.addressId?.nationalMobileNum
+                                        ? `+${branch.addressId.nationalMobileNum} ${branch.addressId.mobileNo}`
+                                        : branch.addressId?.phone || "-"}
+                                    </div>
                                   </div>
                                 </div>
-                              </TableCell>
-                              <TableCell className="text-xs sm:text-sm">
-                                {branch.addressId?.gst || "-"}
-                              </TableCell>
-                              <TableCell className="text-xs sm:text-sm">
-                                {branch.addressId?.primaryContact || "-"}
-                              </TableCell>
-                              <TableCell className="text-xs sm:text-sm">
-                                {branch.addressId?.mobileNo &&
-                                branch.addressId?.nationalMobileNum
-                                  ? `+${branch.addressId.nationalMobileNum} ${branch.addressId.mobileNo}`
-                                  : branch.addressId?.phone || "-"}
-                              </TableCell>
-                              <TableCell className="text-xs sm:text-sm">
-                                {branch.zoneId?.zoneId?.zoneName || "-"}
-                              </TableCell>
-                            </TableRow>
+                                <Separator />
+                                <div className="flex gap-3">
+                                  <Button
+                                    variant="outline"
+                                    size="default"
+                                    className="flex-1 h-10 text-sm font-medium"
+                                    onClick={e => {
+                                      e.stopPropagation();
+                                      handleEditAddress(branch);
+                                    }}
+                                  >
+                                    Edit
+                                  </Button>
+                                  <Button
+                                    variant="destructive"
+                                    size="default"
+                                    className="flex-1 h-10 text-sm font-medium"
+                                    disabled={
+                                      deletingAddressId ===
+                                      (branch.addressId?.id || branch.id)
+                                    }
+                                    onClick={e => {
+                                      e.stopPropagation();
+                                      handleDeleteAddress(
+                                        branch.addressId?.id || branch.id,
+                                        branch.name ||
+                                          branch.addressId?.branchName ||
+                                          "Unknown"
+                                      );
+                                    }}
+                                  >
+                                    {deletingAddressId ===
+                                    (branch.addressId?.id || branch.id) ? (
+                                      <>
+                                        <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                                        Deleting...
+                                      </>
+                                    ) : (
+                                      <>
+                                        <Trash2 className="h-4 w-4 mr-2" />
+                                        Delete
+                                      </>
+                                    )}
+                                  </Button>
+                                </div>
+                              </div>
+                            </Card>
                           ))}
-                        </TableBody>
-                      </Table>
-                    </div>
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Desktop: Table view */}
+                    {addresses.length > 0 && (
+                      <div className="hidden md:block flex-1 overflow-auto">
+                        <Table>
+                          <TableHeader className="bg-accent sticky top-0">
+                            <TableRow className="hover:bg-transparent">
+                              <TableHead className="w-12 text-center text-xs sm:text-sm">
+                                Action
+                              </TableHead>
+                              <TableHead className="min-w-[100px] text-xs sm:text-sm">
+                                Branch
+                              </TableHead>
+                              <TableHead className="min-w-[250px] text-xs sm:text-sm">
+                                Address
+                              </TableHead>
+                              <TableHead className="min-w-[120px] text-xs sm:text-sm">
+                                Tax ID / GST
+                              </TableHead>
+                              <TableHead className="min-w-[120px] text-xs sm:text-sm">
+                                Contact Person
+                              </TableHead>
+                              <TableHead className="min-w-[150px] text-xs sm:text-sm">
+                                Phone
+                              </TableHead>
+                              <TableHead className="min-w-[100px] text-xs sm:text-sm">
+                                Zone
+                              </TableHead>
+                            </TableRow>
+                          </TableHeader>
+                          <TableBody>
+                            {addresses.map(branch => (
+                              <TableRow
+                                key={branch.id}
+                                className="hover:bg-muted/50 cursor-pointer"
+                                onClick={() => handleEditAddress(branch)}
+                              >
+                                <TableCell className="text-center">
+                                  <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    className="h-7 w-7 text-red-500 hover:text-red-700 hover:bg-red-50"
+                                    disabled={
+                                      deletingAddressId ===
+                                      (branch.addressId?.id || branch.id)
+                                    }
+                                    onClick={e => {
+                                      e.stopPropagation();
+                                      handleDeleteAddress(
+                                        branch.addressId?.id || branch.id,
+                                        branch.name ||
+                                          branch.addressId?.branchName ||
+                                          "Unknown"
+                                      );
+                                    }}
+                                  >
+                                    {deletingAddressId ===
+                                    (branch.addressId?.id || branch.id) ? (
+                                      <Loader2 className="h-3 w-3 animate-spin" />
+                                    ) : (
+                                      <Trash2 className="h-3 w-3" />
+                                    )}
+                                  </Button>
+                                </TableCell>
+                                <TableCell className="font-medium text-xs sm:text-sm">
+                                  {branch.name ||
+                                    branch.addressId?.branchName ||
+                                    "-"}
+                                </TableCell>
+                                <TableCell className="font-medium">
+                                  <div className="space-y-1">
+                                    <div className="text-xs sm:text-sm">
+                                      {branch.addressId?.addressLine || "-"}
+                                    </div>
+                                    <div className="text-xs sm:text-sm text-muted-foreground">
+                                      {[
+                                        branch.addressId?.city,
+                                        branch.addressId?.state,
+                                        branch.addressId?.pinCodeId,
+                                      ]
+                                        .filter(Boolean)
+                                        .join(", ") || "-"}
+                                    </div>
+                                    <div className="text-xs sm:text-sm text-muted-foreground">
+                                      {branch.addressId?.country || "-"}
+                                    </div>
+                                    <div className="flex gap-1.5 mt-2">
+                                      {branch.addressId?.isBilling && (
+                                        <Badge
+                                          variant="secondary"
+                                          className="text-xs font-medium px-2.5 py-0.5 bg-primary/10 text-primary hover:bg-primary/20 border-primary/20"
+                                        >
+                                          Billing
+                                        </Badge>
+                                      )}
+                                      {branch.addressId?.isShipping && (
+                                        <Badge
+                                          variant="outline"
+                                          className="text-xs font-medium px-2.5 py-0.5 hover:bg-accent/20"
+                                        >
+                                          Shipping
+                                        </Badge>
+                                      )}
+                                    </div>
+                                  </div>
+                                </TableCell>
+                                <TableCell className="text-xs sm:text-sm">
+                                  {branch.addressId?.gst || "-"}
+                                </TableCell>
+                                <TableCell className="text-xs sm:text-sm">
+                                  {branch.addressId?.primaryContact || "-"}
+                                </TableCell>
+                                <TableCell className="text-xs sm:text-sm">
+                                  {branch.addressId?.mobileNo &&
+                                  branch.addressId?.nationalMobileNum
+                                    ? `+${branch.addressId.nationalMobileNum} ${branch.addressId.mobileNo}`
+                                    : branch.addressId?.phone || "-"}
+                                </TableCell>
+                                <TableCell className="text-xs sm:text-sm">
+                                  {branch.zoneId?.zoneId?.zoneName || "-"}
+                                </TableCell>
+                              </TableRow>
+                            ))}
+                          </TableBody>
+                        </Table>
+                      </div>
                     )}
 
                     {/* Enhanced Pagination Controls - Always show when totalAddresses > 0 */}
@@ -1807,12 +1848,17 @@ export default function CompanyPage() {
             onSuccess={async () => {
               // 🔄 Show loading state
               setIsAddingAddress(true);
-              
+
               try {
                 // 🔄 Fetch fresh data from server
-                await fetchBranchAddresses(searchTerm, currentPage, false, pageSize);
+                await fetchBranchAddresses(
+                  searchTerm,
+                  currentPage,
+                  false,
+                  pageSize
+                );
                 toast.success("Address added successfully!");
-              } catch (error) {
+              } catch {
                 toast.error("Failed to refresh address list");
               } finally {
                 setIsAddingAddress(false);

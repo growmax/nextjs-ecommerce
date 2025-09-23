@@ -4,7 +4,7 @@ export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);
     const stateId = searchParams.get("stateId");
-    
+
     // Get authorization token from headers
     const authHeader = request.headers.get("authorization");
     const tenant = request.headers.get("x-tenant");
@@ -16,6 +16,7 @@ export async function GET(request: NextRequest) {
       );
     }
 
+    // eslint-disable-next-line no-console
     console.log("Fetching districts with params:", { stateId });
 
     // Call external API
@@ -32,6 +33,7 @@ export async function GET(request: NextRequest) {
 
     if (!response.ok) {
       const errorText = await response.text();
+      // eslint-disable-next-line no-console
       console.error("Districts API Error:", response.status, errorText);
       return NextResponse.json(
         { error: `Failed to fetch districts: ${response.status}` },
@@ -39,26 +41,35 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    let data = await response.json();
-    
+    const data = await response.json();
+
     // Filter by stateId if provided (client-side filtering)
     if (stateId && data.data) {
-      data.data = data.data.filter((district: any) => 
-        district.stateId === parseInt(stateId)
+      data.data = data.data.filter(
+        (district: { stateId: number }) =>
+          district.stateId === parseInt(stateId)
       );
-      
-      console.log("Filtered districts for state:", stateId, "Count:", data.data.length);
+
+      // eslint-disable-next-line no-console
+      console.log(
+        "Filtered districts for state:",
+        stateId,
+        "Count:",
+        data.data.length
+      );
     }
-    
+
+    // eslint-disable-next-line no-console
     console.log("Districts API Response:", {
       status: data.status,
       message: data.message,
       dataLength: data.data?.length,
       filteredByState: !!stateId,
     });
-    
+
     return NextResponse.json(data);
   } catch (error) {
+    // eslint-disable-next-line no-console
     console.error("Error in districts API route:", error);
     return NextResponse.json(
       { error: "Internal server error" },

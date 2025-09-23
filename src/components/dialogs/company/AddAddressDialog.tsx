@@ -31,128 +31,146 @@ import { JWTService } from "@/lib/services/JWTService";
 import { Country, State, District } from "@/types/address";
 
 // Enhanced validation with security, business logic, and format validation
-const addressFormSchema = z.object({
-  // Company Information
-  companyName: z.string().optional(),
-  
-  // Core Address Fields - Required with business logic
-  branch: z
-    .string()
-    .min(1, "Branch name is required")
-    .min(2, "Branch name must be at least 2 characters")
-    .max(100, "Branch name cannot exceed 100 characters")
-    .regex(/^[a-zA-Z0-9\s\-&'.()]+$/, "Branch name contains invalid characters")
-    .transform(str => str.trim())
-    .refine(str => str.length > 0, "Branch name cannot be only spaces"),
-    
-  address: z
-    .string()
-    .min(1, "Address is required")
-    .min(5, "Address must be at least 5 characters")
-    .max(200, "Address cannot exceed 200 characters")
-    .regex(/^[a-zA-Z0-9\s\-,.#/()]+$/, "Address contains invalid characters")
-    .transform(str => str.trim())
-    .refine(str => str.length > 0, "Address cannot be only spaces"),
-    
-  locality: z
-    .string()
-    .optional()
-    .refine(val => !val || (val.length >= 2 && val.length <= 50), "Locality must be 2-50 characters if provided")
-    .transform(str => str?.trim() || ""),
-    
-  // Geographic Fields - Required with validation
-  country: z
-    .string()
-    .min(1, "Country is required")
-    .max(50, "Country name too long")
-    .regex(/^[a-zA-Z\s\-'.()]+$/, "Country name contains invalid characters"),
-    
-  state: z
-    .string()
-    .min(1, "State/Province is required")
-    .max(50, "State name too long")
-    .regex(/^[a-zA-Z\s\-'.()]+$/, "State name contains invalid characters"),
-    
-  district: z
-    .string()
-    .optional()
-    .refine(val => !val || (val.length >= 2 && val.length <= 50), "District must be 2-50 characters if provided")
-    .transform(str => str?.trim() || ""),
-    
-  // Postal Code with format validation
-  postalCode: z
-    .string()
-    .min(1, "Postal/Pin code is required")
-    .min(3, "Postal code must be at least 3 characters")
-    .max(10, "Postal code cannot exceed 10 characters")
-    .regex(/^[a-zA-Z0-9\s\-]+$/, "Invalid postal code format"),
-    
-  city: z
-    .string()
-    .optional()
-    .refine(val => !val || (val.length >= 2 && val.length <= 50), "City must be 2-50 characters if provided")
-    .transform(str => str?.trim() || ""),
-    
-  // Coordinates with precise validation
-  latitude: z
-    .string()
-    .optional()
-    .refine(val => {
-      if (!val || val.trim() === "") return true;
-      const num = parseFloat(val);
-      return !isNaN(num) && num >= -90 && num <= 90;
-    }, "Latitude must be between -90 and 90 degrees"),
-    
-  longitude: z
-    .string()
-    .optional()
-    .refine(val => {
-      if (!val || val.trim() === "") return true;
-      const num = parseFloat(val);
-      return !isNaN(num) && num >= -180 && num <= 180;
-    }, "Longitude must be between -180 and 180 degrees"),
-    
-  // Business Configuration
-  isBilling: z.boolean().optional(),
-  isShipping: z.boolean().optional(),
-  
-  // Business Compliance
-  taxId: z
-    .string()
-    .optional()
-    .refine(val => {
-      if (!val || val.trim() === "") return true;
-      // GST format for India: 2 digits state code + 10 digits PAN + 1 digit entity + 1 check digit + 1 default
-      return /^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z]{1}[1-9A-Z]{1}[Z]{1}[0-9A-Z]{1}$/.test(val) || 
-             val.length >= 8; // Allow other tax ID formats
-    }, "Invalid tax ID format")
-    .transform(str => str?.trim().toUpperCase() || ""),
-    
-  // Contact Information with international phone validation
-  contactName: z
-    .string()
-    .optional()
-    .refine(val => {
-      if (!val || val.trim() === "") return true;
-      return val.length >= 2 && val.length <= 50 && /^[a-zA-Z\s\-'.]+$/.test(val);
-    }, "Contact name must be 2-50 characters with valid name characters")
-    .transform(str => str?.trim() || ""),
-    
-  contactNumber: z
-    .string()
-    .optional()
-    .refine(val => {
-      if (!val || val.trim() === "") return true;
-      // International phone number format validation
-      const cleaned = val.replace(/[\s\-\(\)]/g, "");
-      return /^[0-9]{7,15}$/.test(cleaned);
-    }, "Phone number must be 7-15 digits")
-    .transform(str => str?.replace(/[\s\-\(\)]/g, "") || ""),
-})
-.refine(data => data.isBilling || data.isShipping, {
-  message: "Address must be marked as either billing or shipping (or both)",
-  path: ["isBilling"]
-});
+const addressFormSchema = z
+  .object({
+    // Company Information
+    companyName: z.string().optional(),
+
+    // Core Address Fields - Required with business logic
+    branch: z
+      .string()
+      .min(1, "Branch name is required")
+      .min(2, "Branch name must be at least 2 characters")
+      .max(100, "Branch name cannot exceed 100 characters")
+      .regex(
+        /^[a-zA-Z0-9\s\-&'.()]+$/,
+        "Branch name contains invalid characters"
+      )
+      .transform(str => str.trim())
+      .refine(str => str.length > 0, "Branch name cannot be only spaces"),
+
+    address: z
+      .string()
+      .min(1, "Address is required")
+      .min(5, "Address must be at least 5 characters")
+      .max(200, "Address cannot exceed 200 characters")
+      .regex(/^[a-zA-Z0-9\s\-,.#/()]+$/, "Address contains invalid characters")
+      .transform(str => str.trim())
+      .refine(str => str.length > 0, "Address cannot be only spaces"),
+
+    locality: z
+      .string()
+      .optional()
+      .refine(
+        val => !val || (val.length >= 2 && val.length <= 50),
+        "Locality must be 2-50 characters if provided"
+      )
+      .transform(str => str?.trim() || ""),
+
+    // Geographic Fields - Required with validation
+    country: z
+      .string()
+      .min(1, "Country is required")
+      .max(50, "Country name too long")
+      .regex(/^[a-zA-Z\s\-'.()]+$/, "Country name contains invalid characters"),
+
+    state: z
+      .string()
+      .min(1, "State/Province is required")
+      .max(50, "State name too long")
+      .regex(/^[a-zA-Z\s\-'.()]+$/, "State name contains invalid characters"),
+
+    district: z
+      .string()
+      .optional()
+      .refine(
+        val => !val || (val.length >= 2 && val.length <= 50),
+        "District must be 2-50 characters if provided"
+      )
+      .transform(str => str?.trim() || ""),
+
+    // Postal Code with format validation
+    postalCode: z
+      .string()
+      .min(1, "Postal/Pin code is required")
+      .min(3, "Postal code must be at least 3 characters")
+      .max(10, "Postal code cannot exceed 10 characters")
+      .regex(/^[a-zA-Z0-9\s\-]+$/, "Invalid postal code format"),
+
+    city: z
+      .string()
+      .optional()
+      .refine(
+        val => !val || (val.length >= 2 && val.length <= 50),
+        "City must be 2-50 characters if provided"
+      )
+      .transform(str => str?.trim() || ""),
+
+    // Coordinates with precise validation
+    latitude: z
+      .string()
+      .optional()
+      .refine(val => {
+        if (!val || val.trim() === "") return true;
+        const num = parseFloat(val);
+        return !isNaN(num) && num >= -90 && num <= 90;
+      }, "Latitude must be between -90 and 90 degrees"),
+
+    longitude: z
+      .string()
+      .optional()
+      .refine(val => {
+        if (!val || val.trim() === "") return true;
+        const num = parseFloat(val);
+        return !isNaN(num) && num >= -180 && num <= 180;
+      }, "Longitude must be between -180 and 180 degrees"),
+
+    // Business Configuration
+    isBilling: z.boolean().optional(),
+    isShipping: z.boolean().optional(),
+
+    // Business Compliance
+    taxId: z
+      .string()
+      .optional()
+      .refine(val => {
+        if (!val || val.trim() === "") return true;
+        // GST format for India: 2 digits state code + 10 digits PAN + 1 digit entity + 1 check digit + 1 default
+        return (
+          /^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z]{1}[1-9A-Z]{1}[Z]{1}[0-9A-Z]{1}$/.test(
+            val
+          ) || val.length >= 8
+        ); // Allow other tax ID formats
+      }, "Invalid tax ID format")
+      .transform(str => str?.trim().toUpperCase() || ""),
+
+    // Contact Information with international phone validation
+    contactName: z
+      .string()
+      .optional()
+      .refine(val => {
+        if (!val || val.trim() === "") return true;
+        return (
+          val.length >= 2 && val.length <= 50 && /^[a-zA-Z\s\-'.]+$/.test(val)
+        );
+      }, "Contact name must be 2-50 characters with valid name characters")
+      .transform(str => str?.trim() || ""),
+
+    contactNumber: z
+      .string()
+      .optional()
+      .refine(val => {
+        if (!val || val.trim() === "") return true;
+        // International phone number format validation
+        const cleaned = val.replace(/[\s\-\(\)]/g, "");
+        return /^[0-9]{7,15}$/.test(cleaned);
+      }, "Phone number must be 7-15 digits")
+      .transform(str => str?.replace(/[\s\-\(\)]/g, "") || ""),
+  })
+  .refine(data => data.isBilling || data.isShipping, {
+    message: "Address must be marked as either billing or shipping (or both)",
+    path: ["isBilling"],
+  });
 
 type AddressFormData = {
   companyName?: string;
@@ -191,18 +209,17 @@ export function AddAddressDialog({
   const [isLoading, setIsLoading] = React.useState(false);
   const [searchTerm, setSearchTerm] = React.useState("");
   const [dataLoading, setDataLoading] = React.useState(true);
-  
+
   // Store all data
   const [allData, setAllData] = React.useState({
     countries: [] as Country[],
     states: [] as State[],
-    districts: [] as District[]
+    districts: [] as District[],
   });
-  
+
   // Selected values
   const [selectedCountryId, setSelectedCountryId] = React.useState<string>("");
   const [selectedStateId, setSelectedStateId] = React.useState<string>("");
-  
 
   // Load all data in parallel
   const loadAllData = React.useCallback(async () => {
@@ -228,24 +245,24 @@ export function AddAddressDialog({
       const [countriesRes, statesRes, districtsRes] = await Promise.all([
         fetch("/api/countries", { headers }),
         fetch("/api/states", { headers }),
-        fetch("/api/districts", { headers })
+        fetch("/api/districts", { headers }),
       ]);
 
       const [countries, states, districts] = await Promise.all([
         countriesRes.json(),
         statesRes.json(),
-        districtsRes.json()
+        districtsRes.json(),
       ]);
 
       const data = {
         countries: countries.data || [],
         states: states.data || [],
-        districts: districts.data || []
+        districts: districts.data || [],
       };
 
       setAllData(data);
       sessionStorage.setItem("address_data", JSON.stringify(data));
-    } catch (error) {
+    } catch {
       toast.error("Failed to load location data");
     } finally {
       setDataLoading(false);
@@ -261,7 +278,7 @@ export function AddAddressDialog({
     formState: { errors },
     reset,
   } = useForm<AddressFormData>({
-    resolver: zodResolver(addressFormSchema) as any,
+    resolver: zodResolver(addressFormSchema),
     mode: "onChange", // Enable real-time validation
     defaultValues: {
       companyName: initialData?.companyName || undefined,
@@ -291,41 +308,52 @@ export function AddAddressDialog({
   }, [open, allData.countries.length, loadAllData]);
 
   // Handle country selection
-  const handleCountryChange = React.useCallback((countryId: string) => {
-    setSelectedCountryId(countryId);
-    
-    // Find country name and set form value
-    const country = allData.countries.find(c => c.id.toString() === countryId);
-    if (country) {
-      setValue("country", country.name);
-    }
-    
-    // Reset dependent fields
-    setValue("state", "");
-    setValue("district", "");
-    setSelectedStateId("");
-  }, [setValue, allData.countries]);
+  const handleCountryChange = React.useCallback(
+    (countryId: string) => {
+      setSelectedCountryId(countryId);
 
-  // Handle state selection  
-  const handleStateChange = React.useCallback((stateId: string) => {
-    setSelectedStateId(stateId);
-    
-    // Find state name and set form value
-    const state = allData.states.find(s => s.id.toString() === stateId);
-    if (state) {
-      setValue("state", state.name);
-    }
-    
-    // Reset dependent fields
-    setValue("district", "");
-  }, [setValue, allData.states]);
+      // Find country name and set form value
+      const country = allData.countries.find(
+        c => c.id.toString() === countryId
+      );
+      if (country) {
+        setValue("country", country.name);
+      }
+
+      // Reset dependent fields
+      setValue("state", "");
+      setValue("district", "");
+      setSelectedStateId("");
+    },
+    [setValue, allData.countries]
+  );
+
+  // Handle state selection
+  const handleStateChange = React.useCallback(
+    (stateId: string) => {
+      setSelectedStateId(stateId);
+
+      // Find state name and set form value
+      const state = allData.states.find(s => s.id.toString() === stateId);
+      if (state) {
+        setValue("state", state.name);
+      }
+
+      // Reset dependent fields
+      setValue("district", "");
+    },
+    [setValue, allData.states]
+  );
 
   // Memoized options with instant filtering
-  const countryOptions = React.useMemo(() => 
-    allData.countries.map(c => ({
-      value: c.id.toString(),
-      label: c.name
-    })), [allData.countries]);
+  const countryOptions = React.useMemo(
+    () =>
+      allData.countries.map(c => ({
+        value: c.id.toString(),
+        label: c.name,
+      })),
+    [allData.countries]
+  );
 
   const stateOptions = React.useMemo(() => {
     if (!selectedCountryId) return [];
@@ -345,47 +373,55 @@ export function AddAddressDialog({
   React.useEffect(() => {
     if (open) {
       reset(initialData || {});
-      
+
       // 🔧 Initialize selected IDs from initial data
       if (initialData?.country && allData.countries.length > 0) {
-        const country = allData.countries.find(c => c.name === initialData.country);
+        const country = allData.countries.find(
+          c => c.name === initialData.country
+        );
         if (country) {
           setSelectedCountryId(country.id.toString());
         }
       }
-      
+
       if (initialData?.state && allData.states.length > 0) {
         const state = allData.states.find(s => s.name === initialData.state);
         if (state) {
           setSelectedStateId(state.id.toString());
         }
       }
-      
+
       setTimeout(() => {
-        document.getElementById('branch')?.focus();
+        document.getElementById("branch")?.focus();
       }, 100);
     }
   }, [open, initialData, reset, allData.countries, allData.states]);
 
   // Get country info for phone field
   const selectedCountryInfo = React.useMemo(() => {
-    const defaultInfo = { callingCode: '+1 ', iso2: 'us', flag: 'https://flagcdn.com/16x12/us.png' };
+    const defaultInfo = {
+      callingCode: "+1 ",
+      iso2: "us",
+      flag: "https://flagcdn.com/16x12/us.png",
+    };
     if (!selectedCountryId) return defaultInfo;
-    
-    const country = allData.countries.find(c => c.id.toString() === selectedCountryId);
+
+    const country = allData.countries.find(
+      c => c.id.toString() === selectedCountryId
+    );
     if (!country?.callingCodes) return defaultInfo;
-    
-    const callingCode = Array.isArray(country.callingCodes) 
-      ? country.callingCodes[0] 
+
+    const callingCode = Array.isArray(country.callingCodes)
+      ? country.callingCodes[0]
       : country.callingCodes.toString();
-    const iso2 = country.iso2?.toLowerCase() || 'us';
-    
+    const iso2 = country.iso2?.toLowerCase() || "us";
+
     if (!callingCode) return defaultInfo;
-    
+
     return {
-      callingCode: (callingCode.startsWith('+') ? callingCode : `+${callingCode}`) + ' ',
+      callingCode: `${callingCode.startsWith("+") ? callingCode : `+${callingCode}`} `,
       iso2,
-      flag: `https://flagcdn.com/16x12/${iso2}.png`
+      flag: `https://flagcdn.com/16x12/${iso2}.png`,
     };
   }, [selectedCountryId, allData.countries]);
 
@@ -434,7 +470,7 @@ export function AddAddressDialog({
           numericCode: 8,
           region: "Europe",
           subregion: "Southern Europe",
-          countryCode: "AL"
+          countryCode: "AL",
         },
         countryCode: "AL",
         countryCodeIso: "AL",
@@ -446,11 +482,11 @@ export function AddAddressDialog({
           latitude: 40.7086377,
           longitude: 19.9437314,
           name: data.state,
-          stateCode: "BR"
+          stateCode: "BR",
         },
         districtData: {
-          name: data.district || ""
-        }
+          name: data.district || "",
+        },
       };
 
       // 🔧 Build complete API payload matching working cURL
@@ -462,18 +498,19 @@ export function AddAddressDialog({
         businessUnits: [],
         zoneId: null,
         branch: {
-          addressId: addressData  // Same structure as above
+          addressId: addressData, // Same structure as above
         },
         removeWareHouse: [],
         companyId: payload.companyId,
         userId: payload.userId,
-        isUpdate: mode === "edit"
+        isUpdate: mode === "edit",
       };
 
       // 🔧 Use correct endpoint that exists
-      const endpoint = mode === "edit" 
-        ? `/api/branches/update/${payload.userId}?companyId=${payload.companyId}`
-        : `/api/branches/create/${payload.userId}?companyId=${payload.companyId}`;
+      const endpoint =
+        mode === "edit"
+          ? `/api/branches/update/${payload.userId}?companyId=${payload.companyId}`
+          : `/api/branches/create/${payload.userId}?companyId=${payload.companyId}`;
 
       const response = await fetch(endpoint, {
         method: "POST",
@@ -523,7 +560,10 @@ export function AddAddressDialog({
             <CardContent className="p-0 space-y-2 h-full">
               {/* Company Search */}
               <div className="pb-0.5">
-                <Label htmlFor="company-search" className="text-xs font-normal mb-0 block">
+                <Label
+                  htmlFor="company-search"
+                  className="text-xs font-normal mb-0 block"
+                >
                   Company Name
                 </Label>
                 <div className="relative">
@@ -547,57 +587,94 @@ export function AddAddressDialog({
               >
                 {/* Address Details Section */}
                 <div className="space-y-4">
-                  
                   <div className="grid grid-cols-1 gap-2">
                     <div>
-                      <Label htmlFor="branch" className="text-xs font-normal mb-0 block">
-                        Branch <span className="text-red-500 text-xs" aria-label="required">*</span>
+                      <Label
+                        htmlFor="branch"
+                        className="text-xs font-normal mb-0 block"
+                      >
+                        Branch{" "}
+                        <span
+                          className="text-red-500 text-xs"
+                          aria-label="required"
+                        >
+                          *
+                        </span>
                       </Label>
                       <Input
                         id="branch"
                         {...register("branch")}
                         className="h-8 text-sm px-3"
                         aria-invalid={!!errors.branch}
-                        aria-describedby={errors.branch ? "branch-error" : undefined}
+                        aria-describedby={
+                          errors.branch ? "branch-error" : undefined
+                        }
                       />
                       {errors.branch && (
-                        <p id="branch-error" className="text-xs text-red-500 mt-0.5">
+                        <p
+                          id="branch-error"
+                          className="text-xs text-red-500 mt-0.5"
+                        >
                           {errors.branch.message}
                         </p>
                       )}
                     </div>
 
                     <div>
-                      <Label htmlFor="address" className="text-xs font-normal mb-0 block">
-                        Street Address <span className="text-red-500 text-xs" aria-label="required">*</span>
+                      <Label
+                        htmlFor="address"
+                        className="text-xs font-normal mb-0 block"
+                      >
+                        Street Address{" "}
+                        <span
+                          className="text-red-500 text-xs"
+                          aria-label="required"
+                        >
+                          *
+                        </span>
                       </Label>
                       <Textarea
                         id="address"
                         {...register("address")}
                         className="min-h-[70px] text-sm px-3 resize-none"
                         aria-invalid={!!errors.address}
-                        aria-describedby={errors.address ? "address-error" : undefined}
+                        aria-describedby={
+                          errors.address ? "address-error" : undefined
+                        }
                         placeholder="Enter street address"
                       />
                       {errors.address && (
-                        <p id="address-error" className="text-xs text-red-500 mt-0.5">
+                        <p
+                          id="address-error"
+                          className="text-xs text-red-500 mt-0.5"
+                        >
                           {errors.address.message}
                         </p>
                       )}
                     </div>
 
                     <div>
-                      <Label htmlFor="locality" className="text-xs font-normal mb-0 block">Locality</Label>
+                      <Label
+                        htmlFor="locality"
+                        className="text-xs font-normal mb-0 block"
+                      >
+                        Locality
+                      </Label>
                       <Input
                         id="locality"
                         {...register("locality")}
                         className="h-8 text-sm px-3"
                         placeholder="Area, neighborhood"
                         aria-invalid={!!errors.locality}
-                        aria-describedby={errors.locality ? "locality-error" : undefined}
+                        aria-describedby={
+                          errors.locality ? "locality-error" : undefined
+                        }
                       />
                       {errors.locality && (
-                        <p id="locality-error" className="text-xs text-red-500 mt-0.5">
+                        <p
+                          id="locality-error"
+                          className="text-xs text-red-500 mt-0.5"
+                        >
                           {errors.locality.message}
                         </p>
                       )}
@@ -611,7 +688,13 @@ export function AddAddressDialog({
                   <div className="grid grid-cols-2 gap-2">
                     <div>
                       <Label className="text-xs font-normal mb-0 block">
-                        Country <span className="text-red-500 text-xs" aria-label="required">*</span>
+                        Country{" "}
+                        <span
+                          className="text-red-500 text-xs"
+                          aria-label="required"
+                        >
+                          *
+                        </span>
                       </Label>
                       <Controller
                         name="country"
@@ -619,15 +702,17 @@ export function AddAddressDialog({
                         render={() => (
                           <Select
                             value={selectedCountryId}
-                            onValueChange={(value) => {
+                            onValueChange={value => {
                               handleCountryChange(value);
                             }}
                             disabled={dataLoading}
                           >
                             <SelectTrigger className="w-full h-8 text-sm">
-                              <SelectValue placeholder={
-                                dataLoading ? "Loading..." : "Select country"
-                              } />
+                              <SelectValue
+                                placeholder={
+                                  dataLoading ? "Loading..." : "Select country"
+                                }
+                              />
                             </SelectTrigger>
                             <SelectContent>
                               {countryOptions.length > 0 ? (
@@ -641,7 +726,9 @@ export function AddAddressDialog({
                                 ))
                               ) : (
                                 <SelectItem value="no-countries" disabled>
-                                  {dataLoading ? "Loading..." : "No countries available"}
+                                  {dataLoading
+                                    ? "Loading..."
+                                    : "No countries available"}
                                 </SelectItem>
                               )}
                             </SelectContent>
@@ -650,14 +737,20 @@ export function AddAddressDialog({
                       />
                       {errors.country && (
                         <p className="text-xs text-red-500 mt-0">
-                        {errors.country.message}
-                      </p>
-                    )}
-                  </div>
+                          {errors.country.message}
+                        </p>
+                      )}
+                    </div>
 
                     <div>
                       <Label className="text-xs font-normal mb-0 block">
-                        State/Province <span className="text-red-500 text-xs" aria-label="required">*</span>
+                        State/Province{" "}
+                        <span
+                          className="text-red-500 text-xs"
+                          aria-label="required"
+                        >
+                          *
+                        </span>
                       </Label>
                       <Controller
                         name="state"
@@ -665,19 +758,21 @@ export function AddAddressDialog({
                         render={() => (
                           <Select
                             value={selectedStateId}
-                            onValueChange={(value) => {
+                            onValueChange={value => {
                               handleStateChange(value);
                             }}
                             disabled={dataLoading || !selectedCountryId}
                           >
                             <SelectTrigger className="w-full h-8 text-sm">
-                              <SelectValue placeholder={
-                                !selectedCountryId 
-                                  ? "Select country first"
-                                  : dataLoading 
-                                    ? "Loading..." 
-                                    : "Select state"
-                              } />
+                              <SelectValue
+                                placeholder={
+                                  !selectedCountryId
+                                    ? "Select country first"
+                                    : dataLoading
+                                      ? "Loading..."
+                                      : "Select state"
+                                }
+                              />
                             </SelectTrigger>
                             <SelectContent>
                               {stateOptions.length > 0 ? (
@@ -691,12 +786,11 @@ export function AddAddressDialog({
                                 ))
                               ) : (
                                 <SelectItem value="no-states" disabled>
-                                  {!selectedCountryId 
+                                  {!selectedCountryId
                                     ? "Select a country first"
-                                    : dataLoading 
-                                      ? "Loading..." 
-                                      : "No states available"
-                                  }
+                                    : dataLoading
+                                      ? "Loading..."
+                                      : "No states available"}
                                 </SelectItem>
                               )}
                             </SelectContent>
@@ -705,16 +799,18 @@ export function AddAddressDialog({
                       />
                       {errors.state && (
                         <p className="text-xs text-red-500 mt-0">
-                        {errors.state.message}
-                      </p>
-                    )}
+                          {errors.state.message}
+                        </p>
+                      )}
+                    </div>
                   </div>
-                </div>
 
                   {/* District and Postal Code - 50% each */}
                   <div className="grid grid-cols-2 gap-2">
                     <div>
-                      <Label className="text-xs font-normal mb-0 block">District</Label>
+                      <Label className="text-xs font-normal mb-0 block">
+                        District
+                      </Label>
                       <Controller
                         name="district"
                         control={control}
@@ -725,13 +821,15 @@ export function AddAddressDialog({
                             disabled={dataLoading || !selectedStateId}
                           >
                             <SelectTrigger className="w-full h-8 text-sm">
-                              <SelectValue placeholder={
-                                !selectedStateId 
-                                  ? "Select state first"
-                                  : dataLoading 
-                                    ? "Loading..." 
-                                    : "Select district"
-                              } />
+                              <SelectValue
+                                placeholder={
+                                  !selectedStateId
+                                    ? "Select state first"
+                                    : dataLoading
+                                      ? "Loading..."
+                                      : "Select district"
+                                }
+                              />
                             </SelectTrigger>
                             <SelectContent>
                               {districtOptions.length > 0 ? (
@@ -745,12 +843,11 @@ export function AddAddressDialog({
                                 ))
                               ) : (
                                 <SelectItem value="no-districts" disabled>
-                                  {!selectedStateId 
+                                  {!selectedStateId
                                     ? "Select a state first"
-                                    : dataLoading 
-                                      ? "Loading..." 
-                                      : "No districts available"
-                                  }
+                                    : dataLoading
+                                      ? "Loading..."
+                                      : "No districts available"}
                                 </SelectItem>
                               )}
                             </SelectContent>
@@ -760,8 +857,17 @@ export function AddAddressDialog({
                     </div>
 
                     <div>
-                      <Label htmlFor="postalCode" className="text-xs font-normal mb-0 block">
-                        Postal/Pin Code <span className="text-red-500 text-xs" aria-label="required">*</span>
+                      <Label
+                        htmlFor="postalCode"
+                        className="text-xs font-normal mb-0 block"
+                      >
+                        Postal/Pin Code{" "}
+                        <span
+                          className="text-red-500 text-xs"
+                          aria-label="required"
+                        >
+                          *
+                        </span>
                       </Label>
                       <Input
                         id="postalCode"
@@ -780,23 +886,38 @@ export function AddAddressDialog({
                   {/* City 50%, Latitude 25%, Longitude 25% */}
                   <div className="grid grid-cols-4 gap-2">
                     <div className="col-span-2">
-                      <Label htmlFor="city" className="text-xs font-normal mb-0 block">City</Label>
+                      <Label
+                        htmlFor="city"
+                        className="text-xs font-normal mb-0 block"
+                      >
+                        City
+                      </Label>
                       <Input
                         id="city"
                         {...register("city")}
                         className="h-8 text-sm px-3"
                         placeholder="City name"
                         aria-invalid={!!errors.city}
-                        aria-describedby={errors.city ? "city-error" : undefined}
+                        aria-describedby={
+                          errors.city ? "city-error" : undefined
+                        }
                       />
                       {errors.city && (
-                        <p id="city-error" className="text-xs text-red-500 mt-0.5">
+                        <p
+                          id="city-error"
+                          className="text-xs text-red-500 mt-0.5"
+                        >
                           {errors.city.message}
                         </p>
                       )}
                     </div>
                     <div className="col-span-1">
-                      <Label htmlFor="latitude" className="text-xs font-normal mb-0 block">Latitude</Label>
+                      <Label
+                        htmlFor="latitude"
+                        className="text-xs font-normal mb-0 block"
+                      >
+                        Latitude
+                      </Label>
                       <Input
                         id="latitude"
                         {...register("latitude")}
@@ -805,16 +926,26 @@ export function AddAddressDialog({
                         className="h-8 text-sm px-3"
                         placeholder="0.00"
                         aria-invalid={!!errors.latitude}
-                        aria-describedby={errors.latitude ? "latitude-error" : undefined}
+                        aria-describedby={
+                          errors.latitude ? "latitude-error" : undefined
+                        }
                       />
                       {errors.latitude && (
-                        <p id="latitude-error" className="text-xs text-red-500 mt-0.5">
+                        <p
+                          id="latitude-error"
+                          className="text-xs text-red-500 mt-0.5"
+                        >
                           {errors.latitude.message}
                         </p>
                       )}
                     </div>
                     <div className="col-span-1">
-                      <Label htmlFor="longitude" className="text-xs font-normal mb-0 block">Longitude</Label>
+                      <Label
+                        htmlFor="longitude"
+                        className="text-xs font-normal mb-0 block"
+                      >
+                        Longitude
+                      </Label>
                       <Input
                         id="longitude"
                         {...register("longitude")}
@@ -823,10 +954,15 @@ export function AddAddressDialog({
                         className="h-8 text-sm px-3"
                         placeholder="0.00"
                         aria-invalid={!!errors.longitude}
-                        aria-describedby={errors.longitude ? "longitude-error" : undefined}
+                        aria-describedby={
+                          errors.longitude ? "longitude-error" : undefined
+                        }
                       />
                       {errors.longitude && (
-                        <p id="longitude-error" className="text-xs text-red-500 mt-0.5">
+                        <p
+                          id="longitude-error"
+                          className="text-xs text-red-500 mt-0.5"
+                        >
                           {errors.longitude.message}
                         </p>
                       )}
@@ -854,13 +990,16 @@ export function AddAddressDialog({
                               aria-describedby="billing-description"
                             />
                             <div className="flex-1">
-                              <Label 
-                                htmlFor="billing" 
+                              <Label
+                                htmlFor="billing"
                                 className="text-sm font-medium cursor-pointer leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
                               >
                                 Billing Address
                               </Label>
-                              <p id="billing-description" className="text-xs text-muted-foreground mt-1">
+                              <p
+                                id="billing-description"
+                                className="text-xs text-muted-foreground mt-1"
+                              >
                                 Use this address for invoicing and payments
                               </p>
                             </div>
@@ -880,13 +1019,16 @@ export function AddAddressDialog({
                               aria-describedby="shipping-description"
                             />
                             <div className="flex-1">
-                              <Label 
-                                htmlFor="shipping" 
+                              <Label
+                                htmlFor="shipping"
                                 className="text-sm font-medium cursor-pointer leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
                               >
                                 Shipping Address
                               </Label>
-                              <p id="shipping-description" className="text-xs text-muted-foreground mt-1">
+                              <p
+                                id="shipping-description"
+                                className="text-xs text-muted-foreground mt-1"
+                              >
                                 Use this address for product deliveries
                               </p>
                             </div>
@@ -903,17 +1045,27 @@ export function AddAddressDialog({
 
                   {/* Tax ID */}
                   <div>
-                    <Label htmlFor="taxId" className="text-xs font-normal mb-0 block">Tax ID / GST Number</Label>
+                    <Label
+                      htmlFor="taxId"
+                      className="text-xs font-normal mb-0 block"
+                    >
+                      Tax ID / GST Number
+                    </Label>
                     <Input
                       id="taxId"
                       {...register("taxId")}
                       className="h-8 text-sm px-3"
                       placeholder="Enter tax identification number"
                       aria-invalid={!!errors.taxId}
-                      aria-describedby={errors.taxId ? "taxId-error" : undefined}
+                      aria-describedby={
+                        errors.taxId ? "taxId-error" : undefined
+                      }
                     />
                     {errors.taxId && (
-                      <p id="taxId-error" className="text-xs text-red-500 mt-0.5">
+                      <p
+                        id="taxId-error"
+                        className="text-xs text-red-500 mt-0.5"
+                      >
                         {errors.taxId.message}
                       </p>
                     )}
@@ -924,32 +1076,50 @@ export function AddAddressDialog({
                   {/* Contact Details */}
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                     <div>
-                      <Label htmlFor="contactName" className="text-xs font-normal mb-0 block">Contact Person</Label>
+                      <Label
+                        htmlFor="contactName"
+                        className="text-xs font-normal mb-0 block"
+                      >
+                        Contact Person
+                      </Label>
                       <Input
                         id="contactName"
                         {...register("contactName")}
                         className="h-8 text-sm px-3"
                         placeholder="Enter contact person name"
                         aria-invalid={!!errors.contactName}
-                        aria-describedby={errors.contactName ? "contactName-error" : undefined}
+                        aria-describedby={
+                          errors.contactName ? "contactName-error" : undefined
+                        }
                       />
                       {errors.contactName && (
-                        <p id="contactName-error" className="text-xs text-red-500 mt-0.5">
+                        <p
+                          id="contactName-error"
+                          className="text-xs text-red-500 mt-0.5"
+                        >
                           {errors.contactName.message}
                         </p>
                       )}
                     </div>
 
                     <div>
-                      <Label htmlFor="contactNumber" className="text-xs font-normal mb-0 block">Phone Number</Label>
+                      <Label
+                        htmlFor="contactNumber"
+                        className="text-xs font-normal mb-0 block"
+                      >
+                        Phone Number
+                      </Label>
                       <div className="relative">
                         <div className="absolute left-2 top-1/2 -translate-y-1/2 flex items-center gap-1 pointer-events-none z-10">
+                          {/* eslint-disable-next-line @next/next/no-img-element */}
                           <img
                             src={selectedCountryInfo.flag}
                             alt={selectedCountryInfo.iso2}
                             className="w-4 h-3 object-cover"
                           />
-                          <span className="text-sm text-gray-600">{selectedCountryInfo.callingCode}</span>
+                          <span className="text-sm text-gray-600">
+                            {selectedCountryInfo.callingCode}
+                          </span>
                         </div>
                         <Input
                           id="contactNumber"
@@ -958,8 +1128,11 @@ export function AddAddressDialog({
                           inputMode="tel"
                           className="h-8 text-sm pl-20 pr-3"
                           placeholder=""
-                          value={(watch("contactNumber") || "").replace(/^\+\d+\s*/, "")}
-                          onChange={(e) => {
+                          value={(watch("contactNumber") || "").replace(
+                            /^\+\d+\s*/,
+                            ""
+                          )}
+                          onChange={e => {
                             // Save only the local number (without country code)
                             setValue("contactNumber", e.target.value);
                           }}
@@ -1008,8 +1181,10 @@ export function AddAddressDialog({
                   <Loader2 className="h-4 w-4 mr-2 animate-spin" />
                   {mode === "edit" ? "Updating..." : "Adding..."}
                 </>
+              ) : mode === "edit" ? (
+                "Update Address"
               ) : (
-                mode === "edit" ? "Update Address" : "Add Address"
+                "Add Address"
               )}
             </Button>
           </div>
