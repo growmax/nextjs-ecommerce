@@ -1,4 +1,4 @@
-import { getAnonymousToken } from "@/lib/appconfig";
+import API from "@/lib/api";
 import { getDomain } from "@/lib/domain";
 import { NextRequest, NextResponse } from "next/server";
 import createIntlMiddleware from "next-intl/middleware";
@@ -86,7 +86,7 @@ export async function middleware(request: NextRequest) {
   // Only call API if cookie is missing AND user is not authenticated
   if (!existingToken && !isAuthenticated) {
     try {
-      const tokenResponse = await getAnonymousToken(domain);
+      const tokenResponse = await API.Auth.getAnonymousToken(domain);
 
       response.cookies.set("anonymous_token", tokenResponse.accessToken, {
         httpOnly: true,

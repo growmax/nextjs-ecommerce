@@ -3,6 +3,7 @@ import {
   SaveCancelDialogExample,
   SaveCancelToolbarExample,
 } from "@/components/examples/save-cancel-examples";
+import { DashboardToolbarDemo } from "@/components/examples/dashboard-toolbar-demo";
 import { CenteredLayout } from "@/components/layout/PageContent";
 import CartPriceDetails from "@/components/custom/CartPriceDetails";
 
@@ -12,9 +13,9 @@ export default async function Home() {
       <div className="space-y-8">
         <div className="flex items-center justify-center h-full">
           <div className="text-center space-y-4">
-            <h1 className="text-2xl font-bold">SaveCancel Components Demo</h1>
+            <h1 className="text-2xl font-bold">Components Demo</h1>
             <p className="text-muted-foreground">
-              Test the migrated SaveCancel components
+              Test the migrated components and dashboard toolbar
             </p>
           </div>
         </div>
@@ -23,6 +24,10 @@ export default async function Home() {
           <div className="grid gap-8 grid-cols-1 lg:grid-cols-3">
             {/* Left side content - spans 2 columns on large screens */}
             <div className="lg:col-span-2 space-y-8">
+              <div className="bg-card border rounded-lg p-6">
+                <DashboardToolbarDemo />
+              </div>
+
               <div className="bg-card border rounded-lg p-6">
                 <SaveCancelToolbarExample />
               </div>

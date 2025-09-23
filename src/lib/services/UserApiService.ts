@@ -1,9 +1,10 @@
 // User API Service class for handling user-related API calls
+// DEPRECATED: Use API.User instead (from @/lib/api)
 import { UserApiResponse } from "@/lib/interfaces/UserInterfaces";
+import API from "@/lib/api";
 
 export class UserApiService {
   private static instance: UserApiService;
-  private readonly baseUrl = `${process.env.API_BASE_URL}/corecommerce`;
 
   private constructor() {}
 
@@ -19,23 +20,7 @@ export class UserApiService {
     tenantCode: string,
     accessToken: string
   ): Promise<UserApiResponse> {
-    const url = `${this.baseUrl}/userses/findByName?name=${userId}`;
-
-    const response = await fetch(url, {
-      method: "GET",
-      headers: {
-        "x-tenant": tenantCode,
-        Authorization: `Bearer ${accessToken}`,
-        "Content-Type": "application/json",
-      },
-      cache: "no-store",
-    });
-
-    if (!response.ok) {
-      throw new Error(`Failed to fetch user details: ${response.status}`);
-    }
-
-    return response.json();
+    return API.User.getUserDetails(userId, { tenantCode, accessToken });
   }
 
   public async fetchUserDetailsServerSide(
@@ -43,11 +28,10 @@ export class UserApiService {
     tenantCode: string,
     accessToken: string
   ): Promise<UserApiResponse | null> {
-    try {
-      return await this.fetchUserDetails(userId, tenantCode, accessToken);
-    } catch {
-      return null;
-    }
+    return API.User.getUserDetailsServerSide(userId, {
+      tenantCode,
+      accessToken,
+    });
   }
 
   public async fetchCompanyDetails(
@@ -55,38 +39,7 @@ export class UserApiService {
     tenantCode: string,
     accessToken: string
   ): Promise<unknown> {
-    const url = `${this.baseUrl}/companys/${companyId}`;
-
-    // Log request details in development
-    if (process.env.NODE_ENV === "development") {
-      // eslint-disable-next-line no-console
-      console.log("Fetching company data:", {
-        url,
-        tenantCode,
-        companyId,
-        baseUrl: this.baseUrl,
-        apiBaseUrl: process.env.API_BASE_URL,
-      });
-    }
-
-    const response = await fetch(url, {
-      method: "GET",
-      headers: {
-        "x-tenant": tenantCode,
-        Authorization: `Bearer ${accessToken}`,
-        "Content-Type": "application/json",
-      },
-      cache: "no-store",
-    });
-
-    if (!response.ok) {
-      const errorText = await response.text();
-      throw new Error(
-        `Failed to fetch company details: ${response.status} - ${errorText}`
-      );
-    }
-
-    return response.json();
+    return API.User.getCompanyDetails(companyId, { tenantCode, accessToken });
   }
 
   public async fetchCompanyDetailsServerSide(
@@ -94,10 +47,9 @@ export class UserApiService {
     tenantCode: string,
     accessToken: string
   ): Promise<unknown | null> {
-    try {
-      return await this.fetchCompanyDetails(companyId, tenantCode, accessToken);
-    } catch {
-      return null;
-    }
+    return API.User.getCompanyDetailsServerSide(companyId, {
+      tenantCode,
+      accessToken,
+    });
   }
 }

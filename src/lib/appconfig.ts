@@ -1,6 +1,6 @@
 /**
- * App Configuration API - TypeScript Version
- * Simple functions that match your original API documentation
+ * App Configuration API - Refactored to use new API services
+ * Maintains backward compatibility while using the new unified API structure
  */
 
 import {
@@ -14,55 +14,13 @@ import {
   TenantConfigResponse,
 } from "@/types/appconfig";
 
-// Environment URLs - same as your original
-const AUTH_URL = process.env.AUTH_URL || "https://api.myapptino.com/auth/";
-const HOME_PAGE_URL =
-  process.env.HOME_PAGE_URL || "https://api.myapptino.com/homepagepublic/";
-const STOREFRONT_URL =
-  process.env.STOREFRONT_URL || "https://api.myapptino.com/storefront/graphql";
-const CATALOG_URL =
-  process.env.Catalog_URL || "https://api.myapptino.com/catalog";
-
-// Simple fetch wrapper with proper typing
-async function apiCall<T>(url: string, options: RequestInit = {}): Promise<T> {
-  const response = await fetch(url, {
-    headers: {
-      "Content-Type": "application/json",
-      ...options.headers,
-    },
-    ...options,
-  });
-
-  if (!response.ok) {
-    throw new Error(`API Error: ${response.status} ${response.statusText}`);
-  }
-
-  return response.json();
-}
-
-// Extract tenant from JWT with proper typing
-function getTenantFromToken(token: string): string | null {
-  try {
-    const parts = token.split(".");
-    if (parts.length !== 3) return null;
-
-    const payload = JSON.parse(atob(parts[1]!));
-    return payload.iss || null;
-  } catch {
-    return null;
-  }
-}
+import API from "@/lib/api";
 
 // 1. Anonymous Token API
 export async function getAnonymousToken(
   domain: string
 ): Promise<AnonymousTokenResponse> {
-  return apiCall<AnonymousTokenResponse>(`${AUTH_URL}/anonymous`, {
-    headers: {
-      origin: domain,
-      "content-type": "application/json",
-    },
-  });
+  return API.Auth.getAnonymousToken(domain);
 }
 
 // 2. Tenant Code & Configuration API
@@ -70,16 +28,8 @@ export async function getTenantConfig(
   domainUrl: string,
   accessToken?: string
 ): Promise<TenantConfigResponse> {
-  const url = `${HOME_PAGE_URL}getTenantCodeCurrencyCompany?domainUrl=${domainUrl}`;
-
-  const headers: Record<string, string> = {};
-  if (accessToken) {
-    headers["Authorization"] = `Bearer ${accessToken}`;
-    const tenant = getTenantFromToken(accessToken);
-    if (tenant) headers["x-tenant"] = tenant;
-  }
-
-  return apiCall<TenantConfigResponse>(url, { headers });
+  const context = accessToken ? { accessToken } : undefined;
+  return API.Tenant.getTenantConfig(domainUrl, context);
 }
 
 // 3. StoreFront Configuration API (GraphQL)
@@ -87,19 +37,8 @@ export async function getStoreFrontConfig(
   domain: string,
   accessToken?: string
 ): Promise<StoreFrontResponse> {
-  const headers: Record<string, string> = {
-    "Content-Type": "application/json",
-  };
-  if (accessToken) headers["Authorization"] = `Bearer ${accessToken}`;
-
-  return apiCall<StoreFrontResponse>(STOREFRONT_URL, {
-    method: "POST",
-    headers,
-    body: JSON.stringify({
-      query: `{ getAllByDomain(domain:"${domain}"){storeFrontProperty, dataJson} }`,
-      variables: {},
-    }),
-  });
+  const context = accessToken ? { accessToken } : undefined;
+  return API.StoreFront.getStoreFrontConfig(domain, context);
 }
 
 // 4. Categories API
@@ -107,13 +46,9 @@ export async function getCategories(
   accessToken?: string,
   tenantCode?: string
 ): Promise<CategoriesResponse> {
-  const url = `${HOME_PAGE_URL}getAllSubCategories`;
-
-  const headers: Record<string, string> = {};
-  if (accessToken) headers["Authorization"] = `Bearer ${accessToken}`;
-  if (tenantCode) headers["x-tenant"] = tenantCode;
-
-  return apiCall<CategoriesResponse>(url, { headers });
+  const context =
+    accessToken && tenantCode ? { accessToken, tenantCode } : undefined;
+  return API.Catalog.getCategories(context);
 }
 
 // 5. Catalog Settings API
@@ -121,14 +56,7 @@ export async function getCatalogSettings(
   companyId: string,
   accessToken: string
 ): Promise<CatalogSettingsResponse> {
-  return apiCall<CatalogSettingsResponse>(
-    `${CATALOG_URL}/Catalogsettings/${companyId}`,
-    {
-      headers: {
-        Authorization: `Bearer ${accessToken}`,
-      },
-    }
-  );
+  return API.Catalog.getCatalogSettings(companyId, { accessToken });
 }
 
 // 6. Config Cache API
@@ -136,10 +64,15 @@ export async function getConfigCache(
   domain: string,
   accessToken?: string
 ): Promise<ConfigCacheGetResponse> {
+  // These are local API routes, keeping fetch for now
   const headers: Record<string, string> = { origin: domain };
   if (accessToken) headers["Authorization"] = `Bearer ${accessToken}`;
 
-  return apiCall<ConfigCacheGetResponse>("/api/configcache", { headers });
+  const response = await fetch("/api/configcache", { headers });
+  if (!response.ok) {
+    throw new Error(`Failed to get config cache: ${response.status}`);
+  }
+  return response.json();
 }
 
 export async function setConfigCache(
@@ -147,14 +80,23 @@ export async function setConfigCache(
   config: unknown,
   accessToken?: string
 ): Promise<ConfigCachePostResponse> {
-  const headers: Record<string, string> = { origin: domain };
+  // These are local API routes, keeping fetch for now
+  const headers: Record<string, string> = {
+    origin: domain,
+    "Content-Type": "application/json",
+  };
   if (accessToken) headers["Authorization"] = `Bearer ${accessToken}`;
 
-  return apiCall<ConfigCachePostResponse>("/api/configcache", {
+  const response = await fetch("/api/configcache", {
     method: "POST",
     headers,
     body: JSON.stringify({ domain, config }),
   });
+
+  if (!response.ok) {
+    throw new Error(`Failed to set config cache: ${response.status}`);
+  }
+  return response.json();
 }
 
 // Complete Domain Configuration - All APIs in one call
