@@ -15,8 +15,7 @@ export async function POST(request: NextRequest) {
       method: "POST",
       headers: {
         origin:
-          request.headers.get("x-tenant-origin") ||
-          process.env.DEFAULT_TENANT_ORIGIN!,
+          request.headers.get("x-tenant-origin") || process.env.DEFAULT_ORIGIN!,
         "Content-Type": "application/json",
         "Cache-Control": "no-cache, no-store, must-revalidate",
       },

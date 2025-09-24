@@ -37,8 +37,8 @@ export class TenantService {
     if (host.includes("localhost")) {
       // For development, use environment variables
       return {
-        domainUrl: process.env.DEFAULT_TENANT_DOMAIN!,
-        origin: process.env.DEFAULT_TENANT_ORIGIN!,
+        domainUrl: process.env.DEFAULT_DOMAIN!,
+        origin: process.env.DEFAULT_ORIGIN!,
         tenantCode: process.env.DEFAULT_TENANT_CODE!,
       };
     }
