@@ -69,15 +69,6 @@ export async function POST(request: NextRequest) {
         path: "/",
       });
 
-      // Set client-accessible token for client-side auth state sync
-      nextResponse.cookies.set("access_token_client", accessToken, {
-        httpOnly: false, // Client-accessible for auth state management
-        secure: process.env.NODE_ENV === "production",
-        sameSite: "strict",
-        maxAge: 7 * 24 * 60 * 60, // 7 days
-        path: "/",
-      });
-
       if (refreshToken) {
         nextResponse.cookies.set("refresh_token", refreshToken, {
           httpOnly: true,

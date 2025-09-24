@@ -185,6 +185,10 @@ export default function CompanyPage() {
   const [selectedAddress, setSelectedAddress] =
     useState<AddressDialogData | null>(null);
   const [dialogMode, setDialogMode] = useState<"add" | "edit">("add");
+  const [selectedAddressId, setSelectedAddressId] = useState<number | null>(
+    null
+  );
+  const [selectedBranchId, setSelectedBranchId] = useState<number | null>(null);
 
   // Dynamic spacing state
   const [toolbarHeight, setToolbarHeight] = useState(0);
@@ -221,7 +225,12 @@ export default function CompanyPage() {
   // Handle row click to edit address
   const handleEditAddress = (branchData: BranchAddress) => {
     const mappedData = mapAddressDataToDialog(branchData);
+    const addressId = branchData.addressId?.id || null;
+    const branchId = branchData.id || null;
+
     setSelectedAddress(mappedData);
+    setSelectedAddressId(addressId);
+    setSelectedBranchId(branchId);
     setDialogMode("edit");
     setShowAddAddressDialog(true);
   };
@@ -229,6 +238,8 @@ export default function CompanyPage() {
   // Handle add new address
   const handleAddAddress = () => {
     setSelectedAddress(null);
+    setSelectedAddressId(null);
+    setSelectedBranchId(null);
     setDialogMode("add");
     setShowAddAddressDialog(true);
   };
@@ -1845,6 +1856,8 @@ export default function CompanyPage() {
             onOpenChange={setShowAddAddressDialog}
             mode={dialogMode}
             {...(selectedAddress ? { initialData: selectedAddress } : {})}
+            addressId={selectedAddressId || undefined}
+            branchId={selectedBranchId || undefined}
             onSuccess={async () => {
               // 🔄 Show loading state
               setIsAddingAddress(true);
@@ -1857,7 +1870,9 @@ export default function CompanyPage() {
                   false,
                   pageSize
                 );
-                toast.success("Address added successfully!");
+                toast.success(
+                  `Address ${dialogMode === "edit" ? "updated" : "added"} successfully!`
+                );
               } catch {
                 toast.error("Failed to refresh address list");
               } finally {

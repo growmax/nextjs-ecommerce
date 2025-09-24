@@ -11,9 +11,10 @@ import {
 import { useAuth } from "@/contexts/AuthContext";
 import { Building2, Mail, Phone, User } from "lucide-react";
 import { useEffect, useState } from "react";
+import { DashboardChart } from "./components/DashboardChart/DashboardChart";
 
 export default function DashboardPage() {
-  const { user } = useAuth();
+  const { user, isAuthenticated } = useAuth();
   const [mounted, setMounted] = useState(false);
 
   // Prevent hydration mismatch
@@ -33,8 +34,8 @@ export default function DashboardPage() {
     );
   }
 
-  // If no user after mounting, show loading (middleware will redirect)
-  if (!user) {
+  // If not authenticated after mounting, show loading (middleware will redirect)
+  if (!isAuthenticated) {
     return (
       <div className="flex min-h-screen items-center justify-center">
         <div className="text-center">
@@ -71,9 +72,9 @@ export default function DashboardPage() {
               <div className="flex flex-col items-center space-y-3 sm:space-y-4">
                 {/* Mobile-First Avatar Sizing */}
                 <Avatar className="h-16 w-16 sm:h-20 sm:w-20 lg:h-24 lg:w-24">
-                  <AvatarImage src={user.picture} alt={user.name} />
+                  <AvatarImage src={user?.picture} alt={user?.name || "User"} />
                   <AvatarFallback className="text-sm sm:text-base lg:text-lg">
-                    {getInitials(user.name)}
+                    {getInitials(user?.name)}
                   </AvatarFallback>
                 </Avatar>
 
@@ -84,10 +85,10 @@ export default function DashboardPage() {
                       <User className="h-4 w-4 text-muted-foreground" />
                       <span className="font-medium">Name:</span>
                     </div>
-                    <span className="break-all">{user.name || "Not set"}</span>
+                    <span className="break-all">{user?.name || "Not set"}</span>
                   </div>
 
-                  {user.email && (
+                  {user?.email && (
                     <div className="flex flex-col gap-1 text-sm sm:flex-row sm:items-center sm:gap-2">
                       <div className="flex items-center gap-2">
                         <Mail className="h-4 w-4 text-muted-foreground" />
@@ -97,7 +98,7 @@ export default function DashboardPage() {
                     </div>
                   )}
 
-                  {user.phone && (
+                  {user?.phone && (
                     <div className="flex flex-col gap-1 text-sm sm:flex-row sm:items-center sm:gap-2">
                       <div className="flex items-center gap-2">
                         <Phone className="h-4 w-4 text-muted-foreground" />
@@ -112,12 +113,12 @@ export default function DashboardPage() {
                       <Building2 className="h-4 w-4 text-muted-foreground" />
                       <span className="font-medium">Company:</span>
                     </div>
-                    <span>{user.companyName || "Not set"}</span>
+                    <span>{user?.companyName || "Not set"}</span>
                   </div>
 
                   <div className="pt-2 border-t">
                     <span className="inline-flex items-center rounded-md bg-primary/10 px-2 py-1 text-xs font-medium text-primary">
-                      {user.role?.toUpperCase() || "USER"}
+                      {user?.role?.toUpperCase() || "USER"}
                     </span>
                   </div>
                 </div>
@@ -196,6 +197,15 @@ export default function DashboardPage() {
             </p>
           </CardContent>
         </Card>
+
+        {/* Dashboard Analytics Chart */}
+        <div className="mt-4 sm:mt-6">
+          <DashboardChart
+            userId={parseInt(user?.id || "1032")}
+            companyId={user?.companyId || 8690}
+            currencyId={96}
+          />
+        </div>
       </main>
     </div>
   );

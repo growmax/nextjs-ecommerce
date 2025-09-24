@@ -24,7 +24,7 @@ import { Separator } from "@/components/ui/separator";
 import { Search, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { z } from "zod";
-import { useForm, Controller, Resolver } from "react-hook-form";
+import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { AuthStorage } from "@/lib/auth";
 import { JWTService } from "@/lib/services/JWTService";
@@ -180,6 +180,8 @@ export interface AddressDialogProps {
   onSuccess?: (data: AddressFormData) => void;
   mode?: "add" | "edit";
   initialData?: Partial<AddressFormData>;
+  addressId?: number | undefined; // Added for edit functionality
+  branchId?: number | undefined; // Added for branch identification
 }
 
 export function AddAddressDialog({
@@ -188,6 +190,8 @@ export function AddAddressDialog({
   onSuccess,
   mode = "add",
   initialData,
+  addressId,
+  branchId,
 }: AddressDialogProps) {
   const [isLoading, setIsLoading] = React.useState(false);
   const [searchTerm, setSearchTerm] = React.useState("");
@@ -261,26 +265,27 @@ export function AddAddressDialog({
     formState: { errors },
     reset,
   } = useForm<AddressFormData>({
-    resolver: zodResolver(addressFormSchema) as Resolver<AddressFormData>,
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    resolver: zodResolver(addressFormSchema) as any,
     mode: "onChange", // Enable real-time validation
     defaultValues: {
-      companyName: initialData?.companyName || undefined,
+      companyName: initialData?.companyName || "",
       branch: initialData?.branch || "",
       address: initialData?.address || "",
-      locality: initialData?.locality || undefined,
+      locality: initialData?.locality || "",
       country: initialData?.country || "",
       state: initialData?.state || "",
-      district: initialData?.district || undefined,
+      district: initialData?.district || "",
       postalCode: initialData?.postalCode || "",
-      city: initialData?.city || undefined,
-      latitude: initialData?.latitude || undefined,
-      longitude: initialData?.longitude || undefined,
+      city: initialData?.city || "",
+      latitude: initialData?.latitude || "",
+      longitude: initialData?.longitude || "",
       isBilling: initialData?.isBilling || false,
       isShipping: initialData?.isShipping || false,
-      taxId: initialData?.taxId || undefined,
-      contactName: initialData?.contactName || undefined,
-      contactNumber: initialData?.contactNumber || undefined,
-    } as AddressFormData,
+      taxId: initialData?.taxId || "",
+      contactName: initialData?.contactName || "",
+      contactNumber: initialData?.contactNumber || "",
+    },
   });
 
   // Load data when dialog opens
@@ -421,103 +426,273 @@ export function AddAddressDialog({
         throw new Error("Authentication required");
       }
 
-      // 🔧 Build proper API payload matching the working cURL format
-      const addressData = {
-        gst: data.taxId || "",
-        branchName: data.branch,
-        addressLine: data.address,
-        locality: data.locality || "",
-        city: data.city || "",
-        district: data.district || "",
-        lattitude: data.latitude || "",
-        longitude: data.longitude || "",
-        pinCodeId: data.postalCode,
-        state: data.state,
-        country: data.country,
-        isShipping: data.isShipping || false,
-        isBilling: data.isBilling || false,
-        wareHouse: false,
-        primaryContact: data.contactName || "",
-        mobileNo: data.contactNumber || "",
-        phone: data.contactNumber || "",
-        iso2: "IN", // Default for now
-        callingCodes: "91",
-        nationalMobileNum: "",
-        countryData: {
-          callingCodes: 355,
-          flag: "https://restcountries.eu/data/alb.svg",
-          id: 3,
-          iso2: "AL",
-          iso3: "ALB",
-          name: data.country,
-          numericCode: 8,
-          region: "Europe",
-          subregion: "Southern Europe",
-          countryCode: "AL",
-        },
-        countryCode: "AL",
-        countryCodeIso: "AL",
-        countryCallingCode: null,
-        stateData: {
-          countryCode: "AL",
-          countryId: 3,
-          id: 35,
-          latitude: 40.7086377,
-          longitude: 19.9437314,
-          name: data.state,
-          stateCode: "BR",
-        },
-        districtData: {
-          name: data.district || "",
-        },
-      };
+      if (mode === "edit") {
+        // For edit mode, use the PUT endpoint with simplified payload
+        if (!addressId) {
+          toast.error(
+            "Cannot update: Address ID is missing. Please try again."
+          );
+          return;
+        }
 
-      // 🔧 Build complete API payload matching working cURL
-      const apiPayload = {
-        addressId: addressData,
-        removeBranchWareHouseId: [],
-        removeBusinessUnits: [],
-        wareHouses: [],
-        businessUnits: [],
-        zoneId: null,
-        branch: {
-          addressId: addressData, // Same structure as above
-        },
-        removeWareHouse: [],
-        companyId: payload.companyId,
-        userId: payload.userId,
-        isUpdate: mode === "edit",
-      };
+        // Build the address data object
+        const addressData = {
+          id: addressId, // Address ID for existing record identification (Fix #2)
+          gst: data.taxId || "",
+          branchName: data.branch,
+          addressLine: data.address,
+          locality: data.locality || "",
+          city: data.city || "",
+          district: data.district || "", // District ID (already numeric from form)
+          lattitude: data.latitude || "", // Note: API uses 'lattitude' (misspelled)
+          longitude: data.longitude || "",
+          pinCodeId: data.postalCode,
+          state: selectedStateId || "", // State ID (Fix #4)
+          country: selectedCountryId || "", // Country ID (Fix #4)
+          isShipping: data.isShipping || false,
+          isBilling: data.isBilling || false,
+          wareHouse: false,
+          primaryContact: data.contactName || "",
+          mobileNo: data.contactNumber || "",
+          phone: data.contactNumber || "",
+          iso2: selectedCountryInfo.iso2?.toUpperCase() || "IN",
+          callingCodes:
+            selectedCountryInfo.callingCode.replace(/[\s+]/g, "") || "91",
+          nationalMobileNum:
+            selectedCountryInfo.callingCode.replace(/[\s+]/g, "") || "91",
+          countryData: {
+            callingCodes:
+              parseInt(selectedCountryInfo.callingCode.replace(/[\s+]/g, "")) ||
+              91,
+            // Remove flag URL to avoid security violation - API only accepts S3 URLs
+            id: parseInt(selectedCountryId) || 1,
+            iso2: selectedCountryInfo.iso2?.toUpperCase() || "IN",
+            iso3: "IND",
+            name: data.country,
+            numericCode: 356,
+            region: "Asia",
+            subregion: "Southern Asia",
+            countryCode: selectedCountryInfo.iso2?.toUpperCase() || "IN",
+          },
+          countryCode: selectedCountryInfo.iso2?.toUpperCase() || "IN",
+          countryCodeIso: selectedCountryInfo.iso2?.toUpperCase() || "IN",
+          countryCallingCode:
+            selectedCountryInfo.callingCode.replace(/[\s+]/g, "") || "91",
+          stateData: {
+            countryCode: selectedCountryInfo.iso2?.toUpperCase() || "IN",
+            countryId: parseInt(selectedCountryId) || 1,
+            id: parseInt(selectedStateId) || 1,
+            latitude: parseFloat(data.latitude || "0"),
+            longitude: parseFloat(data.longitude || "0"),
+            name: data.state,
+            stateCode: "TN",
+          },
+          districtData: {
+            name: data.district || "",
+          },
+        };
 
-      // 🔧 Use correct endpoint that exists
-      const endpoint =
-        mode === "edit"
-          ? `/api/branches/update/${payload.userId}?companyId=${payload.companyId}`
-          : `/api/branches/create/${payload.userId}?companyId=${payload.companyId}`;
+        // Build the complete payload with the same structure as create
+        const updatePayload = {
+          id: branchId, // Branch ID at root level (Fix #1)
+          name: data.branch, // Branch name at root level (Fix #3)
+          addressId: addressData,
+          // Branch metadata fields (Fix #5)
+          branchSequenceNumber: null,
+          code: null,
+          inSequenceNumber: null,
+          poSequenceNumber: null,
+          salesBranchCode: null,
+          salesOrgId: null,
+          soSequenceNumber: null,
+          toSequenceNumber: null,
+          // Existing fields
+          removeBranchWareHouseId: null, // Changed from [] to null to match Postman
+          removeBusinessUnits: [],
+          wareHouses: [],
+          businessUnits: [],
+          zoneId: null,
+          branch: {
+            addressId: addressData,
+          },
+          removeWareHouse: [],
+          companyId: payload.companyId,
+          userId: payload.userId,
+          isUpdate: true, // Mark as update
+        };
 
-      const response = await fetch(endpoint, {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${accessToken}`,
-          "x-tenant": payload.iss,
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(apiPayload),
-      });
+        const endpoint = `/api/branches/updateBrnAddress/${payload.userId}?companyId=${payload.companyId}&addressId=${addressId}`;
 
-      if (!response.ok) {
-        throw new Error(`Failed to ${mode} address`);
+        const response = await fetch(endpoint, {
+          method: "PUT",
+          headers: {
+            Authorization: `Bearer ${accessToken}`,
+            "x-tenant": payload.iss,
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(updatePayload),
+        });
+
+        if (!response.ok) {
+          const responseClone = response.clone();
+          let errorMessage = "";
+
+          try {
+            const errorData = (await response.json()) as {
+              message?: string;
+              error?: string;
+            };
+            errorMessage =
+              errorData.message || errorData.error || `HTTP ${response.status}`;
+          } catch {
+            try {
+              const textError = await responseClone.text();
+              errorMessage = textError || `HTTP ${response.status}`;
+            } catch {
+              errorMessage = `Failed to update address (${response.status})`;
+            }
+          }
+
+          throw new Error(errorMessage);
+        }
+
+        // Handle successful response with proper TypeScript typing
+        interface UpdateResponse {
+          data: Record<string, unknown>;
+          message: string;
+          status: string;
+        }
+
+        let result: UpdateResponse;
+
+        try {
+          result = (await response.json()) as UpdateResponse;
+
+          // Validate response structure
+          if (!result || typeof result !== "object") {
+            throw new Error("Invalid response format");
+          }
+
+          // Check for API-level errors in successful HTTP response
+          if (result.status !== "success") {
+            throw new Error(result.message || "Update failed");
+          }
+
+          // eslint-disable-next-line no-console
+          console.log("Address update successful:", result);
+        } catch (parseError) {
+          // eslint-disable-next-line no-console
+          console.error("Response parsing error:", parseError);
+
+          if (parseError instanceof Error) {
+            throw new Error(parseError.message);
+          } else {
+            throw new Error("Failed to process server response");
+          }
+        }
+
+        toast.success(result.message || "Address updated successfully!");
+        onSuccess?.(data);
+        onOpenChange(false);
+        reset();
+      } else {
+        // For add mode, use the existing POST endpoint
+        const addressData = {
+          gst: data.taxId || "",
+          branchName: data.branch,
+          addressLine: data.address,
+          locality: data.locality || "",
+          city: data.city || "",
+          district: data.district || "",
+          lattitude: data.latitude || "",
+          longitude: data.longitude || "",
+          pinCodeId: data.postalCode,
+          state: data.state,
+          country: data.country,
+          isShipping: data.isShipping || false,
+          isBilling: data.isBilling || false,
+          wareHouse: false,
+          primaryContact: data.contactName || "",
+          mobileNo: data.contactNumber || "",
+          phone: data.contactNumber || "",
+          iso2: selectedCountryInfo.iso2?.toUpperCase() || "US",
+          callingCodes:
+            selectedCountryInfo.callingCode.replace(/[\s+]/g, "") || "1",
+          nationalMobileNum:
+            selectedCountryInfo.callingCode.replace(/[\s+]/g, "") || "1",
+          countryData: {
+            callingCodes:
+              parseInt(selectedCountryInfo.callingCode.replace(/[\s+]/g, "")) ||
+              1,
+            // Remove flag URL to avoid security violation - API only accepts S3 URLs
+            id: parseInt(selectedCountryId) || 1,
+            iso2: selectedCountryInfo.iso2?.toUpperCase() || "US",
+            iso3: "USA",
+            name: data.country,
+            numericCode: 840,
+            region: "Americas",
+            subregion: "North America",
+            countryCode: selectedCountryInfo.iso2?.toUpperCase() || "US",
+          },
+          countryCode: selectedCountryInfo.iso2?.toUpperCase() || "US",
+          countryCodeIso: selectedCountryInfo.iso2?.toUpperCase() || "US",
+          countryCallingCode:
+            selectedCountryInfo.callingCode.replace(/[\s+]/g, "") || "1",
+          stateData: {
+            countryCode: selectedCountryInfo.iso2?.toUpperCase() || "US",
+            countryId: parseInt(selectedCountryId) || 1,
+            id: parseInt(selectedStateId) || 1,
+            latitude: parseFloat(data.latitude || "0"),
+            longitude: parseFloat(data.longitude || "0"),
+            name: data.state,
+            stateCode: "ST",
+          },
+          districtData: {
+            name: data.district || "",
+          },
+        };
+
+        const apiPayload = {
+          addressId: addressData,
+          removeBranchWareHouseId: [],
+          removeBusinessUnits: [],
+          wareHouses: [],
+          businessUnits: [],
+          zoneId: null,
+          branch: {
+            addressId: addressData,
+          },
+          removeWareHouse: [],
+          companyId: payload.companyId,
+          userId: payload.userId,
+          isUpdate: false,
+        };
+
+        const endpoint = `/api/branches/create/${payload.userId}?companyId=${payload.companyId}`;
+
+        const response = await fetch(endpoint, {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${accessToken}`,
+            "x-tenant": payload.iss,
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(apiPayload),
+        });
+
+        if (!response.ok) {
+          throw new Error(`Failed to add address`);
+        }
+
+        await response.json();
+        toast.success("Address added successfully!");
+        onSuccess?.(data);
+        onOpenChange(false);
+        reset();
       }
-
-      await response.json();
-
-      toast.success(
-        `Address ${mode === "edit" ? "updated" : "added"} successfully!`
-      );
-      onSuccess?.(data);
-      onOpenChange(false);
-      reset();
-    } catch {
+    } catch (error) {
+      // eslint-disable-next-line no-console
+      console.error("Error submitting address:", error);
       toast.error(`Failed to ${mode} address. Please try again.`);
     } finally {
       setIsLoading(false);
@@ -565,7 +740,8 @@ export function AddAddressDialog({
 
               <form
                 id="address-form"
-                onSubmit={handleSubmit(onSubmit)}
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                onSubmit={handleSubmit(onSubmit as any)}
                 className="space-y-1"
               >
                 {/* Address Details Section */}

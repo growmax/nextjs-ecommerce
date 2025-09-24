@@ -86,16 +86,6 @@ export async function POST(request: NextRequest) {
       expires: new Date(0),
     });
 
-    // Clear client-accessible token
-    nextResponse.cookies.set("access_token_client", "", {
-      httpOnly: false,
-      secure: process.env.NODE_ENV === "production",
-      sameSite: "strict",
-      maxAge: 0,
-      path: "/",
-      expires: new Date(0),
-    });
-
     // Clear legacy auth-token if exists
     nextResponse.cookies.set("auth-token", "", {
       httpOnly: true,

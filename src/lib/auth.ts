@@ -30,8 +30,8 @@ export class AuthStorage {
 
   static getAccessToken(): string | null {
     if (typeof window !== "undefined") {
-      // Get token from client-accessible cookie
-      return this.getTokenFromCookie("access_token_client");
+      // Get token from access_token cookie
+      return this.getTokenFromCookie("access_token");
     }
     return null;
   }
@@ -74,15 +74,15 @@ export class AuthStorage {
 
   static clearAuth(): void {
     if (typeof window !== "undefined") {
-      // Clear client-accessible cookies only
-      // Server-side HttpOnly cookies will be cleared by logout API
+      // Clear access_token cookie
+      // Note: HttpOnly cookies cannot be cleared from client-side, but logout API will handle those
       const isProduction = process.env.NODE_ENV === "production";
       const secureFlag = isProduction ? "; Secure" : "";
-      const cookieClearString = `access_token_client=; path=/; expires=Thu, 01 Jan 1970 00:00:00 UTC; SameSite=Strict${secureFlag}`;
+      const cookieClearString = `access_token=; path=/; expires=Thu, 01 Jan 1970 00:00:00 UTC; SameSite=Strict${secureFlag}`;
 
-      // Clear only client-accessible cookie
+      // Clear access_token cookie
       document.cookie = cookieClearString;
-      document.cookie = `access_token_client=; path=/; max-age=0; SameSite=Strict${secureFlag}`;
+      document.cookie = `access_token=; path=/; max-age=0; SameSite=Strict${secureFlag}`;
     }
   }
 
