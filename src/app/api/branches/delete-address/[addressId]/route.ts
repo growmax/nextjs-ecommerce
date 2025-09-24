@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { cookies } from "next/headers";
 
 export async function DELETE(
   request: NextRequest,
@@ -8,13 +9,14 @@ export async function DELETE(
     const resolvedParams = await params;
     const { addressId } = resolvedParams;
 
-    // Get authorization token and tenant from headers
-    const authHeader = request.headers.get("authorization");
+    // Get authorization token from cookies (HttpOnly)
+    const cookieStore = await cookies();
+    const accessToken = cookieStore.get("access_token")?.value;
     const tenant = request.headers.get("x-tenant");
 
-    if (!authHeader) {
+    if (!accessToken) {
       return NextResponse.json(
-        { error: "Authorization required" },
+        { error: "Authentication required. Please log in again." },
         { status: 401 }
       );
     }
@@ -32,7 +34,7 @@ export async function DELETE(
     const response = await fetch(apiUrl, {
       method: "DELETE",
       headers: {
-        Authorization: authHeader,
+        Authorization: `Bearer ${accessToken}`,
         "Content-Type": "application/json",
         ...(tenant && { "x-tenant": tenant }),
       },

@@ -60,9 +60,18 @@ export async function POST(request: NextRequest) {
         path: "/",
       });
 
-      // Set access token (HttpOnly for security)
+      // Set access token (HttpOnly for server-side API routes)
       nextResponse.cookies.set("access_token", accessToken, {
         httpOnly: true,
+        secure: process.env.NODE_ENV === "production",
+        sameSite: "strict",
+        maxAge: 7 * 24 * 60 * 60, // 7 days
+        path: "/",
+      });
+
+      // Set a client-readable token for client-side JWT payload access
+      nextResponse.cookies.set("access_token_client", accessToken, {
+        httpOnly: false, // Client can read this for JWT payload
         secure: process.env.NODE_ENV === "production",
         sameSite: "strict",
         maxAge: 7 * 24 * 60 * 60, // 7 days

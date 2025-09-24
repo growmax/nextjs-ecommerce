@@ -273,10 +273,10 @@ export default function CompanyPage() {
         {
           method: "DELETE",
           headers: {
-            Authorization: `Bearer ${accessToken}`,
             "x-tenant": payload.iss,
             "Content-Type": "application/json",
           },
+          credentials: "include", // Include HttpOnly cookies
         }
       );
 
@@ -415,10 +415,10 @@ export default function CompanyPage() {
 
       const response = await fetch("/api/subindustries", {
         headers: {
-          Authorization: `Bearer ${accessToken}`,
           "x-tenant": payload.iss,
           "Content-Type": "application/json",
         },
+        credentials: "include", // Include HttpOnly cookies
       });
 
       if (response.ok) {
@@ -546,10 +546,10 @@ export default function CompanyPage() {
 
       const response = await fetch(url, {
         headers: {
-          Authorization: `Bearer ${accessToken}`,
           "x-tenant": payload.iss,
           "Content-Type": "application/json",
         },
+        credentials: "include", // Include HttpOnly cookies
       });
 
       if (!response.ok) {
@@ -645,42 +645,27 @@ export default function CompanyPage() {
         setLoading(true);
         setError(null);
 
-        // Check if user is authenticated first
-        if (!AuthStorage.isAuthenticated()) {
+        // Get basic auth info for tenant
+        const accessToken = AuthStorage.getAccessToken();
+        if (!accessToken) {
           setError("Authentication required. Please log in again.");
           return;
         }
 
-        // Get token from storage
-        const accessToken = AuthStorage.getAccessToken();
-        if (!accessToken) {
-          setError("No access token found");
-          return;
-        }
-
-        // Check if token is expired using JWT service
         const jwtService = JWTService.getInstance();
-        if (jwtService.isTokenExpired(accessToken)) {
-          setError("Session expired. Please log in again.");
-          // Clear expired token from storage
-          AuthStorage.clearAuth();
-          return;
-        }
-
-        // Decode JWT to get company ID and tenant
         const payload = jwtService.decodeToken(accessToken);
         if (!payload || !payload.companyId || !payload.iss) {
-          setError("Invalid token or missing company data");
+          setError("Invalid session. Please log in again.");
           return;
         }
 
-        // Fetch company data from API
+        // Fetch company data from API - backend handles authentication
         const response = await fetch(`/api/company/${payload.companyId}`, {
           headers: {
             "x-tenant": payload.iss,
-            Authorization: `Bearer ${accessToken}`,
             "Content-Type": "application/json",
           },
+          credentials: "include", // Include HttpOnly cookies
         });
 
         if (!response.ok) {

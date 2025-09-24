@@ -76,6 +76,16 @@ export async function POST(request: NextRequest) {
       expires: new Date(0),
     });
 
+    // Clear the client-accessible access_token_client cookie
+    nextResponse.cookies.set("access_token_client", "", {
+      httpOnly: false,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: "strict",
+      maxAge: 0,
+      path: "/",
+      expires: new Date(0),
+    });
+
     // Clear refresh token cookie
     nextResponse.cookies.set("refresh_token", "", {
       httpOnly: true,

@@ -230,10 +230,23 @@ export function AddAddressDialog({
       };
 
       const [countriesRes, statesRes, districtsRes] = await Promise.all([
-        fetch("/api/countries", { headers }),
-        fetch("/api/states", { headers }),
-        fetch("/api/districts", { headers }),
+        fetch("/api/countries", {
+          headers,
+          credentials: "include",
+        }),
+        fetch("/api/states", {
+          headers,
+          credentials: "include",
+        }),
+        fetch("/api/districts", {
+          headers,
+          credentials: "include",
+        }),
       ]);
+
+      if (!countriesRes.ok || !statesRes.ok || !districtsRes.ok) {
+        throw new Error("API request failed");
+      }
 
       const [countries, states, districts] = await Promise.all([
         countriesRes.json(),
@@ -333,6 +346,22 @@ export function AddAddressDialog({
     [setValue, allData.states]
   );
 
+  // Handle district selection
+  const handleDistrictChange = React.useCallback(
+    (districtValue: string) => {
+      // District can be either ID or name depending on the option selected
+      const district = allData.districts.find(
+        d => d.id.toString() === districtValue || d.name === districtValue
+      );
+      if (district) {
+        setValue("district", district.name); // Store name for consistency with API expectations
+      } else {
+        setValue("district", districtValue); // Fallback for manual entry
+      }
+    },
+    [setValue, allData.districts]
+  );
+
   // Memoized options with instant filtering
   const countryOptions = React.useMemo(
     () =>
@@ -362,28 +391,64 @@ export function AddAddressDialog({
     if (open) {
       reset(initialData || {});
 
-      // 🔧 Initialize selected IDs from initial data
-      if (initialData?.country && allData.countries.length > 0) {
+      setTimeout(() => {
+        document.getElementById("branch")?.focus();
+      }, 100);
+    }
+  }, [open, initialData, reset]);
+
+  // Initialize dropdowns when data is loaded
+  React.useEffect(() => {
+    if (
+      open &&
+      initialData &&
+      allData.countries.length > 0 &&
+      allData.states.length > 0
+    ) {
+      // 🔧 Initialize selected country ID from initial data
+      if (initialData.country) {
         const country = allData.countries.find(
           c => c.name === initialData.country
         );
         if (country) {
           setSelectedCountryId(country.id.toString());
+          // Set form value to ensure consistency
+          setValue("country", country.name);
         }
       }
 
-      if (initialData?.state && allData.states.length > 0) {
+      // 🔧 Initialize selected state ID from initial data
+      if (initialData.state) {
         const state = allData.states.find(s => s.name === initialData.state);
         if (state) {
           setSelectedStateId(state.id.toString());
+          // Set form value to ensure consistency
+          setValue("state", state.name);
         }
       }
 
-      setTimeout(() => {
-        document.getElementById("branch")?.focus();
-      }, 100);
+      // 🔧 Initialize district value with proper ID resolution
+      if (initialData.district && allData.districts.length > 0) {
+        // Try to find district by name first (for edit mode)
+        const district = allData.districts.find(
+          d => d.name === initialData.district
+        );
+        if (district) {
+          setValue("district", district.name); // Set name for form consistency
+        } else {
+          // Fallback: set the initial value as-is
+          setValue("district", initialData.district);
+        }
+      }
     }
-  }, [open, initialData, reset, allData.countries, allData.states]);
+  }, [
+    open,
+    initialData,
+    allData.countries,
+    allData.states,
+    allData.districts,
+    setValue,
+  ]);
 
   // Get country info for phone field
   const selectedCountryInfo = React.useMemo(() => {
@@ -526,10 +591,10 @@ export function AddAddressDialog({
         const response = await fetch(endpoint, {
           method: "PUT",
           headers: {
-            Authorization: `Bearer ${accessToken}`,
             "x-tenant": payload.iss,
             "Content-Type": "application/json",
           },
+          credentials: "include", // Include HttpOnly cookies
           body: JSON.stringify(updatePayload),
         });
 
@@ -607,8 +672,8 @@ export function AddAddressDialog({
           lattitude: data.latitude || "",
           longitude: data.longitude || "",
           pinCodeId: data.postalCode,
-          state: data.state,
-          country: data.country,
+          state: selectedStateId || "", // Use state ID for consistency
+          country: selectedCountryId || "", // Use country ID for consistency
           isShipping: data.isShipping || false,
           isBilling: data.isBilling || false,
           wareHouse: false,
@@ -673,10 +738,10 @@ export function AddAddressDialog({
         const response = await fetch(endpoint, {
           method: "POST",
           headers: {
-            Authorization: `Bearer ${accessToken}`,
             "x-tenant": payload.iss,
             "Content-Type": "application/json",
           },
+          credentials: "include", // Include HttpOnly cookies
           body: JSON.stringify(apiPayload),
         });
 
@@ -975,8 +1040,15 @@ export function AddAddressDialog({
                         control={control}
                         render={({ field }) => (
                           <Select
-                            value={field.value || ""}
-                            onValueChange={field.onChange}
+                            value={
+                              // Find the district ID for the current form value (name)
+                              field.value
+                                ? allData.districts
+                                    .find(d => d.name === field.value)
+                                    ?.id.toString() || field.value
+                                : ""
+                            }
+                            onValueChange={handleDistrictChange}
                             disabled={dataLoading || !selectedStateId}
                           >
                             <SelectTrigger className="w-full h-8 text-sm">
@@ -1081,6 +1153,9 @@ export function AddAddressDialog({
                         id="latitude"
                         {...register("latitude")}
                         type="number"
+                        step="any"
+                        min="-90"
+                        max="90"
                         inputMode="decimal"
                         className="h-8 text-sm px-3"
                         placeholder="0.00"
@@ -1109,6 +1184,9 @@ export function AddAddressDialog({
                         id="longitude"
                         {...register("longitude")}
                         type="number"
+                        step="any"
+                        min="-180"
+                        max="180"
                         inputMode="decimal"
                         className="h-8 text-sm px-3"
                         placeholder="0.00"

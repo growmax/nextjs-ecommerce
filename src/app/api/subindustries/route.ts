@@ -1,16 +1,17 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
+import { cookies } from "next/headers";
 
-export async function GET(request: Request) {
+export async function GET(request: NextRequest) {
   try {
-    // Extract headers from incoming request
-    const headers = request.headers;
-    const authorization = headers.get("authorization");
-    const tenant = headers.get("x-tenant");
+    // Get authentication from cookies (HttpOnly)
+    const cookieStore = await cookies();
+    const accessToken = cookieStore.get("access_token")?.value;
+    const tenant = request.headers.get("x-tenant");
 
     // Validate authentication
-    if (!authorization) {
+    if (!accessToken) {
       return NextResponse.json(
-        { error: "Authorization token required" },
+        { error: "Authentication required. Please log in again." },
         { status: 401 }
       );
     }
@@ -31,7 +32,7 @@ export async function GET(request: Request) {
       headers: {
         origin: "schwingstetter.myapptino.com",
         "x-tenant": tenant,
-        Authorization: authorization,
+        Authorization: `Bearer ${accessToken}`,
         "Content-Type": "application/json",
       },
     });
@@ -68,17 +69,18 @@ export async function GET(request: Request) {
 }
 
 // Optional: POST endpoint for creating sub-industries
-export async function POST(request: Request) {
+export async function POST(request: NextRequest) {
   try {
-    const headers = request.headers;
-    const authorization = headers.get("authorization");
-    const tenant = headers.get("x-tenant");
+    // Get authentication from cookies (HttpOnly)
+    const cookieStore = await cookies();
+    const accessToken = cookieStore.get("access_token")?.value;
+    const tenant = request.headers.get("x-tenant");
     const body = await request.json();
 
-    if (!authorization || !tenant) {
+    if (!accessToken || !tenant) {
       return NextResponse.json(
-        { error: "Missing required headers" },
-        { status: 400 }
+        { error: "Authentication required or missing tenant" },
+        { status: 401 }
       );
     }
 
@@ -89,7 +91,7 @@ export async function POST(request: Request) {
         headers: {
           origin: "schwingstetter.myapptino.com",
           "x-tenant": tenant,
-          Authorization: authorization,
+          Authorization: `Bearer ${accessToken}`,
           "Content-Type": "application/json",
         },
         body: JSON.stringify(body),

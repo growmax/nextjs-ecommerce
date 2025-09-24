@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { cookies } from "next/headers";
 
 // TypeScript interfaces for API responses
 interface ExternalApiResponse {
@@ -23,15 +24,16 @@ export async function PUT(
     const companyId = searchParams.get("companyId");
     const addressId = searchParams.get("addressId");
 
-    // Get authorization token from headers
-    const authHeader = request.headers.get("authorization");
+    // Get authorization token from cookies (HttpOnly)
+    const cookieStore = await cookies();
+    const accessToken = cookieStore.get("access_token")?.value;
     const tenant = request.headers.get("x-tenant");
 
-    if (!authHeader) {
+    if (!accessToken) {
       return NextResponse.json(
         {
-          error: "Authorization required",
-          message: "Please log in to update address",
+          error: "Authentication required",
+          message: "Please log in again",
           mobile_friendly: true,
         },
         { status: 401 }
@@ -81,7 +83,7 @@ export async function PUT(
     const response = await fetch(apiUrl, {
       method: "PUT",
       headers: {
-        Authorization: authHeader,
+        Authorization: `Bearer ${accessToken}`,
         "Content-Type": "application/json",
         ...(tenant && { "x-tenant": tenant }),
       },

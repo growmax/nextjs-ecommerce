@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { cookies } from "next/headers";
 import { UserApiService } from "@/lib/services/UserApiService";
 import { JWTService } from "@/lib/services/JWTService";
 
@@ -9,19 +10,17 @@ export async function GET(
   try {
     const { companyId: requestedCompanyId } = await params;
 
-    // Extract headers from request
+    // Get authentication from cookies (HttpOnly)
+    const cookieStore = await cookies();
+    const accessToken = cookieStore.get("access_token")?.value;
     const tenantCode = request.headers.get("x-tenant");
-    const authorization = request.headers.get("authorization");
 
-    if (!tenantCode || !authorization) {
+    if (!tenantCode || !accessToken) {
       return NextResponse.json(
-        { error: "Missing required headers: x-tenant or authorization" },
-        { status: 400 }
+        { error: "Authentication required. Please log in again." },
+        { status: 401 }
       );
     }
-
-    // Extract access token from authorization header
-    const accessToken = authorization.replace("Bearer ", "");
 
     // Decode JWT to get the actual company ID and check expiration
     const jwtService = JWTService.getInstance();
