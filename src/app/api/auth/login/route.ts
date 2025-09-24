@@ -8,7 +8,7 @@ export async function POST(request: NextRequest) {
     const origin =
       request.headers.get("x-tenant-origin") ||
       process.env.DEFAULT_ORIGIN ||
-      `https://${process.env.DEFAULT_TENANT_ORIGIN}`;
+      `https://${process.env.DEFAULT_ORIGIN}`;
 
     const response = await fetch(`${process.env.AUTH_URL}/loginNew`, {
       method: "POST",
