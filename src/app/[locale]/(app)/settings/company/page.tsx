@@ -284,7 +284,7 @@ export default function CompanyPage() {
 
       // 🔄 STEP 4: Fetch fresh data from server
       await fetchBranchAddresses(searchTerm, currentPage, false, pageSize);
-    } catch {
+    } catch (error) {
       // 🚨 STEP 5: Handle errors
       const errorMessage =
         error instanceof Error ? error.message : "Failed to delete address";

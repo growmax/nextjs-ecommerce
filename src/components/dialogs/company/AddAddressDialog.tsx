@@ -24,7 +24,7 @@ import { Separator } from "@/components/ui/separator";
 import { Search, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { z } from "zod";
-import { useForm, Controller } from "react-hook-form";
+import { useForm, Controller, Resolver } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { AuthStorage } from "@/lib/auth";
 import { JWTService } from "@/lib/services/JWTService";
@@ -65,7 +65,7 @@ const addressFormSchema = z
         val => !val || (val.length >= 2 && val.length <= 50),
         "Locality must be 2-50 characters if provided"
       )
-      .transform(str => str?.trim() || ""),
+      .transform(str => str?.trim() || undefined),
 
     // Geographic Fields - Required with validation
     country: z
@@ -87,7 +87,7 @@ const addressFormSchema = z
         val => !val || (val.length >= 2 && val.length <= 50),
         "District must be 2-50 characters if provided"
       )
-      .transform(str => str?.trim() || ""),
+      .transform(str => str?.trim() || undefined),
 
     // Postal Code with format validation
     postalCode: z
@@ -104,7 +104,7 @@ const addressFormSchema = z
         val => !val || (val.length >= 2 && val.length <= 50),
         "City must be 2-50 characters if provided"
       )
-      .transform(str => str?.trim() || ""),
+      .transform(str => str?.trim() || undefined),
 
     // Coordinates with precise validation
     latitude: z
@@ -142,7 +142,7 @@ const addressFormSchema = z
           ) || val.length >= 8
         ); // Allow other tax ID formats
       }, "Invalid tax ID format")
-      .transform(str => str?.trim().toUpperCase() || ""),
+      .transform(str => str?.trim().toUpperCase() || undefined),
 
     // Contact Information with international phone validation
     contactName: z
@@ -154,7 +154,7 @@ const addressFormSchema = z
           val.length >= 2 && val.length <= 50 && /^[a-zA-Z\s\-'.]+$/.test(val)
         );
       }, "Contact name must be 2-50 characters with valid name characters")
-      .transform(str => str?.trim() || ""),
+      .transform(str => str?.trim() || undefined),
 
     contactNumber: z
       .string()
@@ -165,31 +165,14 @@ const addressFormSchema = z
         const cleaned = val.replace(/[\s\-\(\)]/g, "");
         return /^[0-9]{7,15}$/.test(cleaned);
       }, "Phone number must be 7-15 digits")
-      .transform(str => str?.replace(/[\s\-\(\)]/g, "") || ""),
+      .transform(str => str?.replace(/[\s\-\(\)]/g, "") || undefined),
   })
   .refine(data => data.isBilling || data.isShipping, {
     message: "Address must be marked as either billing or shipping (or both)",
     path: ["isBilling"],
   });
 
-type AddressFormData = {
-  companyName?: string;
-  branch: string;
-  address: string;
-  locality?: string;
-  country: string;
-  state: string;
-  district?: string;
-  postalCode: string;
-  city?: string;
-  latitude?: string;
-  longitude?: string;
-  isBilling?: boolean;
-  isShipping?: boolean;
-  taxId?: string;
-  contactName?: string;
-  contactNumber?: string;
-};
+type AddressFormData = z.infer<typeof addressFormSchema>;
 
 export interface AddressDialogProps {
   open: boolean;
@@ -278,7 +261,7 @@ export function AddAddressDialog({
     formState: { errors },
     reset,
   } = useForm<AddressFormData>({
-    resolver: zodResolver(addressFormSchema),
+    resolver: zodResolver(addressFormSchema) as Resolver<AddressFormData>,
     mode: "onChange", // Enable real-time validation
     defaultValues: {
       companyName: initialData?.companyName || undefined,

@@ -1,7 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { useAuth } from "@/contexts/AuthContext";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
   Card,
   CardContent,
@@ -9,8 +8,9 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { User, Building2, Mail, Phone } from "lucide-react";
+import { useAuth } from "@/contexts/AuthContext";
+import { Building2, Mail, Phone, User } from "lucide-react";
+import { useEffect, useState } from "react";
 
 export default function DashboardPage() {
   const { user } = useAuth();
