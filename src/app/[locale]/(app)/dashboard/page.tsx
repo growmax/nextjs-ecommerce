@@ -1,40 +1,42 @@
 "use client";
 
-import { Card } from "@/components/ui/card";
 import { useAuth } from "@/contexts/AuthContext";
 import { useEffect, useState } from "react";
-import { DashboardChart } from "./components/DashboardChart/DashboardChart";
 import DashboardOrdersTable from "./components/DashboardOrdersTable/DashboardOrdersTable";
+import { ChartAreaAxes } from "./components/DashboardChart/Dashboardchartdatas";
 
 export default function DashboardPage() {
-  const { user, isAuthenticated } = useAuth();
+  const { isAuthenticated } = useAuth();
   const [mounted, setMounted] = useState(false);
 
-  // Prevent hydration mismatch
+  // Prevent hydration mismatch with faster mounting
   useEffect(() => {
-    setMounted(true);
+    // Use requestAnimationFrame for smoother mounting
+    const frame = requestAnimationFrame(() => {
+      setMounted(true);
+    });
+    return () => cancelAnimationFrame(frame);
   }, []);
 
-  // Show loading state until mounted (prevents hydration issues)
-  if (!mounted) {
+  // Simplified loading with side-by-side layout
+  if (!mounted || !isAuthenticated) {
     return (
-      <div className="flex min-h-screen items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto"></div>
-          <p className="mt-4 text-muted-foreground">Loading...</p>
-        </div>
-      </div>
-    );
-  }
-
-  // If not authenticated after mounting, show loading (middleware will redirect)
-  if (!isAuthenticated) {
-    return (
-      <div className="flex min-h-screen items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto"></div>
-          <p className="mt-4 text-muted-foreground">Redirecting...</p>
-        </div>
+      <div className="min-h-screen bg-background">
+        <main className="container mx-auto px-4 py-6 sm:py-8">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 items-start">
+            {/* Chart loading skeleton */}
+            <div className="h-[400px] flex items-center justify-center">
+              <div className="text-center">
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto"></div>
+                <p className="mt-2 text-sm text-muted-foreground">
+                  {!mounted ? "Loading..." : "Authenticating..."}
+                </p>
+              </div>
+            </div>
+            {/* Table loading skeleton */}
+            <div className="h-[400px] bg-gray-50 rounded-lg animate-pulse"></div>
+          </div>
+        </main>
       </div>
     );
   }
@@ -42,17 +44,11 @@ export default function DashboardPage() {
   return (
     <div className="min-h-screen bg-background">
       <main className="container mx-auto px-4 py-6 sm:py-8">
-        <div className="flex gap-6">
-          <div className="w-1/2">
-            <Card className="w-full h-full">
-              <DashboardChart
-                userId={parseInt(user?.id || "1032")}
-                companyId={user?.companyId || 8690}
-                currencyId={96}
-              />
-            </Card>
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 items-start">
+          <div className="w-full">
+            <ChartAreaAxes />
           </div>
-          <div className="w-1/2">
+          <div className="w-full">
             <DashboardOrdersTable />
           </div>
         </div>

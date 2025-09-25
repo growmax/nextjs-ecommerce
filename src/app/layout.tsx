@@ -37,14 +37,18 @@ export default async function RootLayout({
         />
         {/* Pass auth state to client via meta tags */}
         <meta name="auth-state" content={JSON.stringify(authState)} />
+        {/* Disable double effects in development */}
+        <meta name="next-strict-mode" content="false" />
       </head>
       <body suppressHydrationWarning={true}>
-        <QueryProvider>
-          <LoadingProvider>
-            {children}
-            <GlobalLoaderWrapper />
-          </LoadingProvider>
-        </QueryProvider>
+        <div suppressHydrationWarning={true}>
+          <QueryProvider>
+            <LoadingProvider>
+              {children}
+              <GlobalLoaderWrapper />
+            </LoadingProvider>
+          </QueryProvider>
+        </div>
       </body>
     </html>
   );

@@ -9,6 +9,8 @@ const __dirname = dirname(__filename);
 
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+  // Disable React.StrictMode to prevent double API calls in development
+  reactStrictMode: false,
   experimental: {
     optimizePackageImports: ["lucide-react", "@/components/ui"],
   },

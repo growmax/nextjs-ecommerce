@@ -33,7 +33,9 @@
     "**/*.ts",
     "**/*.tsx",
     ".next/types/**/*.ts",
-    "src/app/check_out"
+    "src/app/check_out",
+    "src/types/*.d.ts",
+    "types/*.d.ts"
   ],
   "exclude": ["node_modules"]
 }

@@ -235,7 +235,7 @@ export default function DashboardOrdersTable() {
           Card,
           {
             className:
-              "w-full bg-white rounded-lg shadow-sm border border-gray-200  !py-0 !gap-0",
+              "w-full bg-white rounded-lg shadow-sm border border-gray-200 !py-0 !gap-0",
           },
           h(
             CardHeader,
