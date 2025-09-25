@@ -18,8 +18,7 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    // eslint-disable-next-line no-console
-    console.log("Fetching states with params:", { countryId });
+    // Fetching states with parameters
 
     // Call external API
     const apiUrl = `${process.env.API_BASE_URL || "https://api.myapptino.com"}/homepagepublic/getAllState`;
@@ -34,9 +33,7 @@ export async function GET(request: NextRequest) {
     });
 
     if (!response.ok) {
-      const errorText = await response.text();
-      // eslint-disable-next-line no-console
-      console.error("States API Error:", response.status, errorText);
+      // States API Error occurred
       return NextResponse.json(
         { error: `Failed to fetch states: ${response.status}` },
         { status: response.status }
@@ -52,27 +49,14 @@ export async function GET(request: NextRequest) {
           state.countryId === parseInt(countryId)
       );
 
-      // eslint-disable-next-line no-console
-      console.log(
-        "Filtered states for country:",
-        countryId,
-        "Count:",
-        data.data.length
-      );
+      // Filtered states for selected country
     }
 
-    // eslint-disable-next-line no-console
-    console.log("States API Response:", {
-      status: data.status,
-      message: data.message,
-      dataLength: data.data?.length,
-      filteredByCountry: !!countryId,
-    });
+    // States API Response processed successfully
 
     return NextResponse.json(data);
-  } catch (error) {
-    // eslint-disable-next-line no-console
-    console.error("Error in states API route:", error);
+  } catch (_error) {
+    // Error in states API route
     return NextResponse.json(
       { error: "Internal server error" },
       { status: 500 }

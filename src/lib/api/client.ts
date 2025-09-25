@@ -125,8 +125,6 @@ function createApiClient(config: ApiClientConfig = {}): AxiosInstance {
       return config;
     },
     error => {
-      // eslint-disable-next-line no-console
-      console.error("Request interceptor error:", error);
       return Promise.reject(error);
     }
   );
@@ -178,9 +176,7 @@ function createApiClient(config: ApiClientConfig = {}): AxiosInstance {
             // Retry original request
             return instance(originalRequest);
           }
-        } catch (refreshError) {
-          // eslint-disable-next-line no-console
-          console.error("Token refresh failed:", refreshError);
+        } catch (_refreshError) {
           // Redirect to login or handle as needed
           if (typeof window !== "undefined") {
             window.location.href = "/login";

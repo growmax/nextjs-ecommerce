@@ -18,8 +18,7 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    // eslint-disable-next-line no-console
-    console.log("Fetching districts with params:", { stateId });
+    // Fetching districts with parameters
 
     // Call external API
     const apiUrl = `${process.env.API_BASE_URL || "https://api.myapptino.com"}/homepagepublic/getAllDistrict`;
@@ -34,9 +33,7 @@ export async function GET(request: NextRequest) {
     });
 
     if (!response.ok) {
-      const errorText = await response.text();
-      // eslint-disable-next-line no-console
-      console.error("Districts API Error:", response.status, errorText);
+      // Districts API Error occurred
       return NextResponse.json(
         { error: `Failed to fetch districts: ${response.status}` },
         { status: response.status }
@@ -52,27 +49,14 @@ export async function GET(request: NextRequest) {
           district.stateId === parseInt(stateId)
       );
 
-      // eslint-disable-next-line no-console
-      console.log(
-        "Filtered districts for state:",
-        stateId,
-        "Count:",
-        data.data.length
-      );
+      // Filtered districts for selected state
     }
 
-    // eslint-disable-next-line no-console
-    console.log("Districts API Response:", {
-      status: data.status,
-      message: data.message,
-      dataLength: data.data?.length,
-      filteredByState: !!stateId,
-    });
+    // Districts API Response processed successfully
 
     return NextResponse.json(data);
-  } catch (error) {
-    // eslint-disable-next-line no-console
-    console.error("Error in districts API route:", error);
+  } catch (_error) {
+    // Error in districts API route
     return NextResponse.json(
       { error: "Internal server error" },
       { status: 500 }

@@ -1,8 +1,8 @@
+import { locales } from "@/i18n/config";
 import API from "@/lib/api";
 import { getDomain } from "@/lib/domain";
-import { NextRequest, NextResponse } from "next/server";
 import createIntlMiddleware from "next-intl/middleware";
-import { locales } from "@/i18n/config";
+import { NextRequest, NextResponse } from "next/server";
 
 // Define protected routes that require authentication
 const PROTECTED_ROUTES = [

@@ -47,9 +47,7 @@ export async function POST(
     });
 
     if (!response.ok) {
-      const errorText = await response.text();
-      // eslint-disable-next-line no-console
-      console.error("API Error:", response.status, errorText);
+      // API Error occurred
       return NextResponse.json(
         { error: `Failed to create branch: ${response.status}` },
         { status: response.status }
@@ -58,9 +56,8 @@ export async function POST(
 
     const data = await response.json();
     return NextResponse.json(data);
-  } catch (error) {
-    // eslint-disable-next-line no-console
-    console.error("Error in create branch API route:", error);
+  } catch (_error) {
+    // Error in create branch API route
     return NextResponse.json(
       { error: "Internal server error" },
       { status: 500 }

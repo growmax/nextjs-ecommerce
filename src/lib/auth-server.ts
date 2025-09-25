@@ -58,9 +58,7 @@ export class ServerAuth {
       }
 
       return true;
-    } catch (error) {
-      // eslint-disable-next-line no-console
-      console.error("[ServerAuth] Error checking authentication:", error);
+    } catch (_error) {
       return false;
     }
   }
@@ -80,9 +78,7 @@ export class ServerAuth {
       // Implementation would depend on your user service API
       // getUserData: User data should be fetched from API, not cookies
       return null;
-    } catch (error) {
-      // eslint-disable-next-line no-console
-      console.error("[ServerAuth] Error getting user data:", error);
+    } catch (_error) {
       return null;
     }
   }
@@ -96,9 +92,7 @@ export class ServerAuth {
     try {
       const cookieStore = await cookies();
       return cookieStore.get(ServerAuth.ACCESS_TOKEN_COOKIE)?.value || null;
-    } catch (error) {
-      // eslint-disable-next-line no-console
-      console.error("[ServerAuth] Error getting access token:", error);
+    } catch (_error) {
       return null;
     }
   }
@@ -198,9 +192,7 @@ export class ServerAuth {
 
       // Check if token has exp claim and if it's expired
       return payload.exp ? payload.exp < currentTime : false;
-    } catch (error) {
-      // eslint-disable-next-line no-console
-      console.error("[ServerAuth] Error checking token expiration:", error);
+    } catch (_error) {
       return true; // Treat invalid tokens as expired
     }
   }

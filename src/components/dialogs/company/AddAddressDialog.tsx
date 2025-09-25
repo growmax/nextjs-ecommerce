@@ -643,11 +643,9 @@ export function AddAddressDialog({
             throw new Error(result.message || "Update failed");
           }
 
-          // eslint-disable-next-line no-console
-          console.log("Address update successful:", result);
+          // Address update successful
         } catch (parseError) {
-          // eslint-disable-next-line no-console
-          console.error("Response parsing error:", parseError);
+          // Response parsing error occurred
 
           if (parseError instanceof Error) {
             throw new Error(parseError.message);
@@ -755,9 +753,8 @@ export function AddAddressDialog({
         onOpenChange(false);
         reset();
       }
-    } catch (error) {
-      // eslint-disable-next-line no-console
-      console.error("Error submitting address:", error);
+    } catch (_error) {
+      // Error submitting address
       toast.error(`Failed to ${mode} address. Please try again.`);
     } finally {
       setIsLoading(false);

@@ -1,4 +1,3 @@
-/* eslint-disable no-console */
 import { NextRequest, NextResponse } from "next/server";
 
 export async function POST(request: NextRequest) {
@@ -13,7 +12,6 @@ export async function POST(request: NextRequest) {
     const refreshToken = body.refreshToken || refreshTokenFromCookie?.value;
 
     if (!accessToken) {
-      console.log("No access token found in request body or cookies");
       return NextResponse.json(
         { error: "No access token provided" },
         { status: 401 }
@@ -21,7 +19,6 @@ export async function POST(request: NextRequest) {
     }
 
     if (!refreshToken) {
-      console.log("No refresh token found in request body or cookies");
       // Still proceed with logout to clear any remaining cookies
       // The external API might not require refresh token for logout
     }
@@ -45,13 +42,6 @@ export async function POST(request: NextRequest) {
     });
 
     const data = await response.json();
-
-    console.log("External logout API response:", {
-      status: response.status,
-      success: data?.success,
-      data,
-    });
-
     // Create response
     const nextResponse = NextResponse.json(data, {
       status: response.status,
@@ -61,10 +51,6 @@ export async function POST(request: NextRequest) {
         Expires: "0",
       },
     });
-
-    // Always clear cookies regardless of external API response
-
-    console.log("Clearing all authentication cookies");
 
     // Clear the access_token cookie (HttpOnly)
     nextResponse.cookies.set("access_token", "", {
@@ -116,13 +102,9 @@ export async function POST(request: NextRequest) {
       path: "/",
     });
 
-    console.log(
-      "All authentication cookies cleared and new anonymous token set"
-    );
-
     return nextResponse;
-  } catch (error) {
-    console.error("Logout API error:", error);
+  } catch (_error) {
+    // Logout API error occurred
     return NextResponse.json({ error: "Failed to logout" }, { status: 500 });
   }
 }
