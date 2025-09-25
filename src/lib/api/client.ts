@@ -1,4 +1,5 @@
 import axios, {
+  AxiosError,
   AxiosInstance,
   AxiosRequestConfig,
   AxiosResponse,
@@ -22,6 +23,17 @@ export interface ApiClientConfig {
   baseURL?: string;
   timeout?: number;
   withCredentials?: boolean;
+}
+
+// Extend InternalAxiosRequestConfig to include _retry property
+interface RetryableAxiosRequestConfig extends InternalAxiosRequestConfig {
+  _retry?: boolean;
+}
+
+// API response data interface for error handling
+interface ApiResponseData {
+  message?: string;
+  [key: string]: unknown;
 }
 
 export interface ApiError {
@@ -124,7 +136,9 @@ function createApiClient(config: ApiClientConfig = {}): AxiosInstance {
 
       return config;
     },
-    error => {
+    (error: unknown) => {
+      // eslint-disable-next-line no-console
+      console.error("Request interceptor error:", error);
       return Promise.reject(error);
     }
   );
@@ -145,8 +159,10 @@ function createApiClient(config: ApiClientConfig = {}): AxiosInstance {
       }
       return response;
     },
-    async error => {
-      const originalRequest = error.config;
+    async (error: AxiosError) => {
+      const originalRequest = error.config as
+        | RetryableAxiosRequestConfig
+        | undefined;
 
       // Log errors in development
       if (process.env.NODE_ENV === "development") {
@@ -162,7 +178,11 @@ function createApiClient(config: ApiClientConfig = {}): AxiosInstance {
       }
 
       // Handle 401 errors - attempt token refresh
-      if (error.response?.status === 401 && !originalRequest._retry) {
+      if (
+        error.response?.status === 401 &&
+        originalRequest &&
+        !originalRequest._retry
+      ) {
         originalRequest._retry = true;
 
         try {
@@ -185,8 +205,9 @@ function createApiClient(config: ApiClientConfig = {}): AxiosInstance {
       }
 
       // Transform error
+      const responseData = error.response?.data as ApiResponseData | undefined;
       const apiError = new ApiClientError(
-        error.response?.data?.message || error.message || "API request failed",
+        responseData?.message || error.message || "API request failed",
         error.response?.status,
         error.response?.data
       );
