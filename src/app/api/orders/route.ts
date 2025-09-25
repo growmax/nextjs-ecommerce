@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import DashboardOrdersTableService from "@/lib/api/services/Dasboard/DashboardOrdersTable";
 
 function getTenantFromToken(token: string): string | null {
   try {
@@ -14,10 +15,14 @@ function getTenantFromToken(token: string): string | null {
 export async function POST(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);
-    const userId = searchParams.get("userId") || "1032";
-    const companyId = searchParams.get("companyId") || "8690";
-    const offset = searchParams.get("offset") || "0";
-    const pgLimit = searchParams.get("limit") || "20";
+    const userId =
+      searchParams.get("userId") || process.env.DEFAULT_USER_ID || "1032";
+    const companyId =
+      searchParams.get("companyId") || process.env.DEFAULT_COMPANY_ID || "8690";
+    const offset = parseInt(searchParams.get("offset") || "0");
+    const limit = parseInt(
+      searchParams.get("limit") || process.env.ORDERS_API_DEFAULT_LIMIT || "20"
+    );
 
     const token =
       request.cookies.get("access_token")?.value ||
@@ -32,35 +37,24 @@ export async function POST(request: NextRequest) {
 
     const tenant = getTenantFromToken(token);
 
-    const headers: Record<string, string> = {
-      Accept: "application/json",
-      "User-Agent": "NextJS-App",
-      origin: "schwingstetter.myapptino.com",
-      "x-tenant": tenant || "schwingstetterdemo",
-      "Content-Type": "application/json",
+    const context = {
+      accessToken: token,
+      tenantCode:
+        tenant || process.env.DEFAULT_TENANT_FALLBACK || "schwingstetterdemo",
     };
 
-    if (token) {
-      headers.Authorization = `Bearer ${token}`;
-    }
+    const data = await DashboardOrdersTableService.getOrdersServerSide(
+      { userId, companyId, offset, limit },
+      context
+    );
 
-    const url = `https://api.myapptino.com/corecommerce/orders/findByFilter?userId=${userId}&companyId=${companyId}&offset=${offset}&pgLimit=${pgLimit}`;
-
-    const response = await fetch(url, {
-      method: "POST",
-      headers,
-      body: JSON.stringify({}),
-    });
-
-    if (!response.ok) {
-      const errorText = await response.text();
+    if (!data) {
       return NextResponse.json(
-        { error: `External API returned ${response.status}: ${errorText}` },
-        { status: response.status }
+        { error: "Failed to fetch orders from service" },
+        { status: 500 }
       );
     }
 
-    const data = await response.json();
     return NextResponse.json(data);
   } catch (error) {
     return NextResponse.json(

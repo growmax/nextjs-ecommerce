@@ -22,6 +22,7 @@ import UserService from "./services/UserService";
 import CatalogService from "./services/CatalogService";
 import StoreFrontService from "./services/StoreFrontService";
 import CartService from "./services/CartService";
+import DashboardOrdersTableService from "./services/Dasboard/DashboardOrdersTable";
 
 // Export services
 export {
@@ -31,6 +32,7 @@ export {
   CatalogService,
   StoreFrontService,
   CartService,
+  DashboardOrdersTableService,
 };
 
 // Export service types
@@ -62,6 +64,12 @@ export type {
 
 export type { Cart } from "./services/CartService";
 
+export type {
+  OrdersResponse,
+  OrdersApiResponse,
+  OrdersRequestParams,
+} from "./services/Dasboard/DashboardOrdersTable";
+
 // Convenience re-exports for common patterns
 export const API = {
   Auth: AuthService,
@@ -70,6 +78,7 @@ export const API = {
   Catalog: CatalogService,
   StoreFront: StoreFrontService,
   Cart: CartService,
+  DashboardOrders: DashboardOrdersTableService,
 } as const;
 
 // Default export for easy importing

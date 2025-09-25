@@ -21,51 +21,10 @@ import { ArrowUpDown, ArrowDownIcon } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useLocale } from "next-intl";
 import { statusColor } from "@/components/custom/statuscolors";
+import { Order } from "@/types/dashboard/DasbordOrderstable/DashboardOrdersTable";
+import { Skeleton } from "@/components/ui/skeleton";
 
 const { createElement: h } = React;
-
-interface CurrencySymbol {
-  currencyCode: string;
-  decimal: string;
-  description: string;
-  id: number;
-  precision: number;
-  symbol: string;
-  tenantId: number;
-  thousand: string;
-}
-
-interface OrderUser {
-  id: number;
-  name: string;
-  email: string;
-}
-
-interface Order {
-  SPRRequested: boolean;
-  buyerBranchName: string;
-  buyerCompanyName: string;
-  createdDate: string;
-  currencySymbol: CurrencySymbol;
-  erpError: string | null;
-  erpId: string;
-  grandTotal: number;
-  itemcount: number;
-  lastUpdatedDate: string;
-  orderIdentifier: string;
-  orderName: string;
-  orderUsers: OrderUser[] | null;
-  quotationIdentifier: string | null;
-  requiredDate: string | null;
-  sellerBranchName: string;
-  sellerCompanyName: string;
-  soldToCode: string;
-  subTotal: number;
-  taxableAmount: number;
-  updatedBuyerStatus: string;
-  updatedSellerStatus: string;
-  vendorId: string | null | number;
-}
 
 export default function DashboardOrdersTable() {
   const [orders, setOrders] = useState<Order[]>([]);
@@ -77,23 +36,34 @@ export default function DashboardOrdersTable() {
     direction: "asc" | "desc";
   }>({ key: "orderName", direction: "desc" });
   const [displayCount] = useState(10);
+  const [isRefreshing, setIsRefreshing] = useState(false);
   const router = useRouter();
   const locale = useLocale();
 
-  const fetchOrders = async (offset: number = 0, limit: number = 10) => {
+  const fetchOrders = async (
+    offset: number = 0,
+    limit: number = 10,
+    isRefresh: boolean = false
+  ) => {
     try {
-      setLoading(true);
+      if (isRefresh) {
+        setIsRefreshing(true);
+      } else {
+        setLoading(true);
+      }
       setError(null);
 
-      const response = await fetch(
-        `/api/orders?offset=${offset}&limit=${limit}`,
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-        }
-      );
+      // Use the service instead of direct API call
+      const response = await fetch(`/api/orders`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          offset,
+          limit,
+        }),
+      });
 
       if (!response.ok) {
         const errorData = await response.json();
@@ -140,6 +110,7 @@ export default function DashboardOrdersTable() {
       setTotalCount(0);
     } finally {
       setLoading(false);
+      setIsRefreshing(false);
     }
   };
 
@@ -198,156 +169,196 @@ export default function DashboardOrdersTable() {
   return h(
     "div",
     { className: "p-3" },
-    h(
-      Card,
-      {
-        className:
-          "w-full bg-white rounded-lg shadow-sm border border-gray-200 !py-0 !gap-0",
-      },
-      h(
-        CardHeader,
-        { className: "px-4 pt-7 pb-2 border-b border-gray-200" },
-        h(
-          "div",
-          { className: "flex justify-start" },
+    loading || isRefreshing
+      ? h(
+          Card,
+          {
+            className:
+              "w-full bg-white rounded-lg shadow-sm border border-gray-200 !py-0 !gap-0",
+          },
           h(
-            CardTitle,
-            { className: "text-sm font-medium text-gray-900 text-center" },
-            `History of Orders ${totalCount > 0 ? `(${totalCount})` : ""}`
-          )
-        )
-      ),
-      h(
-        CardContent,
-        { className: "p-0" },
-        h(
-          "div",
-          { className: "overflow-hidden" },
-          h(
-            "div",
-            { className: "overflow-x-auto" },
+            CardHeader,
+            { className: "px-4 pt-4 !pb-0 border-b border-gray-200" },
             h(
-              Table,
-              { className: "w-full" },
+              "div",
+              { className: "flex justify-start" },
+              h(Skeleton, { className: "h-5 w-48" })
+            )
+          ),
+          h(
+            CardContent,
+            { className: "p-0" },
+            h(
+              "div",
+              { className: "overflow-hidden" },
               h(
-                TableHeader,
-                { className: "bg-gray-50" },
+                "div",
+                { className: "bg-gray-50 px-3 py-2 border-b border-gray-100" },
                 h(
-                  TableRow,
-                  { className: "border-b border-gray-100" },
-                  h(
-                    TableHead,
-                    {
-                      className:
-                        "text-xs font-medium text-gray-600 px-3 py-1 text-left",
-                      scope: "col",
-                    },
-                    h(
-                      "span",
-                      {
-                        className:
-                          "inline-flex items-center cursor-pointer hover:text-gray-900",
-                        onClick: () => handleSort("orderIdentifier"),
-                        role: "button",
-                        tabIndex: 0,
-                      },
-                      "Order Id",
-                      getSortIcon("orderIdentifier")
-                    )
-                  ),
-                  h(
-                    TableHead,
-                    {
-                      className:
-                        "text-xs font-medium text-gray-600 px-3 py-1 text-left",
-                      scope: "col",
-                    },
-                    h(
-                      "span",
-                      {
-                        className: `inline-flex items-center cursor-pointer hover:text-gray-900 ${sortConfig.key === "orderName" ? "text-gray-900" : ""}`,
-                        onClick: () => handleSort("orderName"),
-                        role: "button",
-                        tabIndex: 0,
-                      },
-                      "Name",
-                      getSortIcon("orderName")
-                    )
-                  ),
-                  h(
-                    TableHead,
-                    {
-                      className:
-                        "text-xs font-medium text-gray-600 px-3 py-1 text-left",
-                      scope: "col",
-                    },
-                    h(
-                      "span",
-                      {
-                        className:
-                          "inline-flex items-center cursor-pointer hover:text-gray-900",
-                        onClick: () => handleSort("requiredDate"),
-                        role: "button",
-                        tabIndex: 0,
-                      },
-                      "Required Date",
-                      getSortIcon("requiredDate")
-                    )
-                  ),
-                  h(
-                    TableHead,
-                    {
-                      className:
-                        "text-xs font-medium text-gray-600 px-3 py-1 text-right",
-                      scope: "col",
-                    },
-                    h(
-                      "span",
-                      {
-                        className:
-                          "inline-flex items-center cursor-pointer hover:text-gray-900 justify-end w-full",
-                        onClick: () => handleSort("updatedBuyerStatus"),
-                        role: "button",
-                        tabIndex: 0,
-                      },
-                      "Status",
-                      getSortIcon("updatedBuyerStatus")
-                    )
-                  )
+                  "div",
+                  { className: "flex justify-between items-center" },
+                  h(Skeleton, { className: "h-4 w-16" }),
+                  h(Skeleton, { className: "h-4 w-20" }),
+                  h(Skeleton, { className: "h-4 w-24" }),
+                  h(Skeleton, { className: "h-4 w-16" })
                 )
               ),
+              Array.from({ length: 10 }).map((_, index) =>
+                h(
+                  "div",
+                  {
+                    key: `skeleton-row-${index}`,
+                    className: "px-3 py-3 border-b border-gray-100",
+                  },
+                  h(
+                    "div",
+                    { className: "flex justify-between items-center" },
+                    h(Skeleton, { className: "h-4 w-20" }),
+                    h(Skeleton, { className: "h-4 w-32" }),
+                    h(Skeleton, { className: "h-4 w-24" }),
+                    h(Skeleton, { className: "h-5 w-16 rounded" })
+                  )
+                )
+              )
+            )
+          ),
+          h(
+            CardFooter,
+            {
+              className:
+                "flex justify-start px-2 py-2 !pt-2 border-t border-gray-200",
+            },
+            h(Skeleton, { className: "h-8 w-20 rounded" })
+          )
+        )
+      : h(
+          Card,
+          {
+            className:
+              "w-full bg-white rounded-lg shadow-sm border border-gray-200  !py-0 !gap-0",
+          },
+          h(
+            CardHeader,
+            { className: "px-4 pt-4 !pb-0 border-b border-gray-200" },
+            h(
+              "div",
+              { className: "flex justify-start" },
               h(
-                TableBody,
-                { className: "bg-white divide-y divide-gray-100" },
-                loading
-                  ? h(
+                CardTitle,
+                { className: "text-sm font-medium text-gray-900 text-center" },
+                h("span", {}, "History of Orders "),
+                totalCount > 0 &&
+                  h(
+                    "span",
+                    { className: "text-xs font-normal text-gray-600" },
+                    `(${totalCount})`
+                  )
+              )
+            )
+          ),
+          h(
+            CardContent,
+            { className: "p-0" },
+            h(
+              "div",
+              { className: "overflow-hidden" },
+              h(
+                "div",
+                { className: "overflow-x-auto" },
+                h(
+                  Table,
+                  { className: "w-full" },
+                  h(
+                    TableHeader,
+                    { className: "bg-gray-50" },
+                    h(
                       TableRow,
-                      {},
+                      { className: "border-b border-gray-100" },
                       h(
-                        TableCell,
+                        TableHead,
                         {
-                          colSpan: 4,
                           className:
-                            "px-3 py-3 text-center text-sm text-gray-500",
+                            "text-xs font-medium text-gray-600 px-3 py-1 text-left",
+                          scope: "col",
                         },
-                        "Loading orders..."
-                      )
-                    )
-                  : error
-                    ? h(
-                        TableRow,
-                        {},
                         h(
-                          TableCell,
+                          "span",
                           {
-                            colSpan: 4,
                             className:
-                              "px-3 py-3 text-center text-sm text-red-500",
+                              "inline-flex items-center cursor-pointer hover:text-gray-900",
+                            onClick: () => handleSort("orderIdentifier"),
+                            role: "button",
+                            tabIndex: 0,
                           },
-                          error
+                          "Order Id",
+                          getSortIcon("orderIdentifier")
+                        )
+                      ),
+                      h(
+                        TableHead,
+                        {
+                          className:
+                            "text-xs font-medium text-gray-600 px-3 py-1 text-left",
+                          scope: "col",
+                        },
+                        h(
+                          "span",
+                          {
+                            className: `inline-flex items-center cursor-pointer hover:text-gray-900 ${sortConfig.key === "orderName" ? "text-gray-900" : ""}`,
+                            onClick: () => handleSort("orderName"),
+                            role: "button",
+                            tabIndex: 0,
+                          },
+                          "Name",
+                          getSortIcon("orderName")
+                        )
+                      ),
+                      h(
+                        TableHead,
+                        {
+                          className:
+                            "text-xs font-medium text-gray-600 px-3 py-1 text-left",
+                          scope: "col",
+                        },
+                        h(
+                          "span",
+                          {
+                            className:
+                              "inline-flex items-center cursor-pointer hover:text-gray-900",
+                            onClick: () => handleSort("requiredDate"),
+                            role: "button",
+                            tabIndex: 0,
+                          },
+                          "Required Date",
+                          getSortIcon("requiredDate")
+                        )
+                      ),
+                      h(
+                        TableHead,
+                        {
+                          className:
+                            "text-xs font-medium text-gray-600 px-3 py-1 text-right",
+                          scope: "col",
+                        },
+                        h(
+                          "span",
+                          {
+                            className:
+                              "inline-flex items-center cursor-pointer hover:text-gray-900 justify-end w-full",
+                            onClick: () => handleSort("updatedBuyerStatus"),
+                            role: "button",
+                            tabIndex: 0,
+                          },
+                          "Status",
+                          getSortIcon("updatedBuyerStatus")
                         )
                       )
-                    : displayedOrders.length === 0
+                    )
+                  ),
+                  h(
+                    TableBody,
+                    { className: "bg-white divide-y divide-gray-100" },
+                    error
                       ? h(
                           TableRow,
                           {},
@@ -356,86 +367,103 @@ export default function DashboardOrdersTable() {
                             {
                               colSpan: 4,
                               className:
-                                "px-3 py-3 text-center text-sm text-gray-500",
+                                "px-3 py-3 text-center text-sm text-red-500",
                             },
-                            "No orders found"
+                            error
                           )
                         )
-                      : displayedOrders.map((order, index) =>
-                          h(
+                      : displayedOrders.length === 0
+                        ? h(
                             TableRow,
-                            {
-                              key: order.orderIdentifier || index,
-                              className: "hover:bg-gray-50 transition-colors",
-                              role: "checkbox",
-                              tabIndex: -1,
-                            },
+                            {},
                             h(
                               TableCell,
                               {
-                                className: "px-4 py-3 text-sm text-gray-900",
+                                colSpan: 4,
+                                className:
+                                  "px-3 py-3 text-center text-sm text-gray-500",
                               },
-                              order.orderIdentifier
-                            ),
+                              "No orders found"
+                            )
+                          )
+                        : displayedOrders.map((order, index) =>
                             h(
-                              TableCell,
+                              TableRow,
                               {
-                                className: "px-4 py-3 text-sm text-gray-900",
-                              },
-                              order.orderName
-                            ),
-                            h(
-                              TableCell,
-                              {
-                                className: "px-4 py-3 text-sm text-gray-500",
-                              },
-                              order.requiredDate ||
-                                order.createdDate?.split(" ")[0] ||
-                                ""
-                            ),
-                            h(
-                              TableCell,
-                              {
-                                className: "px-4 py-3 text-right",
+                                key: order.orderIdentifier || index,
+                                className: "hover:bg-gray-50 transition-colors",
+                                role: "checkbox",
+                                tabIndex: -1,
                               },
                               h(
-                                "span",
+                                TableCell,
                                 {
-                                  className:
-                                    "px-1 py-0.5 rounded text-xs font-medium",
-                                  style: {
-                                    backgroundColor: `${statusColor(order.updatedBuyerStatus)}20`,
-                                    color: statusColor(
-                                      order.updatedBuyerStatus
-                                    ),
-                                  },
+                                  className: "px-4 py-3 text-sm text-gray-900",
                                 },
-                                order.updatedBuyerStatus
+                                order.orderIdentifier
+                              ),
+                              h(
+                                TableCell,
+                                {
+                                  className: "px-4 py-3 text-sm text-gray-900",
+                                },
+                                order.orderName
+                              ),
+                              h(
+                                TableCell,
+                                {
+                                  className: "px-4 py-3 text-sm text-gray-500",
+                                },
+                                // order.requiredDate ||
+                                //   order.createdDate?.split(" ")[0] ||
+                                ""
+                              ),
+                              h(
+                                TableCell,
+                                {
+                                  className: "px-4 py-3 text-right",
+                                },
+                                h(
+                                  "span",
+                                  {
+                                    className:
+                                      "px-1 py-0.5 rounded text-xs font-medium",
+                                    style: {
+                                      backgroundColor: `${statusColor(order.updatedBuyerStatus)}20`,
+                                      color: statusColor(
+                                        order.updatedBuyerStatus
+                                      ),
+                                    },
+                                  },
+                                  order.updatedBuyerStatus
+                                )
                               )
                             )
                           )
-                        )
+                  )
+                )
               )
             )
-          )
+          ),
+          totalCount > 10 &&
+            h(
+              CardFooter,
+              {
+                className:
+                  "flex justify-end px-2 py-2 !pt-2 border-t border-gray-200",
+              },
+              h(
+                Button,
+                {
+                  variant: "outline",
+                  size: "sm",
+                  onClick: handleShowMore,
+                  className:
+                    "text-black hover:bg-blacke-50 border-black-600 hover:border-black-700 normal-case text-sm font-medium px-3 py-1 min-h-[32px] transition-all cursor-pointer",
+                },
+                "Show More"
+              )
+            )
         )
-      ),
-      totalCount > 10 &&
-        h(
-          CardFooter,
-          { className: "flex justify-end py-3 px-6 border-t border-gray-200" },
-          h(
-            Button,
-            {
-              variant: "outline",
-              size: "sm",
-              onClick: handleShowMore,
-              className:
-                "text-black hover:bg-black-50 border-black-200 uppercase text-xs font-medium px-4 py-2",
-            },
-            "Show More"
-          )
-        )
-    )
   );
 }
