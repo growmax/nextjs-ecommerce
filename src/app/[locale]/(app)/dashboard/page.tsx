@@ -1,9 +1,10 @@
 "use client";
 
-// import { Card } from "@/components/ui/card";
+import { Card } from "@/components/ui/card";
 import { useAuth } from "@/contexts/AuthContext";
 import { useEffect, useState } from "react";
 import { DashboardChart } from "./components/DashboardChart/DashboardChart";
+import DashboardOrdersTable from "./components/DashboardOrdersTable/DashboardOrdersTable";
 
 export default function DashboardPage() {
   const { user, isAuthenticated } = useAuth();
@@ -39,12 +40,23 @@ export default function DashboardPage() {
   }
 
   return (
-    // <Card className="w-1/4 h-1/4">
-    <DashboardChart
-      userId={parseInt(user?.id || "1032")}
-      companyId={user?.companyId || 8690}
-      currencyId={96}
-    />
-    // </Card>
+    <div className="min-h-screen bg-background">
+      <main className="container mx-auto px-4 py-6 sm:py-8">
+        <div className="flex gap-6">
+          <div className="w-1/2">
+            <Card className="w-full h-full">
+              <DashboardChart
+                userId={parseInt(user?.id || "1032")}
+                companyId={user?.companyId || 8690}
+                currencyId={96}
+              />
+            </Card>
+          </div>
+          <div className="w-1/2">
+            <DashboardOrdersTable />
+          </div>
+        </div>
+      </main>
+    </div>
   );
 }

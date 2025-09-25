@@ -112,16 +112,39 @@ ${colorConfig
 // Chart tooltip component
 const ChartTooltip = RechartsPrimitive.Tooltip;
 
+// Tooltip payload item type
+interface TooltipPayloadItem {
+  value: number | string;
+  name: string;
+  dataKey?: string | number;
+  color?: string;
+  payload?: Record<string, unknown>;
+  [key: string]: unknown;
+}
+
 // Chart tooltip content component
 const ChartTooltipContent = React.forwardRef<
   HTMLDivElement,
-  React.ComponentProps<typeof RechartsPrimitive.Tooltip> &
+  Omit<React.ComponentProps<typeof RechartsPrimitive.Tooltip>, "content"> &
     React.ComponentProps<"div"> & {
+      active?: boolean;
+      payload?: TooltipPayloadItem[];
       hideLabel?: boolean;
       hideIndicator?: boolean;
       indicator?: "line" | "dot" | "dashed";
       nameKey?: string;
       labelKey?: string;
+      label?: string | number;
+      labelFormatter?: (value: string | number) => string;
+      labelClassName?: string;
+      formatter?: (
+        value: number | string,
+        name: string,
+        item?: TooltipPayloadItem,
+        index?: number,
+        payload?: Record<string, unknown>
+      ) => React.ReactNode;
+      color?: string;
     }
 >(
   (
@@ -190,7 +213,7 @@ const ChartTooltipContent = React.forwardRef<
           {payload.map((item, index) => {
             const key = `${nameKey || item.name || item.dataKey || "value"}`;
             const itemConfig = getPayloadConfigFromPayload(config, item, key);
-            const indicatorColor = color || item.payload.fill || item.color;
+            const indicatorColor = color || item.payload?.fill || item.color;
 
             return (
               <div
@@ -293,7 +316,7 @@ const ChartLegendContent = React.forwardRef<
           className
         )}
       >
-        {payload.map(item => {
+        {payload.map((item: TooltipPayloadItem) => {
           const key = `${nameKey || item.dataKey || "value"}`;
           const itemConfig = getPayloadConfigFromPayload(config, item, key);
 

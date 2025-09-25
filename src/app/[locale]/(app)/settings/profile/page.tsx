@@ -84,44 +84,46 @@ function AutoCompleteField({
       <Label className="text-sm font-medium text-gray-700">
         {label} <span className="text-red-500">*</span>
       </Label>
-      <Popover open={open} onOpenChange={setOpen}>
-        <PopoverTrigger asChild>
-          <Button
-            variant="outline"
-            role="combobox"
-            className="w-full justify-between border rounded-lg px-2.5 py-1.5 text-sm text-left font-normal hover:bg-accent hover:text-accent-foreground"
-            ref={triggerRef}
+      <div className="hover:bg-muted/50 transition-colors rounded-lg">
+        <Popover open={open} onOpenChange={setOpen}>
+          <PopoverTrigger asChild>
+            <Button
+              variant="outline"
+              role="combobox"
+              className="w-full justify-between border rounded-lg px-2.5 py-1.5 text-sm text-left font-normal"
+              ref={triggerRef}
+            >
+              <span className="truncate">{value || placeholder}</span>
+              <ArrowDropDownIcon />
+            </Button>
+          </PopoverTrigger>
+          <PopoverContent
+            className="p-0 rounded-lg shadow-md"
+            style={{ width: dropdownWidth }}
           >
-            <span className="truncate">{value || placeholder}</span>
-            <ArrowDropDownIcon />
-          </Button>
-        </PopoverTrigger>
-        <PopoverContent
-          className="p-0 rounded-lg shadow-md"
-          style={{ width: dropdownWidth }}
-        >
-          <Command>
-            <CommandGroup>
-              {options.map(option => (
-                <CommandItem
-                  key={option.value}
-                  onSelect={() => {
-                    setValue(option.label);
-                    setOpen(false);
-                    onChange?.();
-                  }}
-                  className="flex justify-between px-2 py-1.5 text-sm cursor-pointer select-none rounded-md hover:bg-accent hover:text-accent-foreground"
-                >
-                  {option.label}
-                  {value === option.label && (
-                    <Check className="h-4 w-4 text-gray-600" />
-                  )}
-                </CommandItem>
-              ))}
-            </CommandGroup>
-          </Command>
-        </PopoverContent>
-      </Popover>
+            <Command>
+              <CommandGroup>
+                {options.map(option => (
+                  <CommandItem
+                    key={option.value}
+                    onSelect={() => {
+                      setValue(option.label);
+                      setOpen(false);
+                      onChange?.();
+                    }}
+                    className="flex justify-between px-2 py-1.5 text-sm cursor-pointer select-none rounded-md hover:bg-accent hover:text-accent-foreground"
+                  >
+                    {option.label}
+                    {value === option.label && (
+                      <Check className="h-4 w-4 text-gray-600" />
+                    )}
+                  </CommandItem>
+                ))}
+              </CommandGroup>
+            </Command>
+          </PopoverContent>
+        </Popover>
+      </div>
     </div>
   );
 }
@@ -302,7 +304,7 @@ function ProfileCard({
         <Button
           variant="outline"
           size="sm"
-          className="text-gray-600 border-gray-200 hover:bg-gray-50 hover:border-gray-400"
+          className="text-gray-600 border-gray-200 hover:bg-gray-50 hover:border-gray-400 "
           onClick={() => setShowChangePasswordDialog(true)}
         >
           <User className="w-4 h-4 mr-1.5" />
@@ -357,15 +359,17 @@ function ProfileCard({
           {/* Name */}
           <div>
             <label className="block text-xs text-gray-600 mb-1">Name</label>
-            <input
-              type="text"
-              value={name}
-              onChange={e => {
-                setName(e.target.value);
-                onFieldChange();
-              }}
-              className="w-full px-2 py-1.5 border border-gray-300 rounded-lg hover:bg-muted/50 focus:border-gray-400 transition-colors"
-            />
+            <div className="hover:bg-muted/50 transition-colors rounded-lg ">
+              <input
+                type="text"
+                value={name}
+                onChange={e => {
+                  setName(e.target.value);
+                  onFieldChange();
+                }}
+                className="w-full px-2 py-1.5 border border-gray-300 rounded-lg focus:ring-gray-400 transition-colors focus:ring-2 focus:ring-blue-500"
+              />
+            </div>
           </div>
 
           {/* Email */}
@@ -385,38 +389,40 @@ function ProfileCard({
               Mobile Number
             </label>
             <div className="space-y-1">
-              <div className="relative">
-                <input
-                  type="text"
-                  value={phoneNumber}
-                  onChange={e => {
-                    const value = e.target.value
-                      .replace(/\D/g, "")
-                      .slice(0, 10);
-                    handlePhoneChange(value);
-                  }}
-                  className={`w-full px-3 py-2 border rounded-lg text-sm pr-20 hover:bg-muted/50 focus:border-blue-500 transition-colors ${
-                    phoneError ? "border-red-500" : "border-gray-300"
-                  }`}
-                  placeholder="Enter 10-digit number"
-                />
-                {phoneNumber.length === 10 && !phoneVerified && (
-                  <button
-                    className="MuiButtonBase-root MuiButton-root MuiButton-text MuiButton-textPrimary MuiButton-sizeSmall MuiButton-textSizeSmall MuiButton-colorPrimary MuiButton-root MuiButton-text MuiButton-textPrimary MuiButton-sizeSmall MuiButton-textSizeSmall MuiButton-colorPrimary css-17xlhhi absolute right-1 top-1/2 -translate-y-1/2 text-xs h-5 px-2 hover:bg-muted/50 transition-colors rounded"
-                    tabIndex={0}
-                    type="button"
-                    id="verify-phone"
-                    onClick={sendOtp}
-                  >
-                    Verify
-                    <span className="MuiTouchRipple-root css-w0pj6f"></span>
-                  </button>
-                )}
-                {phoneVerified && (
-                  <div className="absolute right-2 top-1/2 -translate-y-1/2 text-green-600 text-xs">
-                    ✓ Verified
-                  </div>
-                )}
+              <div className="hover:bg-muted/50 transition-colors rounded-lg">
+                <div className="relative">
+                  <input
+                    type="text"
+                    value={phoneNumber}
+                    onChange={e => {
+                      const value = e.target.value
+                        .replace(/\D/g, "")
+                        .slice(0, 10);
+                      handlePhoneChange(value);
+                    }}
+                    className={`w-full px-3 py-2 border rounded-lg text-sm pr-20 focus:border-blue-500 transition-colors ${
+                      phoneError ? "border-red-500" : "border-gray-300"
+                    }`}
+                    placeholder="Enter 10-digit number"
+                  />
+                  {phoneNumber.length === 10 && !phoneVerified && (
+                    <button
+                      className="MuiButtonBase-root MuiButton-root MuiButton-text MuiButton-textPrimary MuiButton-sizeSmall MuiButton-textSizeSmall MuiButton-colorPrimary MuiButton-root MuiButton-text MuiButton-textPrimary MuiButton-sizeSmall MuiButton-textSizeSmall MuiButton-colorPrimary css-17xlhhi absolute right-1 top-1/2 -translate-y-1/2 text-xs h-5 px-2 hover:bg-muted/50 transition-colors rounded"
+                      tabIndex={0}
+                      type="button"
+                      id="verify-phone"
+                      onClick={sendOtp}
+                    >
+                      Verify
+                      <span className="MuiTouchRipple-root css-w0pj6f"></span>
+                    </button>
+                  )}
+                  {phoneVerified && (
+                    <div className="absolute right-2 top-1/2 -translate-y-1/2 text-green-600 text-xs">
+                      ✓ Verified
+                    </div>
+                  )}
+                </div>
               </div>
               {phoneError && (
                 <p className="text-red-500 text-xs">{phoneError}</p>
@@ -430,18 +436,22 @@ function ProfileCard({
               Secondary Phone
             </label>
             <div className="space-y-1">
-              <input
-                type="text"
-                value={altPhone}
-                onChange={e => {
-                  const value = e.target.value.replace(/\D/g, "").slice(0, 10);
-                  handleAltPhoneChange(value);
-                }}
-                className={`w-full px-3 py-2 border rounded-lg text-sm hover:bg-muted/50 focus:border-blue-500 transition-colors ${
-                  altPhoneError ? "border-red-500" : "border-gray-300"
-                }`}
-                placeholder="Enter 10-digit number"
-              />
+              <div className="hover:bg-muted/50 transition-colors rounded-lg">
+                <input
+                  type="text"
+                  value={altPhone}
+                  onChange={e => {
+                    const value = e.target.value
+                      .replace(/\D/g, "")
+                      .slice(0, 10);
+                    handleAltPhoneChange(value);
+                  }}
+                  className={`w-full px-3 py-2 border rounded-lg text-sm focus:border-blue-500 transition-colors ${
+                    altPhoneError ? "border-red-500" : "border-gray-300"
+                  }`}
+                  placeholder="Enter 10-digit number"
+                />
+              </div>
               {altPhoneError && (
                 <p className="text-red-500 text-xs">{altPhoneError}</p>
               )}
@@ -454,15 +464,17 @@ function ProfileCard({
               Alternate Email
             </label>
             <div className="space-y-1">
-              <input
-                type="email"
-                value={altEmail}
-                onChange={e => handleAltEmailChange(e.target.value)}
-                className={`w-full px-2 py-1.5 border rounded-lg text-sm hover:bg-muted/50 focus:border-blue-500 transition-colors ${
-                  altEmailError ? "border-red-500" : "border-gray-300"
-                }`}
-                placeholder="Enter valid email address"
-              />
+              <div className="hover:bg-muted/50 transition-colors rounded-lg">
+                <input
+                  type="email"
+                  value={altEmail}
+                  onChange={e => handleAltEmailChange(e.target.value)}
+                  className={`w-full px-2 py-1.5 border rounded-lg text-sm focus:border-blue-500 transition-colors ${
+                    altEmailError ? "border-red-500" : "border-gray-300"
+                  }`}
+                  placeholder="Enter valid email address"
+                />
+              </div>
               {altEmailError && (
                 <p className="text-red-500 text-xs">{altEmailError}</p>
               )}
@@ -497,18 +509,20 @@ function ProfileCard({
               >
                 Enter OTP <span className="text-red-500">*</span>
               </Label>
-              <input
-                id="otp-input"
-                type="text"
-                value={otp}
-                onChange={e => {
-                  const value = e.target.value.replace(/\D/g, "").slice(0, 6);
-                  setOtp(value);
-                }}
-                className="mt-1 w-full px-3 py-2 border border-gray-300 rounded-lg text-sm hover:bg-muted/50 focus:border-blue-500 transition-colors"
-                placeholder="Enter 6-digit OTP"
-                maxLength={6}
-              />
+              <div className="hover:bg-muted/50 transition-colors rounded-lg mt-1">
+                <input
+                  id="otp-input"
+                  type="text"
+                  value={otp}
+                  onChange={e => {
+                    const value = e.target.value.replace(/\D/g, "").slice(0, 6);
+                    setOtp(value);
+                  }}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:border-blue-500 transition-colors"
+                  placeholder="Enter 6-digit OTP"
+                  maxLength={6}
+                />
+              </div>
             </div>
 
             <div className="flex justify-end gap-2">
@@ -548,19 +562,21 @@ function ProfileCard({
               >
                 Enter your OTP <span className="text-red-500">*</span>
               </Label>
-              <input
-                id="password-otp-input"
-                type="text"
-                value={passwordOtp}
-                onChange={e => {
-                  const value = e.target.value.replace(/\D/g, "").slice(0, 6);
-                  setPasswordOtp(value);
-                }}
-                className="mt-1 w-full px-3 py-2 border border-gray-300 rounded-lg text-sm hover:bg-muted/50 focus:border-blue-500 transition-colors"
-                placeholder="Enter 6-digit OTP"
-                maxLength={6}
-                autoFocus
-              />
+              <div className="hover:bg-muted/50 transition-colors rounded-lg mt-1">
+                <input
+                  id="password-otp-input"
+                  type="text"
+                  value={passwordOtp}
+                  onChange={e => {
+                    const value = e.target.value.replace(/\D/g, "").slice(0, 6);
+                    setPasswordOtp(value);
+                  }}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:border-blue-500 transition-colors"
+                  placeholder="Enter 6-digit OTP"
+                  maxLength={6}
+                  autoFocus
+                />
+              </div>
             </div>
 
             {/* Resend Button - Centered */}
@@ -584,30 +600,32 @@ function ProfileCard({
               >
                 Enter New Password <span className="text-red-500">*</span>
               </Label>
-              <div className="relative mt-1">
-                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                  <Lock className="h-4 w-4 text-gray-400" />
+              <div className="hover:bg-muted/50 transition-colors rounded-lg mt-1">
+                <div className="relative">
+                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                    <Lock className="h-4 w-4 text-gray-400" />
+                  </div>
+                  <input
+                    id="new-password-input"
+                    type={showPassword ? "text" : "password"}
+                    value={newPassword}
+                    onChange={e => setNewPassword(e.target.value)}
+                    className="w-full pl-10 pr-10 py-2 border border-gray-300 rounded-lg text-sm focus:border-blue-500 transition-colors"
+                    placeholder="Enter new password"
+                    minLength={6}
+                  />
+                  <button
+                    type="button"
+                    className="absolute inset-y-0 right-0 pr-3 flex items-center"
+                    onClick={() => setShowPassword(!showPassword)}
+                  >
+                    {showPassword ? (
+                      <EyeOff className="h-4 w-4 text-gray-400 hover:text-gray-600" />
+                    ) : (
+                      <Eye className="h-4 w-4 text-gray-400 hover:text-gray-600" />
+                    )}
+                  </button>
                 </div>
-                <input
-                  id="new-password-input"
-                  type={showPassword ? "text" : "password"}
-                  value={newPassword}
-                  onChange={e => setNewPassword(e.target.value)}
-                  className="w-full pl-10 pr-10 py-2 border border-gray-300 rounded-lg text-sm hover:bg-muted/50 focus:border-blue-500 transition-colors"
-                  placeholder="Enter new password"
-                  minLength={6}
-                />
-                <button
-                  type="button"
-                  className="absolute inset-y-0 right-0 pr-3 flex items-center"
-                  onClick={() => setShowPassword(!showPassword)}
-                >
-                  {showPassword ? (
-                    <EyeOff className="h-4 w-4 text-gray-400 hover:text-gray-600" />
-                  ) : (
-                    <Eye className="h-4 w-4 text-gray-400 hover:text-gray-600" />
-                  )}
-                </button>
               </div>
             </div>
 
@@ -924,7 +942,7 @@ export default function ProfilePage() {
                   </Button>
                   <Button
                     size="sm"
-                    className="bg-black hover:bg-black-600/90 text-white rounded-lg"
+                    className="bg-black hover:bg-gray-600/90 text-white rounded-lg"
                     onClick={handlePrefSave}
                     disabled={isLoading}
                   >

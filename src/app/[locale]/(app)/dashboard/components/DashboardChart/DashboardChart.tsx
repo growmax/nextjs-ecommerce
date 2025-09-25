@@ -389,7 +389,7 @@ export function DashboardChart({
               axisLine={false}
               tickMargin={8}
               tickCount={5}
-              tickFormatter={value => {
+              tickFormatter={(value: number) => {
                 if (value >= 1000000) {
                   return `${(value / 1000000).toFixed(1)}M`;
                 } else if (value >= 1000) {
