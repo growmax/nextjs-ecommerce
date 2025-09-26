@@ -3,9 +3,9 @@
 import { useAuth } from "@/contexts/AuthContext";
 import { useEffect, useState } from "react";
 import DashboardOrdersTable from "./components/DashboardOrdersTable/DashboardOrdersTable";
-import { ChartAreaAxes } from "./components/DashboardChart/Dashboardchartdatas";
+import { Dashboardchartdatas } from "./components/DashboardChart/Dashboardchartdatas";
 
-export default function DashboardPage() {
+function DashboardPage() {
   const { isAuthenticated } = useAuth();
   const [mounted, setMounted] = useState(false);
 
@@ -46,7 +46,7 @@ export default function DashboardPage() {
       <main className="container mx-auto px-4 py-6 sm:py-8">
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 items-start">
           <div className="w-full">
-            <ChartAreaAxes />
+            <Dashboardchartdatas />
           </div>
           <div className="w-full">
             <DashboardOrdersTable />
@@ -56,3 +56,5 @@ export default function DashboardPage() {
     </div>
   );
 }
+
+export default DashboardPage;

@@ -1,3 +1,5 @@
+"use client";
+
 import {
   SaveCancelAlertExample,
   SaveCancelDialogExample,
@@ -6,8 +8,18 @@ import {
 import { DashboardToolbarDemo } from "@/components/examples/dashboard-toolbar-demo";
 import { CenteredLayout } from "@/components/layout/PageContent";
 import CartPriceDetails from "@/components/custom/CartPriceDetails";
+import { QuoteFilterForm, QuoteFilterFormData } from "@/components/sales";
 
-export default async function Home() {
+export default function Home() {
+  const handleQuoteFilterSubmit = (_data: QuoteFilterFormData) => {
+    // Handle filter submission logic here
+    // console.log("Quote Filter Data:", _data);
+  };
+
+  const handleQuoteFilterReset = () => {
+    // console.log("Quote filters reset");
+  };
+
   return (
     <CenteredLayout className="min-h-screen bg-background">
       <div className="space-y-8">
@@ -15,7 +27,8 @@ export default async function Home() {
           <div className="text-center space-y-4">
             <h1 className="text-2xl font-bold">Components Demo</h1>
             <p className="text-muted-foreground">
-              Test the migrated components and dashboard toolbar
+              Test the migrated components, dashboard toolbar, and Quote Filter
+              Form
             </p>
           </div>
         </div>
@@ -24,6 +37,25 @@ export default async function Home() {
           <div className="grid gap-8 grid-cols-1 lg:grid-cols-3">
             {/* Left side content - spans 2 columns on large screens */}
             <div className="lg:col-span-2 space-y-8">
+              {/* Quote Filter Form Component Test */}
+              <div className="space-y-4">
+                <h2 className="text-xl font-semibold">
+                  Quote Filter Form Test
+                </h2>
+                <QuoteFilterForm
+                  onSubmit={handleQuoteFilterSubmit}
+                  onReset={handleQuoteFilterReset}
+                  statusOptions={[
+                    { value: "draft", label: "Draft" },
+                    { value: "pending", label: "Pending" },
+                    { value: "approved", label: "Approved" },
+                    { value: "rejected", label: "Rejected" },
+                    { value: "expired", label: "Expired" },
+                    { value: "cancelled", label: "Cancelled" },
+                  ]}
+                />
+              </div>
+
               <div className="bg-card border rounded-lg p-6">
                 <DashboardToolbarDemo />
               </div>

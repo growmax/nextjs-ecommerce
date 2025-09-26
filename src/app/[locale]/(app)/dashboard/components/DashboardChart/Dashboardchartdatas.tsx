@@ -54,7 +54,7 @@ interface DashboardSummaryData {
   trendPercentage: number;
 }
 
-export function ChartAreaAxes() {
+export function Dashboardchartdatas() {
   const [rawData, setRawData] = useState<DashboardData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
