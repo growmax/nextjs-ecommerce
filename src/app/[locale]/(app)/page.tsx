@@ -8,9 +8,13 @@ import {
 import { DashboardToolbarDemo } from "@/components/examples/dashboard-toolbar-demo";
 import { CenteredLayout } from "@/components/layout/PageContent";
 import CartPriceDetails from "@/components/custom/CartPriceDetails";
-import { QuoteFilterForm, QuoteFilterFormData } from "@/components/sales";
+import { QuoteFilterDrawer, QuoteFilterFormData } from "@/components/sales";
+import { useState } from "react";
+import { Button } from "@/components/ui/button";
 
 export default function Home() {
+  const [isDrawerOpen, setIsDrawerOpen] = useState(false);
+
   const handleQuoteFilterSubmit = (_data: QuoteFilterFormData) => {
     // Handle filter submission logic here
     // console.log("Quote Filter Data:", _data);
@@ -18,6 +22,14 @@ export default function Home() {
 
   const handleQuoteFilterReset = () => {
     // console.log("Quote filters reset");
+  };
+
+  const handleDrawerClose = () => {
+    setIsDrawerOpen(false);
+  };
+
+  const handleOpenDrawer = () => {
+    setIsDrawerOpen(true);
   };
 
   return (
@@ -37,12 +49,18 @@ export default function Home() {
           <div className="grid gap-8 grid-cols-1 lg:grid-cols-3">
             {/* Left side content - spans 2 columns on large screens */}
             <div className="lg:col-span-2 space-y-8">
-              {/* Quote Filter Form Component Test */}
+              {/* Quote Filter Drawer Component Test */}
               <div className="space-y-4">
                 <h2 className="text-xl font-semibold">
-                  Quote Filter Form Test
+                  Quote Filter Drawer Test
                 </h2>
-                <QuoteFilterForm
+                <Button onClick={handleOpenDrawer} variant="outline">
+                  Open Filter Drawer
+                </Button>
+
+                <QuoteFilterDrawer
+                  open={isDrawerOpen}
+                  onClose={handleDrawerClose}
                   onSubmit={handleQuoteFilterSubmit}
                   onReset={handleQuoteFilterReset}
                   statusOptions={[
