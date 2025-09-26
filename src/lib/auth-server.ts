@@ -54,7 +54,9 @@ export class ServerAuth {
 
       // Check if token is expired
       if (this.isTokenExpired(accessToken)) {
-        return false;
+        // Token is expired, attempt refresh
+        const refreshSuccess = await this.attemptServerSideRefresh();
+        return refreshSuccess;
       }
 
       return true;
@@ -171,6 +173,24 @@ export class ServerAuth {
   static async shouldShowUnauthenticatedUI(): Promise<boolean> {
     const isAuth = await this.isAuthenticated();
     return !isAuth;
+  }
+
+  /**
+   * Check if refresh token exists (indicates user should stay logged in)
+   *
+   * @returns Promise<boolean> - True if refresh token exists
+   */
+  private static async attemptServerSideRefresh(): Promise<boolean> {
+    try {
+      const cookieStore = await cookies();
+      const refreshToken = cookieStore.get("refresh_token")?.value;
+
+      // If refresh token exists, assume user should stay authenticated
+      // The client-side token refresh will handle the actual token refresh
+      return !!refreshToken;
+    } catch (_error) {
+      return false;
+    }
   }
 
   /**

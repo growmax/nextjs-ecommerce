@@ -3,40 +3,85 @@ import type {
   DashboardFilterParams,
   DashboardQueryParams,
 } from "@/types/dashboard";
+import { RequestContext, coreCommerceClient } from "../client";
+import { BaseService } from "./BaseService";
 
-export class DashboardService {
-  static async getDashboardData(
+export class DashboardService extends BaseService<DashboardService> {
+  // Configure default client for dashboard operations
+  protected defaultClient = coreCommerceClient;
+
+  /**
+   * 🚀 SIMPLIFIED: Get dashboard data (auto-context)
+   * Usage: DashboardService.getDashboardData(params, filters)
+   */
+  async getDashboardData(
     params: DashboardQueryParams,
     filters: DashboardFilterParams
   ): Promise<DashboardApiResponse> {
     const { userId, companyId, offset, limit, currencyId } = params;
 
-    // Build URL with query parameters for our Next.js API route
-    const url = new URL("/api/dashboard", window.location.origin);
-    url.searchParams.append("userId", userId.toString());
-    url.searchParams.append("companyId", companyId.toString());
-    url.searchParams.append("offset", offset.toString());
-    url.searchParams.append("limit", limit.toString());
-    url.searchParams.append("currencyId", currencyId.toString());
-
-    const response = await fetch(url.toString(), {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify(filters),
-      credentials: "include", // Include cookies for authentication
-    });
-
-    if (!response.ok) {
-      throw new Error(`Dashboard API error: ${response.status}`);
-    }
-
-    const data: DashboardApiResponse = await response.json();
-    return data;
+    return (await this.call(
+      `/dashBoardService/findByDashBoardFilter?userId=${userId}&companyId=${companyId}&offset=${offset}&limit=${limit}&currencyId=${currencyId}`,
+      filters,
+      "POST"
+    )) as DashboardApiResponse;
   }
 
-  static transformOrderDataForChart(data: DashboardApiResponse) {
+  /**
+   * 🔧 ADVANCED: Get dashboard data with custom context (when needed)
+   */
+  async getDashboardDataWithContext(
+    params: DashboardQueryParams,
+    filters: DashboardFilterParams,
+    context: RequestContext
+  ): Promise<DashboardApiResponse> {
+    const { userId, companyId, offset, limit, currencyId } = params;
+
+    return (await this.callWith(
+      `/dashBoardService/findByDashBoardFilter?userId=${userId}&companyId=${companyId}&offset=${offset}&limit=${limit}&currencyId=${currencyId}`,
+      filters,
+      { context, method: "POST" }
+    )) as DashboardApiResponse;
+  }
+
+  /**
+   * 🛡️ SIMPLIFIED: Server-side version (auto-context + error handling)
+   * Usage: DashboardService.getDashboardDataServerSide(params, filters)
+   */
+  async getDashboardDataServerSide(
+    params: DashboardQueryParams,
+    filters: DashboardFilterParams
+  ): Promise<DashboardApiResponse | null> {
+    const { userId, companyId, offset, limit, currencyId } = params;
+
+    return (await this.callSafe(
+      `/dashBoardService/findByDashBoardFilter?userId=${userId}&companyId=${companyId}&offset=${offset}&limit=${limit}&currencyId=${currencyId}`,
+      filters,
+      "POST"
+    )) as DashboardApiResponse | null;
+  }
+
+  /**
+   * 🔧 ADVANCED: Server-side with custom context (when needed)
+   */
+  async getDashboardDataServerSideWithContext(
+    params: DashboardQueryParams,
+    filters: DashboardFilterParams,
+    context: RequestContext
+  ): Promise<DashboardApiResponse | null> {
+    const { userId, companyId, offset, limit, currencyId } = params;
+
+    return (await this.callWithSafe(
+      `/dashBoardService/findByDashBoardFilter?userId=${userId}&companyId=${companyId}&offset=${offset}&limit=${limit}&currencyId=${currencyId}`,
+      filters,
+      { context, method: "POST" }
+    )) as DashboardApiResponse | null;
+  }
+
+  /**
+   * Transform dashboard data for chart visualization
+   */
+  transformOrderDataForChart(data: DashboardApiResponse) {
     const monthlyData = new Map<
       string,
       {
@@ -242,7 +287,10 @@ export class DashboardService {
     });
   }
 
-  static calculateTrendPercentage(data: DashboardApiResponse): number {
+  /**
+   * Calculate trend percentage from dashboard data
+   */
+  calculateTrendPercentage(data: DashboardApiResponse): number {
     if (!data.data.lsOrderGraphDto || data.data.lsOrderGraphDto.length < 2) {
       return 0;
     }
@@ -282,7 +330,10 @@ export class DashboardService {
     );
   }
 
-  static getDateRange(data: DashboardApiResponse): string {
+  /**
+   * Get date range from dashboard data
+   */
+  getDateRange(data: DashboardApiResponse): string {
     if (!data.data.lsOrderGraphDto || data.data.lsOrderGraphDto.length === 0) {
       return "No data available";
     }
@@ -311,7 +362,10 @@ export class DashboardService {
     return `${sortedMonths[0]} - ${sortedMonths[sortedMonths.length - 1]}`;
   }
 
-  static getComprehensiveStats(data: DashboardApiResponse) {
+  /**
+   * Get comprehensive statistics from dashboard data
+   */
+  getComprehensiveStats(data: DashboardApiResponse) {
     const stats = {
       totalOrderValue: 0,
       totalQuoteValue: 0,
@@ -400,3 +454,5 @@ export class DashboardService {
     };
   }
 }
+
+export default DashboardService.getInstance();

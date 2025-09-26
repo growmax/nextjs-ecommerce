@@ -1,10 +1,10 @@
 "use client";
 
+import type { DashboardApiResponse } from "@/lib/api";
+import { DashboardService } from "@/lib/api";
+import { TrendingDown, TrendingUp } from "lucide-react";
 import { useEffect, useState } from "react";
-import { TrendingUp, TrendingDown } from "lucide-react";
 import { Area, AreaChart, CartesianGrid, XAxis, YAxis } from "recharts";
-import { DashboardService } from "@/services/dashboardService";
-import type { DashboardApiResponse } from "@/types/dashboard";
 
 import {
   Card,

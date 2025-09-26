@@ -1,6 +1,14 @@
 "use client";
 
-import React, { useState, useMemo, useEffect } from "react";
+import { statusColor } from "@/components/custom/statuscolors";
+import { Button } from "@/components/ui/button";
+import {
+  Card,
+  CardContent,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import {
   Table,
   TableBody,
@@ -9,18 +17,11 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import {
-  Card,
-  CardHeader,
-  CardTitle,
-  CardContent,
-  CardFooter,
-} from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { ArrowUpDown, ArrowDownIcon } from "lucide-react";
-import { useRouter } from "next/navigation";
+import { OrdersService } from "@/lib/api";
+import { ArrowDownIcon, ArrowUpDown } from "lucide-react";
 import { useLocale } from "next-intl";
-import { statusColor } from "@/components/custom/statuscolors";
+import { useRouter } from "next/navigation";
+import React, { useEffect, useMemo, useState } from "react";
 
 const { createElement: h } = React;
 
@@ -84,40 +85,36 @@ export default function DashboardOrdersTable() {
     try {
       setLoading(true);
       setError(null);
-
-      const response = await fetch(
-        `/api/orders?offset=${offset}&limit=${limit}`,
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-        }
-      );
-
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(
-          `HTTP error! status: ${response.status}, message: ${errorData.error || "Unknown error"}`
-        );
-      }
-
-      const result = await response.json();
+      const result = await OrdersService.getOrders({
+        userId: "1032", // You might want to make this dynamic
+        companyId: "8690", // You might want to make this dynamic
+        offset,
+        limit,
+      });
 
       let ordersData: Order[] = [];
       let totalCount = 0;
 
       // Handle the specific API response format
+      const apiResult = result as {
+        status?: string;
+        data?: {
+          ordersResponse?: Order[];
+          totalOrderCount?: number;
+        };
+      };
+
       if (
-        result &&
-        typeof result === "object" &&
-        result.status === "success" &&
-        result.data
+        apiResult &&
+        typeof apiResult === "object" &&
+        apiResult.status === "success" &&
+        apiResult.data
       ) {
-        if (Array.isArray(result.data.ordersResponse)) {
-          ordersData = result.data.ordersResponse;
+        if (Array.isArray(apiResult.data.ordersResponse)) {
+          ordersData = apiResult.data.ordersResponse;
           totalCount =
-            result.data.totalOrderCount || result.data.ordersResponse.length;
+            apiResult.data.totalOrderCount ||
+            apiResult.data.ordersResponse.length;
         }
       }
 
