@@ -1,10 +1,36 @@
+"use client";
+
+import { useState } from "react";
 import { Card, CardContent, CardTitle, CardHeader } from "@/components/ui/card";
+import SideDrawer from "@/components/custom/sidedrawer";
 
 export default function OrdersLandingPage() {
+  const [isDrawerOpen, setIsDrawerOpen] = useState(false);
+
+  const handleCardClick = () => {
+    setIsDrawerOpen(true);
+  };
+
+  const handleDrawerClose = () => {
+    setIsDrawerOpen(false);
+  };
+
+  const handleClearAll = () => {
+    // Add your clear all logic here
+    setIsDrawerOpen(false);
+  };
+
+  const handleApply = () => {
+    // Add your apply logic here
+    handleDrawerClose();
+  };
   return (
     <div className="min-h-screen bg-background">
       <div className="container mx-auto px-4 py-8">
-        <Card className="w-full max-w-4xl mx-auto">
+        <Card
+          className="w-full max-w-4xl mx-auto cursor-pointer hover:shadow-lg transition-shadow"
+          onClick={handleCardClick}
+        >
           <CardHeader>
             <CardTitle className="text-2xl font-bold font-sans">
               Orders Landing
@@ -53,6 +79,14 @@ export default function OrdersLandingPage() {
           </CardContent>
         </Card>
       </div>
+
+      <SideDrawer
+        open={isDrawerOpen}
+        onClose={handleDrawerClose}
+        title="Filters"
+        onClearAll={handleClearAll}
+        onApply={handleApply}
+      />
     </div>
   );
 }

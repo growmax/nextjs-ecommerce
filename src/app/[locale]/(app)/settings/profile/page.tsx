@@ -367,7 +367,7 @@ function ProfileCard({
                   setName(e.target.value);
                   onFieldChange();
                 }}
-                className="w-full px-2 py-1.5 border border-gray-300 rounded-lg focus:ring-gray-400 transition-colors focus:ring-2 focus:ring-blue-500"
+                className="w-full px-2 py-1.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 transition-colors"
               />
             </div>
           </div>
