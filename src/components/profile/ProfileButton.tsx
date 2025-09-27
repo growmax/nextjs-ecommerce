@@ -1,14 +1,14 @@
 "use client";
 
-import { User } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import ProfileMenu from "./ProfileMenu";
+import { User } from "lucide-react";
 import dynamic from "next/dynamic";
+import ProfileMenu from "./ProfileMenu";
 
 function ProfileDropdown() {
   return (

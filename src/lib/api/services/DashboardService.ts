@@ -3,17 +3,13 @@ import type {
   DashboardFilterParams,
   DashboardQueryParams,
 } from "@/types/dashboard";
-import { RequestContext, coreCommerceClient } from "../client";
+import { coreCommerceClient } from "../client";
 import { BaseService } from "./BaseService";
+// dashBoardService/findByDashBoardFilterNew?userId=${userId}&companyId=${companyId}&offset=0&limit=99999999&currencyId=${currencyId}`
 
 export class DashboardService extends BaseService<DashboardService> {
-  // Configure default client for dashboard operations
   protected defaultClient = coreCommerceClient;
 
-  /**
-   * 🚀 SIMPLIFIED: Get dashboard data (auto-context)
-   * Usage: DashboardService.getDashboardData(params, filters)
-   */
   async getDashboardData(
     params: DashboardQueryParams,
     filters: DashboardFilterParams
@@ -21,63 +17,11 @@ export class DashboardService extends BaseService<DashboardService> {
     const { userId, companyId, offset, limit, currencyId } = params;
 
     return (await this.call(
-      `/dashBoardService/findByDashBoardFilter?userId=${userId}&companyId=${companyId}&offset=${offset}&limit=${limit}&currencyId=${currencyId}`,
+      `/dashBoardService/findByDashBoardFilterNew?userId=${userId}&companyId=${companyId}&offset=${offset}&limit=${limit}&currencyId=${currencyId}`,
       filters,
       "POST"
     )) as DashboardApiResponse;
   }
-
-  /**
-   * 🔧 ADVANCED: Get dashboard data with custom context (when needed)
-   */
-  async getDashboardDataWithContext(
-    params: DashboardQueryParams,
-    filters: DashboardFilterParams,
-    context: RequestContext
-  ): Promise<DashboardApiResponse> {
-    const { userId, companyId, offset, limit, currencyId } = params;
-
-    return (await this.callWith(
-      `/dashBoardService/findByDashBoardFilter?userId=${userId}&companyId=${companyId}&offset=${offset}&limit=${limit}&currencyId=${currencyId}`,
-      filters,
-      { context, method: "POST" }
-    )) as DashboardApiResponse;
-  }
-
-  /**
-   * 🛡️ SIMPLIFIED: Server-side version (auto-context + error handling)
-   * Usage: DashboardService.getDashboardDataServerSide(params, filters)
-   */
-  async getDashboardDataServerSide(
-    params: DashboardQueryParams,
-    filters: DashboardFilterParams
-  ): Promise<DashboardApiResponse | null> {
-    const { userId, companyId, offset, limit, currencyId } = params;
-
-    return (await this.callSafe(
-      `/dashBoardService/findByDashBoardFilter?userId=${userId}&companyId=${companyId}&offset=${offset}&limit=${limit}&currencyId=${currencyId}`,
-      filters,
-      "POST"
-    )) as DashboardApiResponse | null;
-  }
-
-  /**
-   * 🔧 ADVANCED: Server-side with custom context (when needed)
-   */
-  async getDashboardDataServerSideWithContext(
-    params: DashboardQueryParams,
-    filters: DashboardFilterParams,
-    context: RequestContext
-  ): Promise<DashboardApiResponse | null> {
-    const { userId, companyId, offset, limit, currencyId } = params;
-
-    return (await this.callWithSafe(
-      `/dashBoardService/findByDashBoardFilter?userId=${userId}&companyId=${companyId}&offset=${offset}&limit=${limit}&currencyId=${currencyId}`,
-      filters,
-      { context, method: "POST" }
-    )) as DashboardApiResponse | null;
-  }
-
   /**
    * Transform dashboard data for chart visualization
    */

@@ -1,18 +1,6 @@
 "use client";
 
-import { useRouter } from "next/navigation";
-import {
-  Home,
-  LayoutDashboard,
-  ShoppingBag,
-  Settings,
-  Building2,
-  IdCard,
-  ShoppingCart,
-  FileText,
-  LogOut,
-  Loader2,
-} from "lucide-react";
+import { CardContent, CardTitle } from "@/components/ui/card";
 import {
   DropdownMenuItem,
   DropdownMenuLabel,
@@ -21,9 +9,21 @@ import {
   DropdownMenuSubContent,
   DropdownMenuSubTrigger,
 } from "@/components/ui/dropdown-menu";
-import { CardContent, CardTitle } from "@/components/ui/card";
-import useUserProfile from "./useUserProfile";
-import useLogout from "./useLogout";
+import useLogout from "@/hooks/Auth/useLogout";
+import {
+  Building2,
+  FileText,
+  Home,
+  IdCard,
+  LayoutDashboard,
+  Loader2,
+  LogOut,
+  Settings,
+  ShoppingBag,
+  ShoppingCart,
+} from "lucide-react";
+import { useRouter } from "next/navigation";
+import useUserProfile from "../../hooks/Profile/useUserProfile";
 
 export default function ProfileMenu() {
   const router = useRouter();

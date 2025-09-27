@@ -2,6 +2,8 @@
 
 import type { DashboardApiResponse } from "@/lib/api";
 import { DashboardService } from "@/lib/api";
+import { AuthStorage } from "@/lib/auth";
+import { JWTService } from "@/lib/services/JWTService";
 import { TrendingDown, TrendingUp } from "lucide-react";
 import { useEffect, useState } from "react";
 import { Area, AreaChart, CartesianGrid, XAxis, YAxis } from "recharts";
@@ -17,29 +19,33 @@ import {
 import { ChartContainer, ChartTooltip } from "@/components/ui/chart";
 import { chartConfig } from "@/const/dashboard/dashboard.const";
 
-interface DashboardChartProps {
-  userId: number;
-  companyId: number;
-  currencyId: number;
-}
-
-export function DashboardChart({
-  userId,
-  companyId,
-  currencyId,
-}: DashboardChartProps) {
+export function DashboardChart() {
   const [chartData, setChartData] = useState<Record<string, unknown>[]>([]);
   const [stats, setStats] = useState<Record<string, unknown> | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [trendPercentage, setTrendPercentage] = useState(0);
   const [dateRange, setDateRange] = useState("Loading...");
+  const jwtService = JWTService.getInstance();
 
   useEffect(() => {
     const fetchDashboardData = async () => {
       try {
         setIsLoading(true);
         setError(null);
+
+        // Get user data from token
+        const token = AuthStorage.getAccessToken();
+        if (!token) {
+          setError("No access token found");
+          return;
+        }
+
+        const payload = jwtService.getTokenPayload(token);
+        if (!payload) {
+          setError("Invalid token");
+          return;
+        }
 
         const currentYear = new Date().getFullYear();
         const filters = {
@@ -54,11 +60,11 @@ export function DashboardChart({
         };
 
         const params = {
-          userId,
-          companyId,
+          userId: payload.userId,
+          companyId: payload.companyId,
           offset: 0,
           limit: 99999999,
-          currencyId,
+          currencyId: 96, // Default currency ID - should be from user preferences
         };
 
         const response: DashboardApiResponse =
@@ -92,7 +98,7 @@ export function DashboardChart({
     };
 
     fetchDashboardData();
-  }, [userId, companyId, currencyId]);
+  }, [jwtService]);
 
   if (isLoading) {
     return (
