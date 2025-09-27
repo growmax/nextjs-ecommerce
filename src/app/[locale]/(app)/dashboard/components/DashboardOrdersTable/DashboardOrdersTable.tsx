@@ -18,100 +18,67 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { OrdersService } from "@/lib/api";
+import { useDashboardOrders } from "@/hooks/useDashboardData";
 import { Order } from "@/types/Dashboard/DasbordOrderstable/DashboardOrdersTable";
 import { ArrowDownIcon, ArrowUpDown } from "lucide-react";
 import { useLocale } from "next-intl";
 import { useRouter } from "next/navigation";
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useMemo, useState } from "react";
 
 const { createElement: h } = React;
 
 export default function DashboardOrdersTable() {
-  const [orders, setOrders] = useState<Order[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const [totalCount, setTotalCount] = useState(0);
   const [sortConfig, setSortConfig] = useState<{
     key: keyof Order;
     direction: "asc" | "desc";
   }>({ key: "orderName", direction: "desc" });
   const [displayCount] = useState(10);
-  const [isRefreshing, setIsRefreshing] = useState(false);
   const router = useRouter();
   const locale = useLocale();
 
-  const fetchOrders = async (
-    offset: number = 0,
-    limit: number = 10,
-    isRefresh: boolean = false
-  ) => {
-    try {
-      if (isRefresh) {
-        setIsRefreshing(true);
-      } else {
-        setLoading(true);
-      }
-      setError(null);
-      const result = await OrdersService.getOrders({
-        userId: "1032", // You might want to make this dynamic
-        companyId: "8690", // You might want to make this dynamic
-        offset,
-        limit,
-      });
+  const {
+    data: result,
+    isLoading: loading,
+    error,
+    isError,
+    isRefetching: isRefreshing,
+  } = useDashboardOrders({
+    userId: "1032", // You might want to make this dynamic
+    companyId: "8690", // You might want to make this dynamic
+    offset: 0,
+    limit: 10,
+  });
 
-      let ordersData: Order[] = [];
-      let totalCount = 0;
+  // Process the API response data
+  const { orders, totalCount } = useMemo(() => {
+    let ordersData: Order[] = [];
+    let totalCount = 0;
 
-      // Handle the specific API response format
-      const apiResult = result as {
-        status?: string;
-        data?: {
-          ordersResponse?: Order[];
-          totalOrderCount?: number;
-        };
+    // Handle the specific API response format
+    const apiResult = result as {
+      status?: string;
+      data?: {
+        ordersResponse?: Order[];
+        totalOrderCount?: number;
       };
+    };
 
-      if (
-        apiResult &&
-        typeof apiResult === "object" &&
-        apiResult.status === "success" &&
-        apiResult.data
-      ) {
-        if (Array.isArray(apiResult.data.ordersResponse)) {
-          ordersData = apiResult.data.ordersResponse;
-          totalCount =
-            apiResult.data.totalOrderCount ||
-            apiResult.data.ordersResponse.length;
-        }
+    if (
+      apiResult &&
+      typeof apiResult === "object" &&
+      apiResult.status === "success" &&
+      apiResult.data
+    ) {
+      if (Array.isArray(apiResult.data.ordersResponse)) {
+        ordersData = apiResult.data.ordersResponse;
+        totalCount =
+          apiResult.data.totalOrderCount ||
+          apiResult.data.ordersResponse.length;
       }
-
-      if (ordersData.length > 0 || Array.isArray(ordersData)) {
-        if (offset === 0) {
-          setOrders(ordersData);
-        } else {
-          setOrders(prev => [...prev, ...ordersData]);
-        }
-        setTotalCount(totalCount);
-      } else {
-        setOrders([]);
-        setTotalCount(0);
-      }
-    } catch (err) {
-      setError(
-        `Failed to fetch orders: ${err instanceof Error ? err.message : "Unknown error"}`
-      );
-      setOrders([]);
-      setTotalCount(0);
-    } finally {
-      setLoading(false);
-      setIsRefreshing(false);
     }
-  };
 
-  useEffect(() => {
-    fetchOrders(0, 10);
-  }, []);
+    return { orders: ordersData, totalCount };
+  }, [result]);
 
   const sortedOrders = useMemo(() => {
     return [...orders].sort((a, b) => {
@@ -353,7 +320,7 @@ export default function DashboardOrdersTable() {
                   h(
                     TableBody,
                     { className: "bg-white divide-y divide-gray-100" },
-                    error
+                    isError
                       ? h(
                           TableRow,
                           {},
@@ -364,7 +331,7 @@ export default function DashboardOrdersTable() {
                               className:
                                 "px-3 py-3 text-center text-sm text-red-500",
                             },
-                            error
+                            `Failed to fetch orders: ${error instanceof Error ? error.message : "Unknown error"}`
                           )
                         )
                       : displayedOrders.length === 0

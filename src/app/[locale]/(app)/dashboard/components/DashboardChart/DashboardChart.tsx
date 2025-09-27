@@ -1,11 +1,7 @@
 "use client";
 
-import type { DashboardApiResponse } from "@/lib/api";
-import { DashboardService } from "@/lib/api";
-import { AuthStorage } from "@/lib/auth";
-import { JWTService } from "@/lib/services/JWTService";
+import { useDashboardChartData } from "@/hooks/useDashboardData";
 import { TrendingDown, TrendingUp } from "lucide-react";
-import { useEffect, useState } from "react";
 import { Area, AreaChart, CartesianGrid, XAxis, YAxis } from "recharts";
 
 import {
@@ -20,85 +16,12 @@ import { ChartContainer, ChartTooltip } from "@/components/ui/chart";
 import { chartConfig } from "@/const/dashboard/dashboard.const";
 
 export function DashboardChart() {
-  const [chartData, setChartData] = useState<Record<string, unknown>[]>([]);
-  const [stats, setStats] = useState<Record<string, unknown> | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const [trendPercentage, setTrendPercentage] = useState(0);
-  const [dateRange, setDateRange] = useState("Loading...");
-  const jwtService = JWTService.getInstance();
+  const { data, isLoading, error, isError } = useDashboardChartData();
 
-  useEffect(() => {
-    const fetchDashboardData = async () => {
-      try {
-        setIsLoading(true);
-        setError(null);
-
-        // Get user data from token
-        const token = AuthStorage.getAccessToken();
-        if (!token) {
-          setError("No access token found");
-          return;
-        }
-
-        const payload = jwtService.getTokenPayload(token);
-        if (!payload) {
-          setError("Invalid token");
-          return;
-        }
-
-        const currentYear = new Date().getFullYear();
-        const filters = {
-          accountId: [],
-          endDate: `${currentYear}-12-31T23:59:59.999Z`,
-          endValue: null,
-          identifier: "",
-          name: "",
-          startDate: `${currentYear}-01-01T00:00:00.000Z`,
-          startValue: null,
-          status: [],
-        };
-
-        const params = {
-          userId: payload.userId,
-          companyId: payload.companyId,
-          offset: 0,
-          limit: 99999999,
-          currencyId: 96, // Default currency ID - should be from user preferences
-        };
-
-        const response: DashboardApiResponse =
-          await DashboardService.getDashboardData(params, filters);
-
-        if (response.status === "success" && response.data) {
-          const transformedData =
-            DashboardService.transformOrderDataForChart(response);
-          setChartData(transformedData);
-
-          const comprehensiveStats =
-            DashboardService.getComprehensiveStats(response);
-          setStats(comprehensiveStats);
-
-          const trend = DashboardService.calculateTrendPercentage(response);
-          setTrendPercentage(trend);
-
-          const range = DashboardService.getDateRange(response);
-          setDateRange(range);
-        } else {
-          setError("Failed to load dashboard data");
-        }
-      } catch (err) {
-        // Error fetching dashboard data: err
-        setError(
-          err instanceof Error ? err.message : "Failed to load dashboard data"
-        );
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    fetchDashboardData();
-  }, [jwtService]);
+  const chartData = data?.chartData || [];
+  const stats = data?.stats || null;
+  const trendPercentage = data?.trendPercentage || 0;
+  const dateRange = data?.dateRange || "Loading...";
 
   if (isLoading) {
     return (
@@ -114,7 +37,7 @@ export function DashboardChart() {
     );
   }
 
-  if (error) {
+  if (isError) {
     return (
       <Card>
         <CardHeader>
@@ -122,7 +45,11 @@ export function DashboardChart() {
           <CardDescription>Error loading data</CardDescription>
         </CardHeader>
         <CardContent className="flex items-center justify-center h-[400px]">
-          <div className="text-destructive">{error}</div>
+          <div className="text-destructive">
+            {error instanceof Error
+              ? error.message
+              : "Failed to load dashboard data"}
+          </div>
         </CardContent>
       </Card>
     );
@@ -165,7 +92,9 @@ export function DashboardChart() {
     label?: string;
   }) => {
     if (active && payload && payload.length && chartData) {
-      const dataPoint = chartData.find(d => d.month === label);
+      const dataPoint = chartData.find(
+        (d: Record<string, unknown>) => d.month === label
+      );
       if (!dataPoint) return null;
 
       return (

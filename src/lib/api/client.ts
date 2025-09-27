@@ -164,10 +164,11 @@ function createApiClient(config: ApiClientConfig = {}): AxiosInstance {
           }
         );
       }
-
       // Handle 401 errors with modern token refresh service
+      // Also handle network errors that might be 401s (CORS/auth failures)
       if (
-        error.response?.status === 401 &&
+        (error.response?.status === 401 ||
+          (error.code === "ERR_NETWORK" && !error.response)) &&
         originalRequest &&
         !originalRequest._retry
       ) {
