@@ -18,8 +18,7 @@ export async function GET(request: NextRequest) {
     // Call external API
     const apiUrl = `${process.env.API_BASE_URL || "https://api.myapptino.com"}/homepagepublic/getCountry`;
 
-    // eslint-disable-next-line no-console
-    console.log("Fetching countries from:", apiUrl);
+    // Fetching countries from external API
 
     const response = await fetch(apiUrl, {
       method: "GET",
@@ -31,9 +30,7 @@ export async function GET(request: NextRequest) {
     });
 
     if (!response.ok) {
-      const errorText = await response.text();
-      // eslint-disable-next-line no-console
-      console.error("Countries API Error:", response.status, errorText);
+      // Countries API Error occurred
       return NextResponse.json(
         { error: `Failed to fetch countries: ${response.status}` },
         { status: response.status }
@@ -42,17 +39,11 @@ export async function GET(request: NextRequest) {
 
     const data = await response.json();
 
-    // eslint-disable-next-line no-console
-    console.log("Countries API Response:", {
-      status: data.status,
-      message: data.message,
-      dataLength: data.data?.length,
-    });
+    // Countries API Response processed successfully
 
     return NextResponse.json(data);
-  } catch (error) {
-    // eslint-disable-next-line no-console
-    console.error("Error in countries API route:", error);
+  } catch (_error) {
+    // Error in countries API route
     return NextResponse.json(
       { error: "Internal server error" },
       { status: 500 }

@@ -358,9 +358,6 @@ function getDefaultTweakCNTheme(): TweakCNTheme {
 
 // Manual theme replacement for development (TEMPORARY)
 export function replaceThemeInGlobalCSS(newThemeCSS: string) {
-  console.log("🎨 Replacing theme in global CSS for development");
-  console.log("📝 In production, this will be handled by TweakCN API");
-
   // For development: manually replace the CSS variables section
   // In production: this will be automated via API call
 }

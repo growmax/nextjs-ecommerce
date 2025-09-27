@@ -41,9 +41,7 @@ export async function DELETE(
     });
 
     if (!response.ok) {
-      const errorText = await response.text();
-      // eslint-disable-next-line no-console
-      console.error("API Error:", response.status, errorText);
+      // API Error occurred
       return NextResponse.json(
         { error: `Failed to delete branch address: ${response.status}` },
         { status: response.status }
@@ -52,9 +50,8 @@ export async function DELETE(
 
     const data = await response.json();
     return NextResponse.json(data);
-  } catch (error) {
-    // eslint-disable-next-line no-console
-    console.error("Error in delete branch address API route:", error);
+  } catch (_error) {
+    // Error in delete branch address API route
     return NextResponse.json(
       { error: "Internal server error" },
       { status: 500 }

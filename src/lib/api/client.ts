@@ -1,4 +1,5 @@
 import axios, {
+  AxiosError,
   AxiosInstance,
   AxiosRequestConfig,
   AxiosResponse,
@@ -15,6 +16,10 @@ const API_CONFIG = {
     "https://api.myapptino.com/storefront/graphql",
   CATALOG_URL: process.env.Catalog_URL || "https://api.myapptino.com/catalog",
   API_BASE_URL: process.env.API_BASE_URL || "https://api.myapptino.com",
+  CORECOMMERCE_URL:
+    process.env.BASE_URL || "https://api.myapptino.com/corecommerce",
+  PREFERENCE_URL:
+    process.env.PREFERENCES_URL || "https://api.myapptino.com/corecommerce",
 } as const;
 
 // Types
@@ -22,6 +27,17 @@ export interface ApiClientConfig {
   baseURL?: string;
   timeout?: number;
   withCredentials?: boolean;
+}
+
+// Extend InternalAxiosRequestConfig to include _retry property
+interface RetryableAxiosRequestConfig extends InternalAxiosRequestConfig {
+  _retry?: boolean;
+}
+
+// API response data interface for error handling
+interface ApiResponseData {
+  message?: string;
+  [key: string]: unknown;
 }
 
 export interface ApiError {
@@ -101,7 +117,13 @@ function createApiClient(config: ApiClientConfig = {}): AxiosInstance {
     (config: InternalAxiosRequestConfig) => {
       // Auto-inject authorization token
       if (typeof window !== "undefined") {
-        const accessToken = getTokenFromCookie("access_token");
+        // Use client-specific cookie for browser requests
+        const cookieName = "access_token_client";
+        const accessToken = getTokenFromCookie(cookieName);
+        // Auto-inject origin header
+        if (!config.headers.origin) {
+          config.headers.origin = window.location.origin;
+        }
         if (accessToken && !config.headers.Authorization) {
           config.headers.Authorization = `Bearer ${accessToken}`;
 
@@ -113,20 +135,9 @@ function createApiClient(config: ApiClientConfig = {}): AxiosInstance {
         }
       }
 
-      // Log requests in development
-      if (process.env.NODE_ENV === "development") {
-        // eslint-disable-next-line no-console
-        console.log(`🚀 ${config.method?.toUpperCase()} ${config.url}`, {
-          headers: config.headers,
-          data: config.data,
-        });
-      }
-
       return config;
     },
-    error => {
-      // eslint-disable-next-line no-console
-      console.error("Request interceptor error:", error);
+    (error: unknown) => {
       return Promise.reject(error);
     }
   );
@@ -134,21 +145,12 @@ function createApiClient(config: ApiClientConfig = {}): AxiosInstance {
   // Response interceptor
   instance.interceptors.response.use(
     (response: AxiosResponse) => {
-      // Log responses in development
-      if (process.env.NODE_ENV === "development") {
-        // eslint-disable-next-line no-console
-        console.log(
-          `✅ ${response.config.method?.toUpperCase()} ${response.config.url}`,
-          {
-            status: response.status,
-            data: response.data,
-          }
-        );
-      }
       return response;
     },
-    async error => {
-      const originalRequest = error.config;
+    async (error: AxiosError) => {
+      const originalRequest = error.config as
+        | RetryableAxiosRequestConfig
+        | undefined;
 
       // Log errors in development
       if (process.env.NODE_ENV === "development") {
@@ -163,34 +165,60 @@ function createApiClient(config: ApiClientConfig = {}): AxiosInstance {
         );
       }
 
-      // Handle 401 errors - attempt token refresh
-      if (error.response?.status === 401 && !originalRequest._retry) {
+      // Handle 401 errors with modern token refresh service
+      if (
+        error.response?.status === 401 &&
+        originalRequest &&
+        !originalRequest._retry
+      ) {
         originalRequest._retry = true;
 
-        try {
-          // Attempt to refresh token via API route
-          const refreshResponse = await fetch("/api/auth/refresh", {
-            method: "POST",
-            credentials: "include",
-          });
+        // Import dynamically to avoid circular dependencies
+        const { default: TokenRefreshService } = await import(
+          "../services/TokenRefreshService"
+        );
 
-          if (refreshResponse.ok) {
-            // Retry original request
-            return instance(originalRequest);
+        try {
+          // Check if refresh is already in progress
+          if (TokenRefreshService.isRefreshInProgress()) {
+            // Queue this request to retry after current refresh completes
+            return TokenRefreshService.queueRequest(originalRequest, () =>
+              instance(originalRequest)
+            );
+          } else {
+            // Initiate token refresh and queue this request
+            const queuePromise = TokenRefreshService.queueRequest(
+              originalRequest,
+              () => instance(originalRequest)
+            );
+
+            // Start the refresh process
+            const refreshResult = await TokenRefreshService.refreshToken();
+
+            if (!refreshResult.success) {
+              // If refresh failed, handle auth failure
+              await TokenRefreshService.handleAuthFailure();
+              throw new ApiClientError("Authentication failed", 401);
+            }
+
+            return queuePromise;
           }
         } catch (refreshError) {
-          // eslint-disable-next-line no-console
-          console.error("Token refresh failed:", refreshError);
-          // Redirect to login or handle as needed
-          if (typeof window !== "undefined") {
-            window.location.href = "/login";
-          }
+          // Handle refresh failure
+          await TokenRefreshService.handleAuthFailure();
+          throw new ApiClientError(
+            refreshError instanceof Error
+              ? refreshError.message
+              : "Token refresh failed",
+            401
+          );
         }
       }
 
       // Transform error
+      const responseData = error.response?.data as ApiResponseData | undefined;
       const apiError = new ApiClientError(
-        error.response?.data?.message || error.message || "API request failed",
+        responseData?.message || error.message || "API request failed",
         error.response?.status,
         error.response?.data
       );
@@ -220,11 +248,15 @@ export const catalogClient = createApiClient({
 });
 
 export const coreCommerceClient = createApiClient({
-  baseURL: `${API_CONFIG.API_BASE_URL}/corecommerce`,
+  baseURL: `${API_CONFIG.CORECOMMERCE_URL}`,
 });
 
 // Generic API client
 export const apiClient = createApiClient({
+  baseURL: API_CONFIG.API_BASE_URL,
+});
+
+export const preferenceClient = createApiClient({
   baseURL: API_CONFIG.API_BASE_URL,
 });
 

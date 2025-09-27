@@ -39,11 +39,14 @@ export function AuthAwareContent({
 /**
  * Interactive content for authenticated users
  */
-function AuthenticatedInteractiveContent({ user }: { user: ServerUser }) {
+function AuthenticatedInteractiveContent({
+  user: _user,
+}: {
+  user: ServerUser;
+}) {
   const handleQuickAction = async () => {
     // Client-side interactive functionality
-    // eslint-disable-next-line no-console
-    console.log("Quick action for user:", user?.name);
+    // Quick action executed for user
   };
 
   return (

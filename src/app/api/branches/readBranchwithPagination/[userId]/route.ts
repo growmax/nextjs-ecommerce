@@ -1,5 +1,5 @@
-import { NextRequest, NextResponse } from "next/server";
 import { cookies } from "next/headers";
+import { NextRequest, NextResponse } from "next/server";
 
 export async function GET(
   request: NextRequest,
@@ -32,16 +32,6 @@ export async function GET(
       );
     }
 
-    // Debug logging
-    // eslint-disable-next-line no-console
-    console.log("Backend API params:", {
-      userId: resolvedParams.userId,
-      companyId,
-      offset,
-      limit,
-      searchString,
-    });
-
     // Fix: The API seems to have issues with offset=5
     // Let's implement a workaround for page 2
     let actualOffset = offset;
@@ -49,10 +39,6 @@ export async function GET(
 
     // For page 2 (offset=5), we need to fetch all 7 records and slice them
     if (offset === "5" && limit === "5") {
-      // eslint-disable-next-line no-console
-      console.log(
-        "Page 2 detected: Using workaround to fetch remaining records"
-      );
       actualOffset = "0";
       actualLimit = "10"; // Fetch more to get all records
     }
@@ -60,8 +46,7 @@ export async function GET(
     // Call external API
     const apiUrl = `${process.env.API_BASE_URL || "https://api.myapptino.com"}/corecommerce/branches/readBranchwithPagination/${resolvedParams.userId}?companyId=${companyId}&offset=${actualOffset}&limit=${actualLimit}&searchString=${encodeURIComponent(searchString)}`;
 
-    // eslint-disable-next-line no-console
-    console.log("External API URL:", apiUrl);
+    // Making external API call
 
     const response = await fetch(apiUrl, {
       method: "GET",
@@ -73,10 +58,7 @@ export async function GET(
     });
 
     if (!response.ok) {
-      const errorText = await response.text();
-
-      // eslint-disable-next-line no-console
-      console.error("API Error:", response.status, errorText);
+      // API Error occurred
       return NextResponse.json(
         { error: `Failed to fetch addresses: ${response.status}` },
         { status: response.status }
@@ -90,15 +72,7 @@ export async function GET(
       const allRecords = data.data.branchResponse;
       const slicedRecords = allRecords.slice(5, 10); // Get records 6-7 (index 5-6)
 
-      // eslint-disable-next-line no-console
-      console.log("Page 2 workaround:", {
-        originalLength: allRecords.length,
-        slicedLength: slicedRecords.length,
-        slicedRecords: slicedRecords.map((b: { id: string; name: string }) => ({
-          id: b.id,
-          name: b.name,
-        })),
-      });
+      // Applied page 2 workaround for data slicing
 
       // Update the response with sliced data
       data = {
@@ -110,23 +84,11 @@ export async function GET(
       };
     }
 
-    // eslint-disable-next-line no-console
-    console.log("External API Response:", {
-      totalCount: data.data?.totalCount,
-      branchResponseLength: data.data?.branchResponse?.length,
-      hasData: !!data.data?.branchResponse,
-      actualBranchData: data.data?.branchResponse
-        ? data.data.branchResponse.map((b: { id: string; name: string }) => ({
-            id: b.id,
-            name: b.name,
-          }))
-        : "No branch data",
-    });
+    // External API Response processed successfully
 
     return NextResponse.json(data);
-  } catch (error) {
-    // eslint-disable-next-line no-console
-    console.error("Error in branches API route:", error);
+  } catch (_error) {
+    // Error in branches API route
     return NextResponse.json(
       { error: "Internal server error" },
       { status: 500 }

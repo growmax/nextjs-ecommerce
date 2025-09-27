@@ -3,6 +3,7 @@ import { NextRequest, NextResponse } from "next/server";
 export async function POST(request: NextRequest) {
   try {
     const refreshToken = request.cookies.get("refresh_token");
+    const accessToken = request.cookies.get("access_token");
 
     if (!refreshToken?.value) {
       return NextResponse.json(
@@ -19,7 +20,10 @@ export async function POST(request: NextRequest) {
         "Content-Type": "application/json",
         "Cache-Control": "no-cache, no-store, must-revalidate",
       },
-      body: JSON.stringify({ refreshToken: refreshToken.value }),
+      body: JSON.stringify({
+        refreshToken: refreshToken.value,
+        accessToken: accessToken?.value || null,
+      }),
     });
 
     if (!response.ok) {

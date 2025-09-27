@@ -3,13 +3,13 @@
 // Export clients
 export {
   apiClient,
+  ApiClientError,
   authClient,
-  homePageClient,
-  storefrontClient,
   catalogClient,
   coreCommerceClient,
   createClientWithContext,
-  ApiClientError,
+  homePageClient,
+  storefrontClient,
   type ApiClientConfig,
   type ApiError,
   type RequestContext,
@@ -17,22 +17,38 @@ export {
 
 // Import services
 import AuthService from "./services/AuthService";
-import TenantService from "./services/TenantService";
-import UserService from "./services/UserService";
+import CartService from "./services/CartService";
 import CatalogService from "./services/CatalogService";
 import StoreFrontService from "./services/StoreFrontService";
-import CartService from "./services/CartService";
-import DashboardOrdersTableService from "./services/Dasboard/DashboardOrdersTable";
+import TenantService from "./services/TenantService";
+import UserService from "./services/UserService";
+
+// Import token management services
+import { AuthTokenService } from "../services/AuthTokenService";
+import RequestQueueService from "../services/RequestQueueService";
+import TokenRefreshService from "../services/TokenRefreshService";
+
+// Import dashboard services from the new location
+import DashboardService from "./services/DashboardService";
+import OrdersService from "./services/OrdersService";
+import PreferenceService from "./services/PreferenceService";
+import UserPreferenceService from "./services/UserPreferenceService";
 
 // Export services
 export {
   AuthService,
-  TenantService,
-  UserService,
-  CatalogService,
-  StoreFrontService,
+  AuthTokenService,
   CartService,
-  DashboardOrdersTableService,
+  CatalogService,
+  DashboardService,
+  OrdersService,
+  PreferenceService,
+  RequestQueueService,
+  StoreFrontService,
+  TenantService,
+  TokenRefreshService,
+  UserPreferenceService,
+  UserService,
 };
 
 // Export service types
@@ -45,29 +61,72 @@ export type {
 export type { TenantInfo } from "./services/TenantService";
 
 export type {
-  UserDetails,
   CompanyDetails,
+  UserDetails,
   UserProfile,
 } from "./services/UserService";
 
 export type {
-  Category,
   CatalogSettings,
+  Category,
   ProductSearchOptions,
 } from "./services/CatalogService";
 
 export type {
-  StoreFrontConfig,
   GraphQLQuery,
   GraphQLResponse,
+  StoreFrontConfig,
 } from "./services/StoreFrontService";
 
-export type { Cart } from "./services/CartService";
+export type { Cart, CartCount, CartParams } from "./services/CartService";
+
+// Export dashboard service types
+export type {
+  DashboardApiResponse,
+  DashboardData,
+  DashboardFilterParams,
+  DashboardGraphItem,
+  DashboardQueryParams,
+  QuoteStatusGraphItem,
+  TopPerformerItem,
+} from "@/types/dashboard";
+
+export type { OrdersParams } from "./services/OrdersService";
 
 export type {
-  OrdersResponse,
+  PreferenceModule,
+  UserPreference,
+} from "./services/PreferenceService";
+
+export type {
+  PreferenceApiResponse,
+  PreferenceFilter,
+  PreferenceQueryParams,
+  UserPreference as UserPreferenceType,
+} from "./services/UserPreferenceService";
+
+// Export token management service types
+export type {
+  QueuedRequest,
+  RefreshTokenResult,
+} from "../services/TokenRefreshService";
+
+export type {
+  EnhancedQueuedRequest,
+  QueuedRequestOptions,
+} from "../services/RequestQueueService";
+
+// Export utility functions
+export {
+  getCommonApiHeaders,
+  getOriginHeader,
+  getTenantApiHeaders,
+} from "../utils/originUtils";
+
+export type {
   OrdersApiResponse,
   OrdersRequestParams,
+  OrdersResponse,
 } from "./services/Dasboard/DashboardOrdersTable";
 
 // Convenience re-exports for common patterns
@@ -78,7 +137,15 @@ export const API = {
   Catalog: CatalogService,
   StoreFront: StoreFrontService,
   Cart: CartService,
-  DashboardOrders: DashboardOrdersTableService,
+  // Token management services
+  TokenRefresh: TokenRefreshService,
+  RequestQueue: RequestQueueService,
+  AuthToken: AuthTokenService.getInstance(),
+  // Additional services
+  Dashboard: DashboardService,
+  Orders: OrdersService,
+  Preference: PreferenceService,
+  UserPreference: UserPreferenceService,
 } as const;
 
 // Default export for easy importing

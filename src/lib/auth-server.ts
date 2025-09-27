@@ -54,13 +54,13 @@ export class ServerAuth {
 
       // Check if token is expired
       if (this.isTokenExpired(accessToken)) {
-        return false;
+        // Token is expired, attempt refresh
+        const refreshSuccess = await this.attemptServerSideRefresh();
+        return refreshSuccess;
       }
 
       return true;
-    } catch (error) {
-      // eslint-disable-next-line no-console
-      console.error("[ServerAuth] Error checking authentication:", error);
+    } catch (_error) {
       return false;
     }
   }
@@ -80,9 +80,7 @@ export class ServerAuth {
       // Implementation would depend on your user service API
       // getUserData: User data should be fetched from API, not cookies
       return null;
-    } catch (error) {
-      // eslint-disable-next-line no-console
-      console.error("[ServerAuth] Error getting user data:", error);
+    } catch (_error) {
       return null;
     }
   }
@@ -96,9 +94,7 @@ export class ServerAuth {
     try {
       const cookieStore = await cookies();
       return cookieStore.get(ServerAuth.ACCESS_TOKEN_COOKIE)?.value || null;
-    } catch (error) {
-      // eslint-disable-next-line no-console
-      console.error("[ServerAuth] Error getting access token:", error);
+    } catch (_error) {
       return null;
     }
   }
@@ -180,6 +176,24 @@ export class ServerAuth {
   }
 
   /**
+   * Check if refresh token exists (indicates user should stay logged in)
+   *
+   * @returns Promise<boolean> - True if refresh token exists
+   */
+  private static async attemptServerSideRefresh(): Promise<boolean> {
+    try {
+      const cookieStore = await cookies();
+      const refreshToken = cookieStore.get("refresh_token")?.value;
+
+      // If refresh token exists, assume user should stay authenticated
+      // The client-side token refresh will handle the actual token refresh
+      return !!refreshToken;
+    } catch (_error) {
+      return false;
+    }
+  }
+
+  /**
    * Check if JWT token is expired
    *
    * @param token - JWT token to check
@@ -198,9 +212,7 @@ export class ServerAuth {
 
       // Check if token has exp claim and if it's expired
       return payload.exp ? payload.exp < currentTime : false;
-    } catch (error) {
-      // eslint-disable-next-line no-console
-      console.error("[ServerAuth] Error checking token expiration:", error);
+    } catch (_error) {
       return true; // Treat invalid tokens as expired
     }
   }

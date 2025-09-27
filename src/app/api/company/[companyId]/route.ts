@@ -8,7 +8,7 @@ export async function GET(
   { params }: { params: Promise<{ companyId: string }> }
 ) {
   try {
-    const { companyId: requestedCompanyId } = await params;
+    const { companyId: _requestedCompanyId } = await params;
 
     // Get authentication from cookies (HttpOnly)
     const cookieStore = await cookies();
@@ -46,13 +46,7 @@ export async function GET(
 
     // Log for debugging in development
     if (process.env.NODE_ENV === "development") {
-      // eslint-disable-next-line no-console
-      console.log("Company API Request:", {
-        requestedCompanyId,
-        tokenCompanyId: companyId,
-        tenantCode,
-        accessToken: `${accessToken.substring(0, 20)}...`,
-      });
+      // Debug info available for troubleshooting
     }
 
     // Use service layer to fetch company data
@@ -75,8 +69,7 @@ export async function GET(
   } catch (error) {
     // Log the error for debugging (only in development)
     if (process.env.NODE_ENV === "development") {
-      // eslint-disable-next-line no-console
-      console.error("Company API Error:", error);
+      // Error details available for troubleshooting
     }
 
     return NextResponse.json(

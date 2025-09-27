@@ -1,6 +1,6 @@
 import createNextIntlPlugin from "next-intl/plugin";
-import { dirname } from 'path';
-import { fileURLToPath } from 'url';
+import { dirname } from "path";
+import { fileURLToPath } from "url";
 
 const withNextIntl = createNextIntlPlugin("./src/i18n/request.ts");
 
@@ -25,7 +25,7 @@ const nextConfig = {
         ignored: /node_modules/,
       };
       config.infrastructureLogging = {
-        level: 'error',
+        level: "error",
       };
     }
     return config;
@@ -56,9 +56,49 @@ const nextConfig = {
           key: "X-XSS-Protection",
           value: "1; mode=block",
         },
+        // CORS headers for API calls
+        {
+          key: "Access-Control-Allow-Origin",
+          value: "*",
+        },
+        {
+          key: "Access-Control-Allow-Methods",
+          value: "GET, POST, PUT, DELETE, OPTIONS, PATCH",
+        },
+        {
+          key: "Access-Control-Allow-Headers",
+          value:
+            "Content-Type, Authorization, X-Requested-With, Accept, Origin, x-tenant, x-csrf-token",
+        },
+        {
+          key: "Access-Control-Allow-Credentials",
+          value: "true",
+        },
         {
           key: "Referrer-Policy",
           value: "strict-origin-when-cross-origin",
+        },
+      ],
+    },
+    {
+      source: "/api/(.*)",
+      headers: [
+        {
+          key: "Access-Control-Allow-Origin",
+          value: "*",
+        },
+        {
+          key: "Access-Control-Allow-Methods",
+          value: "GET, POST, PUT, DELETE, OPTIONS, PATCH",
+        },
+        {
+          key: "Access-Control-Allow-Headers",
+          value:
+            "Content-Type, Authorization, X-Requested-With, Accept, Origin, x-tenant, x-csrf-token",
+        },
+        {
+          key: "Access-Control-Allow-Credentials",
+          value: "true",
         },
       ],
     },

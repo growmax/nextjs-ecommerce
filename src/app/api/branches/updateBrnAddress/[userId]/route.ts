@@ -65,20 +65,12 @@ export async function PUT(
     // Get request body
     const body = await request.json();
 
-    // Debug logging
-    // eslint-disable-next-line no-console
-    console.log("Update Address API params:", {
-      userId: resolvedParams.userId,
-      companyId,
-      addressId,
-      body,
-    });
+    // Debug logging - API params validated
 
     // Call external API
     const apiUrl = `${process.env.API_BASE_URL || "https://api.myapptino.com"}/corecommerce/addresses/updateBrnAddress/${resolvedParams.userId}?companyId=${companyId}&addressId=${addressId}`;
 
-    // eslint-disable-next-line no-console
-    console.log("External API URL:", apiUrl);
+    // Making external API call
 
     const response = await fetch(apiUrl, {
       method: "PUT",
@@ -112,13 +104,7 @@ export async function PUT(
         }
       }
 
-      // eslint-disable-next-line no-console
-      console.error("API Error:", {
-        status: response.status,
-        statusText: response.statusText,
-        message: errorMessage,
-        url: apiUrl,
-      });
+      // API Error occurred during update
 
       return NextResponse.json(
         {
@@ -142,12 +128,7 @@ export async function PUT(
       }
 
       // Log successful response (for debugging)
-      // eslint-disable-next-line no-console
-      console.log("External API Response:", {
-        status: responseData.status,
-        message: responseData.message,
-        hasData: !!responseData.data,
-      });
+      // External API Response processed successfully
 
       // Return clean response without problematic headers
       return NextResponse.json(responseData, {
@@ -157,9 +138,8 @@ export async function PUT(
           "X-Mobile-Optimized": "true",
         },
       });
-    } catch (parseError) {
-      // eslint-disable-next-line no-console
-      console.error("Response parsing error:", parseError);
+    } catch (_parseError) {
+      // Response parsing error occurred
 
       const errorResponse: ApiErrorResponse = {
         error: "Invalid response from external API",
@@ -169,9 +149,8 @@ export async function PUT(
 
       return NextResponse.json(errorResponse, { status: 502 });
     }
-  } catch (error) {
-    // eslint-disable-next-line no-console
-    console.error("Error in update address API route:", error);
+  } catch (_error) {
+    // Error in update address API route
 
     const errorResponse: ApiErrorResponse = {
       error: "Internal server error",
