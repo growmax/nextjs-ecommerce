@@ -68,6 +68,7 @@ interface QuoteFilterFormProps {
   onReset?: () => void;
   statusOptions?: StatusOption[];
   formRef?: React.RefObject<FormMethods | null>;
+  filterType?: string;
 }
 
 export function QuoteFilterForm({
@@ -75,6 +76,7 @@ export function QuoteFilterForm({
   onReset,
   statusOptions = [],
   formRef,
+  filterType = "Quote",
 }: QuoteFilterFormProps) {
   const form = useForm<QuoteFilterFormData>({
     resolver: zodResolver(formSchema),
@@ -128,7 +130,9 @@ export function QuoteFilterForm({
       <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-6">
         {/* Quote Info Section */}
         <div className="space-y-4">
-          <h3 className="text-sm font-medium text-gray-900">Quote Info</h3>
+          <h3 className="text-sm font-medium text-gray-900">
+            {filterType} Info
+          </h3>
 
           {/* Status */}
           <FormField
@@ -175,9 +179,12 @@ export function QuoteFilterForm({
             name="quoteId"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Quote ID</FormLabel>
+                <FormLabel>{filterType} ID</FormLabel>
                 <FormControl>
-                  <Input placeholder="Enter quote ID..." {...field} />
+                  <Input
+                    placeholder={`Enter ${filterType.toLowerCase()} ID...`}
+                    {...field}
+                  />
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -190,9 +197,12 @@ export function QuoteFilterForm({
             name="quoteName"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Quote Name</FormLabel>
+                <FormLabel>{filterType} Name</FormLabel>
                 <FormControl>
-                  <Input placeholder="Enter quote name..." {...field} />
+                  <Input
+                    placeholder={`Enter ${filterType.toLowerCase()} name...`}
+                    {...field}
+                  />
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -203,7 +213,12 @@ export function QuoteFilterForm({
         {/* Quoted Date Range */}
         <div className="space-y-4">
           <h3 className="text-sm font-medium text-gray-900">
-            Quoted Date Range
+            {filterType === "Quote"
+              ? "Quoted"
+              : filterType === "Order"
+                ? "Ordered"
+                : filterType}{" "}
+            Date Range
           </h3>
           <div className="grid grid-cols-2 gap-4">
             <FormField

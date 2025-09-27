@@ -58,9 +58,7 @@ export default async function AppLayout({
             <div className="overflow-x-hidden">
               {/* App pages: Always show nav and footer */}
               <NavBar />
-              <main className="min-h-screen pt-4 pb-8 overflow-x-hidden">
-                {children}
-              </main>
+              <main className="min-h-screen overflow-x-hidden">{children}</main>
               <Footer />
             </div>
           </UserSessionProvider>

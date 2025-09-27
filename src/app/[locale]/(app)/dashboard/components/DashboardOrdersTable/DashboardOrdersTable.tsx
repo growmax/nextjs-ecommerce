@@ -19,7 +19,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { useDashboardOrders } from "@/hooks/useDashboardData";
-import { Order } from "@/types/Dashboard/DasbordOrderstable/DashboardOrdersTable";
+import { Order } from "@/types/dashboard/DasbordOrderstable/DashboardOrdersTable";
 import { ArrowDownIcon, ArrowUpDown } from "lucide-react";
 import { useLocale } from "next-intl";
 import { useRouter } from "next/navigation";

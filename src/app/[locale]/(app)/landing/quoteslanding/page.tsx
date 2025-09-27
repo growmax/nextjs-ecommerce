@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { DashboardToolbar } from "@/components/custom/dashboard-toolbar";
-import QuoteFilterDrawer from "@/components/sales/QuoteFilterDrawer";
+import FilterDrawer from "@/components/sales/FilterDrawer";
 import { QuoteFilterFormData } from "@/components/sales/QuoteFilterForm";
 import { Button } from "@/components/ui/button";
 import { Download, Filter } from "lucide-react";
@@ -65,11 +65,13 @@ export default function QuotesLandingPage() {
           <Filter className="h-4 w-4 mr-2" />
           Open Filters
         </Button>
-        <QuoteFilterDrawer
+        <FilterDrawer
           open={isDrawerOpen}
           onClose={handleDrawerClose}
           onSubmit={handleQuoteFilterSubmit}
           onReset={handleQuoteFilterReset}
+          title="Quote Filters"
+          filterType="Quote"
           statusOptions={[
             { value: "draft", label: "Draft" },
             { value: "pending", label: "Pending" },

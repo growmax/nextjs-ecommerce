@@ -3,7 +3,7 @@ import {
   createClientWithContext,
   RequestContext,
 } from "../../client";
-import { Order } from "@/types/Dashboard/DasbordOrderstable/DashboardOrdersTable";
+import { Order } from "@/types/dashboard/DasbordOrderstable/DashboardOrdersTable";
 
 export interface OrdersResponse {
   ordersResponse: Order[];

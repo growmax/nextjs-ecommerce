@@ -15,9 +15,11 @@ interface QuoteFilterDrawerProps {
   onSubmit: (data: QuoteFilterFormData) => void;
   onReset?: () => void;
   statusOptions?: StatusOption[];
+  title?: string;
+  filterType?: string;
 }
 
-export function QuoteFilterDrawer({
+export function FilterDrawer({
   open,
   onClose,
   onSubmit,
@@ -30,6 +32,8 @@ export function QuoteFilterDrawer({
     { value: "expired", label: "Expired" },
     { value: "cancelled", label: "Cancelled" },
   ],
+  title = "Filters",
+  filterType = "Quote",
 }: QuoteFilterDrawerProps) {
   const formRef = useRef<FormMethods>(null);
 
@@ -55,7 +59,7 @@ export function QuoteFilterDrawer({
     <SideDrawer
       open={open}
       onClose={onClose}
-      title="Filters"
+      title={title}
       onClearAll={handleClearAll}
       onApply={handleApply}
     >
@@ -64,9 +68,10 @@ export function QuoteFilterDrawer({
         onSubmit={handleFormSubmit}
         onReset={onReset || (() => {})}
         statusOptions={statusOptions}
+        filterType={filterType}
       />
     </SideDrawer>
   );
 }
 
-export default QuoteFilterDrawer;
+export default FilterDrawer;
