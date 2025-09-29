@@ -89,7 +89,7 @@ export function ProfileCard({
       <CardContent className="space-y-6">
         {/* Profile Image */}
         <ImageUpload
-          currentImage={profile.avatar}
+          currentImage={profile.avatar || null}
           onImageChange={onImageChange}
           alt="Profile"
           size="md"
@@ -124,7 +124,7 @@ export function ProfileCard({
             label="Mobile Number"
             value={profile.phone}
             onChange={value => onChange("phone", value)}
-            onVerify={onVerifyPhone}
+            {...(onVerifyPhone && { onVerify: onVerifyPhone })}
             verified={phoneVerified}
             required
             disabled={isLoading}

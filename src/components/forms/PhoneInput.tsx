@@ -56,13 +56,16 @@ export function PhoneInput({
   const canVerify =
     value.length === maxLength && !error && !verified && onVerify;
 
+  const formFieldProps: Record<string, unknown> = {
+    label,
+    required,
+    error,
+  };
+  
+  if (className) formFieldProps.className = className;
+
   return (
-    <FormField
-      label={label}
-      required={required}
-      error={error}
-      className={className}
-    >
+    <FormField {...formFieldProps}>
       <div className="relative">
         <Input
           type="text"

@@ -112,7 +112,7 @@ export function useProfileData() {
           apiData.timeFormatOptions?.map(
             (tf: { value: string; timeFormatName: string }) => ({
               value: tf.value,
-              label: tf.display,
+              label: tf.timeFormatName,
             })
           ) || [];
 
