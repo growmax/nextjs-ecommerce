@@ -1,6 +1,6 @@
 // Export main components
 export { default as QuoteFilterForm } from "./QuoteFilterForm";
-export { default as QuoteFilterDrawer } from "./QuoteFilterDrawer";
+export { default as FilterDrawer } from "./FilterDrawer";
 export type {
   QuoteFilterFormData,
   StatusOption,

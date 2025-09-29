@@ -533,6 +533,17 @@ export default function CompanyPage() {
         `limit=${currentPageSize}&` +
         `searchString=${encodeURIComponent(search)}`;
 
+      // Debug logging
+      // eslint-disable-next-line no-console
+      console.log("Fetching addresses with params:", {
+        page,
+        pageSize: currentPageSize,
+        offset,
+        limit: currentPageSize,
+        searchString: search,
+        url,
+      });
+
       const response = await fetch(url, {
         headers: {
           "x-tenant": payload.iss,
@@ -547,9 +558,28 @@ export default function CompanyPage() {
 
       const result = await response.json();
 
+      // Debug logging
+      // eslint-disable-next-line no-console
+      console.log("API Response:", {
+        status: result.status,
+        totalCount: result.data?.totalCount,
+        branchResponseLength: result.data?.branchResponse?.length,
+        branchResponse: result.data?.branchResponse,
+        fullResult: result,
+      });
+
       if (result.status === "success" && result.data) {
         const branchData = result.data.branchResponse || [];
         const totalCount = result.data.totalCount || 0;
+        // eslint-disable-next-line no-console
+        console.log("Setting state:", {
+          branchDataLength: branchData.length,
+          totalCount,
+          page,
+          offset,
+          firstItem: branchData[0]?.name,
+          lastItem: branchData[branchData.length - 1]?.name,
+        });
         setAddresses(branchData);
         setTotalAddresses(totalCount);
       } else {
@@ -569,6 +599,13 @@ export default function CompanyPage() {
 
   // Handle pagination
   const handlePageChange = (newPage: number) => {
+    // eslint-disable-next-line no-console
+    console.log("handlePageChange called:", {
+      currentPage,
+      newPage,
+      searchTerm,
+      pageSize,
+    });
     setCurrentPage(newPage);
     // Don't clear data when paginating
     fetchBranchAddresses(searchTerm, newPage, false, pageSize);

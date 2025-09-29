@@ -54,18 +54,14 @@ export function AutoCompleteField({
   const selectedOption = options.find(option => option.value === value);
   const displayValue = selectedOption?.label || value;
 
-  const formFieldProps: Record<string, unknown> = {
-    label,
-    required,
-    children: undefined, // Will be set below
-  };
-  
-  if (error) formFieldProps.error = error;
-  if (hint) formFieldProps.hint = hint;
-  if (className) formFieldProps.className = className;
-
   return (
-    <FormField {...formFieldProps}>
+    <FormField
+      label={label}
+      required={required}
+      {...(error && { error })}
+      {...(hint && { hint })}
+      {...(className && { className })}
+    >
       <Popover open={open} onOpenChange={setOpen}>
         <PopoverTrigger asChild>
           <Button
