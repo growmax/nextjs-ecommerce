@@ -154,6 +154,7 @@ const SaveCancelToolbar = React.forwardRef<
           <div className={cn("flex gap-2", isMobile ? "w-full" : "ml-auto")}>
             <Button
               variant="outline"
+              size="sm"
               onClick={onCancel}
               className={cn(isMobile && "flex-1")}
               disabled={isLoading}
@@ -162,6 +163,7 @@ const SaveCancelToolbar = React.forwardRef<
             </Button>
 
             <LoadingButton
+              size="sm"
               onClick={onSave}
               loading={isLoading}
               disabled={disabled}

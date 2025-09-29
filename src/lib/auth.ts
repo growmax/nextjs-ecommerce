@@ -137,9 +137,24 @@ export class AuthStorage {
   }
 
   static isTokenExpired(): boolean {
-    // Token expiry is now handled server-side
-    // Client should attempt to use token and handle 401 responses
-    return false;
+    const token = this.getAccessToken();
+    if (!token) return true;
+
+    try {
+      // Decode JWT payload
+      const parts = token.split(".");
+      if (parts.length !== 3 || !parts[1]) {
+        return true; // Invalid token format
+      }
+
+      const payload = JSON.parse(atob(parts[1]));
+      const currentTime = Math.floor(Date.now() / 1000);
+
+      // Check if token has exp claim and if it's expired
+      return payload.exp ? payload.exp < currentTime : false;
+    } catch {
+      return true; // Treat invalid tokens as expired
+    }
   }
 
   static isAuthenticated(): boolean {

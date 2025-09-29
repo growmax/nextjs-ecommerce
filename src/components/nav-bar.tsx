@@ -1,23 +1,22 @@
 "use client";
 
-import { Button } from "@/components/ui/button";
-import { Menu, Search, LogIn } from "lucide-react";
-import { useState } from "react";
-import Logo from "./custom/logo";
-import SearchBox from "./custom/search";
-import NotificationButton from "./notifications";
-import ProfileButton from "./profile/ProfileButton";
-import AddCardButton from "./sample/add-card";
-import Sidebar from "./sidebar";
-import SearchDrawer from "@/components/custom/search-drawer";
 import {
   AuthenticatedOnly,
   UnauthenticatedOnly,
 } from "@/components/auth/AuthGuard";
+import SearchDrawer from "@/components/custom/search-drawer";
+import { Button } from "@/components/ui/button";
+import { SidebarTrigger } from "@/components/ui/sidebar";
+import { LogIn, Search } from "lucide-react";
 import Link from "next/link";
+import { useState } from "react";
+import Logo from "./custom/logo";
+import SearchBox from "./custom/search";
+import NotificationButton from "./notifications";
+import ProfileButton from "./Profile/ProfileButton";
+import AddCardButton from "./sample/add-card";
 
 export default function NavBar() {
-  const [sidebarOpen, setSidebarOpen] = useState(false);
   const [searchDrawerOpen, setSearchDrawerOpen] = useState(false);
 
   return (
@@ -26,15 +25,7 @@ export default function NavBar() {
         <div className="sm:hidden">
           <div className="flex items-center gap-2 px-2 py-2">
             {/* Menu Button */}
-            <Button
-              variant="ghost"
-              size="icon"
-              aria-label="Open menu"
-              onClick={() => setSidebarOpen(true)}
-              className="h-9 w-9 flex-shrink-0"
-            >
-              <Menu className="h-5 w-5" />
-            </Button>
+            <SidebarTrigger className="h-9 w-9 flex-shrink-0" />
             {/* Logo - Center */}
             <div className="flex-1 flex justify-center">
               <Logo />
@@ -75,15 +66,7 @@ export default function NavBar() {
         <div className="hidden sm:flex md:hidden items-center gap-3 px-3 py-2">
           {/* Left: Menu + Logo */}
           <div className="flex items-center gap-2">
-            <Button
-              variant="ghost"
-              size="icon"
-              aria-label="Open menu"
-              onClick={() => setSidebarOpen(true)}
-              className="h-9 w-9"
-            >
-              <Menu className="h-5 w-5" />
-            </Button>
+            <SidebarTrigger className="h-9 w-9" />
             <Logo />
           </div>
 
@@ -116,15 +99,7 @@ export default function NavBar() {
         <div className="hidden md:flex items-center gap-4 px-4 py-3">
           {/* Left Section */}
           <div className="flex items-center gap-3 flex-shrink-0">
-            <Button
-              variant="ghost"
-              size="icon"
-              aria-label="Open menu"
-              onClick={() => setSidebarOpen(true)}
-              className="h-10 w-10"
-            >
-              <Menu className="h-5 w-5" />
-            </Button>
+            <SidebarTrigger className="h-10 w-10" />
             <Logo />
           </div>
 
@@ -154,9 +129,6 @@ export default function NavBar() {
           </div>
         </div>
       </nav>
-
-      {/* Mobile-First Sidebar */}
-      <Sidebar open={sidebarOpen} onClose={() => setSidebarOpen(false)} />
 
       {/* Mobile Search Drawer */}
       <SearchDrawer

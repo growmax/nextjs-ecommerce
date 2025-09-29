@@ -33,6 +33,32 @@ Always to be follow the .claude\instructions.md this file given rules.
 - Use React hooks appropriately (useEffect for side effects, useRef for DOM access)
 - Follow the principle of single responsibility for components
 
+### Client-Side Components
+
+- **ALWAYS use `next/dynamic` with `ssr: false`** for purely client-side components
+- **Follow existing patterns** - Match the exact implementation used in dashboard page
+- **DO NOT OVERENGINEER** - Keep components simple and focused on the specific request
+- **Don't assume requirements** - Stick to what was specifically requested
+- **Use consistent patterns** - If a pattern exists (like dashboard), replicate it exactly
+
+### Implementation Guidelines
+
+- **NEVER overengineer solutions** - Implement only what is explicitly requested
+- **Ask before adding features** - Don't assume additional functionality is needed
+- **Keep it simple** - Simple, working code is better than complex, feature-rich code
+- **Match existing patterns** - If similar functionality exists, copy the exact approach
+- **Avoid premature optimization** - Don't add complexity without explicit need
+
+Example:
+
+```typescript
+import dynamic from "next/dynamic";
+
+const ClientComponent = dynamic(() => import("./ClientComponent"), {
+  ssr: false,
+});
+```
+
 ### Authentication & Security
 
 - Never expose sensitive data in client-side code

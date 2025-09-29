@@ -20,7 +20,13 @@
       "mcp__chrome-devtools__wait_for",
       "Bash(git add:*)",
       "Bash(git commit:*)",
-      "Bash(mv:*)"
+      "Bash(mv:*)",
+      "mcp__chrome-devtools__new_page",
+      "mcp__chrome-devtools__resize_page",
+      "Bash(npx shadcn@latest add:*)",
+      "mcp__chrome-devtools__evaluate_script",
+      "Bash(mkdir:*)",
+      "mcp__chrome-devtools__take_screenshot"
     ],
     "deny": [],
     "ask": []

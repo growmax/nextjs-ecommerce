@@ -1,6 +1,6 @@
 "use client";
 
-import HeaderBar from "@/app/Components/reusable/nameconversion/PageHeader";
+import HeaderBar from "@/components/Global/HeaderBar/HeaderBar";
 import SectionCard from "@/components/custom/SectionCard";
 import { SaveCancelToolbar } from "@/components/custom/save-cancel-toolbar";
 import { AddAddressDialog } from "@/components/dialogs/company";

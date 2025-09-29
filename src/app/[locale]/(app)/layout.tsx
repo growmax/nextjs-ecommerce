@@ -1,10 +1,12 @@
+import { AppSidebar } from "@/components/app-sidebar";
 import Footer from "@/components/footer";
 import NavBar from "@/components/nav-bar";
+import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { TenantProvider } from "@/contexts/TenantContext";
 import { UserSessionProvider } from "@/contexts/UserSessionContext";
-import { ServerUserService } from "@/lib/services/ServerUserService";
 import { getServerAuthState } from "@/lib/auth-server";
+import { ServerUserService } from "@/lib/services/ServerUserService";
 import { fetchTenantFromExternalAPI } from "@/lib/tenant";
 import { NextIntlClientProvider } from "next-intl";
 import { getMessages } from "next-intl/server";
@@ -55,14 +57,19 @@ export default async function AppLayout({
           initialUser={authState.user}
         >
           <UserSessionProvider initialUserData={userData?.data || null}>
-            <div className="overflow-x-hidden">
-              {/* App pages: Always show nav and footer */}
-              <NavBar />
-              <main className="min-h-screen pt-4 pb-8 overflow-x-hidden">
-                {children}
-              </main>
-              <Footer />
-            </div>
+            <SidebarProvider>
+              <AppSidebar />
+              <SidebarInset className="overflow-x-hidden">
+                {/* Fixed Navigation */}
+                <div className="sticky top-0 z-40 bg-background">
+                  <NavBar />
+                </div>
+                <main className="min-h-screen pb-8 overflow-x-hidden">
+                  {children}
+                </main>
+                <Footer />
+              </SidebarInset>
+            </SidebarProvider>
           </UserSessionProvider>
         </AuthProvider>
       </TenantProvider>

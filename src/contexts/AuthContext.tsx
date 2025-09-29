@@ -67,13 +67,11 @@ export function AuthProvider({
     const authenticated = AuthStorage.isAuthenticated();
     setIsAuthenticated(authenticated);
 
-    if (authenticated) {
-      // User data should be fetched from server, not stored locally
-      // Components should make authenticated API calls to get user data
-      setUser(null); // Will be populated by server-side props or API calls
-    } else {
+    // Only clear user if not authenticated
+    if (!authenticated) {
       setUser(null);
     }
+    // If authenticated, keep existing user data until new data is available
 
     return authenticated;
   }, []);
@@ -85,10 +83,31 @@ export function AuthProvider({
       // If no initial state was provided from server, check client-side auth
       if (initialAuthState === undefined && initialUser === undefined) {
         const clientAuth = AuthStorage.isAuthenticated();
-        // Don't get user from localStorage - use server-provided initial user or fetch from API
 
-        setIsAuthenticated(clientAuth);
-        setUser(null); // User data should come from server
+        // If token exists but is expired, try to refresh
+        if (!clientAuth && AuthStorage.getAccessToken()) {
+          AuthStorage.refreshToken()
+            .then(refreshResult => {
+              if (refreshResult) {
+                setIsAuthenticated(true);
+              } else {
+                setIsAuthenticated(false);
+                setUser(null);
+              }
+            })
+            .catch(() => {
+              setIsAuthenticated(false);
+              setUser(null);
+            });
+        } else {
+          setIsAuthenticated(clientAuth);
+
+          // Only clear user if not authenticated
+          if (!clientAuth) {
+            setUser(null);
+          }
+        }
+        // If authenticated but no initial user, keep current state and let components fetch user data
       }
     }
   }, [initialAuthState, initialUser]);
