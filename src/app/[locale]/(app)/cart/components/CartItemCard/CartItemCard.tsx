@@ -20,7 +20,7 @@ const mockCartItems = [
     packagingQty: "1",
     image: "/images/default-placeholder.png",
     description: "",
-    price: 546546,
+    price: 6546,
     total: 99999,
     off: 50,
   },
