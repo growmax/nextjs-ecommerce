@@ -19,6 +19,8 @@ export {
 import AuthService from "./services/AuthService";
 import CartService from "./services/CartService";
 import CatalogService from "./services/CatalogService";
+import CompanyService from "./services/CompanyService";
+import DiscountService from "./services/DiscountService";
 import StoreFrontService from "./services/StoreFrontService";
 import TenantService from "./services/TenantService";
 import UserService from "./services/UserService";
@@ -40,7 +42,9 @@ export {
   AuthTokenService,
   CartService,
   CatalogService,
+  CompanyService,
   DashboardService,
+  DiscountService,
   OrdersService,
   PreferenceService,
   RequestQueueService,
@@ -83,11 +87,7 @@ export type { Cart, CartCount, CartParams } from "./services/CartService";
 // Export dashboard service types
 export type {
   DashboardApiResponse,
-  DashboardData,
   DashboardFilterParams,
-  DashboardGraphItem,
-  DashboardQueryParams,
-  QuoteStatusGraphItem,
   TopPerformerItem,
 } from "@/types/dashboard";
 
@@ -104,6 +104,47 @@ export type {
   PreferenceQueryParams,
   UserPreference as UserPreferenceType,
 } from "./services/UserPreferenceService";
+
+export type {
+  Discount,
+  DiscountItem,
+  DiscountApiResponse,
+  DiscountRequest,
+} from "./services/DiscountService";
+
+// Export CompanyService types
+export type {
+  BranchAddress,
+  Zone,
+  Branch,
+  BranchApiResponse,
+  CompanyApiResponse,
+  DeleteAddressResponse,
+  Industry,
+  getSubIndustrysbyid,
+  SubIndustryApiResponse,
+  BranchPaginationParams,
+  DeleteBranchParams,
+  CreateBranchRequest,
+  CreateBranchResponse,
+  UpdateBranchRequest,
+  UpdateBranchResponse,
+  CountryData,
+  StateData,
+  DistrictData,
+  AddressData,
+  Warehouse,
+  BusinessUnit,
+  ZoneInfo,
+  DashboardRequest,
+  DashboardQueryParams,
+  OrderGraphItem,
+  QuoteGraphItem,
+  QuoteStatusGraphItem,
+  TopDataItem,
+  DashboardData,
+  DashboardResponse,
+} from "./services/CompanyService";
 
 // Export token management service types
 export type {
@@ -132,20 +173,21 @@ export type {
 // Convenience re-exports for common patterns
 export const API = {
   Auth: AuthService,
+  Cart: CartService,
+  Catalog: CatalogService,
+  Company: CompanyService,
+  Dashboard: DashboardService,
+  Discount: DiscountService,
+  Orders: OrdersService,
+  Preference: PreferenceService,
+  StoreFront: StoreFrontService,
   Tenant: TenantService,
   User: UserService,
-  Catalog: CatalogService,
-  StoreFront: StoreFrontService,
-  Cart: CartService,
+  UserPreference: UserPreferenceService,
   // Token management services
   TokenRefresh: TokenRefreshService,
   RequestQueue: RequestQueueService,
   AuthToken: AuthTokenService.getInstance(),
-  // Additional services
-  Dashboard: DashboardService,
-  Orders: OrdersService,
-  Preference: PreferenceService,
-  UserPreference: UserPreferenceService,
 } as const;
 
 // Default export for easy importing

@@ -13,7 +13,7 @@ import { useState } from "react";
 import Logo from "./custom/logo";
 import SearchBox from "./custom/search";
 import NotificationButton from "./notifications";
-import ProfileButton from "./Profile/ProfileButton";
+import ProfileButton from "./profile/ProfileButton";
 import AddCardButton from "./sample/add-card";
 
 export default function NavBar() {

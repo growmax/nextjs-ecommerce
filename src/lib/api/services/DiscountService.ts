@@ -1,4 +1,4 @@
-import { discountClient } from "../client";
+import { coreCommerceClient } from "../client";
 import { BaseService } from "./BaseService";
 
 export interface Discount {
@@ -37,7 +37,7 @@ export interface DiscountRequest {
   sellerId: string;
 }
 export class DiscountService extends BaseService<DiscountService> {
-  protected defaultClient = discountClient;
+  protected defaultClient = coreCommerceClient;
 
   async getDiscount(body: DiscountRequest): Promise<DiscountApiResponse> {
     return (await this.call(

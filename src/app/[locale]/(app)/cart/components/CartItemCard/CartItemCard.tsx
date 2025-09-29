@@ -1,4 +1,3 @@
-// // {
 //     "brandName": "Generic",
 //     "brandProductId": "adsfasd",
 //         "hsnCode": "22011010",

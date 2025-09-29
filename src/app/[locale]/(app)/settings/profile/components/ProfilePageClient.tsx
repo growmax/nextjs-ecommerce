@@ -6,10 +6,10 @@ import { useState, useEffect } from "react";
 import { toast } from "sonner";
 
 // Import our new modular components
-import { OTPDialog } from "@/components/Profile/OTPDialog";
-import { PasswordChangeDialog } from "@/components/Profile/PasswordChangeDialog";
-import { ProfileCard } from "@/components/Profile/ProfileCard";
-import { UserPreferencesCard } from "@/components/Profile/UserPreferencesCard";
+import { OTPDialog } from "@/components/profile/OTPDialog";
+import { PasswordChangeDialog } from "@/components/profile/PasswordChangeDialog";
+import { ProfileCard } from "@/components/profile/ProfileCard";
+import { UserPreferencesCard } from "@/components/profile/UserPreferencesCard";
 import { useProfileData } from "@/hooks/Profile/useProfileData";
 
 export default function ProfilePageClient() {
