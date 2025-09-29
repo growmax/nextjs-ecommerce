@@ -61,10 +61,10 @@ export default async function AppLayout({
               <AppSidebar />
               <SidebarInset className="overflow-x-hidden">
                 {/* Fixed Navigation */}
-                <div className="sticky top-0 z-40 bg-background">
+                <div className="fixed top-0 left-0 right-0 z-40 bg-background">
                   <NavBar />
                 </div>
-                <main className="min-h-screen pb-8 overflow-x-hidden">
+                <main className="min-h-screen pb-8 overflow-x-hidden pt-[69px]">
                   {children}
                 </main>
                 <Footer />

@@ -183,7 +183,7 @@ export default function ProfilePageClient() {
       <HeaderBar title="Profile Settings" />
 
       <main
-        className={`flex-1 px-4 pt-2 pb-4 overflow-x-hidden ${hasChanges ? "pb-32 md:pb-24" : "pb-16"}`}
+        className={`flex-1 px-4 pb-4 overflow-x-hidden ${hasChanges ? "pb-32 md:pb-24" : "pb-16"}`}
       >
         <div className="max-w-6xl mx-auto space-y-6 w-full">
           {/* Profile Information */}
