@@ -1,5 +1,5 @@
-import { coreCommerceClient } from "../client";
 import { BaseService } from "./BaseService";
+import { coreCommerceClient } from "../client";
 
 export interface Discount {
   Value: number;
@@ -36,6 +36,30 @@ export interface DiscountRequest {
   BaseCurrencyId: number;
   sellerId: string;
 }
+
+export interface GetAllSellerPricesRequest {
+  Productid: number[];
+  CurrencyId: number;
+  BaseCurrencyId: number;
+  CompanyId: number;
+}
+
+export interface SellerPrice {
+  productId: number;
+  sellerId: number;
+  sellerName: string;
+  price: number;
+  currency: string;
+  availability: boolean;
+  leadTime: number;
+  minimumOrderQuantity: number;
+}
+
+export interface GetAllSellerPricesResponse {
+  data: SellerPrice[];
+  status: string;
+  message: string;
+}
 export class DiscountService extends BaseService<DiscountService> {
   protected defaultClient = coreCommerceClient;
 
@@ -45,6 +69,30 @@ export class DiscountService extends BaseService<DiscountService> {
       body,
       "POST" // Your curl shows it's actually a POST with body
     )) as DiscountApiResponse;
+  }
+
+  async getAllSellerPrices(
+    request: GetAllSellerPricesRequest
+  ): Promise<GetAllSellerPricesResponse> {
+    return (await this.callWith(
+      "/discounts/discount/getAllSellerPrices",
+      request,
+      {
+        method: "POST",
+      }
+    )) as GetAllSellerPricesResponse;
+  }
+
+  async getAllSellerPricesServerSide(
+    request: GetAllSellerPricesRequest
+  ): Promise<GetAllSellerPricesResponse | null> {
+    return (await this.callWithSafe(
+      "/discounts/discount/getAllSellerPrices",
+      request,
+      {
+        method: "POST",
+      }
+    )) as GetAllSellerPricesResponse | null;
   }
 }
 export default DiscountService.getInstance();
