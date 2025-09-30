@@ -44,10 +44,12 @@ Always to be follow the .claude\instructions.md this file given rules.
 ### Implementation Guidelines
 
 - **NEVER overengineer solutions** - Implement only what is explicitly requested
+- **DO NOT ASSUME AND ADD EXTRA CODE** - Only implement the specific functionality asked for
 - **Ask before adding features** - Don't assume additional functionality is needed
 - **Keep it simple** - Simple, working code is better than complex, feature-rich code
 - **Match existing patterns** - If similar functionality exists, copy the exact approach
 - **Avoid premature optimization** - Don't add complexity without explicit need
+- **Stick to requirements** - When user asks for a specific API method, only add that method
 
 Example:
 

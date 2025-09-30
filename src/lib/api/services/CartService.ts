@@ -17,6 +17,11 @@ export interface CartParams {
   pos?: number;
 }
 
+export interface ClearCartBySellerParams {
+  userId: string;
+  sellerId: string;
+}
+
 export class CartService extends BaseService<CartService> {
   // Configure default client for cart operations
   protected defaultClient = coreCommerceClient;
@@ -51,7 +56,7 @@ export class CartService extends BaseService<CartService> {
 
   /**
    * 🚀 SIMPLIFIED: Get user's cart (auto-context)
-   * Usage: CartService.getCart({ userId: "1339", pos: 0 })
+   * Usage: CartService.getCart({ userId: "1032", pos: 0 })
    */
   async getCart(params: CartParams): Promise<Cart> {
     const { userId, pos = 0 } = params;
@@ -65,7 +70,7 @@ export class CartService extends BaseService<CartService> {
 
   /**
    * 🛡️ SIMPLIFIED: Server-side get cart (auto-context + error handling)
-   * Usage: CartService.getCartServerSide({ userId: "1339", pos: 0 })
+   * Usage: CartService.getCartServerSide({ userId: "1032", pos: 0 })
    */
   async getCartServerSide(params: CartParams): Promise<Cart | null> {
     const { userId, pos = 0 } = params;
@@ -75,6 +80,48 @@ export class CartService extends BaseService<CartService> {
       {},
       "GET"
     )) as Cart | null;
+  }
+
+  /**
+   * 🗑️ SIMPLIFIED: Delete user's cart (auto-context)
+   * Usage: CartService.deleteCart({ userId: "1032", pos: 0 })
+   */
+  async deleteCart(params: CartParams): Promise<unknown> {
+    const { userId, pos = 0 } = params;
+
+    return await this.call(
+      `/carts?userId=${userId}&find=ByUserId&pos=${pos}`,
+      {},
+      "DELETE"
+    );
+  }
+
+  /**
+   * 🛡️ SIMPLIFIED: Server-side delete cart (auto-context + error handling)
+   * Usage: CartService.deleteCartServerSide({ userId: "1032", pos: 0 })
+   */
+  async deleteCartServerSide(params: CartParams): Promise<unknown | null> {
+    const { userId, pos = 0 } = params;
+
+    return await this.callSafe(
+      `/carts?userId=${userId}&find=ByUserId&pos=${pos}`,
+      {},
+      "DELETE"
+    );
+  }
+
+  /**
+   * 🧹 Clear cart by seller
+   * Usage: CartService.clearCartBySeller({ userId: "1032", sellerId: "8682" })
+   */
+  async clearCartBySeller(params: ClearCartBySellerParams): Promise<unknown> {
+    const { userId, sellerId } = params;
+
+    return await this.call(
+      `/carts/clearCartBySeller?userId=${userId}&sellerId=${sellerId}`,
+      {},
+      "DELETE"
+    );
   }
 
   /**
