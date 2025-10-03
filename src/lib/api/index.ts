@@ -34,6 +34,7 @@ import TokenRefreshService from "../services/TokenRefreshService";
 import DashboardService from "./services/DashboardService";
 import OrdersService from "./services/OrdersService";
 import PreferenceService from "./services/PreferenceService";
+import QuotesService from "./services/QuotesService";
 import UserPreferenceService from "./services/UserPreferenceService";
 
 // Export services
@@ -47,6 +48,7 @@ export {
   DiscountService,
   OrdersService,
   PreferenceService,
+  QuotesService,
   RequestQueueService,
   StoreFrontService,
   TenantService,
@@ -146,6 +148,17 @@ export type {
   DashboardResponse,
 } from "./services/CompanyService";
 
+export type {
+  QuotesQueryParams,
+  QuotesRequestBody,
+  CurrencySymbol,
+  ApprovalGroup,
+  QuoteUser,
+  QuoteItem,
+  QuotesResponseData,
+  QuotesApiResponse,
+} from "./services/QuotesService";
+
 // Export token management service types
 export type {
   QueuedRequest,
@@ -180,6 +193,7 @@ export const API = {
   Discount: DiscountService,
   Orders: OrdersService,
   Preference: PreferenceService,
+  Quotes: QuotesService,
   StoreFront: StoreFrontService,
   Tenant: TenantService,
   User: UserService,
