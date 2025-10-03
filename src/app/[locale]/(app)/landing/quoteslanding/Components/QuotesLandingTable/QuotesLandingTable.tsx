@@ -10,6 +10,7 @@ import { toast } from "sonner";
 import { QuotesService, type QuoteItem } from "@/lib/api";
 import { ColumnDef } from "@tanstack/react-table";
 import { useCurrentUser } from "@/hooks/useCurrentUser";
+import { statusColor } from "@/components/custom/statuscolors";
 import { useRouter } from "next/navigation";
 import { useLocale } from "next-intl";
 
@@ -85,20 +86,20 @@ function QuotesLandingTable({
         header: "Buyer Status",
         cell: ({ getValue }) => {
           const status = getValue() as string;
-          const statusColors: Record<string, string> = {
-            draft: "bg-gray-100 text-gray-800",
-            pending: "bg-yellow-100 text-yellow-800",
-            approved: "bg-green-100 text-green-800",
-            rejected: "bg-red-100 text-red-800",
-            expired: "bg-orange-100 text-orange-800",
-            cancelled: "bg-gray-100 text-gray-600",
-          };
+          if (!status) return null;
+
+          // Get color from the centralized statusColor function
+          const bgColor = statusColor(status.toUpperCase());
+
           return (
             <span
-              className={`px-2 py-1 rounded-full text-xs font-medium ${
-                statusColors[status.toLowerCase()] ||
-                "bg-gray-100 text-gray-800"
-              }`}
+              className="px-3 py-1 rounded-full text-xs font-semibold text-white"
+              style={{
+                backgroundColor: bgColor,
+                display: "inline-block",
+                minWidth: "100px",
+                textAlign: "center",
+              }}
             >
               {status}
             </span>

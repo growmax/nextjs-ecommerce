@@ -42,6 +42,34 @@ export const statusColor = (status: string): string => {
     case "ORDER CANCELLED": {
       return "#D32F2F";
     }
+    // Quote statuses
+    case "OPEN": {
+      return "#2196F3"; // Blue
+    }
+    case "IN PROGRESS": {
+      return "#FF9800"; // Orange
+    }
+    case "QUOTE RECEIVED": {
+      return "#4CAF50"; // Green
+    }
+    case "CANCELLED": {
+      return "#757575"; // Gray
+    }
+    case "DRAFT": {
+      return "#9E9E9E"; // Light Gray
+    }
+    case "PENDING": {
+      return "#FFA000"; // Amber
+    }
+    case "APPROVED": {
+      return "#388E3C"; // Dark Green
+    }
+    case "REJECTED": {
+      return "#D32F2F"; // Red
+    }
+    case "EXPIRED": {
+      return "#795548"; // Brown
+    }
     default: {
       return "#c3c3c3";
     }
