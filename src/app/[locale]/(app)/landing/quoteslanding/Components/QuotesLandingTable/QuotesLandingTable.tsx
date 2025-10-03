@@ -4,8 +4,7 @@ import { useState, useEffect, useMemo, useCallback } from "react";
 import DashboardTable from "@/components/custom/DashBoardTable";
 import FilterDrawer from "@/components/sales/FilterDrawer";
 import { QuoteFilterFormData } from "@/components/sales/QuoteFilterForm";
-import { Button } from "@/components/ui/button";
-import { Filter } from "lucide-react";
+import TableHeaderBar from "./TableHeaderBar";
 import { toast } from "sonner";
 import { QuotesService, type QuoteItem } from "@/lib/api";
 import { ColumnDef } from "@tanstack/react-table";
@@ -32,10 +31,10 @@ function QuotesLandingTable({
   const [totalCount, setTotalCount] = useState(0);
   const [page, setPage] = useState(0);
   const [rowPerPage, setRowPerPage] = useState(10);
-  const [pagination, setPagination] = useState({ pageIndex: 0, pageSize: 10 });
   const [filterData, setFilterData] = useState<QuoteFilterFormData | null>(
     null
   );
+  const [activeTab, setActiveTab] = useState("ALL");
 
   // Define table columns
   const columns = useMemo<ColumnDef<QuoteItem>[]>(
@@ -118,14 +117,6 @@ function QuotesLandingTable({
     []
   );
 
-  // Sync pagination state
-  useEffect(() => {
-    setPagination({
-      pageIndex: page,
-      pageSize: rowPerPage,
-    });
-  }, [page, rowPerPage]);
-
   // Computed pagination properties
   const maxPage = useMemo(
     () => Math.max(0, Math.ceil(totalCount / rowPerPage) - 1),
@@ -135,14 +126,6 @@ function QuotesLandingTable({
   const canGoNext = useMemo(
     () => page < maxPage && !loading,
     [page, maxPage, loading]
-  );
-  const currentRangeStart = useMemo(
-    () => page * rowPerPage + 1,
-    [page, rowPerPage]
-  );
-  const currentRangeEnd = useMemo(
-    () => Math.min((page + 1) * rowPerPage, totalCount),
-    [page, rowPerPage, totalCount]
   );
 
   const fetchQuotes = useCallback(async () => {
@@ -154,10 +137,13 @@ function QuotesLandingTable({
 
     setLoading(true);
     try {
+      // 1-based offset: Calculate proper starting record number
+      const calculatedOffset = page + 1;
+
       const queryParams = {
         userId: user.userId,
         companyId: user.companyId,
-        offset: page * rowPerPage,
+        offset: calculatedOffset,
         limit: rowPerPage,
       };
 
@@ -175,9 +161,9 @@ function QuotesLandingTable({
         endGrandTotal: filterData?.totalEnd || "",
         identifier: filterData?.quoteId || "",
         limit: rowPerPage,
-        offset: page * rowPerPage,
+        offset: calculatedOffset, // Now using 1-based offset
         name: filterData?.quoteName || "",
-        pageNumber: page + 1,
+        pageNumber: page + 1, // Backend uses pageNumber for pagination
         startDate: filterData?.lastUpdatedDateStart
           ? filterData.lastUpdatedDateStart.toISOString()
           : "",
@@ -337,26 +323,20 @@ function QuotesLandingTable({
       />
 
       <div className="p-4 space-y-4">
-        <div className="flex justify-between items-center">
-          <Button onClick={handleOpenDrawer} variant="outline">
-            <Filter className="h-4 w-4 mr-2" />
-            Open Filters
-          </Button>
-          {totalCount > 0 && (
-            <div className="text-sm text-gray-600">
-              Showing {currentRangeStart}-{currentRangeEnd} of {totalCount}{" "}
-              quotes
-              {maxPage > 0 && ` | Page ${page + 1} of ${maxPage + 1}`}
-            </div>
-          )}
-        </div>
+        <TableHeaderBar
+          activeTab={activeTab}
+          setActiveTab={setActiveTab}
+          handleOpenDrawer={handleOpenDrawer}
+          handleExport={handleExport}
+          setRowPerPage={setRowPerPage}
+        />
         <DashboardTable
           data={quotes}
           columns={columns}
           loading={loading}
           totalDataCount={totalCount}
-          pagination={pagination}
-          setPagination={setPagination}
+          pagination={{ pageIndex: page, pageSize: rowPerPage }}
+          setPagination={() => {}}
           setPage={setPage}
           pageOptions={[10, 20, 50, 100]}
           handlePrevious={handlePrevious}
@@ -367,7 +347,7 @@ function QuotesLandingTable({
             const newValue =
               typeof value === "string" ? parseInt(value, 10) : value;
             setRowPerPage(newValue);
-            setPagination({ ...pagination, pageSize: newValue });
+            setPage(0); // Reset to first page when changing page size
           }}
           onRowClick={handleRowClick}
           tableHeight="h-[calc(100vh-350px)]"

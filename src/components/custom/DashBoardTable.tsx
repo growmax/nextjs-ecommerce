@@ -155,7 +155,9 @@ const DashboardTable = <T,>({
       <div className="flex items-center justify-between p-4 border-t bg-background">
         <div className="flex items-center gap-3">
           <span className=" text-xs lg:text-sm text-muted-foreground">
-            Page {page + 1} of {pageCount}
+            Showing {Math.min(page * rowPerPage + 1, totalDataCount)} -{" "}
+            {Math.min((page + 1) * rowPerPage, totalDataCount)} of{" "}
+            {totalDataCount} | Page {page + 1} of {pageCount}
           </span>
           <label className="text-xs lg:text-sm text-muted-foreground">
             Rows per page:{" "}
