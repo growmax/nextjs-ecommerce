@@ -131,6 +131,43 @@ export interface QuotesApiResponse {
 }
 
 export class QuotesService extends BaseService<QuotesService> {
+  static getQuotes(
+    _queryParams: {
+      userId: number;
+      companyId: number;
+      offset: number;
+      limit: number;
+    },
+    _filterRequest: {
+      filter_index: number;
+      filter_name: string;
+      endCreatedDate: string;
+      endDate: string;
+      endValue: string;
+      endTaxableAmount: string;
+      endGrandTotal: string;
+      identifier: string;
+      limit: number;
+      offset: number;
+      name: string;
+      pageNumber: number;
+      startDate: string;
+      startCreatedDate: string;
+      startValue: string;
+      startTaxableAmount: string;
+      startGrandTotal: string;
+      status: string[];
+      selectedColumns: never[];
+      columnWidth: never[];
+      columnPosition: string;
+      userDisplayName: string;
+      userStatus: never[];
+      accountId: never[];
+      branchId: never[];
+    }
+  ) {
+    throw new Error("Method not implemented.");
+  }
   protected defaultClient = coreCommerceClient;
 
   async getQuotes(

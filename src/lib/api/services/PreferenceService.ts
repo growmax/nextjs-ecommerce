@@ -15,6 +15,29 @@ export interface UserPreference {
 
 export type PreferenceModule = "order" | "quote" | string;
 
+// Order Preferences Request Interface
+export interface OrderPreferencesRequest {
+  userId: number;
+  companyId: number;
+  module: string;
+  isMobile?: boolean;
+}
+
+// Order Preferences Response Interface
+export interface OrderPreferencesResponse {
+  data: {
+    id?: number;
+    userId: number;
+    module: string;
+    preferences: Record<string, unknown>;
+    tenantCode?: string;
+    createdAt?: string;
+    updatedAt?: string;
+  };
+  message: string | null;
+  status: string;
+}
+
 export class PreferenceService extends BaseService<PreferenceService> {
   // Using apiClient for PREFERENCES_URL endpoint
   protected defaultClient = apiClient;
@@ -93,6 +116,63 @@ export class PreferenceService extends BaseService<PreferenceService> {
       {},
       "GET"
     )) as UserPreference;
+  }
+
+  /**
+   * Find order preferences with company context
+   * @param requestData - Object containing userId, companyId, module, and optional isMobile
+   * @returns Order preferences response
+   */
+  async findOrderPreferences(
+    requestData: OrderPreferencesRequest
+  ): Promise<OrderPreferencesResponse> {
+    const { userId, module } = requestData;
+    const { tenantCode } = this.getUserDataFromToken();
+
+    return (await this.call(
+      `/preferences/find?userId=${userId}&module=${module}&tenantCode=${tenantCode}`,
+      requestData,
+      "GET"
+    )) as OrderPreferencesResponse;
+  }
+
+  /**
+   * Find order preferences with auto-extracted user data
+   * @param isMobile - Optional flag for mobile preferences
+   * @returns Order preferences response
+   */
+  async findOrderPreferencesAuto(
+    isMobile: boolean = false
+  ): Promise<OrderPreferencesResponse> {
+    const { userId, companyId, tenantCode } = this.getUserDataFromToken();
+
+    const requestData: OrderPreferencesRequest = {
+      userId: parseInt(userId),
+      companyId: parseInt(companyId),
+      module: "order",
+      isMobile,
+    };
+
+    return (await this.call(
+      `/preferences/find?userId=${userId}&module=order&tenantCode=${tenantCode}`,
+      requestData,
+      "GET"
+    )) as OrderPreferencesResponse;
+  }
+
+  /**
+   * Server-safe version for order preferences
+   * @param isMobile - Optional flag for mobile preferences
+   * @returns Order preferences response or null if error
+   */
+  async findOrderPreferencesServerSide(
+    isMobile: boolean = false
+  ): Promise<OrderPreferencesResponse | null> {
+    try {
+      return await this.findOrderPreferencesAuto(isMobile);
+    } catch {
+      return null;
+    }
   }
 }
 

@@ -1,5 +1,5 @@
 import DashboardService from "@/lib/api/services/DashboardService";
-import OrdersService from "@/lib/api/services/OrdersService";
+import OrderService from "@/lib/api/services/OrdersService";
 import { AuthStorage } from "@/lib/auth";
 import { JWTService } from "@/lib/services/JWTService";
 import type {
@@ -136,7 +136,7 @@ export function useDashboardOrders(
         }
       }
 
-      return OrdersService.getOrders(queryParams);
+      return OrderService.getOrders(queryParams);
     },
     staleTime: 2 * 60 * 1000, // 2 minutes - orders change more frequently
     gcTime: 5 * 60 * 1000, // 5 minutes

@@ -128,6 +128,23 @@ export function QuoteFilterForm({
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-6">
+        {/* Filter Name */}
+        <FormField
+          control={form.control}
+          name="quoteName"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Filter Name</FormLabel>
+              <FormControl>
+                <Input
+                  placeholder={`Enter ${filterType.toLowerCase()} name...`}
+                  {...field}
+                />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
         {/* Quote Info Section */}
         <div className="space-y-4">
           <h3 className="text-sm font-medium text-gray-900">

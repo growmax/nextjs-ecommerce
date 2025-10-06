@@ -6,6 +6,20 @@ export interface OrdersParams {
   companyId: string;
   offset: number;
   limit: number;
+  // Filter parameters
+  status?: string;
+  orderId?: string;
+  orderName?: string;
+  orderDateStart?: string;
+  orderDateEnd?: string;
+  lastUpdatedDateStart?: string;
+  lastUpdatedDateEnd?: string;
+  subtotalStart?: string;
+  subtotalEnd?: string;
+  taxableStart?: string;
+  taxableEnd?: string;
+  totalStart?: string;
+  totalEnd?: string;
 }
 
 export class OrdersService extends BaseService<OrdersService> {
@@ -17,10 +31,25 @@ export class OrdersService extends BaseService<OrdersService> {
    * Usage: OrdersService.getOrders(params)
    */
   async getOrders(params: OrdersParams): Promise<unknown> {
-    const { userId, companyId, offset, limit } = params;
+    const { userId, companyId, offset, limit, ...filters } = params;
+
+    // Build query string with filters
+    const queryParams = new URLSearchParams({
+      userId,
+      companyId,
+      offset: offset.toString(),
+      pgLimit: limit.toString(),
+    });
+
+    // Add filter parameters if they exist
+    Object.entries(filters).forEach(([key, value]) => {
+      if (value !== undefined && value !== null && value !== "") {
+        queryParams.append(key, value);
+      }
+    });
 
     return this.call(
-      `/orders/findByFilter?userId=${userId}&companyId=${companyId}&offset=${offset}&pgLimit=${limit}`,
+      `/orders/findByFilter?${queryParams.toString()}`,
       {}, // Empty body as per the original API route
       "POST"
     );
@@ -33,10 +62,25 @@ export class OrdersService extends BaseService<OrdersService> {
     params: OrdersParams,
     context: RequestContext
   ): Promise<unknown> {
-    const { userId, companyId, offset, limit } = params;
+    const { userId, companyId, offset, limit, ...filters } = params;
+
+    // Build query string with filters
+    const queryParams = new URLSearchParams({
+      userId,
+      companyId,
+      offset: offset.toString(),
+      pgLimit: limit.toString(),
+    });
+
+    // Add filter parameters if they exist
+    Object.entries(filters).forEach(([key, value]) => {
+      if (value !== undefined && value !== null && value !== "") {
+        queryParams.append(key, value);
+      }
+    });
 
     return this.callWith(
-      `/orders/findByFilter?userId=${userId}&companyId=${companyId}&offset=${offset}&pgLimit=${limit}`,
+      `/orders/findByFilter?${queryParams.toString()}`,
       {}, // Empty body as per the original API route
       { context, method: "POST" }
     );
@@ -47,10 +91,25 @@ export class OrdersService extends BaseService<OrdersService> {
    * Usage: OrdersService.getOrdersServerSide(params)
    */
   async getOrdersServerSide(params: OrdersParams): Promise<unknown | null> {
-    const { userId, companyId, offset, limit } = params;
+    const { userId, companyId, offset, limit, ...filters } = params;
+
+    // Build query string with filters
+    const queryParams = new URLSearchParams({
+      userId,
+      companyId,
+      offset: offset.toString(),
+      pgLimit: limit.toString(),
+    });
+
+    // Add filter parameters if they exist
+    Object.entries(filters).forEach(([key, value]) => {
+      if (value !== undefined && value !== null && value !== "") {
+        queryParams.append(key, value);
+      }
+    });
 
     return this.callSafe(
-      `/orders/findByFilter?userId=${userId}&companyId=${companyId}&offset=${offset}&pgLimit=${limit}`,
+      `/orders/findByFilter?${queryParams.toString()}`,
       {}, // Empty body as per the original API route
       "POST"
     );
@@ -63,10 +122,25 @@ export class OrdersService extends BaseService<OrdersService> {
     params: OrdersParams,
     context: RequestContext
   ): Promise<unknown | null> {
-    const { userId, companyId, offset, limit } = params;
+    const { userId, companyId, offset, limit, ...filters } = params;
+
+    // Build query string with filters
+    const queryParams = new URLSearchParams({
+      userId,
+      companyId,
+      offset: offset.toString(),
+      pgLimit: limit.toString(),
+    });
+
+    // Add filter parameters if they exist
+    Object.entries(filters).forEach(([key, value]) => {
+      if (value !== undefined && value !== null && value !== "") {
+        queryParams.append(key, value);
+      }
+    });
 
     return this.callWithSafe(
-      `/orders/findByFilter?userId=${userId}&companyId=${companyId}&offset=${offset}&pgLimit=${limit}`,
+      `/orders/findByFilter?${queryParams.toString()}`,
       {}, // Empty body as per the original API route
       { context, method: "POST" }
     );

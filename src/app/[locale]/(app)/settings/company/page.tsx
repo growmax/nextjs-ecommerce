@@ -367,7 +367,7 @@ export default function CompanyPage() {
     resolver: zodResolver(addressSearchSchema),
     defaultValues: {
       searchTerm: "",
-      pageSize: 10,
+      pageSize: 20,
     },
   });
 
@@ -375,7 +375,7 @@ export default function CompanyPage() {
 
   // Watch form values for real-time updates
   const searchTerm = watchSearch("searchTerm") || "";
-  const pageSize = watchSearch("pageSize") || 10;
+  const pageSize = watchSearch("pageSize") || 20;
 
   // Watch the subIndustry field for real-time updates
   const watchedSubIndustry = watch("subIndustry");
