@@ -62,6 +62,7 @@ const DashboardTable = <T,>({
 }: TableProps<T>) => {
   const pageCount = Math.ceil(totalDataCount / rowPerPage);
   const tableScrollRef = useRef<HTMLDivElement>(null);
+  const headerScrollRef = useRef<HTMLDivElement>(null);
   const [columnWidths, setColumnWidths] = useState<Record<string, number>>({});
   const [isResizing, setIsResizing] = useState(false);
   const [resizingColumn, setResizingColumn] = useState<string | null>(null);
@@ -150,35 +151,40 @@ const DashboardTable = <T,>({
     return columnWidths[columnId] || defaultSize || 150;
   };
 
+  // Sync horizontal scroll between header and body
+  useEffect(() => {
+    const tableContainer = tableScrollRef.current;
+    const headerContainer = headerScrollRef.current;
+
+    if (!tableContainer || !headerContainer) return;
+
+    const handleScroll = () => {
+      // Sync header scroll with table scroll
+      headerContainer.scrollLeft = tableContainer.scrollLeft;
+    };
+
+    tableContainer.addEventListener("scroll", handleScroll);
+
+    return () => {
+      tableContainer.removeEventListener("scroll", handleScroll);
+    };
+  }, []);
+
   return (
     <div className={`overflow-hidden flex flex-col ${tableHeight} w-full`}>
-      {/* Single Scrollable Table Container */}
+      {/* Static Header - No scrollbar, synced with body */}
       <div
-        ref={tableScrollRef}
-        className="flex-1 overflow-auto relative scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100"
+        ref={headerScrollRef}
+        className="bg-gray-100 sticky top-0 z-50 overflow-hidden"
       >
-        {/* Loading overlay - covers table content for both initial load and filter changes */}
-        {loading && (
-          <div className="absolute inset-0 bg-background/80 backdrop-blur-sm z-30 flex items-center justify-center">
-            <div className="bg-background border shadow-lg rounded-lg p-6 flex flex-col items-center gap-4">
-              <div className="flex gap-1">
-                <div className="w-2 h-2 bg-primary rounded-full animate-bounce [animation-delay:-0.3s]"></div>
-                <div className="w-2 h-2 bg-primary rounded-full animate-bounce [animation-delay:-0.15s]"></div>
-                <div className="w-2 h-2 bg-primary rounded-full animate-bounce"></div>
-              </div>
-              <p className="text-sm text-muted-foreground">Loading...</p>
-            </div>
-          </div>
-        )}
-        <Table className="min-w-full table-fixed table-layout-fixed border-collapse border-separate border-spacing-0">
-          {/* Sticky Header */}
-          <TableHeader className="bg-gray-100 sticky top-0 z-10">
+        <Table className="min-w-full table-fixed border-collapse">
+          <TableHeader>
             {table.getHeaderGroups().map((headerGroup: HeaderGroup<T>) => (
               <TableRow key={headerGroup.id}>
                 {headerGroup.headers.map((header: Header<T, unknown>) => (
                   <TableHead
                     key={header.id}
-                    className="text-center px-3 py-2 bg-gray-100 align-middle whitespace-normal relative group"
+                    className="text-center px-3 py-2 text-xs sm:text-sm bg-gray-100 align-middle whitespace-normal relative group"
                     style={{
                       width: `${getColumnWidth(header.id, header.column.columnDef.size as number)}px`,
                       wordWrap: "break-word",
@@ -205,6 +211,28 @@ const DashboardTable = <T,>({
               </TableRow>
             ))}
           </TableHeader>
+        </Table>
+      </div>
+
+      {/* Scrollable Body Container */}
+      <div
+        ref={tableScrollRef}
+        className="flex-1 overflow-auto relative scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100"
+      >
+        {/* Loading overlay - covers table content for both initial load and filter changes */}
+        {loading && (
+          <div className="absolute inset-0 bg-background/80 backdrop-blur-sm z-30 flex items-center justify-center">
+            <div className="bg-background border shadow-lg rounded-lg p-6 flex flex-col items-center gap-4">
+              <div className="flex gap-1">
+                <div className="w-2 h-2 bg-primary rounded-full animate-bounce [animation-delay:-0.3s]"></div>
+                <div className="w-2 h-2 bg-primary rounded-full animate-bounce [animation-delay:-0.15s]"></div>
+                <div className="w-2 h-2 bg-primary rounded-full animate-bounce"></div>
+              </div>
+              <p className="text-sm text-muted-foreground">Loading...</p>
+            </div>
+          </div>
+        )}
+        <Table className="min-w-full table-fixed border-collapse">
           <TableBody>
             {table.getRowModel().rows.length > 0 ? (
               table.getRowModel().rows.map((row: Row<T>, index: number) => (
