@@ -1,21 +1,7 @@
 "use client";
 
-import * as React from "react";
-import { forwardRef, useImperativeHandle, useRef } from "react";
-import {
-  Filter,
-  MoreVertical,
-  RefreshCw,
-  Settings,
-  X,
-  Grid3X3,
-  List,
-  Columns3,
-} from "lucide-react";
-import { cn } from "@/lib/utils";
-import { Button } from "@/components/ui/button";
-import { LoadingButton } from "./loading-button";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
   Tooltip,
@@ -23,11 +9,24 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { useIsMobile } from "@/hooks/use-mobile";
-import SearchBox from "./search";
+import { cn } from "@/lib/utils";
 import type {
   DashboardToolbarProps,
   DashboardToolbarRef,
 } from "@/types/dashboard-toolbar";
+import {
+  Columns3,
+  Filter,
+  Grid3X3,
+  List,
+  MoreVertical,
+  RefreshCw,
+  Settings,
+  X,
+} from "lucide-react";
+import { forwardRef, useImperativeHandle, useRef } from "react";
+import { LoadingButton } from "./loading-button";
+import SearchBox from "./search";
 
 /**
  * Modern Dashboard Toolbar Component
@@ -227,8 +226,8 @@ const DashboardToolbar = forwardRef<DashboardToolbarRef, DashboardToolbarProps>(
                     onClick={secondary.handleClick}
                     disabled={secondary.disabled || false}
                     variant="outline"
-                    size={isMobile ? "sm" : "default"}
-                    className="gap-2"
+                    size="sm"
+                    className="gap-1 h-7"
                   >
                     {secondary.startIcon}
                     {!isMobile && secondary.value}
@@ -236,10 +235,10 @@ const DashboardToolbar = forwardRef<DashboardToolbarRef, DashboardToolbarProps>(
                 ) : (
                   <Button
                     variant="outline"
-                    size={isMobile ? "sm" : "default"}
+                    size="sm"
                     onClick={secondary.handleClick}
                     disabled={secondary.disabled}
-                    className="gap-2"
+                    className="gap-1 h-7"
                   >
                     {secondary.startIcon}
                     {!isMobile && secondary.value}
@@ -253,18 +252,18 @@ const DashboardToolbar = forwardRef<DashboardToolbarRef, DashboardToolbarProps>(
                     loading={primary.isLoading || false}
                     onClick={primary.handleClick}
                     disabled={primary.disabled || false}
-                    size={isMobile ? "sm" : "default"}
-                    className="gap-2"
+                    size="sm"
+                    className="gap-1 h-7"
                   >
                     {primary.startIcon}
                     {!isMobile && primary.value}
                   </LoadingButton>
                 ) : (
                   <Button
-                    size={isMobile ? "sm" : "default"}
+                    size="sm"
                     onClick={primary.handleClick}
                     disabled={primary.disabled}
-                    className="gap-2"
+                    className="gap-1 h-7"
                   >
                     {primary.startIcon}
                     {!isMobile && primary.value}
@@ -425,8 +424,8 @@ const DashboardToolbar = forwardRef<DashboardToolbarRef, DashboardToolbarProps>(
         >
           <div
             className={cn(
-              "px-4 sm:px-6 py-3 sm:py-4",
-              "flex flex-col sm:flex-row sm:items-center gap-4 sm:gap-6",
+              "px-4 sm:px-6 py-1",
+              "flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-2",
               "max-w-screen-2xl mx-auto"
             )}
           >
@@ -454,8 +453,8 @@ const DashboardToolbar = forwardRef<DashboardToolbarRef, DashboardToolbarProps>(
         >
           <div
             className={cn(
-              "px-4 sm:px-6 py-3 sm:py-4",
-              "flex flex-col sm:flex-row sm:items-center gap-4 sm:gap-6",
+              "px-4 sm:px-6 py-1",
+              "flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-2",
               "max-w-screen-2xl mx-auto"
             )}
           >
@@ -464,9 +463,7 @@ const DashboardToolbar = forwardRef<DashboardToolbarRef, DashboardToolbarProps>(
         </div>
 
         {/* Spacer for fixed positioning */}
-        {position === "fixed" && (
-          <div className="h-16 sm:h-20" aria-hidden="true" />
-        )}
+        {position === "fixed" && <div className="h-10" aria-hidden="true" />}
       </>
     );
   }

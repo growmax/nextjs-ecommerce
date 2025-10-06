@@ -1,5 +1,5 @@
 import { AppSidebar } from "@/components/app-sidebar";
-import Footer from "@/components/footer";
+import { ConditionalFooter } from "@/components/ConditionalFooter";
 import NavBar from "@/components/nav-bar";
 import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
 import { AuthProvider } from "@/contexts/AuthContext";
@@ -64,10 +64,10 @@ export default async function AppLayout({
                 <div className="fixed top-0 left-0 right-0 z-40 bg-background">
                   <NavBar />
                 </div>
-                <main className="min-h-screen pb-8 overflow-x-hidden pt-[69px]">
+                <main className="min-h-screen pb-8 overflow-x-hidden pt-[69px] [&_.landing-page]:!pt-0 [&_.landing-page]:!pb-0 [&_.landing-page]:!min-h-0 [&_.landing-page]:!h-[calc(100vh-69px)]">
                   {children}
                 </main>
-                <Footer />
+                <ConditionalFooter />
               </SidebarInset>
             </SidebarProvider>
           </UserSessionProvider>

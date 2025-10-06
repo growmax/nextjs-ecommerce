@@ -1,14 +1,14 @@
 import React from "react";
 
 import {
+  Cell,
   ColumnDef,
+  Header,
+  HeaderGroup,
+  Row,
   flexRender,
   getCoreRowModel,
   useReactTable,
-  HeaderGroup,
-  Header,
-  Row,
-  Cell,
 } from "@tanstack/react-table";
 
 import {
@@ -77,16 +77,24 @@ const DashboardTable = <T,>({
 
   return (
     <div
-      className={`rounded-md border shadow-sm overflow-hidden flex flex-col ${tableHeight} w-full`}
+      className={`border overflow-hidden flex flex-col ${tableHeight} w-full`}
     >
-      {/* Fixed Header */}
-      <div className="bg-gray-100 border-b">
-        <Table className="min-w-full">
-          <TableHeader>
+      {/* Static Header */}
+      <div className="flex-shrink-0">
+        <Table className="min-w-full table-fixed">
+          <TableHeader className="bg-gray-100">
             {table.getHeaderGroups().map((headerGroup: HeaderGroup<T>) => (
               <TableRow key={headerGroup.id}>
                 {headerGroup.headers.map((header: Header<T, unknown>) => (
-                  <TableHead key={header.id} className="text-left px-3 py-2">
+                  <TableHead
+                    key={header.id}
+                    className="text-left px-3 py-2 bg-gray-100 border-b"
+                    style={{
+                      width: header.column.columnDef.size
+                        ? `${header.column.columnDef.size}px`
+                        : "auto",
+                    }}
+                  >
                     {header.isPlaceholder
                       ? null
                       : flexRender(
@@ -116,7 +124,7 @@ const DashboardTable = <T,>({
             </div>
           </div>
         )}
-        <Table className="min-w-full">
+        <Table className="min-w-full table-fixed">
           <TableBody>
             {table.getRowModel().rows.length > 0 ? (
               table.getRowModel().rows.map((row: Row<T>, index: number) => (
@@ -130,6 +138,11 @@ const DashboardTable = <T,>({
                     <TableCell
                       key={cell.id}
                       className="px-2 sm:px-3 py-2 text-xs sm:text-sm"
+                      style={{
+                        width: cell.column.columnDef.size
+                          ? `${cell.column.columnDef.size}px`
+                          : "auto",
+                      }}
                     >
                       {flexRender(
                         cell.column.columnDef.cell,
@@ -152,8 +165,8 @@ const DashboardTable = <T,>({
           </TableBody>
         </Table>
       </div>
-      <div className="flex items-center justify-between p-4 border-t bg-background">
-        <div className="flex items-center gap-3">
+      <div className="flex items-center justify-between px-4 py-1 border-t bg-background">
+        <div className="flex items-center gap-2">
           <span className=" text-xs lg:text-sm text-muted-foreground">
             Showing {Math.min(page * rowPerPage + 1, totalDataCount)} -{" "}
             {Math.min((page + 1) * rowPerPage, totalDataCount)} of{" "}
@@ -174,7 +187,7 @@ const DashboardTable = <T,>({
             </select>
           </label>
         </div>
-        <div className="flex gap-2">
+        <div className="flex gap-1">
           <Button
             variant="outline"
             size="sm"

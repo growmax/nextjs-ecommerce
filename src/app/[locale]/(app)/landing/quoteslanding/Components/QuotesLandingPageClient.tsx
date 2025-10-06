@@ -1,9 +1,9 @@
 "use client";
 
-import { useState, useCallback } from "react";
 import { DashboardToolbar } from "@/components/custom/dashboard-toolbar";
 import { Toaster } from "@/components/ui/sonner";
 import { Download } from "lucide-react";
+import { useCallback, useState } from "react";
 import { toast } from "sonner";
 import QuotesLandingTable from "../Components/QuotesLandingTable/QuotesLandingTable";
 
@@ -27,7 +27,7 @@ export default function QuotesLandingPageClient() {
   }, []);
 
   return (
-    <>
+    <div className="h-full flex flex-col">
       <DashboardToolbar
         title="Quotes"
         secondary={{
@@ -41,12 +41,14 @@ export default function QuotesLandingPageClient() {
           handleRefresh,
         }}
       />
-      <QuotesLandingTable
-        refreshTrigger={refreshTrigger}
-        setExportCallback={setExportCallback}
-      />
+      <div className="flex-1 overflow-hidden">
+        <QuotesLandingTable
+          refreshTrigger={refreshTrigger}
+          setExportCallback={setExportCallback}
+        />
+      </div>
 
       <Toaster richColors />
-    </>
+    </div>
   );
 }

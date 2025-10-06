@@ -1,17 +1,17 @@
 "use client";
 
-import { useState, useEffect, useMemo, useCallback } from "react";
 import DashboardTable from "@/components/custom/DashBoardTable";
+import { statusColor } from "@/components/custom/statuscolors";
 import FilterDrawer from "@/components/sales/FilterDrawer";
 import { QuoteFilterFormData } from "@/components/sales/QuoteFilterForm";
-import TableHeaderBar from "./TableHeaderBar";
-import { toast } from "sonner";
+import { useCurrentUser } from "@/hooks/useCurrentUser";
 import { QuotesService, type QuoteItem } from "@/lib/api";
 import { ColumnDef } from "@tanstack/react-table";
-import { useCurrentUser } from "@/hooks/useCurrentUser";
-import { statusColor } from "@/components/custom/statuscolors";
-import { useRouter } from "next/navigation";
 import { useLocale } from "next-intl";
+import { useRouter } from "next/navigation";
+import { useCallback, useEffect, useMemo, useState } from "react";
+import { toast } from "sonner";
+import TableHeaderBar from "./TableHeaderBar";
 
 interface QuotesLandingTableProps {
   refreshTrigger?: number;
@@ -30,7 +30,7 @@ function QuotesLandingTable({
   const [loading, setLoading] = useState(true);
   const [totalCount, setTotalCount] = useState(0);
   const [page, setPage] = useState(0);
-  const [rowPerPage, setRowPerPage] = useState(10);
+  const [rowPerPage, setRowPerPage] = useState(20); // Default to first valid option
   const [filterData, setFilterData] = useState<QuoteFilterFormData | null>(
     null
   );
@@ -42,8 +42,9 @@ function QuotesLandingTable({
       {
         accessorKey: "quotationIdentifier",
         header: "Quote ID",
+        size: 150,
         cell: ({ getValue }) => (
-          <span className="font-medium text-blue-600">
+          <span className="font-medium text-blue-600 block truncate">
             {getValue() as string}
           </span>
         ),
@@ -51,30 +52,44 @@ function QuotesLandingTable({
       {
         accessorKey: "quoteName",
         header: "Quote Name",
+        size: 200,
+        cell: ({ getValue }) => (
+          <span className="block truncate">{getValue() as string}</span>
+        ),
       },
       {
         accessorKey: "buyerCompanyName",
         header: "Buyer Company",
+        size: 180,
+        cell: ({ getValue }) => (
+          <span className="block truncate">{getValue() as string}</span>
+        ),
       },
       {
         accessorKey: "sellerCompanyName",
         header: "Seller Company",
+        size: 180,
+        cell: ({ getValue }) => (
+          <span className="block truncate">{getValue() as string}</span>
+        ),
       },
       {
         accessorKey: "itemCount",
         header: "Items",
+        size: 80,
         cell: ({ getValue }) => (
-          <span className="text-center">{getValue() as number}</span>
+          <span className="text-center block">{getValue() as number}</span>
         ),
       },
       {
         accessorKey: "grandTotal",
         header: "Total Amount",
+        size: 140,
         cell: ({ row }) => {
           const currencySymbol = row.original.curencySymbol?.symbol || "$";
           const amount = row.original.grandTotal;
           return (
-            <span className="font-semibold">
+            <span className="font-semibold block truncate">
               {currencySymbol} {amount.toLocaleString()}
             </span>
           );
@@ -83,6 +98,7 @@ function QuotesLandingTable({
       {
         accessorKey: "updatedBuyerStatus",
         header: "Buyer Status",
+        size: 140,
         cell: ({ getValue }) => {
           const status = getValue() as string;
           if (!status) return null;
@@ -92,10 +108,9 @@ function QuotesLandingTable({
 
           return (
             <span
-              className="px-3 py-1 rounded-full text-xs font-semibold text-white"
+              className="px-3 py-1 rounded-full text-xs font-semibold text-white inline-block"
               style={{
                 backgroundColor: bgColor,
-                display: "inline-block",
                 minWidth: "100px",
                 textAlign: "center",
               }}
@@ -108,9 +123,12 @@ function QuotesLandingTable({
       {
         accessorKey: "createdDate",
         header: "Created Date",
+        size: 120,
         cell: ({ getValue }) => {
           const date = getValue() as string;
-          return new Date(date).toLocaleDateString();
+          return (
+            <span className="block">{new Date(date).toLocaleDateString()}</span>
+          );
         },
       },
     ],
@@ -137,8 +155,8 @@ function QuotesLandingTable({
 
     setLoading(true);
     try {
-      // 1-based offset: Calculate proper starting record number
-      const calculatedOffset = page + 1;
+      // 0-based offset: Calculate proper starting record number
+      const calculatedOffset = page;
 
       const queryParams = {
         userId: user.userId,
@@ -161,9 +179,9 @@ function QuotesLandingTable({
         endGrandTotal: filterData?.totalEnd || "",
         identifier: filterData?.quoteId || "",
         limit: rowPerPage,
-        offset: calculatedOffset, // Now using 1-based offset
+        offset: calculatedOffset, // Now using 0-based offset
         name: filterData?.quoteName || "",
-        pageNumber: page + 1, // Backend uses pageNumber for pagination
+        pageNumber: page + 1, // Backend uses 1-based pageNumber for pagination
         startDate: filterData?.lastUpdatedDateStart
           ? filterData.lastUpdatedDateStart.toISOString()
           : "",
@@ -289,7 +307,7 @@ function QuotesLandingTable({
 
   const handlePrevious = () => {
     if (canGoPrevious) {
-      setPage(prevPage => prevPage - 1);
+      setPage(prevPage => Math.max(0, prevPage - 1));
     }
   };
 
@@ -322,7 +340,7 @@ function QuotesLandingTable({
         ]}
       />
 
-      <div className="p-4 space-y-4">
+      <div className="h-full flex flex-col">
         <TableHeaderBar
           activeTab={activeTab}
           setActiveTab={setActiveTab}
@@ -330,28 +348,38 @@ function QuotesLandingTable({
           handleExport={handleExport}
           setRowPerPage={setRowPerPage}
         />
-        <DashboardTable
-          data={quotes}
-          columns={columns}
-          loading={loading}
-          totalDataCount={totalCount}
-          pagination={{ pageIndex: page, pageSize: rowPerPage }}
-          setPagination={() => {}}
-          setPage={setPage}
-          pageOptions={[10, 20, 50, 100]}
-          handlePrevious={handlePrevious}
-          handleNext={handleNext}
-          page={page}
-          rowPerPage={rowPerPage}
-          setRowPerPage={value => {
-            const newValue =
-              typeof value === "string" ? parseInt(value, 10) : value;
-            setRowPerPage(newValue);
-            setPage(0); // Reset to first page when changing page size
-          }}
-          onRowClick={handleRowClick}
-          tableHeight="h-[calc(100vh-350px)]"
-        />
+        <div className="flex-1 overflow-hidden">
+          <DashboardTable
+            data={quotes}
+            columns={columns}
+            loading={loading}
+            totalDataCount={totalCount}
+            pagination={{ pageIndex: page, pageSize: rowPerPage }}
+            setPagination={() => {}}
+            setPage={setPage}
+            pageOptions={[20, 50, 100]}
+            handlePrevious={handlePrevious}
+            handleNext={handleNext}
+            page={page}
+            rowPerPage={rowPerPage}
+            setRowPerPage={value => {
+              const newValue =
+                typeof value === "string" ? parseInt(value, 10) : value;
+              // Validate that the value is one of the allowed options
+              const validOptions = [20, 50, 100];
+              if (validOptions.includes(newValue)) {
+                setRowPerPage(newValue);
+                setPage(0); // Reset to first page when changing page size
+              } else {
+                // Default to 20 if invalid value
+                setRowPerPage(20);
+                setPage(0);
+              }
+            }}
+            onRowClick={handleRowClick}
+            tableHeight="h-full"
+          />
+        </div>
       </div>
     </>
   );
