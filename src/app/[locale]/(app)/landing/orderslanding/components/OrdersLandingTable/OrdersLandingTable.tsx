@@ -4,7 +4,10 @@ import { useState, useEffect, useMemo, useCallback } from "react";
 import DashboardTable from "@/components/custom/DashBoardTable";
 import FilterDrawer from "@/components/sales/FilterDrawer";
 import SideDrawer from "@/components/custom/sidedrawer";
-import { QuoteFilterFormData } from "@/components/sales/QuoteFilterForm";
+import {
+  QuoteFilterFormData,
+  QuoteFilterForm,
+} from "@/components/sales/QuoteFilterForm";
 import { toast } from "sonner";
 import orderService from "@/lib/api/services/OrdersService";
 import { type Order } from "@/types/dashboard/DasbordOrderstable/DashboardOrdersTable";
@@ -164,8 +167,15 @@ function OrdersLandingTable({
       {
         accessorKey: "orderName",
         header: "Order Name",
-        size: 150,
-        cell: ({ row }) => row.original.orderName || "-",
+        size: 200,
+        cell: ({ row }) => (
+          <div
+            className="max-w-[200px] truncate"
+            title={row.original.orderName || "-"}
+          >
+            {row.original.orderName || "-"}
+          </div>
+        ),
       },
       {
         accessorKey: "orderDate",
@@ -199,9 +209,14 @@ function OrdersLandingTable({
         accessorKey: "accountName",
         header: "Account Name",
         size: 250,
-        cell: ({ row }) => {
-          return row.original.buyerCompanyName || "-";
-        },
+        cell: ({ row }) => (
+          <div
+            className="max-w-[250px] truncate"
+            title={row.original.sellerCompanyName || "-"}
+          >
+            {row.original.sellerCompanyName || "-"}
+          </div>
+        ),
       },
       {
         accessorKey: "totalItems",
@@ -367,10 +382,11 @@ function OrdersLandingTable({
 
     setLoading(true);
     try {
+      const calculatedOffset = page;
       const response = await orderService.getOrders({
         userId: user?.userId?.toString() || "",
         companyId: user?.companyId?.toString() || "",
-        offset: page * rowPerPage + 1,
+        offset: calculatedOffset,
         limit: rowPerPage,
       });
       // Handle both possible response structures
@@ -423,7 +439,7 @@ function OrdersLandingTable({
         "Last Modified Date": order.lastUpdatedDate
           ? new Date(order.lastUpdatedDate).toLocaleDateString()
           : "-",
-        "Account Name": order.buyerCompanyName || "-",
+        "Account Name": order.sellerCompanyName || "-",
         "Total Items": order.itemcount || 0,
         "Sub Total": `${order.currencySymbol?.symbol || "USD"} ${Number(order.subTotal || 0).toLocaleString()}`,
         "Taxable Amount": `${order.currencySymbol?.symbol || "USD"} ${Number(order.taxableAmount || 0).toLocaleString()}`,
@@ -539,6 +555,7 @@ function OrdersLandingTable({
       id: "all",
       label: "All",
       hasFilter: true,
+      isFilterActive: !!filterData,
       ...(filterData && { count: 1 }),
     },
   ];
@@ -564,13 +581,20 @@ function OrdersLandingTable({
       <SideDrawer
         open={isAddDrawerOpen}
         onClose={handleAddDrawerClose}
-        title="Add New Order"
+        title="Order Filters"
       >
-        <div className="space-y-4">
-          <p className="text-gray-600">
-            Add new order functionality will be implemented here.
-          </p>
-        </div>
+        <QuoteFilterForm
+          onSubmit={handleOrderFilterSubmit}
+          onReset={handleOrderFilterReset}
+          filterType="Order"
+          statusOptions={[
+            { value: "pending", label: "Pending" },
+            { value: "processing", label: "Processing" },
+            { value: "completed", label: "Completed" },
+            { value: "cancelled", label: "Cancelled" },
+            { value: "refunded", label: "Refunded" },
+          ]}
+        />
       </SideDrawer>
 
       <div className="flex flex-col h-[calc(100vh-140px)]">

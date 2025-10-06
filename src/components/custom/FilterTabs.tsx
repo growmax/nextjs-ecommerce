@@ -95,10 +95,13 @@ export function FilterTabs({
 
               {onAddTab && (
                 <span
-                  className="inline-flex items-center justify-center h-8 w-8 ml-2 rounded-md hover:bg-accent hover:text-accent-foreground transition-colors cursor-pointer"
-                  onClick={onAddTab}
+                  className="inline-flex items-center justify-center h-8 w-8 ml-2 rounded-md hover:bg-accent hover:text-accent-foreground transition-colors cursor-pointer border border-gray-300 bg-white shadow-sm"
+                  onClick={() => {
+                    onAddTab();
+                  }}
+                  title="Add New Order"
                 >
-                  <PlusIcon className="h-4 w-4" />
+                  <PlusIcon className="h-4 w-4 text-gray-600" />
                 </span>
               )}
             </TabsList>
