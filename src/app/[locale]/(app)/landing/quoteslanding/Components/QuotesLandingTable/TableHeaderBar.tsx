@@ -50,11 +50,11 @@ export default function TableHeaderBar({
   };
 
   return (
-    <div className="w-full bg-gradient-to-r from-gray-50 to-gray-100 flex-shrink-0">
-      <div className="relative flex items-center justify-between h-12">
+    <div className="w-full bg-white border-b border-gray-200 flex-shrink-0">
+      <div className="flex items-center justify-between h-12 px-4">
         {/* Tab Container with Overflow Handling */}
         <div className="flex-1 flex items-center overflow-x-auto scrollbar-hide">
-          <div className="flex items-center gap-0.5 min-w-0">
+          <div className="flex items-center gap-6 min-w-0">
             {filters.map(filter => (
               <Tab
                 key={filter}
@@ -71,19 +71,16 @@ export default function TableHeaderBar({
           </div>
         </div>
 
-        {/* Shadow Indicators for Overflow */}
-        <div className="pointer-events-none absolute right-0 top-0 bottom-0 w-8 bg-gradient-to-l from-white to-transparent opacity-0 transition-opacity duration-200" />
-
         {/* Right Section - Settings */}
-        <div className="flex items-center flex-shrink-0">
+        <div className="flex items-center flex-shrink-0 ml-4">
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button
                 variant="ghost"
                 size="sm"
-                className="h-8 w-8 p-0 hover:bg-white rounded-lg transition-all duration-200"
+                className="h-8 w-8 p-0 hover:bg-gray-100 rounded-md transition-colors"
               >
-                <Settings className="h-4 w-4 text-gray-600" />
+                <Settings className="h-4 w-4 text-gray-500" />
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">

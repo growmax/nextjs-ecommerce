@@ -62,7 +62,7 @@ function QuotesLandingTable({
         header: "Buyer Company",
         size: 180,
         cell: ({ getValue }) => (
-          <span className="block truncate">{getValue() as string}</span>
+          <span className="block break-words">{getValue() as string}</span>
         ),
       },
       {
@@ -70,7 +70,7 @@ function QuotesLandingTable({
         header: "Seller Company",
         size: 180,
         cell: ({ getValue }) => (
-          <span className="block truncate">{getValue() as string}</span>
+          <span className="block break-words">{getValue() as string}</span>
         ),
       },
       {
@@ -128,6 +128,56 @@ function QuotesLandingTable({
           const date = getValue() as string;
           return (
             <span className="block">{new Date(date).toLocaleDateString()}</span>
+          );
+        },
+      },
+      {
+        accessorKey: "lastUpdatedDate",
+        header: "Last Updated",
+        size: 120,
+        cell: ({ getValue }) => {
+          const date = getValue() as string;
+          return (
+            <span className="block">{new Date(date).toLocaleDateString()}</span>
+          );
+        },
+      },
+      {
+        accessorKey: "requiredDate",
+        header: "Required Date",
+        size: 120,
+        cell: ({ getValue }) => {
+          const date = getValue() as string;
+          return (
+            <span className="block">{new Date(date).toLocaleDateString()}</span>
+          );
+        },
+      },
+      {
+        accessorKey: "subTotal",
+        header: "Subtotal",
+        size: 120,
+        cell: ({ row }) => {
+          const currencySymbol = row.original.curencySymbol?.symbol || "$";
+          const amount = row.original.subTotal;
+          return (
+            <span className="block truncate">
+              {currencySymbol} {amount?.toLocaleString() || "0"}
+            </span>
+          );
+        },
+      },
+      {
+        accessorKey: "taxableAmount",
+        header: "Taxable Amount",
+        size: 140,
+        cell: ({ row }) => {
+          const currencySymbol = row.original.curencySymbol?.symbol || "$";
+          const amount = row.original.taxableAmount;
+          return (
+            <span className="block truncate">
+              {currencySymbol} {amount?.toLocaleString() || "0"}
+            </span>
           );
         },
       },

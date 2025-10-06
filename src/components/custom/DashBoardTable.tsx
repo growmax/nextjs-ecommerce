@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useRef, useEffect, useState, useCallback } from "react";
 
 import {
   Cell,
@@ -61,6 +61,12 @@ const DashboardTable = <T,>({
   tableHeight = "h-[calc(100vh-250px)]",
 }: TableProps<T>) => {
   const pageCount = Math.ceil(totalDataCount / rowPerPage);
+  const tableScrollRef = useRef<HTMLDivElement>(null);
+  const [columnWidths, setColumnWidths] = useState<Record<string, number>>({});
+  const [isResizing, setIsResizing] = useState(false);
+  const [resizingColumn, setResizingColumn] = useState<string | null>(null);
+  const [startX, setStartX] = useState(0);
+  const [startWidth, setStartWidth] = useState(0);
 
   const table = useReactTable({
     data,
@@ -75,42 +81,82 @@ const DashboardTable = <T,>({
     setRowPerPage(e.target.value);
   };
 
-  return (
-    <div
-      className={`border overflow-hidden flex flex-col ${tableHeight} w-full`}
-    >
-      {/* Static Header */}
-      <div className="flex-shrink-0">
-        <Table className="min-w-full table-fixed">
-          <TableHeader className="bg-gray-100">
-            {table.getHeaderGroups().map((headerGroup: HeaderGroup<T>) => (
-              <TableRow key={headerGroup.id}>
-                {headerGroup.headers.map((header: Header<T, unknown>) => (
-                  <TableHead
-                    key={header.id}
-                    className="text-left px-3 py-2 bg-gray-100 border-b"
-                    style={{
-                      width: header.column.columnDef.size
-                        ? `${header.column.columnDef.size}px`
-                        : "auto",
-                    }}
-                  >
-                    {header.isPlaceholder
-                      ? null
-                      : flexRender(
-                          header.column.columnDef.header,
-                          header.getContext()
-                        )}
-                  </TableHead>
-                ))}
-              </TableRow>
-            ))}
-          </TableHeader>
-        </Table>
-      </div>
+  // Initialize column widths from column definitions
+  useEffect(() => {
+    const initialWidths: Record<string, number> = {};
+    columns.forEach(column => {
+      if (column.id && column.size) {
+        initialWidths[column.id] = column.size as number;
+      }
+    });
+    setColumnWidths(initialWidths);
+  }, [columns]);
 
-      {/* Scrollable Body */}
-      <div className="flex-1 overflow-auto relative scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100">
+  // Handle column resizing
+  const handleMouseDown = useCallback(
+    (e: React.MouseEvent, columnId: string) => {
+      e.preventDefault();
+      setIsResizing(true);
+      setResizingColumn(columnId);
+      setStartX(e.clientX);
+      setStartWidth(columnWidths[columnId] || 150);
+    },
+    [columnWidths]
+  );
+
+  const handleMouseMove = useCallback(
+    (e: MouseEvent) => {
+      if (!isResizing || !resizingColumn) return;
+
+      const diff = e.clientX - startX;
+      const newWidth = Math.max(50, startWidth + diff); // Minimum width of 50px
+
+      setColumnWidths(prev => ({
+        ...prev,
+        [resizingColumn]: newWidth,
+      }));
+    },
+    [isResizing, resizingColumn, startX, startWidth]
+  );
+
+  const handleMouseUp = useCallback(() => {
+    setIsResizing(false);
+    setResizingColumn(null);
+  }, []);
+
+  useEffect(() => {
+    if (isResizing) {
+      document.addEventListener("mousemove", handleMouseMove);
+      document.addEventListener("mouseup", handleMouseUp);
+      document.body.style.cursor = "col-resize";
+      document.body.style.userSelect = "none";
+    } else {
+      document.removeEventListener("mousemove", handleMouseMove);
+      document.removeEventListener("mouseup", handleMouseUp);
+      document.body.style.cursor = "";
+      document.body.style.userSelect = "";
+    }
+
+    return () => {
+      document.removeEventListener("mousemove", handleMouseMove);
+      document.removeEventListener("mouseup", handleMouseUp);
+      document.body.style.cursor = "";
+      document.body.style.userSelect = "";
+    };
+  }, [isResizing, handleMouseMove, handleMouseUp]);
+
+  // Get column width
+  const getColumnWidth = (columnId: string, defaultSize?: number) => {
+    return columnWidths[columnId] || defaultSize || 150;
+  };
+
+  return (
+    <div className={`overflow-hidden flex flex-col ${tableHeight} w-full`}>
+      {/* Single Scrollable Table Container */}
+      <div
+        ref={tableScrollRef}
+        className="flex-1 overflow-auto relative scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100"
+      >
         {/* Loading overlay - covers table content for both initial load and filter changes */}
         {loading && (
           <div className="absolute inset-0 bg-background/80 backdrop-blur-sm z-30 flex items-center justify-center">
@@ -124,24 +170,58 @@ const DashboardTable = <T,>({
             </div>
           </div>
         )}
-        <Table className="min-w-full table-fixed">
+        <Table className="min-w-full table-fixed table-layout-fixed border-collapse border-separate border-spacing-0">
+          {/* Sticky Header */}
+          <TableHeader className="bg-gray-100 sticky top-0 z-10">
+            {table.getHeaderGroups().map((headerGroup: HeaderGroup<T>) => (
+              <TableRow key={headerGroup.id}>
+                {headerGroup.headers.map((header: Header<T, unknown>) => (
+                  <TableHead
+                    key={header.id}
+                    className="text-center px-3 py-2 bg-gray-100 align-middle whitespace-normal relative group"
+                    style={{
+                      width: `${getColumnWidth(header.id, header.column.columnDef.size as number)}px`,
+                      wordWrap: "break-word",
+                      wordBreak: "break-word",
+                    }}
+                  >
+                    {header.isPlaceholder
+                      ? null
+                      : flexRender(
+                          header.column.columnDef.header,
+                          header.getContext()
+                        )}
+                    {/* Resize Handle */}
+                    <div
+                      className="absolute right-0 top-0 w-1 h-full cursor-col-resize bg-transparent hover:bg-blue-500 transition-colors group-hover:bg-gray-300"
+                      onMouseDown={e => handleMouseDown(e, header.id)}
+                      style={{
+                        background:
+                          resizingColumn === header.id ? "#3b82f6" : undefined,
+                      }}
+                    />
+                  </TableHead>
+                ))}
+              </TableRow>
+            ))}
+          </TableHeader>
           <TableBody>
             {table.getRowModel().rows.length > 0 ? (
               table.getRowModel().rows.map((row: Row<T>, index: number) => (
                 <TableRow
                   key={row.id}
-                  className="hover:bg-gray-100 cursor-pointer animate-in fade-in slide-in-from-bottom-1"
+                  className="hover:bg-gray-100 cursor-pointer animate-in fade-in slide-in-from-bottom-1 border-b border-gray-200"
                   style={{ animationDelay: `${index * 50}ms` }}
                   onClick={() => onRowClick?.(row.original)}
                 >
                   {row.getVisibleCells().map((cell: Cell<T, unknown>) => (
                     <TableCell
                       key={cell.id}
-                      className="px-2 sm:px-3 py-2 text-xs sm:text-sm"
+                      className="px-3 py-2 text-xs sm:text-sm align-middle whitespace-normal text-center"
                       style={{
-                        width: cell.column.columnDef.size
-                          ? `${cell.column.columnDef.size}px`
-                          : "auto",
+                        width: `${getColumnWidth(cell.column.id, cell.column.columnDef.size as number)}px`,
+                        wordWrap: "break-word",
+                        wordBreak: "break-word",
                       }}
                     >
                       {flexRender(
@@ -156,7 +236,7 @@ const DashboardTable = <T,>({
               <TableRow>
                 <TableCell
                   colSpan={columns.length}
-                  className="text-center py-4 text-xs sm:text-sm text-muted-foreground"
+                  className="text-center py-4 text-xs sm:text-sm text-muted-foreground align-middle"
                 >
                   No data available
                 </TableCell>
