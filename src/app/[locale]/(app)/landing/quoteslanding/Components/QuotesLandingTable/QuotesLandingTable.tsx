@@ -4,6 +4,8 @@ import DashboardTable from "@/components/custom/DashBoardTable";
 import { statusColor } from "@/components/custom/statuscolors";
 import FilterDrawer from "@/components/sales/FilterDrawer";
 import { QuoteFilterFormData } from "@/components/sales/QuoteFilterForm";
+import { FilterTabs } from "@/components/custom/FilterTabs";
+import SideDrawer from "@/components/custom/sidedrawer";
 import { useCurrentUser } from "@/hooks/useCurrentUser";
 import QuotesService, {
   type QuoteItem,
@@ -13,7 +15,6 @@ import { useLocale } from "next-intl";
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
-import TableHeaderBar from "./TableHeaderBar";
 import {
   Dialog,
   DialogContent,
@@ -142,7 +143,8 @@ function QuotesLandingTable({
   const [filterData, setFilterData] = useState<QuoteFilterFormData | null>(
     null
   );
-  const [activeTab, setActiveTab] = useState("ALL");
+  const [activeTab, setActiveTab] = useState("all");
+  const [isAddDrawerOpen, setIsAddDrawerOpen] = useState(false);
   const [isItemsDialogOpen, setIsItemsDialogOpen] = useState(false);
   const [selectedQuoteItems, setSelectedQuoteItems] =
     useState<QuoteItem | null>(null);
@@ -526,8 +528,26 @@ function QuotesLandingTable({
     setIsDrawerOpen(false);
   };
 
-  const handleOpenDrawer = () => {
+  const handleFilterClick = () => {
     setIsDrawerOpen(true);
+  };
+
+  const handleAddTab = () => {
+    setIsDrawerOpen(true);
+  };
+
+  const handleAddDrawerClose = () => {
+    setIsAddDrawerOpen(false);
+  };
+
+  const handleSettingsClick = () => {
+    toast.info("Settings functionality coming soon!");
+  };
+
+  const handleTabChange = (value: string) => {
+    setActiveTab(value);
+    setPage(0); // Reset to first page when changing tabs
+    toast.info(`Switched to ${value} quotes`);
   };
 
   const handleQuoteFilterSubmit = (data: QuoteFilterFormData) => {
@@ -558,6 +578,17 @@ function QuotesLandingTable({
     router.push(`/${locale}/quotes/${row.quotationIdentifier}`);
   };
 
+  // Define tabs with filter capabilities - only All tab initially
+  const tabs = [
+    {
+      id: "all",
+      label: "All",
+      hasFilter: true,
+      isFilterActive: !!filterData,
+      ...(filterData && { count: 1 }),
+    },
+  ];
+
   return (
     <>
       <FilterDrawer
@@ -567,6 +598,7 @@ function QuotesLandingTable({
         onReset={handleQuoteFilterReset}
         title="Quote Filters"
         filterType="Quote"
+        activeTab={activeTab}
         statusOptions={[
           { value: "draft", label: "Draft" },
           { value: "pending", label: "Pending" },
@@ -577,14 +609,31 @@ function QuotesLandingTable({
         ]}
       />
 
+      <SideDrawer
+        open={isAddDrawerOpen}
+        onClose={handleAddDrawerClose}
+        title="Add New Quote"
+      >
+        <div className="space-y-4">
+          <p className="text-gray-600">
+            Add new quote functionality will be implemented here.
+          </p>
+        </div>
+      </SideDrawer>
+
       <div className="h-full flex flex-col">
-        <TableHeaderBar
-          activeTab={activeTab}
-          setActiveTab={setActiveTab}
-          handleOpenDrawer={handleOpenDrawer}
-          handleExport={handleExport}
-          setRowPerPage={setRowPerPage}
-        />
+        {/* Add FilterTabs above the table */}
+        <div className="flex-shrink-0 mb-4">
+          <FilterTabs
+            tabs={tabs}
+            defaultValue="all"
+            onTabChange={handleTabChange}
+            onAddTab={handleAddTab}
+            onFilterClick={handleFilterClick}
+            onSettingsClick={handleSettingsClick}
+          />
+        </div>
+
         <div className="flex-1 overflow-hidden">
           {loading ? (
             <SkeletonTable columns={columns.length} rows={rowPerPage} />

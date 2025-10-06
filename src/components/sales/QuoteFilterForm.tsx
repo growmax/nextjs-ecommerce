@@ -69,6 +69,7 @@ interface QuoteFilterFormProps {
   statusOptions?: StatusOption[];
   formRef?: React.RefObject<FormMethods | null>;
   filterType?: string;
+  activeTab?: string;
 }
 
 export function QuoteFilterForm({
@@ -77,6 +78,7 @@ export function QuoteFilterForm({
   statusOptions = [],
   formRef,
   filterType = "Quote",
+  activeTab,
 }: QuoteFilterFormProps) {
   const form = useForm<QuoteFilterFormData>({
     resolver: zodResolver(formSchema),
@@ -174,40 +176,44 @@ export function QuoteFilterForm({
           />
 
           {/* Quote ID */}
-          <FormField
-            control={form.control}
-            name="quoteId"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>{filterType} ID</FormLabel>
-                <FormControl>
-                  <Input
-                    placeholder={`Enter ${filterType.toLowerCase()} ID...`}
-                    {...field}
-                  />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
+          {activeTab !== "all" && (
+            <FormField
+              control={form.control}
+              name="quoteId"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>{filterType} ID</FormLabel>
+                  <FormControl>
+                    <Input
+                      placeholder={`Enter ${filterType.toLowerCase()} ID...`}
+                      {...field}
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+          )}
 
           {/* Quote Name */}
-          <FormField
-            control={form.control}
-            name="quoteName"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>{filterType} Name</FormLabel>
-                <FormControl>
-                  <Input
-                    placeholder={`Enter ${filterType.toLowerCase()} name...`}
-                    {...field}
-                  />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
+          {activeTab !== "all" && (
+            <FormField
+              control={form.control}
+              name="quoteName"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>{filterType} Name</FormLabel>
+                  <FormControl>
+                    <Input
+                      placeholder={`Enter ${filterType.toLowerCase()} name...`}
+                      {...field}
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+          )}
         </div>
 
         {/* Quoted Date Range */}

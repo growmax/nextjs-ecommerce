@@ -17,6 +17,7 @@ interface QuoteFilterDrawerProps {
   statusOptions?: StatusOption[];
   title?: string;
   filterType?: string;
+  activeTab?: string;
 }
 
 export function FilterDrawer({
@@ -34,6 +35,7 @@ export function FilterDrawer({
   ],
   title = "Filters",
   filterType = "Quote",
+  activeTab,
 }: QuoteFilterDrawerProps) {
   const formRef = useRef<FormMethods>(null);
 
@@ -69,6 +71,7 @@ export function FilterDrawer({
         onReset={onReset || (() => {})}
         statusOptions={statusOptions}
         filterType={filterType}
+        activeTab={activeTab}
       />
     </SideDrawer>
   );
