@@ -14,6 +14,111 @@ import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 import TableHeaderBar from "./TableHeaderBar";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+
+// Skeleton Table Component
+const SkeletonTable = ({
+  columns,
+  rows = 10,
+}: {
+  columns: number;
+  rows?: number;
+}) => {
+  const SkeletonRow = () => (
+    <tr className="border-b border-gray-100 animate-pulse">
+      {Array.from({ length: columns }).map((_, cellIndex) => (
+        // eslint-disable-next-line react/no-array-index-key
+        <td key={cellIndex} className="px-6 py-4">
+          <div className="flex items-center space-x-2">
+            <div
+              className={`h-4 bg-gray-200 rounded animate-pulse ${
+                cellIndex === 0
+                  ? "w-24" // Quote Id
+                  : cellIndex === 1
+                    ? "w-32" // Name
+                    : cellIndex === 2
+                      ? "w-20" // Quoted Date
+                      : cellIndex === 3
+                        ? "w-20" // Date
+                        : cellIndex === 4
+                          ? "w-28" // Account Name
+                          : cellIndex === 5
+                            ? "w-16" // Total Items
+                            : cellIndex === 6
+                              ? "w-20" // Subtotal
+                              : cellIndex === 7
+                                ? "w-24" // Taxable Amount
+                                : cellIndex === 8
+                                  ? "w-20" // Total
+                                  : cellIndex === 9
+                                    ? "w-20" // Status
+                                    : cellIndex === 10
+                                      ? "w-24" // Required Date
+                                      : "w-full"
+              }`}
+            ></div>
+            {cellIndex === 9 && ( // Status column with rounded background
+              <div className="w-20 h-6 bg-gray-200 rounded-full animate-pulse"></div>
+            )}
+          </div>
+        </td>
+      ))}
+    </tr>
+  );
+
+  return (
+    <div className="rounded-md border shadow-sm overflow-hidden h-full flex flex-col">
+      {/* Skeleton Table Header */}
+      <div className="border-b border-gray-200 bg-gray-50 flex-shrink-0">
+        <table className="w-full">
+          <thead>
+            <tr>
+              {Array.from({ length: columns }).map((_, index) => (
+                // eslint-disable-next-line react/no-array-index-key
+                <th key={index} className="text-left px-4 py-3">
+                  <div className="h-4 bg-gray-200 rounded animate-pulse w-20"></div>
+                </th>
+              ))}
+            </tr>
+          </thead>
+        </table>
+      </div>
+
+      {/* Skeleton Table Body */}
+      <div className="flex-1 overflow-auto">
+        <table className="w-full">
+          <tbody>
+            {Array.from({ length: rows }).map((_, rowIndex) => (
+              // eslint-disable-next-line react/no-array-index-key
+              <SkeletonRow key={rowIndex} />
+            ))}
+          </tbody>
+        </table>
+      </div>
+
+      {/* Skeleton Pagination */}
+      <div className="flex items-center justify-end gap-4 px-4 py-2 border-t bg-gray-50/50 flex-shrink-0">
+        <div className="flex items-center gap-2">
+          <div className="h-3 bg-gray-200 rounded animate-pulse w-16"></div>
+          <div className="h-6 bg-gray-200 rounded animate-pulse w-12"></div>
+        </div>
+        <div className="flex items-center gap-1">
+          <div className="h-3 bg-gray-200 rounded animate-pulse w-20"></div>
+        </div>
+        <div className="flex items-center gap-1">
+          <div className="w-6 h-6 bg-gray-200 rounded animate-pulse"></div>
+          <div className="w-6 h-6 bg-gray-200 rounded animate-pulse"></div>
+        </div>
+      </div>
+    </div>
+  );
+};
 
 interface QuotesLandingTableProps {
   refreshTrigger?: number;
@@ -33,17 +138,21 @@ function QuotesLandingTable({
   const [totalCount, setTotalCount] = useState(0);
   const [page, setPage] = useState(0);
   const [rowPerPage, setRowPerPage] = useState(20); // Default to first valid option
+  const [pagination, setPagination] = useState({ pageIndex: 0, pageSize: 20 });
   const [filterData, setFilterData] = useState<QuoteFilterFormData | null>(
     null
   );
   const [activeTab, setActiveTab] = useState("ALL");
+  const [isItemsDialogOpen, setIsItemsDialogOpen] = useState(false);
+  const [selectedQuoteItems, setSelectedQuoteItems] =
+    useState<QuoteItem | null>(null);
 
   // Define table columns
   const columns = useMemo<ColumnDef<QuoteItem>[]>(
     () => [
       {
         accessorKey: "quotationIdentifier",
-        header: "Quote ID",
+        header: "Quote Id",
         size: 150,
         cell: ({ getValue }) => (
           <span className="font-medium text-blue-600 block truncate">
@@ -53,88 +162,202 @@ function QuotesLandingTable({
       },
       {
         accessorKey: "quoteName",
-        header: "Quote Name",
+        header: "Name",
         size: 200,
         cell: ({ getValue }) => (
           <span className="block truncate">{getValue() as string}</span>
         ),
       },
       {
-        accessorKey: "buyerCompanyName",
-        header: "Buyer Company",
-        size: 180,
-        cell: ({ getValue }) => (
-          <span className="block truncate">{getValue() as string}</span>
-        ),
+        accessorKey: "createdDate",
+        header: "Quoted Date",
+        size: 150,
+        cell: ({ getValue }) => {
+          const date = getValue() as string;
+          if (!date) return "-";
+          try {
+            return (
+              <span className="block">
+                {new Date(date).toLocaleDateString()}
+              </span>
+            );
+          } catch {
+            return "-";
+          }
+        },
       },
       {
-        accessorKey: "sellerCompanyName",
-        header: "Seller Company",
-        size: 180,
+        accessorKey: "lastModifiedDate",
+        header: "Date",
+        size: 150,
+        cell: ({ row }) => {
+          const date =
+            row.original.lastModifiedDate || row.original.updatedDate;
+          if (!date) return "-";
+          try {
+            return (
+              <span className="block">
+                {new Date(date).toLocaleDateString()}
+              </span>
+            );
+          } catch {
+            return "-";
+          }
+        },
+      },
+      {
+        accessorKey: "buyerCompanyName",
+        header: "Account Name",
+        size: 250,
         cell: ({ getValue }) => (
           <span className="block truncate">{getValue() as string}</span>
         ),
       },
       {
         accessorKey: "itemCount",
-        header: "Items",
-        size: 80,
-        cell: ({ getValue }) => (
-          <span className="text-center block">{getValue() as number}</span>
-        ),
+        header: () => <div className="text-center">Total Items</div>,
+        size: 150,
+        cell: ({ row }) => {
+          const items = row.original.itemCount || 0;
+          return (
+            <div className="text-center">
+              <button
+                onClick={e => {
+                  e.stopPropagation();
+                  setSelectedQuoteItems(row.original);
+                  setIsItemsDialogOpen(true);
+                }}
+                className="text-blue-600 hover:text-blue-800 hover:underline font-medium transition-colors cursor-pointer"
+              >
+                {items}
+              </button>
+            </div>
+          );
+        },
+      },
+      {
+        accessorKey: "subTotal",
+        header: () => <div className="text-center">Subtotal</div>,
+        size: 150,
+        cell: ({ row }) => {
+          const currencySymbol = row.original.curencySymbol?.symbol || "$";
+          const amount = row.original.subTotal || row.original.grandTotal || 0;
+          return (
+            <div className="text-center">
+              {currencySymbol} {Number(amount).toLocaleString()}
+            </div>
+          );
+        },
+      },
+      {
+        accessorKey: "taxableAmount",
+        header: () => <div className="text-center">Taxable Amount</div>,
+        size: 150,
+        cell: ({ row }) => {
+          const currencySymbol = row.original.curencySymbol?.symbol || "$";
+          const amount = row.original.taxableAmount || 0;
+          return (
+            <div className="text-center">
+              {currencySymbol} {Number(amount).toLocaleString()}
+            </div>
+          );
+        },
       },
       {
         accessorKey: "grandTotal",
-        header: "Total Amount",
-        size: 140,
+        header: () => <div className="text-center">Total</div>,
+        size: 150,
         cell: ({ row }) => {
           const currencySymbol = row.original.curencySymbol?.symbol || "$";
-          const amount = row.original.grandTotal;
+          const amount = row.original.grandTotal || 0;
           return (
-            <span className="font-semibold block truncate">
-              {currencySymbol} {amount.toLocaleString()}
-            </span>
+            <div className="text-center">
+              <span className="font-semibold">
+                {currencySymbol} {Number(amount).toLocaleString()}
+              </span>
+            </div>
           );
         },
       },
       {
         accessorKey: "updatedBuyerStatus",
-        header: "Buyer Status",
-        size: 140,
+        header: () => <div className="text-center">Status</div>,
+        size: 200,
         cell: ({ getValue }) => {
           const status = getValue() as string;
-          if (!status) return null;
+          if (!status) {
+            return (
+              <div className="text-center">
+                <span className="text-gray-400">-</span>
+              </div>
+            );
+          }
 
           // Get color from the centralized statusColor function
           const bgColor = statusColor(status.toUpperCase());
 
           return (
-            <span
-              className="px-3 py-1 rounded-full text-xs font-semibold text-white inline-block"
-              style={{
-                backgroundColor: bgColor,
-                minWidth: "100px",
-                textAlign: "center",
-              }}
-            >
-              {status}
-            </span>
+            <div className="text-center">
+              <span
+                className="px-3 py-1 rounded-full text-sm font-medium text-white whitespace-nowrap"
+                style={{ backgroundColor: bgColor }}
+              >
+                {status}
+              </span>
+            </div>
           );
         },
       },
       {
-        accessorKey: "createdDate",
-        header: "Created Date",
-        size: 120,
-        cell: ({ getValue }) => {
-          const date = getValue() as string;
-          return (
-            <span className="block">{new Date(date).toLocaleDateString()}</span>
-          );
+        accessorKey: "requiredDate",
+        header: () => <div className="text-center">Required Date</div>,
+        size: 150,
+        cell: ({ row }) => {
+          const date = row.original.requiredDate || row.original.dueDate;
+          if (!date) return <div className="text-center">-</div>;
+          try {
+            return (
+              <div className="text-center">
+                {new Date(date).toLocaleDateString()}
+              </div>
+            );
+          } catch {
+            return <div className="text-center">-</div>;
+          }
         },
       },
     ],
     []
+  );
+
+  // Sync pagination state
+  useEffect(() => {
+    setPagination({
+      pageIndex: page,
+      pageSize: rowPerPage,
+    });
+  }, [page, rowPerPage]);
+
+  // Handle pagination changes from DashboardTable
+  const handlePaginationChange = useCallback(
+    (
+      value:
+        | { pageIndex: number; pageSize: number }
+        | ((prevState: { pageIndex: number; pageSize: number }) => {
+            pageIndex: number;
+            pageSize: number;
+          })
+    ) => {
+      if (typeof value === "function") {
+        const newPagination = value(pagination);
+        setPage(newPagination.pageIndex);
+        setRowPerPage(newPagination.pageSize);
+      } else {
+        setPage(value.pageIndex);
+        setRowPerPage(value.pageSize);
+      }
+    },
+    [pagination]
   );
 
   // Computed pagination properties
@@ -229,50 +452,62 @@ function QuotesLandingTable({
         return;
       }
 
+      // Dynamic import of xlsx to avoid SSR issues
+      const XLSX = await import("xlsx");
+
       // Prepare data for export
       const exportData = quotes.map(quote => ({
-        "Quote ID": quote.quotationIdentifier,
-        "Quote Name": quote.quoteName || "",
-        "Buyer Company": quote.buyerCompanyName || "",
-        "Seller Company": quote.sellerCompanyName || "",
-        Items: quote.itemCount || 0,
-        "Total Amount": `${quote.curencySymbol?.symbol || "$"} ${quote.grandTotal || 0}`,
-        Status: quote.updatedBuyerStatus || "",
-        "Created Date": quote.createdDate
+        "Quote Id": quote.quotationIdentifier,
+        Name: quote.quoteName || "",
+        "Quoted Date": quote.createdDate
           ? new Date(quote.createdDate).toLocaleDateString()
           : "",
+        Date:
+          quote.lastModifiedDate || quote.updatedDate
+            ? new Date(
+                quote.lastModifiedDate || quote.updatedDate
+              ).toLocaleDateString()
+            : "",
+        "Account Name": quote.buyerCompanyName || "",
+        "Total Items": quote.itemCount || 0,
+        Subtotal: `${quote.curencySymbol?.symbol || "$"} ${Number(quote.subTotal || quote.grandTotal || 0).toLocaleString()}`,
+        "Taxable Amount": `${quote.curencySymbol?.symbol || "$"} ${Number(quote.taxableAmount || 0).toLocaleString()}`,
+        Total: `${quote.curencySymbol?.symbol || "$"} ${Number(quote.grandTotal || 0).toLocaleString()}`,
+        Status: quote.updatedBuyerStatus || "",
+        "Required Date":
+          quote.requiredDate || quote.dueDate
+            ? new Date(quote.requiredDate || quote.dueDate).toLocaleDateString()
+            : "",
       }));
 
-      // Convert to CSV
-      const headers = Object.keys(exportData[0] || {});
-      const csvContent = [
-        headers.join(","),
-        ...exportData.map(row =>
-          headers
-            .map(header => {
-              const value = (row as Record<string, string | number>)[header];
-              // Escape quotes and wrap in quotes if contains comma
-              const escaped = String(value).replace(/"/g, '""');
-              return escaped.includes(",") ? `"${escaped}"` : escaped;
-            })
-            .join(",")
-        ),
-      ].join("\n");
+      // Create workbook and worksheet
+      const wb = XLSX.utils.book_new();
+      const ws = XLSX.utils.json_to_sheet(exportData);
 
-      // Create and download file
-      const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
-      const link = document.createElement("a");
-      const url = URL.createObjectURL(blob);
-      link.setAttribute("href", url);
-      link.setAttribute(
-        "download",
-        `quotes_${new Date().toISOString().split("T")[0]}.csv`
-      );
-      link.style.visibility = "hidden";
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-      URL.revokeObjectURL(url);
+      // Set column widths for better readability
+      const colWidths = [
+        { wch: 15 }, // Quote Id
+        { wch: 25 }, // Name
+        { wch: 15 }, // Quoted Date
+        { wch: 15 }, // Date
+        { wch: 25 }, // Account Name
+        { wch: 12 }, // Total Items
+        { wch: 15 }, // Subtotal
+        { wch: 15 }, // Taxable Amount
+        { wch: 15 }, // Total
+        { wch: 12 }, // Status
+        { wch: 15 }, // Required Date
+      ];
+      ws["!cols"] = colWidths;
+
+      // Add worksheet to workbook
+      XLSX.utils.book_append_sheet(wb, ws, "Quotes");
+
+      // Generate filename with current date
+      const filename = `quotes_${new Date().toISOString().split("T")[0]}.xlsx`;
+
+      // Write and download file
+      XLSX.writeFile(wb, filename);
 
       toast.success("Export completed successfully!");
     } catch (_error) {
@@ -351,38 +586,65 @@ function QuotesLandingTable({
           setRowPerPage={setRowPerPage}
         />
         <div className="flex-1 overflow-hidden">
-          <DashboardTable
-            data={quotes}
-            columns={columns}
-            loading={loading}
-            totalDataCount={totalCount}
-            pagination={{ pageIndex: page, pageSize: rowPerPage }}
-            setPagination={() => {}}
-            setPage={setPage}
-            pageOptions={[20, 50, 100]}
-            handlePrevious={handlePrevious}
-            handleNext={handleNext}
-            page={page}
-            rowPerPage={rowPerPage}
-            setRowPerPage={value => {
-              const newValue =
-                typeof value === "string" ? parseInt(value, 10) : value;
-              // Validate that the value is one of the allowed options
-              const validOptions = [20, 50, 100];
-              if (validOptions.includes(newValue)) {
-                setRowPerPage(newValue);
-                setPage(0); // Reset to first page when changing page size
-              } else {
-                // Default to 20 if invalid value
-                setRowPerPage(20);
-                setPage(0);
-              }
-            }}
-            onRowClick={handleRowClick}
-            tableHeight="h-full"
-          />
+          {loading ? (
+            <SkeletonTable columns={columns.length} rows={rowPerPage} />
+          ) : (
+            <DashboardTable
+              data={quotes}
+              columns={columns}
+              loading={false}
+              totalDataCount={totalCount}
+              pagination={pagination}
+              setPagination={handlePaginationChange}
+              setPage={setPage}
+              pageOptions={[20, 50, 100]}
+              handlePrevious={handlePrevious}
+              handleNext={handleNext}
+              page={page}
+              rowPerPage={rowPerPage}
+              setRowPerPage={value => {
+                const newValue =
+                  typeof value === "string" ? parseInt(value, 10) : value;
+                // Validate that the value is one of the allowed options
+                const validOptions = [20, 50, 100];
+                if (validOptions.includes(newValue)) {
+                  setRowPerPage(newValue);
+                  setPage(0); // Reset to first page when changing page size
+                } else {
+                  // Default to 20 if invalid value
+                  setRowPerPage(20);
+                  setPage(0);
+                }
+              }}
+              onRowClick={handleRowClick}
+              tableHeight="h-full"
+            />
+          )}
         </div>
       </div>
+
+      {/* Items Dialog */}
+      <Dialog open={isItemsDialogOpen} onOpenChange={setIsItemsDialogOpen}>
+        <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Quote Items</DialogTitle>
+            <DialogDescription>
+              {selectedQuoteItems && (
+                <>
+                  Quote ID: {selectedQuoteItems.quotationIdentifier} -{" "}
+                  {selectedQuoteItems.quoteName}
+                </>
+              )}
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="py-4">
+            <div className="text-center text-gray-500 py-8">
+              Quote items details will be displayed here.
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
     </>
   );
 }
