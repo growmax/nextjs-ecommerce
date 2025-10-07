@@ -24,6 +24,14 @@ import { Skeleton } from "@/components/ui/skeleton";
 
 // Table Skeleton Component
 const TableSkeleton = ({ rows = 10 }: { rows?: number }) => {
+  const skeletonItems = useMemo(
+    () =>
+      Array.from({ length: rows }, (_, index) => ({
+        id: `skeleton-row-${rows}-${index}`,
+        delay: index * 50,
+      })),
+    [rows]
+  );
   return (
     <div className="rounded-md border shadow-sm overflow-hidden h-full flex flex-col">
       {/* Skeleton Table Header */}
@@ -67,12 +75,11 @@ const TableSkeleton = ({ rows = 10 }: { rows?: number }) => {
 
       {/* Skeleton Table Body */}
       <div className="flex-1 overflow-auto">
-        {Array.from({ length: rows }).map((_, rowIndex) => (
-          // eslint-disable-next-line react/no-array-index-key
+        {skeletonItems.map(item => (
           <div
-            key={rowIndex}
+            key={item.id}
             className="border-b border-gray-100 flex animate-in fade-in slide-in-from-bottom-1"
-            style={{ animationDelay: `${rowIndex * 50}ms` }}
+            style={{ animationDelay: `${item.delay}ms` }}
           >
             <div className="px-2 sm:px-3 py-1 w-[150px]">
               <Skeleton className="h-4 w-24" />

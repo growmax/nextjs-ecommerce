@@ -173,7 +173,7 @@ const DashboardTable = <T,>({
               <TableRow>
                 <TableCell
                   colSpan={columns.length}
-                  className="text-center py-4 text-xs sm:text-sm text-muted-foreground"
+                  className="text-center py-2 text-xs sm:text-sm text-muted-foreground"
                 >
                   No data available
                 </TableCell>

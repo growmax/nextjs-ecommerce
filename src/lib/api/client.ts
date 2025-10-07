@@ -18,8 +18,7 @@ const API_CONFIG = {
   API_BASE_URL: process.env.API_BASE_URL || "https://api.myapptino.com",
   CORECOMMERCE_URL:
     process.env.BASE_URL || "https://api.myapptino.com/corecommerce",
-  PREFERENCE_URL:
-    process.env.PREFERENCE_URL || "https://api.myapptino.com/userpreference",
+  PREFERENCE_URL: process.env.PREFERENCE_URL || "/api/userpreference",
 } as const;
 
 // Types
@@ -105,7 +104,9 @@ function getTenantFromToken(token: string): string | null {
 function createApiClient(config: ApiClientConfig = {}): AxiosInstance {
   const instance = axios.create({
     timeout: 30000,
-    withCredentials: true,
+    // Only use withCredentials for same-origin requests to avoid CORS conflicts
+    // External APIs with wildcard CORS headers don't support credentials
+    withCredentials: config.baseURL?.startsWith("/") ?? false,
     headers: {
       "Content-Type": "application/json",
     },
@@ -117,13 +118,14 @@ function createApiClient(config: ApiClientConfig = {}): AxiosInstance {
     (config: InternalAxiosRequestConfig) => {
       // Auto-inject authorization token
       if (typeof window !== "undefined") {
-        // Use client-specific cookie for browser requests
-        const cookieName = "access_token_client";
-        const accessToken = getTokenFromCookie(cookieName);
-        // Auto-inject origin header
-        if (!config.headers.origin) {
-          config.headers.origin = window.location.origin;
-        }
+        // Try both client-specific and standard cookies for compatibility
+        const clientToken = getTokenFromCookie("access_token_client");
+        const standardToken = getTokenFromCookie("access_token");
+        const accessToken = clientToken || standardToken;
+
+        // Do NOT manually set origin header - browsers handle this automatically
+        // Setting origin manually violates CORS security and causes request failures
+
         if (accessToken && !config.headers.Authorization) {
           config.headers.Authorization = `Bearer ${accessToken}`;
 

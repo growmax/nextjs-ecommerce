@@ -154,71 +154,81 @@ function QuotesLandingTable({
     () => [
       {
         accessorKey: "quotationIdentifier",
-        header: "Quote Id",
+        header: () => <div className="text-center">Quote Id</div>,
         size: 150,
         enableResizing: true,
         cell: ({ getValue }) => (
-          <div className="font-medium text-blue-600 break-words leading-tight overflow-hidden">
+          <div className="flex items-center justify-center h-full font-medium text-blue-600 break-words leading-tight overflow-hidden">
             {getValue() as string}
           </div>
         ),
       },
       {
         accessorKey: "quoteName",
-        header: "Name",
+        header: () => <div className="text-center">Name</div>,
         size: 200,
         enableResizing: true,
         cell: ({ getValue }) => (
-          <div className="break-words leading-tight overflow-hidden">
+          <div className="flex items-center justify-center h-full break-words leading-tight overflow-hidden">
             {getValue() as string}
           </div>
         ),
       },
       {
         accessorKey: "createdDate",
-        header: "Quoted Date",
+        header: () => <div className="text-center">Quoted Date</div>,
         size: 150,
         enableResizing: true,
         cell: ({ getValue }) => {
           const date = getValue() as string;
-          if (!date) return "-";
+          if (!date)
+            return (
+              <div className="flex items-center justify-center h-full">-</div>
+            );
           try {
             return (
-              <div className="break-words leading-tight overflow-hidden">
+              <div className="flex items-center justify-center h-full break-words leading-tight overflow-hidden">
                 {new Date(date).toLocaleDateString()}
               </div>
             );
           } catch {
-            return "-";
+            return (
+              <div className="flex items-center justify-center h-full">-</div>
+            );
           }
         },
       },
       {
         accessorKey: "lastModifiedDate",
-        header: "Date",
+        header: () => <div className="text-center">Date</div>,
         size: 150,
         enableResizing: true,
         cell: ({ row }) => {
           const date = row.original.lastUpdatedDate;
-          if (!date) return "-";
+          if (!date)
+            return (
+              <div className="flex items-center justify-center h-full">-</div>
+            );
           try {
             return (
-              <div className="break-words leading-tight overflow-hidden">
+              <div className="flex items-center justify-center h-full break-words leading-tight overflow-hidden">
                 {new Date(date).toLocaleDateString()}
               </div>
             );
           } catch {
-            return "-";
+            return (
+              <div className="flex items-center justify-center h-full">-</div>
+            );
           }
         },
       },
       {
         accessorKey: "buyerCompanyName",
-        header: "Account Name",
+        header: () => <div className="text-center">Account Name</div>,
         size: 250,
         enableResizing: true,
         cell: ({ getValue }) => (
-          <div className="break-words leading-tight overflow-hidden">
+          <div className="flex items-center justify-center h-full break-words leading-tight overflow-hidden">
             {getValue() as string}
           </div>
         ),
@@ -231,7 +241,7 @@ function QuotesLandingTable({
         cell: ({ row }) => {
           const items = row.original.itemCount || 0;
           return (
-            <div className="text-center">
+            <div className="flex items-center justify-center h-full">
               <button
                 onClick={e => {
                   e.stopPropagation();
@@ -255,7 +265,7 @@ function QuotesLandingTable({
           const currencySymbol = row.original.curencySymbol?.symbol || "$";
           const amount = row.original.subTotal || row.original.grandTotal || 0;
           return (
-            <div className="text-center">
+            <div className="flex items-center justify-center h-full">
               {currencySymbol} {Number(amount).toLocaleString()}
             </div>
           );
@@ -270,7 +280,7 @@ function QuotesLandingTable({
           const currencySymbol = row.original.curencySymbol?.symbol || "$";
           const amount = row.original.taxableAmount || 0;
           return (
-            <div className="text-center">
+            <div className="flex items-center justify-center h-full">
               {currencySymbol} {Number(amount).toLocaleString()}
             </div>
           );
@@ -285,7 +295,7 @@ function QuotesLandingTable({
           const currencySymbol = row.original.curencySymbol?.symbol || "$";
           const amount = row.original.grandTotal || 0;
           return (
-            <div className="text-center">
+            <div className="flex items-center justify-center h-full">
               <div className="font-semibold break-words leading-tight overflow-hidden">
                 {currencySymbol} {Number(amount).toLocaleString()}
               </div>
@@ -302,7 +312,7 @@ function QuotesLandingTable({
           const status = getValue() as string;
           if (!status) {
             return (
-              <div className="text-center">
+              <div className="flex items-center justify-center h-full">
                 <span className="text-gray-400">-</span>
               </div>
             );
@@ -312,7 +322,7 @@ function QuotesLandingTable({
           const bgColor = statusColor(status.toUpperCase());
 
           return (
-            <div className="text-center">
+            <div className="flex items-center justify-center h-full">
               <span
                 className="px-3 py-1 rounded-full text-sm font-medium text-white whitespace-nowrap inline-block max-w-full overflow-hidden text-ellipsis"
                 style={{ backgroundColor: bgColor }}
@@ -331,15 +341,20 @@ function QuotesLandingTable({
         enableResizing: true,
         cell: ({ row }) => {
           const date = row.original.customerRequiredDate;
-          if (!date) return <div className="text-center">-</div>;
+          if (!date)
+            return (
+              <div className="flex items-center justify-center h-full">-</div>
+            );
           try {
             return (
-              <div className="text-center break-words leading-tight overflow-hidden">
+              <div className="flex items-center justify-center h-full break-words leading-tight overflow-hidden">
                 {new Date(date).toLocaleDateString()}
               </div>
             );
           } catch {
-            return <div className="text-center">-</div>;
+            return (
+              <div className="flex items-center justify-center h-full">-</div>
+            );
           }
         },
       },
@@ -634,7 +649,7 @@ function QuotesLandingTable({
 
       <div className="h-full flex flex-col">
         {/* Add FilterTabs above the table */}
-        <div className="flex-shrink-0 mb-4">
+        <div className="flex-shrink-0">
           <FilterTabs
             tabs={tabs}
             defaultValue="all"
@@ -645,7 +660,7 @@ function QuotesLandingTable({
           />
         </div>
 
-        <div className="flex-1 overflow-hidden">
+        <div className=" overflow-hidden">
           {loading ? (
             <SkeletonTable columns={columns.length} rows={rowPerPage} />
           ) : (
@@ -700,7 +715,7 @@ function QuotesLandingTable({
             </DialogDescription>
           </DialogHeader>
 
-          <div className="py-4">
+          <div className="py-2">
             <div className="text-center text-gray-500 py-8">
               Quote items details will be displayed here.
             </div>
