@@ -6,6 +6,12 @@ import { Button } from "@/components/ui/button";
 // import { Badge } from "@/components/ui/badge"
 import { PlusIcon, SettingsIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
+import SideDrawer from "@/components/custom/sidedrawer";
+import {
+  QuoteFilterForm,
+  QuoteFilterFormData,
+  FormMethods,
+} from "@/components/sales/QuoteFilterForm";
 
 interface FilterTab {
   id: string;
@@ -23,6 +29,10 @@ interface FilterTabsProps {
   onSettingsClick?: () => void;
   className?: string;
   children?: React.ReactNode;
+  filterType?: string;
+  statusOptions?: Array<{ value: string; label: string }>;
+  onFilterSubmit?: (data: QuoteFilterFormData) => void;
+  onFilterReset?: () => void;
 }
 
 export function FilterTabs({
@@ -34,12 +44,50 @@ export function FilterTabs({
   onSettingsClick,
   className,
   children,
+  filterType = "Order",
+  statusOptions = [
+    { value: "pending", label: "Pending" },
+    { value: "processing", label: "Processing" },
+    { value: "completed", label: "Completed" },
+    { value: "cancelled", label: "Cancelled" },
+    { value: "refunded", label: "Refunded" },
+  ],
+  onFilterSubmit,
+  onFilterReset,
 }: FilterTabsProps) {
   const [activeTab, setActiveTab] = React.useState(defaultValue);
+  const [isDrawerOpen, setIsDrawerOpen] = React.useState(false);
+  const formRef = React.useRef<FormMethods>(null);
 
   const handleTabChange = (value: string) => {
     setActiveTab(value);
     onTabChange?.(value);
+  };
+
+  const handlePlusClick = () => {
+    if (onAddTab) {
+      onAddTab();
+    } else {
+      setIsDrawerOpen(true);
+    }
+  };
+
+  const handleFilterSubmit = (data: QuoteFilterFormData) => {
+    onFilterSubmit?.(data);
+    setIsDrawerOpen(false);
+  };
+
+  const handleFilterReset = () => {
+    if (formRef.current) {
+      formRef.current.reset();
+    }
+    onFilterReset?.();
+  };
+
+  const handleApply = () => {
+    if (formRef.current) {
+      formRef.current.submit();
+    }
   };
 
   return (
@@ -93,17 +141,13 @@ export function FilterTabs({
                 </div>
               ))}
 
-              {onAddTab && (
-                <span
-                  className="inline-flex items-center justify-center h-8 w-8 ml-2 rounded-md hover:bg-accent hover:text-accent-foreground transition-colors cursor-pointer border border-gray-300 bg-white shadow-sm"
-                  onClick={() => {
-                    onAddTab();
-                  }}
-                  title="Add New Order"
-                >
-                  <PlusIcon className="h-4 w-4 text-gray-600" />
-                </span>
-              )}
+              <span
+                className="inline-flex items-center justify-center h-8 w-8 ml-2 hover:text-accent-foreground transition-colors cursor-pointer"
+                onClick={handlePlusClick}
+                title="Add New Order"
+              >
+                <PlusIcon className="h-4 w-4 text-gray-600" />
+              </span>
             </TabsList>
 
             {onSettingsClick && (
@@ -129,6 +173,24 @@ export function FilterTabs({
           )}
         </Tabs>
       </div>
+
+      {/* SideDrawer */}
+      <SideDrawer
+        open={isDrawerOpen}
+        onClose={() => setIsDrawerOpen(false)}
+        title="Order Filters"
+        onClearAll={handleFilterReset}
+        onApply={handleApply}
+      >
+        <QuoteFilterForm
+          formRef={formRef}
+          onSubmit={handleFilterSubmit}
+          onReset={handleFilterReset}
+          filterType={filterType}
+          statusOptions={statusOptions}
+          showFilterInfo={true}
+        />
+      </SideDrawer>
     </div>
   );
 }

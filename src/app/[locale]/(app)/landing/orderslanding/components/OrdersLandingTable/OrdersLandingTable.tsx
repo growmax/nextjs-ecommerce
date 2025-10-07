@@ -3,11 +3,7 @@
 import { useState, useEffect, useMemo, useCallback } from "react";
 import DashboardTable from "@/components/custom/DashBoardTable";
 import FilterDrawer from "@/components/sales/FilterDrawer";
-import SideDrawer from "@/components/custom/sidedrawer";
-import {
-  QuoteFilterFormData,
-  QuoteFilterForm,
-} from "@/components/sales/QuoteFilterForm";
+import { QuoteFilterFormData } from "@/components/sales/QuoteFilterForm";
 import { toast } from "sonner";
 import orderService from "@/lib/api/services/OrdersService";
 import { type Order } from "@/types/dashboard/DasbordOrderstable/DashboardOrdersTable";
@@ -24,99 +20,109 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { Skeleton } from "@/components/ui/skeleton";
 
-// Skeleton Table Component
-const SkeletonTable = ({
-  columns,
-  rows = 10,
-}: {
-  columns: number;
-  rows?: number;
-}) => {
-  const SkeletonRow = () => (
-    <tr className="border-b border-gray-100 animate-pulse">
-      {Array.from({ length: columns }).map((_, cellIndex) => (
-        // eslint-disable-next-line react/no-array-index-key
-        <td key={cellIndex} className="px-6 py-4">
-          <div className="flex items-center space-x-2">
-            <div
-              className={`h-4 bg-gray-200 rounded animate-pulse ${
-                cellIndex === 0
-                  ? "w-24" // Order ID
-                  : cellIndex === 1
-                    ? "w-32" // Order Name
-                    : cellIndex === 2
-                      ? "w-20" // Order Date
-                      : cellIndex === 3
-                        ? "w-20" // Date
-                        : cellIndex === 4
-                          ? "w-28" // Account Name
-                          : cellIndex === 5
-                            ? "w-16" // Total Items
-                            : cellIndex === 6
-                              ? "w-20" // Sub total
-                              : cellIndex === 7
-                                ? "w-24" // Taxable Amount
-                                : cellIndex === 8
-                                  ? "w-20" // Total
-                                  : cellIndex === 9
-                                    ? "w-20" // Status
-                                    : cellIndex === 10
-                                      ? "w-24" // Required Date
-                                      : "w-full"
-              }`}
-            ></div>
-            {cellIndex === 9 && ( // Status column with rounded background
-              <div className="w-20 h-6 bg-gray-200 rounded-full animate-pulse"></div>
-            )}
-          </div>
-        </td>
-      ))}
-    </tr>
-  );
-
+// Table Skeleton Component
+const TableSkeleton = ({ rows = 10 }: { rows?: number }) => {
   return (
     <div className="rounded-md border shadow-sm overflow-hidden h-full flex flex-col">
       {/* Skeleton Table Header */}
       <div className="border-b border-gray-200 bg-gray-50 flex-shrink-0">
-        <table className="w-full">
-          <thead>
-            <tr>
-              {Array.from({ length: columns }).map((_, index) => (
-                // eslint-disable-next-line react/no-array-index-key
-                <th key={index} className="text-left px-4 py-3">
-                  <div className="h-4 bg-gray-200 rounded animate-pulse w-20"></div>
-                </th>
-              ))}
-            </tr>
-          </thead>
-        </table>
+        <div className="flex">
+          <div className="px-3 py-2 w-[150px]">
+            <Skeleton className="h-4 w-20" />
+          </div>
+          <div className="px-3 py-2 w-[200px]">
+            <Skeleton className="h-4 w-24" />
+          </div>
+          <div className="px-3 py-2 w-[150px]">
+            <Skeleton className="h-4 w-20" />
+          </div>
+          <div className="px-3 py-2 w-[150px]">
+            <Skeleton className="h-4 w-16" />
+          </div>
+          <div className="px-3 py-2 w-[250px]">
+            <Skeleton className="h-4 w-28" />
+          </div>
+          <div className="px-3 py-2 w-[150px]">
+            <Skeleton className="h-4 w-20" />
+          </div>
+          <div className="px-3 py-2 w-[150px]">
+            <Skeleton className="h-4 w-20" />
+          </div>
+          <div className="px-3 py-2 w-[150px]">
+            <Skeleton className="h-4 w-24" />
+          </div>
+          <div className="px-3 py-2 w-[150px]">
+            <Skeleton className="h-4 w-16" />
+          </div>
+          <div className="px-3 py-2 w-[200px]">
+            <Skeleton className="h-4 w-16" />
+          </div>
+          <div className="px-3 py-2 w-[150px]">
+            <Skeleton className="h-4 w-24" />
+          </div>
+        </div>
       </div>
 
       {/* Skeleton Table Body */}
       <div className="flex-1 overflow-auto">
-        <table className="w-full">
-          <tbody>
-            {Array.from({ length: rows }).map((_, rowIndex) => (
-              // eslint-disable-next-line react/no-array-index-key
-              <SkeletonRow key={rowIndex} />
-            ))}
-          </tbody>
-        </table>
+        {Array.from({ length: rows }).map((_, rowIndex) => (
+          // eslint-disable-next-line react/no-array-index-key
+          <div
+            key={rowIndex}
+            className="border-b border-gray-100 flex animate-in fade-in slide-in-from-bottom-1"
+            style={{ animationDelay: `${rowIndex * 50}ms` }}
+          >
+            <div className="px-2 sm:px-3 py-1 w-[150px]">
+              <Skeleton className="h-4 w-24" />
+            </div>
+            <div className="px-2 sm:px-3 py-1 w-[200px]">
+              <Skeleton className="h-4 w-32" />
+            </div>
+            <div className="px-2 sm:px-3 py-1 w-[150px]">
+              <Skeleton className="h-4 w-20" />
+            </div>
+            <div className="px-2 sm:px-3 py-1 w-[150px]">
+              <Skeleton className="h-4 w-20" />
+            </div>
+            <div className="px-2 sm:px-3 py-1 w-[250px]">
+              <Skeleton className="h-4 w-36" />
+            </div>
+            <div className="px-2 sm:px-3 py-1 w-[150px]">
+              <Skeleton className="h-4 w-8" />
+            </div>
+            <div className="px-2 sm:px-3 py-1 w-[150px]">
+              <Skeleton className="h-4 w-20" />
+            </div>
+            <div className="px-2 sm:px-3 py-1 w-[150px]">
+              <Skeleton className="h-4 w-20" />
+            </div>
+            <div className="px-2 sm:px-3 py-1 w-[150px]">
+              <Skeleton className="h-4 w-20" />
+            </div>
+            <div className="px-2 sm:px-3 py-1 w-[200px]">
+              <Skeleton className="h-6 w-24 rounded-full" />
+            </div>
+            <div className="px-2 sm:px-3 py-1 w-[150px]">
+              <Skeleton className="h-4 w-16" />
+            </div>
+          </div>
+        ))}
       </div>
 
       {/* Skeleton Pagination */}
       <div className="flex items-center justify-end gap-4 px-4 py-2 border-t bg-gray-50/50 flex-shrink-0">
         <div className="flex items-center gap-2">
-          <div className="h-3 bg-gray-200 rounded animate-pulse w-16"></div>
-          <div className="h-6 bg-gray-200 rounded animate-pulse w-12"></div>
+          <Skeleton className="h-3 w-16" />
+          <Skeleton className="h-6 w-12" />
         </div>
         <div className="flex items-center gap-1">
-          <div className="h-3 bg-gray-200 rounded animate-pulse w-20"></div>
+          <Skeleton className="h-3 w-20" />
         </div>
         <div className="flex items-center gap-1">
-          <div className="w-6 h-6 bg-gray-200 rounded animate-pulse"></div>
-          <div className="w-6 h-6 bg-gray-200 rounded animate-pulse"></div>
+          <Skeleton className="w-6 h-6" />
+          <Skeleton className="w-6 h-6" />
         </div>
       </div>
     </div>
@@ -136,7 +142,6 @@ function OrdersLandingTable({
   const locale = useLocale();
   const { user } = useCurrentUser();
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
-  const [isAddDrawerOpen, setIsAddDrawerOpen] = useState(false);
   const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);
   const [totalCount, setTotalCount] = useState(0);
@@ -146,7 +151,6 @@ function OrdersLandingTable({
   const [filterData, setFilterData] = useState<QuoteFilterFormData | null>(
     null
   );
-  const [, setActiveTab] = useState("all");
   const [isItemsDialogOpen, setIsItemsDialogOpen] = useState(false);
   const [selectedOrderItems, setSelectedOrderItems] = useState<Order | null>(
     null
@@ -362,7 +366,6 @@ function OrdersLandingTable({
     [pagination]
   );
 
-  // Computed pagination properties
   const maxPage = useMemo(
     () => Math.max(0, Math.ceil(totalCount / rowPerPage) - 1),
     [totalCount, rowPerPage]
@@ -401,9 +404,7 @@ function OrdersLandingTable({
       const ordersData =
         apiResponse.data.ordersResponse || apiResponse.data.orders || [];
       const totalOrders =
-        apiResponse.data.totalOrderCount || apiResponse.data.totalCount || 0; // Log first order to see actual field names
-      if (ordersData.length > 0) {
-      }
+        apiResponse.data.totalOrderCount || apiResponse.data.totalCount || 0;
 
       setOrders(ordersData);
       setTotalCount(totalOrders);
@@ -492,13 +493,9 @@ function OrdersLandingTable({
     }
   }, [handleExport, setExportCallback]);
 
-  const handleDrawerClose = () => {
-    setIsDrawerOpen(false);
-  };
-
   const handleOrderFilterSubmit = (data: QuoteFilterFormData) => {
     setFilterData(data);
-    setPage(0); // Reset to first page when applying filters
+    setPage(0);
     toast.success("Filters have been applied successfully!");
   };
 
@@ -506,28 +503,6 @@ function OrdersLandingTable({
     setFilterData(null);
     setPage(0);
     toast.success("Filters have been reset successfully!");
-  };
-
-  const handleTabChange = (value: string) => {
-    setActiveTab(value);
-    setPage(0); // Reset to first page when changing tabs
-    toast.info(`Switched to ${value} orders`);
-  };
-
-  const handleFilterClick = () => {
-    setIsDrawerOpen(true);
-  };
-
-  const handleAddTab = () => {
-    setIsAddDrawerOpen(true);
-  };
-
-  const handleAddDrawerClose = () => {
-    setIsAddDrawerOpen(false);
-  };
-
-  const handleSettingsClick = () => {
-    toast.info("Settings functionality coming soon!");
   };
 
   const handlePrevious = () => {
@@ -549,7 +524,6 @@ function OrdersLandingTable({
     }
   };
 
-  // Define tabs with filter capabilities - only All tab initially
   const tabs = [
     {
       id: "all",
@@ -564,7 +538,7 @@ function OrdersLandingTable({
     <>
       <FilterDrawer
         open={isDrawerOpen}
-        onClose={handleDrawerClose}
+        onClose={() => setIsDrawerOpen(false)}
         onSubmit={handleOrderFilterSubmit}
         onReset={handleOrderFilterReset}
         title="Order Filters"
@@ -578,41 +552,33 @@ function OrdersLandingTable({
         ]}
       />
 
-      <SideDrawer
-        open={isAddDrawerOpen}
-        onClose={handleAddDrawerClose}
-        title="Order Filters"
-      >
-        <QuoteFilterForm
-          onSubmit={handleOrderFilterSubmit}
-          onReset={handleOrderFilterReset}
-          filterType="Order"
-          statusOptions={[
-            { value: "pending", label: "Pending" },
-            { value: "processing", label: "Processing" },
-            { value: "completed", label: "Completed" },
-            { value: "cancelled", label: "Cancelled" },
-            { value: "refunded", label: "Refunded" },
-          ]}
-        />
-      </SideDrawer>
-
       <div className="flex flex-col h-[calc(100vh-140px)]">
         {/* Add FilterTabs above the table */}
         <div className="flex-shrink-0 mb-4">
           <FilterTabs
             tabs={tabs}
             defaultValue="all"
-            onTabChange={handleTabChange}
-            onAddTab={handleAddTab}
-            onFilterClick={handleFilterClick}
-            onSettingsClick={handleSettingsClick}
+            onTabChange={() => {}}
+            onFilterClick={() => setIsDrawerOpen(true)}
+            onSettingsClick={() =>
+              toast.info("Settings functionality coming soon!")
+            }
+            filterType="Order"
+            statusOptions={[
+              { value: "pending", label: "Pending" },
+              { value: "processing", label: "Processing" },
+              { value: "completed", label: "Completed" },
+              { value: "cancelled", label: "Cancelled" },
+              { value: "refunded", label: "Refunded" },
+            ]}
+            onFilterSubmit={handleOrderFilterSubmit}
+            onFilterReset={handleOrderFilterReset}
           />
         </div>
 
         <div className="flex-1 overflow-hidden">
           {loading ? (
-            <SkeletonTable columns={columns.length} rows={rowPerPage} />
+            <TableSkeleton rows={rowPerPage} />
           ) : (
             <DashboardTable
               data={orders}
@@ -631,7 +597,7 @@ function OrdersLandingTable({
                 const newValue =
                   typeof value === "string" ? parseInt(value, 10) : value;
                 setRowPerPage(newValue);
-                setPage(0); // Reset to first page when changing page size
+                setPage(0);
               }}
               onRowClick={handleRowClick}
               tableHeight="h-full"

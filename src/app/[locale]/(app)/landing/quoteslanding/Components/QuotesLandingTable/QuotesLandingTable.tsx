@@ -193,8 +193,7 @@ function QuotesLandingTable({
         header: "Date",
         size: 150,
         cell: ({ row }) => {
-          const date =
-            row.original.lastModifiedDate || row.original.updatedDate;
+          const date = row.original.lastUpdatedDate;
           if (!date) return "-";
           try {
             return (
@@ -315,7 +314,7 @@ function QuotesLandingTable({
         header: () => <div className="text-center">Required Date</div>,
         size: 150,
         cell: ({ row }) => {
-          const date = row.original.requiredDate || row.original.dueDate;
+          const date = row.original.customerRequiredDate;
           if (!date) return <div className="text-center">-</div>;
           try {
             return (
@@ -464,22 +463,18 @@ function QuotesLandingTable({
         "Quoted Date": quote.createdDate
           ? new Date(quote.createdDate).toLocaleDateString()
           : "",
-        Date:
-          quote.lastModifiedDate || quote.updatedDate
-            ? new Date(
-                quote.lastModifiedDate || quote.updatedDate
-              ).toLocaleDateString()
-            : "",
+        Date: quote.lastUpdatedDate
+          ? new Date(quote.lastUpdatedDate).toLocaleDateString()
+          : "",
         "Account Name": quote.buyerCompanyName || "",
         "Total Items": quote.itemCount || 0,
         Subtotal: `${quote.curencySymbol?.symbol || "$"} ${Number(quote.subTotal || quote.grandTotal || 0).toLocaleString()}`,
         "Taxable Amount": `${quote.curencySymbol?.symbol || "$"} ${Number(quote.taxableAmount || 0).toLocaleString()}`,
         Total: `${quote.curencySymbol?.symbol || "$"} ${Number(quote.grandTotal || 0).toLocaleString()}`,
         Status: quote.updatedBuyerStatus || "",
-        "Required Date":
-          quote.requiredDate || quote.dueDate
-            ? new Date(quote.requiredDate || quote.dueDate).toLocaleDateString()
-            : "",
+        "Required Date": quote.customerRequiredDate
+          ? new Date(quote.customerRequiredDate).toLocaleDateString()
+          : "",
       }));
 
       // Create workbook and worksheet

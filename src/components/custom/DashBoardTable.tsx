@@ -101,7 +101,7 @@ const DashboardTable = <T,>({
                 {headerGroup.headers.map((header: Header<T, unknown>) => (
                   <TableHead
                     key={header.id}
-                    className="text-left px-3 py-2 bg-gray-100 border-b"
+                    className="text-left px-3 py-1.5 bg-gray-100 border-b"
                     style={{
                       width: header.column.columnDef.size
                         ? `${header.column.columnDef.size}px`
@@ -131,7 +131,7 @@ const DashboardTable = <T,>({
                   {row.getVisibleCells().map((cell: Cell<T, unknown>) => (
                     <TableCell
                       key={cell.id}
-                      className="px-2 sm:px-3 py-2 text-xs sm:text-sm"
+                      className="px-2 sm:px-3 py-1 text-xs sm:text-sm"
                       style={{
                         width: cell.column.columnDef.size
                           ? `${cell.column.columnDef.size}px`

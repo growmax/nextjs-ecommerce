@@ -34,6 +34,7 @@ import { cn } from "@/lib/utils";
 
 // Form validation schema
 const formSchema = z.object({
+  filterName: z.string().optional(),
   status: z.string().optional(),
   quoteId: z.string().optional(),
   quoteName: z.string().optional(),
@@ -69,7 +70,8 @@ interface QuoteFilterFormProps {
   statusOptions?: StatusOption[];
   formRef?: React.RefObject<FormMethods | null>;
   filterType?: string;
-  activeTab?: string;
+  activeTab?: string | undefined;
+  showFilterInfo?: boolean;
 }
 
 export function QuoteFilterForm({
@@ -78,24 +80,25 @@ export function QuoteFilterForm({
   statusOptions = [],
   formRef,
   filterType = "Quote",
-  activeTab,
+  showFilterInfo = false,
 }: QuoteFilterFormProps) {
   const form = useForm<QuoteFilterFormData>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      status: undefined,
-      quoteId: undefined,
-      quoteName: undefined,
+      filterName: "",
+      status: "",
+      quoteId: "",
+      quoteName: "",
       quotedDateStart: undefined,
       quotedDateEnd: undefined,
       lastUpdatedDateStart: undefined,
       lastUpdatedDateEnd: undefined,
-      subtotalStart: undefined,
-      subtotalEnd: undefined,
-      taxableStart: undefined,
-      taxableEnd: undefined,
-      totalStart: undefined,
-      totalEnd: undefined,
+      subtotalStart: "",
+      subtotalEnd: "",
+      taxableStart: "",
+      taxableEnd: "",
+      totalStart: "",
+      totalEnd: "",
     },
   });
 
@@ -130,11 +133,43 @@ export function QuoteFilterForm({
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-6">
+        {/* Filter Info Section - Only show when showFilterInfo is true */}
+        {showFilterInfo && (
+          <div className="space-y-4">
+            <h3 className="text-sm font-medium text-gray-900">Filter Info</h3>
+
+            {/* Filter Name */}
+            <FormField
+              control={form.control}
+              name="filterName"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel className="flex items-center gap-1">
+                    Filter Name
+                    <span className="text-red-500">*</span>
+                  </FormLabel>
+                  <FormControl>
+                    <Input
+                      placeholder="Enter filter name..."
+                      {...field}
+                      value={field.value || ""}
+                      required
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+          </div>
+        )}
+
         {/* Quote Info Section */}
         <div className="space-y-4">
-          <h3 className="text-sm font-medium text-gray-900">
-            {filterType} Info
-          </h3>
+          {!showFilterInfo && (
+            <h3 className="text-sm font-medium text-gray-900">
+              {filterType} Info
+            </h3>
+          )}
 
           {/* Status */}
           <FormField
@@ -176,44 +211,42 @@ export function QuoteFilterForm({
           />
 
           {/* Quote ID */}
-          {activeTab !== "all" && (
-            <FormField
-              control={form.control}
-              name="quoteId"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>{filterType} ID</FormLabel>
-                  <FormControl>
-                    <Input
-                      placeholder={`Enter ${filterType.toLowerCase()} ID...`}
-                      {...field}
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-          )}
+          <FormField
+            control={form.control}
+            name="quoteId"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>{filterType} ID</FormLabel>
+                <FormControl>
+                  <Input
+                    placeholder={`Enter ${filterType.toLowerCase()} ID...`}
+                    {...field}
+                    value={field.value || ""}
+                  />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
 
           {/* Quote Name */}
-          {activeTab !== "all" && (
-            <FormField
-              control={form.control}
-              name="quoteName"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>{filterType} Name</FormLabel>
-                  <FormControl>
-                    <Input
-                      placeholder={`Enter ${filterType.toLowerCase()} name...`}
-                      {...field}
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-          )}
+          <FormField
+            control={form.control}
+            name="quoteName"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>{filterType} Name</FormLabel>
+                <FormControl>
+                  <Input
+                    placeholder={`Enter ${filterType.toLowerCase()} name...`}
+                    {...field}
+                    value={field.value || ""}
+                  />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
         </div>
 
         {/* Quoted Date Range */}
@@ -403,7 +436,12 @@ export function QuoteFilterForm({
                 <FormItem>
                   <FormLabel>Start Value</FormLabel>
                   <FormControl>
-                    <Input type="number" placeholder="0.00" {...field} />
+                    <Input
+                      type="number"
+                      placeholder="0.00"
+                      {...field}
+                      value={field.value || ""}
+                    />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -417,7 +455,12 @@ export function QuoteFilterForm({
                 <FormItem>
                   <FormLabel>End Value</FormLabel>
                   <FormControl>
-                    <Input type="number" placeholder="0.00" {...field} />
+                    <Input
+                      type="number"
+                      placeholder="0.00"
+                      {...field}
+                      value={field.value || ""}
+                    />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -437,7 +480,12 @@ export function QuoteFilterForm({
                 <FormItem>
                   <FormLabel>Start Taxable Amount</FormLabel>
                   <FormControl>
-                    <Input type="number" placeholder="0.00" {...field} />
+                    <Input
+                      type="number"
+                      placeholder="0.00"
+                      {...field}
+                      value={field.value || ""}
+                    />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -451,7 +499,12 @@ export function QuoteFilterForm({
                 <FormItem>
                   <FormLabel>End Taxable Amount</FormLabel>
                   <FormControl>
-                    <Input type="number" placeholder="0.00" {...field} />
+                    <Input
+                      type="number"
+                      placeholder="0.00"
+                      {...field}
+                      value={field.value || ""}
+                    />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -474,7 +527,12 @@ export function QuoteFilterForm({
                 <FormItem>
                   <FormLabel>Start Total</FormLabel>
                   <FormControl>
-                    <Input type="number" placeholder="0.00" {...field} />
+                    <Input
+                      type="number"
+                      placeholder="0.00"
+                      {...field}
+                      value={field.value || ""}
+                    />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -488,7 +546,12 @@ export function QuoteFilterForm({
                 <FormItem>
                   <FormLabel>End Total</FormLabel>
                   <FormControl>
-                    <Input type="number" placeholder="0.00" {...field} />
+                    <Input
+                      type="number"
+                      placeholder="0.00"
+                      {...field}
+                      value={field.value || ""}
+                    />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
