@@ -35,7 +35,7 @@ const SkeletonTable = ({
     <tr className="border-b border-gray-100 animate-pulse">
       {Array.from({ length: columns }).map((_, cellIndex) => (
         // eslint-disable-next-line react/no-array-index-key
-        <td key={cellIndex} className="px-6 py-4">
+        <td key={cellIndex} className="px-6 py-6">
           <div className="flex items-center space-x-2">
             <div
               className={`h-4 bg-gray-200 rounded animate-pulse ${
@@ -156,32 +156,37 @@ function QuotesLandingTable({
         accessorKey: "quotationIdentifier",
         header: "Quote Id",
         size: 150,
+        enableResizing: true,
         cell: ({ getValue }) => (
-          <span className="font-medium text-blue-600 block truncate">
+          <div className="font-medium text-blue-600 break-words leading-tight overflow-hidden">
             {getValue() as string}
-          </span>
+          </div>
         ),
       },
       {
         accessorKey: "quoteName",
         header: "Name",
         size: 200,
+        enableResizing: true,
         cell: ({ getValue }) => (
-          <span className="block truncate">{getValue() as string}</span>
+          <div className="break-words leading-tight overflow-hidden">
+            {getValue() as string}
+          </div>
         ),
       },
       {
         accessorKey: "createdDate",
         header: "Quoted Date",
         size: 150,
+        enableResizing: true,
         cell: ({ getValue }) => {
           const date = getValue() as string;
           if (!date) return "-";
           try {
             return (
-              <span className="block">
+              <div className="break-words leading-tight overflow-hidden">
                 {new Date(date).toLocaleDateString()}
-              </span>
+              </div>
             );
           } catch {
             return "-";
@@ -192,14 +197,15 @@ function QuotesLandingTable({
         accessorKey: "lastModifiedDate",
         header: "Date",
         size: 150,
+        enableResizing: true,
         cell: ({ row }) => {
           const date = row.original.lastUpdatedDate;
           if (!date) return "-";
           try {
             return (
-              <span className="block">
+              <div className="break-words leading-tight overflow-hidden">
                 {new Date(date).toLocaleDateString()}
-              </span>
+              </div>
             );
           } catch {
             return "-";
@@ -210,14 +216,18 @@ function QuotesLandingTable({
         accessorKey: "buyerCompanyName",
         header: "Account Name",
         size: 250,
+        enableResizing: true,
         cell: ({ getValue }) => (
-          <span className="block truncate">{getValue() as string}</span>
+          <div className="break-words leading-tight overflow-hidden">
+            {getValue() as string}
+          </div>
         ),
       },
       {
         accessorKey: "itemCount",
         header: () => <div className="text-center">Total Items</div>,
         size: 150,
+        enableResizing: true,
         cell: ({ row }) => {
           const items = row.original.itemCount || 0;
           return (
@@ -240,6 +250,7 @@ function QuotesLandingTable({
         accessorKey: "subTotal",
         header: () => <div className="text-center">Subtotal</div>,
         size: 150,
+        enableResizing: true,
         cell: ({ row }) => {
           const currencySymbol = row.original.curencySymbol?.symbol || "$";
           const amount = row.original.subTotal || row.original.grandTotal || 0;
@@ -254,6 +265,7 @@ function QuotesLandingTable({
         accessorKey: "taxableAmount",
         header: () => <div className="text-center">Taxable Amount</div>,
         size: 150,
+        enableResizing: true,
         cell: ({ row }) => {
           const currencySymbol = row.original.curencySymbol?.symbol || "$";
           const amount = row.original.taxableAmount || 0;
@@ -268,14 +280,15 @@ function QuotesLandingTable({
         accessorKey: "grandTotal",
         header: () => <div className="text-center">Total</div>,
         size: 150,
+        enableResizing: true,
         cell: ({ row }) => {
           const currencySymbol = row.original.curencySymbol?.symbol || "$";
           const amount = row.original.grandTotal || 0;
           return (
             <div className="text-center">
-              <span className="font-semibold">
+              <div className="font-semibold break-words leading-tight overflow-hidden">
                 {currencySymbol} {Number(amount).toLocaleString()}
-              </span>
+              </div>
             </div>
           );
         },
@@ -284,6 +297,7 @@ function QuotesLandingTable({
         accessorKey: "updatedBuyerStatus",
         header: () => <div className="text-center">Status</div>,
         size: 200,
+        enableResizing: true,
         cell: ({ getValue }) => {
           const status = getValue() as string;
           if (!status) {
@@ -300,8 +314,9 @@ function QuotesLandingTable({
           return (
             <div className="text-center">
               <span
-                className="px-3 py-1 rounded-full text-sm font-medium text-white whitespace-nowrap"
+                className="px-3 py-1 rounded-full text-sm font-medium text-white whitespace-nowrap inline-block max-w-full overflow-hidden text-ellipsis"
                 style={{ backgroundColor: bgColor }}
+                title={status}
               >
                 {status}
               </span>
@@ -313,12 +328,13 @@ function QuotesLandingTable({
         accessorKey: "requiredDate",
         header: () => <div className="text-center">Required Date</div>,
         size: 150,
+        enableResizing: true,
         cell: ({ row }) => {
           const date = row.original.customerRequiredDate;
           if (!date) return <div className="text-center">-</div>;
           try {
             return (
-              <div className="text-center">
+              <div className="text-center break-words leading-tight overflow-hidden">
                 {new Date(date).toLocaleDateString()}
               </div>
             );
@@ -662,6 +678,8 @@ function QuotesLandingTable({
               }}
               onRowClick={handleRowClick}
               tableHeight="h-full"
+              enableColumnResizing={true}
+              columnResizeMode="onChange"
             />
           )}
         </div>

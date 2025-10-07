@@ -178,7 +178,7 @@ export function FilterTabs({
       <SideDrawer
         open={isDrawerOpen}
         onClose={() => setIsDrawerOpen(false)}
-        title="Order Filters"
+        title={`${filterType} Filters`}
         onClearAll={handleFilterReset}
         onApply={handleApply}
       >

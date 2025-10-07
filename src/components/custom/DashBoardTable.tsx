@@ -9,6 +9,7 @@ import {
   flexRender,
   getCoreRowModel,
   useReactTable,
+  ColumnResizeMode,
 } from "@tanstack/react-table";
 
 import {
@@ -42,6 +43,8 @@ type TableProps<T> = {
   setRowPerPage: (rowPerPage: number | string) => void;
   onRowClick?: (row: T) => void;
   tableHeight?: string;
+  enableColumnResizing?: boolean;
+  columnResizeMode?: ColumnResizeMode;
 };
 
 const DashboardTable = <T,>({
@@ -59,6 +62,8 @@ const DashboardTable = <T,>({
   setRowPerPage,
   onRowClick,
   tableHeight = "h-[calc(100vh-250px)]",
+  enableColumnResizing = false,
+  columnResizeMode = "onChange",
 }: TableProps<T>) => {
   const pageCount = Math.ceil(totalDataCount / rowPerPage);
 
@@ -68,6 +73,8 @@ const DashboardTable = <T,>({
     getCoreRowModel: getCoreRowModel(),
     manualPagination: true,
     pageCount,
+    enableColumnResizing,
+    columnResizeMode,
   });
 
   const handlePageSizeChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
@@ -94,18 +101,21 @@ const DashboardTable = <T,>({
             </div>
           </div>
         )}
-        <Table className="min-w-full table-fixed">
+        <Table className="min-w-full table-fixed w-full">
           <TableHeader className="bg-gray-100 sticky top-0 z-10">
             {table.getHeaderGroups().map((headerGroup: HeaderGroup<T>) => (
               <TableRow key={headerGroup.id}>
                 {headerGroup.headers.map((header: Header<T, unknown>) => (
                   <TableHead
                     key={header.id}
-                    className="text-left px-3 py-1.5 bg-gray-100 border-b"
+                    className="text-left px-3 py-3 bg-gray-100 border-b relative align-top"
                     style={{
-                      width: header.column.columnDef.size
-                        ? `${header.column.columnDef.size}px`
-                        : "auto",
+                      width: header.getSize(),
+                      maxWidth: header.getSize(),
+                      minWidth: header.getSize(),
+                      wordBreak: "break-word",
+                      lineHeight: "1.4",
+                      overflow: "hidden",
                     }}
                   >
                     {header.isPlaceholder
@@ -114,6 +124,15 @@ const DashboardTable = <T,>({
                           header.column.columnDef.header,
                           header.getContext()
                         )}
+                    {enableColumnResizing && header.column.getCanResize() && (
+                      <div
+                        onMouseDown={header.getResizeHandler()}
+                        onTouchStart={header.getResizeHandler()}
+                        className={`absolute right-0 top-0 h-full w-1 bg-gray-300 cursor-col-resize select-none touch-none hover:bg-blue-500 ${
+                          header.column.getIsResizing() ? "bg-blue-500" : ""
+                        }`}
+                      />
+                    )}
                   </TableHead>
                 ))}
               </TableRow>
@@ -131,11 +150,15 @@ const DashboardTable = <T,>({
                   {row.getVisibleCells().map((cell: Cell<T, unknown>) => (
                     <TableCell
                       key={cell.id}
-                      className="px-2 sm:px-3 py-1 text-xs sm:text-sm"
+                      className="px-2 sm:px-3 py-3 text-xs sm:text-sm align-top"
                       style={{
-                        width: cell.column.columnDef.size
-                          ? `${cell.column.columnDef.size}px`
-                          : "auto",
+                        width: cell.column.getSize(),
+                        maxWidth: cell.column.getSize(),
+                        minWidth: cell.column.getSize(),
+                        wordBreak: "break-word",
+                        lineHeight: "1",
+                        overflow: "hidden",
+                        whiteSpace: "normal",
                       }}
                     >
                       {flexRender(
