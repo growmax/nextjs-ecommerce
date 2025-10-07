@@ -1,4 +1,4 @@
-import { apiClient } from "../client";
+import { preferenceClient } from "../client";
 import { BaseService } from "./BaseService";
 import { JWTService } from "@/lib/services/JWTService";
 import { AuthStorage } from "@/lib/auth";
@@ -14,6 +14,58 @@ export interface UserPreference {
 }
 
 export type PreferenceModule = "order" | "quote" | string;
+
+// Filter Preference Interfaces
+export interface FilterPreference {
+  filter_index: number;
+  filter_name: string;
+  accountId: number[];
+  partnerAcccountId?: number[];
+  accountOwners: string[];
+  approvalAwaiting: string[];
+  endDate: string;
+  endCreatedDate: string;
+  endValue: number | null;
+  endTaxableAmount: number | null;
+  endGrandTotal: number | null;
+  identifier: string;
+  limit: number;
+  offset: number;
+  name: string;
+  pageNumber: number;
+  startDate: string;
+  startCreatedDate: string;
+  startValue: number | null;
+  startTaxableAmount: number | null;
+  startGrandTotal: number | null;
+  status: string[];
+  quoteUsers: string[];
+  tagsList: string[];
+  options: string[];
+  branchId: number[];
+  businessUnitId: number[];
+  selectedColumn?: string[];
+  selectedColumns: string[];
+  columnWidth: Array<{
+    id: string;
+    width: number;
+  }>;
+  columnPosition: string;
+  partnerAccountId?: number[];
+}
+
+export interface PreferenceData {
+  filters: FilterPreference[];
+  selected: number;
+}
+
+export interface FilterPreferenceResponse {
+  id: number;
+  userId: number;
+  tenantCode: string;
+  preference: PreferenceData;
+  module: string;
+}
 
 // Order Preferences Request Interface
 export interface OrderPreferencesRequest {
@@ -39,8 +91,8 @@ export interface OrderPreferencesResponse {
 }
 
 export class PreferenceService extends BaseService<PreferenceService> {
-  // Using apiClient for PREFERENCES_URL endpoint
-  protected defaultClient = apiClient;
+  // Using preferenceClient for userpreference microservice
+  protected defaultClient = preferenceClient;
   private jwtService = JWTService.getInstance();
 
   /**
@@ -170,6 +222,37 @@ export class PreferenceService extends BaseService<PreferenceService> {
   ): Promise<OrderPreferencesResponse | null> {
     try {
       return await this.findOrderPreferencesAuto(isMobile);
+    } catch {
+      return null;
+    }
+  }
+
+  /**
+   * Find filter preferences for a specific module with auto-extracted user data
+   * @param module - The module type (quote, order, etc.)
+   * @returns Filter preferences response with filters array
+   */
+  async findFilterPreferences(
+    module: string
+  ): Promise<FilterPreferenceResponse> {
+    const { userId, tenantCode } = this.getUserDataFromToken();
+    return (await this.call(
+      `/preferences/find?userId=${userId}&module=${module}&tenantCode=${tenantCode}`,
+      {},
+      "GET"
+    )) as FilterPreferenceResponse;
+  }
+
+  /**
+   * Server-safe version for filter preferences
+   * @param module - The module type (quote, order, etc.)
+   * @returns Filter preferences response or null if error
+   */
+  async findFilterPreferencesServerSide(
+    module: string
+  ): Promise<FilterPreferenceResponse | null> {
+    try {
+      return await this.findFilterPreferences(module);
     } catch {
       return null;
     }

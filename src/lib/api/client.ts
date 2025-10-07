@@ -18,6 +18,8 @@ const API_CONFIG = {
   API_BASE_URL: process.env.API_BASE_URL || "https://api.myapptino.com",
   CORECOMMERCE_URL:
     process.env.BASE_URL || "https://api.myapptino.com/corecommerce",
+  PREFERENCE_URL:
+    process.env.PREFERENCE_URL || "https://api.myapptino.com/userpreference",
 } as const;
 
 // Types
@@ -256,7 +258,7 @@ export const apiClient = createApiClient({
 });
 
 export const preferenceClient = createApiClient({
-  baseURL: API_CONFIG.API_BASE_URL,
+  baseURL: API_CONFIG.PREFERENCE_URL,
 });
 
 // Utility functions

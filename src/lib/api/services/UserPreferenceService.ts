@@ -49,7 +49,7 @@ export class UserPreferenceService extends BaseService<UserPreferenceService> {
     const { userId, module, tenantCode } = params;
 
     return (await this.call(
-      `/userpreference/preferences/find?userId=${userId}&module=${module}&tenantCode=${tenantCode}`,
+      `/preferences/find?userId=${userId}&module=${module}&tenantCode=${tenantCode}`,
       filters,
       "POST" // Your curl shows it's actually a POST with body
     )) as PreferenceApiResponse;
@@ -66,7 +66,7 @@ export class UserPreferenceService extends BaseService<UserPreferenceService> {
     const { userId, module, tenantCode } = params;
 
     return (await this.callWith(
-      `/userpreference/preferences/find?userId=${userId}&module=${module}&tenantCode=${tenantCode}`,
+      `/preferences/find?userId=${userId}&module=${module}&tenantCode=${tenantCode}`,
       filters,
       { context, method: "POST" }
     )) as PreferenceApiResponse;
@@ -83,7 +83,7 @@ export class UserPreferenceService extends BaseService<UserPreferenceService> {
     const { userId, module, tenantCode } = params;
 
     return (await this.callSafe(
-      `/userpreference/preferences/find?userId=${userId}&module=${module}&tenantCode=${tenantCode}`,
+      `/preferences/find?userId=${userId}&module=${module}&tenantCode=${tenantCode}`,
       filters,
       "POST"
     )) as PreferenceApiResponse | null;
@@ -100,7 +100,7 @@ export class UserPreferenceService extends BaseService<UserPreferenceService> {
     const { userId, module, tenantCode } = params;
 
     return (await this.callWithSafe(
-      `/userpreference/preferences/find?userId=${userId}&module=${module}&tenantCode=${tenantCode}`,
+      `/preferences/find?userId=${userId}&module=${module}&tenantCode=${tenantCode}`,
       filters,
       { context, method: "POST" }
     )) as PreferenceApiResponse | null;
@@ -116,7 +116,7 @@ export class UserPreferenceService extends BaseService<UserPreferenceService> {
     const { userId, module, tenantCode } = params;
 
     return (await this.call(
-      `/userpreference/preferences/save?userId=${userId}&module=${module}&tenantCode=${tenantCode}`,
+      `/preferences/save?userId=${userId}&module=${module}&tenantCode=${tenantCode}`,
       { preferences },
       "POST"
     )) as PreferenceApiResponse;
@@ -132,7 +132,7 @@ export class UserPreferenceService extends BaseService<UserPreferenceService> {
     const { userId, module, tenantCode } = params;
 
     return (await this.callSafe(
-      `/userpreference/preferences/save?userId=${userId}&module=${module}&tenantCode=${tenantCode}`,
+      `/preferences/save?userId=${userId}&module=${module}&tenantCode=${tenantCode}`,
       { preferences },
       "POST"
     )) as PreferenceApiResponse | null;
