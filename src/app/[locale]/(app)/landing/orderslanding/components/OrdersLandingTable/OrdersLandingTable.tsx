@@ -580,6 +580,8 @@ function OrdersLandingTable({
             ]}
             onFilterSubmit={handleOrderFilterSubmit}
             onFilterReset={handleOrderFilterReset}
+            usePreferenceService={true}
+            module="orders"
           />
         </div>
 

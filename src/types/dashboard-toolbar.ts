@@ -157,6 +157,12 @@ export interface DashboardToolbarProps {
   };
 }
 
+export interface FilterTab {
+  filter_index: number;
+  filter_name: string;
+  filter_data?: Record<string, unknown>;
+}
+
 export interface DashboardToolbarRef {
   refresh: () => void;
   focus: () => void;

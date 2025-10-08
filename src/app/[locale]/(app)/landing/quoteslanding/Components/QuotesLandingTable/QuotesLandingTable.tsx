@@ -657,6 +657,8 @@ function QuotesLandingTable({
             onAddTab={handleAddTab}
             onFilterClick={handleFilterClick}
             onSettingsClick={handleSettingsClick}
+            usePreferenceService={true}
+            module="quotes"
           />
         </div>
 

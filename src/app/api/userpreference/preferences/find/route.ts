@@ -44,8 +44,10 @@ export async function GET(request: NextRequest) {
     // Get tenant from token for validation
     const tokenTenant = getTenantFromToken(accessToken);
 
-    // Build external API URL
-    const externalApiUrl = `https://api.myapptino.com/userpreference/preferences/find?userId=${userId}&module=${moduleParam}&tenantCode=${tenantCode}`;
+    // Build external API URL from environment variable
+    const preferenceBaseUrl =
+      process.env.PREFERENCE_URL || "https://api.myapptino.com/userpreference";
+    const externalApiUrl = `${preferenceBaseUrl}/preferences/find?userId=${userId}&module=${moduleParam}&tenantCode=${tenantCode}`;
 
     // Make server-to-server request (no CORS restrictions)
     const response = await fetch(externalApiUrl, {
