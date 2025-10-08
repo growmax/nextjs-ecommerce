@@ -148,7 +148,6 @@ function QuotesLandingTable({
   );
   const [filterPreferences, setFilterPreferences] =
     useState<FilterPreferenceResponse | null>(null);
-  const [preferencesLoaded, setPreferencesLoaded] = useState(false);
   const [activeTab, setActiveTab] = useState("all");
   const [isAddDrawerOpen, setIsAddDrawerOpen] = useState(false);
   const [isItemsDialogOpen, setIsItemsDialogOpen] = useState(false);
@@ -411,19 +410,20 @@ function QuotesLandingTable({
 
   // Load filter preferences
   const loadFilterPreferences = useCallback(async () => {
-    if (preferencesLoaded) return filterPreferences;
-
     try {
       const preferences =
         await PreferenceService.findFilterPreferences("quote");
       setFilterPreferences(preferences);
-      setPreferencesLoaded(true);
       return preferences;
     } catch {
-      setPreferencesLoaded(true);
       return null;
     }
-  }, [preferencesLoaded, filterPreferences]);
+  }, []);
+
+  // Load preferences on component mount
+  useEffect(() => {
+    loadFilterPreferences();
+  }, [loadFilterPreferences]);
 
   const fetchQuotes = useCallback(async () => {
     // Don't fetch if we don't have user info yet
@@ -434,8 +434,6 @@ function QuotesLandingTable({
 
     setLoading(true);
     try {
-      // Load filter preferences if not already loaded
-      const currentPreferences = await loadFilterPreferences();
       // 0-based offset: Calculate proper starting record number
       const calculatedOffset = page;
 
@@ -475,10 +473,10 @@ function QuotesLandingTable({
       };
 
       // Apply saved filter preferences first
-      if (currentPreferences?.preference?.filters) {
+      if (filterPreferences?.preference?.filters) {
         const activeFilter =
-          currentPreferences.preference.filters[
-            currentPreferences.preference.selected
+          filterPreferences.preference.filters[
+            filterPreferences.preference.selected
           ];
         if (activeFilter) {
           // Handle status array - join with comma or take first value
@@ -594,7 +592,7 @@ function QuotesLandingTable({
     } finally {
       setLoading(false);
     }
-  }, [page, rowPerPage, user, filterData, loadFilterPreferences]);
+  }, [page, rowPerPage, user, filterPreferences, filterData]);
 
   useEffect(() => {
     fetchQuotes();
@@ -696,7 +694,29 @@ function QuotesLandingTable({
   const handleTabChange = (value: string) => {
     setActiveTab(value);
     setPage(0); // Reset to first page when changing tabs
-    toast.info(`Switched to ${value} quotes`);
+
+    // Find the tab and update selected filter preference
+    const selectedTab = tabs.find(tab => tab.id === value);
+    if (
+      selectedTab &&
+      filterPreferences &&
+      typeof selectedTab.filterIndex === "number"
+    ) {
+      // Update the selected filter index in preferences
+      const updatedPreferences = {
+        ...filterPreferences,
+        preference: {
+          ...filterPreferences.preference,
+          selected: selectedTab.filterIndex,
+        },
+      };
+      setFilterPreferences(updatedPreferences);
+      toast.success(`Applied "${selectedTab.label}" filter successfully`);
+    } else if (selectedTab) {
+      toast.success(`Switched to "${selectedTab.label}" view`);
+    } else {
+      toast.info("Filter view changed");
+    }
   };
 
   const handleQuoteFilterSubmit = (data: QuoteFilterFormData) => {
@@ -727,16 +747,34 @@ function QuotesLandingTable({
     router.push(`/${locale}/quotes/${row.quotationIdentifier}`);
   };
 
-  // Define tabs with filter capabilities - only All tab initially
-  const tabs = [
-    {
-      id: "all",
-      label: "All",
+  // Define tabs dynamically from filter preferences
+  const tabs = useMemo(() => {
+    if (
+      !filterPreferences?.preference?.filters ||
+      filterPreferences.preference.filters.length === 0
+    ) {
+      // Fallback to default "All" tab if no preferences loaded
+      return [
+        {
+          id: "all",
+          label: "All",
+          hasFilter: true,
+          isFilterActive: !!filterData,
+          ...(filterData && { count: 1 }),
+        },
+      ];
+    }
+
+    // Generate tabs from filter preferences
+    return filterPreferences.preference.filters.map((filter, index) => ({
+      id: `filter-${index}`,
+      label: filter.filter_name,
       hasFilter: true,
-      isFilterActive: !!filterData,
-      ...(filterData && { count: 1 }),
-    },
-  ];
+      isFilterActive:
+        filterPreferences.preference.selected === index || !!filterData,
+      filterIndex: index,
+    }));
+  }, [filterPreferences, filterData]);
 
   return (
     <>
@@ -775,7 +813,11 @@ function QuotesLandingTable({
         <div className="flex-shrink-0">
           <FilterTabs
             tabs={tabs}
-            defaultValue="all"
+            defaultValue={
+              filterPreferences?.preference?.filters?.length > 0
+                ? `filter-${filterPreferences.preference.selected}`
+                : "all"
+            }
             onTabChange={handleTabChange}
             onAddTab={handleAddTab}
             onFilterClick={handleFilterClick}
