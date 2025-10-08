@@ -6,6 +6,7 @@ import FilterDrawer from "@/components/sales/FilterDrawer";
 import { QuoteFilterFormData } from "@/components/sales/QuoteFilterForm";
 import { toast } from "sonner";
 import orderService, { OrdersParams } from "@/lib/api/services/OrdersService";
+import orderStatusService from "@/lib/api/services/OrderStatusService";
 import PreferenceService, {
   FilterPreferenceResponse,
 } from "@/lib/api/services/PreferenceService";
@@ -42,14 +43,6 @@ const formatCurrency = (
   const currencySymbol = symbol || "USD";
   return `${currencySymbol} ${Number(amount || 0).toLocaleString()}`;
 };
-
-const STATUS_OPTIONS = [
-  { value: "pending", label: "Pending" },
-  { value: "processing", label: "Processing" },
-  { value: "completed", label: "Completed" },
-  { value: "cancelled", label: "Cancelled" },
-  { value: "refunded", label: "Refunded" },
-];
 
 // Table Skeleton Component
 const TableSkeleton = ({ rows = 10 }: { rows?: number }) => {
@@ -187,6 +180,9 @@ function OrdersLandingTable({
   const [selectedOrderItems, setSelectedOrderItems] = useState<Order | null>(
     null
   );
+  const [statusOptions, setStatusOptions] = useState<
+    Array<{ value: string; label: string }>
+  >([]);
 
   // Define table columns
   const columns = useMemo<ColumnDef<Order>[]>(
@@ -354,6 +350,21 @@ function OrdersLandingTable({
   );
 
   const maxPage = Math.max(0, Math.ceil(totalCount / rowPerPage) - 1);
+
+  // Load status options
+  const loadStatusOptions = useCallback(async () => {
+    try {
+      const statuses = await orderStatusService.getOrderStatuses();
+      const options = statuses.map(status => ({
+        value: status.value,
+        label: status.label,
+      }));
+      setStatusOptions(options);
+    } catch {
+      // Fallback to empty array if service fails
+      setStatusOptions([]);
+    }
+  }, []);
 
   // Load filter preferences
   const loadFilterPreferences = useCallback(async () => {
@@ -565,6 +576,11 @@ function OrdersLandingTable({
     fetchOrders();
   }, [fetchOrders, refreshTrigger]);
 
+  // Load status options on component mount
+  useEffect(() => {
+    loadStatusOptions();
+  }, [loadStatusOptions]);
+
   const handleExport = useCallback(async () => {
     try {
       if (orders.length === 0) {
@@ -691,7 +707,7 @@ function OrdersLandingTable({
         onReset={handleOrderFilterReset}
         title="Order Filters"
         filterType="Order"
-        statusOptions={STATUS_OPTIONS}
+        statusOptions={statusOptions}
       />
 
       <div className="flex flex-col h-[calc(100vh-140px)] ">
@@ -706,7 +722,7 @@ function OrdersLandingTable({
               toast.info("Settings functionality coming soon!")
             }
             filterType="Order"
-            statusOptions={STATUS_OPTIONS}
+            statusOptions={statusOptions}
             onFilterSubmit={handleOrderFilterSubmit}
             onFilterReset={handleOrderFilterReset}
           />
