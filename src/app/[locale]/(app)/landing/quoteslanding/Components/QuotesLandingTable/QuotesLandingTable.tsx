@@ -479,13 +479,13 @@ function QuotesLandingTable({
             filterPreferences.preference.selected
           ];
         if (activeFilter) {
-          // Handle status array - join with comma or take first value
+          // Handle status array - take first value to match API expectations
           if (
             activeFilter.status &&
             Array.isArray(activeFilter.status) &&
             activeFilter.status.length > 0
           ) {
-            filterRequest.status = activeFilter.status;
+            filterRequest.status = [activeFilter.status[0] as string];
           }
 
           // Handle date fields
@@ -700,6 +700,7 @@ function QuotesLandingTable({
     if (
       selectedTab &&
       filterPreferences &&
+      selectedTab.filterIndex !== undefined &&
       typeof selectedTab.filterIndex === "number"
     ) {
       // Update the selected filter index in preferences
@@ -760,6 +761,7 @@ function QuotesLandingTable({
           label: "All",
           hasFilter: true,
           isFilterActive: !!filterData,
+          filterIndex: undefined,
           ...(filterData && { count: 1 }),
         },
       ];
@@ -814,7 +816,8 @@ function QuotesLandingTable({
           <FilterTabs
             tabs={tabs}
             defaultValue={
-              filterPreferences?.preference?.filters?.length > 0
+              filterPreferences?.preference?.filters &&
+              filterPreferences.preference.filters.length > 0
                 ? `filter-${filterPreferences.preference.selected}`
                 : "all"
             }

@@ -182,7 +182,7 @@ function OrdersLandingTable({
   );
   const [filterPreferences, setFilterPreferences] =
     useState<FilterPreferenceResponse | null>(null);
-  const [preferencesLoaded, setPreferencesLoaded] = useState(false);
+  const [activeTab, setActiveTab] = useState("all");
   const [isItemsDialogOpen, setIsItemsDialogOpen] = useState(false);
   const [selectedOrderItems, setSelectedOrderItems] = useState<Order | null>(
     null
@@ -357,19 +357,33 @@ function OrdersLandingTable({
 
   // Load filter preferences
   const loadFilterPreferences = useCallback(async () => {
-    if (preferencesLoaded) return filterPreferences;
-
     try {
       const preferences =
         await PreferenceService.findFilterPreferences("order");
       setFilterPreferences(preferences);
-      setPreferencesLoaded(true);
       return preferences;
     } catch {
-      setPreferencesLoaded(true);
       return null;
     }
-  }, [preferencesLoaded, filterPreferences]);
+  }, []);
+
+  // Load preferences on component mount
+  useEffect(() => {
+    loadFilterPreferences();
+  }, [loadFilterPreferences]);
+
+  // Sync activeTab with preference selection
+  useEffect(() => {
+    if (
+      filterPreferences?.preference?.filters &&
+      filterPreferences.preference.filters.length > 0
+    ) {
+      const selectedIndex = filterPreferences.preference.selected;
+      setActiveTab(`filter-${selectedIndex}`);
+    } else {
+      setActiveTab("all");
+    }
+  }, [filterPreferences]);
 
   const fetchOrders = useCallback(async () => {
     // Don't fetch if we don't have user info yet
@@ -380,8 +394,6 @@ function OrdersLandingTable({
 
     setLoading(true);
     try {
-      // Load filter preferences if not already loaded
-      const currentPreferences = await loadFilterPreferences();
       const calculatedOffset = page;
 
       // Apply filter preferences if available
@@ -393,10 +405,10 @@ function OrdersLandingTable({
       };
 
       // Apply saved filter preferences
-      if (currentPreferences?.preference?.filters) {
+      if (filterPreferences?.preference?.filters) {
         const activeFilter =
-          currentPreferences.preference.filters[
-            currentPreferences.preference.selected
+          filterPreferences.preference.filters[
+            filterPreferences.preference.selected
           ];
         if (activeFilter) {
           // Convert filter preference fields to OrdersParams format
@@ -559,7 +571,7 @@ function OrdersLandingTable({
     } finally {
       setLoading(false);
     }
-  }, [page, rowPerPage, user, filterData, loadFilterPreferences]);
+  }, [page, rowPerPage, user, filterPreferences, filterData]);
 
   useEffect(() => {
     fetchOrders();
@@ -672,15 +684,64 @@ function OrdersLandingTable({
     }
   };
 
-  const tabs = [
-    {
-      id: "all",
-      label: "All",
+  const handleTabChange = (value: string) => {
+    setActiveTab(value);
+    setPage(0); // Reset to first page when changing tabs
+
+    // Find the tab and update selected filter preference
+    const selectedTab = tabs.find(tab => tab.id === value);
+    if (
+      selectedTab &&
+      filterPreferences &&
+      selectedTab.filterIndex !== undefined &&
+      typeof selectedTab.filterIndex === "number"
+    ) {
+      // Update the selected filter index in preferences
+      const updatedPreferences = {
+        ...filterPreferences,
+        preference: {
+          ...filterPreferences.preference,
+          selected: selectedTab.filterIndex,
+        },
+      };
+      setFilterPreferences(updatedPreferences);
+      toast.success(`Applied "${selectedTab.label}" filter successfully`);
+    } else if (selectedTab) {
+      toast.success(`Switched to "${selectedTab.label}" view`);
+    } else {
+      toast.info("Filter view changed");
+    }
+  };
+
+  // Define tabs dynamically from filter preferences
+  const tabs = useMemo(() => {
+    if (
+      !filterPreferences?.preference?.filters ||
+      filterPreferences.preference.filters.length === 0
+    ) {
+      // Fallback to default "All" tab if no preferences loaded
+      return [
+        {
+          id: "all",
+          label: "All",
+          hasFilter: true,
+          isFilterActive: !!filterData,
+          filterIndex: undefined,
+          ...(filterData && { count: 1 }),
+        },
+      ];
+    }
+
+    // Generate tabs from filter preferences
+    return filterPreferences.preference.filters.map((filter, index) => ({
+      id: `filter-${index}`,
+      label: filter.filter_name,
       hasFilter: true,
-      isFilterActive: !!filterData,
-      ...(filterData && { count: 1 }),
-    },
-  ];
+      isFilterActive:
+        filterPreferences.preference.selected === index || !!filterData,
+      filterIndex: index,
+    }));
+  }, [filterPreferences, filterData]);
 
   return (
     <>
@@ -699,8 +760,8 @@ function OrdersLandingTable({
         <div className="flex-shrink-0 mb-1">
           <FilterTabs
             tabs={tabs}
-            defaultValue="all"
-            onTabChange={() => {}}
+            defaultValue={activeTab}
+            onTabChange={handleTabChange}
             onFilterClick={() => setIsDrawerOpen(true)}
             onSettingsClick={() =>
               toast.info("Settings functionality coming soon!")

@@ -18,6 +18,8 @@ interface FilterTab {
   label: string;
   hasFilter?: boolean;
   count?: number;
+  isFilterActive?: boolean;
+  filterIndex?: number | undefined;
 }
 
 interface FilterTabsProps {
@@ -101,10 +103,31 @@ export function FilterTabs({
                   <TabsTrigger
                     value={tab.id}
                     className={cn(
-                      "bg-transparent border-none shadow-none rounded-none px-4 py-3",
-                      "data-[state=active]:bg-transparent data-[state=active]:shadow-none",
-                      "data-[state=active]:border-b-2 data-[state=active]:border-primary",
-                      "hover:bg-accent/50 transition-colors"
+                      // Base tab styling
+                      "relative bg-transparent border-none shadow-none rounded-none px-4 py-3",
+                      "hover:bg-accent/50 transition-all duration-300 ease-in-out",
+                      // Tab indicator base (3D bottom layer)
+                      "before:absolute before:bottom-0 before:left-0 before:right-0 before:h-0.5",
+                      "before:transition-all before:duration-300 before:ease-in-out",
+                      "before:transform before:origin-center",
+                      // Show indicator immediately for active tab, hide for inactive
+                      "before:scale-x-0 data-[state=active]:before:scale-x-100",
+                      // Dynamic styling based on filter state
+                      tab.isFilterActive
+                        ? [
+                            // Active filter tab styling (top layer)
+                            "data-[state=active]:bg-blue-50 text-blue-600 font-medium bg-blue-50/30 hover:bg-blue-100/50",
+                            // Enhanced 3D tab indicator for active filters
+                            "data-[state=active]:before:bg-blue-600",
+                            "data-[state=active]:before:shadow-[0_2px_8px_rgba(37,99,235,0.3)]",
+                          ].join(" ")
+                        : [
+                            // Default tab styling (top layer)
+                            "data-[state=active]:bg-accent/20 data-[state=active]:shadow-none",
+                            // Standard 3D tab indicator
+                            "data-[state=active]:before:bg-primary",
+                            "data-[state=active]:before:shadow-[0_2px_4px_rgba(0,0,0,0.1)]",
+                          ].join(" ")
                     )}
                   >
                     <span className="flex items-center gap-2">
