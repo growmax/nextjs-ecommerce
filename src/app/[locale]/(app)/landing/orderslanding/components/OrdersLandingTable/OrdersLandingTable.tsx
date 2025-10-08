@@ -182,6 +182,7 @@ function OrdersLandingTable({
   );
   const [filterPreferences, setFilterPreferences] =
     useState<FilterPreferenceResponse | null>(null);
+  const [preferencesLoaded, setPreferencesLoaded] = useState(false);
   const [isItemsDialogOpen, setIsItemsDialogOpen] = useState(false);
   const [selectedOrderItems, setSelectedOrderItems] = useState<Order | null>(
     null
@@ -356,17 +357,19 @@ function OrdersLandingTable({
 
   // Load filter preferences
   const loadFilterPreferences = useCallback(async () => {
+    if (preferencesLoaded) return filterPreferences;
+
     try {
       const preferences =
         await PreferenceService.findFilterPreferences("order");
       setFilterPreferences(preferences);
-    } catch {}
-  }, []);
-
-  // Load preferences on component mount
-  useEffect(() => {
-    loadFilterPreferences();
-  }, [loadFilterPreferences]);
+      setPreferencesLoaded(true);
+      return preferences;
+    } catch {
+      setPreferencesLoaded(true);
+      return null;
+    }
+  }, [preferencesLoaded, filterPreferences]);
 
   const fetchOrders = useCallback(async () => {
     // Don't fetch if we don't have user info yet
@@ -377,6 +380,8 @@ function OrdersLandingTable({
 
     setLoading(true);
     try {
+      // Load filter preferences if not already loaded
+      const currentPreferences = await loadFilterPreferences();
       const calculatedOffset = page;
 
       // Apply filter preferences if available
@@ -388,10 +393,10 @@ function OrdersLandingTable({
       };
 
       // Apply saved filter preferences
-      if (filterPreferences?.preference?.filters) {
+      if (currentPreferences?.preference?.filters) {
         const activeFilter =
-          filterPreferences.preference.filters[
-            filterPreferences.preference.selected
+          currentPreferences.preference.filters[
+            currentPreferences.preference.selected
           ];
         if (activeFilter) {
           // Convert filter preference fields to OrdersParams format
@@ -554,7 +559,7 @@ function OrdersLandingTable({
     } finally {
       setLoading(false);
     }
-  }, [page, rowPerPage, user, filterPreferences, filterData]);
+  }, [page, rowPerPage, user, filterData, loadFilterPreferences]);
 
   useEffect(() => {
     fetchOrders();

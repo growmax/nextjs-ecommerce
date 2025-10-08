@@ -10,6 +10,9 @@ import { useCurrentUser } from "@/hooks/useCurrentUser";
 import QuotesService, {
   type QuoteItem,
 } from "@/lib/api/services/QuotesService";
+import PreferenceService, {
+  FilterPreferenceResponse,
+} from "@/lib/api/services/PreferenceService";
 import { ColumnDef } from "@tanstack/react-table";
 import { useLocale } from "next-intl";
 import { useRouter } from "next/navigation";
@@ -143,6 +146,9 @@ function QuotesLandingTable({
   const [filterData, setFilterData] = useState<QuoteFilterFormData | null>(
     null
   );
+  const [filterPreferences, setFilterPreferences] =
+    useState<FilterPreferenceResponse | null>(null);
+  const [preferencesLoaded, setPreferencesLoaded] = useState(false);
   const [activeTab, setActiveTab] = useState("all");
   const [isAddDrawerOpen, setIsAddDrawerOpen] = useState(false);
   const [isItemsDialogOpen, setIsItemsDialogOpen] = useState(false);
@@ -403,6 +409,22 @@ function QuotesLandingTable({
     [page, maxPage, loading]
   );
 
+  // Load filter preferences
+  const loadFilterPreferences = useCallback(async () => {
+    if (preferencesLoaded) return filterPreferences;
+
+    try {
+      const preferences =
+        await PreferenceService.findFilterPreferences("quote");
+      setFilterPreferences(preferences);
+      setPreferencesLoaded(true);
+      return preferences;
+    } catch {
+      setPreferencesLoaded(true);
+      return null;
+    }
+  }, [preferencesLoaded, filterPreferences]);
+
   const fetchQuotes = useCallback(async () => {
     // Don't fetch if we don't have user info yet
     if (!user?.userId || !user?.companyId) {
@@ -412,6 +434,8 @@ function QuotesLandingTable({
 
     setLoading(true);
     try {
+      // Load filter preferences if not already loaded
+      const currentPreferences = await loadFilterPreferences();
       // 0-based offset: Calculate proper starting record number
       const calculatedOffset = page;
 
@@ -422,33 +446,25 @@ function QuotesLandingTable({
         limit: rowPerPage,
       };
 
-      const filterRequest = {
+      let filterRequest = {
         filter_index: 1,
         filter_name: "Quote Filter",
-        endCreatedDate: filterData?.quotedDateEnd
-          ? filterData.quotedDateEnd.toISOString()
-          : "",
-        endDate: filterData?.lastUpdatedDateEnd
-          ? filterData.lastUpdatedDateEnd.toISOString()
-          : "",
-        endValue: filterData?.subtotalEnd || "",
-        endTaxableAmount: filterData?.taxableEnd || "",
-        endGrandTotal: filterData?.totalEnd || "",
-        identifier: filterData?.quoteId || "",
+        endCreatedDate: "",
+        endDate: "",
+        endValue: "",
+        endTaxableAmount: "",
+        endGrandTotal: "",
+        identifier: "",
         limit: rowPerPage,
         offset: calculatedOffset, // Now using 0-based offset
-        name: filterData?.quoteName || "",
+        name: "",
         pageNumber: page + 1, // Backend uses 1-based pageNumber for pagination
-        startDate: filterData?.lastUpdatedDateStart
-          ? filterData.lastUpdatedDateStart.toISOString()
-          : "",
-        startCreatedDate: filterData?.quotedDateStart
-          ? filterData.quotedDateStart.toISOString()
-          : "",
-        startValue: filterData?.subtotalStart || "",
-        startTaxableAmount: filterData?.taxableStart || "",
-        startGrandTotal: filterData?.totalStart || "",
-        status: filterData?.status ? [filterData.status] : [],
+        startDate: "",
+        startCreatedDate: "",
+        startValue: "",
+        startTaxableAmount: "",
+        startGrandTotal: "",
+        status: [] as string[],
         selectedColumns: [],
         columnWidth: [],
         columnPosition: "",
@@ -457,6 +473,113 @@ function QuotesLandingTable({
         accountId: [],
         branchId: [],
       };
+
+      // Apply saved filter preferences first
+      if (currentPreferences?.preference?.filters) {
+        const activeFilter =
+          currentPreferences.preference.filters[
+            currentPreferences.preference.selected
+          ];
+        if (activeFilter) {
+          // Handle status array - join with comma or take first value
+          if (
+            activeFilter.status &&
+            Array.isArray(activeFilter.status) &&
+            activeFilter.status.length > 0
+          ) {
+            filterRequest.status = activeFilter.status;
+          }
+
+          // Handle date fields
+          if (activeFilter.startDate)
+            filterRequest.startDate = activeFilter.startDate;
+          if (activeFilter.endDate)
+            filterRequest.endDate = activeFilter.endDate;
+          if (activeFilter.startCreatedDate)
+            filterRequest.startCreatedDate = activeFilter.startCreatedDate;
+          if (activeFilter.endCreatedDate)
+            filterRequest.endCreatedDate = activeFilter.endCreatedDate;
+
+          // Handle amount fields
+          if (
+            activeFilter.startValue !== null &&
+            activeFilter.startValue !== undefined
+          ) {
+            filterRequest.startValue = activeFilter.startValue.toString();
+          }
+          if (
+            activeFilter.endValue !== null &&
+            activeFilter.endValue !== undefined
+          ) {
+            filterRequest.endValue = activeFilter.endValue.toString();
+          }
+          if (
+            activeFilter.startTaxableAmount !== null &&
+            activeFilter.startTaxableAmount !== undefined
+          ) {
+            filterRequest.startTaxableAmount =
+              activeFilter.startTaxableAmount.toString();
+          }
+          if (
+            activeFilter.endTaxableAmount !== null &&
+            activeFilter.endTaxableAmount !== undefined
+          ) {
+            filterRequest.endTaxableAmount =
+              activeFilter.endTaxableAmount.toString();
+          }
+          if (
+            activeFilter.startGrandTotal !== null &&
+            activeFilter.startGrandTotal !== undefined
+          ) {
+            filterRequest.startGrandTotal =
+              activeFilter.startGrandTotal.toString();
+          }
+          if (
+            activeFilter.endGrandTotal !== null &&
+            activeFilter.endGrandTotal !== undefined
+          ) {
+            filterRequest.endGrandTotal = activeFilter.endGrandTotal.toString();
+          }
+
+          // Handle quote identifier and name
+          if (activeFilter.identifier)
+            filterRequest.identifier = activeFilter.identifier;
+          if (activeFilter.name) filterRequest.name = activeFilter.name;
+        }
+      }
+
+      // Apply current filter data (overrides saved preferences)
+      if (filterData) {
+        filterRequest = {
+          ...filterRequest,
+          endCreatedDate: filterData?.quotedDateEnd
+            ? filterData.quotedDateEnd.toISOString()
+            : filterRequest.endCreatedDate,
+          endDate: filterData?.lastUpdatedDateEnd
+            ? filterData.lastUpdatedDateEnd.toISOString()
+            : filterRequest.endDate,
+          endValue: filterData?.subtotalEnd || filterRequest.endValue,
+          endTaxableAmount:
+            filterData?.taxableEnd || filterRequest.endTaxableAmount,
+          endGrandTotal: filterData?.totalEnd || filterRequest.endGrandTotal,
+          identifier: filterData?.quoteId || filterRequest.identifier,
+          name: filterData?.quoteName || filterRequest.name,
+          startDate: filterData?.lastUpdatedDateStart
+            ? filterData.lastUpdatedDateStart.toISOString()
+            : filterRequest.startDate,
+          startCreatedDate: filterData?.quotedDateStart
+            ? filterData.quotedDateStart.toISOString()
+            : filterRequest.startCreatedDate,
+          startValue: filterData?.subtotalStart || filterRequest.startValue,
+          startTaxableAmount:
+            filterData?.taxableStart || filterRequest.startTaxableAmount,
+          startGrandTotal:
+            filterData?.totalStart || filterRequest.startGrandTotal,
+          status: filterData?.status
+            ? [filterData.status]
+            : filterRequest.status,
+        };
+      }
 
       const response = await QuotesService.getQuotes(
         queryParams,
@@ -471,7 +594,7 @@ function QuotesLandingTable({
     } finally {
       setLoading(false);
     }
-  }, [page, rowPerPage, user, filterData]);
+  }, [page, rowPerPage, user, filterData, loadFilterPreferences]);
 
   useEffect(() => {
     fetchQuotes();
