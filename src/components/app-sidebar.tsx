@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import {
   Home,
   LayoutDashboard,
@@ -139,9 +140,14 @@ function useFilteredMenuItems(): MenuItem[] {
 export function AppSidebar() {
   const pathname = usePathname();
   const filteredMenuItems = useFilteredMenuItems();
+  const [isHydrated, setIsHydrated] = useState(false);
+
+  useEffect(() => {
+    setIsHydrated(true);
+  }, []);
 
   const isActive = (href?: string) => {
-    if (!href) return false;
+    if (!isHydrated || !href) return false;
     if (href === "/") return pathname === "/";
     return pathname.startsWith(href);
   };
@@ -161,9 +167,7 @@ export function AppSidebar() {
               {filteredMenuItems.map(item => (
                 <SidebarMenuItem key={item.id}>
                   {item.submenu && item.submenu.length > 0 ? (
-                    <Collapsible
-                      defaultOpen={item.submenu.some(sub => isActive(sub.href))}
-                    >
+                    <Collapsible defaultOpen={false}>
                       <CollapsibleTrigger asChild>
                         <SidebarMenuButton
                           tooltip={item.label}

@@ -26,7 +26,7 @@ function getDataFromToken(
   }
 }
 
-export async function GET(request: NextRequest) {
+export async function POST(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);
     const userIdParam = searchParams.get("userId");
@@ -47,6 +47,7 @@ export async function GET(request: NextRequest) {
     }
 
     const tokenData = getDataFromToken(token);
+    const requestBody = await request.json();
 
     const userId = userIdParam
       ? parseInt(userIdParam)
@@ -66,24 +67,29 @@ export async function GET(request: NextRequest) {
       tenantCode,
     };
 
-    const data = await PreferenceService.findPreferencesWithParamsServerSide(
-      userId,
-      moduleParam,
-      context
-    );
+    // Save the filter preferences using the service
+    const data =
+      await PreferenceService.saveFilterPreferencesWithContextServerSide(
+        moduleParam,
+        requestBody,
+        context
+      );
 
     if (!data) {
       return NextResponse.json(
-        { error: "No preferences found for the specified parameters" },
-        { status: 404 }
+        { error: "Failed to save preferences" },
+        { status: 500 }
       );
     }
 
-    return NextResponse.json(data);
+    return NextResponse.json({
+      success: true,
+      data,
+    });
   } catch (error) {
     return NextResponse.json(
       {
-        error: `Failed to fetch preferences: ${
+        error: `Failed to save preferences: ${
           error instanceof Error ? error.message : "Unknown error"
         }`,
       },

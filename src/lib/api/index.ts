@@ -35,7 +35,6 @@ import DashboardService from "./services/DashboardService";
 import OrdersService from "./services/OrdersService";
 import PreferenceService from "./services/PreferenceService";
 import QuotesService from "./services/QuotesService";
-import UserPreferenceService from "./services/UserPreferenceService";
 
 // Export services
 export {
@@ -53,7 +52,6 @@ export {
   StoreFrontService,
   TenantService,
   TokenRefreshService,
-  UserPreferenceService,
   UserService,
 };
 
@@ -99,13 +97,6 @@ export type {
   PreferenceModule,
   UserPreference,
 } from "./services/PreferenceService";
-
-export type {
-  PreferenceApiResponse,
-  PreferenceFilter,
-  PreferenceQueryParams,
-  UserPreference as UserPreferenceType,
-} from "./services/UserPreferenceService";
 
 export type {
   Discount,
@@ -197,7 +188,6 @@ export const API = {
   StoreFront: StoreFrontService,
   Tenant: TenantService,
   User: UserService,
-  UserPreference: UserPreferenceService,
   // Token management services
   TokenRefresh: TokenRefreshService,
   RequestQueue: RequestQueueService,

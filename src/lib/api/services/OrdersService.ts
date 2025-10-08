@@ -20,36 +20,46 @@ export interface OrdersParams {
   taxableEnd?: string | undefined;
   totalStart?: string | undefined;
   totalEnd?: string | undefined;
+  // Special filter option that doesn't add query parameters
+  filterType?: "all" | "filtered";
 }
 
 export class OrdersService extends BaseService<OrdersService> {
   // Configure default client for orders operations
   protected defaultClient = coreCommerceClient;
 
+  private buildQueryString(params: OrdersParams): string {
+    const { userId, companyId, offset, limit, filterType, ...filters } = params;
+
+    const queryParts = [
+      `userId=${encodeURIComponent(userId)}`,
+      `companyId=${encodeURIComponent(companyId)}`,
+      `offset=${encodeURIComponent(offset.toString())}`,
+      `pgLimit=${encodeURIComponent(limit.toString())}`,
+    ];
+
+    // If filterType is 'all', don't add any filter parameters to maintain clean URL
+    if (filterType !== "all") {
+      Object.entries(filters).forEach(([key, value]) => {
+        if (value !== undefined && value !== null && value !== "") {
+          queryParts.push(
+            `${encodeURIComponent(key)}=${encodeURIComponent(value)}`
+          );
+        }
+      });
+    }
+
+    return queryParts.join("&");
+  }
+
   /**
    * 🚀 SIMPLIFIED: Get orders (auto-context)
    * Usage: OrdersService.getOrders(params)
    */
   async getOrders(params: OrdersParams): Promise<unknown> {
-    const { userId, companyId, offset, limit, ...filters } = params;
-
-    // Build query string with filters
-    const queryParams = new URLSearchParams({
-      userId,
-      companyId,
-      offset: offset.toString(),
-      pgLimit: limit.toString(),
-    });
-
-    // Add filter parameters if they exist
-    Object.entries(filters).forEach(([key, value]) => {
-      if (value !== undefined && value !== null && value !== "") {
-        queryParams.append(key, value);
-      }
-    });
-
+    const queryString = this.buildQueryString(params);
     return this.call(
-      `/orders/findByFilter?${queryParams.toString()}`,
+      `/orders/findByFilter?${queryString}`,
       {}, // Empty body as per the original API route
       "POST"
     );
@@ -62,25 +72,9 @@ export class OrdersService extends BaseService<OrdersService> {
     params: OrdersParams,
     context: RequestContext
   ): Promise<unknown> {
-    const { userId, companyId, offset, limit, ...filters } = params;
-
-    // Build query string with filters
-    const queryParams = new URLSearchParams({
-      userId,
-      companyId,
-      offset: offset.toString(),
-      pgLimit: limit.toString(),
-    });
-
-    // Add filter parameters if they exist
-    Object.entries(filters).forEach(([key, value]) => {
-      if (value !== undefined && value !== null && value !== "") {
-        queryParams.append(key, value);
-      }
-    });
-
+    const queryString = this.buildQueryString(params);
     return this.callWith(
-      `/orders/findByFilter?${queryParams.toString()}`,
+      `/orders/findByFilter?${queryString}`,
       {}, // Empty body as per the original API route
       { context, method: "POST" }
     );
@@ -91,25 +85,9 @@ export class OrdersService extends BaseService<OrdersService> {
    * Usage: OrdersService.getOrdersServerSide(params)
    */
   async getOrdersServerSide(params: OrdersParams): Promise<unknown | null> {
-    const { userId, companyId, offset, limit, ...filters } = params;
-
-    // Build query string with filters
-    const queryParams = new URLSearchParams({
-      userId,
-      companyId,
-      offset: offset.toString(),
-      pgLimit: limit.toString(),
-    });
-
-    // Add filter parameters if they exist
-    Object.entries(filters).forEach(([key, value]) => {
-      if (value !== undefined && value !== null && value !== "") {
-        queryParams.append(key, value);
-      }
-    });
-
+    const queryString = this.buildQueryString(params);
     return this.callSafe(
-      `/orders/findByFilter?${queryParams.toString()}`,
+      `/orders/findByFilter?${queryString}`,
       {}, // Empty body as per the original API route
       "POST"
     );
@@ -122,28 +100,43 @@ export class OrdersService extends BaseService<OrdersService> {
     params: OrdersParams,
     context: RequestContext
   ): Promise<unknown | null> {
-    const { userId, companyId, offset, limit, ...filters } = params;
-
-    // Build query string with filters
-    const queryParams = new URLSearchParams({
-      userId,
-      companyId,
-      offset: offset.toString(),
-      pgLimit: limit.toString(),
-    });
-
-    // Add filter parameters if they exist
-    Object.entries(filters).forEach(([key, value]) => {
-      if (value !== undefined && value !== null && value !== "") {
-        queryParams.append(key, value);
-      }
-    });
-
+    const queryString = this.buildQueryString(params);
     return this.callWithSafe(
-      `/orders/findByFilter?${queryParams.toString()}`,
+      `/orders/findByFilter?${queryString}`,
       {}, // Empty body as per the original API route
       { context, method: "POST" }
     );
+  }
+
+  /**
+   * 🌟 CONVENIENCE: Get all orders without any filters
+   * Usage: OrdersService.getAllOrders({ userId, companyId, offset, limit })
+   */
+  async getAllOrders(params: {
+    userId: string;
+    companyId: string;
+    offset: number;
+    limit: number;
+  }): Promise<unknown> {
+    return this.getOrders({
+      ...params,
+      filterType: "all",
+    });
+  }
+
+  /**
+   * 🌟 CONVENIENCE: Server-side get all orders without any filters
+   */
+  async getAllOrdersServerSide(params: {
+    userId: string;
+    companyId: string;
+    offset: number;
+    limit: number;
+  }): Promise<unknown | null> {
+    return this.getOrdersServerSide({
+      ...params,
+      filterType: "all",
+    });
   }
 }
 

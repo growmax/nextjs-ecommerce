@@ -20,6 +20,7 @@ export interface OrdersRequestParams {
   companyId?: string;
   offset?: number;
   limit?: number;
+  status?: string;
 }
 
 export class DashboardOrdersTableService {
@@ -48,10 +49,23 @@ export class DashboardOrdersTableService {
       companyId = process.env.DEFAULT_COMPANY_ID || "8690",
       offset = 0,
       limit = parseInt(process.env.ORDERS_API_DEFAULT_LIMIT || "20"),
+      status,
     } = params;
 
     const endpoint = process.env.ORDERS_API_ENDPOINT || "orders/findByFilter";
-    const url = `${endpoint}?userId=${userId}&companyId=${companyId}&offset=${offset}&pgLimit=${limit}`;
+
+    const queryParams = new URLSearchParams({
+      userId,
+      companyId,
+      offset: offset.toString(),
+      pgLimit: limit.toString(),
+    });
+
+    if (status) {
+      queryParams.append("status", status);
+    }
+
+    const url = `${endpoint}?${queryParams.toString()}`;
 
     const response = await client.post(url, {});
     return response.data;

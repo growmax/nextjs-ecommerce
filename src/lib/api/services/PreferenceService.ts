@@ -25,9 +25,9 @@ export interface FilterPreference {
   approvalAwaiting: string[];
   endDate: string;
   endCreatedDate: string;
-  endValue: number | null;
-  endTaxableAmount: number | null;
-  endGrandTotal: number | null;
+  endValue: number | null | string;
+  endTaxableAmount: number | null | string;
+  endGrandTotal: number | null | string;
   identifier: string;
   limit: number;
   offset: number;
@@ -35,9 +35,9 @@ export interface FilterPreference {
   pageNumber: number;
   startDate: string;
   startCreatedDate: string;
-  startValue: number | null;
-  startTaxableAmount: number | null;
-  startGrandTotal: number | null;
+  startValue: number | null | string;
+  startTaxableAmount: number | null | string;
+  startGrandTotal: number | null | string;
   status: string[];
   quoteUsers: string[];
   tagsList: string[];
@@ -52,6 +52,8 @@ export interface FilterPreference {
   }>;
   columnPosition: string;
   partnerAccountId?: number[];
+  userDisplayName?: string;
+  userStatus?: string[];
 }
 
 export interface PreferenceData {
@@ -99,7 +101,7 @@ export class PreferenceService extends BaseService<PreferenceService> {
 
   /**
    * Get user data from JWT token
-   * @returns Object with userId and companyId
+   * @returns Object with userId, companyId, and tenantId
    */
   private getUserDataFromToken() {
     const token = AuthStorage.getAccessToken();
@@ -112,10 +114,52 @@ export class PreferenceService extends BaseService<PreferenceService> {
       throw new Error("Invalid token");
     }
 
+    // Type-safe way to access elasticCode if it exists
+    const elasticCode =
+      "elasticCode" in payload
+        ? ((payload as Record<string, unknown>).elasticCode as string)
+        : "";
+
     return {
       userId: payload.userId.toString(),
       companyId: payload.companyId.toString(),
+      tenantCode: payload.tenantId || elasticCode || "",
     };
+  }
+
+  /**
+   * Create request data with user info from token
+   * @param module - The module type
+   * @param data - Additional data to include
+   * @param isMobile - Mobile flag
+   * @returns Request data object
+   */
+  private createRequestData(
+    module: string,
+    data: Record<string, unknown> = {},
+    isMobile: boolean = false
+  ) {
+    const { userId, companyId } = this.getUserDataFromToken();
+    return {
+      userId: parseInt(userId),
+      companyId: parseInt(companyId),
+      module,
+      isMobile,
+      ...data,
+    };
+  }
+
+  /**
+   * Generic server-safe wrapper that returns null on error
+   * @param fn - The function to execute
+   * @returns Function result or null if error
+   */
+  private async serverSafe<T>(fn: () => Promise<T>): Promise<T | null> {
+    try {
+      return await fn();
+    } catch {
+      return null;
+    }
   }
 
   /**
@@ -140,16 +184,7 @@ export class PreferenceService extends BaseService<PreferenceService> {
   async findPreferencesServerSide(
     module: string
   ): Promise<UserPreference | null> {
-    try {
-      const { userId, companyId } = this.getUserDataFromToken();
-      return (await this.callSafe(
-        `/preferences/find?userId=${userId}&module=${module}&companyId=${companyId}&isMobile=false`,
-        {},
-        "GET"
-      )) as UserPreference | null;
-    } catch {
-      return null;
-    }
+    return this.serverSafe(() => this.findPreferences(module));
   }
 
   /**
@@ -251,11 +286,7 @@ export class PreferenceService extends BaseService<PreferenceService> {
   async findOrderPreferencesServerSide(
     isMobile: boolean = false
   ): Promise<OrderPreferencesResponse | null> {
-    try {
-      return await this.findOrderPreferencesAuto(isMobile);
-    } catch {
-      return null;
-    }
+    return this.serverSafe(() => this.findOrderPreferencesAuto(isMobile));
   }
 
   /**
@@ -282,11 +313,250 @@ export class PreferenceService extends BaseService<PreferenceService> {
   async findFilterPreferencesServerSide(
     module: string
   ): Promise<FilterPreferenceResponse | null> {
-    try {
-      return await this.findFilterPreferences(module);
-    } catch {
-      return null;
+    return this.serverSafe(() => this.findFilterPreferences(module));
+  }
+
+  // ========================================
+  // POST METHODS FOR CREATING/UPDATING PREFERENCES
+  // ========================================
+
+  /**
+   * Create/Update user preferences with auto-extracted user data
+   * @param module - The module type (order, quote, etc.)
+   * @param preferences - The preferences data to save
+   * @returns Created/Updated preference response
+   */
+  async createPreferences(
+    module: string,
+    preferences: Record<string, unknown>
+  ): Promise<UserPreference> {
+    const requestData = this.createRequestData(module, { preferences });
+
+    return (await this.call(
+      `/preferences`,
+      requestData,
+      "POST"
+    )) as UserPreference;
+  }
+
+  /**
+   * Server-safe version for creating preferences
+   * @param module - The module type (order, quote, etc.)
+   * @param preferences - The preferences data to save
+   * @returns Created preference response or null if error
+   */
+  async createPreferencesServerSide(
+    module: string,
+    preferences: Record<string, unknown>
+  ): Promise<UserPreference | null> {
+    return this.serverSafe(() => this.createPreferences(module, preferences));
+  }
+
+  /**
+   * Update user preferences with auto-extracted user data
+   * @param module - The module type (order, quote, etc.)
+   * @param preferences - The preferences data to update
+   * @returns Updated preference response
+   */
+  async updatePreferences(
+    module: string,
+    preferences: Record<string, unknown>
+  ): Promise<UserPreference> {
+    const requestData = this.createRequestData(module, { preferences });
+
+    return (await this.call(
+      `/preferences/update`,
+      requestData,
+      "POST"
+    )) as UserPreference;
+  }
+
+  /**
+   * Server-safe version for updating preferences
+   * @param module - The module type (order, quote, etc.)
+   * @param preferences - The preferences data to update
+   * @returns Updated preference response or null if error
+   */
+  async updatePreferencesServerSide(
+    module: string,
+    preferences: Record<string, unknown>
+  ): Promise<UserPreference | null> {
+    return this.serverSafe(() => this.updatePreferences(module, preferences));
+  }
+
+  /**
+   * Save (create or update) user preferences with auto-extracted user data
+   * Matches the curl example format with query parameters
+   * @param module - The module type (order, quote, etc.)
+   * @param preferences - The preferences data to save
+   * @returns Saved preference response
+   */
+  async savePreferences(
+    module: string,
+    preferences: Record<string, unknown>
+  ): Promise<UserPreference> {
+    const { userId, tenantCode } = this.getUserDataFromToken();
+
+    return (await this.call(
+      `/preferences/save?userId=${userId}&module=${module}&tenantCode=${tenantCode}`,
+      preferences,
+      "POST"
+    )) as UserPreference;
+  }
+
+  /**
+   * Server-safe version for saving preferences
+   * @param module - The module type (order, quote, etc.)
+   * @param preferences - The preferences data to save
+   * @returns Saved preference response or null if error
+   */
+  async savePreferencesServerSide(
+    module: string,
+    preferences: Record<string, unknown>
+  ): Promise<UserPreference | null> {
+    return this.serverSafe(() => this.savePreferences(module, preferences));
+  }
+
+  /**
+   * Save filter preferences for a specific module with auto-extracted user data
+   * Matches the curl example format with query parameters
+   * @param module - The module type (quote, order, etc.)
+   * @param filterPreferences - The filter preferences data to save
+   * @returns Saved filter preferences response
+   */
+  async saveFilterPreferences(
+    module: string,
+    filterPreferences: PreferenceData
+  ): Promise<FilterPreferenceResponse> {
+    const { userId, tenantCode } = this.getUserDataFromToken();
+
+    return (await this.call(
+      `/preferences/save?userId=${userId}&module=${module}&tenantCode=${tenantCode}`,
+      filterPreferences,
+      "POST"
+    )) as FilterPreferenceResponse;
+  }
+
+  /**
+   * Server-safe version for saving filter preferences
+   * @param module - The module type (quote, order, etc.)
+   * @param filterPreferences - The filter preferences data to save
+   * @returns Saved filter preferences response or null if error
+   */
+  async saveFilterPreferencesServerSide(
+    module: string,
+    filterPreferences: PreferenceData
+  ): Promise<FilterPreferenceResponse | null> {
+    return this.serverSafe(() =>
+      this.saveFilterPreferences(module, filterPreferences)
+    );
+  }
+
+  // ========================================
+  // ADVANCED POST METHODS WITH CUSTOM CONTEXT
+  // ========================================
+
+  /**
+   * Create preferences with custom context (for advanced usage)
+   * @param module - The module type (order, quote, etc.)
+   * @param preferences - The preferences data to save
+   * @param context - Request context with accessToken and other fields
+   * @returns Created preference response
+   */
+  async createPreferencesWithContext(
+    module: string,
+    preferences: Record<string, unknown>,
+    context: {
+      accessToken: string;
+      companyId: number;
+      isMobile: boolean;
+      userId: number;
+      tenantCode: string;
     }
+  ): Promise<UserPreference> {
+    const requestData = {
+      userId: context.userId,
+      companyId: context.companyId,
+      module,
+      preferences,
+      isMobile: context.isMobile,
+    };
+
+    return (await this.callWithSafe(`/preferences`, requestData, {
+      context,
+      method: "POST",
+    })) as UserPreference;
+  }
+
+  /**
+   * Server-safe version for creating preferences with custom context
+   * @param module - The module type (order, quote, etc.)
+   * @param preferences - The preferences data to save
+   * @param context - Request context with accessToken and other fields
+   * @returns Created preference response or null if error
+   */
+  async createPreferencesWithContextServerSide(
+    module: string,
+    preferences: Record<string, unknown>,
+    context: {
+      accessToken: string;
+      companyId: number;
+      isMobile: boolean;
+      userId: number;
+      tenantCode: string;
+    }
+  ): Promise<UserPreference | null> {
+    return this.serverSafe(() =>
+      this.createPreferencesWithContext(module, preferences, context)
+    );
+  }
+
+  /**
+   * Save filter preferences with custom context (for API routes)
+   * @param module - The module type (order, quote, etc.)
+   * @param filterPreferences - The filter preferences data to save
+   * @param context - Request context with accessToken and other fields
+   * @returns Saved filter preferences response
+   */
+  async saveFilterPreferencesWithContext(
+    module: string,
+    filterPreferences: PreferenceData,
+    context: {
+      accessToken: string;
+      companyId: number;
+      isMobile: boolean;
+      userId: number;
+      tenantCode: string;
+    }
+  ): Promise<FilterPreferenceResponse> {
+    return (await this.callWithSafe(
+      `/preferences/save?userId=${context.userId}&module=${module}&tenantCode=${context.tenantCode}`,
+      filterPreferences,
+      { context, method: "POST" }
+    )) as FilterPreferenceResponse;
+  }
+
+  /**
+   * Server-safe version for saving filter preferences with custom context
+   * @param module - The module type (order, quote, etc.)
+   * @param filterPreferences - The filter preferences data to save
+   * @param context - Request context with accessToken and other fields
+   * @returns Saved filter preferences response or null if error
+   */
+  async saveFilterPreferencesWithContextServerSide(
+    module: string,
+    filterPreferences: PreferenceData,
+    context: {
+      accessToken: string;
+      companyId: number;
+      isMobile: boolean;
+      userId: number;
+      tenantCode: string;
+    }
+  ): Promise<FilterPreferenceResponse | null> {
+    return this.serverSafe(() =>
+      this.saveFilterPreferencesWithContext(module, filterPreferences, context)
+    );
   }
 }
 
