@@ -7,19 +7,19 @@ export interface OrdersParams {
   offset: number;
   limit: number;
   // Filter parameters
-  status?: string;
-  orderId?: string;
-  orderName?: string;
-  orderDateStart?: string;
-  orderDateEnd?: string;
-  lastUpdatedDateStart?: string;
-  lastUpdatedDateEnd?: string;
-  subtotalStart?: string;
-  subtotalEnd?: string;
-  taxableStart?: string;
-  taxableEnd?: string;
-  totalStart?: string;
-  totalEnd?: string;
+  status?: string | undefined;
+  orderId?: string | undefined;
+  orderName?: string | undefined;
+  orderDateStart?: string | undefined;
+  orderDateEnd?: string | undefined;
+  lastUpdatedDateStart?: string | undefined;
+  lastUpdatedDateEnd?: string | undefined;
+  subtotalStart?: string | undefined;
+  subtotalEnd?: string | undefined;
+  taxableStart?: string | undefined;
+  taxableEnd?: string | undefined;
+  totalStart?: string | undefined;
+  totalEnd?: string | undefined;
 }
 
 export class OrdersService extends BaseService<OrdersService> {

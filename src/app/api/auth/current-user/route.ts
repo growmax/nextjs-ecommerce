@@ -14,8 +14,6 @@ export async function GET(request: NextRequest) {
     const response = await fetch("https://api.myapptino.com/auth/user/me", {
       headers: {
         Authorization: `Bearer ${token}`,
-        "x-tenant": "schwingstetterdemo",
-        origin: "schwingstetter.myapptino.com",
         "Content-Type": "application/json",
         "User-Agent": "NextJS-App",
       },
@@ -47,8 +45,8 @@ export async function GET(request: NextRequest) {
     }
 
     const user = {
-      userId: apiData.data.userId || 1032,
-      companyId: apiData.data.companyId || 8690,
+      userId: apiData.data.userId || 1007,
+      companyId: apiData.data.companyId || 8682,
       displayName: apiData.data.displayName || "",
       email: apiData.data.email || "",
       phoneNumber:
@@ -56,6 +54,8 @@ export async function GET(request: NextRequest) {
           ? undefined
           : apiData.data.phoneNumber,
       role: apiData.data.role,
+      isMobile: false,
+      module: "order",
     };
 
     return NextResponse.json({

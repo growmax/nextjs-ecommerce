@@ -46,9 +46,13 @@ export interface ApiError {
 }
 
 export interface RequestContext {
-  tenantCode?: string;
+  companyId?: number;
+  isMobile?: boolean;
+  module?: string;
+  userId?: number;
   accessToken?: string;
   origin?: string;
+  tenantCode?: string;
 }
 
 // Custom error class
@@ -263,6 +267,11 @@ export const preferenceClient = createApiClient({
   baseURL: API_CONFIG.PREFERENCE_URL,
 });
 
+// Local Next.js API client (for /api routes)
+export const localApiClient = createApiClient({
+  baseURL: "", // Empty baseURL for relative paths to current domain
+});
+
 // Utility functions
 export const createClientWithContext = (
   baseClient: AxiosInstance,
@@ -277,7 +286,12 @@ export const createClientWithContext = (
           ...(context.accessToken && {
             Authorization: `Bearer ${context.accessToken}`,
           }),
-          ...(context.tenantCode && { "x-tenant": context.tenantCode }),
+          ...(context.companyId && { "x-company-id": context.companyId }),
+          ...(context.isMobile !== undefined && {
+            "x-is-mobile": context.isMobile,
+          }),
+          ...(context.module && { "x-module": context.module }),
+          ...(context.userId && { "x-user-id": context.userId }),
           ...(context.origin && { origin: context.origin }),
         },
       }),
@@ -290,7 +304,12 @@ export const createClientWithContext = (
           ...(context.accessToken && {
             Authorization: `Bearer ${context.accessToken}`,
           }),
-          ...(context.tenantCode && { "x-tenant": context.tenantCode }),
+          ...(context.companyId && { "x-company-id": context.companyId }),
+          ...(context.isMobile !== undefined && {
+            "x-is-mobile": context.isMobile,
+          }),
+          ...(context.module && { "x-module": context.module }),
+          ...(context.userId && { "x-user-id": context.userId }),
           ...(context.origin && { origin: context.origin }),
         },
       }),
@@ -303,7 +322,12 @@ export const createClientWithContext = (
           ...(context.accessToken && {
             Authorization: `Bearer ${context.accessToken}`,
           }),
-          ...(context.tenantCode && { "x-tenant": context.tenantCode }),
+          ...(context.companyId && { "x-company-id": context.companyId }),
+          ...(context.isMobile !== undefined && {
+            "x-is-mobile": context.isMobile,
+          }),
+          ...(context.module && { "x-module": context.module }),
+          ...(context.userId && { "x-user-id": context.userId }),
           ...(context.origin && { origin: context.origin }),
         },
       }),
@@ -316,7 +340,12 @@ export const createClientWithContext = (
           ...(context.accessToken && {
             Authorization: `Bearer ${context.accessToken}`,
           }),
-          ...(context.tenantCode && { "x-tenant": context.tenantCode }),
+          ...(context.companyId && { "x-company-id": context.companyId }),
+          ...(context.isMobile !== undefined && {
+            "x-is-mobile": context.isMobile,
+          }),
+          ...(context.module && { "x-module": context.module }),
+          ...(context.userId && { "x-user-id": context.userId }),
           ...(context.origin && { origin: context.origin }),
         },
       }),

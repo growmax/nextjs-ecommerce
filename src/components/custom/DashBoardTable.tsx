@@ -108,7 +108,7 @@ const DashboardTable = <T,>({
                 {headerGroup.headers.map((header: Header<T, unknown>) => (
                   <TableHead
                     key={header.id}
-                    className="text-left px-3 py-3 bg-gray-100 border-b relative align-top"
+                    className="text-left px-1 py-0.5 bg-gray-100 border-b relative align-middle"
                     style={{
                       width: header.getSize(),
                       maxWidth: header.getSize(),
@@ -150,7 +150,7 @@ const DashboardTable = <T,>({
                   {row.getVisibleCells().map((cell: Cell<T, unknown>) => (
                     <TableCell
                       key={cell.id}
-                      className="px-2 sm:px-3 py-3 text-xs sm:text-sm align-top"
+                      className="px-1 py-0.25 text-xs sm:text-sm align-middle"
                       style={{
                         width: cell.column.getSize(),
                         maxWidth: cell.column.getSize(),
@@ -173,7 +173,7 @@ const DashboardTable = <T,>({
               <TableRow>
                 <TableCell
                   colSpan={columns.length}
-                  className="text-center py-2 text-xs sm:text-sm text-muted-foreground"
+                  className="text-center py-4 text-xs sm:text-sm text-muted-foreground"
                 >
                   No data available
                 </TableCell>

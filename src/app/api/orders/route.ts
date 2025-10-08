@@ -1,17 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import DashboardOrdersTableService from "@/lib/api/services/Dasboard/DashboardOrdersTable";
 
-function getTenantFromToken(token: string): string | null {
-  try {
-    const parts = token.split(".");
-    if (parts.length !== 3) return null;
-    const payload = JSON.parse(atob(parts[1]!));
-    return payload.iss || null;
-  } catch {
-    return null;
-  }
-}
-
 export async function POST(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);
@@ -35,12 +24,12 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const tenant = getTenantFromToken(token);
-
     const context = {
       accessToken: token,
-      tenantCode:
-        tenant || process.env.DEFAULT_TENANT_FALLBACK || "schwingstetterdemo",
+      companyId: parseInt(companyId),
+      isMobile: false,
+      module: "order",
+      userId: parseInt(userId),
     };
 
     const data = await DashboardOrdersTableService.getOrdersServerSide(

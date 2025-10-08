@@ -62,9 +62,10 @@ export interface PreferenceData {
 export interface FilterPreferenceResponse {
   id: number;
   userId: number;
-  tenantCode: string;
-  preference: PreferenceData;
+  companyId: number;
+  isMobile: boolean;
   module: string;
+  preference: PreferenceData;
 }
 
 // Order Preferences Request Interface
@@ -80,9 +81,10 @@ export interface OrderPreferencesResponse {
   data: {
     id?: number;
     userId: number;
+    companyId: number;
+    isMobile: boolean;
     module: string;
     preferences: Record<string, unknown>;
-    tenantCode?: string;
     createdAt?: string;
     updatedAt?: string;
   };
@@ -97,7 +99,7 @@ export class PreferenceService extends BaseService<PreferenceService> {
 
   /**
    * Get user data from JWT token
-   * @returns Object with userId, tenantCode, and companyId
+   * @returns Object with userId and companyId
    */
   private getUserDataFromToken() {
     const token = AuthStorage.getAccessToken();
@@ -112,7 +114,6 @@ export class PreferenceService extends BaseService<PreferenceService> {
 
     return {
       userId: payload.userId.toString(),
-      tenantCode: payload.tenantId,
       companyId: payload.companyId.toString(),
     };
   }
@@ -123,9 +124,9 @@ export class PreferenceService extends BaseService<PreferenceService> {
    * @returns User preferences
    */
   async findPreferences(module: string): Promise<UserPreference> {
-    const { userId, tenantCode } = this.getUserDataFromToken();
+    const { userId, companyId } = this.getUserDataFromToken();
     return (await this.call(
-      `/preferences/find?userId=${userId}&module=${module}&tenantCode=${tenantCode}`,
+      `/preferences/find?userId=${userId}&module=${module}&companyId=${companyId}&isMobile=false`,
       {},
       "GET"
     )) as UserPreference;
@@ -140,9 +141,9 @@ export class PreferenceService extends BaseService<PreferenceService> {
     module: string
   ): Promise<UserPreference | null> {
     try {
-      const { userId, tenantCode } = this.getUserDataFromToken();
+      const { userId, companyId } = this.getUserDataFromToken();
       return (await this.callSafe(
-        `/preferences/find?userId=${userId}&module=${module}&tenantCode=${tenantCode}`,
+        `/preferences/find?userId=${userId}&module=${module}&companyId=${companyId}&isMobile=false`,
         {},
         "GET"
       )) as UserPreference | null;
@@ -155,19 +156,50 @@ export class PreferenceService extends BaseService<PreferenceService> {
    * Find user preferences with explicit parameters (for advanced usage)
    * @param userId - The user ID
    * @param module - The module type (order, quote, etc.)
-   * @param tenantCode - The tenant code (required as query param)
+   * @param companyId - The company ID
+   * @param isMobile - Mobile flag
    * @returns User preferences
    */
   async findPreferencesWithParams(
-    userId: string,
+    userId: number,
     module: string,
-    tenantCode: string
+    companyId: number,
+    isMobile: boolean = false
   ): Promise<UserPreference> {
     return (await this.call(
-      `/preferences/find?userId=${userId}&module=${module}&tenantCode=${tenantCode}`,
+      `/preferences/find?userId=${userId}&module=${module}&companyId=${companyId}&isMobile=${isMobile}`,
       {},
       "GET"
     )) as UserPreference;
+  }
+
+  /**
+   * Server-safe version with custom context (for API routes)
+   * @param userId - The user ID
+   * @param module - The module type (order, quote, etc.)
+   * @param context - Request context with accessToken and other fields
+   * @returns User preferences or null if error
+   */
+  async findPreferencesWithParamsServerSide(
+    userId: number,
+    module: string,
+    context: {
+      accessToken: string;
+      companyId: number;
+      isMobile: boolean;
+      userId: number;
+      tenantCode: string;
+    }
+  ): Promise<UserPreference | null> {
+    try {
+      return (await this.callWithSafe(
+        `/preferences/find?userId=${userId}&module=${module}&tenantCode=${context.tenantCode}`,
+        {},
+        { context, method: "GET" }
+      )) as UserPreference | null;
+    } catch {
+      return null;
+    }
   }
 
   /**
@@ -178,11 +210,10 @@ export class PreferenceService extends BaseService<PreferenceService> {
   async findOrderPreferences(
     requestData: OrderPreferencesRequest
   ): Promise<OrderPreferencesResponse> {
-    const { userId, module } = requestData;
-    const { tenantCode } = this.getUserDataFromToken();
+    const { userId, companyId, module, isMobile = false } = requestData;
 
     return (await this.call(
-      `/preferences/find?userId=${userId}&module=${module}&tenantCode=${tenantCode}`,
+      `/preferences/find?userId=${userId}&module=${module}&companyId=${companyId}&isMobile=${isMobile}`,
       requestData,
       "GET"
     )) as OrderPreferencesResponse;
@@ -196,7 +227,7 @@ export class PreferenceService extends BaseService<PreferenceService> {
   async findOrderPreferencesAuto(
     isMobile: boolean = false
   ): Promise<OrderPreferencesResponse> {
-    const { userId, companyId, tenantCode } = this.getUserDataFromToken();
+    const { userId, companyId } = this.getUserDataFromToken();
 
     const requestData: OrderPreferencesRequest = {
       userId: parseInt(userId),
@@ -206,7 +237,7 @@ export class PreferenceService extends BaseService<PreferenceService> {
     };
 
     return (await this.call(
-      `/preferences/find?userId=${userId}&module=order&tenantCode=${tenantCode}`,
+      `/preferences/find?userId=${userId}&module=order&companyId=${companyId}&isMobile=${isMobile}`,
       requestData,
       "GET"
     )) as OrderPreferencesResponse;
@@ -235,9 +266,9 @@ export class PreferenceService extends BaseService<PreferenceService> {
   async findFilterPreferences(
     module: string
   ): Promise<FilterPreferenceResponse> {
-    const { userId, tenantCode } = this.getUserDataFromToken();
+    const { userId, companyId } = this.getUserDataFromToken();
     return (await this.call(
-      `/preferences/find?userId=${userId}&module=${module}&tenantCode=${tenantCode}`,
+      `/preferences/find?userId=${userId}&module=${module}&companyId=${companyId}&isMobile=false`,
       {},
       "GET"
     )) as FilterPreferenceResponse;

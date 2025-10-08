@@ -1,12 +1,18 @@
 import { NextRequest, NextResponse } from "next/server";
-import { cookies } from "next/headers";
+import PreferenceService from "@/lib/api/services/PreferenceService";
 
-function getTenantFromToken(token: string): string | null {
+function getDataFromToken(
+  token: string
+): { companyId: number; userId: number; tenantCode: string } | null {
   try {
     const parts = token.split(".");
     if (parts.length !== 3) return null;
     const payload = JSON.parse(atob(parts[1]!));
-    return payload.iss || null;
+    return {
+      companyId: payload.companyId || 8682,
+      userId: payload.userId || 1007,
+      tenantCode: payload.iss || "schwingstetterdemo",
+    };
   } catch {
     return null;
   }
@@ -14,68 +20,63 @@ function getTenantFromToken(token: string): string | null {
 
 export async function GET(request: NextRequest) {
   try {
-    // Get query parameters
     const { searchParams } = new URL(request.url);
-    const userId = searchParams.get("userId");
-    const moduleParam = searchParams.get("module");
-    const tenantCode = searchParams.get("tenantCode");
+    const userIdParam = searchParams.get("userId");
+    const companyIdParam = searchParams.get("companyId");
+    const isMobileParam = searchParams.get("isMobile");
+    const moduleParam = searchParams.get("module") || "order";
+    const tenantCodeParam = searchParams.get("tenantCode");
 
-    // Validate required parameters
-    if (!userId || !moduleParam || !tenantCode) {
-      return NextResponse.json(
-        { error: "Missing required parameters: userId, module, tenantCode" },
-        { status: 400 }
-      );
-    }
+    const token =
+      request.cookies.get("access_token")?.value ||
+      request.cookies.get("access_token_client")?.value;
 
-    // Get authentication from server-side cookies
-    const cookieStore = await cookies();
-    const accessToken =
-      cookieStore.get("access_token")?.value ||
-      cookieStore.get("access_token_client")?.value;
-
-    if (!accessToken) {
+    if (!token) {
       return NextResponse.json(
         { error: "No access token found" },
         { status: 401 }
       );
     }
 
-    // Get tenant from token for validation
-    const tokenTenant = getTenantFromToken(accessToken);
+    const tokenData = getDataFromToken(token);
 
-    // Build external API URL from environment variable
-    const preferenceBaseUrl =
-      process.env.PREFERENCE_URL || "https://api.myapptino.com/userpreference";
-    const externalApiUrl = `${preferenceBaseUrl}/preferences/find?userId=${userId}&module=${moduleParam}&tenantCode=${tenantCode}`;
+    const userId = userIdParam
+      ? parseInt(userIdParam)
+      : tokenData?.userId || 1007;
+    const companyId = companyIdParam
+      ? parseInt(companyIdParam)
+      : tokenData?.companyId || 8682;
+    const isMobile = isMobileParam === "true" || false;
+    const tenantCode =
+      tenantCodeParam || tokenData?.tenantCode || "schwingstetterdemo";
 
-    // Make server-to-server request (no CORS restrictions)
-    const response = await fetch(externalApiUrl, {
-      method: "GET",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${accessToken}`,
-        ...(tokenTenant && { "x-tenant": tokenTenant }),
-      },
-    });
+    const context = {
+      accessToken: token,
+      companyId,
+      isMobile,
+      userId,
+      tenantCode,
+    };
 
-    // Handle API response
-    if (!response.ok) {
-      // For 404 or other errors, return null (matching server-safe behavior)
-      if (response.status === 404) {
-        return NextResponse.json(null);
-      }
+    const data = await PreferenceService.findPreferencesWithParamsServerSide(
+      userId,
+      moduleParam,
+      context
+    );
 
-      return NextResponse.json(
-        { error: `External API error: ${response.status}` },
-        { status: response.status }
-      );
+    if (!data) {
+      return NextResponse.json(null);
     }
 
-    const data = await response.json();
     return NextResponse.json(data);
-  } catch (_error) {
-    // Return null for errors to match server-safe behavior
-    return NextResponse.json(null);
+  } catch (error) {
+    return NextResponse.json(
+      {
+        error: `Failed to fetch preferences: ${
+          error instanceof Error ? error.message : "Unknown error"
+        }`,
+      },
+      { status: 500 }
+    );
   }
 }
