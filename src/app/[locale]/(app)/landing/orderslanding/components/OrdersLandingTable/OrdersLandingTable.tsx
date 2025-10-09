@@ -707,7 +707,9 @@ function OrdersLandingTable({
         onReset={handleOrderFilterReset}
         title="Order Filters"
         filterType="Order"
-        statusOptions={statusOptions}
+        userId={user?.userId}
+        companyId={user?.companyId}
+        module="orders"
       />
 
       <div className="flex flex-col h-[calc(100vh-140px)] ">

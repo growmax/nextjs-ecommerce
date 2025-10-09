@@ -1,23 +1,11 @@
 "use client";
 
 import DashboardTable from "@/components/custom/DashBoardTable";
+import { FilterTabs } from "@/components/custom/FilterTabs";
+import SideDrawer from "@/components/custom/sidedrawer";
 import { statusColor } from "@/components/custom/statuscolors";
 import FilterDrawer from "@/components/sales/FilterDrawer";
 import { QuoteFilterFormData } from "@/components/sales/QuoteFilterForm";
-import { FilterTabs } from "@/components/custom/FilterTabs";
-import SideDrawer from "@/components/custom/sidedrawer";
-import { useCurrentUser } from "@/hooks/useCurrentUser";
-import QuotesService, {
-  type QuoteItem,
-} from "@/lib/api/services/QuotesService";
-import PreferenceService, {
-  FilterPreferenceResponse,
-} from "@/lib/api/services/PreferenceService";
-import { ColumnDef } from "@tanstack/react-table";
-import { useLocale } from "next-intl";
-import { useRouter } from "next/navigation";
-import { useCallback, useEffect, useMemo, useState } from "react";
-import { toast } from "sonner";
 import {
   Dialog,
   DialogContent,
@@ -25,6 +13,18 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { useCurrentUser } from "@/hooks/useCurrentUser";
+import PreferenceService, {
+  FilterPreferenceResponse,
+} from "@/lib/api/services/PreferenceService";
+import QuotesService, {
+  type QuoteItem,
+} from "@/lib/api/services/QuotesService";
+import { ColumnDef } from "@tanstack/react-table";
+import { useLocale } from "next-intl";
+import { useRouter } from "next/navigation";
+import { useCallback, useEffect, useMemo, useState } from "react";
+import { toast } from "sonner";
 
 // Skeleton Table Component
 const SkeletonTable = ({
@@ -788,14 +788,9 @@ function QuotesLandingTable({
         title="Quote Filters"
         filterType="Quote"
         activeTab={activeTab}
-        statusOptions={[
-          { value: "draft", label: "Draft" },
-          { value: "pending", label: "Pending" },
-          { value: "approved", label: "Approved" },
-          { value: "rejected", label: "Rejected" },
-          { value: "expired", label: "Expired" },
-          { value: "cancelled", label: "Cancelled" },
-        ]}
+        userId={user?.userId}
+        companyId={user?.companyId}
+        module="quotes"
       />
 
       <SideDrawer

@@ -2,8 +2,8 @@
 
 // Export clients
 export {
-  apiClient,
   ApiClientError,
+  apiClient,
   authClient,
   catalogClient,
   coreCommerceClient,
@@ -36,6 +36,7 @@ import OrdersService from "./services/OrdersService";
 import OrderStatusService from "./services/OrderStatusService";
 import PreferenceService from "./services/PreferenceService";
 import QuotesService from "./services/QuotesService";
+import QuoteStatusService from "./services/StatusService";
 
 // Export services
 export {
@@ -49,6 +50,7 @@ export {
   OrdersService,
   OrderStatusService,
   PreferenceService,
+  QuoteStatusService,
   QuotesService,
   RequestQueueService,
   StoreFrontService,
@@ -107,55 +109,61 @@ export type {
 
 export type {
   Discount,
-  DiscountItem,
   DiscountApiResponse,
+  DiscountItem,
   DiscountRequest,
 } from "./services/DiscountService";
 
 // Export CompanyService types
 export type {
-  BranchAddress,
-  Zone,
+  AddressData,
   Branch,
+  BranchAddress,
   BranchApiResponse,
-  CompanyApiResponse,
-  DeleteAddressResponse,
-  Industry,
-  getSubIndustrysbyid,
-  SubIndustryApiResponse,
   BranchPaginationParams,
-  DeleteBranchParams,
+  BusinessUnit,
+  CompanyApiResponse,
+  CountryData,
   CreateBranchRequest,
   CreateBranchResponse,
-  UpdateBranchRequest,
-  UpdateBranchResponse,
-  CountryData,
-  StateData,
-  DistrictData,
-  AddressData,
-  Warehouse,
-  BusinessUnit,
-  ZoneInfo,
-  DashboardRequest,
+  DashboardData,
   DashboardQueryParams,
+  DashboardRequest,
+  DashboardResponse,
+  DeleteAddressResponse,
+  DeleteBranchParams,
+  DistrictData,
+  Industry,
   OrderGraphItem,
   QuoteGraphItem,
   QuoteStatusGraphItem,
+  StateData,
+  SubIndustryApiResponse,
   TopDataItem,
-  DashboardData,
-  DashboardResponse,
+  UpdateBranchRequest,
+  UpdateBranchResponse,
+  Warehouse,
+  Zone,
+  ZoneInfo,
+  getSubIndustrysbyid,
 } from "./services/CompanyService";
 
 export type {
+  ApprovalGroup,
+  CurrencySymbol,
+  QuoteItem,
+  QuoteUser,
+  QuotesApiResponse,
   QuotesQueryParams,
   QuotesRequestBody,
-  CurrencySymbol,
-  ApprovalGroup,
-  QuoteUser,
-  QuoteItem,
   QuotesResponseData,
-  QuotesApiResponse,
 } from "./services/QuotesService";
+
+export type {
+  QuoteStatusApiResponse,
+  QuoteStatusResponse,
+  QuoteStatusParams,
+} from "./services/StatusService";
 
 // Export token management service types
 export type {
@@ -193,6 +201,7 @@ export const API = {
   OrderStatus: OrderStatusService,
   Preference: PreferenceService,
   Quotes: QuotesService,
+  QuoteStatus: QuoteStatusService,
   StoreFront: StoreFrontService,
   Tenant: TenantService,
   User: UserService,

@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useRef } from "react";
+import React, { useRef, useState, useCallback, useEffect } from "react";
 import SideDrawer from "@/components/custom/sidedrawer";
 import {
   QuoteFilterForm,
@@ -8,13 +8,16 @@ import {
   StatusOption,
   FormMethods,
 } from "./QuoteFilterForm";
+import QuoteStatusService from "@/lib/api/services/StatusService";
 
 interface QuoteFilterDrawerProps {
   open: boolean;
   onClose: () => void;
   onSubmit: (data: QuoteFilterFormData) => void;
   onReset?: () => void;
-  statusOptions?: StatusOption[];
+  userId?: number | undefined;
+  companyId?: number | undefined;
+  module?: "quotes" | "orders";
   title?: string;
   filterType?: string;
   activeTab?: string;
@@ -25,12 +28,45 @@ export function FilterDrawer({
   onClose,
   onSubmit,
   onReset,
-  statusOptions = [],
+  userId,
+  companyId,
+  module = "quotes",
   title = "Filters",
   filterType = "Quote",
   activeTab,
 }: QuoteFilterDrawerProps) {
   const formRef = useRef<FormMethods>(null);
+
+  // Service-only state management
+  const [statusOptions, setStatusOptions] = useState<StatusOption[]>([]);
+
+  // Service-only loading function
+  const loadStatusOptions = useCallback(async () => {
+    if (!userId || !companyId) {
+      setStatusOptions([]); // Empty array, no fallback
+      return;
+    }
+
+    try {
+      const response = await QuoteStatusService.getQuoteStatusByCompany({
+        userId,
+        companyId,
+        module,
+      });
+
+      // Use ONLY the service response
+      setStatusOptions(response.data);
+    } catch (_error) {
+      setStatusOptions([]); // Empty, no fallback
+    }
+  }, [userId, companyId, module]);
+
+  // Load status options when component mounts or when drawer opens
+  useEffect(() => {
+    if (open) {
+      loadStatusOptions();
+    }
+  }, [open, loadStatusOptions]);
 
   const handleApply = () => {
     if (formRef.current) {
