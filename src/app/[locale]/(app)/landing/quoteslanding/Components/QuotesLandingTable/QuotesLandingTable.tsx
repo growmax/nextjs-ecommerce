@@ -16,6 +16,8 @@ import {
 import { useCurrentUser } from "@/hooks/useCurrentUser";
 import PreferenceService, {
   FilterPreferenceResponse,
+  FilterPreference,
+  PreferenceData,
 } from "@/lib/api/services/PreferenceService";
 import QuotesService, {
   type QuoteItem,
@@ -146,6 +148,9 @@ function QuotesLandingTable({
   const [filterData, setFilterData] = useState<QuoteFilterFormData | null>(
     null
   );
+  const [initialFilterData, setInitialFilterData] = useState<
+    QuoteFilterFormData | undefined
+  >(undefined);
   const [filterPreferences, setFilterPreferences] =
     useState<FilterPreferenceResponse | null>(null);
   const [activeTab, setActiveTab] = useState("all");
@@ -479,13 +484,15 @@ function QuotesLandingTable({
             filterPreferences.preference.selected
           ];
         if (activeFilter) {
-          // Handle status array - take first value to match API expectations
+          // Handle status array - use full array
           if (
             activeFilter.status &&
             Array.isArray(activeFilter.status) &&
             activeFilter.status.length > 0
           ) {
-            filterRequest.status = [activeFilter.status[0] as string];
+            filterRequest.status = activeFilter.status.filter(
+              s => s !== null && s !== undefined
+            );
           }
 
           // Handle date fields
@@ -574,7 +581,9 @@ function QuotesLandingTable({
           startGrandTotal:
             filterData?.totalStart || filterRequest.startGrandTotal,
           status: filterData?.status
-            ? [filterData.status]
+            ? Array.isArray(filterData.status)
+              ? filterData.status
+              : [filterData.status]
             : filterRequest.status,
         };
       }
@@ -608,25 +617,31 @@ function QuotesLandingTable({
       // Dynamic import of xlsx to avoid SSR issues
       const XLSX = await import("xlsx");
 
+      // Helper functions for export
+      const formatDate = (date: string | undefined) =>
+        date ? new Date(date).toLocaleDateString() : "";
+      const formatCurrency = (amount: number | undefined, symbol = "$") =>
+        `${symbol} ${Number(amount || 0).toLocaleString()}`;
+
       // Prepare data for export
-      const exportData = quotes.map(quote => ({
-        "Quote Id": quote.quotationIdentifier,
-        Name: quote.quoteName || "",
-        "Quoted Date": quote.createdDate
-          ? new Date(quote.createdDate).toLocaleDateString()
-          : "",
-        Date: quote.lastUpdatedDate
-          ? new Date(quote.lastUpdatedDate).toLocaleDateString()
-          : "",
-        "Account Name": quote.buyerCompanyName || "",
-        "Total Items": quote.itemCount || 0,
-        Subtotal: `${quote.curencySymbol?.symbol || "$"} ${Number(quote.subTotal || quote.grandTotal || 0).toLocaleString()}`,
-        "Taxable Amount": `${quote.curencySymbol?.symbol || "$"} ${Number(quote.taxableAmount || 0).toLocaleString()}`,
-        Total: `${quote.curencySymbol?.symbol || "$"} ${Number(quote.grandTotal || 0).toLocaleString()}`,
-        Status: quote.updatedBuyerStatus || "",
-        "Required Date": quote.customerRequiredDate
-          ? new Date(quote.customerRequiredDate).toLocaleDateString()
-          : "",
+      const exportData = quotes.map(q => ({
+        "Quote Id": q.quotationIdentifier,
+        Name: q.quoteName || "",
+        "Quoted Date": formatDate(q.createdDate),
+        Date: formatDate(q.lastUpdatedDate),
+        "Account Name": q.buyerCompanyName || "",
+        "Total Items": q.itemCount || 0,
+        Subtotal: formatCurrency(
+          q.subTotal || q.grandTotal,
+          q.curencySymbol?.symbol || "$"
+        ),
+        "Taxable Amount": formatCurrency(
+          q.taxableAmount,
+          q.curencySymbol?.symbol || "$"
+        ),
+        Total: formatCurrency(q.grandTotal, q.curencySymbol?.symbol || "$"),
+        Status: q.updatedBuyerStatus || "",
+        "Required Date": formatDate(q.customerRequiredDate || undefined),
       }));
 
       // Create workbook and worksheet
@@ -671,25 +686,50 @@ function QuotesLandingTable({
     }
   }, [handleExport, setExportCallback]);
 
-  const handleDrawerClose = () => {
-    setIsDrawerOpen(false);
-  };
+  const handleDrawerClose = () => setIsDrawerOpen(false);
+
+  // Convert saved filter to form data format
+  const convertToFormData = (
+    filter: FilterPreference
+  ): QuoteFilterFormData => ({
+    filterName: filter.filter_name,
+    status: filter.status || [],
+    quoteId: filter.identifier || "",
+    quoteName: filter.name || "",
+    quotedDateStart: filter.startDate ? new Date(filter.startDate) : undefined,
+    quotedDateEnd: filter.endDate ? new Date(filter.endDate) : undefined,
+    lastUpdatedDateStart: filter.startCreatedDate
+      ? new Date(filter.startCreatedDate)
+      : undefined,
+    lastUpdatedDateEnd: filter.endCreatedDate
+      ? new Date(filter.endCreatedDate)
+      : undefined,
+    subtotalStart: filter.startValue?.toString() || "",
+    subtotalEnd: filter.endValue?.toString() || "",
+    taxableStart: filter.startTaxableAmount?.toString() || "",
+    taxableEnd: filter.endTaxableAmount?.toString() || "",
+    totalStart: filter.startGrandTotal?.toString() || "",
+    totalEnd: filter.endGrandTotal?.toString() || "",
+  });
 
   const handleFilterClick = () => {
+    let initialData: QuoteFilterFormData | undefined;
+
+    if (activeTab !== "all" && filterPreferences?.preference?.filters) {
+      const tabIndex = parseInt(activeTab.replace("filter-", ""));
+      const filter = filterPreferences.preference.filters.find(
+        f => f.filter_index === tabIndex
+      );
+      if (filter) initialData = convertToFormData(filter);
+    }
+
+    setInitialFilterData(initialData);
     setIsDrawerOpen(true);
   };
-
-  const handleAddTab = () => {
-    setIsDrawerOpen(true);
-  };
-
-  const handleAddDrawerClose = () => {
-    setIsAddDrawerOpen(false);
-  };
-
-  const handleSettingsClick = () => {
+  const handleAddTab = () => setIsDrawerOpen(true);
+  const handleAddDrawerClose = () => setIsAddDrawerOpen(false);
+  const handleSettingsClick = () =>
     toast.info("Settings functionality coming soon!");
-  };
 
   const handleTabChange = (value: string) => {
     setActiveTab(value);
@@ -712,8 +752,40 @@ function QuotesLandingTable({
         },
       };
       setFilterPreferences(updatedPreferences);
-      toast.success(`Applied "${selectedTab.label}" filter successfully`);
+
+      // Auto-apply the filter for this tab
+      const selectedFilter =
+        filterPreferences.preference.filters[selectedTab.filterIndex];
+      if (selectedFilter) {
+        const formData: QuoteFilterFormData = {
+          status: selectedFilter.status || [],
+          quoteId: selectedFilter.identifier || "",
+          quoteName: selectedFilter.name || "",
+          quotedDateStart: selectedFilter.startDate
+            ? new Date(selectedFilter.startDate)
+            : undefined,
+          quotedDateEnd: selectedFilter.endDate
+            ? new Date(selectedFilter.endDate)
+            : undefined,
+          lastUpdatedDateStart: selectedFilter.startCreatedDate
+            ? new Date(selectedFilter.startCreatedDate)
+            : undefined,
+          lastUpdatedDateEnd: selectedFilter.endCreatedDate
+            ? new Date(selectedFilter.endCreatedDate)
+            : undefined,
+          subtotalStart: selectedFilter.startValue?.toString() || "",
+          subtotalEnd: selectedFilter.endValue?.toString() || "",
+          taxableStart: selectedFilter.startTaxableAmount?.toString() || "",
+          taxableEnd: selectedFilter.endTaxableAmount?.toString() || "",
+          totalStart: selectedFilter.startGrandTotal?.toString() || "",
+          totalEnd: selectedFilter.endGrandTotal?.toString() || "",
+        };
+        setFilterData(formData);
+        toast.success(`Applied "${selectedTab.label}" filter successfully`);
+      }
     } else if (selectedTab) {
+      // Clear filters when switching to a tab without saved filters
+      setFilterData(null);
       toast.success(`Switched to "${selectedTab.label}" view`);
     } else {
       toast.info("Filter view changed");
@@ -732,21 +804,97 @@ function QuotesLandingTable({
     toast.success("Filters have been reset successfully!");
   };
 
-  const handlePrevious = () => {
-    if (canGoPrevious) {
-      setPage(prevPage => Math.max(0, prevPage - 1));
+  const handleSaveFilter = async (
+    filterName: string,
+    filterData: QuoteFilterFormData
+  ) => {
+    try {
+      // Get existing filters for this tab context
+      const existing = await PreferenceService.findFilterPreferences("quote");
+
+      // Convert form data to FilterPreference
+      const newFilter: FilterPreference = {
+        filter_index: existing?.preference?.filters.length || 0,
+        filter_name: filterName,
+        status: Array.isArray(filterData.status)
+          ? filterData.status
+          : filterData.status
+            ? [filterData.status]
+            : [],
+        identifier: filterData.quoteId || "",
+        name: filterData.quoteName || "",
+        startDate:
+          filterData.quotedDateStart instanceof Date
+            ? filterData.quotedDateStart.toISOString().split("T")[0] || ""
+            : "",
+        endDate:
+          filterData.quotedDateEnd instanceof Date
+            ? filterData.quotedDateEnd.toISOString().split("T")[0] || ""
+            : "",
+        startCreatedDate:
+          filterData.lastUpdatedDateStart instanceof Date
+            ? filterData.lastUpdatedDateStart.toISOString().split("T")[0] || ""
+            : "",
+        endCreatedDate:
+          filterData.lastUpdatedDateEnd instanceof Date
+            ? filterData.lastUpdatedDateEnd.toISOString().split("T")[0] || ""
+            : "",
+        startValue: parseFloat(filterData.subtotalStart || "0"),
+        endValue: parseFloat(filterData.subtotalEnd || "0"),
+        startTaxableAmount: parseFloat(filterData.taxableStart || "0"),
+        endTaxableAmount: parseFloat(filterData.taxableEnd || "0"),
+        startGrandTotal: parseFloat(filterData.totalStart || "0"),
+        endGrandTotal: parseFloat(filterData.totalEnd || "0"),
+        // Default values for required fields
+        accountId: [],
+        partnerAcccountId: [],
+        accountOwners: [],
+        approvalAwaiting: [],
+        limit: 20,
+        offset: 0,
+        pageNumber: 1,
+        quoteUsers: [],
+        tagsList: [],
+        options: [],
+        branchId: [],
+        businessUnitId: [],
+        selectedColumns: [],
+        columnWidth: [],
+        columnPosition: "",
+      };
+
+      // Add to filters array
+      const updatedData: PreferenceData = {
+        filters: [...(existing?.preference?.filters || []), newFilter],
+        selected: existing?.preference?.filters.length || 0,
+      };
+
+      // Save to backend
+      await PreferenceService.saveFilterPreferences("quote", updatedData);
+
+      // Refresh filter preferences
+      const refreshed = await PreferenceService.findFilterPreferences("quote");
+      if (refreshed) {
+        setFilterPreferences(refreshed);
+      }
+
+      // Apply the saved filter immediately
+      setFilterData(filterData);
+      setActiveTab(`filter-${newFilter.filter_index}`);
+
+      toast.success("Filter saved successfully!");
+    } catch (error) {
+      toast.error("Failed to save filter");
+      throw error;
     }
   };
 
-  const handleNext = () => {
-    if (canGoNext) {
-      setPage(prevPage => prevPage + 1);
-    }
-  };
+  const handlePrevious = () =>
+    canGoPrevious && setPage(p => Math.max(0, p - 1));
+  const handleNext = () => canGoNext && setPage(p => p + 1);
 
-  const handleRowClick = (row: QuoteItem) => {
+  const handleRowClick = (row: QuoteItem) =>
     router.push(`/${locale}/quotes/${row.quotationIdentifier}`);
-  };
 
   // Define tabs dynamically from filter preferences
   const tabs = useMemo(() => {
@@ -790,7 +938,10 @@ function QuotesLandingTable({
         activeTab={activeTab}
         userId={user?.userId}
         companyId={user?.companyId}
-        module="quotes"
+        module="quote"
+        enableSaveFilter={true}
+        onSaveFilter={handleSaveFilter}
+        initialFilterData={initialFilterData}
       />
 
       <SideDrawer
@@ -821,7 +972,7 @@ function QuotesLandingTable({
             onFilterClick={handleFilterClick}
             onSettingsClick={handleSettingsClick}
             usePreferenceService={true}
-            module="quotes"
+            module="quote"
           />
         </div>
 
@@ -845,16 +996,9 @@ function QuotesLandingTable({
               setRowPerPage={value => {
                 const newValue =
                   typeof value === "string" ? parseInt(value, 10) : value;
-                // Validate that the value is one of the allowed options
                 const validOptions = [20, 50, 100];
-                if (validOptions.includes(newValue)) {
-                  setRowPerPage(newValue);
-                  setPage(0); // Reset to first page when changing page size
-                } else {
-                  // Default to 20 if invalid value
-                  setRowPerPage(20);
-                  setPage(0);
-                }
+                setRowPerPage(validOptions.includes(newValue) ? newValue : 20);
+                setPage(0);
               }}
               onRowClick={handleRowClick}
               tableHeight="h-full"

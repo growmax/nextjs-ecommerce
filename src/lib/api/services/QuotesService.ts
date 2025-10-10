@@ -205,6 +205,7 @@ export class QuotesService extends BaseService<QuotesService> {
       branchId: [],
       ...requestBody, // Override with provided values
     };
+
     return (await this.call(
       `/quotes/findByFilter?userId=${userId}&companyId=${companyId}&offset=${offset}&limit=${limit}`,
       completeRequestBody,
