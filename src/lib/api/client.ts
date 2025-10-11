@@ -158,7 +158,24 @@ function createApiClient(config: ApiClientConfig = {}): AxiosInstance {
         | RetryableAxiosRequestConfig
         | undefined;
 
-      // Log errors in development
+      // Check if response actually contains data (false positive error)
+      if (
+        error.response?.data &&
+        (error.response.data as Record<string, unknown>)?.data
+      ) {
+        const responseData = error.response.data as Record<string, unknown>;
+        if (
+          responseData.data &&
+          typeof responseData.data === "object" &&
+          responseData.data !== null &&
+          "ordersResponse" in responseData.data
+        ) {
+          // This is actually a successful response, return it
+          return Promise.resolve(error.response);
+        }
+      }
+
+      // Log errors in development (only for actual errors)
       if (process.env.NODE_ENV === "development") {
         // eslint-disable-next-line no-console
         console.error(

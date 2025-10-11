@@ -58,11 +58,37 @@ export class OrdersService extends BaseService<OrdersService> {
    */
   async getOrders(params: OrdersParams): Promise<unknown> {
     const queryString = this.buildQueryString(params);
-    return this.call(
-      `/orders/findByFilter?${queryString}`,
-      {}, // Empty body as per the original API route
-      "POST"
-    );
+
+    // Send a default filter object like quotes API
+    const body = {
+      filter_index: 0,
+      filter_name: "Default",
+      endCreatedDate: "",
+      endDate: "",
+      endValue: null,
+      endTaxableAmount: null,
+      endGrandTotal: null,
+      identifier: "",
+      limit: params.limit,
+      offset: params.offset,
+      name: "",
+      pageNumber: Math.floor(params.offset / params.limit) + 1,
+      startDate: "",
+      startCreatedDate: "",
+      startValue: null,
+      startTaxableAmount: null,
+      startGrandTotal: null,
+      status: params.status ? [params.status] : [],
+      selectedColumns: [],
+      columnWidth: [],
+      columnPosition: "",
+      userDisplayName: "",
+      userStatus: [],
+      accountId: [],
+      branchId: [],
+    };
+
+    return this.call(`orders/findByFilter?${queryString}`, body, "POST");
   }
 
   /**
@@ -73,11 +99,40 @@ export class OrdersService extends BaseService<OrdersService> {
     context: RequestContext
   ): Promise<unknown> {
     const queryString = this.buildQueryString(params);
-    return this.callWith(
-      `/orders/findByFilter?${queryString}`,
-      {}, // Empty body as per the original API route
-      { context, method: "POST" }
-    );
+
+    // Send a default filter object like quotes API
+    const body = {
+      filter_index: 0,
+      filter_name: "Default",
+      endCreatedDate: "",
+      endDate: "",
+      endValue: null,
+      endTaxableAmount: null,
+      endGrandTotal: null,
+      identifier: "",
+      limit: params.limit,
+      offset: params.offset,
+      name: "",
+      pageNumber: Math.floor(params.offset / params.limit) + 1,
+      startDate: "",
+      startCreatedDate: "",
+      startValue: null,
+      startTaxableAmount: null,
+      startGrandTotal: null,
+      status: params.status ? [params.status] : [],
+      selectedColumns: [],
+      columnWidth: [],
+      columnPosition: "",
+      userDisplayName: "",
+      userStatus: [],
+      accountId: [],
+      branchId: [],
+    };
+
+    return this.callWith(`orders/findByFilter?${queryString}`, body, {
+      context,
+      method: "POST",
+    });
   }
 
   /**
@@ -86,11 +141,37 @@ export class OrdersService extends BaseService<OrdersService> {
    */
   async getOrdersServerSide(params: OrdersParams): Promise<unknown | null> {
     const queryString = this.buildQueryString(params);
-    return this.callSafe(
-      `/orders/findByFilter?${queryString}`,
-      {}, // Empty body as per the original API route
-      "POST"
-    );
+
+    // Send a default filter object like quotes API
+    const body = {
+      filter_index: 0,
+      filter_name: "Default",
+      endCreatedDate: "",
+      endDate: "",
+      endValue: null,
+      endTaxableAmount: null,
+      endGrandTotal: null,
+      identifier: "",
+      limit: params.limit,
+      offset: params.offset,
+      name: "",
+      pageNumber: Math.floor(params.offset / params.limit) + 1,
+      startDate: "",
+      startCreatedDate: "",
+      startValue: null,
+      startTaxableAmount: null,
+      startGrandTotal: null,
+      status: params.status ? [params.status] : [],
+      selectedColumns: [],
+      columnWidth: [],
+      columnPosition: "",
+      userDisplayName: "",
+      userStatus: [],
+      accountId: [],
+      branchId: [],
+    };
+
+    return this.callSafe(`orders/findByFilter?${queryString}`, body, "POST");
   }
 
   /**
@@ -101,11 +182,40 @@ export class OrdersService extends BaseService<OrdersService> {
     context: RequestContext
   ): Promise<unknown | null> {
     const queryString = this.buildQueryString(params);
-    return this.callWithSafe(
-      `/orders/findByFilter?${queryString}`,
-      {}, // Empty body as per the original API route
-      { context, method: "POST" }
-    );
+
+    // Send a default filter object like quotes API
+    const body = {
+      filter_index: 0,
+      filter_name: "Default",
+      endCreatedDate: "",
+      endDate: "",
+      endValue: null,
+      endTaxableAmount: null,
+      endGrandTotal: null,
+      identifier: "",
+      limit: params.limit,
+      offset: params.offset,
+      name: "",
+      pageNumber: Math.floor(params.offset / params.limit) + 1,
+      startDate: "",
+      startCreatedDate: "",
+      startValue: null,
+      startTaxableAmount: null,
+      startGrandTotal: null,
+      status: params.status ? [params.status] : [],
+      selectedColumns: [],
+      columnWidth: [],
+      columnPosition: "",
+      userDisplayName: "",
+      userStatus: [],
+      accountId: [],
+      branchId: [],
+    };
+
+    return this.callWithSafe(`orders/findByFilter?${queryString}`, body, {
+      context,
+      method: "POST",
+    });
   }
 
   /**

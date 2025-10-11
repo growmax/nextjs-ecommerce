@@ -6,6 +6,7 @@ import FilterDrawer from "@/components/sales/FilterDrawer";
 import { QuoteFilterFormData } from "@/components/sales/QuoteFilterForm";
 import { toast } from "sonner";
 import orderService, { OrdersParams } from "@/lib/api/services/OrdersService";
+import ordersFilterService from "@/lib/api/services/OrdersFilterService";
 import orderStatusService from "@/lib/api/services/OrderStatusService";
 import PreferenceService, {
   FilterPreferenceResponse,
@@ -25,6 +26,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Skeleton } from "@/components/ui/skeleton";
+import { OrdersLandingTableProps } from "../../types/ordertypes";
 
 // Helper functions
 const formatDate = (date: string | null | undefined): string => {
@@ -150,11 +152,6 @@ const TableSkeleton = ({ rows = 10 }: { rows?: number }) => {
     </div>
   );
 };
-
-interface OrdersLandingTableProps {
-  refreshTrigger?: number;
-  setExportCallback?: (callback: (() => void) | null) => void;
-}
 
 function OrdersLandingTable({
   refreshTrigger,
@@ -319,12 +316,8 @@ function OrdersLandingTable({
     []
   );
 
-  // Sync pagination state
   useEffect(() => {
-    setPagination({
-      pageIndex: page,
-      pageSize: rowPerPage,
-    });
+    setPagination({ pageIndex: page, pageSize: rowPerPage });
   }, [page, rowPerPage]);
 
   // Handle pagination changes from DashboardTable
@@ -355,13 +348,10 @@ function OrdersLandingTable({
   const loadStatusOptions = useCallback(async () => {
     try {
       const statuses = await orderStatusService.getOrderStatuses();
-      const options = statuses.map(status => ({
-        value: status.value,
-        label: status.label,
-      }));
-      setStatusOptions(options);
+      setStatusOptions(
+        statuses.map(status => ({ value: status.value, label: status.label }))
+      );
     } catch {
-      // Fallback to empty array if service fails
       setStatusOptions([]);
     }
   }, []);
@@ -382,8 +372,56 @@ function OrdersLandingTable({
     }
   }, [preferencesLoaded, filterPreferences]);
 
+  const convertDateToString = (
+    date: Date | string | null | undefined
+  ): string => {
+    if (!date) return "";
+    // TypeScript now knows date is not null/undefined
+    if (date instanceof Date) {
+      const isoString = (date as Date).toISOString();
+      return isoString.split("T")[0] || "";
+    }
+    return String(date);
+  };
+
+  const convertFilterData = useCallback(
+    (data: QuoteFilterFormData): Partial<OrdersParams> => {
+      const converted: Partial<OrdersParams> = {};
+
+      if (data.status) {
+        converted.status = Array.isArray(data.status)
+          ? data.status[0] // Take first status for simple API compatibility
+          : data.status;
+      }
+      if (data.quoteId) converted.orderId = data.quoteId;
+      if (data.quoteName) converted.orderName = data.quoteName;
+
+      if (data.quotedDateStart)
+        converted.orderDateStart = convertDateToString(data.quotedDateStart);
+      if (data.quotedDateEnd)
+        converted.orderDateEnd = convertDateToString(data.quotedDateEnd);
+      if (data.lastUpdatedDateStart)
+        converted.lastUpdatedDateStart = convertDateToString(
+          data.lastUpdatedDateStart
+        );
+      if (data.lastUpdatedDateEnd)
+        converted.lastUpdatedDateEnd = convertDateToString(
+          data.lastUpdatedDateEnd
+        );
+
+      if (data.subtotalStart) converted.subtotalStart = data.subtotalStart;
+      if (data.subtotalEnd) converted.subtotalEnd = data.subtotalEnd;
+      if (data.taxableStart) converted.taxableStart = data.taxableStart;
+      if (data.taxableEnd) converted.taxableEnd = data.taxableEnd;
+      if (data.totalStart) converted.totalStart = data.totalStart;
+      if (data.totalEnd) converted.totalEnd = data.totalEnd;
+
+      return converted;
+    },
+    []
+  );
+
   const fetchOrders = useCallback(async () => {
-    // Don't fetch if we don't have user info yet
     if (!user?.userId || !user?.companyId) {
       setLoading(false);
       return;
@@ -391,164 +429,86 @@ function OrdersLandingTable({
 
     setLoading(true);
     try {
-      // Load filter preferences if not already loaded
       const currentPreferences = await loadFilterPreferences();
       const calculatedOffset = page;
 
-      // Apply filter preferences if available
       let orderParams: OrdersParams = {
-        userId: user?.userId?.toString() || "",
-        companyId: user?.companyId?.toString() || "",
+        userId: user.userId.toString(),
+        companyId: user.companyId.toString(),
         offset: calculatedOffset,
         limit: rowPerPage,
       };
 
-      // Apply saved filter preferences
-      if (currentPreferences?.preference?.filters) {
-        const activeFilter =
-          currentPreferences.preference.filters[
-            currentPreferences.preference.selected
-          ];
-        if (activeFilter) {
-          // Convert filter preference fields to OrdersParams format
-          const convertedFilter: Partial<OrdersParams> = {};
-
-          // Handle status array - join with comma or take first value
-          if (
-            activeFilter.status &&
-            Array.isArray(activeFilter.status) &&
-            activeFilter.status.length > 0
-          ) {
-            convertedFilter.status = activeFilter.status[0]; // Take first status for now
-          }
-
-          // Handle date fields
-          if (activeFilter.startDate)
-            convertedFilter.orderDateStart = activeFilter.startDate;
-          if (activeFilter.endDate)
-            convertedFilter.orderDateEnd = activeFilter.endDate;
-          if (activeFilter.startCreatedDate)
-            convertedFilter.lastUpdatedDateStart =
-              activeFilter.startCreatedDate;
-          if (activeFilter.endCreatedDate)
-            convertedFilter.lastUpdatedDateEnd = activeFilter.endCreatedDate;
-
-          // Handle amount fields
-          if (
-            activeFilter.startValue !== null &&
-            activeFilter.startValue !== undefined
-          ) {
-            convertedFilter.subtotalStart = activeFilter.startValue.toString();
-          }
-          if (
-            activeFilter.endValue !== null &&
-            activeFilter.endValue !== undefined
-          ) {
-            convertedFilter.subtotalEnd = activeFilter.endValue.toString();
-          }
-          if (
-            activeFilter.startTaxableAmount !== null &&
-            activeFilter.startTaxableAmount !== undefined
-          ) {
-            convertedFilter.taxableStart =
-              activeFilter.startTaxableAmount.toString();
-          }
-          if (
-            activeFilter.endTaxableAmount !== null &&
-            activeFilter.endTaxableAmount !== undefined
-          ) {
-            convertedFilter.taxableEnd =
-              activeFilter.endTaxableAmount.toString();
-          }
-          if (
-            activeFilter.startGrandTotal !== null &&
-            activeFilter.startGrandTotal !== undefined
-          ) {
-            convertedFilter.totalStart =
-              activeFilter.startGrandTotal.toString();
-          }
-          if (
-            activeFilter.endGrandTotal !== null &&
-            activeFilter.endGrandTotal !== undefined
-          ) {
-            convertedFilter.totalEnd = activeFilter.endGrandTotal.toString();
-          }
-
-          // Handle order identifier
-          if (activeFilter.identifier)
-            convertedFilter.orderId = activeFilter.identifier;
-          if (activeFilter.name) convertedFilter.orderName = activeFilter.name;
-
-          orderParams = {
-            ...orderParams,
-            ...convertedFilter,
-          };
-        }
-      }
-
-      // Apply current filter data (overrides saved preferences)
       if (filterData) {
-        // Convert filter data to OrdersParams format
-        const convertedCurrentFilter: Partial<OrdersParams> = {};
-
-        // Handle status
-        if (filterData.status)
-          convertedCurrentFilter.status = filterData.status;
-
-        // Handle order fields (map from quote fields to order fields)
-        if (filterData.quoteId)
-          convertedCurrentFilter.orderId = filterData.quoteId;
-        if (filterData.quoteName)
-          convertedCurrentFilter.orderName = filterData.quoteName;
-
-        // Handle date fields - convert Date to string if needed
-        if (filterData.quotedDateStart) {
-          convertedCurrentFilter.orderDateStart =
-            filterData.quotedDateStart instanceof Date
-              ? filterData.quotedDateStart.toISOString().split("T")[0]
-              : filterData.quotedDateStart;
-        }
-        if (filterData.quotedDateEnd) {
-          convertedCurrentFilter.orderDateEnd =
-            filterData.quotedDateEnd instanceof Date
-              ? filterData.quotedDateEnd.toISOString().split("T")[0]
-              : filterData.quotedDateEnd;
-        }
-        if (filterData.lastUpdatedDateStart) {
-          convertedCurrentFilter.lastUpdatedDateStart =
-            filterData.lastUpdatedDateStart instanceof Date
-              ? filterData.lastUpdatedDateStart.toISOString().split("T")[0]
-              : filterData.lastUpdatedDateStart;
-        }
-        if (filterData.lastUpdatedDateEnd) {
-          convertedCurrentFilter.lastUpdatedDateEnd =
-            filterData.lastUpdatedDateEnd instanceof Date
-              ? filterData.lastUpdatedDateEnd.toISOString().split("T")[0]
-              : filterData.lastUpdatedDateEnd;
-        }
-
-        // Handle amount fields
-        if (filterData.subtotalStart)
-          convertedCurrentFilter.subtotalStart = filterData.subtotalStart;
-        if (filterData.subtotalEnd)
-          convertedCurrentFilter.subtotalEnd = filterData.subtotalEnd;
-        if (filterData.taxableStart)
-          convertedCurrentFilter.taxableStart = filterData.taxableStart;
-        if (filterData.taxableEnd)
-          convertedCurrentFilter.taxableEnd = filterData.taxableEnd;
-        if (filterData.totalStart)
-          convertedCurrentFilter.totalStart = filterData.totalStart;
-        if (filterData.totalEnd)
-          convertedCurrentFilter.totalEnd = filterData.totalEnd;
-
-        orderParams = {
-          ...orderParams,
-          ...convertedCurrentFilter,
-        };
+        orderParams = { ...orderParams, ...convertFilterData(filterData) };
       }
 
-      const response = await orderService.getOrders(orderParams);
-      // Handle both possible response structures
+      let response;
+
+      if (filterData || currentPreferences?.preference?.filters) {
+        try {
+          // Build the complete filter object like quotes API
+          const filter = {
+            filter_index: 1,
+            filter_name: "Order Filter",
+            endCreatedDate:
+              convertDateToString(filterData?.lastUpdatedDateEnd) || "",
+            endDate: convertDateToString(filterData?.quotedDateEnd) || "",
+            endValue: filterData?.subtotalEnd
+              ? parseFloat(filterData.subtotalEnd)
+              : null,
+            endTaxableAmount: filterData?.taxableEnd
+              ? parseFloat(filterData.taxableEnd)
+              : null,
+            endGrandTotal: filterData?.totalEnd
+              ? parseFloat(filterData.totalEnd)
+              : null,
+            identifier: filterData?.quoteId || "",
+            limit: rowPerPage,
+            offset: calculatedOffset,
+            name: filterData?.quoteName || "",
+            pageNumber: Math.floor(calculatedOffset / rowPerPage) + 1,
+            startDate: convertDateToString(filterData?.quotedDateStart) || "",
+            startCreatedDate:
+              convertDateToString(filterData?.lastUpdatedDateStart) || "",
+            startValue: filterData?.subtotalStart
+              ? parseFloat(filterData.subtotalStart)
+              : null,
+            startTaxableAmount: filterData?.taxableStart
+              ? parseFloat(filterData.taxableStart)
+              : null,
+            startGrandTotal: filterData?.totalStart
+              ? parseFloat(filterData.totalStart)
+              : null,
+            status: filterData?.status
+              ? Array.isArray(filterData.status)
+                ? filterData.status
+                : [filterData.status]
+              : [],
+            selectedColumns: [],
+            columnWidth: [],
+            columnPosition: "",
+            userDisplayName: "",
+            userStatus: [],
+            accountId: [],
+            branchId: [],
+          };
+
+          response = await ordersFilterService.getOrdersWithFilter({
+            userId: parseInt(user.userId.toString()),
+            companyId: parseInt(user.companyId.toString()),
+            offset: calculatedOffset,
+            pgLimit: rowPerPage,
+            filters: [filter],
+            selected: 0,
+          });
+        } catch {
+          response = await orderService.getOrders(orderParams);
+        }
+      } else {
+        response = await orderService.getOrders(orderParams);
+      }
+
       const apiResponse = response as {
         data: {
           ordersResponse?: Order[];
@@ -557,41 +517,46 @@ function OrdersLandingTable({
           totalCount?: number;
         };
       };
-      const ordersData =
-        apiResponse.data.ordersResponse || apiResponse.data.orders || [];
-      const totalOrders =
-        apiResponse.data.totalOrderCount || apiResponse.data.totalCount || 0;
 
-      setOrders(ordersData);
-      setTotalCount(totalOrders);
+      setOrders(
+        apiResponse.data.ordersResponse || apiResponse.data.orders || []
+      );
+      setTotalCount(
+        apiResponse.data.totalOrderCount || apiResponse.data.totalCount || 0
+      );
     } catch {
       toast.error("Failed to fetch orders");
       setOrders([]);
     } finally {
       setLoading(false);
     }
-  }, [page, rowPerPage, user, filterData, loadFilterPreferences]);
+  }, [
+    user?.userId,
+    user?.companyId,
+    loadFilterPreferences,
+    page,
+    rowPerPage,
+    filterData,
+    convertFilterData,
+  ]);
 
   useEffect(() => {
     fetchOrders();
   }, [fetchOrders, refreshTrigger]);
 
-  // Load status options on component mount
   useEffect(() => {
     loadStatusOptions();
   }, [loadStatusOptions]);
 
   const handleExport = useCallback(async () => {
-    try {
-      if (orders.length === 0) {
-        toast.error("No data to export");
-        return;
-      }
+    if (orders.length === 0) {
+      toast.error("No data to export");
+      return;
+    }
 
-      // Dynamic import of xlsx to avoid SSR issues
+    try {
       const XLSX = await import("xlsx");
 
-      // Prepare data for export
       const exportData = orders.map(order => ({
         "Order Id": order.orderIdentifier || "-",
         "Order Name": order.orderName || "-",
@@ -615,34 +580,28 @@ function OrdersLandingTable({
         "Required Date": formatDate(order.requiredDate),
       }));
 
-      // Create workbook and worksheet
       const wb = XLSX.utils.book_new();
       const ws = XLSX.utils.json_to_sheet(exportData);
 
-      // Set column widths for better readability!
-      const colWidths = [
-        { wch: 15 }, // Order Id
-        { wch: 20 }, // Order Name
-        { wch: 15 }, // Order Date
-        { wch: 15 }, // Last Modified Date
-        { wch: 25 }, // Account Name
-        { wch: 12 }, // Total Items
-        { wch: 15 }, // Sub Total
-        { wch: 15 }, // Taxable Amount
-        { wch: 15 }, // Grand Total
-        { wch: 12 }, // Status
-        { wch: 15 }, // Required Date
+      ws["!cols"] = [
+        { wch: 15 },
+        { wch: 20 },
+        { wch: 15 },
+        { wch: 15 },
+        { wch: 25 },
+        { wch: 12 },
+        { wch: 15 },
+        { wch: 15 },
+        { wch: 15 },
+        { wch: 12 },
+        { wch: 15 },
       ];
-      ws["!cols"] = colWidths;
 
-      // Add worksheet to workbook
       XLSX.utils.book_append_sheet(wb, ws, "Orders");
-
-      // Generate filename with current date
-      const filename = `orders_${new Date().toISOString().split("T")[0]}.xlsx`;
-
-      // Write and download file
-      XLSX.writeFile(wb, filename);
+      XLSX.writeFile(
+        wb,
+        `orders_${new Date().toISOString().split("T")[0]}.xlsx`
+      );
 
       toast.success("Export completed successfully!");
     } catch {
@@ -650,35 +609,28 @@ function OrdersLandingTable({
     }
   }, [orders]);
 
-  // Register export callback with parent component
   useEffect(() => {
-    if (setExportCallback) {
-      setExportCallback(() => handleExport);
-    }
+    setExportCallback?.(() => handleExport);
   }, [handleExport, setExportCallback]);
 
   const handleOrderFilterSubmit = (data: QuoteFilterFormData) => {
     setFilterData(data);
     setPage(0);
-    toast.success("Filters have been applied successfully!");
+    toast.success("Filters applied successfully!");
   };
 
   const handleOrderFilterReset = () => {
     setFilterData(null);
     setPage(0);
-    toast.success("Filters have been reset successfully!");
+    toast.success("Filters reset successfully!");
   };
 
   const handlePrevious = useCallback(() => {
-    if (page > 0 && !loading) {
-      setPage(prevPage => prevPage - 1);
-    }
+    if (page > 0 && !loading) setPage(prev => prev - 1);
   }, [page, loading]);
 
   const handleNext = useCallback(() => {
-    if (page < maxPage && !loading) {
-      setPage(prevPage => prevPage + 1);
-    }
+    if (page < maxPage && !loading) setPage(prev => prev + 1);
   }, [page, maxPage, loading]);
 
   const handleRowClick = (row: Order) => {
@@ -709,7 +661,7 @@ function OrdersLandingTable({
         filterType="Order"
         userId={user?.userId}
         companyId={user?.companyId}
-        module="orders"
+        module="order"
       />
 
       <div className="flex flex-col h-[calc(100vh-140px)] ">
@@ -776,7 +728,9 @@ function OrdersLandingTable({
           </DialogHeader>
 
           <div className="py-4">
-            <div className="text-center text-gray-500 py-8"></div>
+            <div className="text-center text-gray-500 py-8">
+              No items to display
+            </div>
           </div>
         </DialogContent>
       </Dialog>

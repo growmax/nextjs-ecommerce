@@ -20,6 +20,7 @@ interface FilterTab {
   count?: number;
   isFilterActive?: boolean;
   filterIndex?: number | undefined;
+  badgeColor?: string;
 }
 
 interface FilterTabsProps {
@@ -132,6 +133,16 @@ export function FilterTabs({
                   >
                     <span className="flex items-center gap-2">
                       {tab.label}
+                      {tab.count !== undefined && tab.count > 0 && (
+                        <span
+                          className="inline-flex items-center justify-center px-2 py-0.5 text-xs font-medium text-white rounded-full"
+                          style={{
+                            backgroundColor: tab.badgeColor || "#6b7280",
+                          }}
+                        >
+                          {tab.count}
+                        </span>
+                      )}
                       {tab.hasFilter && (
                         <span
                           className="inline-block relative cursor-pointer"
@@ -150,9 +161,6 @@ export function FilterTabs({
                           >
                             <path d="M10 18h4v-2h-4zM3 6v2h18V6zm3 7h12v-2H6z"></path>
                           </svg>
-                          {tab.count && tab.count > 0 && (
-                            <span className="absolute -top-1 -right-1 w-2 h-2 bg-red-500 rounded-full"></span>
-                          )}
                         </span>
                       )}
                     </span>
