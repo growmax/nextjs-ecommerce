@@ -170,7 +170,7 @@ function createApiClient(config: ApiClientConfig = {}): AxiosInstance {
           responseData.data !== null &&
           "ordersResponse" in responseData.data
         ) {
-          // This is actually a successful response, return it
+          // This is actually a successful response, don't log as error
           return Promise.resolve(error.response);
         }
       }

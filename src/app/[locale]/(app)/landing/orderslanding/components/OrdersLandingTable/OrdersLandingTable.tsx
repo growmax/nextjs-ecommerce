@@ -6,9 +6,12 @@ import FilterDrawer from "@/components/sales/FilterDrawer";
 import { QuoteFilterFormData } from "@/components/sales/QuoteFilterForm";
 import { toast } from "sonner";
 import orderService, { OrdersParams } from "@/lib/api/services/OrdersService";
-import ordersFilterService from "@/lib/api/services/OrdersFilterService";
+import ordersFilterService, {
+  OrderFilter,
+} from "@/lib/api/services/OrdersFilterService";
 import PreferenceService, {
   FilterPreferenceResponse,
+  FilterPreference,
 } from "@/lib/api/services/PreferenceService";
 import { type Order } from "@/types/dashboard/DasbordOrderstable/DashboardOrdersTable";
 import { ColumnDef } from "@tanstack/react-table";
@@ -17,6 +20,7 @@ import { useRouter } from "next/navigation";
 import { useLocale } from "next-intl";
 import { statusColor } from "@/components/custom/statuscolors";
 import { FilterTabs } from "@/components/custom/FilterTabs";
+import SideDrawer from "@/components/custom/sidedrawer";
 import {
   Dialog,
   DialogContent,
@@ -160,6 +164,7 @@ function OrdersLandingTable({
   const locale = useLocale();
   const { user } = useCurrentUser();
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
+  const [drawerMode, setDrawerMode] = useState<"filter" | "create">("filter");
   const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);
   const [totalCount, setTotalCount] = useState(0);
@@ -169,9 +174,13 @@ function OrdersLandingTable({
   const [filterData, setFilterData] = useState<QuoteFilterFormData | null>(
     null
   );
+  const [initialFilterData, setInitialFilterData] = useState<
+    QuoteFilterFormData | undefined
+  >(undefined);
   const [filterPreferences, setFilterPreferences] =
     useState<FilterPreferenceResponse | null>(null);
-  const [preferencesLoaded, setPreferencesLoaded] = useState(false);
+  const [activeTab, setActiveTab] = useState("all");
+  const [isAddDrawerOpen, setIsAddDrawerOpen] = useState(false);
   const [isItemsDialogOpen, setIsItemsDialogOpen] = useState(false);
   const [selectedOrderItems, setSelectedOrderItems] = useState<Order | null>(
     null
@@ -338,69 +347,74 @@ function OrdersLandingTable({
     [pagination]
   );
 
-  const maxPage = Math.max(0, Math.ceil(totalCount / rowPerPage) - 1);
+  // Handle previous page navigation
+  const handlePrevious = useCallback(() => {
+    if (page > 0) {
+      setPage(page - 1);
+    }
+  }, [page]);
+
+  // Handle next page navigation
+  const handleNext = useCallback(() => {
+    const maxPage = Math.ceil(totalCount / rowPerPage) - 1;
+    if (page < maxPage) {
+      setPage(page + 1);
+    }
+  }, [page, totalCount, rowPerPage]);
 
   // Load filter preferences
   const loadFilterPreferences = useCallback(async () => {
-    if (preferencesLoaded) return filterPreferences;
-
     try {
       const preferences =
         await PreferenceService.findFilterPreferences("order");
       setFilterPreferences(preferences);
-      setPreferencesLoaded(true);
       return preferences;
     } catch {
-      setPreferencesLoaded(true);
       return null;
     }
-  }, [preferencesLoaded, filterPreferences]);
+  }, []);
 
-  const convertDateToString = (
-    date: Date | string | null | undefined
-  ): string => {
-    if (!date) return "";
-    // TypeScript now knows date is not null/undefined
-    if (date instanceof Date) {
-      const isoString = (date as Date).toISOString();
-      return isoString.split("T")[0] || "";
-    }
-    return String(date);
-  };
+  // Load preferences on component mount
+  useEffect(() => {
+    loadFilterPreferences();
+  }, [loadFilterPreferences]);
 
-  const convertFilterData = useCallback(
-    (data: QuoteFilterFormData): Partial<OrdersParams> => {
-      const converted: Partial<OrdersParams> = {};
+  // Convert saved filter to form data format
+  const convertToFormData = useCallback(
+    (filter: FilterPreference): QuoteFilterFormData => ({
+      filterName: filter.filter_name || "",
+      status: filter.status || [],
+      quoteId: filter.identifier || "",
+      quoteName: filter.name || "",
+      quotedDateStart: filter.startDate
+        ? new Date(filter.startDate)
+        : undefined,
+      quotedDateEnd: filter.endDate ? new Date(filter.endDate) : undefined,
+      lastUpdatedDateStart: filter.startCreatedDate
+        ? new Date(filter.startCreatedDate)
+        : undefined,
+      lastUpdatedDateEnd: filter.endCreatedDate
+        ? new Date(filter.endCreatedDate)
+        : undefined,
+      subtotalStart: filter.startValue?.toString() || "",
+      subtotalEnd: filter.endValue?.toString() || "",
+      taxableStart: filter.startTaxableAmount?.toString() || "",
+      taxableEnd: filter.endTaxableAmount?.toString() || "",
+      totalStart: filter.startGrandTotal?.toString() || "",
+      totalEnd: filter.endGrandTotal?.toString() || "",
+    }),
+    []
+  );
 
-      if (data.status) {
-        converted.status = Array.isArray(data.status)
-          ? data.status[0] // Take first status for simple API compatibility
-          : data.status;
+  const convertDateToString = useCallback(
+    (date: Date | string | null | undefined): string => {
+      if (!date) return "";
+      // TypeScript now knows date is not null/undefined
+      if (date instanceof Date) {
+        const isoString = (date as Date).toISOString();
+        return isoString.split("T")[0] || "";
       }
-      if (data.quoteId) converted.orderId = data.quoteId;
-      if (data.quoteName) converted.orderName = data.quoteName;
-
-      if (data.quotedDateStart)
-        converted.orderDateStart = convertDateToString(data.quotedDateStart);
-      if (data.quotedDateEnd)
-        converted.orderDateEnd = convertDateToString(data.quotedDateEnd);
-      if (data.lastUpdatedDateStart)
-        converted.lastUpdatedDateStart = convertDateToString(
-          data.lastUpdatedDateStart
-        );
-      if (data.lastUpdatedDateEnd)
-        converted.lastUpdatedDateEnd = convertDateToString(
-          data.lastUpdatedDateEnd
-        );
-
-      if (data.subtotalStart) converted.subtotalStart = data.subtotalStart;
-      if (data.subtotalEnd) converted.subtotalEnd = data.subtotalEnd;
-      if (data.taxableStart) converted.taxableStart = data.taxableStart;
-      if (data.taxableEnd) converted.taxableEnd = data.taxableEnd;
-      if (data.totalStart) converted.totalStart = data.totalStart;
-      if (data.totalEnd) converted.totalEnd = data.totalEnd;
-
-      return converted;
+      return String(date);
     },
     []
   );
@@ -413,25 +427,18 @@ function OrdersLandingTable({
 
     setLoading(true);
     try {
-      const currentPreferences = await loadFilterPreferences();
       const calculatedOffset = page;
-
-      let orderParams: OrdersParams = {
+      const orderParams: OrdersParams = {
         userId: user.userId.toString(),
         companyId: user.companyId.toString(),
         offset: calculatedOffset,
         limit: rowPerPage,
       };
 
-      if (filterData) {
-        orderParams = { ...orderParams, ...convertFilterData(filterData) };
-      }
-
       let response;
 
-      if (filterData || currentPreferences?.preference?.filters) {
+      if (filterData) {
         try {
-          // Build the complete filter object like quotes API
           const filter = {
             filter_index: 1,
             filter_name: "Order Filter",
@@ -464,11 +471,11 @@ function OrdersLandingTable({
             startGrandTotal: filterData?.totalStart
               ? parseFloat(filterData.totalStart)
               : null,
-            status: filterData?.status
-              ? Array.isArray(filterData.status)
-                ? filterData.status
-                : [filterData.status]
-              : [],
+            status: Array.isArray(filterData.status)
+              ? filterData.status
+              : filterData.status
+                ? [filterData.status]
+                : [],
             selectedColumns: [],
             columnWidth: [],
             columnPosition: "",
@@ -517,15 +524,13 @@ function OrdersLandingTable({
   }, [
     user?.userId,
     user?.companyId,
-    loadFilterPreferences,
     page,
     rowPerPage,
     filterData,
-    convertFilterData,
+    convertDateToString,
   ]);
 
   useEffect(() => {
-    // Initial load without filters to avoid premature POST requests
     fetchOrders();
   }, [fetchOrders, refreshTrigger]);
 
@@ -594,25 +599,176 @@ function OrdersLandingTable({
     setExportCallback?.(() => handleExport);
   }, [handleExport, setExportCallback]);
 
-  const handleOrderFilterSubmit = useCallback((data: QuoteFilterFormData) => {
+  const handleFilterClick = () => {
+    let initialData: QuoteFilterFormData | undefined;
+
+    if (activeTab !== "all" && filterPreferences?.preference?.filters) {
+      const tabIndex = parseInt(activeTab.replace("filter-", ""));
+      const filter = filterPreferences.preference.filters.find(
+        f => f.filter_index === tabIndex
+      );
+      if (filter) initialData = convertToFormData(filter);
+    }
+
+    setInitialFilterData(initialData);
+    setDrawerMode("filter");
+    setIsDrawerOpen(true);
+  };
+
+  const handleAddTab = () => {
+    // Set empty initial data for creating new custom filter
+    setInitialFilterData(undefined);
+    setDrawerMode("create");
+    setIsDrawerOpen(true);
+  };
+
+  const handleTabChange = (value: string) => {
+    setActiveTab(value);
+    setPage(0); // Reset to first page when changing tabs
+
+    // Find the tab and update selected filter preference
+    const selectedTab = tabs.find(tab => tab.id === value);
+    if (
+      selectedTab &&
+      filterPreferences &&
+      selectedTab.filterIndex !== undefined &&
+      typeof selectedTab.filterIndex === "number"
+    ) {
+      // Update the selected filter index in preferences
+      const updatedPreferences = {
+        ...filterPreferences,
+        preference: {
+          ...filterPreferences.preference,
+          selected: selectedTab.filterIndex,
+        },
+      };
+      setFilterPreferences(updatedPreferences);
+
+      // Auto-apply the filter for this tab
+      const selectedFilter =
+        filterPreferences.preference.filters[selectedTab.filterIndex];
+      if (selectedFilter) {
+        const formData = convertToFormData(selectedFilter);
+        setFilterData(formData);
+        toast.success(`Applied "${selectedTab.label}" filter successfully`);
+      }
+    } else if (selectedTab) {
+      // Clear filters when switching to a tab without saved filters
+      setFilterData(null);
+      toast.success(`Switched to "${selectedTab.label}" view`);
+    } else {
+      toast.info("Filter view changed");
+    }
+  };
+
+  const handleOrderFilterSubmit = (data: QuoteFilterFormData) => {
     setFilterData(data);
     setPage(0);
     toast.success("Filters applied successfully!");
-  }, []);
+  };
 
-  const handleOrderFilterReset = useCallback(() => {
+  const handleOrderFilterReset = () => {
     setFilterData(null);
     setPage(0);
     toast.success("Filters reset successfully!");
-  }, []);
+  };
 
-  const handlePrevious = useCallback(() => {
-    if (page > 0 && !loading) setPage(prev => prev - 1);
-  }, [page, loading]);
+  const handleSaveFilter = useCallback(
+    async (filterData: QuoteFilterFormData) => {
+      if (!user?.userId || !user?.companyId) {
+        toast.error("User information not available");
+        return;
+      }
 
-  const handleNext = useCallback(() => {
-    if (page < maxPage && !loading) setPage(prev => prev + 1);
-  }, [page, maxPage, loading]);
+      const filterName = filterData.filterName || "Custom Filter";
+
+      try {
+        // Convert filter data to OrderFilter format
+        const orderFilter: OrderFilter = {
+          filter_index: 1,
+          filter_name: filterName,
+          endCreatedDate:
+            convertDateToString(filterData?.lastUpdatedDateEnd) || "",
+          endDate: convertDateToString(filterData?.quotedDateEnd) || "",
+          endValue: filterData?.subtotalEnd
+            ? parseFloat(filterData.subtotalEnd)
+            : null,
+          endTaxableAmount: filterData?.taxableEnd
+            ? parseFloat(filterData.taxableEnd)
+            : null,
+          endGrandTotal: filterData?.totalEnd
+            ? parseFloat(filterData.totalEnd)
+            : null,
+          identifier: filterData?.quoteId || "",
+          limit: rowPerPage,
+          offset: page,
+          name: filterData?.quoteName || "",
+          pageNumber: Math.floor(page / rowPerPage) + 1,
+          startDate: convertDateToString(filterData?.quotedDateStart) || "",
+          startCreatedDate:
+            convertDateToString(filterData?.lastUpdatedDateStart) || "",
+          startValue: filterData?.subtotalStart
+            ? parseFloat(filterData.subtotalStart)
+            : null,
+          startTaxableAmount: filterData?.taxableStart
+            ? parseFloat(filterData.taxableStart)
+            : null,
+          startGrandTotal: filterData?.totalStart
+            ? parseFloat(filterData.totalStart)
+            : null,
+          status: filterData?.status
+            ? Array.isArray(filterData.status)
+              ? filterData.status
+              : [filterData.status]
+            : [],
+          selectedColumns: [
+            "createdDate",
+            "sellerCompanyName",
+            "itemcount",
+            "subTotal",
+            "grandTotal",
+            "updatedBuyerStatus",
+            "requiredDate",
+            "taxableAmount",
+            "orderIdentifier",
+            "orderName",
+            "lastUpdatedDate",
+          ],
+          columnWidth: [
+            { id: "orderName", width: 210 },
+            { id: "orderIdentifier", width: 240 },
+            { id: "createdDate", width: 200 },
+            { id: "lastUpdatedDate", width: 200 },
+            { id: "sellerCompanyName", width: 260 },
+            { id: "itemcount", width: 160 },
+            { id: "subTotal", width: 225 },
+            { id: "taxableAmount", width: 245 },
+            { id: "grandTotal", width: 245 },
+            { id: "updatedBuyerStatus", width: 270 },
+            { id: "requiredDate", width: 260 },
+          ],
+          columnPosition:
+            '["orderName","lastUpdatedDate","orderIdentifier","createdDate","sellerCompanyName","itemcount","subTotal","taxableAmount","grandTotal","updatedBuyerStatus","requiredDate"]',
+          userDisplayName: "",
+          userStatus: [],
+          accountId: [],
+          branchId: [],
+        };
+
+        // Save the filter using the OrdersFilterService
+        await ordersFilterService.saveCustomOrderFilter(
+          parseInt(user.userId.toString()),
+          parseInt(user.companyId.toString()),
+          orderFilter
+        );
+
+        toast.success(`Filter "${filterName}" saved successfully!`);
+      } catch {
+        toast.error("Failed to save filter");
+      }
+    },
+    [user?.userId, user?.companyId, rowPerPage, page, convertDateToString]
+  );
 
   const handleRowClick = (row: Order) => {
     const orderId = row.orderIdentifier;
@@ -621,15 +777,35 @@ function OrdersLandingTable({
     }
   };
 
-  const tabs = [
-    {
-      id: "all",
-      label: "All",
+  // Define tabs dynamically from filter preferences
+  const tabs = useMemo(() => {
+    if (
+      !filterPreferences?.preference?.filters ||
+      filterPreferences.preference.filters.length === 0
+    ) {
+      // Fallback to default "All" tab if no preferences loaded
+      return [
+        {
+          id: "all",
+          label: "All",
+          hasFilter: true,
+          isFilterActive: !!filterData,
+          filterIndex: undefined,
+          ...(filterData && { count: 1 }),
+        },
+      ];
+    }
+
+    // Generate tabs from filter preferences
+    return filterPreferences.preference.filters.map((filter, index) => ({
+      id: `filter-${index}`,
+      label: filter.filter_name,
       hasFilter: true,
-      isFilterActive: !!filterData,
-      ...(filterData && { count: 1 }),
-    },
-  ];
+      isFilterActive:
+        filterPreferences.preference.selected === index || !!filterData,
+      filterIndex: index,
+    }));
+  }, [filterPreferences, filterData]);
 
   return (
     <>
@@ -638,21 +814,45 @@ function OrdersLandingTable({
         onClose={() => setIsDrawerOpen(false)}
         onSubmit={handleOrderFilterSubmit}
         onReset={handleOrderFilterReset}
-        title="Order Filters"
+        onSave={handleSaveFilter}
+        title={
+          drawerMode === "create" ? "Create Custom Filter" : "Order Filters"
+        }
         filterType="Order"
+        activeTab={activeTab}
         userId={user?.userId}
         companyId={user?.companyId}
         module="order"
+        initialFilterData={initialFilterData}
+        mode={drawerMode}
       />
+
+      <SideDrawer
+        open={isAddDrawerOpen}
+        onClose={() => setIsAddDrawerOpen(false)}
+        title="Add New Order"
+      >
+        <div className="space-y-4">
+          <p className="text-gray-600">
+            Add new order functionality will be implemented here.
+          </p>
+        </div>
+      </SideDrawer>
 
       <div className="flex flex-col h-[calc(100vh-140px)] ">
         {/* Add FilterTabs above the table */}
         <div className="flex-shrink-0 mb-1">
           <FilterTabs
             tabs={tabs}
-            defaultValue="all"
-            onTabChange={() => {}}
-            onFilterClick={() => setIsDrawerOpen(true)}
+            defaultValue={
+              filterPreferences?.preference?.filters &&
+              filterPreferences.preference.filters.length > 0
+                ? `filter-${filterPreferences.preference.selected}`
+                : "all"
+            }
+            onTabChange={handleTabChange}
+            onAddTab={handleAddTab}
+            onFilterClick={handleFilterClick}
             onSettingsClick={() =>
               toast.info("Settings functionality coming soon!")
             }

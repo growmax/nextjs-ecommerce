@@ -271,6 +271,73 @@ export class OrdersFilterService extends BaseService<OrdersFilterService> {
 
     return this.getOrdersWithFilter(params);
   }
+
+  /**
+   * Save order filter (create/update filter)
+   * @param params - Filter parameters
+   * @returns Saved filter response
+   */
+  async saveOrderFilter(params: OrdersFilterParams): Promise<unknown> {
+    const queryString = this.buildQueryParams(params);
+    const payload = this.buildPayload(params);
+
+    return this.call(`orders/saveFilter?${queryString}`, payload, "POST");
+  }
+
+  /**
+   * Save order filter with custom context
+   * @param params - Filter parameters
+   * @param context - Request context
+   * @returns Saved filter response
+   */
+  async saveOrderFilterWithContext(
+    params: OrdersFilterParams,
+    context: RequestContext
+  ): Promise<unknown> {
+    const queryString = this.buildQueryParams(params);
+    const payload = this.buildPayload(params);
+
+    return this.callWith(`orders/saveFilter?${queryString}`, payload, {
+      context,
+      method: "POST",
+    });
+  }
+
+  /**
+   * Server-safe version for saving order filter
+   * @param params - Filter parameters
+   * @returns Saved filter response or null if error
+   */
+  async saveOrderFilterServerSide(
+    params: OrdersFilterParams
+  ): Promise<unknown | null> {
+    const queryString = this.buildQueryParams(params);
+    const payload = this.buildPayload(params);
+
+    return this.callSafe(`orders/saveFilter?${queryString}`, payload, "POST");
+  }
+
+  /**
+   * Save custom order filter
+   * @param userId - User ID
+   * @param companyId - Company ID
+   * @param filter - Custom filter object
+   * @returns Saved filter response
+   */
+  async saveCustomOrderFilter(
+    userId: number,
+    companyId: number,
+    filter: OrderFilter
+  ): Promise<unknown> {
+    const params: OrdersFilterParams = {
+      userId,
+      companyId,
+      filters: [filter],
+      selected: 0,
+    };
+
+    return this.saveOrderFilter(params);
+  }
 }
 
 export default OrdersFilterService.getInstance();

@@ -248,6 +248,76 @@ export class OrdersService extends BaseService<OrdersService> {
       filterType: "all",
     });
   }
+
+  /**
+   * Create a new order
+   * @param orderData - Order creation data
+   * @returns Created order response
+   */
+  async createOrder(orderData: {
+    orderName: string;
+    orderIdentifier: string;
+    userId: number;
+    companyId: number;
+    status?: string;
+    orderDate?: string;
+    requiredDate?: string;
+    subTotal?: number;
+    taxableAmount?: number;
+    grandTotal?: number;
+  }): Promise<unknown> {
+    const queryString = `userId=${orderData.userId}&companyId=${orderData.companyId}`;
+    return this.call(`orders/create?${queryString}`, orderData, "POST");
+  }
+
+  /**
+   * Create order with custom context
+   * @param orderData - Order creation data
+   * @param context - Request context
+   * @returns Created order response
+   */
+  async createOrderWithContext(
+    orderData: {
+      orderName: string;
+      orderIdentifier: string;
+      userId: number;
+      companyId: number;
+      status?: string;
+      orderDate?: string;
+      requiredDate?: string;
+      subTotal?: number;
+      taxableAmount?: number;
+      grandTotal?: number;
+    },
+    context: RequestContext
+  ): Promise<unknown> {
+    const queryString = `userId=${orderData.userId}&companyId=${orderData.companyId}`;
+    return this.callWith(`orders/create?${queryString}`, orderData, {
+      context,
+      method: "POST",
+    });
+  }
+
+  /**
+   * Server-safe version for creating orders
+   * @param orderData - Order creation data
+   * @returns Created order response or null if error
+   */
+  async createOrderServerSide(orderData: {
+    orderName: string;
+    orderIdentifier: string;
+    userId: number;
+    companyId: number;
+    status?: string;
+    orderDate?: string;
+    requiredDate?: string;
+    subTotal?: number;
+    taxableAmount?: number;
+    grandTotal?: number;
+  }): Promise<unknown | null> {
+    const queryString = `userId=${orderData.userId}&companyId=${orderData.companyId}`;
+    return this.callSafe(`orders/create?${queryString}`, orderData, "POST");
+  }
 }
 
 export default OrdersService.getInstance();
