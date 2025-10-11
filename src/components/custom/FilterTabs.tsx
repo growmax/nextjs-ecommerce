@@ -73,22 +73,12 @@ export function FilterTabs({
                       "before:transform before:origin-center",
                       // Show indicator immediately for active tab, hide for inactive
                       "before:scale-x-0 data-[state=active]:before:scale-x-100",
-                      // Dynamic styling based on filter state
-                      tab.isFilterActive
-                        ? [
-                            // Active filter tab styling (top layer)
-                            "data-[state=active]:bg-blue-50 text-blue-600 font-medium bg-blue-50/30 hover:bg-blue-100/50",
-                            // Enhanced 3D tab indicator for active filters
-                            "data-[state=active]:before:bg-blue-600",
-                            "data-[state=active]:before:shadow-[0_2px_8px_rgba(37,99,235,0.3)]",
-                          ].join(" ")
-                        : [
-                            // Default tab styling (top layer)
-                            "data-[state=active]:bg-accent/20 data-[state=active]:shadow-none",
-                            // Standard 3D tab indicator
-                            "data-[state=active]:before:bg-primary",
-                            "data-[state=active]:before:shadow-[0_2px_4px_rgba(0,0,0,0.1)]",
-                          ].join(" ")
+                      // Active tab styling - always blue
+                      "data-[state=active]:bg-blue-50 data-[state=active]:text-blue-600 data-[state=active]:font-medium",
+                      "data-[state=active]:before:bg-blue-600",
+                      "data-[state=active]:before:shadow-[0_2px_8px_rgba(37,99,235,0.3)]",
+                      // Inactive tab styling - normal/black text
+                      "text-gray-900"
                     )}
                   >
                     <span className="flex items-center gap-2">
