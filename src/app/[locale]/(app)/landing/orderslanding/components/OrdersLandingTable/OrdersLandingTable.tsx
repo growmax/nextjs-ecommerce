@@ -7,7 +7,6 @@ import { QuoteFilterFormData } from "@/components/sales/QuoteFilterForm";
 import { toast } from "sonner";
 import orderService, { OrdersParams } from "@/lib/api/services/OrdersService";
 import ordersFilterService from "@/lib/api/services/OrdersFilterService";
-import orderStatusService from "@/lib/api/services/OrderStatusService";
 import PreferenceService, {
   FilterPreferenceResponse,
 } from "@/lib/api/services/PreferenceService";
@@ -177,9 +176,6 @@ function OrdersLandingTable({
   const [selectedOrderItems, setSelectedOrderItems] = useState<Order | null>(
     null
   );
-  const [statusOptions, setStatusOptions] = useState<
-    Array<{ value: string; label: string }>
-  >([]);
 
   // Define table columns
   const columns = useMemo<ColumnDef<Order>[]>(
@@ -343,18 +339,6 @@ function OrdersLandingTable({
   );
 
   const maxPage = Math.max(0, Math.ceil(totalCount / rowPerPage) - 1);
-
-  // Load status options
-  const loadStatusOptions = useCallback(async () => {
-    try {
-      const statuses = await orderStatusService.getOrderStatuses();
-      setStatusOptions(
-        statuses.map(status => ({ value: status.value, label: status.label }))
-      );
-    } catch {
-      setStatusOptions([]);
-    }
-  }, []);
 
   // Load filter preferences
   const loadFilterPreferences = useCallback(async () => {
@@ -541,12 +525,9 @@ function OrdersLandingTable({
   ]);
 
   useEffect(() => {
+    // Initial load without filters to avoid premature POST requests
     fetchOrders();
   }, [fetchOrders, refreshTrigger]);
-
-  useEffect(() => {
-    loadStatusOptions();
-  }, [loadStatusOptions]);
 
   const handleExport = useCallback(async () => {
     if (orders.length === 0) {
@@ -613,17 +594,17 @@ function OrdersLandingTable({
     setExportCallback?.(() => handleExport);
   }, [handleExport, setExportCallback]);
 
-  const handleOrderFilterSubmit = (data: QuoteFilterFormData) => {
+  const handleOrderFilterSubmit = useCallback((data: QuoteFilterFormData) => {
     setFilterData(data);
     setPage(0);
     toast.success("Filters applied successfully!");
-  };
+  }, []);
 
-  const handleOrderFilterReset = () => {
+  const handleOrderFilterReset = useCallback(() => {
     setFilterData(null);
     setPage(0);
     toast.success("Filters reset successfully!");
-  };
+  }, []);
 
   const handlePrevious = useCallback(() => {
     if (page > 0 && !loading) setPage(prev => prev - 1);
@@ -675,10 +656,6 @@ function OrdersLandingTable({
             onSettingsClick={() =>
               toast.info("Settings functionality coming soon!")
             }
-            filterType="Order"
-            statusOptions={statusOptions}
-            onFilterSubmit={handleOrderFilterSubmit}
-            onFilterReset={handleOrderFilterReset}
           />
         </div>
 

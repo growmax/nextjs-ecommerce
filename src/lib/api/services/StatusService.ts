@@ -79,7 +79,7 @@ export class QuoteStatusService extends BaseService<QuoteStatusService> {
       // Try module-specific endpoint first
       return (await this.call(endpoint, {}, "GET")) as QuoteStatusApiResponse;
     } catch (error: unknown) {
-      // If module is not 'quotes' and request fails with 4xx error, fallback to quotes endpoint
+      // If quotes module fails with 500 error, fallback to orders endpoint
       const hasStatus = error && typeof error === "object" && "status" in error;
       const errorWithStatus = hasStatus ? (error as { status: unknown }) : null;
       const statusCode =
@@ -87,8 +87,8 @@ export class QuoteStatusService extends BaseService<QuoteStatusService> {
           ? errorWithStatus.status
           : 0;
 
-      if (module !== "quotes" && statusCode >= 400 && statusCode < 500) {
-        const fallbackEndpoint = `/quotes/findStatusByCompany?userId=${userId}&companyId=${companyId}`;
+      if (module === "quotes" && statusCode >= 500) {
+        const fallbackEndpoint = `/orders/findStatusByCompany?userId=${userId}&companyId=${companyId}`;
         return (await this.call(
           fallbackEndpoint,
           {},
@@ -137,9 +137,9 @@ export class QuoteStatusService extends BaseService<QuoteStatusService> {
       "GET"
     )) as QuoteStatusApiResponse | null;
 
-    // If module is not 'quotes' and request failed, fallback to quotes endpoint
-    if (!result && module !== "quotes") {
-      const fallbackEndpoint = `/quotes/findStatusByCompany?userId=${userId}&companyId=${companyId}`;
+    // If quotes module failed, fallback to orders endpoint
+    if (!result && module === "quotes") {
+      const fallbackEndpoint = `/orders/findStatusByCompany?userId=${userId}&companyId=${companyId}`;
       return (await this.callSafe(
         fallbackEndpoint,
         {},

@@ -6,12 +6,6 @@ import { Button } from "@/components/ui/button";
 // import { Badge } from "@/components/ui/badge"
 import { PlusIcon, SettingsIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
-import SideDrawer from "@/components/custom/sidedrawer";
-import {
-  QuoteFilterForm,
-  QuoteFilterFormData,
-  FormMethods,
-} from "@/components/sales/QuoteFilterForm";
 
 interface FilterTab {
   id: string;
@@ -32,12 +26,6 @@ interface FilterTabsProps {
   onSettingsClick?: () => void;
   className?: string;
   children?: React.ReactNode;
-  filterType?: string;
-  statusOptions?: Array<{ value: string; label: string }>;
-  onFilterSubmit?: (data: QuoteFilterFormData) => void;
-  onFilterReset?: () => void;
-  usePreferenceService?: boolean;
-  module?: string;
 }
 
 export function FilterTabs({
@@ -49,14 +37,8 @@ export function FilterTabs({
   onSettingsClick,
   className,
   children,
-  filterType = "Order",
-  statusOptions = [],
-  onFilterSubmit,
-  onFilterReset,
 }: FilterTabsProps) {
   const [activeTab, setActiveTab] = React.useState(defaultValue);
-  const [isDrawerOpen, setIsDrawerOpen] = React.useState(false);
-  const formRef = React.useRef<FormMethods>(null);
 
   const handleTabChange = (value: string) => {
     setActiveTab(value);
@@ -64,29 +46,7 @@ export function FilterTabs({
   };
 
   const handlePlusClick = () => {
-    if (onAddTab) {
-      onAddTab();
-    } else {
-      setIsDrawerOpen(true);
-    }
-  };
-
-  const handleFilterSubmit = (data: QuoteFilterFormData) => {
-    onFilterSubmit?.(data);
-    setIsDrawerOpen(false);
-  };
-
-  const handleFilterReset = () => {
-    if (formRef.current) {
-      formRef.current.reset();
-    }
-    onFilterReset?.();
-  };
-
-  const handleApply = () => {
-    if (formRef.current) {
-      formRef.current.submit();
-    }
+    onAddTab?.();
   };
 
   return (
@@ -200,24 +160,6 @@ export function FilterTabs({
           )}
         </Tabs>
       </div>
-
-      {/* SideDrawer */}
-      <SideDrawer
-        open={isDrawerOpen}
-        onClose={() => setIsDrawerOpen(false)}
-        title={`${filterType} Filters`}
-        onClearAll={handleFilterReset}
-        onApply={handleApply}
-      >
-        <QuoteFilterForm
-          formRef={formRef}
-          onSubmit={handleFilterSubmit}
-          onReset={handleFilterReset}
-          filterType={filterType}
-          statusOptions={statusOptions}
-          showFilterInfo={true}
-        />
-      </SideDrawer>
     </div>
   );
 }

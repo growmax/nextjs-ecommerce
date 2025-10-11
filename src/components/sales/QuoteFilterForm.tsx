@@ -68,7 +68,6 @@ interface QuoteFilterFormProps {
   formRef?: React.RefObject<FormMethods | null>;
   filterType?: string;
   activeTab?: string | undefined;
-  showFilterInfo?: boolean;
 }
 
 export function QuoteFilterForm({
@@ -77,7 +76,6 @@ export function QuoteFilterForm({
   statusOptions = [],
   formRef,
   filterType = "Quote",
-  showFilterInfo = false,
 }: QuoteFilterFormProps) {
   const form = useForm<QuoteFilterFormData>({
     resolver: zodResolver(formSchema),
@@ -165,43 +163,30 @@ export function QuoteFilterForm({
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-6">
-        {/* Filter Info Section - Only show when showFilterInfo is true */}
-        {showFilterInfo && (
-          <div className="space-y-4">
-            <h3 className="text-sm font-medium text-gray-900">Filter Info</h3>
-
-            {/* Filter Name */}
-            <FormField
-              control={form.control}
-              name="filterName"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel className="flex items-center gap-1">
-                    Filter Name
-                    <span className="text-red-500">*</span>
-                  </FormLabel>
-                  <FormControl>
-                    <Input
-                      placeholder="Enter filter name..."
-                      {...field}
-                      value={field.value || ""}
-                      required
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-          </div>
-        )}
+        {/* Filter Name */}
+        <FormField
+          control={form.control}
+          name="filterName"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Filter Name</FormLabel>
+              <FormControl>
+                <Input
+                  placeholder="Enter filter name..."
+                  {...field}
+                  value={field.value || ""}
+                />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
 
         {/* Quote Info Section */}
         <div className="space-y-4">
-          {!showFilterInfo && (
-            <h3 className="text-sm font-medium text-gray-900">
-              {filterType} Info
-            </h3>
-          )}
+          <h3 className="text-sm font-medium text-gray-900">
+            {filterType} Info
+          </h3>
 
           {/* Status */}
           <FormField

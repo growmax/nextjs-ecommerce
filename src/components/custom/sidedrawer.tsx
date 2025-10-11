@@ -17,7 +17,9 @@ interface SideDrawerProps {
   children?: React.ReactNode;
   onClearAll?: () => void;
   onApply?: () => void;
+  onSave?: () => void;
   width?: number;
+  mode?: "filter" | "create"; // New prop to control button mode
 }
 
 const SideDrawer: React.FC<SideDrawerProps> = ({
@@ -27,6 +29,8 @@ const SideDrawer: React.FC<SideDrawerProps> = ({
   children,
   onClearAll,
   onApply,
+  onSave,
+  mode = "filter",
 }) => {
   return (
     <Sheet open={open} onOpenChange={onClose}>
@@ -39,7 +43,7 @@ const SideDrawer: React.FC<SideDrawerProps> = ({
           <SheetTitle className="text-lg font-semibold text-gray-900">
             {title}
           </SheetTitle>
-          {onClearAll && (
+          {mode === "filter" && onClearAll && (
             <Button
               variant="ghost"
               size="sm"
@@ -65,13 +69,22 @@ const SideDrawer: React.FC<SideDrawerProps> = ({
             >
               CANCEL
             </Button>
-            {onApply && (
+            {mode === "filter" && onApply && (
               <Button
                 size="sm"
                 onClick={onApply}
                 className="bg-black hover:bg-gray-800 text-white"
               >
                 APPLY
+              </Button>
+            )}
+            {mode === "create" && onSave && (
+              <Button
+                size="sm"
+                onClick={onSave}
+                className="bg-black hover:bg-gray-800 text-white"
+              >
+                SAVE
               </Button>
             )}
           </div>
