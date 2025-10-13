@@ -14,6 +14,24 @@ export interface SellerPrice {
     CompanyId: number;
   };
 }
+export interface AddToCartRequest {
+  userId: number;
+  tenantId: string;
+  useMultiSellerCart: boolean;
+  body: {
+    productsId: number;
+    productId: number;
+    quantity: number;
+    itemNo: number;
+    pos: number;
+    addBundle: boolean;
+    sellerId: number;
+    sellerName: string;
+    sellerLocation: string;
+    price: number;
+  };
+}
+
 export interface DiscountRequest {
   userId: number;
   tenantId: string;
@@ -28,6 +46,14 @@ export interface DiscountRequest {
     companyId: number;
     sellerId: string;
   };
+}
+export interface DeleteCartRequest {
+  itemNo: number;
+  pos: number;
+  productId: number;
+  sellerId: number;
+  tenantId: string | number;
+  userId: number;
 }
 
 export class CartService extends BaseService<CartService> {
@@ -89,6 +115,32 @@ export class CartService extends BaseService<CartService> {
         method: "POST",
         client: discountClient,
       }
+    );
+  }
+  async postCart(
+    params: AddToCartRequest & { body: unknown; method?: string }
+  ): Promise<unknown> {
+    const { userId, method = "PUT" } = params;
+
+    return this.callWith(`carts?userId=${userId}&pos=0`, params.body, {
+      method: method as "POST" | "PUT" | "DELETE", // Support POST, PUT, and DELETE methods
+      client: coreCommerceClient, // Use coreCommerceClient for cart operations
+    });
+  }
+  async deleteCart(params: DeleteCartRequest): Promise<unknown> {
+    const { userId, tenantId, productId, itemNo, sellerId, pos } = params;
+
+    return this.call(
+      `carts/${userId}?productsId=${productId}&itemNo=${itemNo}&pos=0`,
+      {
+        userId,
+        productId,
+        itemNo,
+        sellerId,
+        tenantId,
+        pos,
+      },
+      "DELETE"
     );
   }
 }

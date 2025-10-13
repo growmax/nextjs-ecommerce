@@ -1,5 +1,7 @@
 "use client";
 
+import { useCart } from "@/contexts/CartContext";
+import { useTenantInfo } from "@/contexts/TenantContext";
 import useBilling from "@/hooks/useBilling";
 import useCurrentShippingAddress from "@/hooks/useCurrentShippingAddress";
 import { useCurrentUser } from "@/hooks/useCurrentUser";
@@ -7,11 +9,11 @@ import useGetCurrencyModuleSettings from "@/hooks/useGetCurrencyModuleSettings";
 import useModuleSettings from "@/hooks/useModuleSettings";
 import useSelectedSellerCart from "@/hooks/useSelectedSellerCart";
 import CartServices from "@/lib/api/CartServices";
-import { useEffect, useState } from "react";
-import SellerCard from "./SellerCard/SellerCard";
-import { useRouter } from "next/navigation";
 import { isEmpty, some } from "lodash";
+import { useRouter } from "next/navigation";
+import { useState } from "react";
 import { toast } from "sonner";
+import SellerCard from "./SellerCard/SellerCard";
 
 interface CartItem {
   productId: number;
@@ -22,7 +24,9 @@ interface CartItem {
     inStock: boolean;
   };
   itemNo: string;
-  sellerId?: string;
+  sellerId?: string | number;
+  sellerName?: string;
+  sellerLocation?: string;
   productName?: string;
   shortDescription?: string;
   brandName?: string;
@@ -30,18 +34,21 @@ interface CartItem {
   unitListPrice?: number;
   discount?: number;
   discountPercentage?: number;
+  _updated?: number;
   [key: string]: unknown;
 }
 
 export default function CartPageClient() {
   const router = useRouter();
   const { user } = useCurrentUser();
+  const tenantInfo = useTenantInfo();
   const currency = user?.currency;
   const userId = user?.userId;
+  const tenantId = tenantInfo?.tenantCode || "";
 
-  const [cart, setCart] = useState<CartItem[]>([]);
-  const [totalCart, setTotalCart] = useState(0);
-  const [isLoading, setIsLoading] = useState(false);
+  // Use cart context
+  const { cart, cartCount, setCart, updateCartCount, refreshCart } = useCart();
+
   const { billingDatas } = useBilling(user);
   const { SelectedShippingAddressData } = useCurrentShippingAddress(user);
 
@@ -74,27 +81,6 @@ export default function CartPageClient() {
     isMinOrderValueEnabled || isMinQuoteValueEnabled,
     currency || {}
   );
-
-  const getCart = async () => {
-    if (!userId) return;
-    try {
-      setIsLoading(true);
-      const res: { data?: CartItem[] } = await CartServices.getCart(userId);
-      if (res?.data) {
-        setCart(res.data);
-        setTotalCart(res.data.length);
-      }
-    } catch (_error) {
-      toast.error("Failed to fetch cart");
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    getCart();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [userId]);
 
   // Handle seller selection
   const handleSellerSelection = (sellerId: string) => {
@@ -230,28 +216,62 @@ export default function CartPageClient() {
     }
   };
 
-  // Change quantity in cart
+  // Change quantity in cart - Following reference pattern from useCart.js
   const changeQty = async (item: CartItem, newQuantity: number) => {
     if (!userId || newQuantity <= 0) return;
 
     try {
-      setIsLoading(true);
-      // Update cart locally first for better UX
-      const updatedCart = cart.map(cartItem =>
-        cartItem.productId === item.productId
-          ? { ...cartItem, quantity: newQuantity }
-          : cartItem
-      );
+      // Add timestamp to trigger pricing refetch
+      const timestamp = Date.now();
+
+      // Update cart locally first for better UX (following reference pattern)
+      const updatedCart = cart.map(cartItem => {
+        if (item.sellerId) {
+          // Multi-seller cart: match by productId and sellerId
+          if (
+            cartItem.productId === item.productId &&
+            String(cartItem.sellerId) === String(item.sellerId)
+          ) {
+            return { ...cartItem, quantity: newQuantity, _updated: timestamp };
+          }
+        } else {
+          // Single seller: match by productId only
+          if (cartItem.productId === item.productId) {
+            return { ...cartItem, quantity: newQuantity, _updated: timestamp };
+          }
+        }
+        return cartItem;
+      });
+
       setCart(updatedCart);
 
-      // TODO: Add API call to update quantity on server
+      // Call postCart API with PUT method (following reference useCart.js line 344)
+      await CartServices.postCart({
+        userId: Number(userId),
+        tenantId,
+        useMultiSellerCart: true,
+        body: {
+          productsId: item.productId,
+          productId: item.productId,
+          quantity: newQuantity,
+          itemNo: item.itemNo ? Number(item.itemNo) : 0,
+          pos: 0,
+          addBundle: true,
+          ...(item.sellerId && {
+            sellerId: Number(item.sellerId),
+            sellerName: item.sellerName || "",
+            sellerLocation: item.sellerLocation || "",
+            price: item.unitListPrice || item.unitPrice || 0,
+          }),
+        },
+      });
+
+      // The pricing hooks will automatically refetch due to _updated timestamp change
       toast.success("Quantity updated successfully");
     } catch (_error) {
       toast.error("Failed to update quantity");
       // Revert on error
-      await getCart();
-    } finally {
-      setIsLoading(false);
+      await refreshCart();
     }
   };
 
@@ -264,20 +284,34 @@ export default function CartPageClient() {
     if (!userId) return;
 
     try {
-      setIsLoading(true);
-      // Update cart locally first
-      const updatedCart = cart.filter(item => item.productId !== productId);
+      // Update cart locally first (filter by productId and sellerId for multi-seller support)
+      const updatedCart = cart.filter(item => {
+        if (_sellerId) {
+          return !(
+            item.productId === productId &&
+            String(item.sellerId) === String(_sellerId)
+          );
+        }
+        return item.productId !== productId;
+      });
       setCart(updatedCart);
-      setTotalCart(updatedCart.length);
+      updateCartCount(updatedCart.length);
 
-      // TODO: Add API call to delete item from server
+      // Call API to delete item from server (following reference pattern with DELETE method)
+      await CartServices.deleteCart({
+        userId: Number(userId),
+        tenantId,
+        productId,
+        itemNo: Number(_itemNo),
+        sellerId: Number(_sellerId || 0),
+        pos: 0,
+      });
+
       toast.success("Item removed from cart");
     } catch (_error) {
       toast.error("Failed to remove item");
       // Revert on error
-      await getCart();
-    } finally {
-      setIsLoading(false);
+      await refreshCart();
     }
   };
 
@@ -286,22 +320,20 @@ export default function CartPageClient() {
     if (!userId) return;
 
     try {
-      setIsLoading(true);
       await CartServices.deleteCart({ userId, pos: 0 });
       setCart([]);
-      setTotalCart(0);
+      updateCartCount(0);
       toast.success("Cart cleared successfully");
     } catch (_error) {
       toast.error("Failed to clear cart");
-    } finally {
-      setIsLoading(false);
     }
   };
   return (
     <>
       <SellerCard
-        totalCart={totalCart}
+        totalCart={cartCount}
         cart={cart}
+        user={user}
         selectedSellerId={selectedSellerId}
         onSellerSelect={handleSellerSelection}
         selectedSellerPricing={selectedSellerPricing}
@@ -309,7 +341,7 @@ export default function CartPageClient() {
         selectedSellerItems={selectedSellerItems}
         hasMultipleSellers={hasMultipleSellers}
         isPricingLoading={isPricingLoading}
-        isLoading={isLoading}
+        isLoading={false}
         onItemUpdate={changeQty}
         onItemDelete={deleteCart}
         onClearCart={emptyCart}

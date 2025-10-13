@@ -60,7 +60,9 @@ export abstract class BaseService<
         const putResponse = await clientWithContext.put(endpoint, data);
         return putResponse.data;
       case "DELETE":
-        const deleteResponse = await clientWithContext.delete(endpoint);
+        const deleteResponse = await clientWithContext.delete(endpoint, {
+          data,
+        });
         return deleteResponse.data;
       default:
         throw new Error(`Unsupported HTTP method: ${method}`);
