@@ -1,8 +1,24 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useAuth } from "@/contexts/AuthContext";
+import UserServices from "@/lib/api/services/UserServices";
+import { AuthStorage } from "@/lib/auth";
+import { JWTService } from "@/lib/services/JWTService";
+import { useEffect, useState } from "react";
+
+interface CurrencyObj {
+  currencyCode: string;
+  decimal: string;
+  description: string;
+  id: number;
+  precision: number;
+  symbol: string;
+  tenantId: number;
+  thousand: string;
+}
 
 interface CurrentUser {
+  currency: CurrencyObj;
   userId: number;
   companyId: number;
   displayName: string;
@@ -15,12 +31,39 @@ export function useCurrentUser() {
   const [user, setUser] = useState<CurrentUser | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const { isAuthenticated } = useAuth();
+
+  // Get sub from JWT token
+  const [sub, setSub] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (isAuthenticated) {
+      const token = AuthStorage.getAccessToken();
+      if (token) {
+        const jwtService = JWTService.getInstance();
+        const payload = jwtService.decodeToken(token);
+        setSub(payload?.sub || null);
+      }
+    } else {
+      setSub(null);
+    }
+  }, [isAuthenticated]);
 
   useEffect(() => {
     const fetchUserData = async () => {
       try {
+        // If no sub, can't fetch user data
+        if (!sub) {
+          setLoading(false);
+          return;
+        }
+
         // First check if we have cached user data
-        const cachedUser = sessionStorage.getItem("currentUser");
+        // TEMPORARILY DISABLED FOR TESTING - UNCOMMENT TO RE-ENABLE CACHE
+        const BYPASS_CACHE = true; // Set to false to enable caching
+        const cachedUser = !BYPASS_CACHE
+          ? localStorage.getItem("currentUser")
+          : null;
         if (cachedUser) {
           const userData = JSON.parse(cachedUser);
           setUser(userData);
@@ -28,30 +71,23 @@ export function useCurrentUser() {
           return;
         }
 
-        // Fetch user data from API
-        const response = await fetch("/api/auth/current-user", {
-          method: "GET",
-          credentials: "include",
-        });
+        // Fetch user data from API - UserServices.getUser returns UserApiResponse
+        const response = await UserServices.getUser({ sub });
 
-        if (!response.ok) {
-          throw new Error("Failed to fetch user data");
-        }
-
-        const data = await response.json();
-
-        if (data.success && data.user) {
+        // UserApiResponse has structure: { data: {...}, status: "success" }
+        if (response.data) {
           const userData: CurrentUser = {
-            userId: data.user.userId || 1032, // Fallback to default
-            companyId: data.user.companyId || 8690, // Fallback to default
-            displayName: data.user.displayName || "",
-            email: data.user.email || "",
-            phoneNumber: data.user.phoneNumber,
-            role: data.user.role,
+            currency: response.data.currency,
+            userId: response.data.userId,
+            companyId: response.data.companyId,
+            displayName: response.data.displayName || "",
+            email: response.data.email || "",
+            phoneNumber: response.data.phoneNumber,
+            role: response.data.roleName,
           };
 
-          // Cache the user data
-          sessionStorage.setItem("currentUser", JSON.stringify(userData));
+          // Cache the user data in localStorage
+          localStorage.setItem("currentUser", JSON.stringify(userData));
           setUser(userData);
         } else {
           // Use default values if API doesn't return proper data
@@ -65,25 +101,16 @@ export function useCurrentUser() {
         }
       } catch (err) {
         setError(err instanceof Error ? err.message : "Unknown error");
-
-        // Use default values on error
-        const defaultUser: CurrentUser = {
-          userId: 1032,
-          companyId: 8690,
-          displayName: "User",
-          email: "",
-        };
-        setUser(defaultUser);
       } finally {
         setLoading(false);
       }
     };
 
     fetchUserData();
-  }, []);
+  }, [sub]);
 
   const clearUserCache = () => {
-    sessionStorage.removeItem("currentUser");
+    localStorage.removeItem("currentUser");
   };
 
   return {

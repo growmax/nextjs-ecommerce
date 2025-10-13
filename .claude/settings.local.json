@@ -26,7 +26,16 @@
       "Bash(npx shadcn@latest add:*)",
       "mcp__chrome-devtools__evaluate_script",
       "Bash(mkdir:*)",
-      "mcp__chrome-devtools__take_screenshot"
+      "mcp__chrome-devtools__take_screenshot",
+      "Read(//Users/ajithajeeva/Documents/**)",
+      "mcp__ide__getDiagnostics",
+      "Bash(cat:*)",
+      "Read(//var/folders/n3/n8_ngryx0vd6m_9sm958xj6r0000gn/T/TemporaryItems/NSIRD_screencaptureui_MAvWcQ/**)",
+      "Read(//var/folders/n3/n8_ngryx0vd6m_9sm958xj6r0000gn/T/TemporaryItems/NSIRD_screencaptureui_PnKRn0/**)",
+      "Read(//var/folders/n3/n8_ngryx0vd6m_9sm958xj6r0000gn/T/TemporaryItems/NSIRD_screencaptureui_6KVjqs/**)",
+      "Read(//var/folders/n3/n8_ngryx0vd6m_9sm958xj6r0000gn/T/TemporaryItems/NSIRD_screencaptureui_5Wj2VS/**)",
+      "Bash(npm run build)",
+      "Read(//var/folders/n3/n8_ngryx0vd6m_9sm958xj6r0000gn/T/TemporaryItems/NSIRD_screencaptureui_UKYLVH/**)"
     ],
     "deny": [],
     "ask": []

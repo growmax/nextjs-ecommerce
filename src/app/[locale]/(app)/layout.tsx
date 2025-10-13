@@ -1,6 +1,7 @@
 import { AppSidebar } from "@/components/app-sidebar";
 import { ConditionalFooter } from "@/components/ConditionalFooter";
 import NavBar from "@/components/nav-bar";
+import { TenantDataProvider } from "@/components/TenantDataProvider";
 import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { TenantProvider } from "@/contexts/TenantContext";
@@ -57,19 +58,21 @@ export default async function AppLayout({
           initialUser={authState.user}
         >
           <UserSessionProvider initialUserData={userData?.data || null}>
-            <SidebarProvider>
-              <AppSidebar />
-              <SidebarInset className="overflow-x-hidden">
-                {/* Fixed Navigation */}
-                <div className="fixed top-0 left-0 right-0 z-40 bg-background">
-                  <NavBar />
-                </div>
-                <main className="min-h-screen pb-8 overflow-x-hidden pt-[69px] [&_.landing-page]:!pt-0 [&_.landing-page]:!pb-0 [&_.landing-page]:!min-h-0 [&_.landing-page]:!h-[calc(100vh-69px)]">
-                  {children}
-                </main>
-                <ConditionalFooter />
-              </SidebarInset>
-            </SidebarProvider>
+            <TenantDataProvider>
+              <SidebarProvider>
+                <AppSidebar />
+                <SidebarInset className="overflow-x-hidden">
+                  {/* Fixed Navigation */}
+                  <div className="fixed top-0 left-0 right-0 z-40 bg-background">
+                    <NavBar />
+                  </div>
+                  <main className="min-h-screen pb-8 overflow-x-hidden pt-[69px] [&_.landing-page]:!pt-0 [&_.landing-page]:!pb-0 [&_.landing-page]:!min-h-0 [&_.landing-page]:!h-[calc(100vh-69px)]">
+                    {children}
+                  </main>
+                  <ConditionalFooter />
+                </SidebarInset>
+              </SidebarProvider>
+            </TenantDataProvider>
           </UserSessionProvider>
         </AuthProvider>
       </TenantProvider>

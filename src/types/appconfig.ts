@@ -6,25 +6,145 @@ export interface AnonymousTokenResponse {
 
 // Tenant Configuration Types
 export interface TenantInfo {
+  id: number;
   tenantCode: string;
   elasticCode: string;
-  tenantId: string;
-  typeSenseKey: string;
+  tenantId: number;
+  typeSenseKey: string | null;
   typeSenseCode: string;
+  tenantDomain: string;
+  tenantDescription: string;
+  plainId: string;
+  SSLCreated: boolean;
+  checkSSL: boolean;
+  domainNameVerified: boolean;
+  enablePartnerToPartnerPurchase: boolean;
+  finalCompleted: boolean;
+  initCompleted: boolean;
+  otherInitdataCompleted: boolean;
+  sslCreatedDate: string | null;
+  vendor: string | null;
+  apikey: string | null;
+  assertS3BucketName: string;
+  demoRequired: boolean;
+}
+
+export interface BusinessType {
+  id: number;
+  name: string;
+  tenantId: number;
+}
+
+export interface Industry {
+  id: number;
+  name: string;
+  tenantId: number;
+}
+
+export interface SubIndustry {
+  id: number;
+  name: string;
+  description: string;
+  tenantId: number;
+  industryId: Industry;
+}
+
+export interface AccountType {
+  id: number;
+  name: string;
+}
+
+export interface TaxDetails {
+  id: number;
+  pan: string;
+  panImage: string | null;
+  tenantId: number;
+}
+
+export interface CurrencyInfo {
+  id: number;
+  currencyCode: string;
+  decimal: string;
+  description: string;
+  precision: number;
+  symbol: string;
+  tenantId: number;
+  thousand: string;
+}
+
+export interface AddressInfo {
+  id: number;
+  addressLine: string;
+  city: string;
+  state: string;
+  country: string;
+  countryCode: string;
+  pinCodeId: string;
+  district: string;
+  locality: string;
+  branchName: string;
+  gst: string;
+  phone: string | null;
+  mobileNo: string;
+  email: string | null;
+  lattitude: string | null;
+  longitude: string | null;
+  locationUrl: string | null;
+  regAddress: boolean;
+  isBilling: boolean;
+  isShipping: boolean;
+  wareHouse: boolean;
+  isCustAddress: boolean;
+  primaryContact: string | null;
+  nationalMobileNum: string | null;
+  billToCode: string | null;
+  shipToCode: string | null;
+  soldToCode: string | null;
+  vendorID: string | null;
+  vendorId: string | null;
+  tenantId: number;
 }
 
 export interface SellerCompany {
-  id: string;
+  id: number;
   name: string;
-  // Add other company fields as needed
+  logo: string;
+  website: string;
+  defaultEmail: string;
+  reportEmail: string;
+  companyIdentifier: string;
+  verified: boolean;
+  activated: boolean;
+  profileAccess: boolean;
+  taxExempted: boolean;
+  bnplEnabled: boolean;
+  tenantId: number;
+  vendorId: number | null;
+  accountTypeId: AccountType;
+  businessTypeId: BusinessType;
+  subIndustryId: SubIndustry;
+  currencyId: CurrencyInfo;
+  taxDetailsId: TaxDetails;
+  addressId: AddressInfo | null;
+  taxExemptionId: string | null;
+  bnplCustomerId: string | null;
+  bnplPhone: string | null;
+  finStartMonth: number | null;
+  finStartDate: string | null;
+  finEndDate: string | null;
+  financialYear: string | null;
+  inviteAccess: number | null;
 }
 
 export interface SellerCurrency {
-  id: string;
-  code: string;
+  id: number;
+  currencyCode: string;
   symbol: string;
-  name: string;
-  // Add other currency fields as needed
+  description: string;
+  precision: number;
+  decimal: string;
+  thousand: string;
+  tenantId: number;
 }
 
 export interface TenantConfigResponse {
