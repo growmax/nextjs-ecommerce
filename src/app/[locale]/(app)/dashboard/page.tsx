@@ -1,13 +1,17 @@
-"use client";
+import { Suspense } from "react";
+import type { Metadata } from "next";
 import { PageLoader } from "@/components/Loaders/PageLoader/page-loader";
-import dynamic from "next/dynamic";
+import DashboardPageClient from "./components/DashboardPageClient";
 
-const DashboardPageClient = dynamic(
-  () => import("./components/DashboardPageClient"),
-  {
-    ssr: false,
-    loading: () => <PageLoader message="Loading Dashboard..." />,
-  }
-);
+export const metadata: Metadata = {
+  title: "Dashboard | E-Commerce",
+  description: "View your sales analytics and recent orders",
+};
 
-export default DashboardPageClient;
+export default function DashboardPage() {
+  return (
+    <Suspense fallback={<PageLoader message="Loading Dashboard..." />}>
+      <DashboardPageClient />
+    </Suspense>
+  );
+}

@@ -79,7 +79,7 @@ export interface FilterChipsConfig {
   value?: ReactNode;
 }
 
-export interface DashboardToolbarProps {
+export interface SectionToolbarProps {
   /** Main title displayed in the toolbar */
   title?: string;
 
@@ -163,7 +163,7 @@ export interface FilterTab {
   filter_data?: Record<string, unknown>;
 }
 
-export interface DashboardToolbarRef {
+export interface SectionToolbarRef {
   refresh: () => void;
   focus: () => void;
 }

@@ -21,7 +21,8 @@ import {
 import { Input } from "@/components/ui/input";
 import { useAuth } from "@/contexts/AuthContext";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Edit, Eye, EyeOff } from "lucide-react";
+import { Edit, Eye, EyeOff, Home } from "lucide-react";
+import Link from "next/link";
 import { useTranslations } from "next-intl";
 import { useEffect, useRef, useState } from "react";
 import { useForm } from "react-hook-form";
@@ -369,7 +370,7 @@ export default function LoginPage() {
                 )}
               </CardContent>
 
-              <CardFooter className="pt-6">
+              <CardFooter className="flex flex-col gap-3 pt-6">
                 <Button type="submit" className="w-full" disabled={isLoading}>
                   {isLoading
                     ? t("messages.loading")
@@ -377,6 +378,17 @@ export default function LoginPage() {
                       ? t("auth.signIn")
                       : t("buttons.continue")}
                 </Button>
+                <Link href="/" className="w-full">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    className="w-full"
+                    disabled={isLoading}
+                  >
+                    <Home className="mr-2 h-4 w-4" />
+                    {t("navigation.home") || "Home"}
+                  </Button>
+                </Link>
               </CardFooter>
             </form>
           </Form>

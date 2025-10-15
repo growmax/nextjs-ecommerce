@@ -1,5 +1,6 @@
 "use client";
 
+import { LoadingButton, SearchBox } from "@/components/custom";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -11,9 +12,9 @@ import {
 import { useIsMobile } from "@/hooks/use-mobile";
 import { cn } from "@/lib/utils";
 import type {
-  DashboardToolbarProps,
-  DashboardToolbarRef,
-} from "@/types/dashboard-toolbar";
+  SectionToolbarProps,
+  SectionToolbarRef,
+} from "@/types/section-toolbar";
 import {
   Columns3,
   Filter,
@@ -25,8 +26,6 @@ import {
   X,
 } from "lucide-react";
 import { forwardRef, useImperativeHandle, useRef } from "react";
-import { LoadingButton } from "./loading-button";
-import SearchBox from "./search";
 
 /**
  * Modern Dashboard Toolbar Component
@@ -42,7 +41,7 @@ import SearchBox from "./search";
  * - Loading states
  * - Customizable positioning and styling
  */
-const DashboardToolbar = forwardRef<DashboardToolbarRef, DashboardToolbarProps>(
+const SectionToolbar = forwardRef<SectionToolbarRef, SectionToolbarProps>(
   (
     {
       title,
@@ -111,7 +110,7 @@ const DashboardToolbar = forwardRef<DashboardToolbarRef, DashboardToolbarProps>(
         ) : (
           <>
             {/* Left Section - Title and Info */}
-            <div className="flex items-center gap-3 flex-1 min-w-0">
+            <div className="flex items-center gap-3 min-w-0">
               {/* Title */}
               {title && (
                 <div className={cn("min-w-0", noWrap && "max-w-[300px]")}>
@@ -215,6 +214,9 @@ const DashboardToolbar = forwardRef<DashboardToolbarRef, DashboardToolbarProps>(
                 </div>
               )}
             </div>
+
+            {/* Spacer to push actions to the right */}
+            <div className="flex-1" />
 
             {/* Right Section - Actions */}
             <div className="flex items-center gap-2">
@@ -424,9 +426,9 @@ const DashboardToolbar = forwardRef<DashboardToolbarRef, DashboardToolbarProps>(
         >
           <div
             className={cn(
-              "px-4 sm:px-6 py-1",
+              "px-4 py-1",
               "flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-2",
-              "max-w-screen-2xl mx-auto"
+              "w-full"
             )}
           >
             <ToolbarContent />
@@ -453,9 +455,9 @@ const DashboardToolbar = forwardRef<DashboardToolbarRef, DashboardToolbarProps>(
         >
           <div
             className={cn(
-              "px-4 sm:px-6 py-1",
+              "px-4 py-1",
               "flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-2",
-              "max-w-screen-2xl mx-auto"
+              "w-full"
             )}
           >
             <ToolbarContent />
@@ -469,7 +471,7 @@ const DashboardToolbar = forwardRef<DashboardToolbarRef, DashboardToolbarProps>(
   }
 );
 
-DashboardToolbar.displayName = "DashboardToolbar";
+SectionToolbar.displayName = "SectionToolbar";
 
-export { DashboardToolbar };
-export type { DashboardToolbarProps, DashboardToolbarRef };
+export { SectionToolbar };
+export type { SectionToolbarProps, SectionToolbarRef };

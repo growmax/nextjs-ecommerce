@@ -9,10 +9,10 @@ const __dirname = dirname(__filename);
 
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  // Disable React.StrictMode to prevent double API calls in development
-  reactStrictMode: false,
+  // Enable React.StrictMode for better performance warnings and debugging
+  reactStrictMode: true,
   experimental: {
-    optimizePackageImports: ["lucide-react", "@/components/ui"],
+    optimizePackageImports: ["lucide-react", "@/components/ui", "recharts"],
   },
   poweredByHeader: false,
   compress: true,
@@ -32,13 +32,23 @@ const nextConfig = {
   },
   images: {
     formats: ["image/avif", "image/webp"],
+    deviceSizes: [640, 750, 828, 1080, 1200, 1920, 2048, 3840],
+    imageSizes: [16, 32, 48, 64, 96, 128, 256, 384],
     minimumCacheTTL: 31536000,
+    dangerouslyAllowSVG: true,
+    contentDispositionType: "attachment",
+    contentSecurityPolicy: "default-src 'self'; script-src 'none'; sandbox;",
     remotePatterns: [
       {
         protocol: "https",
         hostname: "picsum.photos",
       },
+      {
+        protocol: "https",
+        hostname: "**.myapptino.com",
+      },
     ],
+    unoptimized: false,
   },
   headers: async () => [
     {

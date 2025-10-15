@@ -1,9 +1,9 @@
+import { UserApiResponse } from "@/lib/interfaces/UserInterfaces";
 import {
   coreCommerceClient,
   createClientWithContext,
   RequestContext,
 } from "../client";
-import { UserApiResponse } from "@/lib/interfaces/UserInterfaces";
 
 export interface UserDetails {
   id: string;
@@ -84,7 +84,7 @@ export class UserService {
     const client = createClientWithContext(coreCommerceClient, context);
 
     const response = await client.get(`/companys/${companyId}`);
-
+    console.log(response);
     return response.data;
   }
 

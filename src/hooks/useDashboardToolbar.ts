@@ -1,7 +1,7 @@
 "use client";
 
-import { useState, useCallback, useRef } from "react";
-import type { DashboardToolbarRef } from "@/types/dashboard-toolbar";
+import type { DashboardToolbarRef } from "@/types/section-toolbar";
+import { useCallback, useRef, useState } from "react";
 
 interface UseDashboardToolbarOptions {
   /** Initial search query */
@@ -211,4 +211,4 @@ export function useDashboardToolbar(options: UseDashboardToolbarOptions = {}) {
   };
 }
 
-export type { DashboardToolbarState, DashboardToolbarActions };
+export type { DashboardToolbarActions, DashboardToolbarState };
