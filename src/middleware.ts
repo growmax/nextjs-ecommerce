@@ -83,10 +83,23 @@ export async function middleware(request: NextRequest) {
   // Check if anonymous token cookie exists
   const existingToken = request.cookies.get("anonymous_token");
 
-  // Only call API if cookie is missing AND user is not authenticated
-  if (!existingToken && !isAuthenticated) {
+  // Only call API if cookie is missing, user is not authenticated, and not on static routes
+  const shouldFetchAnonymousToken =
+    !existingToken &&
+    !isAuthenticated &&
+    !pathname.startsWith("/_next") &&
+    !pathname.startsWith("/api") &&
+    !pathname.includes(".");
+
+  if (shouldFetchAnonymousToken) {
     try {
+      // Add timeout to prevent middleware from blocking too long
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 2000); // 2 second timeout
+
       const tokenResponse = await API.Auth.getAnonymousToken(domain);
+
+      clearTimeout(timeoutId);
 
       response.cookies.set("anonymous_token", tokenResponse.accessToken, {
         httpOnly: true,
@@ -95,7 +108,11 @@ export async function middleware(request: NextRequest) {
         path: "/",
         maxAge: 7 * 24 * 60 * 60, // 7 days
       });
-    } catch {}
+    } catch (error) {
+      // Log error but don't block the request
+      console.error("Failed to fetch anonymous token:", error);
+      // Continue without token
+    }
   }
 
   return response;

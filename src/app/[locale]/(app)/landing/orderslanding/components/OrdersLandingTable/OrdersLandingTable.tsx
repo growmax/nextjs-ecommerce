@@ -1,16 +1,15 @@
 "use client";
 
-import { useState, useEffect, useMemo, useCallback } from "react";
-import { useRouter } from "next/navigation";
-import { useLocale } from "next-intl";
-import { toast } from "sonner";
 import { ColumnDef } from "@tanstack/react-table";
+import { useLocale } from "next-intl";
+import { useRouter } from "next/navigation";
+import { useCallback, useEffect, useMemo, useState } from "react";
+import { toast } from "sonner";
 
-import DashboardTable from "@/components/custom/DashBoardTable";
+import SideDrawer from "@/components/custom/sidedrawer";
+import { DataTable } from "@/components/Global/DataTable";
 import FilterDrawer from "@/components/sales/FilterDrawer";
 import { QuoteFilterFormData } from "@/components/sales/QuoteFilterForm";
-import { FilterTabs } from "@/components/custom/FilterTabs";
-import SideDrawer from "@/components/custom/sidedrawer";
 import {
   Dialog,
   DialogContent,
@@ -18,19 +17,18 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { Skeleton } from "@/components/ui/skeleton";
 
+import { statusColor } from "@/components/custom/statuscolors";
 import { useCurrentUser } from "@/hooks/useCurrentUser";
-import orderService, { OrdersParams } from "@/lib/api/services/OrdersService";
 import ordersFilterService, {
   OrderFilter,
 } from "@/lib/api/services/OrdersFilterService";
+import orderService, { OrdersParams } from "@/lib/api/services/OrdersService";
 import PreferenceService, {
-  FilterPreferenceResponse,
   FilterPreference,
+  FilterPreferenceResponse,
 } from "@/lib/api/services/PreferenceService";
 import { type Order } from "@/types/dashboard/DasbordOrderstable/DashboardOrdersTable";
-import { statusColor } from "@/components/custom/statuscolors";
 import { OrdersLandingTableProps } from "../../types/ordertypes";
 
 // Helper functions
@@ -50,55 +48,6 @@ const convertDateToString = (
     ? date.toISOString().split("T")[0] || ""
     : String(date);
 };
-
-// Table Skeleton Component
-const TableSkeleton = ({ rows = 10 }: { rows?: number }) => (
-  <div className="rounded-md border shadow-sm overflow-hidden h-full flex flex-col">
-    <div className="border-b border-gray-200 bg-gray-50 flex-shrink-0">
-      <div className="flex">
-        {Array.from({ length: 11 }).map((_, index) => (
-          // eslint-disable-next-line react/no-array-index-key
-          <div key={`header-${index}`} className="px-2 py-0.5 w-[150px]">
-            <Skeleton className="h-4 w-20" />
-          </div>
-        ))}
-      </div>
-    </div>
-    <div className="flex-1 overflow-auto">
-      {Array.from({ length: rows }).map((_, rowIndex) => (
-        // eslint-disable-next-line react/no-array-index-key
-        <div
-          key={`row-${rowIndex}`}
-          className="border-b border-gray-100 flex animate-in fade-in slide-in-from-bottom-1"
-          style={{ animationDelay: `${rowIndex * 50}ms` }}
-        >
-          {Array.from({ length: 11 }).map((_, colIndex) => (
-            // eslint-disable-next-line react/no-array-index-key
-            <div
-              key={`cell-${rowIndex}-${colIndex}`}
-              className="px-1 sm:px-2 py-1 w-[150px]"
-            >
-              <Skeleton className="h-4 w-20" />
-            </div>
-          ))}
-        </div>
-      ))}
-    </div>
-    <div className="flex items-center justify-end gap-4 px-4 py-2 border-t bg-gray-50/50 flex-shrink-0">
-      <div className="flex items-center gap-2">
-        <Skeleton className="h-3 w-16" />
-        <Skeleton className="h-6 w-12" />
-      </div>
-      <div className="flex items-center gap-1">
-        <Skeleton className="h-3 w-20" />
-      </div>
-      <div className="flex items-center gap-1">
-        <Skeleton className="w-6 h-6" />
-        <Skeleton className="w-6 h-6" />
-      </div>
-    </div>
-  </div>
-);
 
 function OrdersLandingTable({
   refreshTrigger,
@@ -743,77 +692,28 @@ function OrdersLandingTable({
         </div>
       </SideDrawer>
 
-      <div className="flex flex-col h-[calc(100vh-140px)]">
-        <div className="flex-shrink-0 mb-1">
-          <FilterTabs
-            tabs={tabs}
-            defaultValue={
-              filterPreferences?.preference?.filters &&
-              filterPreferences.preference.filters.length > 0
-                ? `filter-${filterPreferences.preference.selected}`
-                : "all"
-            }
-            onTabChange={handleTabChange}
-            onAddTab={() => {
-              setInitialFilterData(undefined);
-              setDrawerMode("create");
-              setIsDrawerOpen(true);
+      <div className="flex flex-col h-[calc(100vh-140px)] mt-6">
+        <div className="flex-1 flex flex-col overflow-hidden">
+          <DataTable
+            data={orders}
+            columns={columns}
+            pagination={pagination}
+            onPaginationChange={handlePaginationChange}
+            totalCount={totalCount}
+            manualPagination={true}
+            isLoading={loading}
+            onRowClick={row => {
+              const orderId = row.original.orderIdentifier;
+              if (orderId) router.push(`/${locale}/orders/${orderId}`);
             }}
-            onFilterClick={() => {
-              let initialData: QuoteFilterFormData | undefined;
-              if (
-                activeTab !== "all" &&
-                filterPreferences?.preference?.filters
-              ) {
-                const tabIndex = parseInt(activeTab.replace("filter-", ""));
-                const filter = filterPreferences.preference.filters.find(
-                  f => f.filter_index === tabIndex
-                );
-                if (filter) initialData = convertToFormData(filter);
-              }
-              setInitialFilterData(initialData);
-              setDrawerMode("filter");
-              setIsDrawerOpen(true);
-            }}
-            onSettingsClick={() =>
-              toast.info("Settings functionality coming soon!")
-            }
+            pageSizeOptions={[20, 50, 75, 100]}
+            showPagination={true}
+            showPageSizeSelector={true}
+            showFirstLastButtons={true}
+            emptyMessage="No orders found"
+            enableToolbar={false}
+            className="h-full flex flex-col"
           />
-        </div>
-
-        <div className="flex-1 overflow-hidden">
-          {loading ? (
-            <TableSkeleton rows={rowPerPage} />
-          ) : (
-            <DashboardTable
-              data={orders}
-              columns={columns}
-              loading={false}
-              totalDataCount={totalCount}
-              pagination={pagination}
-              setPagination={handlePaginationChange}
-              setPage={setPage}
-              pageOptions={[20, 50, 75, 100]}
-              handlePrevious={() => page > 0 && setPage(page - 1)}
-              handleNext={() => {
-                const maxPage = Math.ceil(totalCount / rowPerPage) - 1;
-                if (page < maxPage) setPage(page + 1);
-              }}
-              page={page}
-              rowPerPage={rowPerPage}
-              setRowPerPage={value => {
-                const newValue =
-                  typeof value === "string" ? parseInt(value, 10) : value;
-                setRowPerPage(newValue);
-                setPage(0);
-              }}
-              onRowClick={row => {
-                const orderId = row.orderIdentifier;
-                if (orderId) router.push(`/${locale}/orders/${orderId}`);
-              }}
-              tableHeight="h-full"
-            />
-          )}
         </div>
       </div>
 

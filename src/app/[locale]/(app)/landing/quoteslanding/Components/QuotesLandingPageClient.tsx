@@ -1,6 +1,6 @@
 "use client";
 
-import { DashboardToolbar } from "@/components/custom/dashboard-toolbar";
+import { SectionToolbar } from "@/components/Global/SectionToolbar/SectionToolbar";
 import { Toaster } from "@/components/ui/sonner";
 import { Download } from "lucide-react";
 import { useCallback, useState } from "react";
@@ -28,7 +28,7 @@ export default function QuotesLandingPageClient() {
 
   return (
     <div className="h-full flex flex-col">
-      <DashboardToolbar
+      <SectionToolbar
         title="Quotes"
         secondary={{
           condition: true,
