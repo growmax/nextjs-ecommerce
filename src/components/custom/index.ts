@@ -18,10 +18,11 @@ export { default as Logo } from "./logo";
 export type {
   ActionToolbarProps,
   ActionToolbarRef,
-  SelectionCount,
+  SelectionCount
 } from "@/types/action-toolbar";
 export type { SaveCancelToolbarProps } from "@/types/save-cancel";
 export type {
   SectionToolbarProps,
-  SectionToolbarRef,
+  SectionToolbarRef
 } from "@/types/section-toolbar";
+

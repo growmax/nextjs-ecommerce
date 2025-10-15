@@ -1,7 +1,7 @@
 "use client";
 
-import dynamic from "next/dynamic";
 import { Skeleton } from "@/components/ui/skeleton";
+import dynamic from "next/dynamic";
 
 // Lazy load heavy components to reduce initial bundle size
 const DashboardChart = dynamic(

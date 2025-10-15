@@ -12,7 +12,7 @@ export {
   storefrontClient,
   type ApiClientConfig,
   type ApiError,
-  type RequestContext,
+  type RequestContext
 } from "./client";
 
 // Import services
@@ -26,7 +26,6 @@ import TenantService from "./services/TenantService";
 import UserService from "./services/UserService";
 
 // Import SubIndustry service
-import SubIndustryService from "./services/SubIndustryService";
 
 // Import token management services
 import { AuthTokenService } from "../services/AuthTokenService";
@@ -52,42 +51,38 @@ export {
   DiscountService,
   OrdersService,
   OrderStatusService,
-  PreferenceService,
-  QuotesService,
-  QuoteStatusService,
-  RequestQueueService,
+  PreferenceService, QuotesService, QuoteStatusService, RequestQueueService,
   StoreFrontService,
-  SubIndustryService,
   TenantService,
   TokenRefreshService,
-  UserService,
+  UserService
 };
 
 // Export service types
-export type {
-  LoginRequest,
-  LoginResponse,
-  RefreshTokenResponse,
-} from "./services/AuthService";
+  export type {
+    LoginRequest,
+    LoginResponse,
+    RefreshTokenResponse
+  } from "./services/AuthService";
 
 export type { TenantInfo } from "./services/TenantService";
 
 export type {
   CompanyDetails,
   UserDetails,
-  UserProfile,
+  UserProfile
 } from "./services/UserService";
 
 export type {
   CatalogSettings,
   Category,
-  ProductSearchOptions,
+  ProductSearchOptions
 } from "./services/CatalogService";
 
 export type {
   GraphQLQuery,
   GraphQLResponse,
-  StoreFrontConfig,
+  StoreFrontConfig
 } from "./services/StoreFrontService";
 
 export type { Cart, CartCount, CartParams } from "./services/CartService";
@@ -96,26 +91,26 @@ export type { Cart, CartCount, CartParams } from "./services/CartService";
 export type {
   DashboardApiResponse,
   DashboardFilterParams,
-  TopPerformerItem,
+  TopPerformerItem
 } from "@/types/dashboard";
 
 export type { OrdersParams } from "./services/OrdersService";
 
 export type {
   OrderStatusResponse,
-  StatusOption,
+  StatusOption
 } from "./services/OrderStatusService";
 
 export type {
   PreferenceModule,
-  UserPreference,
+  UserPreference
 } from "./services/PreferenceService";
 
 export type {
   Discount,
   DiscountApiResponse,
   DiscountItem,
-  DiscountRequest,
+  DiscountRequest
 } from "./services/DiscountService";
 
 // Export CompanyService types
@@ -136,9 +131,7 @@ export type {
   DashboardResponse,
   DeleteAddressResponse,
   DeleteBranchParams,
-  DistrictData,
-  getSubIndustrysbyid,
-  Industry,
+  DistrictData, getSubIndustrysbyid, Industry,
   OrderGraphItem,
   QuoteGraphItem,
   QuoteStatusGraphItem,
@@ -149,48 +142,44 @@ export type {
   UpdateBranchResponse,
   Warehouse,
   Zone,
-  ZoneInfo,
+  ZoneInfo
 } from "./services/CompanyService";
 
 export type {
   ApprovalGroup,
   CurrencySymbol,
-  QuoteItem,
-  QuotesApiResponse,
+  QuoteItem, QuotesApiResponse,
   QuotesQueryParams,
   QuotesRequestBody,
-  QuotesResponseData,
-  QuoteUser,
+  QuotesResponseData, QuoteUser
 } from "./services/QuotesService";
 
 export type {
-  QuoteStatusApiResponse,
-  QuoteStatusParams,
-  QuoteStatusResponse,
+  QuoteStatusApiResponse, QuoteStatusParams, QuoteStatusResponse
 } from "./services/StatusService";
 
 // Export token management service types
 export type {
   QueuedRequest,
-  RefreshTokenResult,
+  RefreshTokenResult
 } from "../services/TokenRefreshService";
 
 export type {
   EnhancedQueuedRequest,
-  QueuedRequestOptions,
+  QueuedRequestOptions
 } from "../services/RequestQueueService";
 
 // Export utility functions
 export {
   getCommonApiHeaders,
   getOriginHeader,
-  getTenantApiHeaders,
+  getTenantApiHeaders
 } from "../utils/originUtils";
 
 export type {
   OrdersApiResponse,
   OrdersRequestParams,
-  OrdersResponse,
+  OrdersResponse
 } from "./services/Dasboard/DashboardOrdersTable";
 
 // Convenience re-exports for common patterns
@@ -209,7 +198,6 @@ export const API = {
   StoreFront: StoreFrontService,
   Tenant: TenantService,
   User: UserService,
-  SubIndustry: SubIndustryService,
   // Token management services
   TokenRefresh: TokenRefreshService,
   RequestQueue: RequestQueueService,

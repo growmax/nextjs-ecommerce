@@ -7,31 +7,12 @@ const withNextIntl = createNextIntlPlugin("./src/i18n/request.ts");
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
-// Bundle analyzer (run with ANALYZE=true npm run build)
-import withBundleAnalyzer from "@next/bundle-analyzer";
-const bundleAnalyzer = withBundleAnalyzer({
-  enabled: process.env.ANALYZE === "true",
-});
-
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  // Enable React.StrictMode for better performance warnings and debugging
-  reactStrictMode: true,
+  // Disable React.StrictMode to prevent double API calls in development
+  reactStrictMode: false,
   experimental: {
-    optimizePackageImports: [
-      "lucide-react",
-      "@/components/ui",
-      "recharts",
-      "@radix-ui/react-dialog",
-      "@radix-ui/react-dropdown-menu",
-      "@radix-ui/react-select",
-      "@radix-ui/react-popover",
-      "@tanstack/react-table",
-      "@tanstack/react-query",
-      "date-fns",
-      "react-hook-form",
-      "@hookform/resolvers",
-    ],
+    optimizePackageImports: ["lucide-react", "@/components/ui"],
   },
   poweredByHeader: false,
   compress: true,
@@ -51,23 +32,13 @@ const nextConfig = {
   },
   images: {
     formats: ["image/avif", "image/webp"],
-    deviceSizes: [640, 750, 828, 1080, 1200, 1920, 2048, 3840],
-    imageSizes: [16, 32, 48, 64, 96, 128, 256, 384],
     minimumCacheTTL: 31536000,
-    dangerouslyAllowSVG: true,
-    contentDispositionType: "attachment",
-    contentSecurityPolicy: "default-src 'self'; script-src 'none'; sandbox;",
     remotePatterns: [
       {
         protocol: "https",
         hostname: "picsum.photos",
       },
-      {
-        protocol: "https",
-        hostname: "**.myapptino.com",
-      },
     ],
-    unoptimized: false,
   },
   headers: async () => [
     {
@@ -143,4 +114,4 @@ const nextConfig = {
   ],
 };
 
-export default withNextIntl(bundleAnalyzer(nextConfig));
+export default withNextIntl(nextConfig);

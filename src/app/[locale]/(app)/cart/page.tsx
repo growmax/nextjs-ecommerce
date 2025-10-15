@@ -1,29 +1,10 @@
-import { Skeleton } from "@/components/ui/skeleton";
-import type { Metadata } from "next";
-import CartPageClient from "./components/CartPageClient";
+"use client";
+import dynamic from "next/dynamic";
 
-export const metadata: Metadata = {
-  title: "Shopping Cart | E-Commerce",
-  description: "Review and manage your shopping cart items",
-};
-
-function CartPageSkeleton() {
-  return (
-    <div className="container mx-auto p-4 space-y-4">
-      <Skeleton className="h-8 w-48" />
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <div className="lg:col-span-2 space-y-4">
-          <Skeleton className="h-48 w-full" />
-          <Skeleton className="h-48 w-full" />
-        </div>
-        <div className="space-y-4">
-          <Skeleton className="h-64 w-full" />
-        </div>
-      </div>
-    </div>
-  );
-}
+const CartPage = dynamic(() => import("./components/CartPageClient"), {
+  ssr: false,
+});
 
 export default function Page() {
-  return <CartPageClient />;
+  return <CartPage />;
 }

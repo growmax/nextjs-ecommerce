@@ -1,5 +1,5 @@
 // Temporarily disabled - uncomment when needed
-export {}; // Make this a module
+export { }; // Make this a module
 
 // import { NextRequest, NextResponse } from "next/server";
 // import { cookies } from "next/headers";

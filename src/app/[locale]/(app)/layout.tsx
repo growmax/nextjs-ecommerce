@@ -1,6 +1,6 @@
 import { AppSidebar } from "@/components/app-sidebar";
 import { ConditionalFooter } from "@/components/ConditionalFooter";
-import { SiteHeader } from "@/components/site-header";
+import NavBar from "@/components/nav-bar";
 import { CartProviderWrapper } from "@/components/providers/CartProviderWrapper";
 import { TenantDataProvider } from "@/components/TenantDataProvider";
 import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
@@ -19,27 +19,28 @@ export default async function AppLayout({
 }: {
   children: React.ReactNode;
 }) {
-  // Parallelize independent API calls for better performance
-  const [messages, _headersList, authState, tenantData] = await Promise.all([
-    getMessages(),
-    headers(),
-    getServerAuthState(),
-    (async () => {
-      const hdrs = await headers();
-      const tenantCode = hdrs.get("x-tenant-code");
-      const tenantDomain = hdrs.get("x-tenant-domain");
-      const tenantOrigin = hdrs.get("x-tenant-origin");
+  const messages = await getMessages();
 
-      if (!tenantCode || !tenantDomain || !tenantOrigin) return null;
-      try {
-        return await fetchTenantFromExternalAPI(tenantDomain, tenantOrigin);
-      } catch {
-        return null;
-      }
-    })(),
-  ]);
+  // Get tenant information from headers (set by middleware)
+  const headersList = await headers();
+  const tenantCode = headersList.get("x-tenant-code");
+  const tenantDomain = headersList.get("x-tenant-domain");
+  const tenantOrigin = headersList.get("x-tenant-origin");
 
-  // Fetch user data server-side only if authenticated (depends on authState)
+  // Fetch tenant data server-side
+  let tenantData = null;
+  if (tenantCode && tenantDomain && tenantOrigin) {
+    try {
+      tenantData = await fetchTenantFromExternalAPI(tenantDomain, tenantOrigin);
+    } catch {
+      tenantData = null;
+    }
+  }
+
+  // Get server-side authentication state
+  const authState = await getServerAuthState();
+
+  // Fetch user data server-side only if authenticated
   const serverUserService = ServerUserService.getInstance();
   let userData = null;
   if (authState.isAuthenticated) {
@@ -60,20 +61,19 @@ export default async function AppLayout({
           <UserSessionProvider initialUserData={userData?.data || null}>
             <CartProviderWrapper>
               <TenantDataProvider>
-                <div className="[--header-height:calc(theme(spacing.14))]">
-                  <SidebarProvider className="flex flex-col">
-                    <SiteHeader />
-                    <div className="flex flex-1">
-                      <AppSidebar />
-                      <SidebarInset className="overflow-x-hidden">
-                        <main className="min-h-screen pb-8 overflow-x-hidden [&_.landing-page]:!pt-0 [&_.landing-page]:!pb-0 [&_.landing-page]:!min-h-0 [&_.landing-page]:!h-[calc(100vh-105px)]">
-                          {children}
-                        </main>
-                        <ConditionalFooter />
-                      </SidebarInset>
+                <SidebarProvider>
+                  <AppSidebar />
+                  <SidebarInset className="overflow-x-hidden">
+                    {/* Fixed Navigation */}
+                    <div className="fixed top-0 left-0 right-0 z-40 bg-background">
+                      <NavBar />
                     </div>
-                  </SidebarProvider>
-                </div>
+                    <main className="min-h-screen pb-8 overflow-x-hidden pt-[69px] [&_.landing-page]:!pt-0 [&_.landing-page]:!pb-0 [&_.landing-page]:!min-h-0 [&_.landing-page]:!h-[calc(100vh-69px)]">
+                      {children}
+                    </main>
+                    <ConditionalFooter />
+                  </SidebarInset>
+                </SidebarProvider>
               </TenantDataProvider>
             </CartProviderWrapper>
           </UserSessionProvider>

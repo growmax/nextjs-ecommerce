@@ -6,8 +6,9 @@ import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 
+import DashboardTable from "@/components/custom/DashBoardTable";
+import { FilterTabs } from "@/components/custom/FilterTabs";
 import SideDrawer from "@/components/custom/sidedrawer";
-import { DataTable } from "@/components/Global/DataTable";
 import FilterDrawer from "@/components/sales/FilterDrawer";
 import { QuoteFilterFormData } from "@/components/sales/QuoteFilterForm";
 import {
@@ -17,6 +18,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { Skeleton } from "@/components/ui/skeleton";
 
 import { statusColor } from "@/components/custom/statuscolors";
 import { useCurrentUser } from "@/hooks/useCurrentUser";
@@ -25,6 +27,7 @@ import ordersFilterService, {
 } from "@/lib/api/services/OrdersFilterService";
 import orderService, { OrdersParams } from "@/lib/api/services/OrdersService";
 import PreferenceService, {
+  FilterPreference,
   FilterPreferenceResponse,
 } from "@/lib/api/services/PreferenceService";
 import { type Order } from "@/types/dashboard/DasbordOrderstable/DashboardOrdersTable";
@@ -48,6 +51,55 @@ const convertDateToString = (
     : String(date);
 };
 
+// Table Skeleton Component
+const TableSkeleton = ({ rows = 10 }: { rows?: number }) => (
+  <div className="rounded-md border shadow-sm overflow-hidden h-full flex flex-col">
+    <div className="border-b border-gray-200 bg-gray-50 flex-shrink-0">
+      <div className="flex">
+        {Array.from({ length: 11 }).map((_, index) => (
+          // eslint-disable-next-line react/no-array-index-key
+          <div key={`header-${index}`} className="px-2 py-0.5 w-[150px]">
+            <Skeleton className="h-4 w-20" />
+          </div>
+        ))}
+      </div>
+    </div>
+    <div className="flex-1 overflow-auto">
+      {Array.from({ length: rows }).map((_, rowIndex) => (
+        // eslint-disable-next-line react/no-array-index-key
+        <div
+          key={`row-${rowIndex}`}
+          className="border-b border-gray-100 flex animate-in fade-in slide-in-from-bottom-1"
+          style={{ animationDelay: `${rowIndex * 50}ms` }}
+        >
+          {Array.from({ length: 11 }).map((_, colIndex) => (
+            // eslint-disable-next-line react/no-array-index-key
+            <div
+              key={`cell-${rowIndex}-${colIndex}`}
+              className="px-1 sm:px-2 py-1 w-[150px]"
+            >
+              <Skeleton className="h-4 w-20" />
+            </div>
+          ))}
+        </div>
+      ))}
+    </div>
+    <div className="flex items-center justify-end gap-4 px-4 py-2 border-t bg-gray-50/50 flex-shrink-0">
+      <div className="flex items-center gap-2">
+        <Skeleton className="h-3 w-16" />
+        <Skeleton className="h-6 w-12" />
+      </div>
+      <div className="flex items-center gap-1">
+        <Skeleton className="h-3 w-20" />
+      </div>
+      <div className="flex items-center gap-1">
+        <Skeleton className="w-6 h-6" />
+        <Skeleton className="w-6 h-6" />
+      </div>
+    </div>
+  </div>
+);
+
 function OrdersLandingTable({
   refreshTrigger,
   setExportCallback,
@@ -58,7 +110,7 @@ function OrdersLandingTable({
 
   // State
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
-  const [_drawerMode] = useState<"filter" | "create">("filter");
+  const [drawerMode, setDrawerMode] = useState<"filter" | "create">("filter");
   const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);
   const [totalCount, setTotalCount] = useState(0);
@@ -68,11 +120,12 @@ function OrdersLandingTable({
   const [filterData, setFilterData] = useState<QuoteFilterFormData | null>(
     null
   );
-  const [initialFilterData] = useState<QuoteFilterFormData | undefined>(
-    undefined
-  );
-  const [_filterPreferences] = useState<FilterPreferenceResponse | null>(null);
-  const [_activeTab] = useState("all");
+  const [initialFilterData, setInitialFilterData] = useState<
+    QuoteFilterFormData | undefined
+  >(undefined);
+  const [filterPreferences, setFilterPreferences] =
+    useState<FilterPreferenceResponse | null>(null);
+  const [activeTab, setActiveTab] = useState("all");
   const [isAddDrawerOpen, setIsAddDrawerOpen] = useState(false);
   const [isItemsDialogOpen, setIsItemsDialogOpen] = useState(false);
   const [selectedOrderItems, setSelectedOrderItems] = useState<Order | null>(
@@ -294,11 +347,39 @@ function OrdersLandingTable({
     [rowPerPage]
   );
 
+  // Convert saved filter to form data
+  const convertToFormData = useCallback(
+    (filter: FilterPreference): QuoteFilterFormData => ({
+      filterName: filter.filter_name || "",
+      status: filter.status || [],
+      quoteId: filter.identifier || "",
+      quoteName: filter.name || "",
+      quotedDateStart: filter.startDate
+        ? new Date(filter.startDate)
+        : undefined,
+      quotedDateEnd: filter.endDate ? new Date(filter.endDate) : undefined,
+      lastUpdatedDateStart: filter.startCreatedDate
+        ? new Date(filter.startCreatedDate)
+        : undefined,
+      lastUpdatedDateEnd: filter.endCreatedDate
+        ? new Date(filter.endCreatedDate)
+        : undefined,
+      subtotalStart: filter.startValue?.toString() || "",
+      subtotalEnd: filter.endValue?.toString() || "",
+      taxableStart: filter.startTaxableAmount?.toString() || "",
+      taxableEnd: filter.endTaxableAmount?.toString() || "",
+      totalStart: filter.startGrandTotal?.toString() || "",
+      totalEnd: filter.endGrandTotal?.toString() || "",
+    }),
+    []
+  );
+
   // Load filter preferences
   const loadFilterPreferences = useCallback(async () => {
     try {
       const preferences =
         await PreferenceService.findFilterPreferences("order");
+      setFilterPreferences(preferences);
       return preferences;
     } catch {
       return null;
@@ -308,7 +389,7 @@ function OrdersLandingTable({
   // Fetch orders
   const fetchOrders = useCallback(async () => {
     if (!user?.userId || !user?.companyId) {
-      // Keep loading true while waiting for user data
+      setLoading(false);
       return;
     }
 
@@ -506,6 +587,53 @@ function OrdersLandingTable({
     [pagination]
   );
 
+  const handleTabChange = useCallback(
+    (value: string) => {
+      setActiveTab(value);
+      setPage(0);
+
+      const currentTabs =
+        !filterPreferences?.preference?.filters ||
+        filterPreferences.preference.filters.length === 0
+          ? [
+              {
+                id: "all",
+                label: "All",
+                hasFilter: true,
+                isFilterActive: !!filterData,
+                filterIndex: undefined,
+              },
+            ]
+          : filterPreferences.preference.filters.map((filter, index) => ({
+              id: `filter-${index}`,
+              label: filter.filter_name,
+              hasFilter: true,
+              isFilterActive:
+                filterPreferences.preference.selected === index || !!filterData,
+              filterIndex: index,
+            }));
+
+      const selectedTab = currentTabs.find(tab => tab.id === value);
+      if (
+        selectedTab &&
+        filterPreferences &&
+        selectedTab.filterIndex !== undefined
+      ) {
+        const selectedFilter =
+          filterPreferences.preference.filters[selectedTab.filterIndex];
+        if (selectedFilter) {
+          const formData = convertToFormData(selectedFilter);
+          setFilterData(formData);
+          toast.success(`Applied "${selectedTab.label}" filter successfully`);
+        }
+      } else {
+        setFilterData(null);
+        toast.success(`Switched to "${selectedTab?.label || "All"}" view`);
+      }
+    },
+    [filterPreferences, filterData, convertToFormData]
+  );
+
   const handleSaveFilter = useCallback(
     async (filterData: QuoteFilterFormData) => {
       if (!user?.userId || !user?.companyId) {
@@ -531,6 +659,32 @@ function OrdersLandingTable({
     },
     [user?.userId, user?.companyId, createFilterFromData, loadFilterPreferences]
   );
+
+  // Define tabs
+  const tabs = useMemo(() => {
+    if (
+      !filterPreferences?.preference?.filters ||
+      filterPreferences.preference.filters.length === 0
+    ) {
+      return [
+        {
+          id: "all",
+          label: "All",
+          hasFilter: true,
+          isFilterActive: !!filterData,
+          filterIndex: undefined,
+        },
+      ];
+    }
+    return filterPreferences.preference.filters.map((filter, index) => ({
+      id: `filter-${index}`,
+      label: filter.filter_name,
+      hasFilter: true,
+      isFilterActive:
+        filterPreferences.preference.selected === index || !!filterData,
+      filterIndex: index,
+    }));
+  }, [filterPreferences, filterData]);
 
   // Effects
   useEffect(() => {
@@ -566,15 +720,15 @@ function OrdersLandingTable({
         }}
         onSave={handleSaveFilter}
         title={
-          _drawerMode === "create" ? "Create Custom Filter" : "Order Filters"
+          drawerMode === "create" ? "Create Custom Filter" : "Order Filters"
         }
         filterType="Order"
-        activeTab={_activeTab}
+        activeTab={activeTab}
         userId={user?.userId}
         companyId={user?.companyId}
         module="order"
         initialFilterData={initialFilterData}
-        mode={_drawerMode}
+        mode={drawerMode}
       />
 
       <SideDrawer
@@ -589,28 +743,77 @@ function OrdersLandingTable({
         </div>
       </SideDrawer>
 
-      <div className="flex flex-col h-[calc(100vh-140px)] mt-6">
-        <div className="flex-1 flex flex-col overflow-hidden">
-          <DataTable
-            data={orders}
-            columns={columns}
-            pagination={pagination}
-            onPaginationChange={handlePaginationChange}
-            totalCount={totalCount}
-            manualPagination={true}
-            isLoading={loading}
-            onRowClick={row => {
-              const orderId = row.original.orderIdentifier;
-              if (orderId) router.push(`/${locale}/orders/${orderId}`);
+      <div className="flex flex-col h-[calc(100vh-140px)]">
+        <div className="flex-shrink-0 mb-1">
+          <FilterTabs
+            tabs={tabs}
+            defaultValue={
+              filterPreferences?.preference?.filters &&
+              filterPreferences.preference.filters.length > 0
+                ? `filter-${filterPreferences.preference.selected}`
+                : "all"
+            }
+            onTabChange={handleTabChange}
+            onAddTab={() => {
+              setInitialFilterData(undefined);
+              setDrawerMode("create");
+              setIsDrawerOpen(true);
             }}
-            pageSizeOptions={[20, 50, 75, 100]}
-            showPagination={true}
-            showPageSizeSelector={true}
-            showFirstLastButtons={true}
-            emptyMessage="No orders found"
-            enableToolbar={false}
-            className="h-full flex flex-col"
+            onFilterClick={() => {
+              let initialData: QuoteFilterFormData | undefined;
+              if (
+                activeTab !== "all" &&
+                filterPreferences?.preference?.filters
+              ) {
+                const tabIndex = parseInt(activeTab.replace("filter-", ""));
+                const filter = filterPreferences.preference.filters.find(
+                  f => f.filter_index === tabIndex
+                );
+                if (filter) initialData = convertToFormData(filter);
+              }
+              setInitialFilterData(initialData);
+              setDrawerMode("filter");
+              setIsDrawerOpen(true);
+            }}
+            onSettingsClick={() =>
+              toast.info("Settings functionality coming soon!")
+            }
           />
+        </div>
+
+        <div className="flex-1 overflow-hidden">
+          {loading ? (
+            <TableSkeleton rows={rowPerPage} />
+          ) : (
+            <DashboardTable
+              data={orders}
+              columns={columns}
+              loading={false}
+              totalDataCount={totalCount}
+              pagination={pagination}
+              setPagination={handlePaginationChange}
+              setPage={setPage}
+              pageOptions={[20, 50, 75, 100]}
+              handlePrevious={() => page > 0 && setPage(page - 1)}
+              handleNext={() => {
+                const maxPage = Math.ceil(totalCount / rowPerPage) - 1;
+                if (page < maxPage) setPage(page + 1);
+              }}
+              page={page}
+              rowPerPage={rowPerPage}
+              setRowPerPage={value => {
+                const newValue =
+                  typeof value === "string" ? parseInt(value, 10) : value;
+                setRowPerPage(newValue);
+                setPage(0);
+              }}
+              onRowClick={row => {
+                const orderId = row.orderIdentifier;
+                if (orderId) router.push(`/${locale}/orders/${orderId}`);
+              }}
+              tableHeight="h-full"
+            />
+          )}
         </div>
       </div>
 

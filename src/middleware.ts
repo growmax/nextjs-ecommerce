@@ -1,4 +1,5 @@
 import { locales } from "@/i18n/config";
+import API from "@/lib/api";
 import { getDomain } from "@/lib/domain";
 import createIntlMiddleware from "next-intl/middleware";
 import { NextRequest, NextResponse } from "next/server";
@@ -78,6 +79,24 @@ export async function middleware(request: NextRequest) {
       ? process.env.DEFAULT_ORIGIN || request.nextUrl.origin
       : request.nextUrl.origin;
   response.headers.set("x-tenant-origin", tenantOrigin);
+
+  // Check if anonymous token cookie exists
+  const existingToken = request.cookies.get("anonymous_token");
+
+  // Only call API if cookie is missing AND user is not authenticated
+  if (!existingToken && !isAuthenticated) {
+    try {
+      const tokenResponse = await API.Auth.getAnonymousToken(domain);
+
+      response.cookies.set("anonymous_token", tokenResponse.accessToken, {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === "production",
+        sameSite: "lax",
+        path: "/",
+        maxAge: 7 * 24 * 60 * 60, // 7 days
+      });
+    } catch {}
+  }
 
   return response;
 }

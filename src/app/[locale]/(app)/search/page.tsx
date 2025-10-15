@@ -1,23 +1,44 @@
-import type { Metadata } from "next";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+"use client";
+
 import { Button } from "@/components/ui/button";
-import { Search, ArrowLeft } from "lucide-react";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { ArrowLeft, Search } from "lucide-react";
 import Link from "next/link";
-import SearchClient from "./SearchClient";
+import { useRouter, useSearchParams } from "next/navigation";
+import { useEffect, useState } from "react";
 
-export const metadata: Metadata = {
-  title: "Search Products | E-Commerce",
-  description: "Search for products in our catalog",
-};
+export default function SearchPage() {
+  const searchParams = useSearchParams();
+  const router = useRouter();
+  const [searchQuery, setSearchQuery] = useState("");
+  const [mounted, setMounted] = useState(false);
 
-interface SearchPageProps {
-  searchParams: {
-    query?: string;
+  const query = searchParams.get("query") || "";
+
+  useEffect(() => {
+    setMounted(true);
+    setSearchQuery(query);
+  }, [query]);
+
+  const handleSearch = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (searchQuery.trim()) {
+      router.push(`/search?query=${encodeURIComponent(searchQuery.trim())}`);
+    }
   };
-}
 
-export default function SearchPage({ searchParams }: SearchPageProps) {
-  const query = searchParams.query || "";
+  if (!mounted) {
+    return (
+      <div className="container mx-auto px-4 py-8">
+        <Card className="max-w-2xl mx-auto">
+          <CardContent className="p-6">
+            <CardTitle>Search</CardTitle>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
 
   return (
     <div className="container mx-auto px-4 py-8">
@@ -35,7 +56,23 @@ export default function SearchPage({ searchParams }: SearchPageProps) {
         </CardHeader>
 
         <CardContent className="space-y-6">
-          <SearchClient initialQuery={query} />
+          <form onSubmit={handleSearch} className="relative">
+            <Input
+              type="text"
+              placeholder="Search products..."
+              value={searchQuery}
+              onChange={e => setSearchQuery(e.target.value)}
+              className="pr-12"
+            />
+            <Button
+              type="submit"
+              size="sm"
+              variant="ghost"
+              className="absolute right-2 top-1/2 -translate-y-1/2"
+            >
+              <Search className="h-4 w-4" />
+            </Button>
+          </form>
 
           {query ? (
             <div className="space-y-4">

@@ -1,6 +1,6 @@
-import { Suspense } from "react";
-import type { Metadata } from "next";
 import { PageLoader } from "@/components/Loaders/PageLoader/page-loader";
+import type { Metadata } from "next";
+import { Suspense } from "react";
 import DashboardPageClient from "./components/DashboardPageClient";
 
 export const metadata: Metadata = {
