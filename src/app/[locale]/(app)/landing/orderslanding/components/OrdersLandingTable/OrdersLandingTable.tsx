@@ -619,27 +619,29 @@ function OrdersLandingTable({
         </div>
       </SideDrawer>
 
-      <div className="mt-6">
-        <DataTable
-          data={orders}
-          columns={columns}
-          pagination={pagination}
-          onPaginationChange={handlePaginationChange}
-          totalCount={totalCount}
-          manualPagination={true}
-          isLoading={loading}
-          onRowClick={row => {
-            const orderId = row.original.orderIdentifier;
-            if (orderId) router.push(`/${locale}/orders/${orderId}`);
-          }}
-          pageSizeOptions={[20, 50, 75, 100]}
-          showPagination={true}
-          showPageSizeSelector={true}
-          showFirstLastButtons={true}
-          emptyMessage="No orders found"
-          enableToolbar={false}
-          className="flex flex-col"
-        />
+      <div className="flex flex-col h-[calc(100vh-140px)] mt-6">
+        <div className="flex-1 flex flex-col overflow-hidden">
+          <DataTable
+            data={orders}
+            columns={columns}
+            pagination={pagination}
+            onPaginationChange={handlePaginationChange}
+            totalCount={totalCount}
+            manualPagination={true}
+            isLoading={loading}
+            onRowClick={row => {
+              const orderId = row.original.orderIdentifier;
+              if (orderId) router.push(`/${locale}/orders/${orderId}`);
+            }}
+            pageSizeOptions={[20, 50, 75, 100]}
+            showPagination={true}
+            showPageSizeSelector={true}
+            showFirstLastButtons={true}
+            emptyMessage="No orders found"
+            enableToolbar={false}
+            className="h-full flex flex-col"
+          />
+        </div>
       </div>
 
       <Dialog open={isItemsDialogOpen} onOpenChange={setIsItemsDialogOpen}>
