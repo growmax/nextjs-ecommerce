@@ -1,0 +1,431 @@
+"use client";
+
+import { statusColor } from "@/components/custom/statuscolors";
+import { Button } from "@/components/ui/button";
+import {
+  Card,
+  CardContent,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Skeleton } from "@/components/ui/skeleton";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import { useDashboardOrders } from "@/hooks/useDashboardData";
+import { Order } from "@/types/dashboard/DasbordOrderstable/DashboardOrdersTable";
+import { ArrowDownIcon, ArrowUpDown } from "lucide-react";
+import { useLocale } from "next-intl";
+import { useRouter } from "next/navigation";
+import React, { useMemo, useState } from "react";
+
+const { createElement: h } = React;
+
+export default function DashboardOrdersTable() {
+  const [sortConfig, setSortConfig] = useState<{
+    key: keyof Order;
+    direction: "asc" | "desc";
+  }>({ key: "orderName", direction: "desc" });
+  const [displayCount] = useState(10);
+  const router = useRouter();
+  const locale = useLocale();
+
+  const {
+    data: result,
+    isLoading: loading,
+    error,
+    isError,
+    isRefetching: isRefreshing,
+  } = useDashboardOrders({
+    userId: "1032", // You might want to make this dynamic
+    companyId: "8690", // You might want to make this dynamic
+    offset: 0,
+    limit: 10,
+  });
+
+  // Process the API response data
+  const { orders, totalCount } = useMemo(() => {
+    let ordersData: Order[] = [];
+    let totalCount = 0;
+
+    // Handle the specific API response format
+    const apiResult = result as {
+      status?: string;
+      data?: {
+        ordersResponse?: Order[];
+        totalOrderCount?: number;
+      };
+    };
+
+    if (
+      apiResult &&
+      typeof apiResult === "object" &&
+      apiResult.status === "success" &&
+      apiResult.data
+    ) {
+      if (Array.isArray(apiResult.data.ordersResponse)) {
+        ordersData = apiResult.data.ordersResponse;
+        totalCount =
+          apiResult.data.totalOrderCount ||
+          apiResult.data.ordersResponse.length;
+      }
+    }
+
+    return { orders: ordersData, totalCount };
+  }, [result]);
+
+  const sortedOrders = useMemo(() => {
+    return [...orders].sort((a, b) => {
+      const aValue = a[sortConfig.key];
+      const bValue = b[sortConfig.key];
+
+      // Handle null values
+      if (aValue == null && bValue == null) return 0;
+      if (aValue == null) return sortConfig.direction === "asc" ? -1 : 1;
+      if (bValue == null) return sortConfig.direction === "asc" ? 1 : -1;
+
+      if (aValue < bValue) {
+        return sortConfig.direction === "asc" ? -1 : 1;
+      }
+      if (aValue > bValue) {
+        return sortConfig.direction === "asc" ? 1 : -1;
+      }
+      return 0;
+    });
+  }, [sortConfig, orders]);
+
+  const displayedOrders = useMemo(() => {
+    return sortedOrders.slice(0, displayCount);
+  }, [sortedOrders, displayCount]);
+
+  const handleShowMore = () => {
+    router.push(`/${locale}/landing/orderslanding`);
+  };
+
+  const handleSort = (key: keyof Order) => {
+    setSortConfig(current => {
+      if (current?.key === key) {
+        return current.direction === "asc"
+          ? { key, direction: "desc" }
+          : { key, direction: "asc" };
+      }
+      return { key, direction: "asc" };
+    });
+  };
+
+  const getSortIcon = (columnKey: keyof Order) => {
+    if (sortConfig?.key !== columnKey) {
+      return h(ArrowUpDown, { className: "ml-2 h-4 w-4 opacity-50" });
+    }
+    return sortConfig.direction === "desc"
+      ? h(ArrowDownIcon, { className: "ml-2 h-4 w-4" })
+      : h(ArrowUpDown, { className: "ml-2 h-4 w-4 rotate-180" });
+  };
+
+  return h(
+    "div",
+    { className: "p-3" },
+    loading || isRefreshing
+      ? h(
+          Card,
+          {
+            className:
+              "w-full bg-white rounded-lg shadow-sm border border-gray-200 !py-0 !gap-0",
+          },
+          h(
+            CardHeader,
+            { className: "px-4 pt-4 !pb-0 border-b border-gray-200" },
+            h(
+              "div",
+              { className: "flex justify-start" },
+              h(Skeleton, { className: "h-5 w-48" })
+            )
+          ),
+          h(
+            CardContent,
+            { className: "p-0" },
+            h(
+              "div",
+              { className: "overflow-hidden" },
+              h(
+                "div",
+                { className: "bg-gray-50 px-3 py-2 border-b border-gray-100" },
+                h(
+                  "div",
+                  { className: "flex justify-between items-center" },
+                  h(Skeleton, { className: "h-4 w-16" }),
+                  h(Skeleton, { className: "h-4 w-20" }),
+                  h(Skeleton, { className: "h-4 w-24" }),
+                  h(Skeleton, { className: "h-4 w-16" })
+                )
+              ),
+              Array.from({ length: 10 }).map((_, index) =>
+                h(
+                  "div",
+                  {
+                    key: `skeleton-row-${index}`,
+                    className: "px-3 py-3 border-b border-gray-100",
+                  },
+                  h(
+                    "div",
+                    { className: "flex justify-between items-center" },
+                    h(Skeleton, { className: "h-4 w-20" }),
+                    h(Skeleton, { className: "h-4 w-32" }),
+                    h(Skeleton, { className: "h-4 w-24" }),
+                    h(Skeleton, { className: "h-5 w-16 rounded" })
+                  )
+                )
+              )
+            )
+          ),
+          h(
+            CardFooter,
+            {
+              className:
+                "flex justify-start px-2 py-2 !pt-2 border-t border-gray-200",
+            },
+            h(Skeleton, { className: "h-8 w-20 rounded" })
+          )
+        )
+      : h(
+          Card,
+          {
+            className:
+              "w-full bg-white rounded-lg shadow-sm border border-gray-200 !py-0 !gap-0",
+          },
+          h(
+            CardHeader,
+            { className: "px-4 pt-4 !pb-0 border-b border-gray-200" },
+            h(
+              "div",
+              { className: "flex justify-start" },
+              h(
+                CardTitle,
+                { className: "text-sm font-medium text-gray-900 text-center" },
+                h("span", {}, "History of Orders "),
+                totalCount > 0 &&
+                  h(
+                    "span",
+                    { className: "text-xs font-normal text-gray-600" },
+                    `(${totalCount})`
+                  )
+              )
+            )
+          ),
+          h(
+            CardContent,
+            { className: "p-0" },
+            h(
+              "div",
+              { className: "overflow-hidden" },
+              h(
+                "div",
+                { className: "overflow-x-auto" },
+                h(
+                  Table,
+                  { className: "w-full" },
+                  h(
+                    TableHeader,
+                    { className: "bg-gray-50" },
+                    h(
+                      TableRow,
+                      { className: "border-b border-gray-100" },
+                      h(
+                        TableHead,
+                        {
+                          className:
+                            "text-xs font-medium text-gray-600 px-3 py-1 text-left",
+                          scope: "col",
+                        },
+                        h(
+                          "span",
+                          {
+                            className:
+                              "inline-flex items-center cursor-pointer hover:text-gray-900",
+                            onClick: () => handleSort("orderIdentifier"),
+                            role: "button",
+                            tabIndex: 0,
+                          },
+                          "Order Id",
+                          getSortIcon("orderIdentifier")
+                        )
+                      ),
+                      h(
+                        TableHead,
+                        {
+                          className:
+                            "text-xs font-medium text-gray-600 px-3 py-1 text-left",
+                          scope: "col",
+                        },
+                        h(
+                          "span",
+                          {
+                            className: `inline-flex items-center cursor-pointer hover:text-gray-900 ${sortConfig.key === "orderName" ? "text-gray-900" : ""}`,
+                            onClick: () => handleSort("orderName"),
+                            role: "button",
+                            tabIndex: 0,
+                          },
+                          "Name",
+                          getSortIcon("orderName")
+                        )
+                      ),
+                      h(
+                        TableHead,
+                        {
+                          className:
+                            "text-xs font-medium text-gray-600 px-3 py-1 text-left",
+                          scope: "col",
+                        },
+                        h(
+                          "span",
+                          {
+                            className:
+                              "inline-flex items-center cursor-pointer hover:text-gray-900",
+                            onClick: () => handleSort("requiredDate"),
+                            role: "button",
+                            tabIndex: 0,
+                          },
+                          "Required Date",
+                          getSortIcon("requiredDate")
+                        )
+                      ),
+                      h(
+                        TableHead,
+                        {
+                          className:
+                            "text-xs font-medium text-gray-600 px-3 py-1 text-right",
+                          scope: "col",
+                        },
+                        h(
+                          "span",
+                          {
+                            className:
+                              "inline-flex items-center cursor-pointer hover:text-gray-900 justify-end w-full",
+                            onClick: () => handleSort("updatedBuyerStatus"),
+                            role: "button",
+                            tabIndex: 0,
+                          },
+                          "Status",
+                          getSortIcon("updatedBuyerStatus")
+                        )
+                      )
+                    )
+                  ),
+                  h(
+                    TableBody,
+                    { className: "bg-white divide-y divide-gray-100" },
+                    isError
+                      ? h(
+                          TableRow,
+                          {},
+                          h(
+                            TableCell,
+                            {
+                              colSpan: 4,
+                              className:
+                                "px-3 py-3 text-center text-sm text-red-500",
+                            },
+                            `Failed to fetch orders: ${error instanceof Error ? error.message : "Unknown error"}`
+                          )
+                        )
+                      : displayedOrders.length === 0
+                        ? h(
+                            TableRow,
+                            {},
+                            h(
+                              TableCell,
+                              {
+                                colSpan: 4,
+                                className:
+                                  "px-3 py-3 text-center text-sm text-gray-500",
+                              },
+                              "No orders found"
+                            )
+                          )
+                        : displayedOrders.map((order, index) =>
+                            h(
+                              TableRow,
+                              {
+                                key: order.orderIdentifier || index,
+                                className: "hover:bg-gray-50 transition-colors",
+                                role: "checkbox",
+                                tabIndex: -1,
+                              },
+                              h(
+                                TableCell,
+                                {
+                                  className: "px-4 py-3 text-sm text-gray-900",
+                                },
+                                order.orderIdentifier
+                              ),
+                              h(
+                                TableCell,
+                                {
+                                  className: "px-4 py-3 text-sm text-gray-900",
+                                },
+                                order.orderName
+                              ),
+                              h(
+                                TableCell,
+                                {
+                                  className: "px-4 py-3 text-sm text-gray-500",
+                                },
+                                // order.requiredDate ||
+                                //   order.createdDate?.split(" ")[0] ||
+                                ""
+                              ),
+                              h(
+                                TableCell,
+                                {
+                                  className: "px-4 py-3 text-right",
+                                },
+                                h(
+                                  "span",
+                                  {
+                                    className:
+                                      "px-1 py-0.5 rounded text-xs font-medium",
+                                    style: {
+                                      backgroundColor: `${statusColor(order.updatedBuyerStatus)}20`,
+                                      color: statusColor(
+                                        order.updatedBuyerStatus
+                                      ),
+                                    },
+                                  },
+                                  order.updatedBuyerStatus
+                                )
+                              )
+                            )
+                          )
+                  )
+                )
+              )
+            )
+          ),
+          totalCount > 10 &&
+            h(
+              CardFooter,
+              {
+                className:
+                  "flex justify-end px-2 py-2 !pt-2 border-t border-gray-200",
+              },
+              h(
+                Button,
+                {
+                  variant: "outline",
+                  size: "sm",
+                  onClick: handleShowMore,
+                  className:
+                    "text-black hover:bg-blacke-50 border-black-600 hover:border-black-700 normal-case text-sm font-medium px-3 py-1 min-h-[32px] transition-all cursor-pointer",
+                },
+                "Show More"
+              )
+            )
+        )
+  );
+}

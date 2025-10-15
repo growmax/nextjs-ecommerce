@@ -28,6 +28,14 @@
       "@/*": ["./src/*"]
     }
   },
-  "include": ["next-env.d.ts", "**/*.ts", "**/*.tsx", ".next/types/**/*.ts"],
+  "include": [
+    "next-env.d.ts",
+    "**/*.ts",
+    "**/*.tsx",
+    ".next/types/**/*.ts",
+    "src/app/check_out",
+    "src/types/*.d.ts",
+    "types/*.d.ts"
+  ],
   "exclude": ["node_modules"]
 }

@@ -1,0 +1,261 @@
+// Anonymous Token Types
+export interface AnonymousTokenResponse {
+  accessToken: string;
+  refreshToken: string;
+}
+
+// Tenant Configuration Types
+export interface TenantInfo {
+  id: number;
+  tenantCode: string;
+  elasticCode: string;
+  tenantId: number;
+  typeSenseKey: string | null;
+  typeSenseCode: string;
+  tenantDomain: string;
+  tenantDescription: string;
+  plainId: string;
+  SSLCreated: boolean;
+  checkSSL: boolean;
+  domainNameVerified: boolean;
+  enablePartnerToPartnerPurchase: boolean;
+  finalCompleted: boolean;
+  initCompleted: boolean;
+  otherInitdataCompleted: boolean;
+  sslCreatedDate: string | null;
+  vendor: string | null;
+  apikey: string | null;
+  assertS3BucketName: string;
+  demoRequired: boolean;
+}
+
+export interface BusinessType {
+  id: number;
+  name: string;
+  tenantId: number;
+}
+
+export interface Industry {
+  id: number;
+  name: string;
+  tenantId: number;
+}
+
+export interface SubIndustry {
+  id: number;
+  name: string;
+  description: string;
+  tenantId: number;
+  industryId: Industry;
+}
+
+export interface AccountType {
+  id: number;
+  name: string;
+}
+
+export interface TaxDetails {
+  id: number;
+  pan: string;
+  panImage: string | null;
+  tenantId: number;
+}
+
+export interface CurrencyInfo {
+  id: number;
+  currencyCode: string;
+  decimal: string;
+  description: string;
+  precision: number;
+  symbol: string;
+  tenantId: number;
+  thousand: string;
+}
+
+export interface AddressInfo {
+  id: number;
+  addressLine: string;
+  city: string;
+  state: string;
+  country: string;
+  countryCode: string;
+  pinCodeId: string;
+  district: string;
+  locality: string;
+  branchName: string;
+  gst: string;
+  phone: string | null;
+  mobileNo: string;
+  email: string | null;
+  lattitude: string | null;
+  longitude: string | null;
+  locationUrl: string | null;
+  regAddress: boolean;
+  isBilling: boolean;
+  isShipping: boolean;
+  wareHouse: boolean;
+  isCustAddress: boolean;
+  primaryContact: string | null;
+  nationalMobileNum: string | null;
+  billToCode: string | null;
+  shipToCode: string | null;
+  soldToCode: string | null;
+  vendorID: string | null;
+  vendorId: string | null;
+  tenantId: number;
+}
+
+export interface SellerCompany {
+  id: number;
+  name: string;
+  logo: string;
+  website: string;
+  defaultEmail: string;
+  reportEmail: string;
+  companyIdentifier: string;
+  verified: boolean;
+  activated: boolean;
+  profileAccess: boolean;
+  taxExempted: boolean;
+  bnplEnabled: boolean;
+  tenantId: number;
+  vendorId: number | null;
+  accountTypeId: AccountType;
+  businessTypeId: BusinessType;
+  subIndustryId: SubIndustry;
+  currencyId: CurrencyInfo;
+  taxDetailsId: TaxDetails;
+  addressId: AddressInfo | null;
+  taxExemptionId: string | null;
+  bnplCustomerId: string | null;
+  bnplPhone: string | null;
+  finStartMonth: number | null;
+  finStartDate: string | null;
+  finEndDate: string | null;
+  financialYear: string | null;
+  inviteAccess: number | null;
+}
+
+export interface SellerCurrency {
+  id: number;
+  currencyCode: string;
+  symbol: string;
+  description: string;
+  precision: number;
+  decimal: string;
+  thousand: string;
+  tenantId: number;
+}
+
+export interface TenantConfigResponse {
+  data: {
+    tenant: TenantInfo;
+    sellerCompanyId: SellerCompany;
+    sellerCurrency: SellerCurrency;
+  };
+}
+
+// StoreFront Configuration Types
+export interface StoreFrontProperty {
+  storeFrontProperty:
+    | "HEADER"
+    | "PRODUCTCARD"
+    | "LOGIN"
+    | "FOOTER"
+    | "BANNER"
+    | string;
+  dataJson: string; // Stringified JSON
+}
+
+export interface StoreFrontResponse {
+  data: {
+    getAllByDomain: StoreFrontProperty[];
+  };
+}
+
+export interface StoreFrontGraphQLRequest {
+  query: string;
+  variables: Record<string, unknown>;
+}
+
+// Category Types
+export interface Category {
+  sc_id: string;
+  name: string;
+  description?: string;
+  parentId?: string;
+  isActive?: boolean;
+  sortOrder?: number;
+  imageUrl?: string;
+}
+
+export interface CategoriesResponse {
+  data: Category[];
+}
+
+// Catalog Settings Types
+export interface CatalogAssignment {
+  _id: string;
+  isCatalog: boolean;
+  name?: string;
+  description?: string;
+}
+
+export interface CatalogSettings {
+  LimitCatalog: boolean;
+  LimitEquipment: boolean;
+  CatalogAssigned: CatalogAssignment[];
+  EquipmentName: string;
+}
+
+export interface CatalogSettingsResponse {
+  data: CatalogSettings;
+}
+
+// Config Cache Types
+export interface ConfigCacheGetResponse {
+  success: boolean;
+  data: string; // Cached config as string
+}
+
+export interface ConfigCachePostResponse {
+  success: boolean;
+  message?: string;
+}
+
+export interface ConfigCacheRequest {
+  domain: string;
+  config: unknown; // The configuration data to cache
+}
+
+// Domain Configuration (combined from all APIs)
+export interface DomainConfiguration {
+  domain: string;
+  accessToken: string;
+  anonymousTokens?: AnonymousTokenResponse;
+  tenantConfig: TenantConfigResponse["data"];
+  storeFrontConfig: StoreFrontProperty[];
+  categories: Category[];
+  catalogSettings?: CatalogSettings;
+  lastUpdated: string;
+}
+
+// Request Parameters
+export interface GetTenantConfigParams {
+  domainUrl: string;
+}
+
+export interface GetStoreFrontConfigParams {
+  domain: string;
+}
+
+export interface GetCatalogSettingsParams {
+  companyId: string;
+}
+
+// Error Types
+export interface AppConfigError extends Error {
+  code?: string;
+  status?: number;
+  domain?: string;
+}

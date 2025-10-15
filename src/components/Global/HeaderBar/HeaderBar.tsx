@@ -1,0 +1,71 @@
+"use client";
+
+import { cn } from "@/lib/utils";
+
+interface HeaderBarProps {
+  title: string;
+  icon?: React.ReactNode;
+  actions?: React.ReactNode;
+  className?: string;
+  style?: React.CSSProperties;
+}
+
+export default function HeaderBar({
+  title,
+  actions,
+  className,
+  style,
+}: HeaderBarProps) {
+  return (
+    <>
+      {/* Fixed Header */}
+      <header
+        className={cn(
+          "fixed top-[69px] left-64 right-0 flex-shrink-0 bg-background border-b border-border shadow-sm z-50",
+          className
+        )}
+        style={{
+          paddingLeft: "16px",
+          paddingRight: "16px",
+          ...style,
+        }}
+      >
+        {/* Toolbar container */}
+        <div className="flex items-center justify-between relative w-full min-h-[48px] px-4 py-2">
+          <div className="flex flex-1">
+            <div className="flex items-center gap-2 truncate">
+              <div className="flex items-center">
+                <h4
+                  className="text-sm font-bold truncate text-black"
+                  title={title}
+                  style={{
+                    fontFamily: '"Roboto", "Helvetica", "Arial", sans-serif',
+                    fontWeight: 700,
+                    lineHeight: 2.0,
+                    letterSpacing: "0.00735em",
+                  }}
+                >
+                  {title}
+                </h4>
+              </div>
+
+              {/* Empty divs for spacing (like MUI) */}
+              <div className="flex-shrink-0"></div>
+              <div className="flex-shrink-0"></div>
+              <div className="flex-shrink-0"></div>
+              <div className="flex-grow"></div>
+            </div>
+          </div>
+
+          {/* Right: optional actions */}
+          {actions && (
+            <div className="flex items-center gap-2 text-black">{actions}</div>
+          )}
+        </div>
+      </header>
+
+      {/* Automatic Spacer - pushes content below the fixed header */}
+      <div className="h-[130px]" />
+    </>
+  );
+}

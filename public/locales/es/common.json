@@ -1,0 +1,105 @@
+{
+  "navigation": {
+    "home": "Inicio",
+    "about": "Acerca de",
+    "contact": "Contacto",
+    "privacy": "Privacidad",
+    "terms": "Términos",
+    "menu": "Menú"
+  },
+  "auth": {
+    "login": "Iniciar Sesión",
+    "logout": "Cerrar Sesión",
+    "register": "Registrarse",
+    "welcome": "Bienvenido",
+    "signIn": "Iniciar Sesión",
+    "signUp": "Registrarse",
+    "forgotPassword": "¿Olvidó su contraseña?",
+    "rememberMe": "Recordarme",
+    "password": "Contraseña",
+    "email": "Correo",
+    "emailPhone": "Correo o Teléfono",
+    "emailPlaceholder": "Ingrese correo o teléfono",
+    "passwordPlaceholder": "Ingrese su contraseña",
+    "enterPassword": "Ingrese su contraseña para {username}",
+    "enterEmailPhone": "Ingrese su correo o teléfono para continuar",
+    "emailRequired": "El correo o teléfono es requerido",
+    "emailInvalid": "Por favor ingrese un correo o teléfono válido",
+    "passwordRequired": "La contraseña es requerida",
+    "loginSuccess": "¡Bienvenido de vuelta! Ha iniciado sesión exitosamente.",
+    "loginFailed": "Error de Inicio de Sesión",
+    "invalidCredentials": "Correo o contraseña inválidos. Por favor intente de nuevo.",
+    "invalidPassword": "Contraseña inválida",
+    "authError": "Error de Autenticación",
+    "tokenError": "No se recibió token de acceso. Por favor intente de nuevo.",
+    "connectionError": "No se pudo conectar al servidor. Por favor verifique su conexión a internet.",
+    "otpRequired": "OTP Requerido",
+    "otpDescription": "Por favor verifique su teléfono para el código de verificación."
+  },
+  "ecommerce": {
+    "cart": "Carrito",
+    "checkout": "Finalizar Compra",
+    "orders": "Pedidos",
+    "addToCart": "Agregar al Carrito",
+    "buyNow": "Comprar Ahora",
+    "price": "Precio",
+    "quantity": "Cantidad",
+    "total": "Total",
+    "subtotal": "Subtotal",
+    "shipping": "Envío",
+    "tax": "Impuesto"
+  },
+  "search": {
+    "placeholder": "Buscar productos...",
+    "button": "Buscar",
+    "noResults": "No se encontraron resultados"
+  },
+  "profile": {
+    "myAccount": "Mi Cuenta",
+    "settings": "Configuración",
+    "viewProfile": "Ver Perfil",
+    "editProfile": "Editar Perfil"
+  },
+  "notifications": {
+    "title": "Notificaciones",
+    "markAsRead": "Marcar como leído",
+    "noNotifications": "No hay notificaciones nuevas"
+  },
+  "buttons": {
+    "save": "Guardar",
+    "cancel": "Cancelar",
+    "delete": "Eliminar",
+    "edit": "Editar",
+    "submit": "Enviar",
+    "confirm": "Confirmar",
+    "back": "Atrás",
+    "next": "Siguiente",
+    "previous": "Anterior",
+    "close": "Cerrar",
+    "viewAll": "Ver Todo",
+    "loadMore": "Cargar Más",
+    "continue": "Continuar"
+  },
+  "messages": {
+    "loading": "Cargando...",
+    "error": "Algo salió mal",
+    "success": "¡Éxito!",
+    "welcome": "Bienvenido a nuestra tienda",
+    "thankYou": "Gracias por su compra"
+  },
+  "footer": {
+    "copyright": "© {{year}} Su Empresa. Todos los derechos reservados.",
+    "madeWith": "Hecho con",
+    "love": "❤️"
+  },
+  "demo": {
+    "components": "Demos de Componentes",
+    "searchDemo": "Demo de Búsqueda",
+    "carouselDemo": "Demo de Carrusel",
+    "cardDemo": "Demo de Tarjeta",
+    "buttonDemo": "Demo de Botón",
+    "accordionDemo": "Demo de Acordeón",
+    "tabsDemo": "Demo de Pestañas",
+    "notificationDemo": "Demo de Notificación"
+  }
+}

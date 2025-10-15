@@ -1,0 +1,122 @@
+"use client";
+
+import { useAuth } from "@/contexts/AuthContext";
+import UserServices from "@/lib/api/services/UserServices";
+import { AuthStorage } from "@/lib/auth";
+import { JWTService } from "@/lib/services/JWTService";
+import { useEffect, useState } from "react";
+
+interface CurrencyObj {
+  currencyCode: string;
+  decimal: string;
+  description: string;
+  id: number;
+  precision: number;
+  symbol: string;
+  tenantId: number;
+  thousand: string;
+}
+
+interface CurrentUser {
+  currency: CurrencyObj;
+  userId: number;
+  companyId: number;
+  displayName: string;
+  email: string;
+  phoneNumber?: string;
+  role?: string;
+}
+
+export function useCurrentUser() {
+  const [user, setUser] = useState<CurrentUser | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const { isAuthenticated } = useAuth();
+
+  // Get sub from JWT token
+  const [sub, setSub] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (isAuthenticated) {
+      const token = AuthStorage.getAccessToken();
+      if (token) {
+        const jwtService = JWTService.getInstance();
+        const payload = jwtService.decodeToken(token);
+        setSub(payload?.sub || null);
+      }
+    } else {
+      setSub(null);
+    }
+  }, [isAuthenticated]);
+
+  useEffect(() => {
+    const fetchUserData = async () => {
+      try {
+        // If no sub, can't fetch user data
+        if (!sub) {
+          setLoading(false);
+          return;
+        }
+
+        // First check if we have cached user data
+        // TEMPORARILY DISABLED FOR TESTING - UNCOMMENT TO RE-ENABLE CACHE
+        const BYPASS_CACHE = true; // Set to false to enable caching
+        const cachedUser = !BYPASS_CACHE
+          ? localStorage.getItem("currentUser")
+          : null;
+        if (cachedUser) {
+          const userData = JSON.parse(cachedUser);
+          setUser(userData);
+          setLoading(false);
+          return;
+        }
+
+        // Fetch user data from API - UserServices.getUser returns UserApiResponse
+        const response = await UserServices.getUser({ sub });
+
+        // UserApiResponse has structure: { data: {...}, status: "success" }
+        if (response.data) {
+          const userData: CurrentUser = {
+            currency: response.data.currency,
+            userId: response.data.userId,
+            companyId: response.data.companyId,
+            displayName: response.data.displayName || "",
+            email: response.data.email || "",
+            phoneNumber: response.data.phoneNumber,
+            role: response.data.roleName,
+          };
+
+          // Cache the user data in localStorage
+          localStorage.setItem("currentUser", JSON.stringify(userData));
+          setUser(userData);
+        } else {
+          // Use default values if API doesn't return proper data
+          const defaultUser: CurrentUser = {
+            userId: 1032,
+            companyId: 8690,
+            displayName: "User",
+            email: "",
+          };
+          setUser(defaultUser);
+        }
+      } catch (err) {
+        setError(err instanceof Error ? err.message : "Unknown error");
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchUserData();
+  }, [sub]);
+
+  const clearUserCache = () => {
+    localStorage.removeItem("currentUser");
+  };
+
+  return {
+    user,
+    loading,
+    error,
+    clearUserCache,
+  };
+}

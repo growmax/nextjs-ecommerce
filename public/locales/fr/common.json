@@ -1,0 +1,105 @@
+{
+  "navigation": {
+    "home": "Accueil",
+    "about": "À Propos",
+    "contact": "Contact",
+    "privacy": "Confidentialité",
+    "terms": "Conditions",
+    "menu": "Menu"
+  },
+  "auth": {
+    "login": "Connexion",
+    "logout": "Déconnexion",
+    "register": "S'inscrire",
+    "welcome": "Bienvenue",
+    "signIn": "Se Connecter",
+    "signUp": "S'inscrire",
+    "forgotPassword": "Mot de passe oublié ?",
+    "rememberMe": "Se souvenir de moi",
+    "password": "Mot de passe",
+    "email": "Email",
+    "emailPhone": "Email ou Téléphone",
+    "emailPlaceholder": "Entrez email ou téléphone",
+    "passwordPlaceholder": "Entrez votre mot de passe",
+    "enterPassword": "Entrez votre mot de passe pour {username}",
+    "enterEmailPhone": "Entrez votre email ou téléphone pour continuer",
+    "emailRequired": "L'email ou le téléphone est requis",
+    "emailInvalid": "Veuillez entrer un email ou téléphone valide",
+    "passwordRequired": "Le mot de passe est requis",
+    "loginSuccess": "Bon retour ! Vous êtes connecté avec succès.",
+    "loginFailed": "Échec de Connexion",
+    "invalidCredentials": "Email ou mot de passe invalide. Veuillez réessayer.",
+    "invalidPassword": "Mot de passe invalide",
+    "authError": "Erreur d'Authentification",
+    "tokenError": "Aucun jeton d'accès reçu. Veuillez réessayer.",
+    "connectionError": "Impossible de se connecter au serveur. Vérifiez votre connexion internet.",
+    "otpRequired": "OTP Requis",
+    "otpDescription": "Vérifiez votre téléphone pour le code de vérification."
+  },
+  "ecommerce": {
+    "cart": "Panier",
+    "checkout": "Commander",
+    "orders": "Commandes",
+    "addToCart": "Ajouter au Panier",
+    "buyNow": "Acheter Maintenant",
+    "price": "Prix",
+    "quantity": "Quantité",
+    "total": "Total",
+    "subtotal": "Sous-total",
+    "shipping": "Livraison",
+    "tax": "Taxe"
+  },
+  "search": {
+    "placeholder": "Rechercher des produits...",
+    "button": "Rechercher",
+    "noResults": "Aucun résultat trouvé"
+  },
+  "profile": {
+    "myAccount": "Mon Compte",
+    "settings": "Paramètres",
+    "viewProfile": "Voir le Profil",
+    "editProfile": "Modifier le Profil"
+  },
+  "notifications": {
+    "title": "Notifications",
+    "markAsRead": "Marquer comme lu",
+    "noNotifications": "Aucune nouvelle notification"
+  },
+  "buttons": {
+    "save": "Enregistrer",
+    "cancel": "Annuler",
+    "delete": "Supprimer",
+    "edit": "Modifier",
+    "submit": "Soumettre",
+    "confirm": "Confirmer",
+    "back": "Retour",
+    "next": "Suivant",
+    "previous": "Précédent",
+    "close": "Fermer",
+    "viewAll": "Voir Tout",
+    "loadMore": "Charger Plus",
+    "continue": "Continuer"
+  },
+  "messages": {
+    "loading": "Chargement...",
+    "error": "Quelque chose s'est mal passé",
+    "success": "Succès !",
+    "welcome": "Bienvenue dans notre magasin",
+    "thankYou": "Merci pour votre achat"
+  },
+  "footer": {
+    "copyright": "© {{year}} Votre Entreprise. Tous droits réservés.",
+    "madeWith": "Fait avec",
+    "love": "❤️"
+  },
+  "demo": {
+    "components": "Démos de Composants",
+    "searchDemo": "Démo de Recherche",
+    "carouselDemo": "Démo de Carrousel",
+    "cardDemo": "Démo de Carte",
+    "buttonDemo": "Démo de Bouton",
+    "accordionDemo": "Démo d'Accordéon",
+    "tabsDemo": "Démo d'Onglets",
+    "notificationDemo": "Démo de Notification"
+  }
+}
