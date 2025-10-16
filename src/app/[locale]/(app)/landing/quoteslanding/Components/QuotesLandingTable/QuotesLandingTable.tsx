@@ -15,8 +15,8 @@ import {
 } from "@/components/ui/dialog";
 import { useCurrentUser } from "@/hooks/useCurrentUser";
 import PreferenceService, {
-  FilterPreferenceResponse,
-  FilterPreference,
+  type FilterPreferenceResponse,
+  type FilterPreference,
 } from "@/lib/api/services/PreferenceService";
 import QuotesService, {
   type QuoteItem,
