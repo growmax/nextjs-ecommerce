@@ -12,7 +12,7 @@ export default function OrdersLandingPageClient() {
         secondary={{
           condition: true,
           value: "Export",
-          startIcon: <Download className="h-4 w-4" />,
+          startIcon: <Download />,
         }}
         refresh={{
           condition: true,
