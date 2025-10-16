@@ -2,11 +2,15 @@ import AddMoreProducts from "@/components/Global/Products/AddMoreProducts";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
 import { Separator } from "@/components/ui/separator";
-import { Minus, Plus, School, Trash } from "lucide-react";
+import { EllipsisVertical, Minus, Plus, School, Trash } from "lucide-react";
 import CartSkeleton from "../CartSkeleton";
 import PriceDetails from "../PriceDetails";
-
 interface CartProduct {
   productId: number;
   quantity: number;
@@ -93,6 +97,7 @@ export default function SellerCard({
   isLoading,
   onItemUpdate,
   onItemDelete,
+  onClearCart,
   handleOrder,
   handleQuote,
   currency,
@@ -130,6 +135,22 @@ export default function SellerCard({
             <div className="w-full md:w-96">
               <AddMoreProducts />
             </div>
+            <Popover>
+              <PopoverTrigger asChild>
+                <button className="p-2 rounded-full hover:bg-gray-100">
+                  <EllipsisVertical className="w-5 h-5" />
+                </button>
+              </PopoverTrigger>
+              <PopoverContent className="w-auto p-2">
+                <Button
+                  variant="ghost"
+                  className="text-black-600 hover:text-black-700"
+                  onClick={onClearCart}
+                >
+                  Clear Cart
+                </Button>
+              </PopoverContent>
+            </Popover>
           </CardHeader>
           <CardContent className="flex-1 md:overflow-y-auto">
             {sellerIds.map((sellerId: string) => {

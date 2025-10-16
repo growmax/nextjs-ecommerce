@@ -277,10 +277,12 @@ export default function CartPageClient() {
     if (!userId) return;
 
     try {
-      await CartServices.deleteCart({ userId, pos: 0 });
+      await CartServices.emptyCart({ userId });
       setCart([]);
       updateCartCount(0);
       toast.success("Cart cleared successfully");
+      // Refresh cart to ensure UI is in sync with backend
+      await refreshCart();
     } catch (_error) {
       toast.error("Failed to clear cart");
     }
