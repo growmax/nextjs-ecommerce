@@ -65,6 +65,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { injectOptionalColumns } from "./columnHelpers";
 import { DataTablePagination } from "./DataTablePagination";
 import { DraggableRow } from "./DraggableRow";
+import { SkeletonRow } from "./SkeletonRow";
 import type { DataTableProps } from "./types";
 
 export function DataTable<TData>({
@@ -123,15 +124,20 @@ export function DataTable<TData>({
 }: DataTableProps<TData>) {
   // Internal states (used only if not controlled)
   const [data, setData] = React.useState(initialData);
-  const [internalRowSelection, setInternalRowSelection] = React.useState<RowSelectionState>({});
+  const [internalRowSelection, setInternalRowSelection] =
+    React.useState<RowSelectionState>({});
   const [internalColumnVisibility, setInternalColumnVisibility] =
     React.useState<VisibilityState>({});
-  const [internalColumnFilters, setInternalColumnFilters] = React.useState<ColumnFiltersState>([]);
-  const [internalSorting, setInternalSorting] = React.useState<SortingState>([]);
-  const [internalPagination, setInternalPagination] = React.useState<PaginationState>({
-    pageIndex: 0,
-    pageSize: pageSizeOptions[0] || 10,
-  });
+  const [internalColumnFilters, setInternalColumnFilters] =
+    React.useState<ColumnFiltersState>([]);
+  const [internalSorting, setInternalSorting] = React.useState<SortingState>(
+    []
+  );
+  const [internalPagination, setInternalPagination] =
+    React.useState<PaginationState>({
+      pageIndex: 0,
+      pageSize: pageSizeOptions[0] || 10,
+    });
 
   // Update internal data when initialData changes
   React.useEffect(() => {
@@ -142,7 +148,8 @@ export function DataTable<TData>({
   const rowSelection = controlledRowSelection ?? internalRowSelection;
   const setRowSelection = onRowSelectionChange ?? setInternalRowSelection;
 
-  const columnVisibility = controlledColumnVisibility ?? internalColumnVisibility;
+  const columnVisibility =
+    controlledColumnVisibility ?? internalColumnVisibility;
   const setColumnVisibility =
     onColumnVisibilityChange ?? setInternalColumnVisibility;
 
@@ -331,9 +338,9 @@ export function DataTable<TData>({
   // Render table content
   const renderTableContent = () => {
     const tableElement = (
-      <div className="overflow-hidden rounded-lg border">
+      <div className="relative overflow-auto rounded-lg border max-h-[calc(100vh-260px)] mb-4">
         <Table className={tableClassName}>
-          <TableHeader className="bg-muted sticky top-0 z-10">
+          <TableHeader className="bg-muted sticky top-0 z-10 shadow-sm">
             {table.getHeaderGroups().map(headerGroup => (
               <TableRow key={headerGroup.id}>
                 {headerGroup.headers.map(header => {
@@ -353,14 +360,17 @@ export function DataTable<TData>({
           </TableHeader>
           <TableBody className="**:data-[slot=table-cell]:first:w-8">
             {isLoading ? (
-              <TableRow>
-                <TableCell
-                  colSpan={columns.length}
-                  className="h-24 text-center"
-                >
-                  Loading...
-                </TableCell>
-              </TableRow>
+              <>
+                {Array.from(
+                  { length: pagination.pageSize || 10 },
+                  (_, index) => (
+                    <SkeletonRow
+                      key={`skeleton-${index}`}
+                      columnCount={columns.length}
+                    />
+                  )
+                )}
+              </>
             ) : table.getRowModel().rows?.length ? (
               enableDragDrop ? (
                 <SortableContext
@@ -463,9 +473,7 @@ export function DataTable<TData>({
               </TabsTrigger>
             ))}
           </TabsList>
-          <div className="flex items-center gap-2">
-            {renderToolbar()}
-          </div>
+          <div className="flex items-center gap-2">{renderToolbar()}</div>
         </div>
         {tabs.map(tab => (
           <TabsContent
@@ -496,12 +504,10 @@ export function DataTable<TData>({
 
   // Render without tabs
   return (
-    <div className={`flex flex-col ${className || ""}`}>
+    <div className={`flex flex-col  ${className || ""}`}>
       {renderToolbar()}
       <div className="flex-1 overflow-auto">
-        <div className="px-4 lg:px-6">
-          {renderTableContent()}
-        </div>
+        <div className="px-4 lg:px-6">{renderTableContent()}</div>
       </div>
       {showPagination && (
         <div className="flex-shrink-0 border-t bg-background">
