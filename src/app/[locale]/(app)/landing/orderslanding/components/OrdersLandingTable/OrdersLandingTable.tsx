@@ -338,7 +338,7 @@ function OrdersLandingTable({
   // Fetch orders
   const fetchOrders = useCallback(async () => {
     if (!user?.userId || !user?.companyId) {
-      setLoading(false);
+      // Keep loading true while waiting for user data
       return;
     }
 
@@ -536,53 +536,6 @@ function OrdersLandingTable({
     [pagination]
   );
 
-  const handleTabChange = useCallback(
-    (value: string) => {
-      setActiveTab(value);
-      setPage(0);
-
-      const currentTabs =
-        !filterPreferences?.preference?.filters ||
-        filterPreferences.preference.filters.length === 0
-          ? [
-              {
-                id: "all",
-                label: "All",
-                hasFilter: true,
-                isFilterActive: !!filterData,
-                filterIndex: undefined,
-              },
-            ]
-          : filterPreferences.preference.filters.map((filter, index) => ({
-              id: `filter-${index}`,
-              label: filter.filter_name,
-              hasFilter: true,
-              isFilterActive:
-                filterPreferences.preference.selected === index || !!filterData,
-              filterIndex: index,
-            }));
-
-      const selectedTab = currentTabs.find(tab => tab.id === value);
-      if (
-        selectedTab &&
-        filterPreferences &&
-        selectedTab.filterIndex !== undefined
-      ) {
-        const selectedFilter =
-          filterPreferences.preference.filters[selectedTab.filterIndex];
-        if (selectedFilter) {
-          const formData = convertToFormData(selectedFilter);
-          setFilterData(formData);
-          toast.success(`Applied "${selectedTab.label}" filter successfully`);
-        }
-      } else {
-        setFilterData(null);
-        toast.success(`Switched to "${selectedTab?.label || "All"}" view`);
-      }
-    },
-    [filterPreferences, filterData, convertToFormData]
-  );
-
   const handleSaveFilter = useCallback(
     async (filterData: QuoteFilterFormData) => {
       if (!user?.userId || !user?.companyId) {
@@ -608,32 +561,6 @@ function OrdersLandingTable({
     },
     [user?.userId, user?.companyId, createFilterFromData, loadFilterPreferences]
   );
-
-  // Define tabs
-  const tabs = useMemo(() => {
-    if (
-      !filterPreferences?.preference?.filters ||
-      filterPreferences.preference.filters.length === 0
-    ) {
-      return [
-        {
-          id: "all",
-          label: "All",
-          hasFilter: true,
-          isFilterActive: !!filterData,
-          filterIndex: undefined,
-        },
-      ];
-    }
-    return filterPreferences.preference.filters.map((filter, index) => ({
-      id: `filter-${index}`,
-      label: filter.filter_name,
-      hasFilter: true,
-      isFilterActive:
-        filterPreferences.preference.selected === index || !!filterData,
-      filterIndex: index,
-    }));
-  }, [filterPreferences, filterData]);
 
   // Effects
   useEffect(() => {
@@ -692,29 +619,27 @@ function OrdersLandingTable({
         </div>
       </SideDrawer>
 
-      <div className="flex flex-col h-[calc(100vh-140px)] mt-6">
-        <div className="flex-1 flex flex-col overflow-hidden">
-          <DataTable
-            data={orders}
-            columns={columns}
-            pagination={pagination}
-            onPaginationChange={handlePaginationChange}
-            totalCount={totalCount}
-            manualPagination={true}
-            isLoading={loading}
-            onRowClick={row => {
-              const orderId = row.original.orderIdentifier;
-              if (orderId) router.push(`/${locale}/orders/${orderId}`);
-            }}
-            pageSizeOptions={[20, 50, 75, 100]}
-            showPagination={true}
-            showPageSizeSelector={true}
-            showFirstLastButtons={true}
-            emptyMessage="No orders found"
-            enableToolbar={false}
-            className="h-full flex flex-col"
-          />
-        </div>
+      <div className="mt-6">
+        <DataTable
+          data={orders}
+          columns={columns}
+          pagination={pagination}
+          onPaginationChange={handlePaginationChange}
+          totalCount={totalCount}
+          manualPagination={true}
+          isLoading={loading}
+          onRowClick={row => {
+            const orderId = row.original.orderIdentifier;
+            if (orderId) router.push(`/${locale}/orders/${orderId}`);
+          }}
+          pageSizeOptions={[20, 50, 75, 100]}
+          showPagination={true}
+          showPageSizeSelector={true}
+          showFirstLastButtons={true}
+          emptyMessage="No orders found"
+          enableToolbar={false}
+          className="flex flex-col"
+        />
       </div>
 
       <Dialog open={isItemsDialogOpen} onOpenChange={setIsItemsDialogOpen}>

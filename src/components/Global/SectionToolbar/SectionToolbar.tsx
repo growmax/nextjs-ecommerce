@@ -240,7 +240,6 @@ const SectionToolbar = forwardRef<SectionToolbarRef, SectionToolbarProps>(
                     size="sm"
                     onClick={secondary.handleClick}
                     disabled={secondary.disabled}
-                    className="gap-1 h-7"
                   >
                     {secondary.startIcon}
                     {!isMobile && secondary.value}
