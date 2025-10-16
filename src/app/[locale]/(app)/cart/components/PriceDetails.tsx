@@ -41,7 +41,7 @@ export default function PriceDetails({
   const showDiscount = showListPrice && DISCOUNT > 0;
 
   return (
-    <Card className="shadow-lg bg-green-50">
+    <Card className="shadow-lg bg-white">
       <CardHeader className="pb-3">
         <h3 className="text-lg font-semibold">Price Details</h3>
       </CardHeader>

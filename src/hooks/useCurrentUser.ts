@@ -59,11 +59,7 @@ export function useCurrentUser() {
         }
 
         // First check if we have cached user data
-        // TEMPORARILY DISABLED FOR TESTING - UNCOMMENT TO RE-ENABLE CACHE
-        const BYPASS_CACHE = true; // Set to false to enable caching
-        const cachedUser = !BYPASS_CACHE
-          ? localStorage.getItem("currentUser")
-          : null;
+        const cachedUser = localStorage.getItem("currentUser");
         if (cachedUser) {
           const userData = JSON.parse(cachedUser);
           setUser(userData);
@@ -89,15 +85,6 @@ export function useCurrentUser() {
           // Cache the user data in localStorage
           localStorage.setItem("currentUser", JSON.stringify(userData));
           setUser(userData);
-        } else {
-          // Use default values if API doesn't return proper data
-          const defaultUser: CurrentUser = {
-            userId: 1032,
-            companyId: 8690,
-            displayName: "User",
-            email: "",
-          };
-          setUser(defaultUser);
         }
       } catch (err) {
         setError(err instanceof Error ? err.message : "Unknown error");

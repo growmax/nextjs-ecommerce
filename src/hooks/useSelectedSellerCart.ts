@@ -1,11 +1,10 @@
 import { useMemo } from "react";
 import { useCurrentUser } from "./useCurrentUser";
-import useModuleSettings from "./useModuleSettings";
 import useMultipleSellerCart from "./useMultipleSellerCart";
 
 const useSelectedSellerCart = (cartItems, selectedSellerId) => {
   const { user } = useCurrentUser();
-  const { moduleSettings } = useModuleSettings(user);
+  // const { moduleSettings } = useModuleSettings(user);
 
   const cartData = cartItems || [];
 
@@ -15,11 +14,11 @@ const useSelectedSellerCart = (cartItems, selectedSellerId) => {
       isInter: true,
       insuranceCharges: 0,
       precision: 2,
-      Settings: moduleSettings || {},
+      Settings: {},
       isSeller: user?.isSeller || false,
       taxExemption: user?.taxExemption || false,
     };
-  }, [moduleSettings, user]);
+  }, [user]);
 
   // Use multiple seller cart hook
   const {

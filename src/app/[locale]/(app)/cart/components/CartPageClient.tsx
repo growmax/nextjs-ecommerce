@@ -2,11 +2,7 @@
 
 import { useCart } from "@/contexts/CartContext";
 import { useTenantInfo } from "@/contexts/TenantContext";
-import useBilling from "@/hooks/useBilling";
-import useCurrentShippingAddress from "@/hooks/useCurrentShippingAddress";
 import { useCurrentUser } from "@/hooks/useCurrentUser";
-import useGetCurrencyModuleSettings from "@/hooks/useGetCurrencyModuleSettings";
-import useModuleSettings from "@/hooks/useModuleSettings";
 import useSelectedSellerCart from "@/hooks/useSelectedSellerCart";
 import CartServices from "@/lib/api/CartServices";
 import { isEmpty, some } from "lodash";
@@ -47,10 +43,17 @@ export default function CartPageClient() {
   const tenantId = tenantInfo?.tenantCode || "";
 
   // Use cart context
-  const { cart, cartCount, setCart, updateCartCount, refreshCart } = useCart();
+  const {
+    cart,
+    cartCount,
+    setCart,
+    updateCartCount,
+    refreshCart,
+    isLoading: isCartLoading,
+  } = useCart();
 
-  const { billingDatas } = useBilling(user);
-  const { SelectedShippingAddressData } = useCurrentShippingAddress(user);
+  // const { billingDatas } = useBilling(user);
+  // const { SelectedShippingAddressData } = useCurrentShippingAddress(user);
 
   // Initialize selectedSellerId from localStorage if available
   const [selectedSellerId, setSelectedSellerId] = useState<string | null>(
@@ -71,16 +74,6 @@ export default function CartPageClient() {
     sellerCarts,
     sellerIds,
   } = useSelectedSellerCart(cart, selectedSellerId);
-
-  const { orderSettings, quoteSettings } = useModuleSettings(user);
-  const { isMinOrderValueEnabled } = orderSettings || {};
-  const { isMinQuoteValueEnabled } = quoteSettings || {};
-
-  const { minimumOrderValue, minimumQuoteValue } = useGetCurrencyModuleSettings(
-    user || {},
-    isMinOrderValueEnabled || isMinQuoteValueEnabled,
-    currency || {}
-  );
 
   // Handle seller selection
   const handleSellerSelection = (sellerId: string) => {
@@ -134,29 +127,11 @@ export default function CartPageClient() {
         } else {
           const addressPasses = addressCheck(true);
           if (addressPasses) {
-            if (isMinOrderValueEnabled) {
-              if (
-                minimumOrderValue &&
-                minimumOrderValue > selectedSellerPricing?.grandTotal
-              ) {
-                toast.info(
-                  `Minimum order value ${currency?.currencyCode} ${minimumOrderValue}`
-                );
-                return;
-              } else {
-                router.push(
-                  selectedSellerId
-                    ? `/ordersummary?sellerId=${selectedSellerId}`
-                    : "/ordersummary"
-                );
-              }
-            } else {
-              router.push(
-                selectedSellerId
-                  ? `/ordersummary?sellerId=${selectedSellerId}`
-                  : "/ordersummary"
-              );
-            }
+            router.push(
+              selectedSellerId
+                ? `/ordersummary?sellerId=${selectedSellerId}`
+                : "/ordersummary"
+            );
           }
         }
       } else {
@@ -187,29 +162,11 @@ export default function CartPageClient() {
 
       const addressPasses = addressCheck(false);
       if (addressPasses) {
-        if (isMinQuoteValueEnabled) {
-          if (
-            minimumQuoteValue &&
-            minimumQuoteValue > selectedSellerPricing?.grandTotal
-          ) {
-            toast.info(
-              `Minimum Quote value ${currency?.currencyCode} ${minimumQuoteValue}`
-            );
-            return;
-          } else {
-            router.push(
-              selectedSellerId
-                ? `/quotesummary?sellerId=${selectedSellerId}`
-                : "/quotesummary"
-            );
-          }
-        } else {
-          router.push(
-            selectedSellerId
-              ? `/quotesummary?sellerId=${selectedSellerId}`
-              : "/quotesummary"
-          );
-        }
+        router.push(
+          selectedSellerId
+            ? `/quotesummary?sellerId=${selectedSellerId}`
+            : "/quotesummary"
+        );
       }
     } else {
       router.push(`/auth/login?from=Cart`);
@@ -328,6 +285,47 @@ export default function CartPageClient() {
       toast.error("Failed to clear cart");
     }
   };
+
+  // Handle adding product from search
+  const handleAddProduct = async (product: unknown) => {
+    if (!userId) {
+      toast.info("Please login to add products to cart");
+      return;
+    }
+
+    try {
+      const prod = product as {
+        productId: number;
+        brandProductId?: string;
+        productName?: string;
+      };
+
+      // Add product to cart via API
+      await CartServices.postCart({
+        userId: Number(userId),
+        tenantId,
+        useMultiSellerCart: true,
+        body: {
+          productsId: prod.productId,
+          productId: prod.productId,
+          quantity: 1,
+          itemNo: 0,
+          pos: 0,
+          addBundle: true,
+        },
+      });
+
+      toast.success(
+        `${prod.brandProductId || prod.productName || "Product"} added to cart`
+      );
+
+      // Refresh cart to show the newly added item
+      await refreshCart();
+    } catch (_error) {
+      toast.error("Failed to add product to cart");
+    }
+  };
+
   return (
     <>
       <SellerCard
@@ -341,25 +339,16 @@ export default function CartPageClient() {
         selectedSellerItems={selectedSellerItems}
         hasMultipleSellers={hasMultipleSellers}
         isPricingLoading={isPricingLoading}
-        isLoading={false}
+        isLoading={isCartLoading}
         onItemUpdate={changeQty}
         onItemDelete={deleteCart}
         onClearCart={emptyCart}
         handleOrder={handleOrder}
         handleQuote={handleQuote}
-        minimumOrderValue={
-          typeof minimumOrderValue === "string"
-            ? parseFloat(minimumOrderValue)
-            : minimumOrderValue
-        }
-        minimumQuoteValue={
-          typeof minimumQuoteValue === "string"
-            ? parseFloat(minimumQuoteValue)
-            : minimumQuoteValue
-        }
         currency={currency}
         sellerCarts={sellerCarts}
         sellerIds={sellerIds}
+        onAddProduct={handleAddProduct}
       />
     </>
   );

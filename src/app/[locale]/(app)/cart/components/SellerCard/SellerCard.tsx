@@ -1,3 +1,4 @@
+import AddMoreProducts from "@/components/Global/Products/AddMoreProducts";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -40,10 +41,6 @@ interface SellerCart {
   pricing?: SellerPricing;
 }
 
-interface Currency {
-  currencyCode?: string;
-  [key: string]: unknown;
-}
 interface CurrencyObj {
   currencyCode: string;
   decimal: string;
@@ -80,16 +77,15 @@ interface SellerCardProps {
   onClearCart: () => void;
   handleOrder: () => void;
   handleQuote: () => void;
-  minimumOrderValue?: number;
-  minimumQuoteValue?: number;
-  currency: Currency;
+  currency?: CurrencyObj;
   sellerCarts: Record<string, SellerCart>;
   sellerIds: string[];
+  onAddProduct: (product: unknown) => Promise<void>;
 }
 
 export default function SellerCard({
   totalCart,
-  user,
+  user: _user,
   selectedSellerId,
   onSellerSelect,
   selectedSellerPricing,
@@ -103,15 +99,16 @@ export default function SellerCard({
   sellerCarts,
   sellerIds,
 }: SellerCardProps) {
-  // Show skeleton while loading or pricing is loading
-  if (Boolean(user) === false || isLoading || isPricingLoading) {
+  // Show full skeleton only when cart is initially loading (not when pricing is updating)
+  if (isLoading) {
     return <CartSkeleton />;
   }
+
   // Show empty cart message if no sellers or items
   if (!sellerCarts || !sellerIds || sellerIds.length === 0) {
     return (
-      <div className="flex flex-start mt-6 px-8">
-        <Card className="w-3/5 shadow-lg">
+      <div className="flex flex-start mt-6 px-4 md:px-8">
+        <Card className="w-full md:w-3/5 shadow-lg">
           <CardHeader className="text-lg font-semibold">My Cart (0)</CardHeader>
           <CardContent>
             <div className="text-center py-8 text-gray-500">
@@ -124,48 +121,91 @@ export default function SellerCard({
   }
 
   return (
-    <div className="flex gap-4 mt-6 px-8">
-      {/* Left side - Cart Items */}
-      <Card className="w-3/5 shadow-lg">
-        <CardHeader className="text-lg font-semibold">
-          My Cart ({totalCart})
-        </CardHeader>
-        <CardContent>
-          {sellerIds.map((sellerId: string) => {
-            const sellerCart = sellerCarts[sellerId];
-            const items = sellerCart?.items || [];
-            const sellerName = sellerCart?.seller?.name || "Unknown Seller";
-            const sellerPricing = sellerCart?.pricing;
+    <div className="flex flex-col md:flex-row gap-4 mt-6 px-4 md:px-8 min-h-[calc(100vh-100px)] md:h-[calc(100vh-100px)]">
+      {/* Left side - Cart Items (Scrollable) */}
+      <div className="w-full md:w-3/5 flex-shrink-0 flex flex-col md:h-full">
+        <Card className="shadow-lg flex flex-col md:h-full">
+          <CardHeader className="text-base md:text-lg font-semibold flex flex-col md:flex-row justify-between md:items-center gap-2 flex-shrink-0">
+            <span>My Cart ({totalCart})</span>
+            <div className="w-full md:w-96">
+              <AddMoreProducts />
+            </div>
+          </CardHeader>
+          <CardContent className="flex-1 md:overflow-y-auto">
+            {sellerIds.map((sellerId: string) => {
+              const sellerCart = sellerCarts[sellerId];
+              const items = sellerCart?.items || [];
+              const sellerName = sellerCart?.seller?.name || "Unknown Seller";
+              const sellerPricing = sellerCart?.pricing;
 
-            return (
-              <div key={sellerId} className="mb-4">
-                <div
-                  className={`p-2 border-2 rounded-lg transition duration-200 cursor-pointer ${
-                    selectedSellerId === sellerId
-                      ? "border-black shadow-md bg-blue-50"
-                      : "hover:border-black hover:shadow-md"
-                  }`}
-                  onClick={() => onSellerSelect(sellerId)}
-                >
-                  <div className="flex justify-between items-start">
-                    <div className="p-4">
-                      <p className="font-semibold">
-                        {selectedSellerId === sellerId
-                          ? "✓ Selected for Checkout"
-                          : "Select for Checkout"}
-                      </p>
+              return (
+                <div key={sellerId} className="mb-4">
+                  <div
+                    className={`p-1.5 md:p-2 border-2 rounded-lg transition duration-200 cursor-pointer ${
+                      selectedSellerId === sellerId
+                        ? "border-black shadow-md bg-blue-50"
+                        : "hover:border-black hover:shadow-md"
+                    }`}
+                    onClick={() => onSellerSelect(sellerId)}
+                  >
+                    <div className="flex justify-between items-start">
+                      <div className="p-2 md:p-4">
+                        <p className="text-sm md:text-base font-semibold">
+                          {selectedSellerId === sellerId
+                            ? "✓ Selected for Checkout"
+                            : "Select for Checkout"}
+                        </p>
+                      </div>
+                      <div className="flex flex-col items-end p-2 md:p-4">
+                        <p className="text-xs md:text-sm">
+                          {items.length} items
+                        </p>
+                        {isPricingLoading ? (
+                          <div className="h-5 md:h-6 w-20 md:w-24 bg-gray-200 animate-pulse rounded"></div>
+                        ) : (
+                          <p className="text-sm md:text-base font-semibold">
+                            {currency?.currencyCode === "INR"
+                              ? "₹"
+                              : currency?.currencyCode || "₹"}
+                            {sellerPricing?.grandTotal
+                              ? sellerPricing.grandTotal.toFixed(2)
+                              : items
+                                  .reduce(
+                                    (sum: number, item: CartProduct) =>
+                                      sum +
+                                      (item.unitPrice ||
+                                        item.unitListPrice ||
+                                        0) *
+                                        item.quantity,
+                                    0
+                                  )
+                                  .toFixed(2)}
+                          </p>
+                        )}
+                      </div>
                     </div>
-                    <div className="flex flex-col items-end p-4">
-                      <p className="text-base">{items.length} items</p>
-                      <p className="text-base font-semibold">
-                        {currency?.currencyCode === "INR"
-                          ? "₹"
-                          : currency?.currencyCode || "₹"}{" "}
-                        {isPricingLoading
-                          ? "Loading..."
-                          : sellerPricing?.grandTotal
-                            ? sellerPricing.grandTotal.toFixed(2)
-                            : items
+                    <Separator />
+
+                    <div>
+                      <div className="flex justify-between items-start">
+                        <div className="p-2 md:p-4 flex gap-1">
+                          <School size={16} className="md:w-5 md:h-5" />
+                          <p className="font-medium text-xs md:text-sm">
+                            {sellerName}
+                          </p>
+                        </div>
+                        <div className="flex flex-col items-end p-2 md:p-4">
+                          <p className="text-xs md:text-sm">
+                            {items.length} items
+                          </p>
+                          {isPricingLoading ? (
+                            <div className="h-4 md:h-5 w-16 md:w-20 bg-gray-200 animate-pulse rounded"></div>
+                          ) : (
+                            <p className="text-xs md:text-sm font-medium">
+                              {currency?.currencyCode === "INR"
+                                ? "₹"
+                                : currency?.currencyCode || "₹"}
+                              {items
                                 .reduce(
                                   (sum: number, item: CartProduct) =>
                                     sum +
@@ -176,165 +216,152 @@ export default function SellerCard({
                                   0
                                 )
                                 .toFixed(2)}
-                      </p>
-                    </div>
-                  </div>
-                  <Separator />
-
-                  <div>
-                    <div className="flex justify-between items-start">
-                      <div className="p-4 flex gap-1">
-                        <School size={20} />
-                        <p className="font-medium text-sm">{sellerName}</p>
+                            </p>
+                          )}
+                        </div>
                       </div>
-                      <div className="flex flex-col items-end p-4">
-                        <p className="text-sm">{items.length} items</p>
-                        <p className="text-sm font-medium">
-                          {currency?.currencyCode === "INR"
-                            ? "₹"
-                            : currency?.currencyCode || "₹"}
-                          {items
-                            .reduce(
-                              (sum: number, item: CartProduct) =>
-                                sum +
-                                (item.unitPrice || item.unitListPrice || 0) *
-                                  item.quantity,
-                              0
-                            )
-                            .toFixed(2)}
+                      <Separator />
+                      <div className="p-2 md:p-4">
+                        <p className="font-medium text-xs md:text-sm mb-2 md:mb-4">
+                          Items ({items.length})
                         </p>
-                      </div>
-                    </div>
-                    <Separator />
-                    <div className="p-4">
-                      <p className="font-medium text-sm mb-4">
-                        Items ({items.length})
-                      </p>
 
-                      {/* Product List for this Seller */}
-                      {items.map((product: CartProduct, index: number) => (
-                        <div
-                          key={product.productId || index}
-                          className="flex border p-4 justify-between items-start mb-2 rounded-md hover:border-gray-400"
-                        >
-                          {/* Left Section */}
-                          <div className="flex flex-col">
-                            <div className="font-medium">
-                              {product.shortDescription || product.productName}
-                            </div>
-                            <div className="text-sm text-gray-600">
-                              Brand: {product.brandName}
-                            </div>
-                            <div className="flex items-center gap-2 mt-1">
-                              <span className="font-semibold text-base text-primary">
-                                {currency?.currencyCode === "INR"
-                                  ? "₹"
-                                  : currency?.currencyCode || "₹"}
-                                {product.unitPrice?.toFixed(2) ||
-                                  product.unitListPrice?.toFixed(2)}
-                              </span>
-                              {(product.unitListPrice ?? 0) >
-                                (product.unitPrice ?? 0) && (
-                                <>
-                                  <span className="text-sm text-gray-500 line-through">
-                                    {currency?.currencyCode === "INR"
-                                      ? "₹"
-                                      : currency?.currencyCode || "₹"}
-                                    {product.unitListPrice?.toFixed(2)}
-                                  </span>
-                                  <span className="text-sm text-green-600 font-medium">
-                                    {(product.discount ?? 0) > 0 ||
-                                    (product.discountPercentage ?? 0) > 0
-                                      ? `${((product.discount || product.discountPercentage) ?? 0).toFixed(0)}% OFF`
-                                      : ""}
-                                  </span>
-                                </>
-                              )}
-                            </div>
+                        {/* Product List for this Seller */}
+                        {items.map((product: CartProduct, index: number) => (
+                          <div
+                            key={product.productId || index}
+                            className="flex flex-col sm:flex-row border p-2 md:p-4 justify-between items-start mb-2 rounded-md hover:border-gray-400 gap-2 md:gap-4"
+                          >
+                            {/* Left Section */}
+                            <div className="flex flex-col flex-1">
+                              <div className="text-sm md:text-base font-medium">
+                                {product.shortDescription ||
+                                  product.productName}
+                              </div>
+                              <div className="text-xs md:text-sm text-gray-600">
+                                Brand: {product.brandName}
+                              </div>
+                              <div className="flex items-center gap-2 mt-1">
+                                {isPricingLoading ? (
+                                  <div className="h-5 md:h-6 w-14 md:w-16 bg-gray-200 animate-pulse rounded"></div>
+                                ) : (
+                                  <>
+                                    <span className="font-semibold text-sm md:text-base text-primary">
+                                      {currency?.currencyCode === "INR"
+                                        ? "₹"
+                                        : currency?.currencyCode || "₹"}
+                                      {product.unitPrice?.toFixed(2) ||
+                                        product.unitListPrice?.toFixed(2)}
+                                    </span>
+                                    {(product.unitListPrice ?? 0) >
+                                      (product.unitPrice ?? 0) && (
+                                      <>
+                                        <span className="text-xs md:text-sm text-gray-500 line-through">
+                                          {currency?.currencyCode === "INR"
+                                            ? "₹"
+                                            : currency?.currencyCode || "₹"}
+                                          {product.unitListPrice?.toFixed(2)}
+                                        </span>
+                                        <span className="text-xs md:text-sm text-green-600 font-medium">
+                                          {(product.discount ?? 0) > 0 ||
+                                          (product.discountPercentage ?? 0) > 0
+                                            ? `${((product.discount || product.discountPercentage) ?? 0).toFixed(0)}% OFF`
+                                            : ""}
+                                        </span>
+                                      </>
+                                    )}
+                                  </>
+                                )}
+                              </div>
 
-                            <div className="flex items-center gap-2 mt-2">
-                              <span className="text-gray-700 text-sm">
-                                Quantity:
-                              </span>
+                              <div className="flex items-center gap-2 mt-2">
+                                <span className="text-gray-700 text-xs md:text-sm">
+                                  Quantity:
+                                </span>
 
-                              <Button
-                                className="h-6 w-6 min-w-0 p-0 flex items-center justify-center bg-white text-black
+                                <Button
+                                  className="h-5 md:h-6 w-5 md:w-6 min-w-0 p-0 flex items-center justify-center bg-white text-black
                       hover:bg-gray-100 border border-gray-300 rounded"
+                                  onClick={() =>
+                                    onItemUpdate(
+                                      product,
+                                      Math.max(1, product.quantity - 1)
+                                    )
+                                  }
+                                  disabled={isLoading || product.quantity <= 1}
+                                >
+                                  <Minus className="h-3 w-3" />
+                                </Button>
+
+                                <Input
+                                  className="w-8 md:w-10 h-5 md:h-6 text-xs md:text-sm text-center border border-gray-300 rounded focus:outline-none focus:ring-0"
+                                  value={product.quantity}
+                                  readOnly
+                                />
+
+                                <Button
+                                  className="h-5 md:h-6 w-5 md:w-6 min-w-0 p-0 flex items-center justify-center bg-white text-black
+                      hover:bg-gray-100 border border-gray-300 rounded"
+                                  onClick={() =>
+                                    onItemUpdate(product, product.quantity + 1)
+                                  }
+                                  disabled={isLoading}
+                                >
+                                  <Plus className="h-3 w-3" />
+                                </Button>
+                              </div>
+                            </div>
+
+                            {/* Right Section */}
+                            <div className="flex items-center justify-between gap-3 w-full sm:w-auto">
+                              <Button
+                                className="h-5 md:h-6 w-5 md:w-6 min-w-0 p-0 flex items-center justify-center bg-white text-red-500
+                    hover:bg-red-50 border border-gray-300 rounded flex-shrink-0"
                                 onClick={() =>
-                                  onItemUpdate(
-                                    product,
-                                    Math.max(1, product.quantity - 1)
+                                  onItemDelete(
+                                    product.productId,
+                                    product.itemNo,
+                                    product.sellerId
                                   )
-                                }
-                                disabled={isLoading || product.quantity <= 1}
-                              >
-                                <Minus className="h-3 w-3" />
-                              </Button>
-
-                              <Input
-                                className="w-10 h-6 text-center border border-gray-300 rounded focus:outline-none focus:ring-0"
-                                value={product.quantity}
-                                readOnly
-                              />
-
-                              <Button
-                                className="h-6 w-6 min-w-0 p-0 flex items-center justify-center bg-white text-black
-                      hover:bg-gray-100 border border-gray-300 rounded"
-                                onClick={() =>
-                                  onItemUpdate(product, product.quantity + 1)
                                 }
                                 disabled={isLoading}
                               >
-                                <Plus className="h-3 w-3" />
+                                <Trash className="h-3 w-3" />
                               </Button>
+                              <div className="flex flex-col gap-1 items-end">
+                                <span className="text-xs md:text-sm text-gray-600">
+                                  Total
+                                </span>
+                                {isPricingLoading ? (
+                                  <div className="h-5 md:h-6 w-14 md:w-16 bg-gray-200 animate-pulse rounded"></div>
+                                ) : (
+                                  <span className="text-sm md:text-base font-semibold whitespace-nowrap">
+                                    {currency?.currencyCode === "INR"
+                                      ? "₹"
+                                      : currency?.currencyCode || "₹"}
+                                    {(
+                                      (product.unitPrice ||
+                                        product.unitListPrice ||
+                                        0) * product.quantity
+                                    ).toFixed(2)}
+                                  </span>
+                                )}
+                              </div>
                             </div>
                           </div>
-
-                          {/* Right Section */}
-                          <div className="flex flex-col items-end gap-2">
-                            <Button
-                              className="h-6 w-6 min-w-0 p-0 flex items-center justify-center bg-white text-red-500
-                    hover:bg-red-50 border border-gray-300 rounded"
-                              onClick={() =>
-                                onItemDelete(
-                                  product.productId,
-                                  product.itemNo,
-                                  product.sellerId
-                                )
-                              }
-                              disabled={isLoading}
-                            >
-                              <Trash className="h-3 w-3" />
-                            </Button>
-                            <div className="flex flex-col gap-1 items-end">
-                              <span className="text-sm text-gray-600">
-                                Total
-                              </span>
-                              <span className="text-base font-semibold">
-                                {currency?.currencyCode === "INR"
-                                  ? "₹"
-                                  : currency?.currencyCode || "₹"}
-                                {(
-                                  (product.unitPrice ||
-                                    product.unitListPrice ||
-                                    0) * product.quantity
-                                ).toFixed(2)}
-                              </span>
-                            </div>
-                          </div>
-                        </div>
-                      ))}
+                        ))}
+                      </div>
                     </div>
                   </div>
                 </div>
-              </div>
-            );
-          })}
-        </CardContent>
-      </Card>
+              );
+            })}
+          </CardContent>
+        </Card>
+      </div>
 
-      {/* Right side - Price Details and Actions */}
-      <div className="w-2/5 space-y-4">
+      {/* Right side - Price Details and Actions (Fixed, Non-scrollable) */}
+      <div className="w-full md:w-2/5 flex-shrink-0 flex flex-col md:h-full space-y-4">
         {/* Price Details */}
         {selectedSellerPricing && (
           <PriceDetails
@@ -352,14 +379,14 @@ export default function SellerCard({
         {/* Action Buttons */}
         <div className="space-y-3">
           <Button
-            className="w-full bg-black hover:bg-purple-700 text-white py-6 text-base font-medium"
+            className="w-full bg-black hover:bg-black text-white py-4 md:py-6 text-sm md:text-base font-medium"
             onClick={handleOrder}
             disabled={isPricingLoading || !selectedSellerId}
           >
             CREATE ORDER
           </Button>
           <Button
-            className="w-full bg-white hover:bg-gray-50 text-black border border-black py-6 text-base font-medium"
+            className="w-full bg-white hover:bg-gray-50 text-black border border-black py-4 md:py-6 text-sm md:text-base font-medium"
             onClick={handleQuote}
             disabled={isPricingLoading || !selectedSellerId}
           >

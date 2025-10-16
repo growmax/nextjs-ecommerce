@@ -100,17 +100,9 @@ const useMultipleSellerCart = (cartItems, calculationParams = {}) => {
 
   // Update state when processed carts change
   useEffect(() => {
-    // Only update if there's an actual change to prevent unnecessary rerenders
-    const cartsChanged =
-      JSON.stringify(sellerCarts) !== JSON.stringify(processedSellerCarts);
-    const summaryChanged =
-      JSON.stringify(overallSummary) !== JSON.stringify(summary);
-
-    if (cartsChanged || summaryChanged) {
-      setSellerCarts(processedSellerCarts);
-      setOverallSummary(summary);
-    }
-  }, [processedSellerCarts, summary, overallSummary, sellerCarts]);
+    setSellerCarts(processedSellerCarts);
+    setOverallSummary(summary);
+  }, [processedSellerCarts, summary]);
 
   // Auto-select seller: prefer persisted selection, then first available
   useEffect(() => {
