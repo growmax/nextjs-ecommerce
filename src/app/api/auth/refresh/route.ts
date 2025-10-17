@@ -12,10 +12,10 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const response = await fetch(`${process.env.AUTH_URL}/refresh`, {
+    const response = await fetch(`${process.env.AUTH_URL}/refreshToken`, {
       method: "POST",
       headers: {
-        origin:
+        Origin:
           request.headers.get("x-tenant-origin") || process.env.DEFAULT_ORIGIN!,
         "Content-Type": "application/json",
         "Cache-Control": "no-cache, no-store, must-revalidate",
@@ -27,9 +27,19 @@ export async function POST(request: NextRequest) {
     });
 
     if (!response.ok) {
+      // Log error for debugging
+      const errorData = await response.json().catch(() => ({}));
+      if (process.env.NODE_ENV === "development") {
+        console.error("Token refresh failed:", {
+          status: response.status,
+          error: errorData,
+          endpoint: `${process.env.AUTH_URL}/refreshToken`,
+        });
+      }
+
       // Clear invalid refresh token
       const nextResponse = NextResponse.json(
-        { error: "Token refresh failed" },
+        { error: "Token refresh failed", details: errorData },
         { status: 401 }
       );
 
@@ -63,15 +73,31 @@ export async function POST(request: NextRequest) {
       return nextResponse;
     }
 
-    const tokens = await response.json();
+    const responseData = await response.json();
 
-    const nextResponse = NextResponse.json(tokens, {
-      headers: {
-        "Cache-Control": "no-cache, no-store, must-revalidate",
-        Pragma: "no-cache",
-        Expires: "0",
+    // Handle nested token structure from external API
+    // API returns: { tokens: { accessToken, refreshToken } }
+    // Also support flat structure: { accessToken, refreshToken }
+    let tokens = responseData;
+    if (responseData.tokens) {
+      tokens = responseData.tokens;
+    } else if (responseData.data?.accessToken) {
+      tokens = responseData.data;
+    }
+
+    const nextResponse = NextResponse.json(
+      {
+        accessToken: tokens.accessToken,
+        refreshToken: tokens.refreshToken,
       },
-    });
+      {
+        headers: {
+          "Cache-Control": "no-cache, no-store, must-revalidate",
+          Pragma: "no-cache",
+          Expires: "0",
+        },
+      }
+    );
 
     // Set new access token
     if (tokens.accessToken) {

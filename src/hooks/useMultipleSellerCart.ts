@@ -99,10 +99,10 @@ const useMultipleSellerCart = (cartItems, calculationParams = {}) => {
   }, [processedSellerCarts]);
 
   // Update state when processed carts change
-  useEffect(() => {
-    setSellerCarts(processedSellerCarts);
-    setOverallSummary(summary);
-  }, [processedSellerCarts]);
+  // useEffect(() => {
+  //   setSellerCarts(processedSellerCarts);
+  //   setOverallSummary(summary);
+  // }, [processedSellerCarts]);
 
   // Auto-select seller: prefer persisted selection, then first available
   useEffect(() => {
