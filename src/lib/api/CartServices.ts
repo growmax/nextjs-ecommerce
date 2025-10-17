@@ -28,10 +28,10 @@ export interface AddToCartRequest {
     itemNo: number;
     pos: number;
     addBundle: boolean;
-    sellerId: number;
-    sellerName: string;
-    sellerLocation: string;
-    price: number;
+    sellerId?: number;
+    sellerName?: string;
+    sellerLocation?: string;
+    price?: number;
   };
 }
 

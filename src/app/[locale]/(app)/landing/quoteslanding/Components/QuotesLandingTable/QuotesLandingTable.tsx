@@ -15,7 +15,6 @@ import {
 import { useCurrentUser } from "@/hooks/useCurrentUser";
 import PreferenceService, {
   FilterPreferenceResponse,
-  FilterPreference,
 } from "@/lib/api/services/PreferenceService";
 import QuotesService, {
   type QuoteItem,
@@ -39,7 +38,7 @@ function QuotesLandingTable({
   const locale = useLocale();
   const { user } = useCurrentUser();
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
-  const [drawerMode, setDrawerMode] = useState<"filter" | "create">("filter");
+  const [_drawerMode] = useState<"filter" | "create">("filter");
   const [quotes, setQuotes] = useState<QuoteItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [totalCount, setTotalCount] = useState(0);
@@ -49,7 +48,7 @@ function QuotesLandingTable({
   const [filterData, setFilterData] = useState<QuoteFilterFormData | null>(
     null
   );
-  const [initialFilterData, setInitialFilterData] = useState<
+  const [initialFilterData] = useState<
     QuoteFilterFormData | undefined
   >(undefined);
   const [filterPreferences, setFilterPreferences] =
@@ -649,29 +648,6 @@ function QuotesLandingTable({
 
   const handleDrawerClose = () => setIsDrawerOpen(false);
 
-  // Convert saved filter to form data format
-  const convertToFormData = (
-    filter: FilterPreference
-  ): QuoteFilterFormData => ({
-    filterName: filter.filter_name || "", // ← Add filter_name mapping
-    status: filter.status || [],
-    quoteId: filter.identifier || "",
-    quoteName: filter.name || "",
-    quotedDateStart: filter.startDate ? new Date(filter.startDate) : undefined,
-    quotedDateEnd: filter.endDate ? new Date(filter.endDate) : undefined,
-    lastUpdatedDateStart: filter.startCreatedDate
-      ? new Date(filter.startCreatedDate)
-      : undefined,
-    lastUpdatedDateEnd: filter.endCreatedDate
-      ? new Date(filter.endCreatedDate)
-      : undefined,
-    subtotalStart: filter.startValue?.toString() || "",
-    subtotalEnd: filter.endValue?.toString() || "",
-    taxableStart: filter.startTaxableAmount?.toString() || "",
-    taxableEnd: filter.endTaxableAmount?.toString() || "",
-    totalStart: filter.startGrandTotal?.toString() || "",
-    totalEnd: filter.endGrandTotal?.toString() || "",
-  });
 
   const handleAddDrawerClose = () => setIsAddDrawerOpen(false);
 
@@ -718,14 +694,14 @@ function QuotesLandingTable({
         onReset={handleQuoteFilterReset}
         onSave={handleQuoteFilterSave}
         title={
-          drawerMode === "create" ? "Create Custom Filter" : "Quote Filters"
+          _drawerMode === "create" ? "Create Custom Filter" : "Quote Filters"
         }
         filterType="Quote"
         userId={user?.userId}
         companyId={user?.companyId}
         module="quote"
         initialFilterData={initialFilterData}
-        mode={drawerMode}
+        mode={_drawerMode}
       />
 
       <SideDrawer

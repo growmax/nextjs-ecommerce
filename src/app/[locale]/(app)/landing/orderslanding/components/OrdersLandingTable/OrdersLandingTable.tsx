@@ -25,7 +25,6 @@ import ordersFilterService, {
 } from "@/lib/api/services/OrdersFilterService";
 import orderService, { OrdersParams } from "@/lib/api/services/OrdersService";
 import PreferenceService, {
-  FilterPreference,
   FilterPreferenceResponse,
 } from "@/lib/api/services/PreferenceService";
 import { type Order } from "@/types/dashboard/DasbordOrderstable/DashboardOrdersTable";
@@ -59,7 +58,7 @@ function OrdersLandingTable({
 
   // State
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
-  const [drawerMode, setDrawerMode] = useState<"filter" | "create">("filter");
+  const [_drawerMode] = useState<"filter" | "create">("filter");
   const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);
   const [totalCount, setTotalCount] = useState(0);
@@ -69,12 +68,12 @@ function OrdersLandingTable({
   const [filterData, setFilterData] = useState<QuoteFilterFormData | null>(
     null
   );
-  const [initialFilterData, setInitialFilterData] = useState<
+  const [initialFilterData] = useState<
     QuoteFilterFormData | undefined
   >(undefined);
-  const [filterPreferences, setFilterPreferences] =
+  const [_filterPreferences] =
     useState<FilterPreferenceResponse | null>(null);
-  const [activeTab, setActiveTab] = useState("all");
+  const [_activeTab] = useState("all");
   const [isAddDrawerOpen, setIsAddDrawerOpen] = useState(false);
   const [isItemsDialogOpen, setIsItemsDialogOpen] = useState(false);
   const [selectedOrderItems, setSelectedOrderItems] = useState<Order | null>(
@@ -296,39 +295,12 @@ function OrdersLandingTable({
     [rowPerPage]
   );
 
-  // Convert saved filter to form data
-  const convertToFormData = useCallback(
-    (filter: FilterPreference): QuoteFilterFormData => ({
-      filterName: filter.filter_name || "",
-      status: filter.status || [],
-      quoteId: filter.identifier || "",
-      quoteName: filter.name || "",
-      quotedDateStart: filter.startDate
-        ? new Date(filter.startDate)
-        : undefined,
-      quotedDateEnd: filter.endDate ? new Date(filter.endDate) : undefined,
-      lastUpdatedDateStart: filter.startCreatedDate
-        ? new Date(filter.startCreatedDate)
-        : undefined,
-      lastUpdatedDateEnd: filter.endCreatedDate
-        ? new Date(filter.endCreatedDate)
-        : undefined,
-      subtotalStart: filter.startValue?.toString() || "",
-      subtotalEnd: filter.endValue?.toString() || "",
-      taxableStart: filter.startTaxableAmount?.toString() || "",
-      taxableEnd: filter.endTaxableAmount?.toString() || "",
-      totalStart: filter.startGrandTotal?.toString() || "",
-      totalEnd: filter.endGrandTotal?.toString() || "",
-    }),
-    []
-  );
 
   // Load filter preferences
   const loadFilterPreferences = useCallback(async () => {
     try {
       const preferences =
         await PreferenceService.findFilterPreferences("order");
-      setFilterPreferences(preferences);
       return preferences;
     } catch {
       return null;
@@ -596,15 +568,15 @@ function OrdersLandingTable({
         }}
         onSave={handleSaveFilter}
         title={
-          drawerMode === "create" ? "Create Custom Filter" : "Order Filters"
+          _drawerMode === "create" ? "Create Custom Filter" : "Order Filters"
         }
         filterType="Order"
-        activeTab={activeTab}
+        activeTab={_activeTab}
         userId={user?.userId}
         companyId={user?.companyId}
         module="order"
         initialFilterData={initialFilterData}
-        mode={drawerMode}
+        mode={_drawerMode}
       />
 
       <SideDrawer

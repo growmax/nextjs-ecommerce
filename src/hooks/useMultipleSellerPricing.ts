@@ -42,7 +42,7 @@ export default function useMultipleSellerPricing(
   const auth = true;
 
   const productIds = uniqBy(cartItems || [], "productId").map(
-    (item: CartItem) => item.productId
+    (item: CartItem) => Number(item.productId)
   );
   const quantityHash = useMemo(() => {
     if (!cartItems || cartItems.length === 0) return "empty";
@@ -84,7 +84,7 @@ export default function useMultipleSellerPricing(
         ) || [];
 
       return sellerItems.map((item: CartItem) => ({
-        ProductVariantId: item.productId,
+        ProductVariantId: Number(item.productId),
         quantity: item.quantity || 1,
       }));
     };
@@ -100,7 +100,7 @@ export default function useMultipleSellerPricing(
           CurrencyId: currency?.id || sellerCurrency?.id || 0,
           BaseCurrencyId: sellerCurrency?.id || 0,
           companyId: companyId || 0,
-          sellerId,
+          sellerId: String(sellerId),
         },
       }).catch((error: unknown) => {
         // eslint-disable-next-line no-console
@@ -125,14 +125,15 @@ export default function useMultipleSellerPricing(
 
     // Group getAllSellerPrices by numeric sellerId for easy lookup
     const allSellerPricesBySeller: SellerPricing = {};
-    allSellerPricesData.forEach((item: Record<string, unknown>) => {
+    (allSellerPricesData as Record<string, unknown>[]).forEach((item: Record<string, unknown>) => {
       // Only use numeric seller IDs
-      const sellerId = item.sellerId || item.vendorId;
+      const sellerId = (item.sellerId || item.vendorId) as string | number;
       if (sellerId) {
-        if (!allSellerPricesBySeller[sellerId]) {
-          allSellerPricesBySeller[sellerId] = [];
+        const sellerKey = String(sellerId);
+        if (!allSellerPricesBySeller[sellerKey]) {
+          allSellerPricesBySeller[sellerKey] = [];
         }
-        allSellerPricesBySeller[sellerId].push(item);
+        allSellerPricesBySeller[sellerKey].push(item);
       } else {
         // eslint-disable-next-line no-console
         console.warn(
@@ -149,7 +150,7 @@ export default function useMultipleSellerPricing(
       const fallbackData = allSellerPricesBySeller[sellerId] || [];
 
       // Check if seller-specific data actually belongs to this seller
-      const validSellerData = sellerSpecificData.filter(
+      const validSellerData = (sellerSpecificData as Record<string, unknown>[]).filter(
         (item: Record<string, unknown>) =>
           String(item.sellerId) === String(sellerId) ||
           String(item.vendorId) === String(sellerId)
@@ -221,8 +222,10 @@ export default function useMultipleSellerPricing(
         }
       } else {
         // Group getAllSellerPrices response by numeric sellerId only
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const priceData = (data as any)?.data || [];
         const groupedBySeller = groupBy(
-          (data as PricingResult).data,
+          priceData as Record<string, unknown>[],
           (item: Record<string, unknown>) => {
             const id = item.sellerId || item.vendorId;
             if (!id) {
@@ -232,13 +235,13 @@ export default function useMultipleSellerPricing(
                 item
               );
             }
-            return id || "no-seller-id";
+            return String(id || "no-seller-id");
           }
         );
         // Remove items with no seller ID
         delete groupedBySeller["no-seller-id"];
-        setSellerPricingData(groupedBySeller);
-        setAllSellerPricesData(groupedBySeller);
+        setSellerPricingData(groupedBySeller as SellerPricing);
+        setAllSellerPricesData(groupedBySeller as SellerPricing);
       }
     }
   }, [data, error, sellerIds]);

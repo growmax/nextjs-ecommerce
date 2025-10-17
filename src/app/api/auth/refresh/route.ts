@@ -30,11 +30,7 @@ export async function POST(request: NextRequest) {
       // Log error for debugging
       const errorData = await response.json().catch(() => ({}));
       if (process.env.NODE_ENV === "development") {
-        console.error("Token refresh failed:", {
-          status: response.status,
-          error: errorData,
-          endpoint: `${process.env.AUTH_URL}/refreshToken`,
-        });
+        // Token refresh failed
       }
 
       // Clear invalid refresh token

@@ -10,14 +10,15 @@ import {
 } from "lodash";
 
 export const cartCalculation = (
-  cartData,
+  cartData: any, // eslint-disable-line @typescript-eslint/no-explicit-any
   isInter = true,
   insuranceCharges = 0,
   precision = 2,
-  Settings
+  Settings: any // eslint-disable-line @typescript-eslint/no-explicit-any
 ) => {
   let cartArray = cloneDeep(cartData);
-  const cartValue = {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const cartValue: any = {
     totalItems: cartData.length,
     totalValue: 0,
     totalTax: 0,
@@ -30,7 +31,7 @@ export const cartCalculation = (
     cashDiscountValue: 0,
     hideListPricePublic: some(cartData, ["listPricePublic", false]),
   };
-  cartArray = cartArray.map((data, index) => {
+  cartArray = cartArray.map((data: any, index: number) => { // eslint-disable-line @typescript-eslint/no-explicit-any
     // Apply cash discount to unit price if applicable
     if (data.cashdiscountValue && data.cashdiscountValue > 0) {
       // Only store original unit price if not already stored
@@ -187,7 +188,8 @@ export const cartCalculation = (
   return cartValue;
 };
 
-export const handleBundleProductsLogic = item => {
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export const handleBundleProductsLogic = (item: any) => {
   let detectBundlePriceFromProduct = 0;
   let bundleUnitListPrice = item.initial_unitListPrice_fe;
   if (item.bundleProducts?.length > 0) {
@@ -211,12 +213,12 @@ export const handleBundleProductsLogic = item => {
 };
 
 export const discountDetails = (
-  cartData,
-  isSeller,
-  taxExemption,
+  cartData: any, // eslint-disable-line @typescript-eslint/no-explicit-any
+  _isSeller: any, // eslint-disable-line @typescript-eslint/no-explicit-any
+  taxExemption: any, // eslint-disable-line @typescript-eslint/no-explicit-any
   precision = 2
 ) => {
-  cartData.forEach(item => {
+  cartData.forEach((item: any) => { // eslint-disable-line @typescript-eslint/no-explicit-any
     item.packagingQuantity = item.packagingQty
       ? parseFloat(item.packagingQty)
       : parseFloat(item.packagingQuantity);
@@ -359,26 +361,36 @@ export const discountDetails = (
 };
 
 export const VolumeDiscountCalculation = (
-  isInter,
-  products,
-  VdData,
-  subTotal,
-  overallShipping,
-  Settings,
-  beforeTax,
-  beforeTaxPercentage,
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  isInter: any,
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  products: any,
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  VdData: any,
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  subTotal: any,
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  overallShipping: any,
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  Settings: any,
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  beforeTax: any,
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  beforeTaxPercentage: any,
   precision = 2
 ) => {
-  const vdDetails = {};
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const vdDetails: any = {};
   let addProd = 0;
   let addTax = 0;
   let addVolumeProd = 0;
   const productsAfterVd = products;
   let pfRate = 0;
   let shippingTax = 0;
-  productsAfterVd.forEach((product, index) => {
+  productsAfterVd.forEach((product: any, index: number) => { // eslint-disable-line @typescript-eslint/no-explicit-any
     let shippingCompound = 0;
-    VdData?.forEach((vd, indexvd) => {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    VdData?.forEach((vd: any, indexvd: any) => {
       if (product.itemNo === vd.itemNo) {
         product.appliedDiscount = vd.appliedDiscount;
         // product.discount = vd.appliedDiscount
@@ -694,13 +706,20 @@ export const VolumeDiscountCalculation = (
 
 export const getProductWiseMargin = (
   precision = 2,
-  discountBased,
-  data,
-  prevData,
-  subTotal,
-  maxRange,
-  prevApproved,
-  isRejected
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  discountBased: any,
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  data: any,
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  prevData: any,
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  subTotal: any,
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  maxRange: any,
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  prevApproved: any,
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  isRejected: any
 ) => {
   let totalHoCost = 0;
   let totalProductCost = 0;
@@ -819,7 +838,7 @@ export const getProductWiseMargin = (
       }
     }
     // }
-    if (index === data.length - 1) {
+    if (((index as unknown) as number) === data.length - 1) {
       costProfit =
         subTotal > 0 && totalProductCost > 0
           ? parseFloat(
@@ -848,10 +867,13 @@ export const getProductWiseMargin = (
 };
 
 export const addMoreUtils = (
-  isInter,
-  item = {},
-  isSeller,
-  taxExemption,
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  isInter: any,
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  item: any = {},
+  _isSeller: any, // eslint-disable-line @typescript-eslint/no-explicit-any
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  taxExemption: any,
   precision = 2
 ) => {
   item.productCost = item.productCost ? item.productCost : 0;
@@ -960,23 +982,32 @@ export const addMoreUtils = (
 };
 
 export const calculate_volume_discount = (
-  isInter,
-  VdData,
-  subTotal,
-  insuranceCharges,
-  beforeTax,
-  beforeTaxPercentage,
-  overallShipping,
-  Settings,
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  isInter: any,
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  VdData: any,
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  subTotal: any,
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  insuranceCharges: any,
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  beforeTax: any,
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  beforeTaxPercentage: any,
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  overallShipping: any,
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  Settings: any,
   precision = 2
 ) => {
-  const vdDetails = {};
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const vdDetails: any = {};
   let addProd = 0;
   let addVolumeProd = 0;
   let pfRate = 0;
   let shippingTax = 0;
   try {
-    VdData.forEach((product, index) => {
+    VdData.forEach((product: any, index: number) => { // eslint-disable-line @typescript-eslint/no-explicit-any
       let shippingCompound = 0;
       // if(product?.volume_discount_obj?.Percentage && product?.volume_discount_obj?.DiscountId){
       //if disc changed manually, we dont need to check CantCombineWithOtherDiscounts..

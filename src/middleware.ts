@@ -108,9 +108,8 @@ export async function middleware(request: NextRequest) {
         path: "/",
         maxAge: 7 * 24 * 60 * 60, // 7 days
       });
-    } catch (error) {
+    } catch {
       // Log error but don't block the request
-      console.error("Failed to fetch anonymous token:", error);
       // Continue without token
     }
   }

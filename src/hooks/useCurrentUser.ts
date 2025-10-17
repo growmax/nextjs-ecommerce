@@ -9,11 +9,11 @@ import { useEffect, useState } from "react";
 interface CurrencyObj {
   currencyCode: string;
   decimal: string;
-  description: string;
-  id: number;
+  description?: string;
+  id?: number;
   precision: number;
   symbol: string;
-  tenantId: number;
+  tenantId?: number;
   thousand: string;
 }
 
@@ -78,7 +78,6 @@ export function useCurrentUser() {
             companyId: response.data.companyId,
             displayName: response.data.displayName || "",
             email: response.data.email || "",
-            phoneNumber: response.data.phoneNumber,
             role: response.data.roleName,
           };
 

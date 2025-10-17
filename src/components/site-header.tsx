@@ -41,7 +41,7 @@ export function SiteHeader() {
   const { isLoggingOut, handleLogout } = useLogout();
 
   // Get cart count from selected seller cart
-  const { selectedSellerItems = [] } = useSelectedSellerCart() || {};
+  const { selectedSellerItems = [] } = useSelectedSellerCart([], null) || {};
   const cartCount = selectedSellerItems?.length || 0;
   const notificationCount = 3;
 

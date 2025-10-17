@@ -1,5 +1,5 @@
 // Export main components
-export { DataTable } from "./DataTable.tsx";
+export { DataTable } from "./DataTable";
 export { DataTablePagination } from "./DataTablePagination";
 export { DraggableRow } from "./DraggableRow";
 export { DragHandle } from "./DragHandle";
