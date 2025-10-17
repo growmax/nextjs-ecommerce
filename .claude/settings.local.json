@@ -52,6 +52,7 @@
       "Read(//var/folders/jl/6glsqt190jn01b62rc97k3c40000gn/T/TemporaryItems/NSIRD_screencaptureui_92tBu3/**)",
       "Read(//var/folders/jl/6glsqt190jn01b62rc97k3c40000gn/T/TemporaryItems/NSIRD_screencaptureui_aWwkE2/**)",
       "Bash(ls:*)",
+<<<<<<< HEAD
       "Bash(git fsck:*)",
       "Bash(yarn cache clean:*)",
       "Bash(git config:*)",
@@ -72,6 +73,14 @@
       "Read(//var/folders/jl/6glsqt190jn01b62rc97k3c40000gn/T/TemporaryItems/NSIRD_screencaptureui_v3MAxd/**)",
       "Bash(kill:*)",
       "Bash(sips:*)"
+=======
+      "Read(//var/folders/n3/n8_ngryx0vd6m_9sm958xj6r0000gn/T/TemporaryItems/NSIRD_screencaptureui_YeYvPX/**)",
+      "Read(//var/folders/n3/n8_ngryx0vd6m_9sm958xj6r0000gn/T/TemporaryItems/NSIRD_screencaptureui_mcrk1g/**)",
+      "Read(//var/folders/n3/n8_ngryx0vd6m_9sm958xj6r0000gn/T/TemporaryItems/NSIRD_screencaptureui_81WoBI/**)",
+      "Read(//var/folders/n3/n8_ngryx0vd6m_9sm958xj6r0000gn/T/TemporaryItems/NSIRD_screencaptureui_zPjNrg/**)",
+      "Read(//var/folders/n3/n8_ngryx0vd6m_9sm958xj6r0000gn/T/TemporaryItems/NSIRD_screencaptureui_Y4xQwg/**)",
+      "Read(//var/folders/n3/n8_ngryx0vd6m_9sm958xj6r0000gn/T/TemporaryItems/NSIRD_screencaptureui_eV8UwL/**)"
+>>>>>>> 0f7c258163737c6d77f797c643e5db05ca7b3cc7
     ],
     "deny": [],
     "ask": []

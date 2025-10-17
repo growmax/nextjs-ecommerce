@@ -1,4 +1,4 @@
-import AddMoreProducts from "@/components/Global/Products/AddMoreProducts";
+import ImageWithFallback from "@/components/ImageWithFallback";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -8,6 +8,7 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover";
 import { Separator } from "@/components/ui/separator";
+import { Title } from "@/utils/Typo";
 import { EllipsisVertical, Minus, Plus, School, Trash } from "lucide-react";
 import CartSkeleton from "../CartSkeleton";
 import PriceDetails from "../PriceDetails";
@@ -23,6 +24,10 @@ interface CartProduct {
   discountPercentage?: number;
   itemNo: string;
   sellerId?: string;
+  img?: string;
+  hsnCode?: string;
+  packagingQuantity?: number;
+  minOrderQuantity?: number;
 }
 
 interface SellerPricing {
@@ -131,10 +136,10 @@ export default function SellerCard({
       <div className="w-full md:w-3/5 flex-shrink-0 flex flex-col md:h-full">
         <Card className="shadow-lg flex flex-col md:h-full">
           <CardHeader className="text-base md:text-lg font-semibold flex flex-col md:flex-row justify-between md:items-center gap-2 flex-shrink-0">
-            <span>My Cart ({totalCart})</span>
-            <div className="w-full md:w-96">
+            <Title>My Cart ({totalCart})</Title>
+            {/* <div className="w-full md:w-96">
               <AddMoreProducts />
-            </div>
+            </div> */}
             <Popover>
               <PopoverTrigger asChild>
                 <button className="p-2 rounded-full hover:bg-gray-100">
@@ -152,7 +157,7 @@ export default function SellerCard({
               </PopoverContent>
             </Popover>
           </CardHeader>
-          <CardContent className="flex-1 md:overflow-y-auto">
+          <CardContent className="flex-1 md:overflow-y-auto space-y-4 pb-0">
             {sellerIds.map((sellerId: string) => {
               const sellerCart = sellerCarts[sellerId];
               const items = sellerCart?.items || [];
@@ -251,8 +256,23 @@ export default function SellerCard({
                         {items.map((product: CartProduct, index: number) => (
                           <div
                             key={product.productId || index}
-                            className="flex flex-col sm:flex-row border p-2 md:p-4 justify-between items-start mb-2 rounded-md hover:border-gray-400 gap-2 md:gap-4"
+                            className="flex flex-col sm:flex-row border p-2 md:p-4 justify-between items-start mb-2 last:mb-0 rounded-md hover:border-gray-400 gap-2 md:gap-4"
                           >
+                            {/* Product Image */}
+                            <div className="w-16 h-16 md:w-20 md:h-20 flex-shrink-0 rounded-md overflow-hidden bg-gray-100">
+                              <ImageWithFallback
+                                src={product.img}
+                                alt={
+                                  product.productName ||
+                                  product.shortDescription ||
+                                  "Product"
+                                }
+                                width={80}
+                                height={80}
+                                objectFit="cover"
+                              />
+                            </div>
+
                             {/* Left Section */}
                             <div className="flex flex-col flex-1">
                               <div className="text-sm md:text-base font-medium">
@@ -262,6 +282,11 @@ export default function SellerCard({
                               <div className="text-xs md:text-sm text-gray-600">
                                 Brand: {product.brandName}
                               </div>
+                              {product.hsnCode && (
+                                <div className="text-xs md:text-sm text-gray-600">
+                                  HSN: {product.hsnCode}
+                                </div>
+                              )}
                               <div className="flex items-center gap-2 mt-1">
                                 {isPricingLoading ? (
                                   <div className="h-5 md:h-6 w-14 md:w-16 bg-gray-200 animate-pulse rounded"></div>
@@ -331,13 +356,29 @@ export default function SellerCard({
                                   <Plus className="h-3 w-3" />
                                 </Button>
                               </div>
+
+                              {/* Additional Product Info */}
+                              {(product.packagingQuantity ||
+                                product.minOrderQuantity) && (
+                                <div className="flex gap-3 mt-2 pt-2 border-t border-gray-200">
+                                  {product.packagingQuantity && (
+                                    <span className="text-xs text-gray-600">
+                                      Packaging Qty: {product.packagingQuantity}
+                                    </span>
+                                  )}
+                                  {product.minOrderQuantity && (
+                                    <span className="text-xs text-gray-600">
+                                      Min Order Qty: {product.minOrderQuantity}
+                                    </span>
+                                  )}
+                                </div>
+                              )}
                             </div>
 
                             {/* Right Section */}
-                            <div className="flex items-center justify-between gap-3 w-full sm:w-auto">
+                            <div className="flex flex-row sm:flex-col items-center justify-between gap-2 w-full sm:w-auto mt-2 sm:mt-0">
                               <Button
-                                className="h-5 md:h-6 w-5 md:w-6 min-w-0 p-0 flex items-center justify-center bg-white text-red-500
-                    hover:bg-red-50 border border-gray-300 rounded flex-shrink-0"
+                                className="h-8 w-8 min-w-0 p-0 flex items-center justify-center bg-white text-red-500 hover:bg-red-50 border border-red-500 rounded flex-shrink-0 ml-6"
                                 onClick={() =>
                                   onItemDelete(
                                     product.productId,
@@ -347,8 +388,9 @@ export default function SellerCard({
                                 }
                                 disabled={isLoading}
                               >
-                                <Trash className="h-3 w-3" />
+                                <Trash className="h-4 w-4 sm:h-3 sm:w-3" />
                               </Button>
+
                               <div className="flex flex-col gap-1 items-end">
                                 <span className="text-xs md:text-sm text-gray-600">
                                   Total
