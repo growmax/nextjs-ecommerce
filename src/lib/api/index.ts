@@ -32,6 +32,7 @@ import TokenRefreshService from "../services/TokenRefreshService";
 
 // Import dashboard services from the new location
 import DashboardService from "./services/DashboardService";
+import OrderDetailsService from "./services/OrderDetailsService";
 import OrdersService from "./services/OrdersService";
 import OrderStatusService from "./services/OrderStatusService";
 import PreferenceService from "./services/PreferenceService";
@@ -47,6 +48,7 @@ export {
   CompanyService,
   DashboardService,
   DiscountService,
+  OrderDetailsService,
   OrdersService,
   OrderStatusService,
   PreferenceService,
@@ -101,6 +103,13 @@ export type {
   OrderStatusResponse,
   StatusOption,
 } from "./services/OrderStatusService";
+
+export type {
+  FetchOrderDetailsParams,
+  OrderDetailItem,
+  OrderDetailsData,
+  OrderDetailsResponse,
+} from "./services/OrderDetailsService";
 
 export type {
   PreferenceModule,
@@ -197,6 +206,7 @@ export const API = {
   Company: CompanyService,
   Dashboard: DashboardService,
   Discount: DiscountService,
+  OrderDetails: OrderDetailsService,
   Orders: OrdersService,
   OrderStatus: OrderStatusService,
   Preference: PreferenceService,
