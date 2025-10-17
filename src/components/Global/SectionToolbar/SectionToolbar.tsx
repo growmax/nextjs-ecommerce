@@ -15,6 +15,7 @@ import type {
   SectionToolbarProps,
   SectionToolbarRef,
 } from "@/types/section-toolbar";
+import { Title } from "@/utils/Typo";
 import {
   Columns3,
   Filter,
@@ -114,16 +115,9 @@ const SectionToolbar = forwardRef<SectionToolbarRef, SectionToolbarProps>(
               {/* Title */}
               {title && (
                 <div className={cn("min-w-0", noWrap && "max-w-[300px]")}>
-                  <h1
-                    className={cn(
-                      "font-semibold text-foreground",
-                      isMobile ? "text-lg" : "text-xl",
-                      noWrap && "truncate"
-                    )}
-                    title={title}
-                  >
+                  <Title>
                     {isMobile && mobileProps?.title ? mobileProps.title : title}
-                  </h1>
+                  </Title>
                 </div>
               )}
 
