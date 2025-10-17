@@ -1,219 +1,105 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import * as React from "react";
 import {
   Home,
   LayoutDashboard,
   ShoppingBag,
-  ShoppingCart,
-  FileText,
   Settings,
-  IdCard,
-  Building2,
-  ChevronRight,
 } from "lucide-react";
+import { NavMain } from "@/components/nav-main";
+import { NavUser } from "@/components/nav-user";
 import {
   Sidebar,
   SidebarContent,
-  SidebarGroup,
-  SidebarGroupContent,
+  SidebarFooter,
+  SidebarHeader,
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
-  SidebarMenuSub,
-  SidebarMenuSubButton,
-  SidebarMenuSubItem,
-  SidebarHeader,
-  SidebarTrigger,
 } from "@/components/ui/sidebar";
-import {
-  Collapsible,
-  CollapsibleContent,
-  CollapsibleTrigger,
-} from "@/components/ui/collapsible";
 import { useAuth } from "@/contexts/AuthContext";
-import Link from "next/link";
-import { usePathname } from "next/navigation";
 import Logo from "./custom/logo";
+import Link from "next/link";
 
-interface MenuItem {
-  id: string;
-  href?: string;
-  icon: React.ReactNode;
-  label: string;
-  requireAuth?: boolean;
-  submenu?: MenuItem[];
-}
-
-const sidebarMenuItems: MenuItem[] = [
+const navMainItems = [
   {
-    id: "home",
-    href: "/",
-    icon: <Home className="h-4 w-4" />,
-    label: "Home",
-    requireAuth: false,
+    title: "Home",
+    url: "/",
+    icon: Home,
   },
   {
-    id: "dashboard",
-    href: "/dashboard",
-    icon: <LayoutDashboard className="h-4 w-4" />,
-    label: "Dashboard",
-    requireAuth: true,
+    title: "Dashboard",
+    url: "/dashboard",
+    icon: LayoutDashboard,
   },
   {
-    id: "sales",
-    label: "Sales",
-    icon: <ShoppingBag className="h-4 w-4" />,
-    requireAuth: true,
-    submenu: [
+    title: "Sales",
+    url: "#",
+    icon: ShoppingBag,
+    items: [
       {
-        id: "orders",
-        href: "/landing/orderslanding",
-        icon: <ShoppingCart className="h-4 w-4" />,
-        label: "Orders",
-        requireAuth: true,
+        title: "Quotes",
+        url: "/landing/quoteslanding",
       },
       {
-        id: "quotes",
-        href: "/landing/quoteslanding",
-        icon: <FileText className="h-4 w-4" />,
-        label: "Quotes",
-        requireAuth: true,
+        title: "Orders",
+        url: "/landing/orderslanding",
       },
     ],
   },
   {
-    id: "settings",
-    label: "Settings",
-    icon: <Settings className="h-4 w-4" />,
-    requireAuth: true,
-    submenu: [
+    title: "Settings",
+    url: "#",
+    icon: Settings,
+    items: [
       {
-        id: "profile",
-        href: "/settings/profile",
-        icon: <IdCard className="h-4 w-4" />,
-        label: "Profile",
-        requireAuth: true,
+        title: "Profile",
+        url: "/settings/profile",
       },
       {
-        id: "company",
-        href: "/settings/company",
-        icon: <Building2 className="h-4 w-4" />,
-        label: "Company",
-        requireAuth: true,
+        title: "Company",
+        url: "/settings/company",
       },
     ],
   },
 ];
 
-function useFilteredMenuItems(): MenuItem[] {
+export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const { isAuthenticated } = useAuth();
 
-  return sidebarMenuItems
-    .filter(item => {
-      if (item.requireAuth === false || item.requireAuth === undefined) {
-        return true;
-      }
-      return item.requireAuth === true ? isAuthenticated : true;
-    })
-    .map(item => {
-      if (item.submenu) {
-        const filteredSubmenu = item.submenu.filter(subitem => {
-          if (
-            subitem.requireAuth === false ||
-            subitem.requireAuth === undefined
-          ) {
-            return true;
-          }
-          return subitem.requireAuth === true ? isAuthenticated : true;
-        });
-
-        return {
-          ...item,
-          submenu: filteredSubmenu,
-        };
-      }
-      return item;
-    });
-}
-
-export function AppSidebar() {
-  const pathname = usePathname();
-  const filteredMenuItems = useFilteredMenuItems();
-  const [isHydrated, setIsHydrated] = useState(false);
-
-  useEffect(() => {
-    setIsHydrated(true);
-  }, []);
-
-  const isActive = (href?: string) => {
-    if (!isHydrated || !href) return false;
-    if (href === "/") return pathname === "/";
-    return pathname.startsWith(href);
-  };
+  // Filter nav items based on auth state
+  const filteredNavMainItems = React.useMemo(() => {
+    if (!isAuthenticated) {
+      return navMainItems.filter(item => item.title === "Home");
+    }
+    return navMainItems;
+  }, [isAuthenticated]);
 
   return (
-    <Sidebar>
+    <Sidebar
+      className="top-(--header-height) h-[calc(100svh-var(--header-height))]!"
+      {...props}
+    >
       <SidebarHeader>
-        <div className="flex items-center gap-2 px-2 py-2">
-          <SidebarTrigger />
-          <Logo />
-        </div>
+        <SidebarMenu>
+          <SidebarMenuItem>
+            <SidebarMenuButton size="lg" asChild>
+              <Link href="/" className="flex items-center gap-2">
+                <Logo />
+              </Link>
+            </SidebarMenuButton>
+          </SidebarMenuItem>
+        </SidebarMenu>
       </SidebarHeader>
       <SidebarContent>
-        <SidebarGroup>
-          <SidebarGroupContent>
-            <SidebarMenu>
-              {filteredMenuItems.map(item => (
-                <SidebarMenuItem key={item.id}>
-                  {item.submenu && item.submenu.length > 0 ? (
-                    <Collapsible defaultOpen={false}>
-                      <CollapsibleTrigger asChild>
-                        <SidebarMenuButton
-                          tooltip={item.label}
-                          className="w-full"
-                        >
-                          {item.icon}
-                          <span>{item.label}</span>
-                          <ChevronRight className="ml-auto h-4 w-4 transition-transform duration-200 group-data-[state=open]/collapsible:rotate-90" />
-                        </SidebarMenuButton>
-                      </CollapsibleTrigger>
-                      <CollapsibleContent>
-                        <SidebarMenuSub>
-                          {item.submenu.map(subitem => (
-                            <SidebarMenuSubItem key={subitem.id}>
-                              <SidebarMenuSubButton
-                                asChild
-                                isActive={isActive(subitem.href)}
-                              >
-                                <Link href={subitem.href || "#"}>
-                                  {subitem.icon}
-                                  <span>{subitem.label}</span>
-                                </Link>
-                              </SidebarMenuSubButton>
-                            </SidebarMenuSubItem>
-                          ))}
-                        </SidebarMenuSub>
-                      </CollapsibleContent>
-                    </Collapsible>
-                  ) : (
-                    <SidebarMenuButton
-                      asChild
-                      tooltip={item.label}
-                      isActive={isActive(item.href)}
-                    >
-                      <Link href={item.href || "#"}>
-                        {item.icon}
-                        <span>{item.label}</span>
-                      </Link>
-                    </SidebarMenuButton>
-                  )}
-                </SidebarMenuItem>
-              ))}
-            </SidebarMenu>
-          </SidebarGroupContent>
-        </SidebarGroup>
+        <NavMain items={filteredNavMainItems} />
       </SidebarContent>
+      {isAuthenticated && (
+        <SidebarFooter>
+          <NavUser />
+        </SidebarFooter>
+      )}
     </Sidebar>
   );
 }
