@@ -74,18 +74,18 @@ export default function SalesHeader({
   return (
     <div
       className={cn(
-        "flex items-center justify-between gap-4 px-4 py-3 bg-white border-b",
+        "flex flex-col md:flex-row md:items-center justify-between gap-2 md:gap-4 px-3 md:px-4 py-2 md:py-3 bg-white border-b",
         className
       )}
     >
       {/* Left Section - Title, Identifier, and Status */}
-      <div className="flex items-center gap-3 flex-1 min-w-0">
+      <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-3 flex-1 min-w-0">
         {/* Title with Edit Icon */}
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 min-w-0">
           {loading ? (
             <Skeleton className="h-6 w-48" />
           ) : (
-            <h1 className="text-lg font-semibold text-gray-900 truncate">
+            <h1 className="text-base md:text-lg font-semibold text-gray-900 truncate">
               {title}
             </h1>
           )}
@@ -94,47 +94,50 @@ export default function SalesHeader({
               variant="ghost"
               size="icon"
               onClick={onEdit}
-              className="size-8 text-gray-500 hover:text-gray-700"
+              className="size-7 md:size-8 text-gray-500 hover:text-gray-700 shrink-0"
             >
-              <Pencil className="size-4" />
+              <Pencil className="size-3.5 md:size-4" />
             </Button>
           )}
         </div>
 
-        {/* Identifier */}
-        {loading ? (
-          <Skeleton className="h-4 w-24" />
-        ) : (
-          <span className="text-sm font-medium text-gray-600">
-            {identifier}
-          </span>
-        )}
+        {/* Identifier and Status Container */}
+        <div className="flex items-center gap-2 sm:gap-3 flex-wrap">
+          {/* Identifier */}
+          {loading ? (
+            <Skeleton className="h-4 w-24" />
+          ) : (
+            <span className="text-xs md:text-sm font-medium text-gray-600 truncate">
+              {identifier}
+            </span>
+          )}
 
-        {/* Status Badge */}
-        {loading ? (
-          <Skeleton className="h-6 w-20" />
-        ) : (
-          status && (
-            <Badge
-              variant={status.variant || "secondary"}
-              className={cn(
-                "uppercase text-xs font-semibold px-3 py-1",
-                status.className
-              )}
-            >
-              {status.label}
-            </Badge>
-          )
-        )}
+          {/* Status Badge */}
+          {loading ? (
+            <Skeleton className="h-6 w-20" />
+          ) : (
+            status && (
+              <Badge
+                variant={status.variant || "secondary"}
+                className={cn(
+                  "uppercase text-[10px] md:text-xs font-semibold px-2 md:px-3 py-0.5 md:py-1 shrink-0",
+                  status.className
+                )}
+              >
+                {status.label}
+              </Badge>
+            )
+          )}
+        </div>
       </div>
 
       {/* Right Section - Action Buttons and Icons */}
-      <div className="flex items-center gap-2">
+      <div className="flex items-center gap-1.5 md:gap-2 self-end md:self-auto">
         {/* Custom Action Buttons */}
         {loading ? (
           <>
-            <Skeleton className="h-8 w-24" />
-            <Skeleton className="h-8 w-24" />
+            <Skeleton className="h-8 w-20 md:w-24" />
+            <Skeleton className="h-8 w-20 md:w-24" />
           </>
         ) : (
           buttons.map(button => (
@@ -143,7 +146,7 @@ export default function SalesHeader({
               variant={button.variant || "outline"}
               onClick={button.onClick}
               disabled={button.disabled}
-              className="uppercase text-xs font-semibold"
+              className="uppercase text-[10px] md:text-xs font-semibold px-2 md:px-4 py-1.5 md:py-2 h-7 md:h-9 whitespace-nowrap"
             >
               {button.icon && <span className="mr-1">{button.icon}</span>}
               {button.label}
@@ -158,9 +161,9 @@ export default function SalesHeader({
               <Button
                 variant="ghost"
                 size="icon"
-                className="text-gray-500 hover:text-gray-700"
+                className="text-gray-500 hover:text-gray-700 size-7 md:size-9"
               >
-                <MoreVertical className="size-5" />
+                <MoreVertical className="size-4 md:size-5" />
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="w-48">
@@ -191,9 +194,9 @@ export default function SalesHeader({
             variant="ghost"
             size="icon"
             onClick={onRefresh}
-            className="text-gray-500 hover:text-gray-700"
+            className="text-gray-500 hover:text-gray-700 size-7 md:size-9"
           >
-            <RefreshCw className="size-5" />
+            <RefreshCw className="size-4 md:size-5" />
           </Button>
         )}
 
@@ -203,9 +206,9 @@ export default function SalesHeader({
             variant="ghost"
             size="icon"
             onClick={onClose}
-            className="text-gray-500 hover:text-gray-700"
+            className="text-gray-500 hover:text-gray-700 size-7 md:size-9"
           >
-            <X className="size-5" />
+            <X className="size-4 md:size-5" />
           </Button>
         )}
       </div>
