@@ -102,7 +102,7 @@ const useMultipleSellerCart = (cartItems, calculationParams = {}) => {
   useEffect(() => {
     setSellerCarts(processedSellerCarts);
     setOverallSummary(summary);
-  }, [processedSellerCarts, summary]);
+  }, [processedSellerCarts]);
 
   // Auto-select seller: prefer persisted selection, then first available
   useEffect(() => {
