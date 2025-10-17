@@ -66,14 +66,12 @@ const TableSkeleton = ({ rows = 10 }: { rows?: number }) => (
     </div>
     <div className="flex-1 overflow-auto">
       {Array.from({ length: rows }).map((_, rowIndex) => (
-        // eslint-disable-next-line react/no-array-index-key
         <div
           key={`row-${rowIndex}`}
           className="border-b border-gray-100 flex animate-in fade-in slide-in-from-bottom-1"
           style={{ animationDelay: `${rowIndex * 50}ms` }}
         >
           {Array.from({ length: 11 }).map((_, colIndex) => (
-            // eslint-disable-next-line react/no-array-index-key
             <div
               key={`cell-${rowIndex}-${colIndex}`}
               className="px-1 sm:px-2 py-1 w-[150px]"
@@ -809,7 +807,8 @@ function OrdersLandingTable({
               }}
               onRowClick={row => {
                 const orderId = row.orderIdentifier;
-                if (orderId) router.push(`/${locale}/orders/${orderId}`);
+                if (orderId)
+                  router.push(`/${locale}/details/orderDetails/${orderId}`);
               }}
               tableHeight="h-full"
             />
