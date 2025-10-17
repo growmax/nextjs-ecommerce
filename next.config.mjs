@@ -7,12 +7,31 @@ const withNextIntl = createNextIntlPlugin("./src/i18n/request.ts");
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
+// Bundle analyzer (run with ANALYZE=true npm run build)
+import withBundleAnalyzer from "@next/bundle-analyzer";
+const bundleAnalyzer = withBundleAnalyzer({
+  enabled: process.env.ANALYZE === "true",
+});
+
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   // Enable React.StrictMode for better performance warnings and debugging
   reactStrictMode: true,
   experimental: {
-    optimizePackageImports: ["lucide-react", "@/components/ui", "recharts"],
+    optimizePackageImports: [
+      "lucide-react",
+      "@/components/ui",
+      "recharts",
+      "@radix-ui/react-dialog",
+      "@radix-ui/react-dropdown-menu",
+      "@radix-ui/react-select",
+      "@radix-ui/react-popover",
+      "@tanstack/react-table",
+      "@tanstack/react-query",
+      "date-fns",
+      "react-hook-form",
+      "@hookform/resolvers",
+    ],
   },
   poweredByHeader: false,
   compress: true,
@@ -124,4 +143,4 @@ const nextConfig = {
   ],
 };
 
-export default withNextIntl(nextConfig);
+export default withNextIntl(bundleAnalyzer(nextConfig));

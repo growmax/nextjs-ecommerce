@@ -1,7 +1,37 @@
 "use client";
 
-import { DashboardChart } from "./DashboardChart/DashboardChart";
-import DashboardOrdersTable from "./DashboardOrdersTable/DashboardOrdersTable";
+import dynamic from "next/dynamic";
+import { Skeleton } from "@/components/ui/skeleton";
+
+// Lazy load heavy components to reduce initial bundle size
+const DashboardChart = dynamic(
+  () =>
+    import("./DashboardChart/DashboardChart").then(
+      mod => mod.DashboardChart
+    ),
+  {
+    loading: () => (
+      <div className="space-y-4">
+        <Skeleton className="h-8 w-48" />
+        <Skeleton className="h-64 w-full" />
+      </div>
+    ),
+    ssr: false,
+  }
+);
+
+const DashboardOrdersTable = dynamic(
+  () => import("./DashboardOrdersTable/DashboardOrdersTable"),
+  {
+    loading: () => (
+      <div className="space-y-4">
+        <Skeleton className="h-8 w-48" />
+        <Skeleton className="h-64 w-full" />
+      </div>
+    ),
+    ssr: false,
+  }
+);
 
 export default function DashboardPageClient() {
   return (

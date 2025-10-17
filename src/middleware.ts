@@ -1,5 +1,5 @@
 import { locales } from "@/i18n/config";
-import API from "@/lib/api";
+import AuthService from "@/lib/api/services/AuthService";
 import { getDomain } from "@/lib/domain";
 import createIntlMiddleware from "next-intl/middleware";
 import { NextRequest, NextResponse } from "next/server";
@@ -97,7 +97,7 @@ export async function middleware(request: NextRequest) {
       const controller = new AbortController();
       const timeoutId = setTimeout(() => controller.abort(), 2000); // 2 second timeout
 
-      const tokenResponse = await API.Auth.getAnonymousToken(domain);
+      const tokenResponse = await AuthService.getAnonymousToken(domain);
 
       clearTimeout(timeoutId);
 
