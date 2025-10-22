@@ -18,10 +18,6 @@ const useMultipleSellerCart = (cartItems: any, calculationParams: any = {}) => {
     }
     return null;
   });
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const [sellerCarts] = useState<Record<string, any>>({});
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const [overallSummary] = useState<Record<string, any>>({});
 
   // Extract seller IDs from cart items
   const sellerIds = useMemo(() => {
@@ -102,7 +98,7 @@ const useMultipleSellerCart = (cartItems: any, calculationParams: any = {}) => {
   }, [cartItems, calculationParams, sellerPricingData, allSellerPricesData]);
 
   // Calculate overall summary
-  useMemo(() => {
+  const overallSummary = useMemo(() => {
     return getOverallCartSummary(processedSellerCarts);
   }, [processedSellerCarts]);
 
@@ -117,13 +113,22 @@ const useMultipleSellerCart = (cartItems: any, calculationParams: any = {}) => {
     const sellerIds = Object.keys(processedSellerCarts);
 
     if (sellerIds.length > 0) {
+      const firstSellerId = sellerIds[0];
       // If we have a selectedSellerId but it's not in the current cart, clear it
       if (selectedSellerId && !sellerIds.includes(selectedSellerId)) {
-        handleSellerSelect(sellerIds[0]);
+        if (firstSellerId) {
+          setSelectedSellerId(firstSellerId);
+          if (typeof window !== "undefined") {
+            localStorage.setItem("selectedSellerId", firstSellerId);
+          }
+        }
       }
       // If no seller selected, select the first one
-      else if (!selectedSellerId) {
-        handleSellerSelect(sellerIds[0]);
+      else if (!selectedSellerId && firstSellerId) {
+        setSelectedSellerId(firstSellerId);
+        if (typeof window !== "undefined") {
+          localStorage.setItem("selectedSellerId", firstSellerId);
+        }
       }
     } else {
       // Clear selection when cart is empty
@@ -134,7 +139,8 @@ const useMultipleSellerCart = (cartItems: any, calculationParams: any = {}) => {
         }
       }
     }
-  }, [processedSellerCarts, selectedSellerId]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [processedSellerCarts]);
 
   // Handle seller selection
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -148,7 +154,7 @@ const useMultipleSellerCart = (cartItems: any, calculationParams: any = {}) => {
 
   // Get selected seller cart
   const selectedSellerCart = selectedSellerId
-    ? sellerCarts[selectedSellerId]
+    ? processedSellerCarts[selectedSellerId]
     : null;
 
   // Get selected seller items for checkout
@@ -157,13 +163,13 @@ const useMultipleSellerCart = (cartItems: any, calculationParams: any = {}) => {
     : [];
 
   // Check if multiple sellers exist
-  const hasMultipleSellers = Object.keys(sellerCarts).length > 1;
+  const hasMultipleSellers = Object.keys(processedSellerCarts).length > 1;
 
   // Get seller IDs from processed carts
-  const processedSellerIds = Object.keys(sellerCarts);
+  const processedSellerIds = Object.keys(processedSellerCarts);
 
   return {
-    sellerCarts,
+    sellerCarts: processedSellerCarts,
     selectedSellerId,
     selectedSellerCart,
     selectedSellerItems,
@@ -171,7 +177,7 @@ const useMultipleSellerCart = (cartItems: any, calculationParams: any = {}) => {
     handleSellerSelect,
     hasMultipleSellers,
     sellerIds: processedSellerIds,
-    isEmpty: isEmpty(sellerCarts),
+    isEmpty: isEmpty(processedSellerCarts),
     isLoading: pricingLoading,
     isPricingLoading: pricingLoading, // Expose pricing loading state explicitly
     refreshPricing: revalidatePricing,

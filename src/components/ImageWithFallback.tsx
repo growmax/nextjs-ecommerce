@@ -33,7 +33,7 @@ export default function ImageWithFallback({
 
   const handleError = () => {
     // Only set fallback if we haven't already
-    if (imgSrc !== placeholderimg) {
+    if (typeof imgSrc === "string") {
       setImgSrc(placeholderimg);
     }
   };
