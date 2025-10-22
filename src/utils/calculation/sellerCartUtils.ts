@@ -18,10 +18,8 @@ export const groupCartItemsBySeller = (cartItems: any, _debugMode = true) => {
 
   const sellerCarts: any = {};
 
-  Object.keys(groupedItems).forEach((groupKey: any) => {
-    const items = groupedItems[groupKey];
-    if (!items || items.length === 0) return;
-
+  Object.keys(groupedItems).forEach(groupKey => {
+    const items = groupedItems[groupKey] || [];
     const firstItem = items[0];
     // Create seller information from cart item data
     const sellerInfo = {
@@ -155,6 +153,7 @@ export const calculateAllSellerCartPricing = (
  * @param {object} sellerCartsWithPricing - Seller carts with pricing
  * @returns {object} - Overall summary
  */
+
 export const getOverallCartSummary = (sellerCartsWithPricing: any) => {
   const sellerIds = Object.keys(sellerCartsWithPricing);
 
@@ -197,8 +196,9 @@ export const getOverallCartSummary = (sellerCartsWithPricing: any) => {
  * @param {string} sellerId - Seller ID
  * @returns {object} - Mock seller data
  */
+
 export const getMockSellerData = (sellerId: any) => {
-  const mockSellers = {
+  const mockSellers: any = {
     "seller-1": {
       id: "seller-1",
       name: "Vashi Electricals",
@@ -252,6 +252,7 @@ export const getMockSellerData = (sellerId: any) => {
  * @param {object} calculationParams - Calculation parameters
  * @returns {object} - Seller carts with volume discount applied
  */
+
 export const applyVolumeDiscountsToSellerCarts = (
   sellerCarts: any,
   volumeDiscountData: any = {},
@@ -274,11 +275,11 @@ export const applyVolumeDiscountsToSellerCarts = (
     if (sellerVDData.length > 0) {
       // Calculate subtotal for this seller
       const subTotal = sellerCart.items.reduce(
-        (sum: any, item: any) => sum + (item.totalPrice || 0),
+        (sum: number, item: any) => sum + (item.totalPrice || 0),
         0
       );
       const overallShipping = sellerCart.items.reduce(
-        (sum: any, item: any) => sum + (item.shippingCharges || 0),
+        (sum: number, item: any) => sum + (item.shippingCharges || 0),
         0
       );
 
@@ -316,6 +317,7 @@ export const applyVolumeDiscountsToSellerCarts = (
  * @param {object} allSellerPricesData - All seller prices data (fallback)
  * @returns {object | null} - Best matching pricing data or null
  */
+
 export const findBestPricingMatch = (
   item: any,
   sellerPricingData: any,
@@ -364,7 +366,7 @@ export const findBestPricingMatch = (
     for (const [otherSellerId, prices] of Object.entries(allSellerPricesData)) {
       const anyPricing = find(
         prices as any,
-        (price: any) => String(price.ProductVariantId) === String(productId)
+        price => String(price.ProductVariantId) === String(productId)
       );
       if (anyPricing) {
         return {
@@ -385,6 +387,7 @@ export const findBestPricingMatch = (
  * @param {object} allSellerPricesData - All seller prices (fallback)
  * @returns {object} - Merged pricing data
  */
+
 export const mergeSellerPricing = (
   sellerPricingData: any,
   allSellerPricesData: any
@@ -408,6 +411,7 @@ export const mergeSellerPricing = (
  * @param {object} pricingData - Pricing data object
  * @returns {boolean} - True if pricing is valid
  */
+
 export const isValidPricing = (pricingData: any) => {
   return (
     pricingData &&
@@ -421,6 +425,7 @@ export const isValidPricing = (pricingData: any) => {
  * @param {object} sellerCarts - Seller carts with pricing
  * @returns {object} - Summary of pricing resolution
  */
+
 export const getPricingResolutionSummary = (sellerCarts: any) => {
   const summary: any = {
     totalSellers: 0,
@@ -436,11 +441,13 @@ export const getPricingResolutionSummary = (sellerCarts: any) => {
 
   Object.entries(sellerCarts).forEach(([sellerId, cart]: [string, any]) => {
     summary.totalSellers++;
-    cart.items?.forEach((item: any) => {
+    (cart as any).items?.forEach((item: any) => {
       summary.totalProducts++;
 
       if (item.pricingSource) {
-        summary.pricingBySources[item.pricingSource]++;
+        summary.pricingBySources[
+          item.pricingSource as keyof typeof summary.pricingBySources
+        ]++;
       } else if (item.priceNotAvailable) {
         summary.pricingBySources["no-pricing"]++;
         summary.productsWithoutPricing.push({

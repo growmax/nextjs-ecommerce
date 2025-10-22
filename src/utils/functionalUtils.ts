@@ -1,10 +1,9 @@
 import _, { maxBy, toNumber } from "lodash";
 
-/* eslint-disable @typescript-eslint/no-explicit-any */
 export function getSuitableDiscountByQuantity(
-  quantity: any,
-  discountsList: any,
-  _qtyIncrease: any
+  quantity: any, // eslint-disable-line @typescript-eslint/no-explicit-any
+  discountsList: any, // eslint-disable-line @typescript-eslint/no-explicit-any
+  qtyIncrease: any // eslint-disable-line @typescript-eslint/no-explicit-any
 ) {
   const { resultArr: ranges, nextSuitableDiscount } = getObjectsByQuantityValue(
     toNumber(quantity),
@@ -17,8 +16,14 @@ export function getSuitableDiscountByQuantity(
   // }
   return { suitableDiscount, nextSuitableDiscount };
 }
-function getObjectsByQuantityValue(quantity: any, arr: any = []) {
-  const resultArr: any = [];
+
+function getObjectsByQuantityValue(
+  quantity: any,
+  arr: any = [],
+  _qtyIncrease?: any
+) {
+  // eslint-disable-line @typescript-eslint/no-explicit-any
+  const resultArr = [];
   // const nextSuitableDiscArr = [];
   for (const obj of arr) {
     if (obj.min_qty <= quantity && quantity <= obj.max_qty) {
@@ -37,10 +42,11 @@ function getObjectsByQuantityValue(quantity: any, arr: any = []) {
     .value();
   return { resultArr, nextSuitableDiscount };
 }
+
 export const assign_pricelist_discounts_data_to_products = (
-  product: any = {},
-  prd_wise_discData: any = {},
-  updateDiscounts = true
+  product: any = {}, // eslint-disable-line @typescript-eslint/no-explicit-any
+  prd_wise_discData: any = {}, // eslint-disable-line @typescript-eslint/no-explicit-any
+  updateDiscounts: any = true // eslint-disable-line @typescript-eslint/no-explicit-any
 ) => {
   product.disc_prd_related_obj = prd_wise_discData
     ? prd_wise_discData

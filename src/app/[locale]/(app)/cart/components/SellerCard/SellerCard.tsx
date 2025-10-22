@@ -14,6 +14,11 @@ import CartSkeleton from "../CartSkeleton";
 interface CartProduct {
   productId: number;
   quantity: number;
+  replacement?: boolean;
+  showPrice?: boolean;
+  inventoryResponse?: {
+    inStock: boolean;
+  };
   productName?: string;
   shortDescription?: string;
   brandName?: string;
@@ -22,11 +27,13 @@ interface CartProduct {
   discount?: number;
   discountPercentage?: number;
   itemNo: string;
-  sellerId?: string;
+  sellerId?: string | number;
   img?: string;
   hsnCode?: string;
   packagingQuantity?: number;
   minOrderQuantity?: number;
+  _updated?: number;
+  [key: string]: unknown;
 }
 
 interface SellerPricing {
@@ -52,11 +59,11 @@ interface SellerCart {
 interface CurrencyObj {
   currencyCode: string;
   decimal: string;
-  description: string;
-  id: number;
+  description?: string;
+  id?: number;
   precision: number;
   symbol: string;
-  tenantId: number;
+  tenantId?: number;
   thousand: string;
 }
 interface CurrentUser {
@@ -70,7 +77,7 @@ interface CurrentUser {
 }
 interface SellerCardProps {
   totalCart: number;
-  user: CurrentUser[];
+  user: CurrentUser | null;
   cart: CartProduct[];
   selectedSellerId: string | null;
   onSellerSelect: (sellerId: string) => void;
@@ -80,12 +87,12 @@ interface SellerCardProps {
   hasMultipleSellers: boolean;
   isPricingLoading: boolean;
   isLoading: boolean;
-  onItemUpdate: (item: CartProduct, quantity: number) => void;
-  onItemDelete: (productId: number, itemNo: string, sellerId?: string) => void;
+  onItemUpdate: (item: CartProduct, quantity: number) => Promise<void>;
+  onItemDelete: (productId: number, itemNo: string, sellerId?: string | number) => void;
   onClearCart: () => void;
   handleOrder: () => void;
   handleQuote: () => void;
-  currency?: CurrencyObj;
+  currency?: CurrencyObj | undefined;
   sellerCarts: Record<string, SellerCart>;
   sellerIds: string[];
   onAddProduct: (product: unknown) => Promise<void>;

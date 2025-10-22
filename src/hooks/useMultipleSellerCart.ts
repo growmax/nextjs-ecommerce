@@ -10,10 +10,7 @@ import { isEmpty } from "lodash";
 import { useEffect, useMemo, useState } from "react";
 import useMultipleSellerPricing from "./useMultipleSellerPricing";
 
-const useMultipleSellerCart = (
-  cartItems: any[],
-  calculationParams: any = {}
-) => {
+const useMultipleSellerCart = (cartItems: any, calculationParams: any = {}) => {
   // Initialize selectedSellerId from localStorage
   const [selectedSellerId, setSelectedSellerId] = useState(() => {
     if (typeof window !== "undefined") {
@@ -43,15 +40,14 @@ const useMultipleSellerCart = (
       return {};
     }
     // Group items by seller with debug logging
-    const groupedCarts = groupCartItemsBySeller(cartItems, true) as Record<
-      string,
-      any
-    >;
 
-    const enhancedCarts: Record<string, any> = {};
+    const groupedCarts: any = groupCartItemsBySeller(cartItems, true);
 
-    Object.keys(groupedCarts).forEach((sellerId: string) => {
+    const enhancedCarts: any = {};
+
+    Object.keys(groupedCarts).forEach((sellerId: any) => {
       const cart = groupedCarts[sellerId];
+
       const itemsWithSellerPricing = cart.items.map((item: any) => {
         const itemPricing = findBestPricingMatch(
           item,
@@ -113,19 +109,22 @@ const useMultipleSellerCart = (
   useEffect(() => {
     const sellerIds = Object.keys(processedSellerCarts);
 
-    if (sellerIds.length > 0 && sellerIds[0]) {
+    if (sellerIds.length > 0) {
+      const firstSellerId = sellerIds[0];
       // If we have a selectedSellerId but it's not in the current cart, clear it
       if (selectedSellerId && !sellerIds.includes(selectedSellerId)) {
-        setSelectedSellerId(sellerIds[0]);
-        if (typeof window !== "undefined") {
-          localStorage.setItem("selectedSellerId", sellerIds[0]);
+        if (firstSellerId) {
+          setSelectedSellerId(firstSellerId);
+          if (typeof window !== "undefined") {
+            localStorage.setItem("selectedSellerId", firstSellerId);
+          }
         }
       }
       // If no seller selected, select the first one
-      else if (!selectedSellerId) {
-        setSelectedSellerId(sellerIds[0]);
+      else if (!selectedSellerId && firstSellerId) {
+        setSelectedSellerId(firstSellerId);
         if (typeof window !== "undefined") {
-          localStorage.setItem("selectedSellerId", sellerIds[0]);
+          localStorage.setItem("selectedSellerId", firstSellerId);
         }
       }
     } else {
@@ -141,7 +140,8 @@ const useMultipleSellerCart = (
   }, [processedSellerCarts]);
 
   // Handle seller selection
-  const handleSellerSelect = (sellerId: string | null) => {
+
+  const handleSellerSelect = (sellerId: any) => {
     setSelectedSellerId(sellerId);
     // Persist to localStorage
     if (typeof window !== "undefined" && sellerId) {

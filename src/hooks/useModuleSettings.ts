@@ -7,6 +7,11 @@ interface UserData {
   companyId?: number;
 }
 
+interface ModuleData {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  data?: Record<string, any>;
+}
+
 export default function useModuleSettings(userData: UserData | null = null) {
   const userId = userData?.userId;
   const companyId = userData?.companyId;
@@ -20,7 +25,7 @@ export default function useModuleSettings(userData: UserData | null = null) {
 
   const { data, error } = useSWR(
     userId && companyId ? [userId, "ModuleSettings", companyId] : null,
-    fetcher
+    () => fetcher() as Promise<ModuleData>
   );
 
   let quoteSettings;

@@ -6,6 +6,7 @@
 
 "use client";
 
+import Image from "next/image";
 import { useTenantData } from "./useTenantData";
 
 export function TenantDataExample() {
@@ -87,10 +88,11 @@ export function TenantDataExample() {
             {tenantData.sellerCompanyId?.logo && (
               <div>
                 <strong>Logo:</strong>{" "}
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img
+                <Image
                   src={tenantData.sellerCompanyId.logo}
                   alt="Company Logo"
+                  width={48}
+                  height={48}
                   className="h-12"
                 />
               </div>

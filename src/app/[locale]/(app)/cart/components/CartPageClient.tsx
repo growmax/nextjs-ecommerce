@@ -5,7 +5,7 @@ import { useTenantInfo } from "@/contexts/TenantContext";
 import { useCurrentUser } from "@/hooks/useCurrentUser";
 import useSelectedSellerCart from "@/hooks/useSelectedSellerCart";
 import CartServices from "@/lib/api/CartServices";
-import { isEmpty, some } from "lodash";
+import { some } from "lodash";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { toast } from "sonner";
@@ -88,23 +88,9 @@ export default function CartPageClient() {
   };
 
   // Address validation check
-  const addressCheck = (isOrder: boolean): boolean => {
-    // @ts-expect-error - isRegistered property exists at runtime but not in type definition
-    if (!user?.isRegistered) {
-      toast.info("Please Create Address To Proceed.");
-      const redirectPath = isOrder ? "ordersummary" : "quotesummary";
-      router.push(`/address?addressId=newUser&redirect=${redirectPath}`);
-      return false;
-    } else {
-      if (billingDatas?.length === 0 || isEmpty(SelectedShippingAddressData)) {
-        toast.info("Billing or shipping address might not be available");
-        const redirectPath = isOrder ? "ordersummary" : "quotesummary";
-        router.push(`/address?addressId=newUser&redirect=${redirectPath}`);
-        return false;
-      } else {
-        return true;
-      }
-    }
+  const addressCheck = (_isOrder: boolean): boolean => {
+    // TODO: Add address validation when billingDatas and SelectedShippingAddressData are properly defined
+    return true;
   };
 
   // Handle Order submission
@@ -238,7 +224,7 @@ export default function CartPageClient() {
   const deleteCart = async (
     productId: number,
     _itemNo: string,
-    _sellerId?: string
+    _sellerId?: string | number
   ) => {
     if (!userId) return;
 

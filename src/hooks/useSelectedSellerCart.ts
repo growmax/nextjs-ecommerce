@@ -3,10 +3,7 @@ import { useMemo } from "react";
 import { useCurrentUser } from "./useCurrentUser";
 import useMultipleSellerCart from "./useMultipleSellerCart";
 
-const useSelectedSellerCart = (
-  cartItems: any[],
-  selectedSellerId: string | null
-) => {
+const useSelectedSellerCart = (cartItems: any, selectedSellerId: any) => {
   const { user } = useCurrentUser();
   // const { moduleSettings } = useModuleSettings(user);
 
@@ -19,10 +16,10 @@ const useSelectedSellerCart = (
       insuranceCharges: 0,
       precision: 2,
       Settings: {},
-      // @ts-expect-error - isSeller and taxExemption may not exist on CurrentUser type
-      isSeller: user?.isSeller || false,
-      // @ts-expect-error - isSeller and taxExemption may not exist on CurrentUser type
-      taxExemption: user?.taxExemption || false,
+
+      isSeller: (user as any)?.isSeller || false,
+
+      taxExemption: (user as any)?.taxExemption || false,
     };
   }, [user]);
 

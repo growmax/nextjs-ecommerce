@@ -17,7 +17,8 @@ export const cartCalculation = (
   precision = 2,
   Settings: any
 ) => {
-  let cartArray: any = cloneDeep(cartData);
+  let cartArray = cloneDeep(cartData);
+
   const cartValue: any = {
     totalItems: cartData.length,
     totalValue: 0,
@@ -31,7 +32,7 @@ export const cartCalculation = (
     cashDiscountValue: 0,
     hideListPricePublic: some(cartData, ["listPricePublic", false]),
   };
-  cartArray = cartArray.map((data: any, index: any) => {
+  cartArray = cartArray.map((data: any, index: number) => {
     // Apply cash discount to unit price if applicable
     if (data.cashdiscountValue && data.cashdiscountValue > 0) {
       // Only store original unit price if not already stored
@@ -361,12 +362,19 @@ export const discountDetails = (
 
 export const VolumeDiscountCalculation = (
   isInter: any,
+
   products: any,
+
   VdData: any,
+
   subTotal: any,
+
   overallShipping: any,
+
   Settings: any,
+
   beforeTax: any,
+
   beforeTaxPercentage: any,
   precision = 2
 ) => {
@@ -377,8 +385,9 @@ export const VolumeDiscountCalculation = (
   const productsAfterVd = products;
   let pfRate = 0;
   let shippingTax = 0;
-  productsAfterVd.forEach((product: any, index: any) => {
+  productsAfterVd.forEach((product: any, index: number) => {
     let shippingCompound = 0;
+
     VdData?.forEach((vd: any, indexvd: any) => {
       if (product.itemNo === vd.itemNo) {
         product.appliedDiscount = vd.appliedDiscount;
@@ -695,12 +704,19 @@ export const VolumeDiscountCalculation = (
 
 export const getProductWiseMargin = (
   precision = 2,
+
   discountBased: any,
+
   data: any,
+
   prevData: any,
+
   subTotal: any,
+
   maxRange: any,
+
   prevApproved: any,
+
   isRejected: any
 ) => {
   let totalHoCost = 0;
@@ -820,7 +836,7 @@ export const getProductWiseMargin = (
       }
     }
     // }
-    if (index === data.length - 1) {
+    if ((index as unknown as number) === data.length - 1) {
       costProfit =
         subTotal > 0 && totalProductCost > 0
           ? parseFloat(
@@ -850,8 +866,10 @@ export const getProductWiseMargin = (
 
 export const addMoreUtils = (
   isInter: any,
+
   item: any = {},
   _isSeller: any,
+
   taxExemption: any,
   precision = 2
 ) => {
@@ -962,12 +980,19 @@ export const addMoreUtils = (
 
 export const calculate_volume_discount = (
   isInter: any,
+
   VdData: any,
+
   subTotal: any,
+
   insuranceCharges: any,
+
   beforeTax: any,
+
   beforeTaxPercentage: any,
+
   overallShipping: any,
+
   Settings: any,
   precision = 2
 ) => {
@@ -977,7 +1002,7 @@ export const calculate_volume_discount = (
   let pfRate = 0;
   let shippingTax = 0;
   try {
-    VdData.forEach((product: any, index: any) => {
+    VdData.forEach((product: any, index: number) => {
       let shippingCompound = 0;
       // if(product?.volume_discount_obj?.Percentage && product?.volume_discount_obj?.DiscountId){
       //if disc changed manually, we dont need to check CantCombineWithOtherDiscounts..

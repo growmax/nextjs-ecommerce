@@ -29,6 +29,9 @@ export async function POST(request: NextRequest) {
     if (!response.ok) {
       // Log error for debugging
       const errorData = await response.json().catch(() => ({}));
+      if (process.env.NODE_ENV === "development") {
+        // Token refresh failed
+      }
 
       // Clear invalid refresh token
       const nextResponse = NextResponse.json(

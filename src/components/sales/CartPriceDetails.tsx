@@ -30,10 +30,10 @@ interface SellerPricing {
 interface CurrencyProps {
   currencyCode: string;
   decimal: string;
-  description: string;
-  id: number;
+  description?: string;
+  id?: number;
   symbol: string;
-  tenantId: number;
+  tenantId?: number;
   thousand: string;
   precision: number;
 }

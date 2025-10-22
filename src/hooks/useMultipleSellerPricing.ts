@@ -43,7 +43,7 @@ export default function useMultipleSellerPricing(
   const auth = true;
 
   const productIds = uniqBy(cartItems || [], "productId").map(
-    (item: CartItem) => item.productId
+    (item: CartItem) => Number(item.productId)
   );
   const quantityHash = useMemo(() => {
     if (!cartItems || cartItems.length === 0) return "empty";
@@ -85,7 +85,7 @@ export default function useMultipleSellerPricing(
         ) || [];
 
       return sellerItems.map((item: CartItem) => ({
-        ProductVariantId: item.productId,
+        ProductVariantId: Number(item.productId),
         quantity: item.quantity || 1,
       }));
     };
@@ -102,8 +102,7 @@ export default function useMultipleSellerPricing(
           CurrencyId: currency?.id || sellerCurrency?.id || 0,
           BaseCurrencyId: sellerCurrency?.id || 0,
           companyId: companyId || 0,
-
-          sellerId: sellerId as any,
+          sellerId: String(sellerId),
         },
       }).catch((_error: unknown) => {
         // Failed to fetch pricing for seller
@@ -126,21 +125,21 @@ export default function useMultipleSellerPricing(
 
     // Group getAllSellerPrices by numeric sellerId for easy lookup
     const allSellerPricesBySeller: SellerPricing = {};
-
-    (allSellerPricesData as any[]).forEach((item: Record<string, unknown>) => {
-      // Only use numeric seller IDs
-      const sellerId = item.sellerId || item.vendorId;
-      if (sellerId) {
-        const sellerIdStr = sellerId as string;
-        if (!allSellerPricesBySeller[sellerIdStr]) {
-          allSellerPricesBySeller[sellerIdStr] = [];
+    (allSellerPricesData as Record<string, unknown>[]).forEach(
+      (item: Record<string, unknown>) => {
+        // Only use numeric seller IDs
+        const sellerId = (item.sellerId || item.vendorId) as string | number;
+        if (sellerId) {
+          const sellerKey = String(sellerId);
+          if (!allSellerPricesBySeller[sellerKey]) {
+            allSellerPricesBySeller[sellerKey] = [];
+          }
+          allSellerPricesBySeller[sellerKey].push(item);
+        } else {
+          // Pricing item has no numeric sellerId or vendorId
         }
-
-        allSellerPricesBySeller[sellerIdStr]!.push(item as any);
-      } else {
-        // Pricing item has no numeric sellerId or vendorId
       }
-    });
+    );
 
     // Process each seller's pricing with validation
     sellerIds.forEach((sellerId: string | number, index: number) => {
@@ -149,8 +148,9 @@ export default function useMultipleSellerPricing(
       const fallbackData = allSellerPricesBySeller[sellerId] || [];
 
       // Check if seller-specific data actually belongs to this seller
-
-      const validSellerData = (sellerSpecificData as any[]).filter(
+      const validSellerData = (
+        sellerSpecificData as Record<string, unknown>[]
+      ).filter(
         (item: Record<string, unknown>) =>
           String(item.sellerId) === String(sellerId) ||
           String(item.vendorId) === String(sellerId)
@@ -219,18 +219,24 @@ export default function useMultipleSellerPricing(
       } else {
         // Group getAllSellerPrices response by numeric sellerId only
 
-        const groupedBySeller: any = groupBy(
-          (data as PricingResult).data as any,
+        const priceData = (data as any)?.data || [];
+        const groupedBySeller = groupBy(
+          priceData as Record<string, unknown>[],
           (item: Record<string, unknown>) => {
             const id = item.sellerId || item.vendorId;
-            // Item has no numeric sellerId or vendorId
-            return id || "no-seller-id";
+            if (!id) {
+              console.warn(
+                "[useMultipleSellerPricing] Item has no numeric sellerId or vendorId:",
+                item
+              );
+            }
+            return String(id || "no-seller-id");
           }
         );
         // Remove items with no seller ID
         delete groupedBySeller["no-seller-id"];
-        setSellerPricingData(groupedBySeller);
-        setAllSellerPricesData(groupedBySeller);
+        setSellerPricingData(groupedBySeller as SellerPricing);
+        setAllSellerPricesData(groupedBySeller as SellerPricing);
       }
     }
   }, [data, error, sellerIds]);
