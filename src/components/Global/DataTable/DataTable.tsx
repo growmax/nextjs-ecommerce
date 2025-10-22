@@ -65,7 +65,6 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { injectOptionalColumns } from "./columnHelpers";
 import { DataTablePagination } from "./DataTablePagination";
 import { DraggableRow } from "./DraggableRow";
-import { SkeletonRow } from "./SkeletonRow";
 import type { DataTableProps } from "./types";
 
 export function DataTable<TData>({
@@ -338,9 +337,9 @@ export function DataTable<TData>({
   // Render table content
   const renderTableContent = () => {
     const tableElement = (
-      <div className="relative overflow-auto rounded-lg border max-h-[calc(100vh-260px)] mb-4">
+      <div className="overflow-hidden rounded-lg border">
         <Table className={tableClassName}>
-          <TableHeader className="bg-muted sticky top-0 z-10 shadow-sm">
+          <TableHeader className="bg-muted sticky top-0 z-10">
             {table.getHeaderGroups().map(headerGroup => (
               <TableRow key={headerGroup.id}>
                 {headerGroup.headers.map(header => {
@@ -360,17 +359,14 @@ export function DataTable<TData>({
           </TableHeader>
           <TableBody className="**:data-[slot=table-cell]:first:w-8">
             {isLoading ? (
-              <>
-                {Array.from(
-                  { length: pagination.pageSize || 10 },
-                  (_, index) => (
-                    <SkeletonRow
-                      key={`skeleton-${index}`}
-                      columnCount={columns.length}
-                    />
-                  )
-                )}
-              </>
+              <TableRow>
+                <TableCell
+                  colSpan={columns.length}
+                  className="h-24 text-center"
+                >
+                  Loading...
+                </TableCell>
+              </TableRow>
             ) : table.getRowModel().rows?.length ? (
               enableDragDrop ? (
                 <SortableContext
@@ -504,7 +500,7 @@ export function DataTable<TData>({
 
   // Render without tabs
   return (
-    <div className={`flex flex-col  ${className || ""}`}>
+    <div className={`flex flex-col ${className || ""}`}>
       {renderToolbar()}
       <div className="flex-1 overflow-auto">
         <div className="px-4 lg:px-6">{renderTableContent()}</div>

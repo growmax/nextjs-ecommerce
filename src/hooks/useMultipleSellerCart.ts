@@ -140,7 +140,6 @@ const useMultipleSellerCart = (cartItems: any, calculationParams: any = {}) => {
   }, [processedSellerCarts]);
 
   // Handle seller selection
-
   const handleSellerSelect = (sellerId: any) => {
     setSelectedSellerId(sellerId);
     // Persist to localStorage

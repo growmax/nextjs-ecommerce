@@ -1,11 +1,9 @@
-import AddMoreProducts from "@/components/Global/Products/AddMoreProducts";
-import CartItemCard from "./cart/components/CartItemCard/CartItemCard";
+import type { Metadata } from "next";
 
+export const metadata: Metadata = {
+  title: "Home | E-Commerce",
+  description: "Browse and add products to your cart",
+};
 export default function Home() {
-  return (
-    <>
-      <AddMoreProducts />
-      <CartItemCard />
-    </>
-  );
+  return <>Homge Page...</>;
 }

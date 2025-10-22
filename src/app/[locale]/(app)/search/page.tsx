@@ -2,43 +2,23 @@
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
 import { ArrowLeft, Search } from "lucide-react";
+import { Metadata } from "next";
 import Link from "next/link";
-import { useRouter, useSearchParams } from "next/navigation";
-import { useEffect, useState } from "react";
 
-export default function SearchPage() {
-  const searchParams = useSearchParams();
-  const router = useRouter();
-  const [searchQuery, setSearchQuery] = useState("");
-  const [mounted, setMounted] = useState(false);
+export const metadata: Metadata = {
+  title: "Search Products | E-Commerce",
+  description: "Search for products in our catalog",
+};
 
-  const query = searchParams.get("query") || "";
-
-  useEffect(() => {
-    setMounted(true);
-    setSearchQuery(query);
-  }, [query]);
-
-  const handleSearch = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (searchQuery.trim()) {
-      router.push(`/search?query=${encodeURIComponent(searchQuery.trim())}`);
-    }
+interface SearchPageProps {
+  searchParams: {
+    query?: string;
   };
+}
 
-  if (!mounted) {
-    return (
-      <div className="container mx-auto px-4 py-8">
-        <Card className="max-w-2xl mx-auto">
-          <CardContent className="p-6">
-            <CardTitle>Search</CardTitle>
-          </CardContent>
-        </Card>
-      </div>
-    );
-  }
+export default function SearchPage({ searchParams }: SearchPageProps) {
+  const query = searchParams.query || "";
 
   return (
     <div className="container mx-auto px-4 py-8">
@@ -56,23 +36,7 @@ export default function SearchPage() {
         </CardHeader>
 
         <CardContent className="space-y-6">
-          <form onSubmit={handleSearch} className="relative">
-            <Input
-              type="text"
-              placeholder="Search products..."
-              value={searchQuery}
-              onChange={e => setSearchQuery(e.target.value)}
-              className="pr-12"
-            />
-            <Button
-              type="submit"
-              size="sm"
-              variant="ghost"
-              className="absolute right-2 top-1/2 -translate-y-1/2"
-            >
-              <Search className="h-4 w-4" />
-            </Button>
-          </form>
+          <SearchClient initialQuery={query} />
 
           {query ? (
             <div className="space-y-4">

@@ -1,12 +1,5 @@
 "use client";
 
-import * as React from "react";
-import {
-  Home,
-  LayoutDashboard,
-  ShoppingBag,
-  Settings,
-} from "lucide-react";
 import { NavMain } from "@/components/nav-main";
 import { NavUser } from "@/components/nav-user";
 import {
@@ -19,8 +12,10 @@ import {
   SidebarMenuItem,
 } from "@/components/ui/sidebar";
 import { useAuth } from "@/contexts/AuthContext";
-import Logo from "./custom/logo";
+import { Home, LayoutDashboard, Settings, ShoppingBag } from "lucide-react";
 import Link from "next/link";
+import * as React from "react";
+import Logo from "./custom/logo";
 
 const navMainItems = [
   {

@@ -22,8 +22,9 @@ export function SkeletonRow({ columnCount }: SkeletonRowProps) {
 
   return (
     <TableRow className="animate-pulse">
-      {Array.from({ length: columnCount }, (_, index) => (
-        <TableCell key={`skeleton-cell-${index}`} className="py-4">
+      {Array.from({ length: columnCount }).map((_item, index) => (
+        // eslint-disable-next-line react/no-array-index-key
+        <TableCell key={`skeleton-${columnCount}-${index}`} className="py-4">
           <div
             className={`h-4 bg-gray-200 rounded ${getSkeletonWidth(index)}`}
           />

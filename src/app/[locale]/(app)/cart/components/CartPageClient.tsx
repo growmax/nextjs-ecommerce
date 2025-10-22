@@ -1,5 +1,14 @@
 "use client";
 
+import { Button } from "@/components/ui/button";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { useCart } from "@/contexts/CartContext";
 import { useTenantInfo } from "@/contexts/TenantContext";
 import { useCurrentUser } from "@/hooks/useCurrentUser";
@@ -10,15 +19,6 @@ import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { toast } from "sonner";
 import SellerCard from "./SellerCard/SellerCard";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
-import { Button } from "@/components/ui/button";
 
 interface CartItem {
   productId: number;

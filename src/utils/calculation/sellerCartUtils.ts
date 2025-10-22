@@ -153,7 +153,6 @@ export const calculateAllSellerCartPricing = (
  * @param {object} sellerCartsWithPricing - Seller carts with pricing
  * @returns {object} - Overall summary
  */
-
 export const getOverallCartSummary = (sellerCartsWithPricing: any) => {
   const sellerIds = Object.keys(sellerCartsWithPricing);
 
