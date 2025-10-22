@@ -1,14 +1,14 @@
 import _, { maxBy, toNumber } from "lodash";
 
+/* eslint-disable @typescript-eslint/no-explicit-any */
 export function getSuitableDiscountByQuantity(
-  quantity,
-  discountsList,
-  qtyIncrease
+  quantity: any,
+  discountsList: any,
+  _qtyIncrease: any
 ) {
   const { resultArr: ranges, nextSuitableDiscount } = getObjectsByQuantityValue(
     toNumber(quantity),
-    discountsList,
-    toNumber(qtyIncrease)
+    discountsList
   );
   const suitableDiscount = maxBy(ranges, "Value");
   // let nextSuitableDiscount =  last(nextSuitableDiscArr)
@@ -17,8 +17,8 @@ export function getSuitableDiscountByQuantity(
   // }
   return { suitableDiscount, nextSuitableDiscount };
 }
-function getObjectsByQuantityValue(quantity, arr = []) {
-  const resultArr = [];
+function getObjectsByQuantityValue(quantity: any, arr: any = []) {
+  const resultArr: any = [];
   // const nextSuitableDiscArr = [];
   for (const obj of arr) {
     if (obj.min_qty <= quantity && quantity <= obj.max_qty) {
@@ -29,7 +29,7 @@ function getObjectsByQuantityValue(quantity, arr = []) {
     // }
   }
   const nextSuitableDiscount = _.chain(arr)
-    .filter(discount => {
+    .filter((discount: any) => {
       return discount.min_qty > quantity;
     })
     .sortBy("min_qty")
@@ -38,8 +38,8 @@ function getObjectsByQuantityValue(quantity, arr = []) {
   return { resultArr, nextSuitableDiscount };
 }
 export const assign_pricelist_discounts_data_to_products = (
-  product = {},
-  prd_wise_discData = {},
+  product: any = {},
+  prd_wise_discData: any = {},
   updateDiscounts = true
 ) => {
   product.disc_prd_related_obj = prd_wise_discData
@@ -84,10 +84,11 @@ export const assign_pricelist_discounts_data_to_products = (
         ? product?.packagingQty
         : product?.packagingQuantity || 1
     );
-  product.CantCombineWithOtherDisCounts =
-    suitableDiscount?.CantCombineWithOtherDisCounts;
+  product.CantCombineWithOtherDisCounts = (
+    suitableDiscount as any
+  )?.CantCombineWithOtherDisCounts;
   product.nextSuitableDiscount = nextSuitableDiscount;
-  product.discountDetails = { ...suitableDiscount };
+  product.discountDetails = { ...(suitableDiscount as any) };
 
   product.discountDetails.BasePrice = product.BasePrice;
   product.discountDetails.plnErpCode = product.plnErpCode;

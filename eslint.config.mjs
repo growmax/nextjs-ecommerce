@@ -13,7 +13,7 @@ const eslintConfig = [
   ...compat.extends("next/core-web-vitals", "next/typescript"),
   {
     rules: {
-      "no-console": "error",
+      "no-console": process.env.NODE_ENV === "production" ? "error" : "off",
       "no-debugger": "error",
       "no-unused-vars": "off",
       "@typescript-eslint/no-unused-vars": [

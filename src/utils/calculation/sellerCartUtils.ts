@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { find, groupBy } from "lodash";
 import {
   cartCalculation,
@@ -5,20 +6,22 @@ import {
   VolumeDiscountCalculation,
 } from "./cartCalculation";
 
-export const groupCartItemsBySeller = (cartItems, _debugMode = true) => {
+export const groupCartItemsBySeller = (cartItems: any, _debugMode = true) => {
   if (!cartItems || cartItems.length === 0) {
     return {};
   }
 
-  const groupedItems = groupBy(cartItems, item => {
+  const groupedItems = groupBy(cartItems, (item: any) => {
     const groupKey = item.sellerId;
     return groupKey;
   });
 
-  const sellerCarts = {};
+  const sellerCarts: any = {};
 
-  Object.keys(groupedItems).forEach(groupKey => {
+  Object.keys(groupedItems).forEach((groupKey: any) => {
     const items = groupedItems[groupKey];
+    if (!items || items.length === 0) return;
+
     const firstItem = items[0];
     // Create seller information from cart item data
     const sellerInfo = {
@@ -34,7 +37,10 @@ export const groupCartItemsBySeller = (cartItems, _debugMode = true) => {
       seller: sellerInfo,
       items,
       itemCount: items.length,
-      totalQuantity: items.reduce((sum, item) => sum + (item.quantity || 0), 0),
+      totalQuantity: items.reduce(
+        (sum: any, item: any) => sum + (item.quantity || 0),
+        0
+      ),
     };
   });
   return sellerCarts;
@@ -52,11 +58,11 @@ export const groupCartItemsBySeller = (cartItems, _debugMode = true) => {
  * @returns {object} - Calculated price details for seller
  */
 export const calculateSellerCartPricing = (
-  sellerItems,
+  sellerItems: any,
   isInter = true,
   insuranceCharges = 0,
   precision = 2,
-  Settings = {},
+  Settings: any = {},
   isSeller = false,
   taxExemption = false
 ) => {
@@ -108,8 +114,8 @@ export const calculateSellerCartPricing = (
  * @returns {object} - Seller carts with calculated pricing
  */
 export const calculateAllSellerCartPricing = (
-  sellerCarts,
-  calculationParams = {}
+  sellerCarts: any,
+  calculationParams: any = {}
 ) => {
   const {
     isInter = true,
@@ -120,9 +126,9 @@ export const calculateAllSellerCartPricing = (
     taxExemption = false,
   } = calculationParams;
 
-  const sellerCartsWithPricing = {};
+  const sellerCartsWithPricing: any = {};
 
-  Object.keys(sellerCarts).forEach(sellerId => {
+  Object.keys(sellerCarts).forEach((sellerId: any) => {
     const sellerCart = sellerCarts[sellerId];
     const { pricing, processedItems } = calculateSellerCartPricing(
       sellerCart.items,
@@ -149,7 +155,7 @@ export const calculateAllSellerCartPricing = (
  * @param {object} sellerCartsWithPricing - Seller carts with pricing
  * @returns {object} - Overall summary
  */
-export const getOverallCartSummary = sellerCartsWithPricing => {
+export const getOverallCartSummary = (sellerCartsWithPricing: any) => {
   const sellerIds = Object.keys(sellerCartsWithPricing);
 
   if (sellerIds.length === 0) {
@@ -191,7 +197,7 @@ export const getOverallCartSummary = sellerCartsWithPricing => {
  * @param {string} sellerId - Seller ID
  * @returns {object} - Mock seller data
  */
-export const getMockSellerData = sellerId => {
+export const getMockSellerData = (sellerId: any) => {
   const mockSellers = {
     "seller-1": {
       id: "seller-1",
@@ -226,7 +232,7 @@ export const getMockSellerData = sellerId => {
   };
 
   return (
-    mockSellers[sellerId] || {
+    (mockSellers as any)[sellerId] || {
       id: sellerId,
       name: "Unknown Seller",
       location: "Location not specified",
@@ -247,9 +253,9 @@ export const getMockSellerData = sellerId => {
  * @returns {object} - Seller carts with volume discount applied
  */
 export const applyVolumeDiscountsToSellerCarts = (
-  sellerCarts,
-  volumeDiscountData = {},
-  calculationParams = {}
+  sellerCarts: any,
+  volumeDiscountData: any = {},
+  calculationParams: any = {}
 ) => {
   const {
     isInter = true,
@@ -259,7 +265,7 @@ export const applyVolumeDiscountsToSellerCarts = (
     beforeTaxPercentage = 0,
   } = calculationParams;
 
-  const sellerCartsWithVD = {};
+  const sellerCartsWithVD: any = {};
 
   Object.keys(sellerCarts).forEach(sellerId => {
     const sellerCart = sellerCarts[sellerId];
@@ -268,11 +274,11 @@ export const applyVolumeDiscountsToSellerCarts = (
     if (sellerVDData.length > 0) {
       // Calculate subtotal for this seller
       const subTotal = sellerCart.items.reduce(
-        (sum, item) => sum + (item.totalPrice || 0),
+        (sum: any, item: any) => sum + (item.totalPrice || 0),
         0
       );
       const overallShipping = sellerCart.items.reduce(
-        (sum, item) => sum + (item.shippingCharges || 0),
+        (sum: any, item: any) => sum + (item.shippingCharges || 0),
         0
       );
 
@@ -311,9 +317,9 @@ export const applyVolumeDiscountsToSellerCarts = (
  * @returns {object | null} - Best matching pricing data or null
  */
 export const findBestPricingMatch = (
-  item,
-  sellerPricingData,
-  allSellerPricesData
+  item: any,
+  sellerPricingData: any,
+  allSellerPricesData: any
 ) => {
   const productId = item.productId;
   const sellerId = item.sellerId;
@@ -357,8 +363,8 @@ export const findBestPricingMatch = (
     // Only use cross-seller pricing if not in strict mode
     for (const [otherSellerId, prices] of Object.entries(allSellerPricesData)) {
       const anyPricing = find(
-        prices,
-        price => String(price.ProductVariantId) === String(productId)
+        prices as any,
+        (price: any) => String(price.ProductVariantId) === String(productId)
       );
       if (anyPricing) {
         return {
@@ -379,7 +385,10 @@ export const findBestPricingMatch = (
  * @param {object} allSellerPricesData - All seller prices (fallback)
  * @returns {object} - Merged pricing data
  */
-export const mergeSellerPricing = (sellerPricingData, allSellerPricesData) => {
+export const mergeSellerPricing = (
+  sellerPricingData: any,
+  allSellerPricesData: any
+) => {
   const mergedData = { ...sellerPricingData };
 
   // Add any sellers from allSellerPrices that don't have specific pricing
@@ -399,7 +408,7 @@ export const mergeSellerPricing = (sellerPricingData, allSellerPricesData) => {
  * @param {object} pricingData - Pricing data object
  * @returns {boolean} - True if pricing is valid
  */
-export const isValidPricing = pricingData => {
+export const isValidPricing = (pricingData: any) => {
   return (
     pricingData &&
     (pricingData.MasterPrice !== null || pricingData.BasePrice !== null) &&
@@ -412,8 +421,8 @@ export const isValidPricing = pricingData => {
  * @param {object} sellerCarts - Seller carts with pricing
  * @returns {object} - Summary of pricing resolution
  */
-export const getPricingResolutionSummary = sellerCarts => {
-  const summary = {
+export const getPricingResolutionSummary = (sellerCarts: any) => {
+  const summary: any = {
     totalSellers: 0,
     totalProducts: 0,
     pricingBySources: {
@@ -425,9 +434,9 @@ export const getPricingResolutionSummary = sellerCarts => {
     productsWithoutPricing: [],
   };
 
-  Object.entries(sellerCarts).forEach(([sellerId, cart]) => {
+  Object.entries(sellerCarts).forEach(([sellerId, cart]: [string, any]) => {
     summary.totalSellers++;
-    cart.items?.forEach(item => {
+    cart.items?.forEach((item: any) => {
       summary.totalProducts++;
 
       if (item.pricingSource) {

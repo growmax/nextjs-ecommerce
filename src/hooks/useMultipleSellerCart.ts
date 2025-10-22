@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import {
   calculateAllSellerCartPricing,
   findBestPricingMatch,
@@ -9,7 +10,10 @@ import { isEmpty } from "lodash";
 import { useEffect, useMemo, useState } from "react";
 import useMultipleSellerPricing from "./useMultipleSellerPricing";
 
-const useMultipleSellerCart = (cartItems, calculationParams = {}) => {
+const useMultipleSellerCart = (
+  cartItems: any[],
+  calculationParams: any = {}
+) => {
   // Initialize selectedSellerId from localStorage
   const [selectedSellerId, setSelectedSellerId] = useState(() => {
     if (typeof window !== "undefined") {
@@ -39,13 +43,16 @@ const useMultipleSellerCart = (cartItems, calculationParams = {}) => {
       return {};
     }
     // Group items by seller with debug logging
-    const groupedCarts = groupCartItemsBySeller(cartItems, true);
+    const groupedCarts = groupCartItemsBySeller(cartItems, true) as Record<
+      string,
+      any
+    >;
 
-    const enhancedCarts = {};
+    const enhancedCarts: Record<string, any> = {};
 
-    Object.keys(groupedCarts).forEach(sellerId => {
+    Object.keys(groupedCarts).forEach((sellerId: string) => {
       const cart = groupedCarts[sellerId];
-      const itemsWithSellerPricing = cart.items.map(item => {
+      const itemsWithSellerPricing = cart.items.map((item: any) => {
         const itemPricing = findBestPricingMatch(
           item,
           sellerPricingData,
@@ -53,7 +60,7 @@ const useMultipleSellerCart = (cartItems, calculationParams = {}) => {
         );
 
         if (itemPricing) {
-          const pricedItem = assign_pricelist_discounts_data_to_products(
+          const pricedItem: any = assign_pricelist_discounts_data_to_products(
             { ...item, showPrice: true },
             itemPricing
           );
@@ -106,7 +113,7 @@ const useMultipleSellerCart = (cartItems, calculationParams = {}) => {
   useEffect(() => {
     const sellerIds = Object.keys(processedSellerCarts);
 
-    if (sellerIds.length > 0) {
+    if (sellerIds.length > 0 && sellerIds[0]) {
       // If we have a selectedSellerId but it's not in the current cart, clear it
       if (selectedSellerId && !sellerIds.includes(selectedSellerId)) {
         setSelectedSellerId(sellerIds[0]);
@@ -134,7 +141,7 @@ const useMultipleSellerCart = (cartItems, calculationParams = {}) => {
   }, [processedSellerCarts]);
 
   // Handle seller selection
-  const handleSellerSelect = sellerId => {
+  const handleSellerSelect = (sellerId: string | null) => {
     setSelectedSellerId(sellerId);
     // Persist to localStorage
     if (typeof window !== "undefined" && sellerId) {
@@ -144,7 +151,7 @@ const useMultipleSellerCart = (cartItems, calculationParams = {}) => {
 
   // Get selected seller cart
   const selectedSellerCart = selectedSellerId
-    ? processedSellerCarts[selectedSellerId]
+    ? (processedSellerCarts as Record<string, any>)[selectedSellerId]
     : null;
 
   // Get selected seller items for checkout

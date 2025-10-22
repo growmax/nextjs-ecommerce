@@ -84,7 +84,6 @@ export class UserService {
     const client = createClientWithContext(coreCommerceClient, context);
 
     const response = await client.get(`/companys/${companyId}`);
-    console.log(response);
     return response.data;
   }
 

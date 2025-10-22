@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import CartService from "@/lib/api/CartServices";
 import { useTenantStore } from "@/store/useTenantStore";
 import { groupBy, uniqBy } from "lodash";
@@ -62,7 +63,7 @@ export default function useMultipleSellerPricing(
       userId: userId || 0,
       tenantId: tenant?.tenantCode || "",
       body: {
-        Productid: productIds,
+        Productid: productIds as number[],
         CurrencyId: currency?.id || sellerCurrency?.id || 0,
         BaseCurrencyId: sellerCurrency?.id || 0,
         CompanyId: companyId || 0,
@@ -95,15 +96,16 @@ export default function useMultipleSellerPricing(
         userId: userId || 0,
         tenantId: tenant?.tenantCode || "",
         body: {
-          Productid: productIds,
-          ProductData: getProductDataForSeller(sellerId), // Include quantity data
+          Productid: productIds as number[],
+
+          ProductData: getProductDataForSeller(sellerId) as any,
           CurrencyId: currency?.id || sellerCurrency?.id || 0,
           BaseCurrencyId: sellerCurrency?.id || 0,
           companyId: companyId || 0,
-          sellerId,
+
+          sellerId: sellerId as any,
         },
       }).catch((error: unknown) => {
-        // eslint-disable-next-line no-console
         console.warn(`Failed to fetch pricing for seller ${sellerId}:`, error);
         return { data: [] }; // Return empty data on error
       })
@@ -112,7 +114,6 @@ export default function useMultipleSellerPricing(
     const [sellerResults, allSellerPricesResult] = await Promise.all([
       Promise.all(sellerPromises),
       getAllSellerPricesPromise.catch((error: unknown) => {
-        // eslint-disable-next-line no-console
         console.warn("Failed to fetch getAllSellerPrices:", error);
         return { data: [] };
       }),
@@ -125,16 +126,18 @@ export default function useMultipleSellerPricing(
 
     // Group getAllSellerPrices by numeric sellerId for easy lookup
     const allSellerPricesBySeller: SellerPricing = {};
-    allSellerPricesData.forEach((item: Record<string, unknown>) => {
+
+    (allSellerPricesData as any[]).forEach((item: Record<string, unknown>) => {
       // Only use numeric seller IDs
       const sellerId = item.sellerId || item.vendorId;
       if (sellerId) {
-        if (!allSellerPricesBySeller[sellerId]) {
-          allSellerPricesBySeller[sellerId] = [];
+        const sellerIdStr = sellerId as string;
+        if (!allSellerPricesBySeller[sellerIdStr]) {
+          allSellerPricesBySeller[sellerIdStr] = [];
         }
-        allSellerPricesBySeller[sellerId].push(item);
+
+        allSellerPricesBySeller[sellerIdStr]!.push(item as any);
       } else {
-        // eslint-disable-next-line no-console
         console.warn(
           "[useMultipleSellerPricing] Pricing item has no numeric sellerId or vendorId:",
           item
@@ -149,7 +152,8 @@ export default function useMultipleSellerPricing(
       const fallbackData = allSellerPricesBySeller[sellerId] || [];
 
       // Check if seller-specific data actually belongs to this seller
-      const validSellerData = sellerSpecificData.filter(
+
+      const validSellerData = (sellerSpecificData as any[]).filter(
         (item: Record<string, unknown>) =>
           String(item.sellerId) === String(sellerId) ||
           String(item.vendorId) === String(sellerId)
@@ -162,7 +166,7 @@ export default function useMultipleSellerPricing(
         sellerPricing[sellerId] = fallbackData;
       } else {
         // No pricing available for this seller
-        // eslint-disable-next-line no-console
+
         console.warn(
           `[useMultipleSellerPricing] No pricing data available for seller ${sellerId}`
         );
@@ -221,12 +225,12 @@ export default function useMultipleSellerPricing(
         }
       } else {
         // Group getAllSellerPrices response by numeric sellerId only
-        const groupedBySeller = groupBy(
-          (data as PricingResult).data,
+
+        const groupedBySeller: any = groupBy(
+          (data as PricingResult).data as any,
           (item: Record<string, unknown>) => {
             const id = item.sellerId || item.vendorId;
             if (!id) {
-              // eslint-disable-next-line no-console
               console.warn(
                 "[useMultipleSellerPricing] Item has no numeric sellerId or vendorId:",
                 item

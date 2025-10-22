@@ -85,9 +85,9 @@ export function TenantDataExample() {
               {tenantData.sellerCompanyId?.verified ? "Yes" : "No"}
             </div>
             {tenantData.sellerCompanyId?.logo && (
-              // eslint-disable-next-line @next/next/no-img-element
               <div>
                 <strong>Logo:</strong>{" "}
+                {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img
                   src={tenantData.sellerCompanyId.logo}
                   alt="Company Logo"

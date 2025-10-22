@@ -1,6 +1,6 @@
 "use client";
 
-import type { DashboardToolbarRef } from "@/types/section-toolbar";
+import type { SectionToolbarRef } from "@/types/section-toolbar";
 import { useCallback, useRef, useState } from "react";
 
 interface UseDashboardToolbarOptions {
@@ -53,7 +53,7 @@ export function useDashboardToolbar(options: UseDashboardToolbarOptions = {}) {
     searchDebounce = 300,
   } = options;
 
-  const toolbarRef = useRef<DashboardToolbarRef>(null);
+  const toolbarRef = useRef<SectionToolbarRef>(null);
 
   // State
   const [state, setState] = useState<DashboardToolbarState>({

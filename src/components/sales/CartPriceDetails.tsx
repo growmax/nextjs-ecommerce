@@ -1,12 +1,12 @@
 "use client";
 
+import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Button } from "@/components/ui/button";
-import PricingFormat from "../PricingFormat";
 import { IconChevronDown } from "@tabler/icons-react";
 import { useState } from "react";
+import PricingFormat from "../PricingFormat";
 
 interface SellerPricing {
   totalItems?: number;
@@ -352,7 +352,11 @@ export default function CartPriceDetails({
         {taxExpanded && !taxExempted && getBreakup && getBreakup.length > 0 && (
           <div className="ml-4 space-y-2">
             {getBreakup.map((breakup, index) => (
-              <div key={index} className="flex justify-between items-center">
+              // eslint-disable-next-line react/no-array-index-key
+              <div
+                key={`breakup-${breakup.taxName}-${index}`}
+                className="flex justify-between items-center"
+              >
                 <span className="text-xs text-gray-600">{breakup.taxName}</span>
                 {isPricingLoading ? (
                   <Skeleton className="h-3 w-16" />

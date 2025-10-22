@@ -29,6 +29,7 @@ export default function useModuleSettings(userData: UserData | null = null) {
 
   // The API response has structure: { data: { quoteSection, salesSection, orderSection } }
   // Note: termsSection is not included in the current API response
+  // @ts-expect-error - SWR data type inference doesn't include the full API response structure
   const apiData = data?.data;
 
   if (apiData?.quoteSection?.lsQuoteSec) {

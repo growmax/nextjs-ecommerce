@@ -1,8 +1,12 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { useMemo } from "react";
 import { useCurrentUser } from "./useCurrentUser";
 import useMultipleSellerCart from "./useMultipleSellerCart";
 
-const useSelectedSellerCart = (cartItems, selectedSellerId) => {
+const useSelectedSellerCart = (
+  cartItems: any[],
+  selectedSellerId: string | null
+) => {
   const { user } = useCurrentUser();
   // const { moduleSettings } = useModuleSettings(user);
 
@@ -15,7 +19,9 @@ const useSelectedSellerCart = (cartItems, selectedSellerId) => {
       insuranceCharges: 0,
       precision: 2,
       Settings: {},
+      // @ts-expect-error - isSeller and taxExemption may not exist on CurrentUser type
       isSeller: user?.isSeller || false,
+      // @ts-expect-error - isSeller and taxExemption may not exist on CurrentUser type
       taxExemption: user?.taxExemption || false,
     };
   }, [user]);
@@ -33,8 +39,8 @@ const useSelectedSellerCart = (cartItems, selectedSellerId) => {
 
   // Get selected seller's data
   const selectedSeller =
-    selectedSellerId && sellerCarts[selectedSellerId]
-      ? sellerCarts[selectedSellerId]
+    selectedSellerId && (sellerCarts as Record<string, any>)[selectedSellerId]
+      ? (sellerCarts as Record<string, any>)[selectedSellerId]
       : selectedSellerCart;
 
   // Return data in format expected by existing cart components

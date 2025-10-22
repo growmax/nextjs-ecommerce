@@ -2,8 +2,8 @@
 
 // Export clients
 export {
-  ApiClientError,
   apiClient,
+  ApiClientError,
   authClient,
   catalogClient,
   coreCommerceClient,
@@ -24,6 +24,9 @@ import DiscountService from "./services/DiscountService";
 import StoreFrontService from "./services/StoreFrontService";
 import TenantService from "./services/TenantService";
 import UserService from "./services/UserService";
+
+// Import SubIndustry service
+import SubIndustryService from "./services/SubIndustryService";
 
 // Import token management services
 import { AuthTokenService } from "../services/AuthTokenService";
@@ -50,10 +53,11 @@ export {
   OrdersService,
   OrderStatusService,
   PreferenceService,
-  QuoteStatusService,
   QuotesService,
+  QuoteStatusService,
   RequestQueueService,
   StoreFrontService,
+  SubIndustryService,
   TenantService,
   TokenRefreshService,
   UserService,
@@ -133,6 +137,7 @@ export type {
   DeleteAddressResponse,
   DeleteBranchParams,
   DistrictData,
+  getSubIndustrysbyid,
   Industry,
   OrderGraphItem,
   QuoteGraphItem,
@@ -145,24 +150,23 @@ export type {
   Warehouse,
   Zone,
   ZoneInfo,
-  getSubIndustrysbyid,
 } from "./services/CompanyService";
 
 export type {
   ApprovalGroup,
   CurrencySymbol,
   QuoteItem,
-  QuoteUser,
   QuotesApiResponse,
   QuotesQueryParams,
   QuotesRequestBody,
   QuotesResponseData,
+  QuoteUser,
 } from "./services/QuotesService";
 
 export type {
   QuoteStatusApiResponse,
-  QuoteStatusResponse,
   QuoteStatusParams,
+  QuoteStatusResponse,
 } from "./services/StatusService";
 
 // Export token management service types
@@ -205,6 +209,7 @@ export const API = {
   StoreFront: StoreFrontService,
   Tenant: TenantService,
   User: UserService,
+  SubIndustry: SubIndustryService,
   // Token management services
   TokenRefresh: TokenRefreshService,
   RequestQueue: RequestQueueService,

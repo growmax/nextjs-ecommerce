@@ -1,3 +1,5 @@
+import { AuthStorage } from "../../auth";
+import { JWTService } from "../../services/JWTService";
 import { coreCommerceClient } from "../client";
 import { BaseService } from "./BaseService";
 
@@ -197,8 +199,8 @@ export type SubIndustryApiResponse = getSubIndustrysbyid[];
 
 // Parameter interfaces for better type safety and clarity
 export interface BranchPaginationParams {
-  userId: string | number;
-  companyId: number;
+  userId?: string | number;
+  companyId?: number;
   offset: number;
   limit: number;
   searchString?: string;
@@ -424,9 +426,43 @@ export class CompanyService extends BaseService<CompanyService> {
   async getAllBranchesWithPagination(
     params: BranchPaginationParams
   ): Promise<BranchApiResponse> {
-    const { userId, companyId, offset, limit, searchString = "" } = params;
+    const { offset, limit, searchString = "" } = params;
+
+    let userId = params.userId;
+    let companyId = params.companyId;
+
+    // Auto-read from JWT if not provided
+    if (!userId || !companyId) {
+      const accessToken = AuthStorage.getAccessToken();
+      if (accessToken) {
+        try {
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          const payload: any =
+            JWTService.getInstance().decodeToken(accessToken);
+          // common token field names - try a few fallbacks
+          userId = userId ?? payload?.userId ?? payload?.id ?? payload?.sub;
+          companyId = companyId ?? payload?.companyId;
+        } catch (_e) {
+          // decoding failed -> let the missing id check below handle it
+        }
+      }
+    }
+
+    if (
+      userId === undefined ||
+      userId === null ||
+      companyId === undefined ||
+      companyId === null
+    ) {
+      return Promise.reject(
+        new Error("Missing userId or companyId. Ensure user is authenticated.")
+      );
+    }
+
     return (await this.call(
-      `/branches/readBranchwithPagination/${userId}?companyId=${companyId}&offset=${offset}&limit=${limit}&searchString=${searchString}`,
+      `/branches/readBranchwithPagination/${userId}?companyId=${companyId}&offset=${offset}&limit=${limit}&searchString=${encodeURIComponent(
+        searchString
+      )}`,
       undefined,
       "GET"
     )) as BranchApiResponse;
@@ -442,12 +478,39 @@ export class CompanyService extends BaseService<CompanyService> {
     )) as DeleteAddressResponse;
   }
 
-  async getBranch(id: string | number): Promise<CompanyApiResponse> {
+  // New helper: fetch company for the currently authenticated user (reads token, decodes companyId)
+  async getBranch(id?: string | number): Promise<CompanyApiResponse | null> {
+    let companyId: string | number | undefined = id;
+
+    if (companyId === undefined || companyId === null) {
+      const accessToken = AuthStorage.getAccessToken();
+      if (!accessToken) {
+        // no token -> caller can decide how to handle (null means not authenticated)
+        return null;
+      }
+
+      const jwtService = JWTService.getInstance();
+      try {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const payload: any = jwtService.decodeToken(accessToken);
+        companyId = payload?.companyId;
+        if (!companyId) return null;
+      } catch (_e) {
+        // invalid token
+        return null;
+      }
+    }
+
     return (await this.call(
-      `/companys/${id}`,
+      `/companys/${companyId}`,
       undefined,
       "GET"
     )) as CompanyApiResponse;
+  }
+
+  // Backwards-compatible alias (optional)
+  async getCurrentCompany(): Promise<CompanyApiResponse | null> {
+    return this.getBranch();
   }
 
   async getSubIndustrys(): Promise<SubIndustryApiResponse> {
