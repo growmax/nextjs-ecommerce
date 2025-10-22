@@ -2,19 +2,18 @@
 
 import {
   Bell,
-  SidebarIcon,
-  ShoppingCart,
-  LogOut,
-  IdCard,
   Building2,
+  IdCard,
   Loader2,
+  LogOut,
+  ShoppingCart,
+  SidebarIcon,
 } from "lucide-react";
 import Link from "next/link";
 
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Separator } from "@/components/ui/separator";
-import { useSidebar } from "@/components/ui/sidebar";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -24,15 +23,12 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import {
-  Avatar,
-  AvatarFallback,
-  AvatarImage,
-} from "@/components/ui/avatar";
+import { Separator } from "@/components/ui/separator";
+import { useSidebar } from "@/components/ui/sidebar";
 import { useAuth } from "@/contexts/AuthContext";
+import { useCart } from "@/contexts/CartContext";
 import useLogout from "@/hooks/Auth/useLogout";
 import useUserProfile from "@/hooks/Profile/useUserProfile";
-import useSelectedSellerCart from "@/hooks/useSelectedSellerCart";
 
 export function SiteHeader() {
   const { toggleSidebar } = useSidebar();
@@ -40,17 +36,17 @@ export function SiteHeader() {
   const { userProfile } = useUserProfile();
   const { isLoggingOut, handleLogout } = useLogout();
 
-  // Get cart count from selected seller cart
-  const { selectedSellerItems = [] } = useSelectedSellerCart([], null) || {};
-  const cartCount = selectedSellerItems?.length || 0;
+  // Get cart count from cart context
+  const { cartCount } = useCart();
   const notificationCount = 3;
 
-  const initials = userProfile?.displayName
-    ?.split(" ")
-    .map(n => n[0])
-    .join("")
-    .toUpperCase()
-    .slice(0, 2) || "U";
+  const initials =
+    userProfile?.displayName
+      ?.split(" ")
+      .map(n => n[0])
+      .join("")
+      .toUpperCase()
+      .slice(0, 2) || "U";
 
   return (
     <header className="bg-background sticky top-0 z-50 flex w-full items-center border-b">
@@ -65,7 +61,9 @@ export function SiteHeader() {
         </Button>
         <Separator orientation="vertical" className="mr-2 h-4" />
         <Link href="/" className="flex items-center">
-          <span className="font-bold text-lg text-foreground hover:opacity-80">Seimens</span>
+          <span className="font-bold text-lg text-foreground hover:opacity-80">
+            Siemens
+          </span>
         </Link>
 
         {/* Spacer to push icons to the right */}
@@ -111,11 +109,7 @@ export function SiteHeader() {
           {isAuthenticated && userProfile ? (
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="h-9 w-9"
-                >
+                <Button variant="ghost" size="icon" className="h-9 w-9">
                   <Avatar className="h-8 w-8 rounded-lg">
                     <AvatarImage
                       src={userProfile.picture || ""}
