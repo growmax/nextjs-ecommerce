@@ -105,6 +105,7 @@ export type {
 } from "./services/OrderStatusService";
 
 export type {
+  DbProductDetail,
   FetchOrderDetailsParams,
   OrderDetailItem,
   OrderDetailsData,

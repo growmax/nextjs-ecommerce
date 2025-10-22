@@ -9,6 +9,21 @@ export interface FetchOrderDetailsParams {
   orderId: string;
 }
 
+// Product details interface
+export interface DbProductDetail {
+  itemNo?: number;
+  productShortDescription?: string;
+  brandProductId?: string;
+  itemTaxableAmount?: number;
+  discount?: number;
+  unitPrice?: number;
+  unitQuantity?: number;
+  invoiceQuantity?: number;
+  totalPrice?: number;
+  tax?: number;
+  [key: string]: unknown;
+}
+
 // Response interface - extend this as you get more data from the API
 export interface OrderDetailItem {
   orderIdentifier: string;
@@ -21,6 +36,7 @@ export interface OrderDetailItem {
   sellerCompanyName?: string;
   updatedBuyerStatus?: string;
   updatedSellerStatus?: string;
+  dbProductDetails?: DbProductDetail[];
   // Add more fields as needed
   [key: string]: unknown;
 }
@@ -38,6 +54,13 @@ export interface OrderDetailsData {
   updatedBuyerStatus?: string;
   updatedSellerStatus?: string;
   orderDetails?: OrderDetailItem[];
+  buyerCurrencySymbol?: {
+    currencyCode?: string;
+    symbol?: string;
+    decimal?: string;
+    thousand?: string;
+    precision?: number;
+  };
   // Add more fields as needed based on actual API response
   [key: string]: unknown;
 }
