@@ -383,10 +383,11 @@ const CompanyDetail = () => {
                 <FormLabel>
                   Industry Description :{" "}
                   {form.watch("data.subIndustryId.id")
-                    ? // @ts-expect-error - subIndustryOptions type issue
-                      (subIndustryOptions ?? []).find(
-                        (o: any) =>
-                          String(o.id) === String(form.watch("subIndustry"))
+                    ? (
+                        (subIndustryOptions ?? []).find(
+                          (o: any) =>
+                            String(o.id) === String(form.watch("subIndustry"))
+                        ) as any
                       )?.name ||
                       form.getValues("data.subIndustryId.name") ||
                       ""
@@ -394,10 +395,11 @@ const CompanyDetail = () => {
                 </FormLabel>
                 <p className="text-sm text-muted-foreground">
                   {form.watch("data.subIndustryId.id")
-                    ? // @ts-expect-error - subIndustryOptions type issue
-                      (subIndustryOptions ?? []).find(
-                        (o: any) =>
-                          String(o.id) === String(form.watch("subIndustry"))
+                    ? (
+                        (subIndustryOptions ?? []).find(
+                          (o: any) =>
+                            String(o.id) === String(form.watch("subIndustry"))
+                        ) as any
                       )?.description ||
                       form.getValues("data.subIndustryId.description") ||
                       "No description available"

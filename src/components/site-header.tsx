@@ -26,9 +26,9 @@ import {
 import { Separator } from "@/components/ui/separator";
 import { useSidebar } from "@/components/ui/sidebar";
 import { useAuth } from "@/contexts/AuthContext";
+import { useCart } from "@/contexts/CartContext";
 import useLogout from "@/hooks/Auth/useLogout";
 import useUserProfile from "@/hooks/Profile/useUserProfile";
-import useSelectedSellerCart from "@/hooks/useSelectedSellerCart";
 
 export function SiteHeader() {
   const { toggleSidebar } = useSidebar();
@@ -36,9 +36,8 @@ export function SiteHeader() {
   const { userProfile } = useUserProfile();
   const { isLoggingOut, handleLogout } = useLogout();
 
-  // Get cart count from selected seller cart
-  const { selectedSellerItems = [] } = useSelectedSellerCart([], null) || {};
-  const cartCount = selectedSellerItems?.length || 0;
+  // Get cart count from cart context
+  const { cartCount } = useCart();
   const notificationCount = 3;
 
   const initials =
@@ -63,7 +62,7 @@ export function SiteHeader() {
         <Separator orientation="vertical" className="mr-2 h-4" />
         <Link href="/" className="flex items-center">
           <span className="font-bold text-lg text-foreground hover:opacity-80">
-            Seimens
+            Siemens
           </span>
         </Link>
 

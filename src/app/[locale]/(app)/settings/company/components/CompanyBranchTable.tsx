@@ -20,9 +20,8 @@ const CompanyBranchTable = () => {
           searchString: "",
         });
         if (!mounted) return;
-        // @ts-expect-error - response may have different structures
         setBranches(
-          response?.branchResponse ?? response?.data ?? response ?? []
+          (response as any)?.branchResponse ?? response?.data ?? response ?? []
         );
       } catch (_error) {
         // Error handled silently

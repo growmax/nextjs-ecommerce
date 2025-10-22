@@ -105,16 +105,16 @@ export default function useMultipleSellerPricing(
 
           sellerId: sellerId as any,
         },
-      }).catch((error: unknown) => {
-        console.warn(`Failed to fetch pricing for seller ${sellerId}:`, error);
+      }).catch((_error: unknown) => {
+        // Failed to fetch pricing for seller
         return { data: [] }; // Return empty data on error
       })
     );
     // Fetch both seller-specific and getAllSellerPrices in parallel
     const [sellerResults, allSellerPricesResult] = await Promise.all([
       Promise.all(sellerPromises),
-      getAllSellerPricesPromise.catch((error: unknown) => {
-        console.warn("Failed to fetch getAllSellerPrices:", error);
+      getAllSellerPricesPromise.catch((_error: unknown) => {
+        // Failed to fetch getAllSellerPrices
         return { data: [] };
       }),
     ]);
@@ -138,10 +138,7 @@ export default function useMultipleSellerPricing(
 
         allSellerPricesBySeller[sellerIdStr]!.push(item as any);
       } else {
-        console.warn(
-          "[useMultipleSellerPricing] Pricing item has no numeric sellerId or vendorId:",
-          item
-        );
+        // Pricing item has no numeric sellerId or vendorId
       }
     });
 
@@ -166,10 +163,6 @@ export default function useMultipleSellerPricing(
         sellerPricing[sellerId] = fallbackData;
       } else {
         // No pricing available for this seller
-
-        console.warn(
-          `[useMultipleSellerPricing] No pricing data available for seller ${sellerId}`
-        );
         sellerPricing[sellerId] = [];
       }
     });
@@ -230,12 +223,7 @@ export default function useMultipleSellerPricing(
           (data as PricingResult).data as any,
           (item: Record<string, unknown>) => {
             const id = item.sellerId || item.vendorId;
-            if (!id) {
-              console.warn(
-                "[useMultipleSellerPricing] Item has no numeric sellerId or vendorId:",
-                item
-              );
-            }
+            // Item has no numeric sellerId or vendorId
             return id || "no-seller-id";
           }
         );

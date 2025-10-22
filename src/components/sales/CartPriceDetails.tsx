@@ -351,10 +351,9 @@ export default function CartPriceDetails({
         {/* Tax Breakdown - Collapsible */}
         {taxExpanded && !taxExempted && getBreakup && getBreakup.length > 0 && (
           <div className="ml-4 space-y-2">
-            {getBreakup.map((breakup, index) => (
-              // eslint-disable-next-line react/no-array-index-key
+            {getBreakup.map(breakup => (
               <div
-                key={`breakup-${breakup.taxName}-${index}`}
+                key={`breakup-${breakup.taxName}-${breakup.value}`}
                 className="flex justify-between items-center"
               >
                 <span className="text-xs text-gray-600">{breakup.taxName}</span>
