@@ -10,6 +10,15 @@ import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { toast } from "sonner";
 import SellerCard from "./SellerCard/SellerCard";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
 
 interface CartItem {
   productId: number;
@@ -53,8 +62,8 @@ export default function CartPageClient() {
   } = useCart();
 
   // Commented out - address check disabled
-  const billingDatas: unknown[] = [];
-  const SelectedShippingAddressData: unknown = null;
+  // const billingDatas: unknown[] = [];
+  // const SelectedShippingAddressData: unknown = null;
   // const { billingDatas } = useBilling(user);
   // const { SelectedShippingAddressData } = useCurrentShippingAddress(user);
 
@@ -67,6 +76,21 @@ export default function CartPageClient() {
       return null;
     }
   );
+
+  // Delete confirmation dialog state
+  const [deleteDialog, setDeleteDialog] = useState<{
+    isOpen: boolean;
+    productId: number | null;
+    itemNo: string | null;
+    sellerId?: string | number | null;
+    productName?: string | null;
+  }>({
+    isOpen: false,
+    productId: null,
+    itemNo: null,
+    sellerId: null,
+    productName: null,
+  });
 
   const {
     selectedSellerCart,
@@ -220,6 +244,33 @@ export default function CartPageClient() {
     }
   };
 
+  // Open delete confirmation dialog
+  const openDeleteDialog = (
+    productId: number,
+    _itemNo: string,
+    _sellerId?: string | number,
+    productName?: string
+  ) => {
+    setDeleteDialog({
+      isOpen: true,
+      productId,
+      itemNo: _itemNo,
+      sellerId: _sellerId,
+      productName,
+    });
+  };
+
+  // Close delete confirmation dialog
+  const closeDeleteDialog = () => {
+    setDeleteDialog({
+      isOpen: false,
+      productId: null,
+      itemNo: null,
+      sellerId: null,
+      productName: null,
+    });
+  };
+
   // Delete item from cart
   const deleteCart = async (
     productId: number,
@@ -252,6 +303,7 @@ export default function CartPageClient() {
         pos: 0,
       });
 
+      closeDeleteDialog();
       toast.success("Item removed from cart");
     } catch (_error) {
       toast.error("Failed to remove item");
@@ -325,7 +377,6 @@ export default function CartPageClient() {
       <SellerCard
         totalCart={cartCount}
         cart={cart}
-        // @ts-expect-error - user type mismatch with SellerCard expectations
         user={user}
         selectedSellerId={selectedSellerId}
         onSellerSelect={handleSellerSelection}
@@ -335,9 +386,8 @@ export default function CartPageClient() {
         hasMultipleSellers={hasMultipleSellers}
         isPricingLoading={isPricingLoading}
         isLoading={isCartLoading}
-        // @ts-expect-error - item type mismatch with SellerCard expectations
         onItemUpdate={changeQty}
-        onItemDelete={deleteCart}
+        onItemDelete={openDeleteDialog}
         onClearCart={emptyCart}
         handleOrder={handleOrder}
         handleQuote={handleQuote}
@@ -346,6 +396,46 @@ export default function CartPageClient() {
         sellerIds={sellerIds}
         onAddProduct={handleAddProduct}
       />
+
+      {/* Delete Confirmation Dialog */}
+      <Dialog open={deleteDialog.isOpen} onOpenChange={closeDeleteDialog}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Remove Item from Cart?</DialogTitle>
+            <DialogDescription>
+              {deleteDialog.productName ? (
+                <>Are you sure you want to remove <span className="font-semibold">{deleteDialog.productName}</span> from your cart?</>
+              ) : (
+                "Are you sure you want to remove this item from your cart?"
+              )}
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter className="gap-2 sm:gap-0">
+            <Button
+              variant="outline"
+              onClick={closeDeleteDialog}
+              className="w-full sm:w-auto"
+            >
+              Cancel
+            </Button>
+            <Button
+              variant="destructive"
+              onClick={() => {
+                if (deleteDialog.productId && deleteDialog.itemNo) {
+                  deleteCart(
+                    deleteDialog.productId,
+                    deleteDialog.itemNo,
+                    deleteDialog.sellerId
+                  );
+                }
+              }}
+              className="w-full sm:w-auto"
+            >
+              Remove Item
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </>
   );
 }

@@ -105,10 +105,10 @@ export default function CartPriceDetails({
 
   return (
     <Card className="shadow-lg bg-white gap-0 p-0">
-      <CardHeader className="bg-gray-100 text-black py-4 px-6 m-0 rounded-t-lg">
+      <CardHeader className="bg-gray-100 text-black py-5 px-8 m-0 rounded-t-lg">
         <h2 className="text-xl font-bold m-0">Price Details</h2>
       </CardHeader>
-      <CardContent className="space-y-4 py-6 px-6">
+      <CardContent className="space-y-5 py-8 px-8">
         {/* Total Items */}
         <div className="flex justify-between items-center">
           <span className="text-base text-gray-600">Total Items</span>
