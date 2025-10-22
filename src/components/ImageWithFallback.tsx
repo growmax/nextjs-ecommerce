@@ -1,6 +1,6 @@
 "use client";
 
-import Image from "next/image";
+import Image, { StaticImageData } from "next/image";
 import { useState } from "react";
 import placeholderimg from "../../public/asset/default-placeholder.png";
 
@@ -29,11 +29,11 @@ export default function ImageWithFallback({
 }: ImageWithFallbackProps) {
   // Use fallback immediately if src is null/undefined/empty
   const validSrc = src && src.trim() !== "" ? src : placeholderimg;
-  const [imgSrc, setImgSrc] = useState<string>(validSrc);
+  const [imgSrc, setImgSrc] = useState<string | StaticImageData>(validSrc);
 
   const handleError = () => {
     // Only set fallback if we haven't already
-    if (imgSrc !== placeholderimg) {
+    if (typeof imgSrc === "string") {
       setImgSrc(placeholderimg);
     }
   };

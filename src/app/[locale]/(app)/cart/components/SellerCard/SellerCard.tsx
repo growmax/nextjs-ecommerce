@@ -1,4 +1,5 @@
 import ImageWithFallback from "@/components/ImageWithFallback";
+import CartPriceDetails from "@/components/sales/CartPriceDetails";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -11,7 +12,6 @@ import { Separator } from "@/components/ui/separator";
 import { Title } from "@/utils/Typo";
 import { EllipsisVertical, Minus, Plus, School, Trash } from "lucide-react";
 import CartSkeleton from "../CartSkeleton";
-import PriceDetails from "../PriceDetails";
 interface CartProduct {
   productId: number;
   quantity: number;
@@ -427,14 +427,9 @@ export default function SellerCard({
       <div className="w-full md:w-2/5 flex-shrink-0 flex flex-col md:h-full space-y-4">
         {/* Price Details */}
         {selectedSellerPricing && (
-          <PriceDetails
+          <CartPriceDetails
             cartValue={selectedSellerPricing}
-            currencyCode={currency?.currencyCode || "INR"}
-            currencySymbol={
-              currency?.currencyCode === "INR"
-                ? "₹"
-                : currency?.currencyCode || "₹"
-            }
+            {...(currency && { currency })}
             isPricingLoading={isPricingLoading}
           />
         )}
