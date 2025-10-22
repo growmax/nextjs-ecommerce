@@ -1,5 +1,6 @@
 import CartServices from "@/lib/api/CartServices";
-import { useEffect, useState } from "react";
+import { useMemo } from "react";
+import useSWR from "swr";
 
 interface UserData {
   userId?: number;
@@ -10,44 +11,35 @@ export default function useBilling(userData: UserData | null = null) {
   const userId = userData?.userId;
   const companyId = userData?.companyId;
 
-  const [billingData, setBillingData] = useState<unknown[] | null>(null);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<unknown>(null);
-
-  useEffect(() => {
-    if (userId && companyId) {
-      const body = {
-        userId,
-        companyId,
-      };
-
-      async function fetchBilling() {
-        try {
-          setLoading(true);
-          setError(null);
-          const res = (await CartServices.geBilling(body)) as {
-            data?: unknown[];
-          };
-
-          if (res?.data) {
-            setBillingData(res.data);
-          }
-        } catch (err) {
-          setError(err);
-        } finally {
-          setLoading(false);
-        }
-      }
-
-      fetchBilling();
+  const fetcher = () => {
+    if (!userId || !companyId) {
+      return Promise.reject(new Error("Missing userId or companyId"));
     }
-  }, [userId, companyId]);
+    return CartServices.geBilling({ userId, companyId });
+  };
 
-  const formatAddress = (billingData as Record<string, unknown>[] | null)?.map(
-    o => {
-      return { ...(o.addressId as Record<string, unknown>), id: o.id };
+  const { data, error } = useSWR(
+    userId && companyId ? [userId, "Billing", companyId] : null,
+    fetcher,
+    {
+      revalidateOnFocus: false,
+      dedupingInterval: 30000, // Cache for 30 seconds
     }
   );
 
-  return { billingDatas: formatAddress || [], loading, error, formatAddress };
+  const formatAddress = useMemo(() => {
+    const billingData = (data as { data?: unknown[] })?.data;
+    return (
+      (billingData as Record<string, unknown>[] | null)?.map(o => {
+        return { ...(o.addressId as Record<string, unknown>), id: o.id };
+      }) || []
+    );
+  }, [data]);
+
+  return {
+    billingDatas: formatAddress,
+    loading: !error && !data,
+    error,
+    formatAddress,
+  };
 }

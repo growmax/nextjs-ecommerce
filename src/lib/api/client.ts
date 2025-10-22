@@ -199,6 +199,12 @@ function createApiClient(config: ApiClientConfig = {}): AxiosInstance {
       ) {
         originalRequest._retry = true;
 
+        // CRITICAL: Remove old authorization header from original request
+        // so the request interceptor can inject the fresh token from updated cookies
+        if (originalRequest.headers) {
+          delete originalRequest.headers.Authorization;
+        }
+
         // Import dynamically to avoid circular dependencies
         const { default: TokenRefreshService } = await import(
           "../services/TokenRefreshService"

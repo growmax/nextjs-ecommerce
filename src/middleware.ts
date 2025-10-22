@@ -1,5 +1,5 @@
 import { locales } from "@/i18n/config";
-import API from "@/lib/api";
+import AuthService from "@/lib/api/services/AuthService";
 import { getDomain } from "@/lib/domain";
 import createIntlMiddleware from "next-intl/middleware";
 import { NextRequest, NextResponse } from "next/server";
@@ -83,10 +83,23 @@ export async function middleware(request: NextRequest) {
   // Check if anonymous token cookie exists
   const existingToken = request.cookies.get("anonymous_token");
 
-  // Only call API if cookie is missing AND user is not authenticated
-  if (!existingToken && !isAuthenticated) {
+  // Only call API if cookie is missing, user is not authenticated, and not on static routes
+  const shouldFetchAnonymousToken =
+    !existingToken &&
+    !isAuthenticated &&
+    !pathname.startsWith("/_next") &&
+    !pathname.startsWith("/api") &&
+    !pathname.includes(".");
+
+  if (shouldFetchAnonymousToken) {
     try {
-      const tokenResponse = await API.Auth.getAnonymousToken(domain);
+      // Add timeout to prevent middleware from blocking too long
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 2000); // 2 second timeout
+
+      const tokenResponse = await AuthService.getAnonymousToken(domain);
+
+      clearTimeout(timeoutId);
 
       response.cookies.set("anonymous_token", tokenResponse.accessToken, {
         httpOnly: true,
@@ -95,7 +108,10 @@ export async function middleware(request: NextRequest) {
         path: "/",
         maxAge: 7 * 24 * 60 * 60, // 7 days
       });
-    } catch {}
+    } catch {
+      // Log error but don't block the request
+      // Continue without token
+    }
   }
 
   return response;

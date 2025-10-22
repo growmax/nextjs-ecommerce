@@ -1,6 +1,7 @@
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Subtitle, TypographyMuted } from "@/utils/Typo";
 
 interface SellerPricing {
   totalItems?: number;
@@ -41,20 +42,18 @@ export default function PriceDetails({
   const showDiscount = showListPrice && DISCOUNT > 0;
 
   return (
-    <Card className="shadow-lg bg-green-50">
-      <CardHeader className="pb-3">
-        <h3 className="text-lg font-semibold">Price Details</h3>
+    <Card className="shadow-lg bg-white gap-2">
+      <CardHeader>
+        <Subtitle>Price Details</Subtitle>
       </CardHeader>
       <CardContent className="space-y-3">
         {/* Total Items */}
         <div className="flex justify-between items-center">
-          <span className="text-sm text-gray-600 font-normal">Total Items</span>
+          <TypographyMuted>Total Items</TypographyMuted>
           {isPricingLoading ? (
             <Skeleton className="h-4 w-12" />
           ) : (
-            <span className="text-sm font-normal">
-              {cartValue?.totalItems || 0}
-            </span>
+            <TypographyMuted>{cartValue?.totalItems || 0}</TypographyMuted>
           )}
         </div>
 
@@ -100,13 +99,15 @@ export default function PriceDetails({
 
         {/* Tax */}
         <div className="flex justify-between items-center">
-          <span className="text-sm text-gray-600">Tax</span>
+          <TypographyMuted>Tax</TypographyMuted>
+
           {isPricingLoading ? (
             <Skeleton className="h-4 w-24" />
           ) : (
-            <span className="text-sm font-medium text-gray-600">
+            <TypographyMuted>
+              {" "}
               {currencyCode} {formatCurrency(cartValue?.totalTax || 0)}
-            </span>
+            </TypographyMuted>
           )}
         </div>
 

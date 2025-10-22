@@ -1,10 +1,21 @@
 "use client";
 
+import dynamic from "next/dynamic";
 import HeaderBar from "@/components/Global/HeaderBar/HeaderBar";
 import SectionCard from "@/components/custom/SectionCard";
 import { SaveCancelToolbar } from "@/components/custom/save-cancel-toolbar";
-import { AddAddressDialog } from "@/components/dialogs/company";
 import { FullWidthLayout } from "@/components/layout/PageContent";
+
+// Lazy load AddAddressDialog - it's heavy with form validation and components
+const AddAddressDialog = dynamic(
+  () =>
+    import("@/components/dialogs/company").then(mod => ({
+      default: mod.AddAddressDialog,
+    })),
+  {
+    ssr: false,
+  }
+);
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";

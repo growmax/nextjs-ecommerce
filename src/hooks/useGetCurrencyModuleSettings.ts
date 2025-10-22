@@ -1,6 +1,7 @@
 import CartServices from "@/lib/api/CartServices";
 import { find } from "lodash";
-import { useEffect, useState } from "react";
+import { useMemo } from "react";
+import useSWR from "swr";
 
 interface CurrencySection {
   sectionDetailName: string;
@@ -32,46 +33,50 @@ export default function useGetCurrencyModuleSettings(
   const userId = user?.userId;
   const companyId = user?.companyId;
   const currency = user?.currency;
-  const [currencyModule, setCurrencyModule] =
-    useState<CurrencyModuleData | null>(null);
 
-  useEffect(() => {
-    if (!userId || !companyId) return;
-
-    const body = {
+  const fetcher = () => {
+    if (!userId || !companyId) {
+      return Promise.reject(new Error("Missing userId or companyId"));
+    }
+    return CartServices.getCurrencyModuleSettings({
       userId: userId as string | number,
       companyId: companyId as string | number,
-    };
-    async function CurrencyModuleSetting() {
-      const res = (await CartServices.getCurrencyModuleSettings(body)) as {
-        data?: CurrencyModuleData;
-      };
-      if (res?.data) {
-        setCurrencyModule(res.data);
-      }
+    });
+  };
+
+  const { data } = useSWR(
+    userId && companyId && condition
+      ? [userId, "CurrencyModuleSettings", companyId]
+      : null,
+    fetcher,
+    {
+      revalidateOnFocus: false,
+      dedupingInterval: 60000, // Cache for 60 seconds (settings rarely change)
     }
-    CurrencyModuleSetting();
-  }, [condition, userId, companyId]);
-  let minimumOrderValue, minimumQuoteValue;
-  if (currencyModule) {
-    minimumOrderValue = find(currencyModule?.orderCurrencySec, [
+  );
+
+  const { minimumOrderValue, minimumQuoteValue } = useMemo(() => {
+    const currencyModule = (data as { data?: CurrencyModuleData })?.data;
+
+    if (!currencyModule) {
+      return { minimumOrderValue: undefined, minimumQuoteValue: undefined };
+    }
+
+    const currencyCode = buyerCurrency?.currencyCode || currency?.currencyCode;
+
+    const minimumOrderValue = find(currencyModule?.orderCurrencySec, [
       "sectionDetailName",
-      `ORDER_VALUE_${
-        buyerCurrency?.currencyCode
-          ? buyerCurrency?.currencyCode
-          : currency?.currencyCode
-      }`,
+      `ORDER_VALUE_${currencyCode}`,
     ])?.sectionDetailValue;
 
-    minimumQuoteValue = find(currencyModule?.quoteCurrencySec, [
+    const minimumQuoteValue = find(currencyModule?.quoteCurrencySec, [
       "sectionDetailName",
-      `QUOTE_VALUE_${
-        buyerCurrency?.currencyCode
-          ? buyerCurrency?.currencyCode
-          : currency?.currencyCode
-      }`,
+      `QUOTE_VALUE_${currencyCode}`,
     ])?.sectionDetailValue;
-  }
+
+    return { minimumOrderValue, minimumQuoteValue };
+  }, [data, buyerCurrency?.currencyCode, currency?.currencyCode]);
+
   return {
     minimumOrderValue,
     minimumQuoteValue,

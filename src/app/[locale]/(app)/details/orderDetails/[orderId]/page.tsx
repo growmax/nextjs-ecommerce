@@ -5,14 +5,14 @@ import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 
+import CartPriceDetails from "@/components/custom/CartPriceDetails";
 import {
+  OrderContactDetails,
   OrderProductsTable,
   OrderStatusTracker,
-  OrderContactDetails,
   OrderTermsCard,
   SalesHeader,
 } from "@/components/sales";
-import CartPriceDetails from "@/components/custom/CartPriceDetails";
 import { useCurrentUser } from "@/hooks/useCurrentUser";
 import { useTenantData } from "@/hooks/useTenantData";
 import type { OrderDetailsResponse } from "@/lib/api";
@@ -255,6 +255,17 @@ export default function OrderDetailsPage({ params }: OrderDetailsPageProps) {
                 {...(orderDetails.data?.updatedBuyerStatus && {
                   currentStatus: orderDetails.data.updatedBuyerStatus,
                 })}
+                {...(orderDetails.data?.orderDetails?.[0]?.grandTotal && {
+                  total: orderDetails.data.orderDetails[0].grandTotal,
+                })}
+                paid={0} // This would come from payment data
+                {...(orderDetails.data?.orderDetails?.[0]?.grandTotal && {
+                  toPay: orderDetails.data.orderDetails[0].grandTotal,
+                })}
+                {...(orderDetails.data?.buyerCurrencySymbol?.symbol && {
+                  currencySymbol: orderDetails.data.buyerCurrencySymbol.symbol,
+                })}
+                lastDateToPay={undefined} // Set to undefined to show "No due"
               />
             )}
 

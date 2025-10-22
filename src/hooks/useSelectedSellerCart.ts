@@ -1,11 +1,11 @@
 import { useMemo } from "react";
 import { useCurrentUser } from "./useCurrentUser";
-import useModuleSettings from "./useModuleSettings";
 import useMultipleSellerCart from "./useMultipleSellerCart";
 
-const useSelectedSellerCart = (cartItems, selectedSellerId) => {
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const useSelectedSellerCart = (cartItems: any, selectedSellerId: any) => {
   const { user } = useCurrentUser();
-  const { moduleSettings } = useModuleSettings(user);
+  // const { moduleSettings } = useModuleSettings(user);
 
   const cartData = cartItems || [];
 
@@ -15,11 +15,13 @@ const useSelectedSellerCart = (cartItems, selectedSellerId) => {
       isInter: true,
       insuranceCharges: 0,
       precision: 2,
-      Settings: moduleSettings || {},
-      isSeller: user?.isSeller || false,
-      taxExemption: user?.taxExemption || false,
+      Settings: {},
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      isSeller: (user as any)?.isSeller || false,
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      taxExemption: (user as any)?.taxExemption || false,
     };
-  }, [moduleSettings, user]);
+  }, [user]);
 
   // Use multiple seller cart hook
   const {

@@ -9,7 +9,8 @@ import { isEmpty } from "lodash";
 import { useEffect, useMemo, useState } from "react";
 import useMultipleSellerPricing from "./useMultipleSellerPricing";
 
-const useMultipleSellerCart = (cartItems, calculationParams = {}) => {
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const useMultipleSellerCart = (cartItems: any, calculationParams: any = {}) => {
   // Initialize selectedSellerId from localStorage
   const [selectedSellerId, setSelectedSellerId] = useState(() => {
     if (typeof window !== "undefined") {
@@ -17,8 +18,6 @@ const useMultipleSellerCart = (cartItems, calculationParams = {}) => {
     }
     return null;
   });
-  const [sellerCarts, setSellerCarts] = useState({});
-  const [overallSummary, setOverallSummary] = useState({});
 
   // Extract seller IDs from cart items
   const sellerIds = useMemo(() => {
@@ -41,13 +40,17 @@ const useMultipleSellerCart = (cartItems, calculationParams = {}) => {
       return {};
     }
     // Group items by seller with debug logging
-    const groupedCarts = groupCartItemsBySeller(cartItems, true);
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const groupedCarts: any = groupCartItemsBySeller(cartItems, true);
 
-    const enhancedCarts = {};
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const enhancedCarts: any = {};
 
-    Object.keys(groupedCarts).forEach(sellerId => {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    Object.keys(groupedCarts).forEach((sellerId: any) => {
       const cart = groupedCarts[sellerId];
-      const itemsWithSellerPricing = cart.items.map(item => {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const itemsWithSellerPricing = cart.items.map((item: any) => {
         const itemPricing = findBestPricingMatch(
           item,
           sellerPricingData,
@@ -55,7 +58,8 @@ const useMultipleSellerCart = (cartItems, calculationParams = {}) => {
         );
 
         if (itemPricing) {
-          const pricedItem = assign_pricelist_discounts_data_to_products(
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          const pricedItem: any = assign_pricelist_discounts_data_to_products(
             { ...item, showPrice: true },
             itemPricing
           );
@@ -94,36 +98,37 @@ const useMultipleSellerCart = (cartItems, calculationParams = {}) => {
   }, [cartItems, calculationParams, sellerPricingData, allSellerPricesData]);
 
   // Calculate overall summary
-  const summary = useMemo(() => {
+  const overallSummary = useMemo(() => {
     return getOverallCartSummary(processedSellerCarts);
   }, [processedSellerCarts]);
 
   // Update state when processed carts change
-  useEffect(() => {
-    // Only update if there's an actual change to prevent unnecessary rerenders
-    const cartsChanged =
-      JSON.stringify(sellerCarts) !== JSON.stringify(processedSellerCarts);
-    const summaryChanged =
-      JSON.stringify(overallSummary) !== JSON.stringify(summary);
-
-    if (cartsChanged || summaryChanged) {
-      setSellerCarts(processedSellerCarts);
-      setOverallSummary(summary);
-    }
-  }, [processedSellerCarts, summary, overallSummary, sellerCarts]);
+  // useEffect(() => {
+  //   setSellerCarts(processedSellerCarts);
+  //   setOverallSummary(summary);
+  // }, [processedSellerCarts]);
 
   // Auto-select seller: prefer persisted selection, then first available
   useEffect(() => {
     const sellerIds = Object.keys(processedSellerCarts);
 
     if (sellerIds.length > 0) {
+      const firstSellerId = sellerIds[0];
       // If we have a selectedSellerId but it's not in the current cart, clear it
       if (selectedSellerId && !sellerIds.includes(selectedSellerId)) {
-        handleSellerSelect(sellerIds[0]);
+        if (firstSellerId) {
+          setSelectedSellerId(firstSellerId);
+          if (typeof window !== "undefined") {
+            localStorage.setItem("selectedSellerId", firstSellerId);
+          }
+        }
       }
       // If no seller selected, select the first one
-      else if (!selectedSellerId) {
-        handleSellerSelect(sellerIds[0]);
+      else if (!selectedSellerId && firstSellerId) {
+        setSelectedSellerId(firstSellerId);
+        if (typeof window !== "undefined") {
+          localStorage.setItem("selectedSellerId", firstSellerId);
+        }
       }
     } else {
       // Clear selection when cart is empty
@@ -134,10 +139,12 @@ const useMultipleSellerCart = (cartItems, calculationParams = {}) => {
         }
       }
     }
-  }, [processedSellerCarts, selectedSellerId]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [processedSellerCarts]);
 
   // Handle seller selection
-  const handleSellerSelect = sellerId => {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const handleSellerSelect = (sellerId: any) => {
     setSelectedSellerId(sellerId);
     // Persist to localStorage
     if (typeof window !== "undefined" && sellerId) {
@@ -147,7 +154,7 @@ const useMultipleSellerCart = (cartItems, calculationParams = {}) => {
 
   // Get selected seller cart
   const selectedSellerCart = selectedSellerId
-    ? sellerCarts[selectedSellerId]
+    ? processedSellerCarts[selectedSellerId]
     : null;
 
   // Get selected seller items for checkout
@@ -156,13 +163,13 @@ const useMultipleSellerCart = (cartItems, calculationParams = {}) => {
     : [];
 
   // Check if multiple sellers exist
-  const hasMultipleSellers = Object.keys(sellerCarts).length > 1;
+  const hasMultipleSellers = Object.keys(processedSellerCarts).length > 1;
 
   // Get seller IDs from processed carts
-  const processedSellerIds = Object.keys(sellerCarts);
+  const processedSellerIds = Object.keys(processedSellerCarts);
 
   return {
-    sellerCarts,
+    sellerCarts: processedSellerCarts,
     selectedSellerId,
     selectedSellerCart,
     selectedSellerItems,
@@ -170,7 +177,7 @@ const useMultipleSellerCart = (cartItems, calculationParams = {}) => {
     handleSellerSelect,
     hasMultipleSellers,
     sellerIds: processedSellerIds,
-    isEmpty: isEmpty(sellerCarts),
+    isEmpty: isEmpty(processedSellerCarts),
     isLoading: pricingLoading,
     isPricingLoading: pricingLoading, // Expose pricing loading state explicitly
     refreshPricing: revalidatePricing,

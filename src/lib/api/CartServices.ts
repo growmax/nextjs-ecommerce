@@ -14,6 +14,9 @@ export interface SellerPrice {
     CompanyId: number;
   };
 }
+export interface emptyCart {
+  userId: string | number;
+}
 export interface AddToCartRequest {
   userId: number;
   tenantId: string;
@@ -25,10 +28,10 @@ export interface AddToCartRequest {
     itemNo: number;
     pos: number;
     addBundle: boolean;
-    sellerId: number;
-    sellerName: string;
-    sellerLocation: string;
-    price: number;
+    sellerId?: number;
+    sellerName?: string;
+    sellerLocation?: string;
+    price?: number;
   };
 }
 
@@ -140,6 +143,13 @@ export class CartService extends BaseService<CartService> {
         tenantId,
         pos,
       },
+      "DELETE"
+    );
+  }
+  async emptyCart(params: emptyCart): Promise<unknown> {
+    return this.call(
+      `carts?userId=${params?.userId}&find=ByUserId&pos=0`,
+      {},
       "DELETE"
     );
   }

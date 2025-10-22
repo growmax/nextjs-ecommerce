@@ -189,3 +189,146 @@
     }
   }
 }
+
+:root {
+  --sidebar: hsl(0 0% 98%);
+  --sidebar-foreground: hsl(240 5.3% 26.1%);
+  --sidebar-primary: hsl(240 5.9% 10%);
+  --sidebar-primary-foreground: hsl(0 0% 98%);
+  --sidebar-accent: hsl(240 4.8% 95.9%);
+  --sidebar-accent-foreground: hsl(240 5.9% 10%);
+  --sidebar-border: hsl(220 13% 91%);
+  --sidebar-ring: hsl(217.2 91.2% 59.8%);
+}
+
+.dark {
+  --sidebar: hsl(240 5.9% 10%);
+  --sidebar-foreground: hsl(240 4.8% 95.9%);
+  --sidebar-primary: hsl(224.3 76.3% 48%);
+  --sidebar-primary-foreground: hsl(0 0% 100%);
+  --sidebar-accent: hsl(240 3.7% 15.9%);
+  --sidebar-accent-foreground: hsl(240 4.8% 95.9%);
+  --sidebar-border: hsl(240 3.7% 15.9%);
+  --sidebar-ring: hsl(217.2 91.2% 59.8%);
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply bg-background text-foreground;
+    /* Mobile-first font sizing */
+    font-size: 14px;
+    line-height: 1.5;
+    /* Apply TweakCN custom fonts */
+    font-family: var(--font-sans) !important;
+  }
+
+  /* Force font inheritance for all text elements */
+  h1,
+  h2,
+  h3,
+  h4,
+  h5,
+  h6,
+  p,
+  span,
+  div,
+  button,
+  input,
+  textarea,
+  select {
+    font-family: inherit !important;
+  }
+
+  /* Apply serif font to specific elements if needed */
+  .font-serif {
+    font-family: var(--font-serif) !important;
+  }
+
+  /* Apply mono font to code elements */
+  code,
+  pre,
+  .font-mono {
+    font-family: var(--font-mono) !important;
+  }
+
+  /* Ensure font loading and fallback */
+  @supports (font-display: swap) {
+    .font-loading {
+      font-display: swap;
+    }
+  }
+
+  /* Debug font loading - remove after testing */
+  .debug-font::after {
+    content: " (Font: " attr(data-font) ")";
+    font-size: 0.75em;
+    color: var(--muted-foreground);
+  }
+
+  /* Mobile-First Typography Scale */
+  h1 {
+    font-size: 1.75rem;
+  } /* 28px mobile */
+  h2 {
+    font-size: 1.5rem;
+  } /* 24px mobile */
+  h3 {
+    font-size: 1.25rem;
+  } /* 20px mobile */
+
+  /* Tablet and up */
+  @media (min-width: 768px) {
+    body {
+      font-size: 16px;
+    }
+    h1 {
+      font-size: 2.25rem;
+    } /* 36px tablet+ */
+    h2 {
+      font-size: 1.875rem;
+    } /* 30px tablet+ */
+    h3 {
+      font-size: 1.5rem;
+    } /* 24px tablet+ */
+  }
+
+  /* Desktop */
+  @media (min-width: 1024px) {
+    h1 {
+      font-size: 3rem;
+    } /* 48px desktop */
+    h2 {
+      font-size: 2.25rem;
+    } /* 36px desktop */
+    h3 {
+      font-size: 1.875rem;
+    } /* 30px desktop */
+  }
+
+  /* Mobile-First Touch Targets */
+  button,
+  [role="button"],
+  input,
+  select,
+  textarea {
+    min-height: 44px;
+    min-width: 44px;
+  }
+
+  /* Mobile-First Container */
+  .container {
+    padding-left: 1rem;
+    padding-right: 1rem;
+  }
+
+  @media (min-width: 768px) {
+    .container {
+      padding-left: 2rem;
+      padding-right: 2rem;
+    }
+  }
+}

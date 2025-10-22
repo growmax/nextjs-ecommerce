@@ -26,3 +26,7 @@ export type {
   SelectionCount,
 } from "@/types/action-toolbar";
 export type { SaveCancelToolbarProps } from "@/types/save-cancel";
+export type {
+  SectionToolbarProps,
+  SectionToolbarRef,
+} from "@/types/section-toolbar";
