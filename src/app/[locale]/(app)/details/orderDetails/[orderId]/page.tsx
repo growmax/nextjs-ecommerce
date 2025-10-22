@@ -1,17 +1,57 @@
 "use client";
 
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Skeleton } from "@/components/ui/skeleton";
 import { useLocale } from "next-intl";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 
-import { SalesHeader } from "@/components/sales";
+import {
+  OrderProductsTable,
+  OrderStatusTracker,
+  OrderContactDetails,
+  OrderTermsCard,
+  SalesHeader,
+} from "@/components/sales";
+import CartPriceDetails from "@/components/custom/CartPriceDetails";
 import { useCurrentUser } from "@/hooks/useCurrentUser";
 import { useTenantData } from "@/hooks/useTenantData";
 import type { OrderDetailsResponse } from "@/lib/api";
 import { OrderDetailsService } from "@/lib/api";
+
+// Import types for proper typing
+interface AddressDetails {
+  addressLine?: string;
+  branchName?: string;
+  city?: string;
+  state?: string;
+  country?: string;
+  pinCodeId?: string;
+  gst?: string;
+  district?: string;
+  locality?: string;
+  mobileNo?: string;
+  phone?: string;
+  billToCode?: string;
+  shipToCode?: string;
+  soldToCode?: string;
+  sellerCompanyName?: string;
+  sellerBranchName?: string;
+}
+
+interface OrderTerms {
+  paymentTerms?: string;
+  paymentTermsCode?: string;
+  deliveryTerms?: string;
+  deliveryTermsCode?: string;
+  deliveryTermsCode2?: string;
+  freight?: string;
+  insurance?: string;
+  packageForwarding?: string;
+  packageForwardingCode?: string;
+  dispatchInstructions?: string;
+  dispatchInstructionsCode?: string;
+  additionalTerms?: string;
+}
 
 interface OrderDetailsPageProps {
   params: Promise<{
@@ -133,6 +173,10 @@ export default function OrderDetailsPage({ params }: OrderDetailsPageProps) {
     toast.info("Download PDF functionality coming soon");
   };
 
+  const handleExportProducts = () => {
+    toast.info("Export products functionality coming soon");
+  };
+
   // Helper to get status badge styling based on status
   const getStatusStyle = (status?: string) => {
     switch (status?.toUpperCase()) {
@@ -197,55 +241,156 @@ export default function OrderDetailsPage({ params }: OrderDetailsPageProps) {
       />
 
       {/* Order Details Content */}
-      <div className="container mx-auto px-3 sm:px-4 md:px-6 py-3 sm:py-4 md:py-6 space-y-3 sm:space-y-4 md:space-y-6">
-        <div className="min-h-[70vh] md:min-h-[80vh]">
-          {loading ? (
-            <Card className="shadow-sm">
-              <CardHeader className="p-4 sm:p-5 md:p-6">
-                <Skeleton className="h-6 sm:h-7 md:h-8 w-48 sm:w-56 md:w-64" />
-              </CardHeader>
-              <CardContent className="p-4 sm:p-5 md:p-6 space-y-2">
-                <Skeleton className="h-5 sm:h-6 w-full" />
-                <Skeleton className="h-5 sm:h-6 w-3/4" />
-              </CardContent>
-            </Card>
-          ) : error ? (
-            <Card className="shadow-sm border-destructive/50">
-              <CardHeader className="p-4 sm:p-5 md:p-6">
-                <CardTitle className="text-destructive text-lg sm:text-xl md:text-2xl">
-                  Error
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="p-4 sm:p-5 md:p-6">
-                <p className="text-sm sm:text-base text-muted-foreground break-words">
-                  {error}
-                </p>
-              </CardContent>
-            </Card>
-          ) : orderDetails ? (
-            <Card className="shadow-sm">
-              <CardHeader className="p-4 sm:p-5 md:p-6">
-                <CardTitle className="text-lg sm:text-xl md:text-2xl font-bold break-words">
-                  <span className="block sm:inline">Order Name:</span>{" "}
-                  <span className="block sm:inline text-gray-700">
-                    {orderDetails.data?.orderDetails?.[0]?.orderName
-                      ? decodeUnicode(
-                          orderDetails.data.orderDetails[0].orderName
-                        )
-                      : "N/A"}
-                  </span>
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="p-4 sm:p-5 md:p-6">
-                <p className="text-sm sm:text-base text-muted-foreground break-all">
-                  <span className="font-medium">Order ID:</span>{" "}
-                  {orderDetails.data?.orderDetails?.[0]?.orderIdentifier ||
-                    orderDetails.data?.orderIdentifier ||
-                    orderId}
-                </p>
-              </CardContent>
-            </Card>
-          ) : null}
+      <div className="container mx-auto px-3 sm:px-4 md:px-6 py-3 sm:py-4 md:py-6">
+        <div className="flex flex-col lg:flex-row gap-3 sm:gap-4 md:gap-6">
+          {/* Left Side - Status Tracker and Products Table - 70% */}
+          <div className="w-full lg:w-[70%] space-y-3 sm:space-y-4 md:space-y-6">
+            {/* Status Tracker */}
+            {!loading && !error && orderDetails && (
+              <OrderStatusTracker
+                {...(orderId && { orderId })}
+                {...(orderDetails.data?.createdDate && {
+                  createdDate: orderDetails.data.createdDate,
+                })}
+                {...(orderDetails.data?.updatedBuyerStatus && {
+                  currentStatus: orderDetails.data.updatedBuyerStatus,
+                })}
+              />
+            )}
+
+            {/* Products Table */}
+            {!loading && !error && orderDetails && (
+              <OrderProductsTable
+                products={
+                  orderDetails.data?.orderDetails?.[0]?.dbProductDetails || []
+                }
+                {...(orderDetails.data?.orderDetails?.[0]?.dbProductDetails
+                  ?.length && {
+                  totalCount:
+                    orderDetails.data.orderDetails[0].dbProductDetails.length,
+                })}
+                onExport={handleExportProducts}
+              />
+            )}
+
+            {/* Contact Details and Terms Cards - Side by Side */}
+            {!loading && !error && orderDetails && (
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3 sm:gap-4 md:gap-6">
+                {/* Contact Details Card */}
+                <OrderContactDetails
+                  billingAddress={
+                    orderDetails.data?.orderDetails?.[0]
+                      ?.billingAddressDetails as unknown as AddressDetails
+                  }
+                  shippingAddress={
+                    orderDetails.data?.orderDetails?.[0]
+                      ?.shippingAddressDetails as unknown as AddressDetails
+                  }
+                  registerAddress={
+                    orderDetails.data?.orderDetails?.[0]
+                      ?.registerAddressDetails as unknown as AddressDetails
+                  }
+                  sellerAddress={
+                    orderDetails.data?.orderDetails?.[0]
+                      ?.sellerAddressDetail as unknown as AddressDetails
+                  }
+                  buyerCompanyName={
+                    orderDetails.data?.orderDetails?.[0]
+                      ?.buyerCompanyName as unknown as string
+                  }
+                  buyerBranchName={
+                    orderDetails.data?.orderDetails?.[0]
+                      ?.buyerBranchName as unknown as string
+                  }
+                  warehouseName={
+                    ((
+                      orderDetails.data?.orderDetails?.[0]
+                        ?.dbProductDetails?.[0] as unknown as Record<
+                        string,
+                        Record<string, string>
+                      >
+                    )?.wareHouse?.wareHouseName ||
+                      (
+                        orderDetails.data?.orderDetails?.[0]
+                          ?.dbProductDetails?.[0] as unknown as Record<
+                          string,
+                          string
+                        >
+                      )?.orderWareHouseName) as string | undefined
+                  }
+                  salesBranch={
+                    orderDetails.data?.orderDetails?.[0]
+                      ?.sellerBranchName as unknown as string | undefined
+                  }
+                  requiredDate={
+                    (orderDetails.data?.orderDetails?.[0]
+                      ?.customerRequiredDate ||
+                      orderDetails.data?.orderDeliveryDate) as unknown as
+                      | string
+                      | undefined
+                  }
+                  referenceNumber={
+                    (orderDetails.data?.buyerReferenceNumber ||
+                      orderDetails.data?.sellerReferenceNumber) as unknown as
+                      | string
+                      | undefined
+                  }
+                />
+
+                {/* Terms Card */}
+                <OrderTermsCard
+                  orderTerms={
+                    orderDetails.data?.orderDetails?.[0]
+                      ?.orderTerms as unknown as OrderTerms
+                  }
+                />
+              </div>
+            )}
+          </div>
+
+          {/* Right Side - Price Details - 30% */}
+          {!loading && !error && orderDetails && (
+            <div className="w-full lg:w-[30%]">
+              <div className="[&_#CartPriceDetails_>_div_>_div_>_div:nth-child(3)]:hidden [&_#CartPriceDetails_>_div_>_div_>_div:nth-child(2)_h5]:!font-normal [&_#CartPriceDetails_>_div_>_div_>_div:nth-child(4)_h6]:!font-bold [&_#CartPriceDetails_>_div_>_div:first-child_svg]:!hidden">
+                <CartPriceDetails
+                  totalItems={
+                    orderDetails.data?.orderDetails?.[0]?.dbProductDetails
+                      ?.length || 0
+                  }
+                  totalLP={
+                    Number(orderDetails.data?.orderDetails?.[0]?.subTotal) || 0
+                  }
+                  subtotal={
+                    Number(orderDetails.data?.orderDetails?.[0]?.subTotal) || 0
+                  }
+                  taxableAmount={
+                    Number(
+                      orderDetails.data?.orderDetails?.[0]?.taxableAmount
+                    ) || 0
+                  }
+                  tax={
+                    Number(orderDetails.data?.orderDetails?.[0]?.overallTax) ||
+                    0
+                  }
+                  total={
+                    Number(orderDetails.data?.orderDetails?.[0]?.grandTotal) ||
+                    0
+                  }
+                  currency={
+                    (
+                      orderDetails.data?.buyerCurrencySymbol as {
+                        symbol?: string;
+                      }
+                    )?.symbol || "INR ₹"
+                  }
+                  igst={
+                    Number(orderDetails.data?.orderDetails?.[0]?.overallTax) ||
+                    0
+                  }
+                />
+              </div>
+            </div>
+          )}
         </div>
       </div>
     </div>
