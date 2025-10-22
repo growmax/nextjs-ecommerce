@@ -19,28 +19,27 @@ export default async function AppLayout({
 }: {
   children: React.ReactNode;
 }) {
-  const messages = await getMessages();
+  // Parallelize independent API calls for better performance
+  const [messages, _headersList, authState, tenantData] = await Promise.all([
+    getMessages(),
+    headers(),
+    getServerAuthState(),
+    (async () => {
+      const hdrs = await headers();
+      const tenantCode = hdrs.get("x-tenant-code");
+      const tenantDomain = hdrs.get("x-tenant-domain");
+      const tenantOrigin = hdrs.get("x-tenant-origin");
 
-  // Get tenant information from headers (set by middleware)
-  const headersList = await headers();
-  const tenantCode = headersList.get("x-tenant-code");
-  const tenantDomain = headersList.get("x-tenant-domain");
-  const tenantOrigin = headersList.get("x-tenant-origin");
+      if (!tenantCode || !tenantDomain || !tenantOrigin) return null;
+      try {
+        return await fetchTenantFromExternalAPI(tenantDomain, tenantOrigin);
+      } catch {
+        return null;
+      }
+    })(),
+  ]);
 
-  // Fetch tenant data server-side
-  let tenantData = null;
-  if (tenantCode && tenantDomain && tenantOrigin) {
-    try {
-      tenantData = await fetchTenantFromExternalAPI(tenantDomain, tenantOrigin);
-    } catch {
-      tenantData = null;
-    }
-  }
-
-  // Get server-side authentication state
-  const authState = await getServerAuthState();
-
-  // Fetch user data server-side only if authenticated
+  // Fetch user data server-side only if authenticated (depends on authState)
   const serverUserService = ServerUserService.getInstance();
   let userData = null;
   if (authState.isAuthenticated) {
