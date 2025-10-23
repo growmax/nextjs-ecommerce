@@ -1,6 +1,11 @@
 "use client";
 
 import { Card } from "@/components/ui/card";
+import {
+  HoverCard,
+  HoverCardContent,
+  HoverCardTrigger,
+} from "@/components/ui/hover-card";
 import { cn } from "@/lib/utils";
 
 export interface OrderStatusStep {
@@ -114,7 +119,7 @@ export default function OrderStatusTracker({
   };
 
   return (
-    <Card className={cn("p-4 sm:p-6", className)}>
+    <Card className={cn("p-4 sm:p-6 mt-[50px]", className)}>
       {/* Order ID and Date at top left, Financial Summary at top right */}
       <div className="flex justify-between items-start mb-4">
         {(orderId || createdDate) && (
@@ -176,29 +181,41 @@ export default function OrderStatusTracker({
           const isLast = index === ORDER_STATUS_STEPS.length - 1;
 
           return (
-            <div
-              key={step.key}
-              className={cn(
-                "flex-1 h-8 sm:h-7 flex items-center justify-center font-medium transition-all duration-300 ease-in-out relative",
-                isActive
-                  ? "bg-primary text-primary-foreground shadow-sm"
-                  : "bg-gray-100 text-gray-600 hover:bg-gray-200",
-                // First item - rounded left
-                index === 0 && "rounded-l-lg",
-                // Last item - rounded right
-                isLast && "rounded-r-lg",
-                // Add subtle border between items
-                !isLast && "border-r border-gray-300/50"
-              )}
-            >
-              <span className="text-xs sm:text-sm px-2 sm:px-3 text-center font-semibold tracking-wide">
-                {step.label}
-              </span>
-              {/* Add a subtle inner shadow for depth */}
-              {isActive && (
-                <div className="absolute inset-0 rounded-inherit bg-gradient-to-b from-white/10 to-transparent pointer-events-none" />
-              )}
-            </div>
+            <HoverCard key={step.key}>
+              <HoverCardTrigger asChild>
+                <div
+                  className={cn(
+                    "flex-1 h-8 sm:h-7 flex items-center justify-center font-medium transition-all duration-300 ease-in-out relative cursor-pointer group",
+                    isActive
+                      ? "bg-primary text-primary-foreground shadow-sm hover:bg-primary/90 hover:shadow-md"
+                      : "bg-gray-100 text-gray-600 hover:bg-gray-200 hover:shadow-sm hover:scale-[1.02] hover:text-gray-800",
+                    // First item - rounded left
+                    index === 0 && "rounded-l-lg",
+                    // Last item - rounded right
+                    isLast && "rounded-r-lg",
+                    // Add subtle border between items
+                    !isLast && "border-r border-gray-300/50"
+                  )}
+                >
+                  <span className="text-xs sm:text-sm px-2 sm:px-3 text-center font-semibold tracking-wide transition-all duration-300 ease-in-out group-hover:scale-105">
+                    {step.label}
+                  </span>
+                  {/* Add a subtle inner shadow for depth */}
+                  {isActive && (
+                    <div className="absolute inset-0 rounded-inherit bg-linear-to-b from-white/10 to-transparent pointer-events-none group-hover:from-white/20" />
+                  )}
+                  {/* Add hover effect for inactive states */}
+                  {!isActive && (
+                    <div className="absolute inset-0 rounded-inherit bg-linear-to-b from-white/0 to-white/5 pointer-events-none opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+                  )}
+                </div>
+              </HoverCardTrigger>
+              <HoverCardContent className="w-auto p-2">
+                <div className="text-sm font-medium text-center">
+                  {step.label}
+                </div>
+              </HoverCardContent>
+            </HoverCard>
           );
         })}
       </div>

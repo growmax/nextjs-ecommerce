@@ -5,9 +5,9 @@ import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 
-import CartPriceDetails from "@/components/custom/CartPriceDetails";
 import {
   OrderContactDetails,
+  OrderPriceDetails,
   OrderProductsTable,
   OrderStatusTracker,
   OrderTermsCard,
@@ -241,7 +241,7 @@ export default function OrderDetailsPage({ params }: OrderDetailsPageProps) {
       />
 
       {/* Order Details Content */}
-      <div className="container mx-auto px-3 sm:px-4 md:px-6 py-3 sm:py-4 md:py-6">
+      <div className="container mx-auto px-3 sm:px-4 md:px-6 py-3 sm:py-4 md:py-6 relative pt-28">
         <div className="flex flex-col lg:flex-row gap-3 sm:gap-4 md:gap-6">
           {/* Left Side - Status Tracker and Products Table - 70% */}
           <div className="w-full lg:w-[70%] space-y-3 sm:space-y-4 md:space-y-6">
@@ -265,7 +265,7 @@ export default function OrderDetailsPage({ params }: OrderDetailsPageProps) {
                 {...(orderDetails.data?.buyerCurrencySymbol?.symbol && {
                   currencySymbol: orderDetails.data.buyerCurrencySymbol.symbol,
                 })}
-                lastDateToPay={undefined} // Set to undefined to show "No due"
+                // lastDateToPay is optional, so we don't need to pass it
               />
             )}
 
@@ -329,6 +329,22 @@ export default function OrderDetailsPage({ params }: OrderDetailsPageProps) {
                         >
                       )?.orderWareHouseName) as string | undefined
                   }
+                  warehouseAddress={
+                    (
+                      orderDetails.data?.orderDetails?.[0]
+                        ?.dbProductDetails?.[0] as unknown as Record<
+                        string,
+                        Record<string, Record<string, string>>
+                      >
+                    )?.wareHouse?.addressId as unknown as {
+                      addressLine?: string;
+                      district?: string;
+                      city?: string;
+                      state?: string;
+                      pinCodeId?: string;
+                      country?: string;
+                    }
+                  }
                   salesBranch={
                     orderDetails.data?.orderDetails?.[0]
                       ?.sellerBranchName as unknown as string | undefined
@@ -361,45 +377,50 @@ export default function OrderDetailsPage({ params }: OrderDetailsPageProps) {
 
           {/* Right Side - Price Details - 30% */}
           {!loading && !error && orderDetails && (
-            <div className="w-full lg:w-[30%]">
-              <div className="[&_#CartPriceDetails_>_div_>_div_>_div:nth-child(3)]:hidden [&_#CartPriceDetails_>_div_>_div_>_div:nth-child(2)_h5]:!font-normal [&_#CartPriceDetails_>_div_>_div_>_div:nth-child(4)_h6]:!font-bold [&_#CartPriceDetails_>_div_>_div:first-child_svg]:!hidden">
-                <CartPriceDetails
-                  totalItems={
-                    orderDetails.data?.orderDetails?.[0]?.dbProductDetails
-                      ?.length || 0
-                  }
-                  totalLP={
-                    Number(orderDetails.data?.orderDetails?.[0]?.subTotal) || 0
-                  }
-                  subtotal={
-                    Number(orderDetails.data?.orderDetails?.[0]?.subTotal) || 0
-                  }
-                  taxableAmount={
-                    Number(
-                      orderDetails.data?.orderDetails?.[0]?.taxableAmount
-                    ) || 0
-                  }
-                  tax={
-                    Number(orderDetails.data?.orderDetails?.[0]?.overallTax) ||
-                    0
-                  }
-                  total={
-                    Number(orderDetails.data?.orderDetails?.[0]?.grandTotal) ||
-                    0
-                  }
-                  currency={
-                    (
-                      orderDetails.data?.buyerCurrencySymbol as {
-                        symbol?: string;
-                      }
-                    )?.symbol || "INR ₹"
-                  }
-                  igst={
-                    Number(orderDetails.data?.orderDetails?.[0]?.overallTax) ||
-                    0
-                  }
-                />
-              </div>
+            <div className="w-full lg:w-[30%] mt-[52px]">
+              <OrderPriceDetails
+                totalItems={
+                  orderDetails.data?.orderDetails?.[0]?.dbProductDetails
+                    ?.length || 0
+                }
+                totalLP={
+                  Number(orderDetails.data?.orderDetails?.[0]?.subTotal) || 0
+                }
+                discount={
+                  Number(
+                    orderDetails.data?.orderDetails?.[0]?.calculatedDiscount
+                  ) || 0
+                }
+                subtotal={
+                  Number(orderDetails.data?.orderDetails?.[0]?.subTotal) || 0
+                }
+                taxableAmount={
+                  Number(orderDetails.data?.orderDetails?.[0]?.taxableAmount) ||
+                  0
+                }
+                tax={
+                  Number(orderDetails.data?.orderDetails?.[0]?.overallTax) || 0
+                }
+                taxDetails={[
+                  {
+                    name: "IGST",
+                    value:
+                      Number(
+                        orderDetails.data?.orderDetails?.[0]?.overallTax
+                      ) || 0,
+                  },
+                ]}
+                total={
+                  Number(orderDetails.data?.orderDetails?.[0]?.grandTotal) || 0
+                }
+                currency={
+                  (
+                    orderDetails.data?.buyerCurrencySymbol as {
+                      symbol?: string;
+                    }
+                  )?.symbol || "INR ₹"
+                }
+              />
             </div>
           )}
         </div>
