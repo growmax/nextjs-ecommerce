@@ -62,21 +62,19 @@ const TermRow = ({
         <p className="text-sm font-normal text-gray-900">{label}</p>
       </div>
       <div>
-        <p className="text-sm text-gray-900">{value || "-"}</p>
+        <p className="text-sm font-semibold text-gray-900">{value || "-"}</p>
       </div>
     </div>
   );
 };
 
-export default function OrderTermsCard({
-  orderTerms,
-}: OrderTermsCardProps) {
+export default function OrderTermsCard({ orderTerms }: OrderTermsCardProps) {
   if (!orderTerms) return null;
 
   return (
     <Card className="shadow-sm h-full">
-      <CardHeader className="px-6 -my-5 py-2 bg-gray-50 rounded-t-lg">
-        <CardTitle className="text-xl font-semibold text-gray-900 !m-0">
+      <CardHeader className="px-6 -my-5  bg-gray-50 rounded-t-lg">
+        <CardTitle className="text-xl font-semibold text-gray-900 m-0!">
           Terms
         </CardTitle>
       </CardHeader>
@@ -113,7 +111,8 @@ export default function OrderTermsCard({
           <TermRow
             label="Mode of Dispatch"
             value={
-              orderTerms.dispatchInstructions && orderTerms.dispatchInstructionsCode
+              orderTerms.dispatchInstructions &&
+              orderTerms.dispatchInstructionsCode
                 ? `${orderTerms.dispatchInstructions} - (${orderTerms.dispatchInstructionsCode})`
                 : orderTerms.dispatchInstructions
             }
@@ -136,4 +135,3 @@ export default function OrderTermsCard({
     </Card>
   );
 }
-

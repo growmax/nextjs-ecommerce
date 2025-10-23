@@ -4,8 +4,9 @@ export { default as FilterDrawer } from "./FilterDrawer";
 export { default as SalesHeader } from "./sales-header";
 export { default as OrderStatusTracker } from "./order-status-tracker";
 export { default as OrderProductsTable } from "./order-products-table";
-export { default as OrderContactDetails } from "./order-contact-details";
-export { default as OrderTermsCard } from "./order-terms-card";
+export { default as OrderContactDetails } from "./contactdetails";
+export { default as OrderTermsCard } from "./terms-card";
+export { default as OrderPriceDetails } from "./order-price-details";
 export type {
   QuoteFilterFormData,
   StatusOption,

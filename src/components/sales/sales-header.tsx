@@ -1,6 +1,5 @@
 "use client";
 
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -9,6 +8,8 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Skeleton } from "@/components/ui/skeleton";
+import { useSidebar } from "@/components/ui/sidebar";
+import { statusColor } from "@/components/custom/statuscolors";
 import { cn } from "@/lib/utils";
 import { MoreVertical, Pencil, RefreshCw, X } from "lucide-react";
 
@@ -71,10 +72,18 @@ export default function SalesHeader({
   className,
   loading = false,
 }: SalesHeaderProps) {
+  const { state, isMobile } = useSidebar();
+
   return (
     <div
       className={cn(
-        "flex flex-col md:flex-row md:items-center justify-between gap-2 md:gap-4 px-3 md:px-4 py-2 md:py-3 bg-white border-b",
+        "fixed top-14 z-40 flex flex-col md:flex-row md:items-center justify-between gap-2 md:gap-4 px-3 md:px-4 py-2 md:py-3 bg-white border-b shadow-sm transition-all duration-200",
+        // Responsive positioning based on sidebar state
+        isMobile
+          ? "left-0 right-0"
+          : state === "expanded"
+            ? "left-64 right-0" // 16rem = 256px = 64 * 4px
+            : "left-0 right-0", // When collapsed, start from very left edge
         className
       )}
     >
@@ -117,15 +126,14 @@ export default function SalesHeader({
             <Skeleton className="h-6 w-20" />
           ) : (
             status && (
-              <Badge
-                variant={status.variant || "secondary"}
-                className={cn(
-                  "uppercase text-[10px] md:text-xs font-semibold px-2 md:px-3 py-0.5 md:py-1 shrink-0",
-                  status.className
-                )}
+              <span
+                className="px-3 py-1 rounded-full text-sm font-medium text-white whitespace-nowrap shrink-0"
+                style={{
+                  backgroundColor: statusColor(status.label.toUpperCase()),
+                }}
               >
                 {status.label}
-              </Badge>
+              </span>
             )
           )}
         </div>
