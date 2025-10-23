@@ -6,10 +6,18 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from "@/components/ui/accordion";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { Minus, Plus, Trash, Package, ArrowLeft, CheckCircle2, AlertCircle } from "lucide-react";
+import {
+  AlertCircle,
+  ArrowLeft,
+  CheckCircle2,
+  Minus,
+  Package,
+  Plus,
+  Trash,
+} from "lucide-react";
 import CartSkeleton from "../CartSkeleton";
 interface CartProduct {
   productId: number;
@@ -88,7 +96,12 @@ interface SellerCardProps {
   isPricingLoading: boolean;
   isLoading: boolean;
   onItemUpdate: (item: CartProduct, quantity: number) => Promise<void>;
-  onItemDelete: (productId: number, itemNo: string, sellerId?: string | number, productName?: string) => void;
+  onItemDelete: (
+    productId: number,
+    itemNo: string,
+    sellerId?: string | number,
+    productName?: string
+  ) => void;
   onClearCart: () => void;
   handleOrder: () => void;
   handleQuote: () => void;
@@ -130,8 +143,12 @@ export default function SellerCard({
               <div className="flex justify-center">
                 <Package className="h-16 w-16 text-gray-300" />
               </div>
-              <h3 className="text-xl font-semibold text-gray-900">Your cart is empty</h3>
-              <p className="text-sm text-gray-500">Add products to your cart to get started</p>
+              <h3 className="text-xl font-semibold text-gray-900">
+                Your cart is empty
+              </h3>
+              <p className="text-sm text-gray-500">
+                Add products to your cart to get started
+              </p>
               <Button
                 variant="default"
                 className="mt-4"
@@ -152,9 +169,16 @@ export default function SellerCard({
       {/* Header with breadcrumb and continue shopping */}
       <div className="mb-6 flex items-center justify-between flex-wrap gap-4">
         <div>
-          <h1 className="text-2xl md:text-3xl font-bold text-gray-900">Shopping Cart</h1>
+          <h1 className="text-2xl md:text-3xl font-bold text-gray-900">
+            Shopping Cart
+          </h1>
           <p className="text-sm text-gray-500 mt-1">
-            {sellerIds.reduce((total, sellerId) => total + (sellerCarts[sellerId]?.items?.length || 0), 0)} items in your cart
+            {sellerIds.reduce(
+              (total, sellerId) =>
+                total + (sellerCarts[sellerId]?.items?.length || 0),
+              0
+            )}{" "}
+            items in your cart
           </p>
         </div>
         <Button
@@ -177,10 +201,9 @@ export default function SellerCard({
           const sellerCart = sellerCarts[sellerId];
           const items = sellerCart?.items || [];
           const sellerName = sellerCart?.seller?.name || "Unknown Seller";
-          const sellerLocation = items[0]?.sellerLocation || sellerCart?.seller?.location || "";
+          const sellerLocation =
+            items[0]?.sellerLocation || sellerCart?.seller?.location || "";
           const sellerPricing = sellerCart?.pricing;
-          const hasOutOfStockItems = items.some((item: CartProduct) => item.inventoryResponse?.inStock === false);
-
           return (
             <div
               key={sellerId}
@@ -191,38 +214,38 @@ export default function SellerCard({
                   className="hover:no-underline px-6 py-4"
                   onClick={() => onSellerSelect(sellerId)}
                 >
-                  <div className="flex items-center gap-3 flex-wrap">
-                    <div className="flex items-center gap-3">
-                      <Package className="h-5 w-5 text-gray-600" />
-                      <span className="font-semibold text-lg text-gray-900">{sellerName}</span>
-                      <Badge variant="secondary" className="ml-2">
-                        {items.length} {items.length === 1 ? 'item' : 'items'}
+                  <div className="flex items-center gap-2 md:gap-3 flex-wrap">
+                    <div className="flex items-center gap-2 md:gap-3 flex-nowrap">
+                      <Package className="h-5 w-5 text-gray-600 flex-shrink-0" />
+                      <span className="font-semibold text-sm lg:text-lg text-gray-900 truncate">
+                        {sellerName}
+                      </span>
+                      <Badge
+                        variant="secondary"
+                        className="whitespace-nowrap flex-shrink-0"
+                      >
+                        {items.length} {items.length === 1 ? "item" : "items"}
                       </Badge>
                     </div>
-                    {sellerLocation && (
+                    {sellerLocation &&
+                    sellerLocation !== "Location not specified" ? (
                       <span className="text-sm text-gray-500 ml-2">
                         {sellerLocation}
                       </span>
-                    )}
+                    ) : null}
                   </div>
                 </AccordionTrigger>
-                <AccordionContent className="pt-4 px-6 pb-6">
+                <AccordionContent className="pt-4 px-4 md:px-4 lg:px-6 pb-6">
                   <div className="flex flex-col lg:flex-row gap-6">
                     {/* Left side - Product List */}
                     <div className="flex-1 space-y-4">
-                      {items.map((product: CartProduct, index: number) => {
-                        const itemSubtotal = (product.unitPrice || product.unitListPrice || 0) * product.quantity;
-                        const originalPrice = (product.unitListPrice || 0) * product.quantity;
-                        const savings = originalPrice > itemSubtotal ? originalPrice - itemSubtotal : 0;
-                        const isInStock = product.inventoryResponse?.inStock !== false;
-
-                        return (
+                      {items.map((product: CartProduct, index: number) => (
                         <div
                           key={product.productId || index}
-                          className="flex md:flex-row flex-col border-2 border-gray-200 rounded-xl overflow-hidden bg-white shadow-sm hover:shadow-md transition-all"
+                          className="flex md:flex-row flex-col border rounded-lg overflow-hidden mb-3 bg-white"
                         >
                           {/* Image - full width on mobile, left side on desktop */}
-                          <div className="flex-shrink-0 w-full md:w-40 h-56 md:h-auto relative group">
+                          <div className="relative flex-shrink-0 w-full md:w-32 h-48 md:h-auto">
                             <ImageWithFallback
                               src={product.img}
                               alt={
@@ -230,19 +253,18 @@ export default function SellerCard({
                                 product.shortDescription ||
                                 "Product"
                               }
-                              width={160}
-                              height={160}
+                              width={100}
+                              height={120}
                               objectFit="cover"
-                              className="h-full w-full object-cover group-hover:scale-105 transition-transform duration-300"
+                              className="h-full w-full object-cover"
                             />
-                            {/* Stock indicator badge */}
-                            {isInStock ? (
-                              <Badge className="absolute top-2 left-2 bg-green-500 hover:bg-green-600">
+                            {product?.inventoryResponse?.inStock !== false ? (
+                              <Badge className="absolute top-2 left-6 bg-green-500 hover:bg-green-600 text-[8px] px-1.5 py-0.5">
                                 <CheckCircle2 className="h-3 w-3 mr-1" />
                                 In Stock
                               </Badge>
                             ) : (
-                              <Badge className="absolute top-2 left-2 bg-red-500 hover:bg-red-600">
+                              <Badge className="absolute top-2 left-6 bg-red-500 hover:bg-red-600 text-[8px] px-1.5 py-0.5">
                                 <AlertCircle className="h-3 w-3 mr-1" />
                                 Out of Stock
                               </Badge>
@@ -252,116 +274,90 @@ export default function SellerCard({
                           {/* Content wrapper - below image on mobile, right side on desktop */}
                           <div className="flex-1 flex flex-col md:flex-row min-w-0">
                             {/* Product details section */}
-                            <div className="flex-1 flex flex-col justify-between p-4 md:p-5 min-w-0">
-                              <div className="flex justify-between gap-3">
-                                <div className="flex flex-col gap-2 flex-1 min-w-0">
-                                  <h3 className="font-semibold text-base md:text-lg text-gray-900 line-clamp-2 leading-snug">
+                            <div className="flex-1 flex flex-col justify-between p-3 md:p-4 min-w-0">
+                              <div className="flex justify-between gap-2">
+                                <div className="flex flex-col gap-1 flex-1 min-w-0">
+                                  <h3 className="font-medium text-sm sm:text-base md:text-sm line-clamp-2 leading-tight">
                                     {product.shortDescription ||
                                       product.productName}
                                   </h3>
-                                  <p className="text-sm text-gray-600">
-                                    {product.brandName}
-                                    {product.hsnCode && (
-                                      <>
-                                        <span className="mx-2 text-gray-400">|</span>
-                                        <span className="text-gray-500">{product.hsnCode}</span>
-                                      </>
-                                    )}
+                                  <p className="text-xs md:text-sm text-gray-600 truncate">
+                                    {product.brandName} • {product.hsnCode}
                                   </p>
-                                  {/* Unit price display */}
-                                  <div className="flex items-baseline gap-2 mt-1">
-                                    <span className="text-sm text-gray-600">Unit Price:</span>
-                                    <span className="text-sm font-semibold text-gray-900">
-                                      {currency?.currencyCode === "INR" ? "₹" : currency?.currencyCode || "₹"}
-                                      {(product.unitPrice || product.unitListPrice || 0).toFixed(2)}
-                                    </span>
-                                    {(product.unitListPrice ?? 0) > (product.unitPrice ?? 0) && (
-                                      <span className="text-xs text-gray-400 line-through">
-                                        {currency?.currencyCode === "INR" ? "₹" : currency?.currencyCode || "₹"}
-                                        {product.unitListPrice?.toFixed(2)}
-                                      </span>
-                                    )}
-                                  </div>
                                 </div>
                                 {/* Delete button - mobile only, shown at top right */}
                                 <Button
-                                  variant="ghost"
-                                  className="md:hidden h-9 w-9 p-0 flex items-center justify-center hover:bg-red-50 hover:text-red-600 rounded-lg flex-shrink-0"
+                                  className="md:hidden h-6 w-6 p-0 flex items-center justify-center bg-transparent text-black hover:bg-gray-100 rounded-lg border-0 flex-shrink-0"
                                   onClick={() =>
                                     onItemDelete(
                                       product.productId,
                                       product.itemNo,
-                                      product.sellerId,
-                                      product.shortDescription || product.productName
+                                      product.sellerId
                                     )
                                   }
                                   disabled={isLoading}
-                                  aria-label="Remove item from cart"
                                 >
-                                  <Trash className="h-5 w-5" />
+                                  <Trash className="h-4 w-4" />
                                 </Button>
                               </div>
 
-                              {/* Bottom row: Quantity controls and Subtotal (mobile only) */}
-                              <div className="flex items-center justify-between mt-4 md:hidden">
+                              {/* Bottom row: Quantity controls and Price (mobile only) */}
+                              <div className="flex items-center justify-between mt-3 md:hidden">
                                 {/* Quantity controls */}
-                                <div className="flex flex-col gap-2">
-                                  <span className="text-xs text-gray-500 font-medium">Quantity</span>
-                                  <div className="flex items-center gap-3">
-                                    <Button
-                                      variant="outline"
-                                      size="icon"
-                                      className="h-11 w-11 rounded-lg hover:bg-gray-100 active:scale-95 transition-all"
-                                      onClick={() =>
-                                        onItemUpdate(
-                                          product,
-                                          Math.max(1, product.quantity - 1)
-                                        )
-                                      }
-                                      disabled={
-                                        isLoading || product.quantity <= 1
-                                      }
-                                      aria-label="Decrease quantity"
-                                    >
-                                      <Minus className="h-5 w-5" />
-                                    </Button>
-                                    <span className="text-lg font-semibold min-w-[32px] text-center">
-                                      {product.quantity}
-                                    </span>
-                                    <Button
-                                      variant="outline"
-                                      size="icon"
-                                      className="h-11 w-11 rounded-lg hover:bg-gray-100 active:scale-95 transition-all"
-                                      onClick={() =>
-                                        onItemUpdate(
-                                          product,
-                                          product.quantity + 1
-                                        )
-                                      }
-                                      disabled={isLoading}
-                                      aria-label="Increase quantity"
-                                    >
-                                      <Plus className="h-5 w-5" />
-                                    </Button>
-                                  </div>
+                                <div className="flex items-center gap-2.5">
+                                  <Button
+                                    className="h-8 w-8 p-0 flex items-center justify-center bg-white text-black hover:bg-gray-100 border border-gray-300 rounded-md flex-shrink-0"
+                                    onClick={() =>
+                                      onItemUpdate(
+                                        product,
+                                        Math.max(1, product.quantity - 1)
+                                      )
+                                    }
+                                    disabled={
+                                      isLoading || product.quantity <= 1
+                                    }
+                                  >
+                                    <Minus className="h-4 w-4" />
+                                  </Button>
+                                  <span className="text-base font-medium min-w-[24px] text-center">
+                                    {product.quantity}
+                                  </span>
+                                  <Button
+                                    className="h-8 w-8 p-0 flex items-center justify-center bg-white text-black hover:bg-gray-100 border border-gray-300 rounded-md flex-shrink-0"
+                                    onClick={() =>
+                                      onItemUpdate(
+                                        product,
+                                        product.quantity + 1
+                                      )
+                                    }
+                                    disabled={isLoading}
+                                  >
+                                    <Plus className="h-4 w-4" />
+                                  </Button>
                                 </div>
 
-                                {/* Item Subtotal - mobile */}
+                                {/* Price - mobile */}
                                 {isPricingLoading ? (
-                                  <div className="h-8 w-24 bg-gray-200 animate-pulse rounded"></div>
+                                  <div className="h-6 w-20 bg-gray-200 animate-pulse rounded"></div>
                                 ) : (
-                                  <div className="flex flex-col items-end gap-1">
-                                    <span className="text-xs text-gray-500 font-medium">Subtotal</span>
-                                    <span className="text-lg font-bold text-gray-900 whitespace-nowrap">
+                                  <div className="flex flex-col items-end">
+                                    <span className="text-[14px] font-semibold text-black whitespace-nowrap">
                                       {currency?.currencyCode === "INR"
                                         ? "₹"
                                         : currency?.currencyCode || "₹"}
-                                      {itemSubtotal.toFixed(2)}
+                                      {product.unitPrice?.toFixed(2) ||
+                                        product.unitListPrice?.toFixed(2)}
                                     </span>
-                                    {savings > 0 && (
-                                      <span className="text-xs text-green-600 font-medium">
-                                        Saved {currency?.currencyCode === "INR" ? "₹" : currency?.currencyCode || "₹"}
-                                        {savings.toFixed(2)}
+                                    <span className="text-[12px] font-medium text-[#2E7D32] whitespace-nowrap">
+                                      {product?.discount}% OFF
+                                    </span>
+                                    {(product.unitListPrice ?? 0) >
+                                      (product.unitPrice ?? 0) && (
+                                      <span className="text-[12px] text-gray-400 line-through whitespace-nowrap">
+                                        {currency?.currencyCode === "INR"
+                                          ? "₹"
+                                          : currency?.currencyCode || "₹"}
+                                        {product.unitListPrice?.toFixed(2)}
                                       </span>
                                     )}
                                   </div>
@@ -369,77 +365,71 @@ export default function SellerCard({
                               </div>
 
                               {/* Quantity controls - desktop only */}
-                              <div className="hidden md:flex flex-col gap-2 mt-3">
-                                <span className="text-xs text-gray-500 font-medium">Quantity</span>
-                                <div className="flex items-center gap-3">
-                                  <Button
-                                    variant="outline"
-                                    size="icon"
-                                    className="h-12 w-12 rounded-lg hover:bg-gray-100 active:scale-95 transition-all"
-                                    onClick={() =>
-                                      onItemUpdate(
-                                        product,
-                                        Math.max(1, product.quantity - 1)
-                                      )
-                                    }
-                                    disabled={isLoading || product.quantity <= 1}
-                                    aria-label="Decrease quantity"
-                                  >
-                                    <Minus className="h-5 w-5" />
-                                  </Button>
-                                  <span className="text-lg font-semibold min-w-[32px] text-center">
-                                    {product.quantity}
-                                  </span>
-                                  <Button
-                                    variant="outline"
-                                    size="icon"
-                                    className="h-12 w-12 rounded-lg hover:bg-gray-100 active:scale-95 transition-all"
-                                    onClick={() =>
-                                      onItemUpdate(product, product.quantity + 1)
-                                    }
-                                    disabled={isLoading}
-                                    aria-label="Increase quantity"
-                                  >
-                                    <Plus className="h-5 w-5" />
-                                  </Button>
-                                </div>
+                              <div className="hidden md:flex items-center gap-2 mt-2">
+                                <Button
+                                  className="h-11 w-11 p-0 flex items-center justify-center bg-white text-black hover:bg-gray-100 border border-gray-300 rounded-lg flex-shrink-0"
+                                  onClick={() =>
+                                    onItemUpdate(
+                                      product,
+                                      Math.max(1, product.quantity - 1)
+                                    )
+                                  }
+                                  disabled={isLoading || product.quantity <= 1}
+                                >
+                                  <Minus className="h-4 w-4" />
+                                </Button>
+                                <span className="text-base font-medium min-w-[24px] text-center">
+                                  {product.quantity}
+                                </span>
+                                <Button
+                                  className="h-11 w-11 p-0 flex items-center justify-center bg-white text-black hover:bg-gray-100 border border-gray-300 rounded-lg flex-shrink-0"
+                                  onClick={() =>
+                                    onItemUpdate(product, product.quantity + 1)
+                                  }
+                                  disabled={isLoading}
+                                >
+                                  <Plus className="h-4 w-4" />
+                                </Button>
                               </div>
                             </div>
 
-                            {/* Right section: Delete button and Subtotal - desktop only */}
-                            <div className="hidden md:flex flex-col justify-between items-end p-5 flex-shrink-0 min-w-[180px]">
+                            {/* Right section: Delete button and Price - desktop only */}
+                            <div className="hidden md:flex flex-col justify-between items-end p-2.5 sm:p-4 flex-shrink-0">
                               <Button
-                                variant="ghost"
-                                className="h-9 w-9 p-0 flex items-center justify-center hover:bg-red-50 hover:text-red-600 rounded-lg"
+                                className="h-6 w-6 sm:h-7 sm:w-7 p-0 flex items-center justify-center bg-transparent text-black hover:bg-gray-100 rounded-lg border-0"
                                 onClick={() =>
                                   onItemDelete(
                                     product.productId,
                                     product.itemNo,
-                                    product.sellerId,
-                                    product.shortDescription || product.productName
+                                    product.sellerId
                                   )
                                 }
                                 disabled={isLoading}
-                                aria-label="Remove item from cart"
                               >
-                                <Trash className="h-5 w-5" />
+                                <Trash className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
                               </Button>
 
                               {isPricingLoading ? (
-                                <div className="h-8 w-28 bg-gray-200 animate-pulse rounded"></div>
+                                <div className="h-5 sm:h-7 w-16 sm:w-24 bg-gray-200 animate-pulse rounded"></div>
                               ) : (
                                 <div className="flex flex-col items-end gap-1">
-                                  <span className="text-xs text-gray-500 font-medium">Subtotal</span>
-                                  <span className="text-xl font-bold text-gray-900 whitespace-nowrap">
+                                  <span className="text-lg sm:text-base md:text-sm font-semibold text-black whitespace-nowrap mr-1">
                                     {currency?.currencyCode === "INR"
                                       ? "₹"
                                       : currency?.currencyCode || "₹"}
-                                    {itemSubtotal.toFixed(2)}
+                                    {product.unitPrice?.toFixed(2) ||
+                                      product.unitListPrice?.toFixed(2)}
                                   </span>
-                                  {savings > 0 && (
-                                    <span className="text-sm text-green-600 font-medium">
-                                      Saved {currency?.currencyCode === "INR" ? "₹" : currency?.currencyCode || "₹"}
-                                      {savings.toFixed(2)}
+                                  <span className="text-[12px] font-medium text-[#2E7D32] whitespace-nowrap mr-1.5">
+                                    {product?.discount}% OFF
+                                  </span>
+                                  {(product.unitListPrice ?? 0) >
+                                    (product.unitPrice ?? 0) && (
+                                    <span className="text-lg sm:text-base md:text-sm text-gray-400 line-through whitespace-nowrap mt-0.5">
+                                      {currency?.currencyCode === "INR"
+                                        ? "₹"
+                                        : currency?.currencyCode || "₹"}
+                                      {product.unitListPrice?.toFixed(2)}
                                     </span>
                                   )}
                                 </div>
@@ -447,8 +437,7 @@ export default function SellerCard({
                             </div>
                           </div>
                         </div>
-                      );
-                      })}
+                      ))}
                     </div>
 
                     {/* Right side - Price Details and Actions */}
@@ -471,10 +460,10 @@ export default function SellerCard({
                             onSellerSelect(sellerId);
                             handleOrder();
                           }}
-                          disabled={isPricingLoading || hasOutOfStockItems}
+                          disabled={isPricingLoading}
                           aria-label="Proceed to create order"
                         >
-                          {isPricingLoading ? 'Loading...' : 'CREATE ORDER'}
+                          {isPricingLoading ? "Loading..." : "CREATE ORDER"}
                         </Button>
                         <Button
                           size="lg"
