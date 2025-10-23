@@ -1,7 +1,6 @@
-import { Suspense } from "react";
+import { Skeleton } from "@/components/ui/skeleton";
 import type { Metadata } from "next";
 import CartPageClient from "./components/CartPageClient";
-import { Skeleton } from "@/components/ui/skeleton";
 
 export const metadata: Metadata = {
   title: "Shopping Cart | E-Commerce",
@@ -26,9 +25,5 @@ function CartPageSkeleton() {
 }
 
 export default function Page() {
-  return (
-    <Suspense fallback={<CartPageSkeleton />}>
-      <CartPageClient />
-    </Suspense>
-  );
+  return <CartPageClient />;
 }

@@ -177,6 +177,7 @@ export default function SellerCard({
           const sellerCart = sellerCarts[sellerId];
           const items = sellerCart?.items || [];
           const sellerName = sellerCart?.seller?.name || "Unknown Seller";
+          const sellerLocation = items[0]?.sellerLocation || sellerCart?.seller?.location || "";
           const sellerPricing = sellerCart?.pricing;
           const hasOutOfStockItems = items.some((item: CartProduct) => item.inventoryResponse?.inStock === false);
 
@@ -190,12 +191,19 @@ export default function SellerCard({
                   className="hover:no-underline px-6 py-4"
                   onClick={() => onSellerSelect(sellerId)}
                 >
-                  <div className="flex items-center gap-3">
-                    <Package className="h-5 w-5 text-gray-600" />
-                    <span className="font-semibold text-lg text-gray-900">{sellerName}</span>
-                    <Badge variant="secondary" className="ml-2">
-                      {items.length} {items.length === 1 ? 'item' : 'items'}
-                    </Badge>
+                  <div className="flex items-center gap-3 flex-wrap">
+                    <div className="flex items-center gap-3">
+                      <Package className="h-5 w-5 text-gray-600" />
+                      <span className="font-semibold text-lg text-gray-900">{sellerName}</span>
+                      <Badge variant="secondary" className="ml-2">
+                        {items.length} {items.length === 1 ? 'item' : 'items'}
+                      </Badge>
+                    </div>
+                    {sellerLocation && (
+                      <span className="text-sm text-gray-500 ml-2">
+                        {sellerLocation}
+                      </span>
+                    )}
                   </div>
                 </AccordionTrigger>
                 <AccordionContent className="pt-4 px-6 pb-6">
