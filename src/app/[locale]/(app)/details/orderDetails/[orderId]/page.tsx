@@ -173,10 +173,6 @@ export default function OrderDetailsPage({ params }: OrderDetailsPageProps) {
     toast.info("Download PDF functionality coming soon");
   };
 
-  const handleExportProducts = () => {
-    toast.info("Export products functionality coming soon");
-  };
-
   // Helper to get status badge styling based on status
   const getStatusStyle = (status?: string) => {
     switch (status?.toUpperCase()) {
@@ -280,7 +276,9 @@ export default function OrderDetailsPage({ params }: OrderDetailsPageProps) {
                   totalCount:
                     orderDetails.data.orderDetails[0].dbProductDetails.length,
                 })}
-                onExport={handleExportProducts}
+                onExport={() =>
+                  toast.info("Export products functionality coming soon")
+                }
               />
             )}
 
@@ -357,10 +355,7 @@ export default function OrderDetailsPage({ params }: OrderDetailsPageProps) {
                       | undefined
                   }
                   referenceNumber={
-                    (orderDetails.data?.buyerReferenceNumber ||
-                      orderDetails.data?.sellerReferenceNumber) as unknown as
-                      | string
-                      | undefined
+                    (orderDetails.data?.buyerReferenceNumber as string) || "-"
                   }
                 />
 
@@ -384,13 +379,29 @@ export default function OrderDetailsPage({ params }: OrderDetailsPageProps) {
                     ?.length || 0
                 }
                 totalLP={
-                  Number(orderDetails.data?.orderDetails?.[0]?.subTotal) || 0
-                }
-                discount={
-                  Number(
-                    orderDetails.data?.orderDetails?.[0]?.calculatedDiscount
+                  orderDetails.data?.orderDetails?.[0]?.dbProductDetails?.reduce(
+                    (sum, product) => sum + (product.unitListPrice || 0),
+                    0
                   ) || 0
                 }
+                discount={(() => {
+                  const products =
+                    orderDetails.data?.orderDetails?.[0]?.dbProductDetails ||
+                    [];
+                  let totalDiscount = 0;
+
+                  products.forEach(product => {
+                    const unitListPrice = product.unitListPrice || 0;
+                    const discountPercentage = product.discount || 0;
+                    if (discountPercentage > 0) {
+                      const productDiscount =
+                        (unitListPrice * discountPercentage) / 100;
+                      totalDiscount += productDiscount;
+                    }
+                  });
+
+                  return totalDiscount;
+                })()}
                 subtotal={
                   Number(orderDetails.data?.orderDetails?.[0]?.subTotal) || 0
                 }

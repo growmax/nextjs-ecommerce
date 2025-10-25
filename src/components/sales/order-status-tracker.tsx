@@ -123,7 +123,7 @@ export default function OrderStatusTracker({
       {/* Order ID and Date at top left, Financial Summary at top right */}
       <div className="flex justify-between items-start mb-4">
         {(orderId || createdDate) && (
-          <div>
+          <div className="mt-15 sm:mt-0">
             {orderId && (
               <p className="text-sm font-semibold text-gray-900">{orderId}</p>
             )}
@@ -175,7 +175,7 @@ export default function OrderStatusTracker({
       </div>
 
       {/* Steps Container */}
-      <div className="flex items-center gap-0 overflow-hidden rounded-lg shadow-sm">
+      <div className="hidden sm:flex items-center gap-0 overflow-hidden rounded-lg shadow-sm">
         {ORDER_STATUS_STEPS.map((step, index) => {
           const isActive = currentStepOrder >= step.order;
           const isLast = index === ORDER_STATUS_STEPS.length - 1;
