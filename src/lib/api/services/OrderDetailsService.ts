@@ -17,6 +17,7 @@ export interface DbProductDetail {
   itemTaxableAmount?: number;
   discount?: number;
   unitPrice?: number;
+  unitListPrice?: number;
   unitQuantity?: number;
   invoiceQuantity?: number;
   totalPrice?: number;

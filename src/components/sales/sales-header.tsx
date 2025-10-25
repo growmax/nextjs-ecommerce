@@ -90,7 +90,7 @@ export default function SalesHeader({
       {/* Left Section - Title, Identifier, and Status */}
       <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-3 flex-1 min-w-0">
         {/* Title with Edit Icon */}
-        <div className="flex items-center gap-2 min-w-0">
+        <div className="flex items-center justify-center sm:justify-start gap-2 min-w-0">
           {loading ? (
             <Skeleton className="h-6 w-48" />
           ) : (
@@ -111,7 +111,7 @@ export default function SalesHeader({
         </div>
 
         {/* Identifier and Status Container */}
-        <div className="flex items-center gap-2 sm:gap-3 flex-wrap">
+        <div className="flex items-center justify-center sm:justify-start gap-2 sm:gap-3 flex-wrap">
           {/* Identifier */}
           {loading ? (
             <Skeleton className="h-4 w-24" />
@@ -140,7 +140,7 @@ export default function SalesHeader({
       </div>
 
       {/* Right Section - Action Buttons and Icons */}
-      <div className="flex items-center gap-1.5 md:gap-2 self-end md:self-auto">
+      <div className="flex items-center gap-4.5 md:gap-2 self-end md:self-auto">
         {/* Custom Action Buttons */}
         {loading ? (
           <>

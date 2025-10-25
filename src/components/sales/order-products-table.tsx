@@ -28,6 +28,7 @@ export interface ProductItem {
   discount?: number;
   discountPercentage?: number;
   unitPrice?: number;
+  unitListPrice?: number;
   usc?: number;
   unitQuantity?: number;
   quantity?: number;
@@ -87,9 +88,9 @@ export default function OrderProductsTable({
 
   return (
     <Card className={cn("", className)}>
-      {/* Header with Export Button */}
-      <CardHeader className="flex flex-row items-center justify-between">
-        <CardTitle className="text-xs font-semibold">
+      {/* Header */}
+      <CardHeader className="py-0 px-4 -my-1 flex flex-row items-center justify-between">
+        <CardTitle className="text-base font-semibold py-0 my-0 leading-none -mt-1 -mb-1">
           Products ({displayCount})
         </CardTitle>
         {onExport && (
@@ -97,9 +98,9 @@ export default function OrderProductsTable({
             variant="outline"
             size="sm"
             onClick={onExport}
-            className="h-3 px-1 text-xs m-0"
+            className="h-3.5 px-1.5 py-0! text-xs font-medium border-gray-300 text-gray-700 hover:bg-gray-50 -my-0.5"
           >
-            <Download className="h-2 w-2" />
+            <Download className="h-2 w-2 mr-0.5" />
             EXPORT
           </Button>
         )}
@@ -111,7 +112,7 @@ export default function OrderProductsTable({
           <Table>
             <TableHeader>
               <TableRow className="bg-muted/50">
-                <TableHead className="font-medium text-primary sticky left-0 bg-muted z-20 min-w-[200px] shadow-[2px_0_4px_-2px_rgba(0,0,0,0.1)] py-3 before:absolute before:inset-0 before:bg-muted before:-z-10">
+                <TableHead className="font-medium text-primary sticky left-0 bg-muted z-20 min-w-[150px] sm:min-w-[200px] shadow-[2px_0_4px_-2px_rgba(0,0,0,0.1)] py-3 before:absolute before:inset-0 before:bg-muted before:-z-10">
                   <span className="relative z-10">ITEMS</span>
                 </TableHead>
                 <TableHead className="font-medium text-primary text-right min-w-[140px] py-3">
@@ -166,8 +167,9 @@ export default function OrderProductsTable({
                       "";
                     const discountValue =
                       product.discount ?? product.discountPercentage ?? 0;
-                    // Use itemTaxableAmount or unitPrice as base price
+                    // Use unitListPrice as primary source for base price, fallback to other fields
                     const basePrice =
+                      product.unitListPrice ??
                       product.itemTaxableAmount ??
                       product.unitPrice ??
                       product.basePrice;
@@ -185,9 +187,9 @@ export default function OrderProductsTable({
                     return (
                       <TableRow
                         key={product.itemNo || index}
-                        className="group hover:bg-muted/30 h-12"
+                        className="group hover:bg-muted/30 h-12 border-b"
                       >
-                        <TableCell className="sticky left-0 bg-white dark:bg-gray-950 group-hover:bg-muted/30 z-10 min-w-[200px] shadow-[2px_0_4px_-2px_rgba(0,0,0,0.1)] transition-colors py-3 before:absolute before:inset-0 before:bg-white dark:before:bg-gray-950 before:-z-10">
+                        <TableCell className="sticky left-0 bg-white dark:bg-gray-950 group-hover:bg-muted/30 z-10 min-w-[150px] sm:min-w-[200px] shadow-[2px_0_4px_-2px_rgba(0,0,0,0.1)] transition-colors py-3 before:absolute before:inset-0 before:bg-white dark:before:bg-gray-950 before:-z-10">
                           <div className="flex flex-col gap-0.5 relative z-10">
                             <span className="font-medium text-sm">
                               {itemName}
@@ -233,8 +235,11 @@ export default function OrderProductsTable({
                       itemsPerPage - currentPageProducts.length
                     ),
                   }).map((_, index) => (
-                    <TableRow key={`empty-${index}`} className="h-12">
-                      <TableCell className="sticky left-0 bg-white dark:bg-gray-950 z-10 min-w-[200px] shadow-[2px_0_4px_-2px_rgba(0,0,0,0.1)] py-3 before:absolute before:inset-0 before:bg-white dark:before:bg-gray-950 before:-z-10">
+                    <TableRow
+                      key={`empty-${index}`}
+                      className="h-12 border-b-0"
+                    >
+                      <TableCell className="sticky left-0 bg-white dark:bg-gray-950 z-10 min-w-[150px] sm:min-w-[200px] shadow-[2px_0_4px_-2px_rgba(0,0,0,0.1)] py-3 before:absolute before:inset-0 before:bg-white dark:before:bg-gray-950 before:-z-10">
                         <div className="h-6"></div>
                       </TableCell>
                       <TableCell className="min-w-[140px] py-3">

@@ -46,7 +46,7 @@ export default function OrderPriceDetails({
         </CardTitle>
       </CardHeader>
 
-      <CardContent className="px-4 py-2 space-y-3 pt-0! pb-0!">
+      <CardContent className="px-4 py-2 space-y-3 pt-0! pb-4">
         {/* Total Items */}
         <div className="grid grid-cols-2 gap-2">
           <div>
@@ -99,10 +99,15 @@ export default function OrderPriceDetails({
           <div className="text-right">
             <h6 className="text-sm font-semibold text-gray-800">
               {currency}
-              {subtotal.toLocaleString("en-IN", {
-                minimumFractionDigits: 2,
-                maximumFractionDigits: 2,
-              })}
+              {hasDiscount
+                ? (totalLP - discount).toLocaleString("en-IN", {
+                    minimumFractionDigits: 2,
+                    maximumFractionDigits: 2,
+                  })
+                : subtotal.toLocaleString("en-IN", {
+                    minimumFractionDigits: 2,
+                    maximumFractionDigits: 2,
+                  })}
             </h6>
           </div>
         </div>
