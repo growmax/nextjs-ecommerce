@@ -14,7 +14,6 @@ import { useTenantInfo } from "@/contexts/TenantContext";
 import { useCurrentUser } from "@/hooks/useCurrentUser";
 import useSelectedSellerCart from "@/hooks/useSelectedSellerCart";
 import CartServices from "@/lib/api/CartServices";
-import { some } from "lodash";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { toast } from "sonner";
@@ -118,73 +117,23 @@ export default function CartPageClient() {
   };
 
   // Handle Order submission
-  const handleOrder = () => {
-    if (selectedSellerPricing?.hasProductsWithNegativeTotalPrice) {
-      toast.error(
-        "Cart contains products with negative prices. Please review your cart."
-      );
-      return;
-    }
+  const handleOrder = (sellerId: string | number) => {
 
-    if (userId) {
-      if (some(cart, (item: CartItem) => item.replacement)) {
-        toast.info("Few products are unavailable, try replacing items");
-        return;
-      }
-
-      if (
-        !some(cart, ["showPrice", false]) &&
-        selectedSellerPricing?.hasAllProductsAvailableInPriceList
-      ) {
-        if (some(cart, ["inventoryResponse.inStock", false])) {
-          toast.info("Remove out of stock product(s) to place order");
-        } else {
-          const addressPasses = addressCheck(true);
-          if (addressPasses) {
             router.push(
-              selectedSellerId
-                ? `/ordersummary?sellerId=${selectedSellerId}`
-                : "/ordersummary"
+             `/ordersummary/${sellerId}`
+
             );
-          }
-        }
-      } else {
-        toast.info(
-          "Cart contains product(s) with price(s) unknown, ask for quote instead"
-        );
-        return;
-      }
-    } else {
-      router.push(`/auth/login?from=Cart`);
-    }
+
   };
 
   // Handle Quote submission
-  const handleQuote = () => {
-    if (selectedSellerPricing?.hasProductsWithNegativeTotalPrice) {
-      toast.error(
-        "Cart contains products with negative prices. Please review your cart."
-      );
-      return;
-    }
+  const handleQuote = (sellerId: string | number) => {
 
-    if (userId) {
-      if (some(cart, (item: CartItem) => item.replacement)) {
-        toast.info("Few products are unavailable, try replacing items");
-        return;
-      }
-
-      const addressPasses = addressCheck(false);
-      if (addressPasses) {
         router.push(
-          selectedSellerId
-            ? `/quotesummary?sellerId=${selectedSellerId}`
-            : "/quotesummary"
-        );
-      }
-    } else {
-      router.push(`/auth/login?from=Cart`);
-    }
+        `/quotesummary/${sellerId}`
+           );
+
+
   };
 
   // Change quantity in cart - Following reference pattern from useCart.js

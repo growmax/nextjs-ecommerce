@@ -103,8 +103,8 @@ interface SellerCardProps {
     productName?: string
   ) => void;
   onClearCart: () => void;
-  handleOrder: () => void;
-  handleQuote: () => void;
+  handleOrder: (sellerId: string | number) => void;
+  handleQuote: (sellerId: string | number) => void;
   currency?: CurrencyObj | undefined;
   sellerCarts: Record<string, SellerCart>;
   sellerIds: string[];
@@ -458,7 +458,7 @@ export default function SellerCard({
                           className="w-full bg-black hover:bg-gray-900 text-white py-6 text-base font-semibold shadow-lg hover:shadow-xl active:scale-[0.98] transition-all"
                           onClick={() => {
                             onSellerSelect(sellerId);
-                            handleOrder();
+                            handleOrder(sellerId);
                           }}
                           disabled={isPricingLoading}
                           aria-label="Proceed to create order"
@@ -471,7 +471,7 @@ export default function SellerCard({
                           className="w-full bg-white hover:bg-gray-50 text-gray-900 border-2 border-gray-300 py-6 text-base font-medium hover:border-gray-400 active:scale-[0.98] transition-all"
                           onClick={() => {
                             onSellerSelect(sellerId);
-                            handleQuote();
+                            handleQuote(sellerId);
                           }}
                           disabled={isPricingLoading}
                           aria-label="Request a quote"
