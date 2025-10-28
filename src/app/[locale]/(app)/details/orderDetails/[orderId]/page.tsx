@@ -13,10 +13,11 @@ import {
   OrderTermsCard,
   SalesHeader,
 } from "@/components/sales";
+import { EditOrderNameDialog } from "@/components/dialogs/EditOrderNameDialog";
 import { useCurrentUser } from "@/hooks/useCurrentUser";
 import { useTenantData } from "@/hooks/useTenantData";
 import type { OrderDetailsResponse } from "@/lib/api";
-import { OrderDetailsService } from "@/lib/api";
+import { OrderDetailsService, OrderNameService } from "@/lib/api";
 
 // Import types for proper typing
 interface AddressDetails {
@@ -84,6 +85,7 @@ export default function OrderDetailsPage({ params }: OrderDetailsPageProps) {
   );
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [editDialogOpen, setEditDialogOpen] = useState(false);
 
   const { user } = useCurrentUser();
   const { tenantData } = useTenantData();
@@ -158,7 +160,43 @@ export default function OrderDetailsPage({ params }: OrderDetailsPageProps) {
   };
 
   const handleEditQuote = () => {
-    toast.info("Edit order functionality coming soon");
+    router.push(`/${locale}/details/orderDetails/${orderId}/edit`);
+  };
+
+  const handleEditOrder = () => {
+    setEditDialogOpen(true);
+  };
+
+  const handleSaveOrderName = async (newOrderName: string) => {
+    if (!user || !orderDetails?.data?.orderDetails?.[0]?.orderIdentifier) {
+      throw new Error("Missing required data for updating order name");
+    }
+
+    try {
+      // Call the API to update the order name
+      await OrderNameService.updateOrderName({
+        userId: user.userId,
+        companyId: user.companyId,
+        orderIdentifier: orderDetails.data.orderDetails[0].orderIdentifier,
+        orderName: newOrderName,
+      });
+
+      // Update the local state to reflect the change
+      if (orderDetails && orderDetails.data?.orderDetails) {
+        const updatedOrderDetails = {
+          ...orderDetails,
+          data: {
+            ...orderDetails.data,
+            orderDetails: orderDetails.data.orderDetails.map((order, index) =>
+              index === 0 ? { ...order, orderName: newOrderName } : order
+            ),
+          },
+        };
+        setOrderDetails(updatedOrderDetails);
+      }
+    } catch (error) {
+      throw error; // Re-throw to let the dialog handle the error
+    }
   };
 
   const handlePlaceOrder = () => {
@@ -208,6 +246,7 @@ export default function OrderDetailsPage({ params }: OrderDetailsPageProps) {
             className: getStatusStyle(status),
           },
         })}
+        onEdit={handleEditOrder}
         onRefresh={handleRefresh}
         onClose={handleClose}
         menuOptions={[
@@ -232,7 +271,7 @@ export default function OrderDetailsPage({ params }: OrderDetailsPageProps) {
             onClick: handlePlaceOrder,
           },
         ]}
-        showEditIcon={false}
+        showEditIcon={true}
         loading={loading}
       />
 
@@ -436,6 +475,15 @@ export default function OrderDetailsPage({ params }: OrderDetailsPageProps) {
           )}
         </div>
       </div>
+
+      {/* Edit Order Name Dialog */}
+      <EditOrderNameDialog
+        open={editDialogOpen}
+        onOpenChange={setEditDialogOpen}
+        currentOrderName={orderName || ""}
+        onSave={handleSaveOrderName}
+        loading={loading}
+      />
     </div>
   );
 }
