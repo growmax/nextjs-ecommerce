@@ -7,6 +7,8 @@ import {
   HoverCardContent,
   HoverCardTrigger,
 } from "@/components/ui/hover-card";
+import { Input } from "@/components/ui/input";
+import { Calendar } from "lucide-react";
 
 interface AddressDetails {
   addressLine?: string;
@@ -50,6 +52,9 @@ interface OrderContactDetailsProps {
   salesBranch?: string | undefined;
   requiredDate?: string | undefined;
   referenceNumber?: string | undefined;
+  isEditable?: boolean;
+  onRequiredDateChange?: (date: string) => void;
+  onReferenceNumberChange?: (refNumber: string) => void;
 }
 
 const DetailRow = ({
@@ -70,6 +75,63 @@ const DetailRow = ({
       </div>
       <div>
         <p className="text-sm font-semibold text-gray-900">{value || "-"}</p>
+      </div>
+    </div>
+  );
+};
+
+const EditableDateRow = ({
+  label,
+  value,
+  onChange,
+}: {
+  label: string;
+  value?: string | undefined;
+  onChange?: ((date: string) => void) | undefined;
+}) => {
+  return (
+    <div className="grid grid-cols-2 gap-4 py-1.5">
+      <div>
+        <p className="text-sm font-normal text-gray-900">{label}</p>
+      </div>
+      <div className="relative">
+        <Input
+          type="date"
+          value={value || ""}
+          onChange={e => onChange?.(e.target.value)}
+          className="text-sm border-gray-300 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 bg-gray-50"
+          placeholder={label}
+        />
+        <Calendar className="absolute right-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400 pointer-events-none" />
+      </div>
+    </div>
+  );
+};
+
+const EditableTextRow = ({
+  label,
+  value,
+  onChange,
+  placeholder,
+}: {
+  label: string;
+  value?: string | undefined;
+  onChange?: ((value: string) => void) | undefined;
+  placeholder?: string | undefined;
+}) => {
+  return (
+    <div className="grid grid-cols-2 gap-4 py-1.5">
+      <div>
+        <p className="text-sm font-normal text-gray-900">{label}</p>
+      </div>
+      <div>
+        <Input
+          type="text"
+          value={value || ""}
+          onChange={e => onChange?.(e.target.value)}
+          className="text-sm border-gray-300 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 bg-gray-50"
+          placeholder={placeholder || label}
+        />
       </div>
     </div>
   );
@@ -156,8 +218,8 @@ const AddressRow = ({
   addressDetails,
 }: {
   label: string;
-  addressName?: string;
-  addressDetails?: AddressDetails;
+  addressName?: string | undefined;
+  addressDetails?: AddressDetails | undefined;
 }) => {
   if (!addressName) return null;
 
@@ -244,6 +306,9 @@ export default function OrderContactDetails({
   salesBranch,
   requiredDate,
   referenceNumber,
+  isEditable = false,
+  onRequiredDateChange,
+  onReferenceNumberChange,
 }: OrderContactDetailsProps) {
   return (
     <Card className="shadow-sm h-full">
@@ -293,14 +358,31 @@ export default function OrderContactDetails({
           />
 
           {/* Required Date */}
-          <DetailRow label="Required Date" value={requiredDate} />
+          {isEditable ? (
+            <EditableDateRow
+              label="Required Date"
+              value={requiredDate}
+              onChange={onRequiredDateChange}
+            />
+          ) : (
+            <DetailRow label="Required Date" value={requiredDate} />
+          )}
 
           {/* Reference Number */}
-          <DetailRow
-            label="Reference Number"
-            value={referenceNumber}
-            showEmpty={true}
-          />
+          {isEditable ? (
+            <EditableTextRow
+              label="Reference Number"
+              value={referenceNumber}
+              onChange={onReferenceNumberChange}
+              placeholder="Reference Number"
+            />
+          ) : (
+            <DetailRow
+              label="Reference Number"
+              value={referenceNumber}
+              showEmpty={true}
+            />
+          )}
         </div>
       </CardContent>
     </Card>

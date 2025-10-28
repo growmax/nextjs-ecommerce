@@ -11,6 +11,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { Input } from "@/components/ui/input";
 import { Download } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { CustomPagination } from "@/components/ui/custom-pagination";
@@ -48,6 +49,9 @@ export interface OrderProductsTableProps {
   onExport?: () => void;
   className?: string;
   itemsPerPage?: number;
+  isEditable?: boolean;
+  onQuantityChange?: (productId: string, quantity: number) => void;
+  editedQuantities?: Record<string, number>;
 }
 
 // Format currency
@@ -65,6 +69,9 @@ export default function OrderProductsTable({
   onExport,
   className,
   itemsPerPage = 5,
+  isEditable = false,
+  onQuantityChange,
+  editedQuantities = {},
 }: OrderProductsTableProps) {
   const [currentPage, setCurrentPage] = useState(1);
   const displayCount = totalCount || products.length;
@@ -98,9 +105,9 @@ export default function OrderProductsTable({
             variant="outline"
             size="sm"
             onClick={onExport}
-            className="h-3.5 px-1.5 py-0! text-xs font-medium border-gray-300 text-gray-700 hover:bg-gray-50 -my-0.5"
+            className="h-2.5 px-1 py-0! text-[10px] font-medium border-gray-300 text-gray-700 hover:bg-gray-50 -my-1"
           >
-            <Download className="h-2 w-2 mr-0.5" />
+            <Download className="h-1 w-1 mr-0.5" />
             EXPORT
           </Button>
         )}
@@ -173,8 +180,17 @@ export default function OrderProductsTable({
                       product.itemTaxableAmount ??
                       product.unitPrice ??
                       product.basePrice;
-                    const quantity =
+                    const originalQuantity =
                       product.unitQuantity ?? product.quantity ?? 0;
+                    const productId =
+                      product.brandProductId ||
+                      product.itemCode ||
+                      product.orderIdentifier ||
+                      "";
+                    const quantity =
+                      isEditable && editedQuantities[productId] !== undefined
+                        ? editedQuantities[productId]
+                        : originalQuantity;
                     const invoicedQty =
                       product.invoiceQuantity ?? product.invoicedQty ?? 0;
                     const amount = product.totalPrice ?? product.amount;
@@ -214,7 +230,59 @@ export default function OrderProductsTable({
                           {formatCurrency(product.usc || 0)}
                         </TableCell>
                         <TableCell className="text-center min-w-[100px] py-3">
-                          {quantity}
+                          {isEditable ? (
+                            <Input
+                              type="number"
+                              value={quantity}
+                              onChange={e => {
+                                const inputValue = e.target.value;
+                                // Remove leading zeros and handle empty input
+                                let newQuantity = 0;
+                                if (inputValue !== "") {
+                                  // Remove leading zeros (e.g., "033" becomes "33")
+                                  const cleanValue =
+                                    inputValue.replace(/^0+/, "") || "0";
+                                  newQuantity = parseInt(cleanValue) || 0;
+                                }
+                                onQuantityChange?.(productId, newQuantity);
+                              }}
+                              onKeyDown={e => {
+                                // If current value is "0" and user presses backspace, clear the field
+                                if (
+                                  e.key === "Backspace" &&
+                                  e.currentTarget.value === "0"
+                                ) {
+                                  e.currentTarget.value = "";
+                                  onQuantityChange?.(productId, 0);
+                                }
+                                // If user types a number when field shows "0", replace it
+                                if (
+                                  e.key >= "0" &&
+                                  e.key <= "9" &&
+                                  e.currentTarget.value === "0"
+                                ) {
+                                  e.currentTarget.value = "";
+                                }
+                              }}
+                              onWheel={e => {
+                                e.preventDefault();
+                                e.currentTarget.blur();
+                              }}
+                              onFocus={e => {
+                                e.target.addEventListener(
+                                  "wheel",
+                                  event => {
+                                    event.preventDefault();
+                                  },
+                                  { passive: false }
+                                );
+                              }}
+                              className="w-20 h-8 text-center text-sm border-gray-300 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none [-moz-appearance:textfield]"
+                              min="0"
+                            />
+                          ) : (
+                            quantity
+                          )}
                         </TableCell>
                         <TableCell className="text-center min-w-[140px] py-3">
                           {invoicedQty}
@@ -236,7 +304,7 @@ export default function OrderProductsTable({
                     ),
                   }).map((_, index) => (
                     <TableRow
-                      key={`empty-${index}`}
+                      key={`empty-row-${currentPage}-${startIndex + index}`}
                       className="h-12 border-b-0"
                     >
                       <TableCell className="sticky left-0 bg-white dark:bg-gray-950 z-10 min-w-[150px] sm:min-w-[200px] shadow-[2px_0_4px_-2px_rgba(0,0,0,0.1)] py-3 before:absolute before:inset-0 before:bg-white dark:before:bg-gray-950 before:-z-10">
