@@ -8,27 +8,35 @@ import {
   HoverCardTrigger,
 } from "@/components/ui/hover-card";
 import { Input } from "@/components/ui/input";
-import { Calendar } from "lucide-react";
+import { Calendar, Pencil } from "lucide-react";
+import { AddressDetailsDialog } from "@/components/dialogs/AddressDetailsDialog";
+import { type BillingAddress } from "@/lib/api";
+import { useState } from "react";
+import { toast } from "sonner";
+import SellerWarehouseService, {
+  type SellerBranch,
+  type Warehouse,
+} from "@/lib/api/services/SellerWarehouseService";
 
 interface AddressDetails {
-  addressLine?: string;
-  branchName?: string;
-  city?: string;
-  state?: string;
-  country?: string;
-  pinCodeId?: string;
-  pincode?: string;
-  gst?: string;
-  district?: string;
-  locality?: string;
-  mobileNo?: string;
-  phone?: string;
-  email?: string;
-  billToCode?: string;
-  shipToCode?: string;
-  soldToCode?: string;
-  sellerCompanyName?: string;
-  sellerBranchName?: string;
+  addressLine?: string | undefined;
+  branchName?: string | undefined;
+  city?: string | undefined;
+  state?: string | undefined;
+  country?: string | undefined;
+  pinCodeId?: string | undefined;
+  pincode?: string | undefined;
+  gst?: string | undefined;
+  district?: string | undefined;
+  locality?: string | undefined;
+  mobileNo?: string | undefined;
+  phone?: string | undefined;
+  email?: string | undefined;
+  billToCode?: string | undefined;
+  shipToCode?: string | undefined;
+  soldToCode?: string | undefined;
+  sellerCompanyName?: string | undefined;
+  sellerBranchName?: string | undefined;
 }
 
 interface WarehouseAddressDetails {
@@ -53,8 +61,17 @@ interface OrderContactDetailsProps {
   requiredDate?: string | undefined;
   referenceNumber?: string | undefined;
   isEditable?: boolean;
+  userId?: string | undefined;
+  buyerBranchId?: number | undefined;
+  buyerCompanyId?: number | undefined;
+  productIds?: number[] | undefined;
+  sellerCompanyId?: number | undefined;
   onRequiredDateChange?: (date: string) => void;
   onReferenceNumberChange?: (refNumber: string) => void;
+  onBillingAddressChange?: (address: AddressDetails) => void;
+  onShippingAddressChange?: (address: AddressDetails) => void;
+  onSellerBranchChange?: (sellerBranch: SellerBranch | null) => void;
+  onWarehouseChange?: (warehouse: Warehouse | null) => void;
 }
 
 const DetailRow = ({
@@ -216,10 +233,14 @@ const AddressRow = ({
   label,
   addressName,
   addressDetails,
+  isEditable = false,
+  onEditClick,
 }: {
   label: string;
   addressName?: string | undefined;
   addressDetails?: AddressDetails | undefined;
+  isEditable?: boolean;
+  onEditClick?: () => void;
 }) => {
   if (!addressName) return null;
 
@@ -234,26 +255,45 @@ const AddressRow = ({
 
   if (!hasAddressDetails) {
     return (
-      <div className="grid grid-cols-2 gap-4 py-1.5">
+      <div className="grid grid-cols-2 gap-4 py-1.5 group">
         <div>
           <p className="text-sm font-normal text-gray-900">{label}</p>
         </div>
-        <div>
-          <p className="text-sm font-semibold text-gray-900">{addressName}</p>
+        <div className="flex items-center gap-2 min-w-0">
+          <p
+            className={`${isEditable ? "text-xs" : "text-sm"} font-semibold text-gray-900 truncate`}
+          >
+            {addressName}
+          </p>
+          {isEditable && (
+            <Pencil
+              className="h-4 w-4 text-gray-400 opacity-0 group-hover:opacity-100 transition-opacity duration-200 shrink-0 cursor-pointer hover:text-gray-600"
+              onClick={e => {
+                e.stopPropagation();
+                if (process.env.NODE_ENV === "development") {
+                  // eslint-disable-next-line no-console
+                  console.log("Edit icon clicked for Bill To");
+                }
+                onEditClick?.();
+              }}
+            />
+          )}
         </div>
       </div>
     );
   }
 
   return (
-    <div className="grid grid-cols-2 gap-4 py-1.5">
+    <div className="grid grid-cols-2 gap-4 py-1.5 group">
       <div>
         <p className="text-sm font-normal text-gray-900">{label}</p>
       </div>
-      <div>
+      <div className="flex items-center gap-2 min-w-0">
         <HoverCard>
           <HoverCardTrigger asChild>
-            <p className="text-sm font-semibold text-gray-900 cursor-pointer underline">
+            <p
+              className={`${isEditable ? "text-xs" : "text-sm"} font-semibold text-gray-900 cursor-pointer underline truncate`}
+            >
               {addressName}
             </p>
           </HoverCardTrigger>
@@ -292,6 +332,15 @@ const AddressRow = ({
             </div>
           </HoverCardContent>
         </HoverCard>
+        {isEditable && (
+          <Pencil
+            className="h-4 w-4 text-gray-400 opacity-0 group-hover:opacity-100 transition-opacity duration-200 shrink-0 cursor-pointer hover:text-gray-600"
+            onClick={e => {
+              e.stopPropagation();
+              onEditClick?.();
+            }}
+          />
+        )}
       </div>
     </div>
   );
@@ -307,9 +356,112 @@ export default function OrderContactDetails({
   requiredDate,
   referenceNumber,
   isEditable = false,
+  userId,
+  buyerBranchId,
+  buyerCompanyId,
+  productIds,
+  sellerCompanyId,
   onRequiredDateChange,
   onReferenceNumberChange,
+  onBillingAddressChange,
+  onShippingAddressChange,
+  onSellerBranchChange,
+  onWarehouseChange,
 }: OrderContactDetailsProps) {
+  const [billingDialogOpen, setBillingDialogOpen] = useState(false);
+  const [shippingDialogOpen, setShippingDialogOpen] = useState(false);
+
+  const handleBillingAddressSelect = async (address: BillingAddress) => {
+    // Convert BillingAddress to AddressDetails format
+    const updatedBillingAddress: AddressDetails = {
+      branchName: address.addressId.branchName,
+      addressLine: address.addressId.addressLine || undefined,
+      city: address.addressId.city || undefined,
+      state: address.addressId.state || undefined,
+      country: address.addressId.country || undefined,
+      pincode: address.addressId.pinCodeId || undefined,
+      billToCode: address.addressId.billToCode || undefined,
+      gst: address.addressId.gst || undefined,
+      mobileNo: address.addressId.mobileNo || undefined,
+      phone: address.addressId.phone || undefined,
+      email: address.addressId.email || undefined,
+    };
+
+    // Update UI immediately
+    if (onBillingAddressChange) {
+      onBillingAddressChange(updatedBillingAddress);
+    }
+
+    // Show success message
+    toast.success("Billing address updated successfully");
+
+    // Call APIs to update seller branch and warehouse
+    if (
+      userId &&
+      buyerBranchId &&
+      buyerCompanyId &&
+      productIds &&
+      sellerCompanyId
+    ) {
+      try {
+        const request = {
+          userId: parseInt(userId),
+          buyerBranchId,
+          buyerCompanyId,
+          productIds,
+          sellerCompanyId,
+        };
+
+        const { sellerBranch, warehouse } =
+          await SellerWarehouseService.getSellerBranchAndWarehouse(
+            userId,
+            buyerCompanyId.toString(),
+            request
+          );
+
+        // Update seller branch
+        if (onSellerBranchChange) {
+          onSellerBranchChange(sellerBranch);
+        }
+
+        // Update warehouse
+        if (onWarehouseChange) {
+          onWarehouseChange(warehouse);
+        }
+
+        if (sellerBranch) {
+          toast.success("Seller branch and warehouse updated successfully");
+        }
+      } catch {
+        toast.error("Failed to sync seller branch and warehouse with server");
+      }
+    }
+  };
+
+  const handleShippingAddressSelect = (address: BillingAddress) => {
+    // Convert BillingAddress to AddressDetails format
+    const updatedShippingAddress: AddressDetails = {
+      branchName: address.addressId.branchName,
+      addressLine: address.addressId.addressLine || undefined,
+      city: address.addressId.city || undefined,
+      state: address.addressId.state || undefined,
+      country: address.addressId.country || undefined,
+      pincode: address.addressId.pinCodeId || undefined,
+      shipToCode: address.addressId.shipToCode || undefined,
+      gst: address.addressId.gst || undefined,
+      mobileNo: address.addressId.mobileNo || undefined,
+      phone: address.addressId.phone || undefined,
+      email: address.addressId.email || undefined,
+    };
+
+    // Update UI immediately
+    if (onShippingAddressChange) {
+      onShippingAddressChange(updatedShippingAddress);
+    }
+
+    // Show success message
+    toast.success("Shipping address updated successfully");
+  };
   return (
     <Card className="shadow-sm h-full">
       <CardHeader className="px-6 -my-5  bg-gray-50 rounded-t-lg">
@@ -344,6 +496,14 @@ export default function OrderContactDetails({
                 : billingAddress?.branchName || billingAddress?.billToCode
             }
             addressDetails={billingAddress}
+            isEditable={isEditable}
+            onEditClick={() => {
+              if (process.env.NODE_ENV === "development") {
+                // eslint-disable-next-line no-console
+                console.log("Setting billing dialog open to true");
+              }
+              setBillingDialogOpen(true);
+            }}
           />
 
           {/* Ship To */}
@@ -355,6 +515,8 @@ export default function OrderContactDetails({
                 : shippingAddress?.branchName || shippingAddress?.shipToCode
             }
             addressDetails={shippingAddress}
+            isEditable={isEditable}
+            onEditClick={() => setShippingDialogOpen(true)}
           />
 
           {/* Required Date */}
@@ -385,6 +547,110 @@ export default function OrderContactDetails({
           )}
         </div>
       </CardContent>
+
+      {/* Billing Address Dialog */}
+      <AddressDetailsDialog
+        open={billingDialogOpen}
+        onOpenChange={setBillingDialogOpen}
+        onAddressSelect={handleBillingAddressSelect}
+        mode="billing"
+        currentAddress={
+          billingAddress
+            ? ({
+                id: billingAddress.billToCode || "",
+                name: billingAddress.branchName || "",
+                addressId: {
+                  addressLine: billingAddress.addressLine || "",
+                  billToCode: billingAddress.billToCode || null,
+                  branchName: billingAddress.branchName || "",
+                  city: billingAddress.city || "",
+                  country: billingAddress.country || "",
+                  countryCode: "",
+                  district: "",
+                  email: billingAddress.email || null,
+                  gst: billingAddress.gst || "",
+                  id: 0,
+                  isBilling: true,
+                  isCustAddress: false,
+                  isShipping: false,
+                  lattitude: "",
+                  locality: "",
+                  locationUrl: null,
+                  longitude: "",
+                  mobileNo: billingAddress.mobileNo || "",
+                  nationalMobileNum: "",
+                  phone: billingAddress.phone || "",
+                  pinCodeId: billingAddress.pincode || "",
+                  primaryContact: "",
+                  regAddress: false,
+                  shipToCode: null,
+                  soldToCode: null,
+                  state: billingAddress.state || "",
+                  tenantId: 0,
+                  vendorID: null,
+                  vendorId: null,
+                  wareHouse: false,
+                },
+                companyId: {
+                  id: 0,
+                  name: "",
+                },
+              } as BillingAddress)
+            : undefined
+        }
+      />
+
+      {/* Shipping Address Dialog */}
+      <AddressDetailsDialog
+        open={shippingDialogOpen}
+        onOpenChange={setShippingDialogOpen}
+        onAddressSelect={handleShippingAddressSelect}
+        mode="shipping"
+        currentAddress={
+          shippingAddress
+            ? ({
+                id: shippingAddress.shipToCode || "",
+                name: shippingAddress.branchName || "",
+                addressId: {
+                  addressLine: shippingAddress.addressLine || "",
+                  billToCode: null,
+                  branchName: shippingAddress.branchName || "",
+                  city: shippingAddress.city || "",
+                  country: shippingAddress.country || "",
+                  countryCode: "",
+                  district: "",
+                  email: shippingAddress.email || null,
+                  gst: shippingAddress.gst || "",
+                  id: 0,
+                  isBilling: false,
+                  isCustAddress: false,
+                  isShipping: true,
+                  lattitude: "",
+                  locality: "",
+                  locationUrl: null,
+                  longitude: "",
+                  mobileNo: shippingAddress.mobileNo || "",
+                  nationalMobileNum: "",
+                  phone: shippingAddress.phone || "",
+                  pinCodeId: shippingAddress.pincode || "",
+                  primaryContact: "",
+                  regAddress: false,
+                  shipToCode: shippingAddress.shipToCode || null,
+                  soldToCode: null,
+                  state: shippingAddress.state || "",
+                  tenantId: 0,
+                  vendorID: null,
+                  vendorId: null,
+                  wareHouse: false,
+                },
+                companyId: {
+                  id: 0,
+                  name: "",
+                },
+              } as BillingAddress)
+            : undefined
+        }
+      />
     </Card>
   );
 }

@@ -16,25 +16,31 @@ import { useCurrentUser } from "@/hooks/useCurrentUser";
 import { useTenantData } from "@/hooks/useTenantData";
 import type { OrderDetailsResponse } from "@/lib/api";
 import { OrderDetailsService } from "@/lib/api";
+import {
+  type SellerBranch,
+  type Warehouse,
+} from "@/lib/api/services/SellerWarehouseService";
 
 // Import types for proper typing
 interface AddressDetails {
-  addressLine?: string;
-  branchName?: string;
-  city?: string;
-  state?: string;
-  country?: string;
-  pinCodeId?: string;
-  gst?: string;
-  district?: string;
-  locality?: string;
-  mobileNo?: string;
-  phone?: string;
-  billToCode?: string;
-  shipToCode?: string;
-  soldToCode?: string;
-  sellerCompanyName?: string;
-  sellerBranchName?: string;
+  addressLine?: string | undefined;
+  branchName?: string | undefined;
+  city?: string | undefined;
+  state?: string | undefined;
+  country?: string | undefined;
+  pinCodeId?: string | undefined;
+  pincode?: string | undefined;
+  gst?: string | undefined;
+  district?: string | undefined;
+  locality?: string | undefined;
+  mobileNo?: string | undefined;
+  phone?: string | undefined;
+  email?: string | undefined;
+  billToCode?: string | undefined;
+  shipToCode?: string | undefined;
+  soldToCode?: string | undefined;
+  sellerCompanyName?: string | undefined;
+  sellerBranchName?: string | undefined;
 }
 
 interface OrderTerms {
@@ -90,6 +96,17 @@ export default function EditOrderPage({ params }: EditOrderPageProps) {
   const [editedRequiredDate, setEditedRequiredDate] = useState<string>("");
   const [editedReferenceNumber, setEditedReferenceNumber] =
     useState<string>("");
+  const [editedBillingAddress, setEditedBillingAddress] = useState<
+    AddressDetails | undefined
+  >(undefined);
+  const [editedShippingAddress, setEditedShippingAddress] = useState<
+    AddressDetails | undefined
+  >(undefined);
+  const [editedSellerBranch, setEditedSellerBranch] =
+    useState<SellerBranch | null>(null);
+  const [editedWarehouse, setEditedWarehouse] = useState<Warehouse | null>(
+    null
+  );
 
   const { user } = useCurrentUser();
   const { tenantData } = useTenantData();
@@ -187,6 +204,22 @@ export default function EditOrderPage({ params }: EditOrderPageProps) {
 
   const handleReferenceNumberChange = (refNumber: string) => {
     setEditedReferenceNumber(refNumber);
+  };
+
+  const handleBillingAddressChange = (address: AddressDetails) => {
+    setEditedBillingAddress(address);
+  };
+
+  const handleShippingAddressChange = (address: AddressDetails) => {
+    setEditedShippingAddress(address);
+  };
+
+  const handleSellerBranchChange = (sellerBranch: SellerBranch | null) => {
+    setEditedSellerBranch(sellerBranch);
+  };
+
+  const handleWarehouseChange = (warehouse: Warehouse | null) => {
+    setEditedWarehouse(warehouse);
   };
 
   const handleSave = async () => {
@@ -289,12 +322,14 @@ export default function EditOrderPage({ params }: EditOrderPageProps) {
                 {/* Contact Details Card */}
                 <OrderContactDetails
                   billingAddress={
-                    orderDetails.data?.orderDetails?.[0]
-                      ?.billingAddressDetails as unknown as AddressDetails
+                    editedBillingAddress ||
+                    (orderDetails.data?.orderDetails?.[0]
+                      ?.billingAddressDetails as unknown as AddressDetails)
                   }
                   shippingAddress={
-                    orderDetails.data?.orderDetails?.[0]
-                      ?.shippingAddressDetails as unknown as AddressDetails
+                    editedShippingAddress ||
+                    (orderDetails.data?.orderDetails?.[0]
+                      ?.shippingAddressDetails as unknown as AddressDetails)
                   }
                   registerAddress={
                     orderDetails.data?.orderDetails?.[0]
@@ -313,7 +348,8 @@ export default function EditOrderPage({ params }: EditOrderPageProps) {
                       ?.buyerBranchName as unknown as string
                   }
                   warehouseName={
-                    ((
+                    editedWarehouse?.name ||
+                    (((
                       orderDetails.data?.orderDetails?.[0]
                         ?.dbProductDetails?.[0] as unknown as Record<
                         string,
@@ -326,7 +362,7 @@ export default function EditOrderPage({ params }: EditOrderPageProps) {
                           string,
                           string
                         >
-                      )?.orderWareHouseName) as string | undefined
+                      )?.orderWareHouseName) as string | undefined)
                   }
                   warehouseAddress={
                     (
@@ -345,14 +381,34 @@ export default function EditOrderPage({ params }: EditOrderPageProps) {
                     }
                   }
                   salesBranch={
-                    orderDetails.data?.orderDetails?.[0]
-                      ?.sellerBranchName as unknown as string | undefined
+                    editedSellerBranch?.name ||
+                    (orderDetails.data?.orderDetails?.[0]
+                      ?.sellerBranchName as unknown as string | undefined)
                   }
                   requiredDate={editedRequiredDate}
                   referenceNumber={editedReferenceNumber}
                   isEditable={true}
                   onRequiredDateChange={handleRequiredDateChange}
                   onReferenceNumberChange={handleReferenceNumberChange}
+                  onBillingAddressChange={handleBillingAddressChange}
+                  onShippingAddressChange={handleShippingAddressChange}
+                  onSellerBranchChange={handleSellerBranchChange}
+                  onWarehouseChange={handleWarehouseChange}
+                  userId={user?.userId?.toString()}
+                  buyerBranchId={
+                    orderDetails.data?.orderDetails?.[0]
+                      ?.buyerBranchId as number
+                  }
+                  buyerCompanyId={user?.companyId}
+                  productIds={
+                    orderDetails.data?.orderDetails?.[0]?.dbProductDetails?.map(
+                      p => p.productId
+                    ) as number[]
+                  }
+                  sellerCompanyId={
+                    orderDetails.data?.orderDetails?.[0]
+                      ?.sellerCompanyId as number
+                  }
                 />
 
                 {/* Terms Card */}

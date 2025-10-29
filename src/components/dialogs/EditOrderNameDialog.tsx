@@ -54,12 +54,16 @@ export function EditOrderNameDialog({
     formState: { errors, isValid },
     reset,
     setValue,
+    watch,
   } = useForm<OrderNameFormData>({
     resolver: zodResolver(orderNameSchema),
     defaultValues: {
       orderName: currentOrderName,
     },
   });
+
+  // Watch the current form value to compare with original
+  const currentFormValue = watch("orderName");
 
   // Update form when currentOrderName changes
   React.useEffect(() => {
@@ -137,7 +141,13 @@ export function EditOrderNameDialog({
             </Button>
             <Button
               type="submit"
-              disabled={loading || isSubmitting || !isValid}
+              disabled={
+                loading ||
+                isSubmitting ||
+                !isValid ||
+                !currentFormValue ||
+                currentFormValue.trim() === currentOrderName.trim()
+              }
               className="min-w-[80px]"
             >
               {isSubmitting ? (

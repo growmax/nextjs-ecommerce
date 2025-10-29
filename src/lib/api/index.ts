@@ -17,6 +17,7 @@ export {
 
 // Import services
 import AuthService from "./services/AuthService";
+import BillingBranchService from "./services/BillingBranchService";
 import CartService from "./services/CartService";
 import CatalogService from "./services/CatalogService";
 import CompanyService from "./services/CompanyService";
@@ -44,6 +45,7 @@ import QuoteStatusService from "./services/StatusService";
 export {
   AuthService,
   AuthTokenService,
+  BillingBranchService,
   CartService,
   CatalogService,
   CompanyService,
@@ -70,6 +72,10 @@ export type {
   RefreshTokenResponse,
 } from "./services/AuthService";
 
+export type {
+  BillingAddress,
+  BillingBranchResponse,
+} from "./services/BillingBranchService";
 export type { TenantInfo } from "./services/TenantService";
 
 export type {
