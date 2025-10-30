@@ -89,11 +89,7 @@ interface SellerCardProps {
   isPricingLoading: boolean;
   isLoading: boolean;
   onItemUpdate: (item: CartProduct, quantity: number) => Promise<void>;
-  onItemDelete: (
-    productId: number,
-    itemNo: string,
-    sellerId?: string | number
-  ) => void;
+  onItemDelete: (productId: number, itemNo: string, sellerId?: string | number) => void;
   onClearCart: () => void;
   handleOrder: () => void;
   handleQuote: () => void;

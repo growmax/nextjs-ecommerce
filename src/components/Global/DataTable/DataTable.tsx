@@ -123,20 +123,15 @@ export function DataTable<TData>({
 }: DataTableProps<TData>) {
   // Internal states (used only if not controlled)
   const [data, setData] = React.useState(initialData);
-  const [internalRowSelection, setInternalRowSelection] =
-    React.useState<RowSelectionState>({});
+  const [internalRowSelection, setInternalRowSelection] = React.useState<RowSelectionState>({});
   const [internalColumnVisibility, setInternalColumnVisibility] =
     React.useState<VisibilityState>({});
-  const [internalColumnFilters, setInternalColumnFilters] =
-    React.useState<ColumnFiltersState>([]);
-  const [internalSorting, setInternalSorting] = React.useState<SortingState>(
-    []
-  );
-  const [internalPagination, setInternalPagination] =
-    React.useState<PaginationState>({
-      pageIndex: 0,
-      pageSize: pageSizeOptions[0] || 10,
-    });
+  const [internalColumnFilters, setInternalColumnFilters] = React.useState<ColumnFiltersState>([]);
+  const [internalSorting, setInternalSorting] = React.useState<SortingState>([]);
+  const [internalPagination, setInternalPagination] = React.useState<PaginationState>({
+    pageIndex: 0,
+    pageSize: pageSizeOptions[0] || 10,
+  });
 
   // Update internal data when initialData changes
   React.useEffect(() => {
@@ -147,8 +142,7 @@ export function DataTable<TData>({
   const rowSelection = controlledRowSelection ?? internalRowSelection;
   const setRowSelection = onRowSelectionChange ?? setInternalRowSelection;
 
-  const columnVisibility =
-    controlledColumnVisibility ?? internalColumnVisibility;
+  const columnVisibility = controlledColumnVisibility ?? internalColumnVisibility;
   const setColumnVisibility =
     onColumnVisibilityChange ?? setInternalColumnVisibility;
 
@@ -469,7 +463,9 @@ export function DataTable<TData>({
               </TabsTrigger>
             ))}
           </TabsList>
-          <div className="flex items-center gap-2">{renderToolbar()}</div>
+          <div className="flex items-center gap-2">
+            {renderToolbar()}
+          </div>
         </div>
         {tabs.map(tab => (
           <TabsContent
@@ -503,7 +499,9 @@ export function DataTable<TData>({
     <div className={`flex flex-col ${className || ""}`}>
       {renderToolbar()}
       <div className="flex-1 overflow-auto">
-        <div className="px-4 lg:px-6">{renderTableContent()}</div>
+        <div className="px-4 lg:px-6">
+          {renderTableContent()}
+        </div>
       </div>
       {showPagination && (
         <div className="flex-shrink-0 border-t bg-background">

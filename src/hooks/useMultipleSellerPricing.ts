@@ -125,25 +125,23 @@ export default function useMultipleSellerPricing(
 
     // Group getAllSellerPrices by numeric sellerId for easy lookup
     const allSellerPricesBySeller: SellerPricing = {};
-    (allSellerPricesData as Record<string, unknown>[]).forEach(
-      (item: Record<string, unknown>) => {
-        // Only use numeric seller IDs
-        const sellerId = (item.sellerId || item.vendorId) as string | number;
-        if (sellerId) {
-          const sellerKey = String(sellerId);
-          if (!allSellerPricesBySeller[sellerKey]) {
-            allSellerPricesBySeller[sellerKey] = [];
-          }
-          allSellerPricesBySeller[sellerKey].push(item);
-        } else {
-          // eslint-disable-next-line no-console
-          console.warn(
-            "[useMultipleSellerPricing] Pricing item has no numeric sellerId or vendorId:",
-            item
-          );
+    (allSellerPricesData as Record<string, unknown>[]).forEach((item: Record<string, unknown>) => {
+      // Only use numeric seller IDs
+      const sellerId = (item.sellerId || item.vendorId) as string | number;
+      if (sellerId) {
+        const sellerKey = String(sellerId);
+        if (!allSellerPricesBySeller[sellerKey]) {
+          allSellerPricesBySeller[sellerKey] = [];
         }
+        allSellerPricesBySeller[sellerKey].push(item);
+      } else {
+        // eslint-disable-next-line no-console
+        console.warn(
+          "[useMultipleSellerPricing] Pricing item has no numeric sellerId or vendorId:",
+          item
+        );
       }
-    );
+    });
 
     // Process each seller's pricing with validation
     sellerIds.forEach((sellerId: string | number, index: number) => {
@@ -152,9 +150,7 @@ export default function useMultipleSellerPricing(
       const fallbackData = allSellerPricesBySeller[sellerId] || [];
 
       // Check if seller-specific data actually belongs to this seller
-      const validSellerData = (
-        sellerSpecificData as Record<string, unknown>[]
-      ).filter(
+      const validSellerData = (sellerSpecificData as Record<string, unknown>[]).filter(
         (item: Record<string, unknown>) =>
           String(item.sellerId) === String(sellerId) ||
           String(item.vendorId) === String(sellerId)

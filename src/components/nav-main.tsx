@@ -70,7 +70,10 @@ export function NavMain({
             defaultOpen={item.isActive || isActive(item.url)}
           >
             <SidebarMenuItem>
-              <CollapsibleTrigger className="w-full [&[data-state=closed]>button]:h-8 [&[data-state=open]>button]:h-8">
+              <CollapsibleTrigger
+                asChild
+                className="w-full [&[data-state=closed]>button]:h-8 [&[data-state=open]>button]:h-8"
+              >
                 <SidebarMenuButton tooltip={item.title}>
                   <item.icon />
                   <span>{item.title}</span>

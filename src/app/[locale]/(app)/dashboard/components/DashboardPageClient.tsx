@@ -6,7 +6,9 @@ import { Skeleton } from "@/components/ui/skeleton";
 // Lazy load heavy components to reduce initial bundle size
 const DashboardChart = dynamic(
   () =>
-    import("./DashboardChart/DashboardChart").then(mod => mod.DashboardChart),
+    import("./DashboardChart/DashboardChart").then(
+      mod => mod.DashboardChart
+    ),
   {
     loading: () => (
       <div className="space-y-4">

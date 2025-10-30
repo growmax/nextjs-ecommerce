@@ -7,16 +7,7 @@ interface SkeletonRowProps {
 export function SkeletonRow({ columnCount }: SkeletonRowProps) {
   // Generate varying widths for more realistic skeleton
   const getSkeletonWidth = (index: number) => {
-    const widths = [
-      "w-24",
-      "w-32",
-      "w-28",
-      "w-36",
-      "w-20",
-      "w-24",
-      "w-28",
-      "w-32",
-    ];
+    const widths = ["w-24", "w-32", "w-28", "w-36", "w-20", "w-24", "w-28", "w-32"];
     return widths[index % widths.length];
   };
 
@@ -25,9 +16,7 @@ export function SkeletonRow({ columnCount }: SkeletonRowProps) {
       {Array.from({ length: columnCount }).map((_item, index) => (
         // eslint-disable-next-line react/no-array-index-key
         <TableCell key={`skeleton-${columnCount}-${index}`} className="py-4">
-          <div
-            className={`h-4 bg-gray-200 rounded ${getSkeletonWidth(index)}`}
-          />
+          <div className={`h-4 bg-gray-200 rounded ${getSkeletonWidth(index)}`} />
         </TableCell>
       ))}
     </TableRow>

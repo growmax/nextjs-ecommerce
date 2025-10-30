@@ -48,9 +48,9 @@ function QuotesLandingTable({
   const [filterData, setFilterData] = useState<QuoteFilterFormData | null>(
     null
   );
-  const [initialFilterData] = useState<QuoteFilterFormData | undefined>(
-    undefined
-  );
+  const [initialFilterData] = useState<
+    QuoteFilterFormData | undefined
+  >(undefined);
   const [filterPreferences, setFilterPreferences] =
     useState<FilterPreferenceResponse | null>(null);
   const [isAddDrawerOpen, setIsAddDrawerOpen] = useState(false);
@@ -229,6 +229,7 @@ function QuotesLandingTable({
     },
     [pagination]
   );
+
 
   // Load filter preferences
   const loadFilterPreferences = useCallback(async () => {
@@ -646,6 +647,7 @@ function QuotesLandingTable({
   }, [handleExport, setExportCallback]);
 
   const handleDrawerClose = () => setIsDrawerOpen(false);
+
 
   const handleAddDrawerClose = () => setIsAddDrawerOpen(false);
 

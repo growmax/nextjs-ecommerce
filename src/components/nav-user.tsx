@@ -9,7 +9,11 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import {
+  Avatar,
+  AvatarFallback,
+  AvatarImage,
+} from "@/components/ui/avatar";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -37,13 +41,12 @@ export function NavUser() {
     return null;
   }
 
-  const initials =
-    userProfile.displayName
-      ?.split(" ")
-      .map(n => n[0])
-      .join("")
-      .toUpperCase()
-      .slice(0, 2) || "U";
+  const initials = userProfile.displayName
+    ?.split(" ")
+    .map(n => n[0])
+    .join("")
+    .toUpperCase()
+    .slice(0, 2) || "U";
 
   return (
     <SidebarMenu>
@@ -59,9 +62,7 @@ export function NavUser() {
                   src={userProfile.picture || ""}
                   alt={userProfile.displayName || "User"}
                 />
-                <AvatarFallback className="rounded-lg">
-                  {initials}
-                </AvatarFallback>
+                <AvatarFallback className="rounded-lg">{initials}</AvatarFallback>
               </Avatar>
               <div className="grid flex-1 text-left text-sm leading-tight">
                 <span className="truncate font-medium">
@@ -123,7 +124,11 @@ export function NavUser() {
               disabled={isLoggingOut}
               className="text-red-600 focus:text-red-600"
             >
-              {isLoggingOut ? <Loader2 className="animate-spin" /> : <LogOut />}
+              {isLoggingOut ? (
+                <Loader2 className="animate-spin" />
+              ) : (
+                <LogOut />
+              )}
               {isLoggingOut ? "Logging out..." : "Log out"}
             </DropdownMenuItem>
           </DropdownMenuContent>

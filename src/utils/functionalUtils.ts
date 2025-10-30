@@ -1,5 +1,6 @@
 import _, { maxBy, toNumber } from "lodash";
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export function getSuitableDiscountByQuantity(
   quantity: any, // eslint-disable-line @typescript-eslint/no-explicit-any
   discountsList: any, // eslint-disable-line @typescript-eslint/no-explicit-any
@@ -17,13 +18,8 @@ export function getSuitableDiscountByQuantity(
   // }
   return { suitableDiscount, nextSuitableDiscount };
 }
-
-function getObjectsByQuantityValue(
-  quantity: any,
-  arr: any = [],
-  _qtyIncrease?: any
-) {
-  // eslint-disable-line @typescript-eslint/no-explicit-any
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function getObjectsByQuantityValue(quantity: any, arr: any = [], _qtyIncrease?: any) { // eslint-disable-line @typescript-eslint/no-explicit-any
   const resultArr = [];
   // const nextSuitableDiscArr = [];
   for (const obj of arr) {
@@ -43,7 +39,7 @@ function getObjectsByQuantityValue(
     .value();
   return { resultArr, nextSuitableDiscount };
 }
-
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export const assign_pricelist_discounts_data_to_products = (
   product: any = {}, // eslint-disable-line @typescript-eslint/no-explicit-any
   prd_wise_discData: any = {}, // eslint-disable-line @typescript-eslint/no-explicit-any

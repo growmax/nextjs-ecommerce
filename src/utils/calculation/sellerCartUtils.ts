@@ -252,7 +252,7 @@ export const getMockSellerData = (sellerId: any) => {
  * @param {object} calculationParams - Calculation parameters
  * @returns {object} - Seller carts with volume discount applied
  */
-
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export const applyVolumeDiscountsToSellerCarts = (
   sellerCarts: any, // eslint-disable-line @typescript-eslint/no-explicit-any
   volumeDiscountData: any = {}, // eslint-disable-line @typescript-eslint/no-explicit-any
@@ -318,7 +318,7 @@ export const applyVolumeDiscountsToSellerCarts = (
  * @param {object} allSellerPricesData - All seller prices data (fallback)
  * @returns {object | null} - Best matching pricing data or null
  */
-
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export const findBestPricingMatch = (
   item: any, // eslint-disable-line @typescript-eslint/no-explicit-any
   sellerPricingData: any, // eslint-disable-line @typescript-eslint/no-explicit-any
@@ -388,7 +388,7 @@ export const findBestPricingMatch = (
  * @param {object} allSellerPricesData - All seller prices (fallback)
  * @returns {object} - Merged pricing data
  */
-
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export const mergeSellerPricing = (
   sellerPricingData: any, // eslint-disable-line @typescript-eslint/no-explicit-any
   allSellerPricesData: any // eslint-disable-line @typescript-eslint/no-explicit-any
@@ -412,9 +412,8 @@ export const mergeSellerPricing = (
  * @param {object} pricingData - Pricing data object
  * @returns {boolean} - True if pricing is valid
  */
-
-export const isValidPricing = (pricingData: any) => {
-  // eslint-disable-line @typescript-eslint/no-explicit-any
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export const isValidPricing = (pricingData: any) => { // eslint-disable-line @typescript-eslint/no-explicit-any
   return (
     pricingData &&
     (pricingData.MasterPrice !== null || pricingData.BasePrice !== null) &&
@@ -427,9 +426,8 @@ export const isValidPricing = (pricingData: any) => {
  * @param {object} sellerCarts - Seller carts with pricing
  * @returns {object} - Summary of pricing resolution
  */
-
-export const getPricingResolutionSummary = (sellerCarts: any) => {
-  // eslint-disable-line @typescript-eslint/no-explicit-any
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export const getPricingResolutionSummary = (sellerCarts: any) => { // eslint-disable-line @typescript-eslint/no-explicit-any
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const summary: any = {
     totalSellers: 0,
@@ -445,14 +443,11 @@ export const getPricingResolutionSummary = (sellerCarts: any) => {
 
   Object.entries(sellerCarts).forEach(([sellerId, cart]) => {
     summary.totalSellers++;
-    (cart as any).items?.forEach((item: any) => {
-      // eslint-disable-line @typescript-eslint/no-explicit-any
+    (cart as any).items?.forEach((item: any) => { // eslint-disable-line @typescript-eslint/no-explicit-any
       summary.totalProducts++;
 
       if (item.pricingSource) {
-        summary.pricingBySources[
-          item.pricingSource as keyof typeof summary.pricingBySources
-        ]++;
+        summary.pricingBySources[item.pricingSource as keyof typeof summary.pricingBySources]++;
       } else if (item.priceNotAvailable) {
         summary.pricingBySources["no-pricing"]++;
         summary.productsWithoutPricing.push({
