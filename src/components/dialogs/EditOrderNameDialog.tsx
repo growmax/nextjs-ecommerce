@@ -24,7 +24,7 @@ const orderNameSchema = z.object({
     .min(3, "Order name must be at least 3 characters")
     .max(100, "Order name must be less than 100 characters")
     .regex(
-      /^[a-zA-Z0-9\s\-_.,()&]+$/,
+      /^[a-zA-Z0-9\s\-_.,()&']+$/,
       "Order name contains invalid characters"
     ),
 });
@@ -53,7 +53,6 @@ export function EditOrderNameDialog({
     handleSubmit,
     formState: { errors, isValid },
     reset,
-    setValue,
     watch,
   } = useForm<OrderNameFormData>({
     resolver: zodResolver(orderNameSchema),
@@ -65,12 +64,12 @@ export function EditOrderNameDialog({
   // Watch the current form value to compare with original
   const currentFormValue = watch("orderName");
 
-  // Update form when currentOrderName changes
+  // Ensure the input always shows the latest order name when dialog opens
   React.useEffect(() => {
-    if (currentOrderName) {
-      setValue("orderName", currentOrderName);
+    if (open) {
+      reset({ orderName: currentOrderName });
     }
-  }, [currentOrderName, setValue]);
+  }, [open, currentOrderName, reset]);
 
   const onSubmit = async (data: OrderNameFormData) => {
     if (data.orderName === currentOrderName) {
@@ -93,20 +92,20 @@ export function EditOrderNameDialog({
   };
 
   const handleCancel = () => {
-    reset();
+    reset({ orderName: currentOrderName });
     onOpenChange(false);
   };
 
   const handleOpenChange = (open: boolean) => {
     if (!open && !isSubmitting) {
-      reset();
+      reset({ orderName: currentOrderName });
     }
     onOpenChange(open);
   };
 
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
-      <DialogContent className="w-full max-w-md p-6">
+      <DialogContent className="w-full max-w-md p-6" showCloseButton={false}>
         <DialogHeader>
           <DialogTitle className="text-lg font-semibold">
             Edit Order Name

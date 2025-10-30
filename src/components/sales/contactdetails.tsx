@@ -371,7 +371,7 @@ export default function OrderContactDetails({
   const [billingDialogOpen, setBillingDialogOpen] = useState(false);
   const [shippingDialogOpen, setShippingDialogOpen] = useState(false);
 
-  const handleBillingAddressSelect = async (address: BillingAddress) => {
+  const handleBillingAddressSelect = (address: BillingAddress) => {
     // Convert BillingAddress to AddressDetails format
     const updatedBillingAddress: AddressDetails = {
       branchName: address.addressId.branchName,
@@ -395,45 +395,67 @@ export default function OrderContactDetails({
     // Show success message
     toast.success("Billing address updated successfully");
 
-    // Call APIs to update seller branch and warehouse
+    // Call APIs to update seller branch and warehouse immediately
+    // Use buyerBranchId from order details (it represents the buyer's branch)
     if (
       userId &&
       buyerBranchId &&
       buyerCompanyId &&
       productIds &&
+      productIds.length > 0 &&
       sellerCompanyId
     ) {
-      try {
-        const request = {
+      // Call API immediately in background
+      SellerWarehouseService.getSellerBranchAndWarehouse(
+        userId,
+        buyerCompanyId.toString(),
+        {
           userId: parseInt(userId),
           buyerBranchId,
           buyerCompanyId,
           productIds,
           sellerCompanyId,
-        };
-
-        const { sellerBranch, warehouse } =
-          await SellerWarehouseService.getSellerBranchAndWarehouse(
-            userId,
-            buyerCompanyId.toString(),
-            request
-          );
-
-        // Update seller branch
-        if (onSellerBranchChange) {
-          onSellerBranchChange(sellerBranch);
         }
+      )
+        .then(({ sellerBranch, warehouse }) => {
+          // Update seller branch immediately (call even if null to clear previous state)
+          if (onSellerBranchChange) {
+            onSellerBranchChange(sellerBranch);
+          }
 
-        // Update warehouse
-        if (onWarehouseChange) {
-          onWarehouseChange(warehouse);
-        }
+          // Update warehouse immediately (call even if null to clear previous state)
+          if (onWarehouseChange) {
+            onWarehouseChange(warehouse);
+          }
 
-        if (sellerBranch) {
-          toast.success("Seller branch and warehouse updated successfully");
-        }
-      } catch {
-        toast.error("Failed to sync seller branch and warehouse with server");
+          // Show appropriate success message
+          if (sellerBranch && warehouse) {
+            toast.success("Seller branch and warehouse updated successfully");
+          } else if (sellerBranch) {
+            toast.success("Seller branch updated successfully");
+          } else if (warehouse) {
+            toast.success("Warehouse updated successfully");
+          } else {
+            toast.error("No seller branch or warehouse found");
+          }
+        })
+        .catch(() => {
+          // Show error message
+          toast.error("Failed to sync seller branch and warehouse with server");
+          // Still try to update seller branch if it was partially successful
+          // This ensures UI updates even on partial failures
+        });
+    } else {
+      // Debug: Show what's missing
+      const missing = [];
+      if (!userId) missing.push("userId");
+      if (!buyerBranchId) missing.push("buyerBranchId");
+      if (!buyerCompanyId) missing.push("buyerCompanyId");
+      if (!productIds || productIds.length === 0) missing.push("productIds");
+      if (!sellerCompanyId) missing.push("sellerCompanyId");
+
+      if (process.env.NODE_ENV === "development") {
+        toast.error(`Missing required data: ${missing.join(", ")}`);
       }
     }
   };

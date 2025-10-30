@@ -81,25 +81,30 @@ export class SellerWarehouseService extends BaseService<SellerWarehouseService> 
   ): Promise<Warehouse | null> {
     const url = `/branches/findWareHouseByBranchId/2?branchId=${branchId}`;
 
-    const response = await this.call(url, request, "POST");
+    try {
+      const response = await this.call(url, request, "POST");
 
-    // Normalize API response - response format: { success: true, data: { wareHouseName: "...", id: ... } }
-    if (response && typeof response === "object" && "data" in response) {
-      const data = (response as { success?: boolean; data: unknown }).data;
-      if (data && typeof data === "object" && "wareHouseName" in data) {
-        const warehouseData = data as WarehouseResponse;
-        return {
-          id: warehouseData.id,
-          name: warehouseData.wareHouseName,
-          wareHouseName: warehouseData.wareHouseName,
-          ...(warehouseData.wareHousecode && {
-            wareHousecode: warehouseData.wareHousecode,
-          }),
-        };
+      // Normalize API response - response format: { success: true, data: { wareHouseName: "...", id: ... } }
+      if (response && typeof response === "object" && "data" in response) {
+        const data = (response as { success?: boolean; data: unknown }).data;
+        if (data && typeof data === "object" && "wareHouseName" in data) {
+          const warehouseData = data as WarehouseResponse;
+          return {
+            id: warehouseData.id,
+            name: warehouseData.wareHouseName,
+            wareHouseName: warehouseData.wareHouseName,
+            ...(warehouseData.wareHousecode && {
+              wareHousecode: warehouseData.wareHousecode,
+            }),
+          };
+        }
       }
-    }
 
-    return null;
+      return null;
+    } catch (error) {
+      // Re-throw the error so we can see it in the network tab
+      throw error;
+    }
   }
 
   // Combined method to get seller branch and warehouse
@@ -111,29 +116,41 @@ export class SellerWarehouseService extends BaseService<SellerWarehouseService> 
     sellerBranch: SellerBranch | null;
     warehouse: Warehouse | null;
   }> {
+    let sellerBranch: SellerBranch | null = null;
+    let warehouse: Warehouse | null = null;
+
+    // Step 1: Call seller branch API
     try {
-      // First, find seller branch
       const sellerBranches = await this.findSellerBranch(
         userId,
         companyId,
         request
       );
-      const sellerBranch = sellerBranches.length > 0 ? sellerBranches[0] : null;
-
-      if (!sellerBranch) {
-        return { sellerBranch: null, warehouse: null };
-      }
-
-      // Then, find warehouse by seller branch ID
-      const warehouse = await this.findWarehouseByBranchId(
-        sellerBranch.branchId,
-        { sellerBranchId: sellerBranch.branchId }
-      );
-
-      return { sellerBranch, warehouse };
+      sellerBranch =
+        sellerBranches.length > 0 ? (sellerBranches[0] ?? null) : null;
     } catch {
-      return { sellerBranch: null, warehouse: null };
+      // Seller branch API failed, but continue to try warehouse API
+      sellerBranch = null;
     }
+
+    // Step 2: Call warehouse API using seller branch ID or buyer branch ID
+    // The warehouse API should be called with the sellerBranchId from the seller branch response
+    const sellerBranchId = sellerBranch?.branchId || request.buyerBranchId;
+
+    // Only call warehouse API if we have a valid branch ID
+    if (sellerBranchId) {
+      try {
+        // Explicitly call warehouse API
+        warehouse = await this.findWarehouseByBranchId(sellerBranchId, {
+          sellerBranchId,
+        });
+      } catch {
+        // Warehouse API failed, but still return seller branch if available
+        warehouse = null;
+      }
+    }
+
+    return { sellerBranch, warehouse };
   }
 }
 

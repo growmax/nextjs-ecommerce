@@ -18,6 +18,8 @@ import { useCurrentUser } from "@/hooks/useCurrentUser";
 import { useTenantData } from "@/hooks/useTenantData";
 import type { OrderDetailsResponse } from "@/lib/api";
 import { OrderDetailsService, OrderNameService } from "@/lib/api";
+import { exportProductsToCsv } from "@/lib/export-csv";
+import type { ProductCsvRow } from "@/lib/export-csv";
 
 // Import types for proper typing
 interface AddressDetails {
@@ -315,9 +317,13 @@ export default function OrderDetailsPage({ params }: OrderDetailsPageProps) {
                   totalCount:
                     orderDetails.data.orderDetails[0].dbProductDetails.length,
                 })}
-                onExport={() =>
-                  toast.info("Export products functionality coming soon")
-                }
+                onExport={() => {
+                  const products =
+                    orderDetails.data?.orderDetails?.[0]?.dbProductDetails ||
+                    [];
+                  const filename = `Order_${orderId}_Products.csv`;
+                  exportProductsToCsv(products as ProductCsvRow[], filename);
+                }}
               />
             )}
 
