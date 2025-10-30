@@ -30,9 +30,12 @@ export class OrderNameService extends BaseService<OrderNameService> {
   ): Promise<UpdateOrderNameResponse> {
     const { userId, companyId, orderIdentifier, orderName } = params;
 
+    // Backend expects the payload as { newName: "..." }
+    const query = `userId=${encodeURIComponent(String(userId))}&companyId=${encodeURIComponent(String(companyId))}&orderIdentifier=${encodeURIComponent(orderIdentifier)}`;
+
     return this.call(
-      `/orders/changeOrderName?userId=${userId}&companyId=${companyId}&orderIdentifier=${orderIdentifier}`,
-      { orderName },
+      `/orders/changeOrderName?${query}`,
+      { newName: orderName },
       "PUT"
     ) as Promise<UpdateOrderNameResponse>;
   }
@@ -45,9 +48,11 @@ export class OrderNameService extends BaseService<OrderNameService> {
   async updateOrderNameServerSide(
     params: UpdateOrderNameRequest
   ): Promise<UpdateOrderNameResponse | null> {
+    const query = `userId=${encodeURIComponent(String(params.userId))}&companyId=${encodeURIComponent(String(params.companyId))}&orderIdentifier=${encodeURIComponent(params.orderIdentifier)}`;
+
     return this.callSafe(
-      `/orders/changeOrderName?userId=${params.userId}&companyId=${params.companyId}&orderIdentifier=${params.orderIdentifier}`,
-      { orderName: params.orderName },
+      `/orders/changeOrderName?${query}`,
+      { newName: params.orderName },
       "PUT"
     ) as Promise<UpdateOrderNameResponse | null>;
   }
