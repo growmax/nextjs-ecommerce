@@ -1,9 +1,11 @@
 import { GlobalLoaderWrapper } from "@/components/custom/global-loader-wrapper";
+import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { LoadingProvider } from "@/contexts/LoadingContext";
 import { ServerAuth } from "@/lib/auth-server";
 import { ServerThemeAPI } from "@/lib/theme-server";
 import { QueryProvider } from "@/providers/QueryProvider";
 import type { Metadata } from "next";
+import { Suspense } from "react";
 import "./globals.css";
 
 export const metadata: Metadata = {
@@ -42,12 +44,27 @@ export default async function RootLayout({
       </head>
       <body suppressHydrationWarning={true}>
         <div suppressHydrationWarning={true}>
-          <QueryProvider>
-            <LoadingProvider>
-              {children}
-              <GlobalLoaderWrapper />
-            </LoadingProvider>
-          </QueryProvider>
+          <ErrorBoundary>
+            <QueryProvider>
+              <LoadingProvider>
+                <Suspense
+                  fallback={
+                    <div className="flex min-h-screen items-center justify-center">
+                      <div className="text-center">
+                        <div className="inline-block h-8 w-8 animate-spin rounded-full border-4 border-solid border-current border-r-transparent align-[-0.125em] motion-reduce:animate-[spin_1.5s_linear_infinite]" />
+                        <p className="mt-4 text-sm text-muted-foreground">
+                          Loading...
+                        </p>
+                      </div>
+                    </div>
+                  }
+                >
+                  {children}
+                </Suspense>
+                <GlobalLoaderWrapper />
+              </LoadingProvider>
+            </QueryProvider>
+          </ErrorBoundary>
         </div>
       </body>
     </html>

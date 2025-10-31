@@ -1,4 +1,6 @@
-import { find, groupBy } from "lodash";
+// Use individual lodash imports for better tree-shaking
+import find from "lodash/find";
+import groupBy from "lodash/groupBy";
 import {
   cartCalculation,
   discountDetails,

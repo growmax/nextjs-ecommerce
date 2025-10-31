@@ -38,6 +38,10 @@ export default function ImageWithFallback({
     }
   };
 
+  // Only use blur placeholder for StaticImageData (local images)
+  // Next.js automatically generates blurDataURL for imported static images
+  const isStaticImage = typeof imgSrc !== "string";
+
   return (
     <Image
       src={imgSrc}
@@ -50,7 +54,8 @@ export default function ImageWithFallback({
         backgroundColor: "#f5f5f5",
       }}
       onError={handleError}
-      unoptimized
+      loading="lazy"
+      {...(isStaticImage && { placeholder: "blur" })}
     />
   );
 }

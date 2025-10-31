@@ -5,7 +5,8 @@ import {
   groupCartItemsBySeller,
 } from "@/utils/calculation/sellerCartUtils";
 import { assign_pricelist_discounts_data_to_products } from "@/utils/functionalUtils";
-import { isEmpty } from "lodash";
+// Use individual lodash imports for better tree-shaking
+import isEmpty from "lodash/isEmpty";
 import { useEffect, useMemo, useState } from "react";
 import useMultipleSellerPricing from "./useMultipleSellerPricing";
 

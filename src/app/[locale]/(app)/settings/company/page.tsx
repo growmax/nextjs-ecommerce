@@ -1,21 +1,10 @@
 "use client";
 
-import dynamic from "next/dynamic";
+import { ErrorBoundary } from "@/components/ErrorBoundary";
 import HeaderBar from "@/components/Global/HeaderBar/HeaderBar";
 import SectionCard from "@/components/custom/SectionCard";
 import { SaveCancelToolbar } from "@/components/custom/save-cancel-toolbar";
 import { FullWidthLayout } from "@/components/layout/PageContent";
-
-// Lazy load AddAddressDialog - it's heavy with form validation and components
-const AddAddressDialog = dynamic(
-  () =>
-    import("@/components/dialogs/company").then(mod => ({
-      default: mod.AddAddressDialog,
-    })),
-  {
-    ssr: false,
-  }
-);
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -51,10 +40,22 @@ import {
   Trash2,
   User,
 } from "lucide-react";
-import { useEffect, useMemo, useRef, useState } from "react";
+import dynamic from "next/dynamic";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Controller, useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { z } from "zod";
+
+// Lazy load AddAddressDialog - it's heavy with form validation and components
+const AddAddressDialog = dynamic(
+  () =>
+    import("@/components/dialogs/company").then(mod => ({
+      default: mod.AddAddressDialog,
+    })),
+  {
+    ssr: false,
+  }
+);
 
 // Form validation schema
 const companyFormSchema = z.object({
@@ -507,106 +508,109 @@ export default function CompanyPage() {
     }
   };
 
-  // Fetch branch addresses from API
-  const fetchBranchAddresses = async (
-    search: string = "",
-    page: number = 0,
-    clearDataFirst: boolean = false,
-    pageSizeOverride?: number
-  ) => {
-    try {
-      // Clear data immediately if requested (for new searches)
-      if (clearDataFirst) {
+  // Fetch branch addresses from API - memoized to prevent unnecessary re-renders
+  const fetchBranchAddresses = useCallback(
+    async (
+      search: string = "",
+      page: number = 0,
+      clearDataFirst: boolean = false,
+      pageSizeOverride?: number
+    ) => {
+      try {
+        // Clear data immediately if requested (for new searches)
+        if (clearDataFirst) {
+          setAddresses([]);
+          setTotalAddresses(0);
+        }
+
+        setLoadingAddresses(true);
+        setAddressError(null);
+
+        const accessToken = AuthStorage.getAccessToken();
+        const jwtService = JWTService.getInstance();
+        const payload = jwtService.decodeToken(accessToken!);
+
+        if (!payload || !payload.companyId || !payload.userId) {
+          throw new Error("Missing authentication data");
+        }
+
+        const currentPageSize = pageSizeOverride || pageSize;
+        // API uses row-based offset, not page-based
+        // For page 2 with 7 total records and pageSize=5:
+        // We want records 6-7, so offset should be 5 (start from 6th record)
+        const offset = page * currentPageSize;
+        const url =
+          `/api/branches/readBranchwithPagination/${payload.userId}?` +
+          `companyId=${payload.companyId}&` +
+          `offset=${offset}&` +
+          `limit=${currentPageSize}&` +
+          `searchString=${encodeURIComponent(search)}`;
+
+        // Debug logging
+        // eslint-disable-next-line no-console
+        console.log("Fetching addresses with params:", {
+          page,
+          pageSize: currentPageSize,
+          offset,
+          limit: currentPageSize,
+          searchString: search,
+          url,
+        });
+
+        const response = await fetch(url, {
+          headers: {
+            "x-tenant": payload.iss,
+            "Content-Type": "application/json",
+          },
+          credentials: "include", // Include HttpOnly cookies
+        });
+
+        if (!response.ok) {
+          throw new Error(`Failed to fetch addresses: ${response.status}`);
+        }
+
+        const result = await response.json();
+
+        // Debug logging
+        // eslint-disable-next-line no-console
+        console.log("API Response:", {
+          status: result.status,
+          totalCount: result.data?.totalCount,
+          branchResponseLength: result.data?.branchResponse?.length,
+          branchResponse: result.data?.branchResponse,
+          fullResult: result,
+        });
+
+        if (result.status === "success" && result.data) {
+          const branchData = result.data.branchResponse || [];
+          const totalCount = result.data.totalCount || 0;
+          // eslint-disable-next-line no-console
+          console.log("Setting state:", {
+            branchDataLength: branchData.length,
+            totalCount,
+            page,
+            offset,
+            firstItem: branchData[0]?.name,
+            lastItem: branchData[branchData.length - 1]?.name,
+          });
+          setAddresses(branchData);
+          setTotalAddresses(totalCount);
+        } else {
+          throw new Error(result.message || "Failed to fetch addresses");
+        }
+      } catch (err) {
+        setAddressError(
+          err instanceof Error ? err.message : "Failed to load addresses"
+        );
         setAddresses([]);
         setTotalAddresses(0);
+      } finally {
+        setLoadingAddresses(false);
+        setIsSearching(false); // Reset searching state
       }
-
-      setLoadingAddresses(true);
-      setAddressError(null);
-
-      const accessToken = AuthStorage.getAccessToken();
-      const jwtService = JWTService.getInstance();
-      const payload = jwtService.decodeToken(accessToken!);
-
-      if (!payload || !payload.companyId || !payload.userId) {
-        throw new Error("Missing authentication data");
-      }
-
-      const currentPageSize = pageSizeOverride || pageSize;
-      // API uses row-based offset, not page-based
-      // For page 2 with 7 total records and pageSize=5:
-      // We want records 6-7, so offset should be 5 (start from 6th record)
-      const offset = page * currentPageSize;
-      const url =
-        `/api/branches/readBranchwithPagination/${payload.userId}?` +
-        `companyId=${payload.companyId}&` +
-        `offset=${offset}&` +
-        `limit=${currentPageSize}&` +
-        `searchString=${encodeURIComponent(search)}`;
-
-      // Debug logging
-      // eslint-disable-next-line no-console
-      console.log("Fetching addresses with params:", {
-        page,
-        pageSize: currentPageSize,
-        offset,
-        limit: currentPageSize,
-        searchString: search,
-        url,
-      });
-
-      const response = await fetch(url, {
-        headers: {
-          "x-tenant": payload.iss,
-          "Content-Type": "application/json",
-        },
-        credentials: "include", // Include HttpOnly cookies
-      });
-
-      if (!response.ok) {
-        throw new Error(`Failed to fetch addresses: ${response.status}`);
-      }
-
-      const result = await response.json();
-
-      // Debug logging
-      // eslint-disable-next-line no-console
-      console.log("API Response:", {
-        status: result.status,
-        totalCount: result.data?.totalCount,
-        branchResponseLength: result.data?.branchResponse?.length,
-        branchResponse: result.data?.branchResponse,
-        fullResult: result,
-      });
-
-      if (result.status === "success" && result.data) {
-        const branchData = result.data.branchResponse || [];
-        const totalCount = result.data.totalCount || 0;
-        // eslint-disable-next-line no-console
-        console.log("Setting state:", {
-          branchDataLength: branchData.length,
-          totalCount,
-          page,
-          offset,
-          firstItem: branchData[0]?.name,
-          lastItem: branchData[branchData.length - 1]?.name,
-        });
-        setAddresses(branchData);
-        setTotalAddresses(totalCount);
-      } else {
-        throw new Error(result.message || "Failed to fetch addresses");
-      }
-    } catch (err) {
-      setAddressError(
-        err instanceof Error ? err.message : "Failed to load addresses"
-      );
-      setAddresses([]);
-      setTotalAddresses(0);
-    } finally {
-      setLoadingAddresses(false);
-      setIsSearching(false); // Reset searching state
-    }
-  };
+    },
+    [pageSize] // Only depend on pageSize, not searchTerm or page (they're passed as params)
+  );
 
   // Handle pagination
   const handlePageChange = (newPage: number) => {
@@ -726,8 +730,7 @@ export default function CompanyPage() {
     if (companyData && companyData.data) {
       fetchBranchAddresses("", 0, false, pageSize);
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [companyData]); // Remove pageSize from dependencies to prevent duplicate calls
+  }, [companyData, fetchBranchAddresses, pageSize]);
 
   // Handle search with debounce (only for search term changes)
   useEffect(() => {
@@ -750,8 +753,7 @@ export default function CompanyPage() {
     }, 500);
 
     return () => clearTimeout(timer);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [searchTerm]); // Only watch searchTerm to prevent conflicts
+  }, [searchTerm, companyData, fetchBranchAddresses, pageSize]);
 
   // Dynamic spacing calculation
   useEffect(() => {
@@ -974,685 +976,519 @@ export default function CompanyPage() {
   };
 
   return (
-    <>
-      <div data-header="true">
-        <HeaderBar
-          title="Company Settings"
-          icon={<User className="w-5 h-5 sm:w-6 sm:h-6" />}
-        />
-      </div>
+    <ErrorBoundary>
+      <>
+        <div data-header="true">
+          <HeaderBar
+            title="Company Settings"
+            icon={<User className="w-5 h-5 sm:w-6 sm:h-6" />}
+          />
+        </div>
 
-      {/* SaveCancelToolbar - Positioned at top below header */}
-      <SaveCancelToolbar
-        show={isDirty}
-        onSave={handleSubmit(onSubmit)}
-        onCancel={handleCancel}
-        isLoading={isSaving}
-        saveText="Save Changes"
-        cancelText="Cancel"
-        className="!top-[56px] !left-0 !fixed"
-        data-save-cancel-toolbar="true"
-      />
-      <FullWidthLayout>
-        {/* Mobile-First Responsive Layout */}
-        <div
-          className="min-h-screen bg-background"
-          style={{ marginTop: dynamicMarginTop }}
-          ref={contentRef}
-        >
-          <div className="flex flex-col gap-0 sm:gap-1 lg:gap-2 px-1 sm:px-3 lg:px-4 pt-2 sm:pt-3 lg:pt-4 pb-1 sm:pb-2 lg:pb-3 min-h-screen w-full max-w-full overflow-x-hidden">
-            {/* Main Company Form Card - Mobile Responsive */}
-            <SectionCard
-              title={`Welcome ${data.name}`}
-              className="
+        {/* SaveCancelToolbar - Positioned at top below header */}
+        <SaveCancelToolbar
+          show={isDirty}
+          onSave={handleSubmit(onSubmit)}
+          onCancel={handleCancel}
+          isLoading={isSaving}
+          saveText="Save Changes"
+          cancelText="Cancel"
+          className="!top-[56px] !left-0 !fixed"
+          data-save-cancel-toolbar="true"
+        />
+        <FullWidthLayout>
+          {/* Mobile-First Responsive Layout */}
+          <div
+            className="min-h-screen bg-background"
+            style={{ marginTop: dynamicMarginTop }}
+            ref={contentRef}
+          >
+            <div className="flex flex-col gap-0 sm:gap-1 lg:gap-2 px-1 sm:px-3 lg:px-4 pt-2 sm:pt-3 lg:pt-4 pb-1 sm:pb-2 lg:pb-3 min-h-screen w-full max-w-full overflow-x-hidden">
+              {/* Main Company Form Card - Mobile Responsive */}
+              <SectionCard
+                title={`Welcome ${data.name}`}
+                className="
                 w-full max-w-full sm:max-w-7xl mx-auto mt-0
                 min-h-[400px] sm:min-h-[500px] lg:min-h-[600px] max-h-none
                 overflow-hidden flex flex-col
               "
-              contentClassName="pt-1 sm:pt-2 pb-1 sm:pb-2 px-1 sm:px-4 lg:px-6"
-            >
-              <div className="flex-1 overflow-y-auto">
-                <form
-                  onSubmit={handleSubmit(onSubmit)}
-                  className="flex-1 flex flex-col pb-0"
-                >
-                  {/* Mobile-First Responsive Layout Grid */}
-                  <div className="flex flex-col lg:flex-row gap-2 sm:gap-3 lg:gap-4 flex-1 w-full overflow-hidden">
-                    {/* Company Logo Upload - Mobile Responsive */}
-                    <div className="flex-shrink-0 self-center lg:self-start order-1 lg:order-none w-full sm:w-auto">
-                      <Label
-                        htmlFor="profile-image"
-                        className="block text-sm font-medium mb-2"
-                      >
-                        Company Logo
-                      </Label>
-                      <div className="relative">
-                        <input
-                          type="file"
-                          id="profile-image"
-                          accept="image/*"
-                          onChange={handleImageUpload}
-                          className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
-                          disabled={isUploading}
-                        />
-                        <div className="w-20 h-20 sm:w-24 sm:h-24 md:w-28 md:h-28 lg:w-32 lg:h-32 mx-auto lg:mx-0 border-2 border-dashed border-muted-foreground rounded-lg flex items-center justify-center relative overflow-hidden bg-muted/5 hover:bg-muted/10 transition-colors">
-                          {profileImage ? (
-                            <div className="relative w-full h-full">
-                              {/* eslint-disable-next-line @next/next/no-img-element */}
-                              <img
-                                src={profileImage}
-                                alt="Company Logo"
-                                className="w-full h-full object-contain rounded-lg"
-                                onError={() => setProfileImage(null)}
-                              />
-                              {isUploading && (
-                                <div className="absolute inset-0 bg-black/50 flex items-center justify-center rounded-lg">
-                                  <div className="text-white text-center">
-                                    <Loader2 className="h-6 w-6 animate-spin mx-auto mb-1" />
-                                    <div className="text-xs">
-                                      {uploadProgress}%
+                contentClassName="pt-1 sm:pt-2 pb-1 sm:pb-2 px-1 sm:px-4 lg:px-6"
+              >
+                <div className="flex-1 overflow-y-auto">
+                  <form
+                    onSubmit={handleSubmit(onSubmit)}
+                    className="flex-1 flex flex-col pb-0"
+                  >
+                    {/* Mobile-First Responsive Layout Grid */}
+                    <div className="flex flex-col lg:flex-row gap-2 sm:gap-3 lg:gap-4 flex-1 w-full overflow-hidden">
+                      {/* Company Logo Upload - Mobile Responsive */}
+                      <div className="flex-shrink-0 self-center lg:self-start order-1 lg:order-none w-full sm:w-auto">
+                        <Label
+                          htmlFor="profile-image"
+                          className="block text-sm font-medium mb-2"
+                        >
+                          Company Logo
+                        </Label>
+                        <div className="relative">
+                          <input
+                            type="file"
+                            id="profile-image"
+                            accept="image/*"
+                            onChange={handleImageUpload}
+                            className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
+                            disabled={isUploading}
+                          />
+                          <div className="w-20 h-20 sm:w-24 sm:h-24 md:w-28 md:h-28 lg:w-32 lg:h-32 mx-auto lg:mx-0 border-2 border-dashed border-muted-foreground rounded-lg flex items-center justify-center relative overflow-hidden bg-muted/5 hover:bg-muted/10 transition-colors">
+                            {profileImage ? (
+                              <div className="relative w-full h-full">
+                                {/* eslint-disable-next-line @next/next/no-img-element */}
+                                <img
+                                  src={profileImage}
+                                  alt="Company Logo"
+                                  className="w-full h-full object-contain rounded-lg"
+                                  onError={() => setProfileImage(null)}
+                                />
+                                {isUploading && (
+                                  <div className="absolute inset-0 bg-black/50 flex items-center justify-center rounded-lg">
+                                    <div className="text-white text-center">
+                                      <Loader2 className="h-6 w-6 animate-spin mx-auto mb-1" />
+                                      <div className="text-xs">
+                                        {uploadProgress}%
+                                      </div>
                                     </div>
                                   </div>
-                                </div>
-                              )}
+                                )}
+                              </div>
+                            ) : (
+                              <div className="text-center">
+                                <User className="mx-auto h-12 w-12 text-muted-foreground mb-2" />
+                                <span className="text-xs text-muted-foreground font-medium">
+                                  {isUploading
+                                    ? "Uploading..."
+                                    : "Click to Upload"}
+                                </span>
+                                <span className="text-xs text-muted-foreground/70 block mt-1">
+                                  PNG, JPG up to 5MB
+                                </span>
+                              </div>
+                            )}
+                          </div>
+
+                          {/* Upload Progress Bar */}
+                          {isUploading && uploadProgress > 0 && (
+                            <div className="mt-2">
+                              <div className="w-full bg-muted rounded-full h-1.5">
+                                <div
+                                  className="bg-primary h-1.5 rounded-full transition-all duration-300"
+                                  style={{ width: `${uploadProgress}%` }}
+                                />
+                              </div>
                             </div>
-                          ) : (
-                            <div className="text-center">
-                              <User className="mx-auto h-12 w-12 text-muted-foreground mb-2" />
-                              <span className="text-xs text-muted-foreground font-medium">
-                                {isUploading
-                                  ? "Uploading..."
-                                  : "Click to Upload"}
-                              </span>
-                              <span className="text-xs text-muted-foreground/70 block mt-1">
-                                PNG, JPG up to 5MB
-                              </span>
+                          )}
+
+                          {/* Upload Error */}
+                          {uploadError && (
+                            <div className="mt-2 text-xs text-red-600 text-center">
+                              {uploadError}
                             </div>
                           )}
                         </div>
-
-                        {/* Upload Progress Bar */}
-                        {isUploading && uploadProgress > 0 && (
-                          <div className="mt-2">
-                            <div className="w-full bg-muted rounded-full h-1.5">
-                              <div
-                                className="bg-primary h-1.5 rounded-full transition-all duration-300"
-                                style={{ width: `${uploadProgress}%` }}
-                              />
-                            </div>
-                          </div>
-                        )}
-
-                        {/* Upload Error */}
-                        {uploadError && (
-                          <div className="mt-2 text-xs text-red-600 text-center">
-                            {uploadError}
-                          </div>
-                        )}
                       </div>
-                    </div>
 
-                    {/* Form Fields - Mobile Responsive Grid */}
-                    <div className="flex-1 flex flex-col order-2 lg:order-none w-full min-w-0">
-                      <div className="flex-1 space-y-2 sm:space-y-3 lg:space-y-4 w-full">
-                        {/* First Line - Company Name & Website */}
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-2 md:gap-4 w-full">
-                          <div className="space-y-1.5 sm:space-y-2 w-full min-w-0">
-                            <Label
-                              htmlFor="company-name"
-                              className="text-sm font-medium"
-                            >
-                              Company Name
-                            </Label>
-                            <Input
-                              id="company-name"
-                              {...register("name")}
-                              placeholder={data.name}
-                              className="w-full border border-gray-300 focus:border-blue-500 h-10 sm:h-10 md:h-11 text-sm sm:text-base"
-                            />
-                            {errors.name && (
-                              <p className="text-xs sm:text-sm text-red-600">
-                                {errors.name.message}
-                              </p>
-                            )}
-                          </div>
-                          <div className="space-y-1.5 sm:space-y-2 w-full min-w-0">
-                            <Label
-                              htmlFor="website"
-                              className="text-sm font-medium"
-                            >
-                              Website Link
-                            </Label>
-                            <Input
-                              id="website"
-                              {...register("website")}
-                              type="url"
-                              placeholder={
-                                data.website || "No website available"
-                              }
-                              className="w-full border border-gray-300 focus:border-blue-500 h-10 sm:h-10 md:h-11 text-sm sm:text-base"
-                            />
-                            {errors.website && (
-                              <p className="text-xs sm:text-sm text-red-600">
-                                {errors.website.message}
-                              </p>
-                            )}
-                          </div>
-                        </div>
-
-                        {/* Second Line - Tax ID/GST & Business Type */}
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-3 md:gap-4">
-                          <div className="space-y-1.5 sm:space-y-2">
-                            <Label
-                              htmlFor="tax-id"
-                              className="text-sm font-medium"
-                            >
-                              Tax ID/GST
-                            </Label>
-                            <Input
-                              id="tax-id"
-                              {...register("gst")}
-                              placeholder={data.addressId.gst}
-                              className="border border-gray-300 focus:border-blue-500 h-10 sm:h-10 md:h-11 text-sm sm:text-base"
-                            />
-                            {errors.gst && (
-                              <p className="text-xs sm:text-sm text-red-600">
-                                {errors.gst.message}
-                              </p>
-                            )}
-                          </div>
-                          <div className="space-y-1.5 sm:space-y-2">
-                            <Label
-                              htmlFor="business-type"
-                              className="text-sm font-medium"
-                            >
-                              Business Type
-                            </Label>
-                            <Input
-                              id="business-type"
-                              value={data.businessTypeId.name}
-                              readOnly
-                              className="bg-muted border border-gray-300 h-10 sm:h-10 md:h-11 text-sm sm:text-base"
-                            />
-                          </div>
-                        </div>
-
-                        {/* Third Line - Account Type & Default Currency */}
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-3 md:gap-4">
-                          <div className="space-y-1.5 sm:space-y-2">
-                            <Label
-                              htmlFor="account-type"
-                              className="text-sm font-medium"
-                            >
-                              Account Type
-                            </Label>
-                            <Input
-                              id="account-type"
-                              value={data.accountTypeId.name}
-                              readOnly
-                              className="bg-muted border border-gray-300 h-10 sm:h-10 md:h-11 text-sm sm:text-base"
-                            />
-                          </div>
-                          <div className="space-y-1.5 sm:space-y-2">
-                            <Label
-                              htmlFor="default-currency"
-                              className="text-sm font-medium"
-                            >
-                              Default Currency
-                            </Label>
-                            <Input
-                              id="default-currency"
-                              value={data.currencyId.currencyCode}
-                              readOnly
-                              className="bg-muted border border-gray-300 h-10 sm:h-10 md:h-11 text-sm sm:text-base"
-                            />
-                          </div>
-                        </div>
-
-                        {/* Fourth Line - Sub Industry & Industry Description */}
-                        <div className="grid grid-cols-1 lg:grid-cols-2 gap-3 sm:gap-4 lg:gap-6">
-                          <div className="space-y-1.5 sm:space-y-2">
-                            <Label
-                              htmlFor="sub-industry"
-                              className="text-sm font-medium"
-                            >
-                              Sub Industry
-                            </Label>
-                            {subIndustryOptions.length > 0 ? (
-                              <Controller
-                                name="subIndustry"
-                                control={control}
-                                render={({ field }) => (
-                                  <Select
-                                    value={field.value}
-                                    onValueChange={value => {
-                                      field.onChange(value);
-                                      handleSubIndustryChange(value);
-                                    }}
-                                  >
-                                    <SelectTrigger className="border border-gray-300 focus:border-blue-500 h-10 sm:h-10 md:h-11 text-sm sm:text-base">
-                                      <SelectValue placeholder="Select sub industry" />
-                                    </SelectTrigger>
-                                    <SelectContent className="max-h-48 sm:max-h-60">
-                                      {Object.keys(groupedOptions).length > 0
-                                        ? Object.entries(groupedOptions).map(
-                                            (
-                                              [industryName, items],
-                                              groupIndex
-                                            ) => (
-                                              <SelectGroup key={industryName}>
-                                                {/* Non-clickable Industry Header using SelectLabel */}
-                                                <SelectLabel className="text-xs font-semibold text-muted-foreground">
-                                                  {industryName.toUpperCase()}
-                                                </SelectLabel>
-
-                                                {/* Clickable Sub-industry Items */}
-                                                {items.map(option => (
-                                                  <SelectItem
-                                                    key={option.value}
-                                                    value={option.value}
-                                                    className="pl-6"
-                                                  >
-                                                    {option.label}
-                                                  </SelectItem>
-                                                ))}
-
-                                                {/* Add separator between groups (except last) */}
-                                                {groupIndex <
-                                                  Object.keys(groupedOptions)
-                                                    .length -
-                                                    1 && <SelectSeparator />}
-                                              </SelectGroup>
-                                            )
-                                          )
-                                        : /* Fallback: Show ungrouped options if grouping fails */
-                                          subIndustryOptions.map(option => (
-                                            <SelectItem
-                                              key={option.value}
-                                              value={option.value}
-                                            >
-                                              {option.label}
-                                            </SelectItem>
-                                          ))}
-                                    </SelectContent>
-                                  </Select>
-                                )}
-                              />
-                            ) : (
+                      {/* Form Fields - Mobile Responsive Grid */}
+                      <div className="flex-1 flex flex-col order-2 lg:order-none w-full min-w-0">
+                        <div className="flex-1 space-y-2 sm:space-y-3 lg:space-y-4 w-full">
+                          {/* First Line - Company Name & Website */}
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-2 md:gap-4 w-full">
+                            <div className="space-y-1.5 sm:space-y-2 w-full min-w-0">
+                              <Label
+                                htmlFor="company-name"
+                                className="text-sm font-medium"
+                              >
+                                Company Name
+                              </Label>
                               <Input
-                                id="sub-industry"
-                                {...register("subIndustry")}
-                                placeholder="Loading sub-industries..."
-                                disabled
-                                className="border border-gray-300 h-9 sm:h-10"
+                                id="company-name"
+                                {...register("name")}
+                                placeholder={data.name}
+                                className="w-full border border-gray-300 focus:border-blue-500 h-10 sm:h-10 md:h-11 text-sm sm:text-base"
                               />
-                            )}
-                            {errors.subIndustry && (
-                              <p className="text-xs sm:text-sm text-red-600">
-                                {errors.subIndustry.message}
-                              </p>
-                            )}
-                          </div>
-                          <div className="space-y-1.5 sm:space-y-2">
-                            <div className="text-sm font-bold text-foreground">
-                              {getCurrentIndustryInfo().industryName}
+                              {errors.name && (
+                                <p className="text-xs sm:text-sm text-red-600">
+                                  {errors.name.message}
+                                </p>
+                              )}
                             </div>
-                            <p className="text-xs sm:text-sm text-muted-foreground leading-relaxed">
-                              {getCurrentIndustryInfo().description}
-                            </p>
+                            <div className="space-y-1.5 sm:space-y-2 w-full min-w-0">
+                              <Label
+                                htmlFor="website"
+                                className="text-sm font-medium"
+                              >
+                                Website Link
+                              </Label>
+                              <Input
+                                id="website"
+                                {...register("website")}
+                                type="url"
+                                placeholder={
+                                  data.website || "No website available"
+                                }
+                                className="w-full border border-gray-300 focus:border-blue-500 h-10 sm:h-10 md:h-11 text-sm sm:text-base"
+                              />
+                              {errors.website && (
+                                <p className="text-xs sm:text-sm text-red-600">
+                                  {errors.website.message}
+                                </p>
+                              )}
+                            </div>
+                          </div>
+
+                          {/* Second Line - Tax ID/GST & Business Type */}
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-3 md:gap-4">
+                            <div className="space-y-1.5 sm:space-y-2">
+                              <Label
+                                htmlFor="tax-id"
+                                className="text-sm font-medium"
+                              >
+                                Tax ID/GST
+                              </Label>
+                              <Input
+                                id="tax-id"
+                                {...register("gst")}
+                                placeholder={data.addressId.gst}
+                                className="border border-gray-300 focus:border-blue-500 h-10 sm:h-10 md:h-11 text-sm sm:text-base"
+                              />
+                              {errors.gst && (
+                                <p className="text-xs sm:text-sm text-red-600">
+                                  {errors.gst.message}
+                                </p>
+                              )}
+                            </div>
+                            <div className="space-y-1.5 sm:space-y-2">
+                              <Label
+                                htmlFor="business-type"
+                                className="text-sm font-medium"
+                              >
+                                Business Type
+                              </Label>
+                              <Input
+                                id="business-type"
+                                value={data.businessTypeId.name}
+                                readOnly
+                                className="bg-muted border border-gray-300 h-10 sm:h-10 md:h-11 text-sm sm:text-base"
+                              />
+                            </div>
+                          </div>
+
+                          {/* Third Line - Account Type & Default Currency */}
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-3 md:gap-4">
+                            <div className="space-y-1.5 sm:space-y-2">
+                              <Label
+                                htmlFor="account-type"
+                                className="text-sm font-medium"
+                              >
+                                Account Type
+                              </Label>
+                              <Input
+                                id="account-type"
+                                value={data.accountTypeId.name}
+                                readOnly
+                                className="bg-muted border border-gray-300 h-10 sm:h-10 md:h-11 text-sm sm:text-base"
+                              />
+                            </div>
+                            <div className="space-y-1.5 sm:space-y-2">
+                              <Label
+                                htmlFor="default-currency"
+                                className="text-sm font-medium"
+                              >
+                                Default Currency
+                              </Label>
+                              <Input
+                                id="default-currency"
+                                value={data.currencyId.currencyCode}
+                                readOnly
+                                className="bg-muted border border-gray-300 h-10 sm:h-10 md:h-11 text-sm sm:text-base"
+                              />
+                            </div>
+                          </div>
+
+                          {/* Fourth Line - Sub Industry & Industry Description */}
+                          <div className="grid grid-cols-1 lg:grid-cols-2 gap-3 sm:gap-4 lg:gap-6">
+                            <div className="space-y-1.5 sm:space-y-2">
+                              <Label
+                                htmlFor="sub-industry"
+                                className="text-sm font-medium"
+                              >
+                                Sub Industry
+                              </Label>
+                              {subIndustryOptions.length > 0 ? (
+                                <Controller
+                                  name="subIndustry"
+                                  control={control}
+                                  render={({ field }) => (
+                                    <Select
+                                      value={field.value}
+                                      onValueChange={value => {
+                                        field.onChange(value);
+                                        handleSubIndustryChange(value);
+                                      }}
+                                    >
+                                      <SelectTrigger className="border border-gray-300 focus:border-blue-500 h-10 sm:h-10 md:h-11 text-sm sm:text-base">
+                                        <SelectValue placeholder="Select sub industry" />
+                                      </SelectTrigger>
+                                      <SelectContent className="max-h-48 sm:max-h-60">
+                                        {Object.keys(groupedOptions).length > 0
+                                          ? Object.entries(groupedOptions).map(
+                                              (
+                                                [industryName, items],
+                                                groupIndex
+                                              ) => (
+                                                <SelectGroup key={industryName}>
+                                                  {/* Non-clickable Industry Header using SelectLabel */}
+                                                  <SelectLabel className="text-xs font-semibold text-muted-foreground">
+                                                    {industryName.toUpperCase()}
+                                                  </SelectLabel>
+
+                                                  {/* Clickable Sub-industry Items */}
+                                                  {items.map(option => (
+                                                    <SelectItem
+                                                      key={option.value}
+                                                      value={option.value}
+                                                      className="pl-6"
+                                                    >
+                                                      {option.label}
+                                                    </SelectItem>
+                                                  ))}
+
+                                                  {/* Add separator between groups (except last) */}
+                                                  {groupIndex <
+                                                    Object.keys(groupedOptions)
+                                                      .length -
+                                                      1 && <SelectSeparator />}
+                                                </SelectGroup>
+                                              )
+                                            )
+                                          : /* Fallback: Show ungrouped options if grouping fails */
+                                            subIndustryOptions.map(option => (
+                                              <SelectItem
+                                                key={option.value}
+                                                value={option.value}
+                                              >
+                                                {option.label}
+                                              </SelectItem>
+                                            ))}
+                                      </SelectContent>
+                                    </Select>
+                                  )}
+                                />
+                              ) : (
+                                <Input
+                                  id="sub-industry"
+                                  {...register("subIndustry")}
+                                  placeholder="Loading sub-industries..."
+                                  disabled
+                                  className="border border-gray-300 h-9 sm:h-10"
+                                />
+                              )}
+                              {errors.subIndustry && (
+                                <p className="text-xs sm:text-sm text-red-600">
+                                  {errors.subIndustry.message}
+                                </p>
+                              )}
+                            </div>
+                            <div className="space-y-1.5 sm:space-y-2">
+                              <div className="text-sm font-bold text-foreground">
+                                {getCurrentIndustryInfo().industryName}
+                              </div>
+                              <p className="text-xs sm:text-sm text-muted-foreground leading-relaxed">
+                                {getCurrentIndustryInfo().description}
+                              </p>
+                            </div>
                           </div>
                         </div>
                       </div>
                     </div>
-                  </div>
-                </form>
-              </div>
-            </SectionCard>
+                  </form>
+                </div>
+              </SectionCard>
 
-            {/* Address Information Card - Mobile Responsive */}
-            <SectionCard
-              title="Address Information"
-              className="
+              {/* Address Information Card - Mobile Responsive */}
+              <SectionCard
+                title="Address Information"
+                className="
                 w-full max-w-full sm:max-w-7xl mx-auto
                 min-h-[300px] sm:min-h-[400px] max-h-none
                 overflow-hidden flex flex-col
               "
-              contentClassName="pt-1 sm:pt-2 px-1 sm:px-3 lg:px-4"
-              headerActions={
-                <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
-                  <Controller
-                    name="searchTerm"
-                    control={controlSearch}
-                    render={({ field }) => (
-                      <Input
-                        placeholder="Search addresses..."
-                        className="flex-1 sm:flex-none sm:w-48 md:w-56 lg:w-64 text-sm h-9"
-                        value={field.value || ""}
-                        onChange={e => {
-                          field.onChange(e.target.value);
-                          handleSearchChange(e.target.value);
-                        }}
-                      />
-                    )}
-                  />
-                  <Button
-                    size="sm"
-                    className="h-9 px-3 flex items-center gap-2 flex-shrink-0 text-sm"
-                    onClick={handleAddAddress}
-                    disabled={isAddingAddress}
-                  >
-                    {isAddingAddress ? (
-                      <>
-                        <Loader2 className="h-4 w-4 animate-spin" />
-                        <span>Adding...</span>
-                      </>
-                    ) : (
-                      <>
-                        <Plus className="h-4 w-4" />
-                        <span>Add Address</span>
-                      </>
-                    )}
-                  </Button>
-                </div>
-              }
-            >
-              <div className="flex-1 overflow-hidden flex flex-col relative">
-                {/* Loading state */}
-                {(loadingAddresses || isAddingAddress) && (
-                  <div className="flex items-center justify-center p-8">
-                    <Loader2 className="h-8 w-8 animate-spin mr-2" />
-                    <span>
-                      {isAddingAddress
-                        ? "Adding address and refreshing list..."
-                        : isSearching
-                          ? `Searching addresses${searchTerm ? ` for "${searchTerm}"` : ""}...`
-                          : "Loading addresses..."}
-                    </span>
-                  </div>
-                )}
-
-                {/* Adding address overlay */}
-                {isAddingAddress && addresses.length > 0 && (
-                  <div className="absolute inset-0 bg-background/80 backdrop-blur-sm z-10 flex items-center justify-center">
-                    <div className="bg-background border rounded-lg p-6 shadow-lg flex items-center gap-3">
-                      <Loader2 className="h-6 w-6 animate-spin text-primary" />
-                      <span className="text-sm font-medium">
-                        Adding address and refreshing list...
-                      </span>
-                    </div>
-                  </div>
-                )}
-
-                {/* Error state */}
-                {addressError && !loadingAddresses && (
-                  <div className="text-center text-red-600 p-8">
-                    <p>Error: {addressError}</p>
+                contentClassName="pt-1 sm:pt-2 px-1 sm:px-3 lg:px-4"
+                headerActions={
+                  <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
+                    <Controller
+                      name="searchTerm"
+                      control={controlSearch}
+                      render={({ field }) => (
+                        <Input
+                          placeholder="Search addresses..."
+                          className="flex-1 sm:flex-none sm:w-48 md:w-56 lg:w-64 text-sm h-9"
+                          value={field.value || ""}
+                          onChange={e => {
+                            field.onChange(e.target.value);
+                            handleSearchChange(e.target.value);
+                          }}
+                        />
+                      )}
+                    />
                     <Button
-                      variant="outline"
                       size="sm"
-                      onClick={() =>
-                        fetchBranchAddresses(
-                          searchTerm,
-                          currentPage,
-                          false,
-                          pageSize
-                        )
-                      }
-                      className="mt-4"
+                      className="h-9 px-3 flex items-center gap-2 flex-shrink-0 text-sm"
+                      onClick={handleAddAddress}
+                      disabled={isAddingAddress}
                     >
-                      Retry
+                      {isAddingAddress ? (
+                        <>
+                          <Loader2 className="h-4 w-4 animate-spin" />
+                          <span>Adding...</span>
+                        </>
+                      ) : (
+                        <>
+                          <Plus className="h-4 w-4" />
+                          <span>Add Address</span>
+                        </>
+                      )}
                     </Button>
                   </div>
-                )}
+                }
+              >
+                <div className="flex-1 overflow-hidden flex flex-col relative">
+                  {/* Loading state */}
+                  {(loadingAddresses || isAddingAddress) && (
+                    <div className="flex items-center justify-center p-8">
+                      <Loader2 className="h-8 w-8 animate-spin mr-2" />
+                      <span>
+                        {isAddingAddress
+                          ? "Adding address and refreshing list..."
+                          : isSearching
+                            ? `Searching addresses${searchTerm ? ` for "${searchTerm}"` : ""}...`
+                            : "Loading addresses..."}
+                      </span>
+                    </div>
+                  )}
 
-                {/* Empty state - Only show when truly no data exists */}
-                {!loadingAddresses &&
-                  !addressError &&
-                  addresses.length === 0 &&
-                  totalAddresses === 0 && (
-                    <div className="text-center text-gray-600 p-8">
-                      <p>No addresses found</p>
+                  {/* Adding address overlay */}
+                  {isAddingAddress && addresses.length > 0 && (
+                    <div className="absolute inset-0 bg-background/80 backdrop-blur-sm z-10 flex items-center justify-center">
+                      <div className="bg-background border rounded-lg p-6 shadow-lg flex items-center gap-3">
+                        <Loader2 className="h-6 w-6 animate-spin text-primary" />
+                        <span className="text-sm font-medium">
+                          Adding address and refreshing list...
+                        </span>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Error state */}
+                  {addressError && !loadingAddresses && (
+                    <div className="text-center text-red-600 p-8">
+                      <p>Error: {addressError}</p>
                       <Button
                         variant="outline"
                         size="sm"
-                        onClick={handleAddAddress}
+                        onClick={() =>
+                          fetchBranchAddresses(
+                            searchTerm,
+                            currentPage,
+                            false,
+                            pageSize
+                          )
+                        }
                         className="mt-4"
-                        disabled={isAddingAddress}
                       >
-                        {isAddingAddress ? (
-                          <>
-                            <Loader2 className="h-4 w-4 mr-1 animate-spin" />
-                            Adding...
-                          </>
-                        ) : (
-                          <>
-                            <Plus className="h-4 w-4 mr-1" />
-                            Add First Address
-                          </>
-                        )}
+                        Retry
                       </Button>
                     </div>
                   )}
 
-                {/* Data display - Show when we have total addresses even if current page is empty */}
-                {!loadingAddresses && !addressError && totalAddresses > 0 && (
-                  <>
-                    {/* Show message if current page is empty but data exists */}
-                    {addresses.length === 0 && (
+                  {/* Empty state - Only show when truly no data exists */}
+                  {!loadingAddresses &&
+                    !addressError &&
+                    addresses.length === 0 &&
+                    totalAddresses === 0 && (
                       <div className="text-center text-gray-600 p-8">
-                        <p>No addresses on this page</p>
-                        <p className="text-sm mt-2">
-                          Try navigating to a different page or adjusting the
-                          page size
-                        </p>
+                        <p>No addresses found</p>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={handleAddAddress}
+                          className="mt-4"
+                          disabled={isAddingAddress}
+                        >
+                          {isAddingAddress ? (
+                            <>
+                              <Loader2 className="h-4 w-4 mr-1 animate-spin" />
+                              Adding...
+                            </>
+                          ) : (
+                            <>
+                              <Plus className="h-4 w-4 mr-1" />
+                              Add First Address
+                            </>
+                          )}
+                        </Button>
                       </div>
                     )}
 
-                    {/* Mobile: Card view */}
-                    {addresses.length > 0 && (
-                      <div className="block md:hidden flex-1 overflow-y-auto">
-                        <div className="space-y-2 p-1">
-                          {addresses.map(branch => (
-                            <Card
-                              key={branch.id}
-                              className="p-3 flex-shrink-0 shadow-sm hover:shadow-md transition-shadow cursor-pointer"
-                              onClick={() => handleEditAddress(branch)}
-                            >
-                              <div className="space-y-3">
-                                <div className="space-y-0.5">
-                                  <div className="flex items-start justify-between gap-2">
-                                    <div className="font-semibold text-sm">
-                                      {branch.name ||
-                                        branch.addressId?.branchName ||
-                                        "-"}
-                                    </div>
-                                    <div className="flex gap-1 flex-shrink-0">
-                                      {branch.addressId?.isBilling && (
-                                        <Badge
-                                          variant="secondary"
-                                          className="text-xs px-2 py-0.5"
-                                        >
-                                          Billing
-                                        </Badge>
-                                      )}
-                                      {branch.addressId?.isShipping && (
-                                        <Badge
-                                          variant="outline"
-                                          className="text-xs px-2 py-0.5"
-                                        >
-                                          Shipping
-                                        </Badge>
-                                      )}
-                                    </div>
-                                  </div>
-                                  <div className="text-xs sm:text-sm text-muted-foreground">
-                                    {branch.addressId?.addressLine || "-"}
-                                  </div>
-                                  <div className="text-xs sm:text-sm text-muted-foreground">
-                                    {[
-                                      branch.addressId?.city,
-                                      branch.addressId?.state,
-                                      branch.addressId?.pinCodeId,
-                                    ]
-                                      .filter(Boolean)
-                                      .join(", ") || "-"}
-                                  </div>
-                                  <div className="text-xs sm:text-sm text-muted-foreground">
-                                    {branch.addressId?.country || "-"}
-                                  </div>
-                                </div>
-                                <div className="grid grid-cols-2 gap-2 sm:gap-3 text-xs sm:text-sm">
-                                  <div className="space-y-0.5">
-                                    <span className="text-xs font-medium text-muted-foreground">
-                                      Tax ID/GST
-                                    </span>
-                                    <div className="font-medium text-xs sm:text-sm">
-                                      {branch.addressId?.gst || "-"}
-                                    </div>
-                                  </div>
-                                  <div className="space-y-0.5">
-                                    <span className="text-xs font-medium text-muted-foreground">
-                                      Contact
-                                    </span>
-                                    <div className="font-medium text-xs sm:text-sm">
-                                      {branch.addressId?.primaryContact || "-"}
-                                    </div>
-                                  </div>
-                                  <div className="col-span-2 space-y-0.5">
-                                    <span className="text-xs font-medium text-muted-foreground">
-                                      Phone
-                                    </span>
-                                    <div className="font-medium text-xs sm:text-sm">
-                                      {branch.addressId?.mobileNo &&
-                                      branch.addressId?.nationalMobileNum
-                                        ? `+${branch.addressId.nationalMobileNum} ${branch.addressId.mobileNo}`
-                                        : branch.addressId?.phone || "-"}
-                                    </div>
-                                  </div>
-                                </div>
-                                <Separator />
-                                <div className="flex gap-3">
-                                  <Button
-                                    variant="outline"
-                                    size="default"
-                                    className="flex-1 h-10 text-sm font-medium"
-                                    onClick={e => {
-                                      e.stopPropagation();
-                                      handleEditAddress(branch);
-                                    }}
-                                  >
-                                    Edit
-                                  </Button>
-                                  <Button
-                                    variant="destructive"
-                                    size="default"
-                                    className="flex-1 h-10 text-sm font-medium"
-                                    disabled={
-                                      deletingAddressId ===
-                                      (branch.addressId?.id || branch.id)
-                                    }
-                                    onClick={e => {
-                                      e.stopPropagation();
-                                      handleDeleteAddress(
-                                        branch.addressId?.id || branch.id,
-                                        branch.name ||
-                                          branch.addressId?.branchName ||
-                                          "Unknown"
-                                      );
-                                    }}
-                                  >
-                                    {deletingAddressId ===
-                                    (branch.addressId?.id || branch.id) ? (
-                                      <>
-                                        <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                                        Deleting...
-                                      </>
-                                    ) : (
-                                      <>
-                                        <Trash2 className="h-4 w-4 mr-2" />
-                                        Delete
-                                      </>
-                                    )}
-                                  </Button>
-                                </div>
-                              </div>
-                            </Card>
-                          ))}
+                  {/* Data display - Show when we have total addresses even if current page is empty */}
+                  {!loadingAddresses && !addressError && totalAddresses > 0 && (
+                    <>
+                      {/* Show message if current page is empty but data exists */}
+                      {addresses.length === 0 && (
+                        <div className="text-center text-gray-600 p-8">
+                          <p>No addresses on this page</p>
+                          <p className="text-sm mt-2">
+                            Try navigating to a different page or adjusting the
+                            page size
+                          </p>
                         </div>
-                      </div>
-                    )}
+                      )}
 
-                    {/* Desktop: Table view */}
-                    {addresses.length > 0 && (
-                      <div className="hidden md:block flex-1 overflow-auto">
-                        <Table>
-                          <TableHeader className="bg-accent sticky top-0">
-                            <TableRow className="hover:bg-transparent">
-                              <TableHead className="w-12 text-center text-xs sm:text-sm">
-                                Action
-                              </TableHead>
-                              <TableHead className="min-w-[100px] text-xs sm:text-sm">
-                                Branch
-                              </TableHead>
-                              <TableHead className="min-w-[250px] text-xs sm:text-sm">
-                                Address
-                              </TableHead>
-                              <TableHead className="min-w-[120px] text-xs sm:text-sm">
-                                Tax ID / GST
-                              </TableHead>
-                              <TableHead className="min-w-[120px] text-xs sm:text-sm">
-                                Contact Person
-                              </TableHead>
-                              <TableHead className="min-w-[150px] text-xs sm:text-sm">
-                                Phone
-                              </TableHead>
-                              <TableHead className="min-w-[100px] text-xs sm:text-sm">
-                                Zone
-                              </TableHead>
-                            </TableRow>
-                          </TableHeader>
-                          <TableBody>
+                      {/* Mobile: Card view */}
+                      {addresses.length > 0 && (
+                        <div className="block md:hidden flex-1 overflow-y-auto">
+                          <div className="space-y-2 p-1">
                             {addresses.map(branch => (
-                              <TableRow
+                              <Card
                                 key={branch.id}
-                                className="hover:bg-muted/50 cursor-pointer"
+                                className="p-3 flex-shrink-0 shadow-sm hover:shadow-md transition-shadow cursor-pointer"
                                 onClick={() => handleEditAddress(branch)}
                               >
-                                <TableCell className="text-center">
-                                  <Button
-                                    variant="ghost"
-                                    size="sm"
-                                    className="h-7 w-7 text-red-500 hover:text-red-700 hover:bg-red-50"
-                                    disabled={
-                                      deletingAddressId ===
-                                      (branch.addressId?.id || branch.id)
-                                    }
-                                    onClick={e => {
-                                      e.stopPropagation();
-                                      handleDeleteAddress(
-                                        branch.addressId?.id || branch.id,
-                                        branch.name ||
+                                <div className="space-y-3">
+                                  <div className="space-y-0.5">
+                                    <div className="flex items-start justify-between gap-2">
+                                      <div className="font-semibold text-sm">
+                                        {branch.name ||
                                           branch.addressId?.branchName ||
-                                          "Unknown"
-                                      );
-                                    }}
-                                  >
-                                    {deletingAddressId ===
-                                    (branch.addressId?.id || branch.id) ? (
-                                      <Loader2 className="h-3 w-3 animate-spin" />
-                                    ) : (
-                                      <Trash2 className="h-3 w-3" />
-                                    )}
-                                  </Button>
-                                </TableCell>
-                                <TableCell className="font-medium text-xs sm:text-sm">
-                                  {branch.name ||
-                                    branch.addressId?.branchName ||
-                                    "-"}
-                                </TableCell>
-                                <TableCell className="font-medium">
-                                  <div className="space-y-1">
-                                    <div className="text-xs sm:text-sm">
+                                          "-"}
+                                      </div>
+                                      <div className="flex gap-1 flex-shrink-0">
+                                        {branch.addressId?.isBilling && (
+                                          <Badge
+                                            variant="secondary"
+                                            className="text-xs px-2 py-0.5"
+                                          >
+                                            Billing
+                                          </Badge>
+                                        )}
+                                        {branch.addressId?.isShipping && (
+                                          <Badge
+                                            variant="outline"
+                                            className="text-xs px-2 py-0.5"
+                                          >
+                                            Shipping
+                                          </Badge>
+                                        )}
+                                      </div>
+                                    </div>
+                                    <div className="text-xs sm:text-sm text-muted-foreground">
                                       {branch.addressId?.addressLine || "-"}
                                     </div>
                                     <div className="text-xs sm:text-sm text-muted-foreground">
@@ -1667,217 +1503,394 @@ export default function CompanyPage() {
                                     <div className="text-xs sm:text-sm text-muted-foreground">
                                       {branch.addressId?.country || "-"}
                                     </div>
-                                    <div className="flex gap-1.5 mt-2">
-                                      {branch.addressId?.isBilling && (
-                                        <Badge
-                                          variant="secondary"
-                                          className="text-xs font-medium px-2.5 py-0.5 bg-primary/10 text-primary hover:bg-primary/20 border-primary/20"
-                                        >
-                                          Billing
-                                        </Badge>
-                                      )}
-                                      {branch.addressId?.isShipping && (
-                                        <Badge
-                                          variant="outline"
-                                          className="text-xs font-medium px-2.5 py-0.5 hover:bg-accent/20"
-                                        >
-                                          Shipping
-                                        </Badge>
-                                      )}
+                                  </div>
+                                  <div className="grid grid-cols-2 gap-2 sm:gap-3 text-xs sm:text-sm">
+                                    <div className="space-y-0.5">
+                                      <span className="text-xs font-medium text-muted-foreground">
+                                        Tax ID/GST
+                                      </span>
+                                      <div className="font-medium text-xs sm:text-sm">
+                                        {branch.addressId?.gst || "-"}
+                                      </div>
+                                    </div>
+                                    <div className="space-y-0.5">
+                                      <span className="text-xs font-medium text-muted-foreground">
+                                        Contact
+                                      </span>
+                                      <div className="font-medium text-xs sm:text-sm">
+                                        {branch.addressId?.primaryContact ||
+                                          "-"}
+                                      </div>
+                                    </div>
+                                    <div className="col-span-2 space-y-0.5">
+                                      <span className="text-xs font-medium text-muted-foreground">
+                                        Phone
+                                      </span>
+                                      <div className="font-medium text-xs sm:text-sm">
+                                        {branch.addressId?.mobileNo &&
+                                        branch.addressId?.nationalMobileNum
+                                          ? `+${branch.addressId.nationalMobileNum} ${branch.addressId.mobileNo}`
+                                          : branch.addressId?.phone || "-"}
+                                      </div>
                                     </div>
                                   </div>
-                                </TableCell>
-                                <TableCell className="text-xs sm:text-sm">
-                                  {branch.addressId?.gst || "-"}
-                                </TableCell>
-                                <TableCell className="text-xs sm:text-sm">
-                                  {branch.addressId?.primaryContact || "-"}
-                                </TableCell>
-                                <TableCell className="text-xs sm:text-sm">
-                                  {branch.addressId?.mobileNo &&
-                                  branch.addressId?.nationalMobileNum
-                                    ? `+${branch.addressId.nationalMobileNum} ${branch.addressId.mobileNo}`
-                                    : branch.addressId?.phone || "-"}
-                                </TableCell>
-                                <TableCell className="text-xs sm:text-sm">
-                                  {branch.zoneId?.zoneId?.zoneName || "-"}
-                                </TableCell>
-                              </TableRow>
+                                  <Separator />
+                                  <div className="flex gap-3">
+                                    <Button
+                                      variant="outline"
+                                      size="default"
+                                      className="flex-1 h-10 text-sm font-medium"
+                                      onClick={e => {
+                                        e.stopPropagation();
+                                        handleEditAddress(branch);
+                                      }}
+                                    >
+                                      Edit
+                                    </Button>
+                                    <Button
+                                      variant="destructive"
+                                      size="default"
+                                      className="flex-1 h-10 text-sm font-medium"
+                                      disabled={
+                                        deletingAddressId ===
+                                        (branch.addressId?.id || branch.id)
+                                      }
+                                      onClick={e => {
+                                        e.stopPropagation();
+                                        handleDeleteAddress(
+                                          branch.addressId?.id || branch.id,
+                                          branch.name ||
+                                            branch.addressId?.branchName ||
+                                            "Unknown"
+                                        );
+                                      }}
+                                    >
+                                      {deletingAddressId ===
+                                      (branch.addressId?.id || branch.id) ? (
+                                        <>
+                                          <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                                          Deleting...
+                                        </>
+                                      ) : (
+                                        <>
+                                          <Trash2 className="h-4 w-4 mr-2" />
+                                          Delete
+                                        </>
+                                      )}
+                                    </Button>
+                                  </div>
+                                </div>
+                              </Card>
                             ))}
-                          </TableBody>
-                        </Table>
-                      </div>
-                    )}
-
-                    {/* Enhanced Pagination Controls - Always show when totalAddresses > 0 */}
-                    <div className="border-t bg-background">
-                      <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-3 p-3 sm:p-4">
-                        {/* Left side: Results info and page size selector */}
-                        <div className="flex flex-col sm:flex-row sm:items-center gap-4">
-                          <div className="text-sm text-muted-foreground order-2 sm:order-1">
-                            {addresses.length > 0 ? (
-                              <>
-                                Showing{" "}
-                                <span className="font-semibold text-foreground">
-                                  {currentPage * pageSize + 1}
-                                </span>{" "}
-                                to{" "}
-                                <span className="font-semibold text-foreground">
-                                  {Math.min(
-                                    (currentPage + 1) * pageSize,
-                                    totalAddresses
-                                  )}
-                                </span>{" "}
-                                of{" "}
-                                <span className="font-semibold text-foreground">
-                                  {totalAddresses}
-                                </span>{" "}
-                                addresses
-                              </>
-                            ) : (
-                              <>
-                                Total{" "}
-                                <span className="font-semibold text-foreground">
-                                  {totalAddresses}
-                                </span>{" "}
-                                addresses available
-                              </>
-                            )}
-                          </div>
-
-                          {/* Page Size Selector */}
-                          <div className="flex items-center gap-2 order-1 sm:order-2">
-                            <Label
-                              htmlFor="page-size"
-                              className="text-sm text-muted-foreground whitespace-nowrap"
-                            >
-                              Show:
-                            </Label>
-                            <Controller
-                              name="pageSize"
-                              control={controlSearch}
-                              render={({ field }) => (
-                                <Select
-                                  value={field.value.toString()}
-                                  onValueChange={value => {
-                                    const newSize = parseInt(value);
-                                    field.onChange(newSize);
-                                    handlePageSizeChange(newSize);
-                                  }}
-                                >
-                                  <SelectTrigger
-                                    className="w-20 h-9 border-input"
-                                    id="page-size"
-                                  >
-                                    <SelectValue />
-                                  </SelectTrigger>
-                                  <SelectContent>
-                                    {pageSizeOptions.map(size => (
-                                      <SelectItem
-                                        key={size}
-                                        value={size.toString()}
-                                      >
-                                        {size}
-                                      </SelectItem>
-                                    ))}
-                                  </SelectContent>
-                                </Select>
-                              )}
-                            />
-                            <span className="text-sm text-muted-foreground whitespace-nowrap">
-                              per page
-                            </span>
                           </div>
                         </div>
+                      )}
 
-                        {/* Right side: Navigation controls */}
-                        <div className="flex items-center justify-center lg:justify-end">
-                          <nav
-                            className="flex items-center gap-2"
-                            aria-label="Pagination Navigation"
-                          >
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              onClick={() => handlePageChange(currentPage - 1)}
-                              disabled={currentPage === 0}
-                              className="h-10 px-3 gap-1 min-w-[44px]"
-                              aria-label="Go to previous page"
-                            >
-                              <ChevronLeft className="h-4 w-4" />
-                              <span className="hidden sm:inline">Previous</span>
-                            </Button>
+                      {/* Desktop: Table view */}
+                      {addresses.length > 0 && (
+                        <div className="hidden md:block flex-1 overflow-auto">
+                          <Table>
+                            <TableHeader className="bg-accent sticky top-0">
+                              <TableRow className="hover:bg-transparent">
+                                <TableHead className="w-12 text-center text-xs sm:text-sm">
+                                  Action
+                                </TableHead>
+                                <TableHead className="min-w-[100px] text-xs sm:text-sm">
+                                  Branch
+                                </TableHead>
+                                <TableHead className="min-w-[250px] text-xs sm:text-sm">
+                                  Address
+                                </TableHead>
+                                <TableHead className="min-w-[120px] text-xs sm:text-sm">
+                                  Tax ID / GST
+                                </TableHead>
+                                <TableHead className="min-w-[120px] text-xs sm:text-sm">
+                                  Contact Person
+                                </TableHead>
+                                <TableHead className="min-w-[150px] text-xs sm:text-sm">
+                                  Phone
+                                </TableHead>
+                                <TableHead className="min-w-[100px] text-xs sm:text-sm">
+                                  Zone
+                                </TableHead>
+                              </TableRow>
+                            </TableHeader>
+                            <TableBody>
+                              {addresses.map(branch => (
+                                <TableRow
+                                  key={branch.id}
+                                  className="hover:bg-muted/50 cursor-pointer"
+                                  onClick={() => handleEditAddress(branch)}
+                                >
+                                  <TableCell className="text-center">
+                                    <Button
+                                      variant="ghost"
+                                      size="sm"
+                                      className="h-7 w-7 text-red-500 hover:text-red-700 hover:bg-red-50"
+                                      disabled={
+                                        deletingAddressId ===
+                                        (branch.addressId?.id || branch.id)
+                                      }
+                                      onClick={e => {
+                                        e.stopPropagation();
+                                        handleDeleteAddress(
+                                          branch.addressId?.id || branch.id,
+                                          branch.name ||
+                                            branch.addressId?.branchName ||
+                                            "Unknown"
+                                        );
+                                      }}
+                                    >
+                                      {deletingAddressId ===
+                                      (branch.addressId?.id || branch.id) ? (
+                                        <Loader2 className="h-3 w-3 animate-spin" />
+                                      ) : (
+                                        <Trash2 className="h-3 w-3" />
+                                      )}
+                                    </Button>
+                                  </TableCell>
+                                  <TableCell className="font-medium text-xs sm:text-sm">
+                                    {branch.name ||
+                                      branch.addressId?.branchName ||
+                                      "-"}
+                                  </TableCell>
+                                  <TableCell className="font-medium">
+                                    <div className="space-y-1">
+                                      <div className="text-xs sm:text-sm">
+                                        {branch.addressId?.addressLine || "-"}
+                                      </div>
+                                      <div className="text-xs sm:text-sm text-muted-foreground">
+                                        {[
+                                          branch.addressId?.city,
+                                          branch.addressId?.state,
+                                          branch.addressId?.pinCodeId,
+                                        ]
+                                          .filter(Boolean)
+                                          .join(", ") || "-"}
+                                      </div>
+                                      <div className="text-xs sm:text-sm text-muted-foreground">
+                                        {branch.addressId?.country || "-"}
+                                      </div>
+                                      <div className="flex gap-1.5 mt-2">
+                                        {branch.addressId?.isBilling && (
+                                          <Badge
+                                            variant="secondary"
+                                            className="text-xs font-medium px-2.5 py-0.5 bg-primary/10 text-primary hover:bg-primary/20 border-primary/20"
+                                          >
+                                            Billing
+                                          </Badge>
+                                        )}
+                                        {branch.addressId?.isShipping && (
+                                          <Badge
+                                            variant="outline"
+                                            className="text-xs font-medium px-2.5 py-0.5 hover:bg-accent/20"
+                                          >
+                                            Shipping
+                                          </Badge>
+                                        )}
+                                      </div>
+                                    </div>
+                                  </TableCell>
+                                  <TableCell className="text-xs sm:text-sm">
+                                    {branch.addressId?.gst || "-"}
+                                  </TableCell>
+                                  <TableCell className="text-xs sm:text-sm">
+                                    {branch.addressId?.primaryContact || "-"}
+                                  </TableCell>
+                                  <TableCell className="text-xs sm:text-sm">
+                                    {branch.addressId?.mobileNo &&
+                                    branch.addressId?.nationalMobileNum
+                                      ? `+${branch.addressId.nationalMobileNum} ${branch.addressId.mobileNo}`
+                                      : branch.addressId?.phone || "-"}
+                                  </TableCell>
+                                  <TableCell className="text-xs sm:text-sm">
+                                    {branch.zoneId?.zoneId?.zoneName || "-"}
+                                  </TableCell>
+                                </TableRow>
+                              ))}
+                            </TableBody>
+                          </Table>
+                        </div>
+                      )}
 
-                            <div className="flex items-center gap-1 px-3 py-2 text-sm font-medium bg-muted/50 rounded-md mx-1">
-                              <span className="text-muted-foreground">
-                                Page
-                              </span>
-                              <span className="text-foreground">
-                                {currentPage + 1}
-                              </span>
-                              <span className="text-muted-foreground">of</span>
-                              <span className="text-foreground">
-                                {Math.ceil(totalAddresses / pageSize)}
-                              </span>
+                      {/* Enhanced Pagination Controls - Always show when totalAddresses > 0 */}
+                      <div className="border-t bg-background">
+                        <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-3 p-3 sm:p-4">
+                          {/* Left side: Results info and page size selector */}
+                          <div className="flex flex-col sm:flex-row sm:items-center gap-4">
+                            <div className="text-sm text-muted-foreground order-2 sm:order-1">
+                              {addresses.length > 0 ? (
+                                <>
+                                  Showing{" "}
+                                  <span className="font-semibold text-foreground">
+                                    {currentPage * pageSize + 1}
+                                  </span>{" "}
+                                  to{" "}
+                                  <span className="font-semibold text-foreground">
+                                    {Math.min(
+                                      (currentPage + 1) * pageSize,
+                                      totalAddresses
+                                    )}
+                                  </span>{" "}
+                                  of{" "}
+                                  <span className="font-semibold text-foreground">
+                                    {totalAddresses}
+                                  </span>{" "}
+                                  addresses
+                                </>
+                              ) : (
+                                <>
+                                  Total{" "}
+                                  <span className="font-semibold text-foreground">
+                                    {totalAddresses}
+                                  </span>{" "}
+                                  addresses available
+                                </>
+                              )}
                             </div>
 
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              onClick={() => handlePageChange(currentPage + 1)}
-                              disabled={
-                                (currentPage + 1) * pageSize >= totalAddresses
-                              }
-                              className="h-10 px-3 gap-1 min-w-[44px]"
-                              aria-label="Go to next page"
+                            {/* Page Size Selector */}
+                            <div className="flex items-center gap-2 order-1 sm:order-2">
+                              <Label
+                                htmlFor="page-size"
+                                className="text-sm text-muted-foreground whitespace-nowrap"
+                              >
+                                Show:
+                              </Label>
+                              <Controller
+                                name="pageSize"
+                                control={controlSearch}
+                                render={({ field }) => (
+                                  <Select
+                                    value={field.value.toString()}
+                                    onValueChange={value => {
+                                      const newSize = parseInt(value);
+                                      field.onChange(newSize);
+                                      handlePageSizeChange(newSize);
+                                    }}
+                                  >
+                                    <SelectTrigger
+                                      className="w-20 h-9 border-input"
+                                      id="page-size"
+                                    >
+                                      <SelectValue />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                      {pageSizeOptions.map(size => (
+                                        <SelectItem
+                                          key={size}
+                                          value={size.toString()}
+                                        >
+                                          {size}
+                                        </SelectItem>
+                                      ))}
+                                    </SelectContent>
+                                  </Select>
+                                )}
+                              />
+                              <span className="text-sm text-muted-foreground whitespace-nowrap">
+                                per page
+                              </span>
+                            </div>
+                          </div>
+
+                          {/* Right side: Navigation controls */}
+                          <div className="flex items-center justify-center lg:justify-end">
+                            <nav
+                              className="flex items-center gap-2"
+                              aria-label="Pagination Navigation"
                             >
-                              <span className="hidden sm:inline">Next</span>
-                              <ChevronRight className="h-4 w-4" />
-                            </Button>
-                          </nav>
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() =>
+                                  handlePageChange(currentPage - 1)
+                                }
+                                disabled={currentPage === 0}
+                                className="h-10 px-3 gap-1 min-w-[44px]"
+                                aria-label="Go to previous page"
+                              >
+                                <ChevronLeft className="h-4 w-4" />
+                                <span className="hidden sm:inline">
+                                  Previous
+                                </span>
+                              </Button>
+
+                              <div className="flex items-center gap-1 px-3 py-2 text-sm font-medium bg-muted/50 rounded-md mx-1">
+                                <span className="text-muted-foreground">
+                                  Page
+                                </span>
+                                <span className="text-foreground">
+                                  {currentPage + 1}
+                                </span>
+                                <span className="text-muted-foreground">
+                                  of
+                                </span>
+                                <span className="text-foreground">
+                                  {Math.ceil(totalAddresses / pageSize)}
+                                </span>
+                              </div>
+
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() =>
+                                  handlePageChange(currentPage + 1)
+                                }
+                                disabled={
+                                  (currentPage + 1) * pageSize >= totalAddresses
+                                }
+                                className="h-10 px-3 gap-1 min-w-[44px]"
+                                aria-label="Go to next page"
+                              >
+                                <span className="hidden sm:inline">Next</span>
+                                <ChevronRight className="h-4 w-4" />
+                              </Button>
+                            </nav>
+                          </div>
                         </div>
                       </div>
-                    </div>
-                  </>
-                )}
-              </div>
-            </SectionCard>
+                    </>
+                  )}
+                </div>
+              </SectionCard>
+            </div>
           </div>
-        </div>
 
-        {/* Add Address Dialog */}
-        {showAddAddressDialog && (
-          <AddAddressDialog
-            open={showAddAddressDialog}
-            onOpenChange={setShowAddAddressDialog}
-            mode={dialogMode}
-            {...(selectedAddress ? { initialData: selectedAddress } : {})}
-            addressId={selectedAddressId || undefined}
-            branchId={selectedBranchId || undefined}
-            onSuccess={async () => {
-              // 🔄 Show loading state
-              setIsAddingAddress(true);
+          {/* Add Address Dialog */}
+          {showAddAddressDialog && (
+            <AddAddressDialog
+              open={showAddAddressDialog}
+              onOpenChange={setShowAddAddressDialog}
+              mode={dialogMode}
+              {...(selectedAddress ? { initialData: selectedAddress } : {})}
+              addressId={selectedAddressId || undefined}
+              branchId={selectedBranchId || undefined}
+              onSuccess={async () => {
+                // 🔄 Show loading state
+                setIsAddingAddress(true);
 
-              try {
-                // 🔄 Fetch fresh data from server
-                await fetchBranchAddresses(
-                  searchTerm,
-                  currentPage,
-                  false,
-                  pageSize
-                );
-                toast.success(
-                  `Address ${dialogMode === "edit" ? "updated" : "added"} successfully!`
-                );
-              } catch {
-                toast.error("Failed to refresh address list");
-              } finally {
-                setIsAddingAddress(false);
-              }
-            }}
-          />
-        )}
-      </FullWidthLayout>
-    </>
+                try {
+                  // 🔄 Fetch fresh data from server
+                  await fetchBranchAddresses(
+                    searchTerm,
+                    currentPage,
+                    false,
+                    pageSize
+                  );
+                  toast.success(
+                    `Address ${dialogMode === "edit" ? "updated" : "added"} successfully!`
+                  );
+                } catch {
+                  toast.error("Failed to refresh address list");
+                } finally {
+                  setIsAddingAddress(false);
+                }
+              }}
+            />
+          )}
+        </FullWidthLayout>
+      </>
+    </ErrorBoundary>
   );
 }

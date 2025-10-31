@@ -148,40 +148,19 @@ export class TenantService {
 
   /**
    * Get tenant configuration with caching
+   * 
+   * NOTE: For client-side caching, use React Query's useQuery hook with getTenantConfig().
+   * This method no longer uses localStorage to avoid server-side execution issues.
+   * React Query will handle caching automatically on the client side.
+   * 
+   * @deprecated Use getTenantConfig() with React Query for caching instead
    */
   async getTenantWithCache(
     domainUrl: string,
     context?: RequestContext
   ): Promise<TenantConfigResponse> {
-    const cacheKey = `tenant_config_${domainUrl}`;
-
-    // Try to get from cache first
-    if (typeof window !== "undefined") {
-      const cached = localStorage.getItem(cacheKey);
-      if (cached) {
-        const { data, timestamp } = JSON.parse(cached);
-        // Cache for 1 hour
-        if (Date.now() - timestamp < 3600000) {
-          return data;
-        }
-      }
-    }
-
-    // Fetch fresh data
-    const tenantConfig = await this.getTenantConfig(domainUrl, context);
-
-    // Cache the result
-    if (typeof window !== "undefined") {
-      localStorage.setItem(
-        cacheKey,
-        JSON.stringify({
-          data: tenantConfig,
-          timestamp: Date.now(),
-        })
-      );
-    }
-
-    return tenantConfig;
+    // Simply return fresh data - let React Query handle caching on client-side
+    return this.getTenantConfig(domainUrl, context);
   }
 }
 

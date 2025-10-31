@@ -1,13 +1,12 @@
-import {
-  cloneDeep,
-  each,
-  forEach,
-  isEmpty,
-  isNumber,
-  remove,
-  round,
-  some,
-} from "lodash";
+// Use individual lodash imports for better tree-shaking
+import cloneDeep from "lodash/cloneDeep";
+import each from "lodash/each";
+import forEach from "lodash/forEach";
+import isEmpty from "lodash/isEmpty";
+import isNumber from "lodash/isNumber";
+import remove from "lodash/remove";
+import round from "lodash/round";
+import some from "lodash/some";
 
 export const cartCalculation = (
   cartData: any, // eslint-disable-line @typescript-eslint/no-explicit-any

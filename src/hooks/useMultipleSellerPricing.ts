@@ -1,8 +1,10 @@
 import CartService from "@/lib/api/CartServices";
 import { useTenantStore } from "@/store/useTenantStore";
-import { groupBy, uniqBy } from "lodash";
+// Use individual lodash imports for better tree-shaking
+import { useQuery } from "@tanstack/react-query";
+import groupBy from "lodash/groupBy";
+import uniqBy from "lodash/uniqBy";
 import { useEffect, useMemo, useState } from "react";
-import useSWR from "swr";
 import { useCurrentUser } from "./useCurrentUser";
 
 interface CartItem {
@@ -185,28 +187,24 @@ export default function useMultipleSellerPricing(
   const {
     data,
     error,
-    mutate: revalidate,
-  } = useSWR(
-    shouldFetch
-      ? [
-          `/multiSellerPricing`,
-          quantityHash,
-          ...productIds,
-          ...(sellerIds || []),
-          currency?.id,
-          sellerCurrency?.id,
-        ]
-      : null,
-    fetch,
-    {
-      shouldRetryOnError: false,
-      revalidateOnFocus: false,
-      dedupingInterval: 2000, // Allow some deduping to prevent excessive requests
-      revalidateOnMount: true, // Always fetch on mount
-    }
-  );
-
-  // Remove forced revalidation - SWR will handle it automatically with the cache key
+    isLoading,
+    refetch: revalidate,
+  } = useQuery({
+    queryKey: [
+      `/multiSellerPricing`,
+      quantityHash,
+      ...productIds,
+      ...(sellerIds || []),
+      currency?.id,
+      sellerCurrency?.id,
+    ],
+    queryFn: fetch,
+    enabled: shouldFetch,
+    retry: false, // was shouldRetryOnError: false
+    refetchOnWindowFocus: false, // was revalidateOnFocus: false
+    staleTime: 2000, // was dedupingInterval: 2000
+    refetchOnMount: true, // was revalidateOnMount: true
+  });
 
   const [sellerPricingData, setSellerPricingData] = useState({});
   const [allSellerPricesData, setAllSellerPricesData] = useState({});
@@ -249,8 +247,8 @@ export default function useMultipleSellerPricing(
   return {
     sellerPricingData,
     allSellerPricesData, // Expose for additional fallback scenarios
-    isLoading: shouldFetch ? !error && !data : false,
+    isLoading: shouldFetch ? isLoading : false,
     error,
-    revalidate, // Expose revalidate function for manual cache invalidation
+    revalidate, // Expose refetch function for manual cache invalidation
   };
 }

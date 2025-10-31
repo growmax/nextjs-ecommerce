@@ -1,12 +1,17 @@
+import InteractiveDemoWrapper from "@/components/demo/InteractiveDemoWrapper";
 import type { Metadata } from "next";
 import { Suspense } from "react";
-import InteractiveDemoWrapper from "@/components/demo/InteractiveDemoWrapper";
 
 export const metadata: Metadata = {
   title: "Fast Homepage Demo | Progressive Hydration",
   description:
     "Demonstrating Grainger-like fast page load with progressive hydration",
 };
+
+// Enable ISR for homepage - revalidate every hour
+// This allows the page to be statically generated and served from cache
+// while still being updated periodically
+export const revalidate = 3600; // 1 hour
 
 export default function HomePage() {
   // Simulate some mock data (this renders instantly as HTML)
@@ -67,9 +72,7 @@ export default function HomePage() {
               className="bg-indigo-100 border-2 border-indigo-300 p-6 rounded-lg text-center hover:shadow-md transition-shadow"
             >
               <div className="text-4xl mb-2">🏷️</div>
-              <h3 className="font-semibold text-indigo-900">
-                {category.name}
-              </h3>
+              <h3 className="font-semibold text-indigo-900">{category.name}</h3>
             </div>
           ))}
         </div>

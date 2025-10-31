@@ -5,7 +5,8 @@ import { useTenantInfo } from "@/contexts/TenantContext";
 import { useCurrentUser } from "@/hooks/useCurrentUser";
 import SearchService from "@/lib/api/services/SearchService";
 import { serchquery } from "@/utils/query/elasticQueries";
-import { debounce } from "lodash";
+// Use individual lodash imports for better tree-shaking
+import debounce from "lodash/debounce";
 import { ImageIcon, Loader2, Search } from "lucide-react";
 import Image from "next/image";
 import { useEffect, useState } from "react";

@@ -1,4 +1,6 @@
-import _, { maxBy, toNumber } from "lodash";
+// Use individual lodash imports for better tree-shaking
+import maxBy from "lodash/maxBy";
+import toNumber from "lodash/toNumber";
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export function getSuitableDiscountByQuantity(

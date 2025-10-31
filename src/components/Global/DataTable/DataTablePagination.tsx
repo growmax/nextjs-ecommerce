@@ -5,6 +5,7 @@ import {
   ChevronsRight,
 } from "lucide-react";
 import type { Table } from "@tanstack/react-table";
+import * as React from "react";
 
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
@@ -23,7 +24,7 @@ interface DataTablePaginationProps<TData> {
   pageSizeOptions?: number[];
 }
 
-export function DataTablePagination<TData>({
+function DataTablePaginationComponent<TData>({
   table,
   showPageSizeSelector = true,
   showFirstLastButtons = true,
@@ -115,3 +116,8 @@ export function DataTablePagination<TData>({
     </div>
   );
 }
+
+// Memoize to prevent unnecessary re-renders when table state changes
+export const DataTablePagination = React.memo(
+  DataTablePaginationComponent
+) as typeof DataTablePaginationComponent;

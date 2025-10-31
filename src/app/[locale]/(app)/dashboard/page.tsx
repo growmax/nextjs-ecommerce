@@ -1,6 +1,7 @@
-import { Suspense } from "react";
-import type { Metadata } from "next";
+import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { PageLoader } from "@/components/Loaders/PageLoader/page-loader";
+import type { Metadata } from "next";
+import { Suspense } from "react";
 import DashboardPageClient from "./components/DashboardPageClient";
 
 export const metadata: Metadata = {
@@ -10,8 +11,10 @@ export const metadata: Metadata = {
 
 export default function DashboardPage() {
   return (
-    <Suspense fallback={<PageLoader message="Loading Dashboard..." />}>
-      <DashboardPageClient />
-    </Suspense>
+    <ErrorBoundary>
+      <Suspense fallback={<PageLoader message="Loading Dashboard..." />}>
+        <DashboardPageClient />
+      </Suspense>
+    </ErrorBoundary>
   );
 }

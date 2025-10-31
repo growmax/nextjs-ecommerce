@@ -5,7 +5,8 @@ import { useTenantInfo } from "@/contexts/TenantContext";
 import { useCurrentUser } from "@/hooks/useCurrentUser";
 import useSelectedSellerCart from "@/hooks/useSelectedSellerCart";
 import CartServices from "@/lib/api/CartServices";
-import { some } from "lodash";
+// Use individual lodash imports for better tree-shaking
+import some from "lodash/some";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { toast } from "sonner";
