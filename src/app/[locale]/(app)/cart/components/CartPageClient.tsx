@@ -128,7 +128,7 @@ export default function CartPageClient() {
         return;
       }
     } else {
-      router.push(`/auth/login?from=Cart`);
+      router.push(`/login?from=Cart`);
     }
   };
 
@@ -156,7 +156,7 @@ export default function CartPageClient() {
         );
       }
     } else {
-      router.push(`/auth/login?from=Cart`);
+      router.push(`/login?from=Cart`);
     }
   };
 
