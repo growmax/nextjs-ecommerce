@@ -2,9 +2,10 @@
 
 import { useLocale } from "next-intl";
 import { useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 
+import { EditOrderNameDialog } from "@/components/dialogs/EditOrderNameDialog";
 import {
   OrderContactDetails,
   OrderPriceDetails,
@@ -13,13 +14,22 @@ import {
   OrderTermsCard,
   SalesHeader,
 } from "@/components/sales";
-import { EditOrderNameDialog } from "@/components/dialogs/EditOrderNameDialog";
 import { useCurrentUser } from "@/hooks/useCurrentUser";
 import { useTenantData } from "@/hooks/useTenantData";
-import type { OrderDetailsResponse } from "@/lib/api";
-import { OrderDetailsService, OrderNameService } from "@/lib/api";
-import { exportProductsToCsv } from "@/lib/export-csv";
+import type {
+  OrderDetailsResponse,
+  PaymentDueDataItem,
+  PaymentHistoryItem,
+} from "@/lib/api";
+import {
+  OrderDetailsService,
+  OrderNameService,
+  PaymentService,
+} from "@/lib/api";
 import type { ProductCsvRow } from "@/lib/export-csv";
+import { exportProductsToCsv } from "@/lib/export-csv";
+import { zoneDateTimeCalculator } from "@/utils/dateformat";
+import { differenceInDays, isAfter } from "date-fns";
 
 // Import types for proper typing
 interface AddressDetails {
@@ -88,9 +98,53 @@ export default function OrderDetailsPage({ params }: OrderDetailsPageProps) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [editDialogOpen, setEditDialogOpen] = useState(false);
+  const [paymentHistory, setPaymentHistory] = useState<PaymentHistoryItem[]>(
+    []
+  );
+  const [paymentDueData, setPaymentDueData] = useState<PaymentDueDataItem[]>(
+    []
+  );
 
   const { user } = useCurrentUser();
   const { tenantData } = useTenantData();
+
+  // Get user preferences for date/time formatting
+  const getUserPreferences = () => {
+    try {
+      const savedPrefs = localStorage.getItem("userPreferences");
+      if (savedPrefs) {
+        const prefs = JSON.parse(savedPrefs);
+        return {
+          timeZone: prefs.timeZone || "Asia/Kolkata",
+          dateFormat: prefs.dateFormat || "dd/MM/yyyy",
+          timeFormat: prefs.timeFormat || "hh:mm a",
+        };
+      }
+    } catch {
+      // Fallback to defaults
+    }
+    return {
+      timeZone: "Asia/Kolkata",
+      dateFormat: "dd/MM/yyyy",
+      timeFormat: "hh:mm a",
+    };
+  };
+
+  const preferences = getUserPreferences();
+
+  // Calculate total paid from payment history
+  const totalPaid = paymentHistory.reduce(
+    (sum, item) => sum + (item.amountReceived || 0),
+    0
+  );
+
+  // Prevent duplicate fetches for the same identifiers (helps with StrictMode double effects)
+  const lastFetchKeyRef = useRef<string | null>(null);
+
+  // Derive only primitive dependencies to satisfy exhaustive-deps
+  const userId = user?.userId;
+  const companyId = user?.companyId;
+  const tenantCode = tenantData?.tenant?.tenantCode;
 
   // Load params asynchronously
   useEffect(() => {
@@ -105,7 +159,15 @@ export default function OrderDetailsPage({ params }: OrderDetailsPageProps) {
   useEffect(() => {
     const fetchOrderDetails = async () => {
       // Wait for params, user and tenant data to be available
-      if (!paramsLoaded || !orderId || !user || !tenantData?.tenant) {
+      if (!paramsLoaded || !orderId || !userId || !tenantCode || !companyId) {
+        return;
+      }
+
+      // Build a stable key from primitives only
+      const fetchKey = [orderId, userId, companyId, tenantCode].join("|");
+
+      // Skip if we've already fetched for this exact key (prevents duplicate calls in dev)
+      if (lastFetchKeyRef.current === fetchKey) {
         return;
       }
 
@@ -114,13 +176,14 @@ export default function OrderDetailsPage({ params }: OrderDetailsPageProps) {
         setError(null);
 
         const response = await OrderDetailsService.fetchOrderDetails({
-          userId: user.userId,
-          tenantId: tenantData.tenant.tenantCode,
-          companyId: user.companyId,
+          userId,
+          tenantId: tenantCode,
+          companyId,
           orderId,
         });
 
         setOrderDetails(response);
+        lastFetchKeyRef.current = fetchKey;
       } catch (err) {
         const errorMessage =
           err instanceof Error ? err.message : "Failed to fetch order details";
@@ -132,7 +195,69 @@ export default function OrderDetailsPage({ params }: OrderDetailsPageProps) {
     };
 
     fetchOrderDetails();
-  }, [paramsLoaded, orderId, user, tenantData]);
+  }, [paramsLoaded, orderId, userId, companyId, tenantCode]);
+
+  // Fetch overall payments when order details are loaded
+  useEffect(() => {
+    const fetchPayments = async () => {
+      if (!orderId || !orderDetails) {
+        setPaymentHistory([]);
+        return;
+      }
+
+      try {
+        const response =
+          await PaymentService.fetchOverallPaymentsByOrder(orderId);
+        const items = Array.isArray(response?.data) ? response.data : [];
+        setPaymentHistory(items);
+      } catch (err) {
+        // eslint-disable-next-line no-console
+        console.error("Failed to fetch payments:", err);
+        setPaymentHistory([]);
+      }
+    };
+
+    fetchPayments();
+  }, [orderId, orderDetails]);
+
+  // Fetch payment due details when order details are loaded
+  useEffect(() => {
+    const fetchPaymentDue = async () => {
+      if (!orderId || !orderDetails) {
+        setPaymentDueData([]);
+        return;
+      }
+
+      try {
+        const response = await PaymentService.fetchPaymentDueByOrder(orderId);
+        // Handle nested response structure from API (data.data.data)
+        let data: PaymentDueDataItem[] = [];
+        if (response && typeof response === "object") {
+          // Try different nested structures
+          if (
+            "data" in response &&
+            response.data &&
+            typeof response.data === "object" &&
+            "data" in response.data &&
+            Array.isArray((response.data as { data: unknown }).data)
+          ) {
+            data = (response.data as { data: PaymentDueDataItem[] }).data;
+          } else if ("data" in response && Array.isArray(response.data)) {
+            data = response.data;
+          } else if (Array.isArray(response)) {
+            data = response;
+          }
+        }
+        setPaymentDueData(data);
+      } catch (err) {
+        // eslint-disable-next-line no-console
+        console.error("Failed to fetch payment due details:", err);
+        setPaymentDueData([]);
+      }
+    };
+
+    fetchPaymentDue();
+  }, [orderId, orderDetails]);
 
   // Handler functions
   const handleRefresh = async () => {
@@ -201,8 +326,8 @@ export default function OrderDetailsPage({ params }: OrderDetailsPageProps) {
     }
   };
 
-  const handlePlaceOrder = () => {
-    toast.info("Place order functionality coming soon");
+  const handleRequestEdit = () => {
+    toast.info("Request edit functionality coming soon");
   };
 
   const handleClone = () => {
@@ -234,7 +359,81 @@ export default function OrderDetailsPage({ params }: OrderDetailsPageProps) {
 
   // Extract data for header
   const orderName = orderDetails?.data?.orderDetails?.[0]?.orderName;
-  const status = orderDetails?.data?.updatedBuyerStatus;
+  const status = orderDetails?.data?.updatedBuyerStatus as string | undefined;
+  const isCancelled = status?.toUpperCase() === "ORDER CANCELLED";
+  const isEditInProgress = status?.toUpperCase() === "EDIT IN PROGRESS";
+  const cancelMsg = orderDetails?.data?.orderDetails?.[0]?.cancelMsg as
+    | string
+    | null
+    | undefined;
+  const createdDate = orderDetails?.data?.createdDate as string | undefined;
+
+  // Determine which buttons to show based on order status
+  const headerButtons = isEditInProgress
+    ? [
+        {
+          label: "EDIT ORDER",
+          variant: "outline" as const,
+          onClick: handleEditQuote,
+        },
+      ]
+    : [
+        {
+          label: "REQUEST EDIT",
+          variant: "outline" as const,
+          onClick: handleRequestEdit,
+        },
+      ];
+
+  // Process payment due data to extract last date to pay
+  const getLastDateToPay = (): string => {
+    if (paymentDueData.length === 0) {
+      return "- No due";
+    }
+
+    const firstItem = paymentDueData[0];
+    if (!firstItem) {
+      return "- No due";
+    }
+
+    // Get the appropriate breakup array
+    const breakup = firstItem.invoiceIdentifier
+      ? firstItem.invoiceDueBreakup
+      : firstItem.orderDueBreakup;
+
+    if (!breakup || breakup.length === 0) {
+      return "- No due";
+    }
+
+    const firstBreakup = breakup[0];
+    const dueDate = firstBreakup?.dueDate;
+
+    if (!dueDate) {
+      return "-";
+    }
+
+    // Check if the date is overdue
+    const dueDateObj = new Date(dueDate);
+    const isDue = isAfter(new Date(), dueDateObj);
+
+    if (isDue) {
+      const daysOverdue = differenceInDays(new Date(), dueDateObj);
+      return `Overdue by ${daysOverdue} ${daysOverdue > 1 ? "days" : "day"}`;
+    }
+
+    // Format the date using user preferences
+    const formattedDate = zoneDateTimeCalculator(
+      dueDate,
+      preferences.timeZone,
+      preferences.dateFormat,
+      preferences.timeFormat,
+      true
+    );
+
+    return formattedDate || "-";
+  };
+
+  const lastDateToPay = getLastDateToPay();
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -261,18 +460,7 @@ export default function OrderDetailsPage({ params }: OrderDetailsPageProps) {
             onClick: handleDownloadPDF,
           },
         ]}
-        buttons={[
-          {
-            label: "EDIT ORDER",
-            variant: "outline",
-            onClick: handleEditQuote,
-          },
-          {
-            label: "PLACE ORDER",
-            variant: "default",
-            onClick: handlePlaceOrder,
-          },
-        ]}
+        buttons={headerButtons}
         showEditIcon={true}
         loading={loading}
       />
@@ -282,28 +470,67 @@ export default function OrderDetailsPage({ params }: OrderDetailsPageProps) {
         <div className="flex flex-col lg:flex-row gap-3 sm:gap-4 md:gap-6">
           {/* Left Side - Status Tracker and Products Table - 70% */}
           <div className="w-full lg:w-[70%] space-y-3 sm:space-y-4 md:space-y-6">
+            {/* Cancellation Card */}
+            {isCancelled && cancelMsg && !loading && orderDetails && (
+              <div className="mt-17 bg-gray-50 rounded-lg p-4 sm:p-5 border border-gray-200 shadow-sm">
+                <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
+                  {/* Left Section - Order Identifier and Date */}
+                  <div className="flex flex-col gap-1">
+                    <div className="font-semibold text-gray-900 text-base sm:text-lg">
+                      {orderDetails?.data?.orderIdentifier || orderId}
+                    </div>
+                    <div className="text-xs sm:text-sm text-gray-500">
+                      {zoneDateTimeCalculator(
+                        createdDate,
+                        preferences.timeZone,
+                        preferences.dateFormat,
+                        preferences.timeFormat,
+                        true
+                      ) || ""}
+                    </div>
+                  </div>
+
+                  {/* Right Section - Cancellation Reason */}
+                  <div className="flex flex-col gap-1 sm:text-right">
+                    <div className="text-xs sm:text-sm font-medium text-gray-700">
+                      Reason for cancellation
+                    </div>
+                    <div className="text-sm sm:text-base font-medium text-red-600">
+                      {cancelMsg || ""}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
             {/* Status Tracker */}
             {!loading && !error && orderDetails && (
-              <OrderStatusTracker
-                {...(orderId && { orderId })}
-                {...(orderDetails.data?.createdDate && {
-                  createdDate: orderDetails.data.createdDate,
-                })}
-                {...(orderDetails.data?.updatedBuyerStatus && {
-                  currentStatus: orderDetails.data.updatedBuyerStatus,
-                })}
-                {...(orderDetails.data?.orderDetails?.[0]?.grandTotal && {
-                  total: orderDetails.data.orderDetails[0].grandTotal,
-                })}
-                paid={0} // This would come from payment data
-                {...(orderDetails.data?.orderDetails?.[0]?.grandTotal && {
-                  toPay: orderDetails.data.orderDetails[0].grandTotal,
-                })}
-                {...(orderDetails.data?.buyerCurrencySymbol?.symbol && {
-                  currencySymbol: orderDetails.data.buyerCurrencySymbol.symbol,
-                })}
-                // lastDateToPay is optional, so we don't need to pass it
-              />
+              <div className={isCancelled && cancelMsg ? "" : "mt-17"}>
+                <OrderStatusTracker
+                  {...(orderId && { orderId })}
+                  {...(orderDetails.data?.createdDate && {
+                    createdDate: orderDetails.data.createdDate,
+                  })}
+                  {...(orderDetails.data?.updatedBuyerStatus && {
+                    currentStatus: orderDetails.data.updatedBuyerStatus,
+                  })}
+                  {...(orderDetails.data?.orderDetails?.[0]?.grandTotal && {
+                    total: orderDetails.data.orderDetails[0].grandTotal,
+                  })}
+                  paid={totalPaid}
+                  {...(orderDetails.data?.orderDetails?.[0]?.grandTotal && {
+                    toPay:
+                      (orderDetails.data.orderDetails[0].grandTotal || 0) -
+                      (totalPaid || 0),
+                  })}
+                  {...(orderDetails.data?.buyerCurrencySymbol?.symbol && {
+                    currencySymbol:
+                      orderDetails.data.buyerCurrencySymbol.symbol,
+                  })}
+                  {...(paymentHistory && { paymentHistory })}
+                  {...(lastDateToPay && { lastDateToPay })}
+                  className={isCancelled && cancelMsg ? "mt-0" : undefined}
+                />
+              </div>
             )}
 
             {/* Products Table */}
@@ -417,7 +644,7 @@ export default function OrderDetailsPage({ params }: OrderDetailsPageProps) {
 
           {/* Right Side - Price Details - 30% */}
           {!loading && !error && orderDetails && (
-            <div className="w-full lg:w-[30%] mt-[52px]">
+            <div className="w-full lg:w-[30%] mt-17">
               <OrderPriceDetails
                 totalItems={
                   orderDetails.data?.orderDetails?.[0]?.dbProductDetails

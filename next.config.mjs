@@ -66,6 +66,22 @@ const nextConfig = {
         protocol: "https",
         hostname: "**.myapptino.com",
       },
+      {
+        protocol: "https",
+        hostname: "schwing-dev-app-assets.s3.ap-south-1.amazonaws.com",
+      },
+      {
+        protocol: "https",
+        hostname: "growmax-dev-app-assets.s3.ap-northeast-1.amazonaws.com",
+      },
+      {
+        protocol: "https",
+        hostname: "**.s3.amazonaws.com",
+      },
+      {
+        protocol: "https",
+        hostname: "**.s3.*.amazonaws.com",
+      },
     ],
     unoptimized: false,
   },
