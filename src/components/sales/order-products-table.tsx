@@ -245,17 +245,17 @@ export default function OrderProductsTable({
                           <div className="flex items-center gap-3 relative z-10">
                             {/* Product Image or Placeholder */}
                             {productImage ? (
-                              <div className="shrink-0 w-10 h-10 rounded-full overflow-hidden">
+                              <div className="shrink-0 w-10 h-10 rounded-lg overflow-hidden flex items-center justify-center bg-gray-100">
                                 <ImageWithFallback
                                   src={productImage}
                                   alt={itemName}
                                   width={40}
                                   height={40}
-                                  className="w-full h-full object-cover rounded-full"
+                                  className="w-full h-full object-cover rounded-lg"
                                 />
                               </div>
                             ) : (
-                              <div className="shrink-0 w-10 h-10 rounded-full bg-gray-300 flex items-center justify-center">
+                              <div className="shrink-0 w-10 h-10 rounded-lg bg-gray-300 flex items-center justify-center">
                                 <span className="text-white font-semibold text-sm">
                                   {firstLetter}
                                 </span>

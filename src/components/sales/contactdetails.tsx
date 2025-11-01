@@ -511,7 +511,7 @@ export default function OrderContactDetails({
   };
   return (
     <Card className="shadow-sm h-full">
-      <CardHeader className="px-6 -my-5  bg-gray-50 rounded-t-lg">
+      <CardHeader className="px-6 -my-5  bg-gray-50 rounded-t-lg items-end">
         <CardTitle className="text-xl font-semibold text-gray-900 m-0!">
           Contact Details
         </CardTitle>
