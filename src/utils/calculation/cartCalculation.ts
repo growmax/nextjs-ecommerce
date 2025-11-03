@@ -30,7 +30,8 @@ export const cartCalculation = (
     cashDiscountValue: 0,
     hideListPricePublic: some(cartData, ["listPricePublic", false]),
   };
-  cartArray = cartArray.map((data: any, index: number) => { // eslint-disable-line @typescript-eslint/no-explicit-any
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  cartArray = cartArray.map((data: any, index: number) => {
     // Apply cash discount to unit price if applicable
     if (data.cashdiscountValue && data.cashdiscountValue > 0) {
       // Only store original unit price if not already stored
@@ -82,6 +83,7 @@ export const cartCalculation = (
           } else {
             data[`${inter.taxName}Value`] =
               (intraTotalTax * inter.taxPercentage) / 100;
+            intraTotalTax += data[`${inter.taxName}Value`];
           }
           cartValue[`${inter.taxName}Total`] = cartValue[
             `${inter.taxName}Total`
@@ -89,9 +91,8 @@ export const cartCalculation = (
             ? cartValue[`${inter.taxName}Total`]
             : 0;
           cartValue[`${inter.taxName}Total`] += data[`${inter.taxName}Value`];
-          data.totalTax =
-            ((data.totalPrice + data.pfRate) * data.totalInterTax) / 100;
         });
+        data.totalTax = intraTotalTax;
       } else {
         data.totalTax = 0;
       }
@@ -108,6 +109,7 @@ export const cartCalculation = (
           } else {
             data[`${intra.taxName}Value`] =
               (interTotalTax * intra.taxPercentage) / 100;
+            interTotalTax += data[`${intra.taxName}Value`];
           }
           cartValue[`${intra.taxName}Total`] = cartValue[
             `${intra.taxName}Total`
@@ -115,8 +117,8 @@ export const cartCalculation = (
             ? cartValue[`${intra.taxName}Total`]
             : 0;
           cartValue[`${intra.taxName}Total`] += data[`${intra.taxName}Value`];
-          data.totalTax = interTotalTax;
         });
+        data.totalTax = interTotalTax;
       } else {
         data.totalTax = 0;
       }
@@ -165,6 +167,7 @@ export const cartCalculation = (
       cartValue.totalTax +
       cartValue.totalValue +
       cartValue.pfRate +
+      cartValue.totalShipping +
       cartValue.insuranceCharges;
     cartValue.grandTotal = Settings?.roundingAdjustment
       ? round(cartValue.calculatedTotal)
@@ -217,7 +220,8 @@ export const discountDetails = (
   taxExemption: any, // eslint-disable-line @typescript-eslint/no-explicit-any
   precision = 2
 ) => {
-  cartData.forEach((item: any) => { // eslint-disable-line @typescript-eslint/no-explicit-any
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  cartData.forEach((item: any) => {
     item.packagingQuantity = item.packagingQty
       ? parseFloat(item.packagingQty)
       : parseFloat(item.packagingQuantity);
@@ -386,7 +390,8 @@ export const VolumeDiscountCalculation = (
   const productsAfterVd = products;
   let pfRate = 0;
   let shippingTax = 0;
-  productsAfterVd.forEach((product: any, index: number) => { // eslint-disable-line @typescript-eslint/no-explicit-any
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  productsAfterVd.forEach((product: any, index: number) => {
     let shippingCompound = 0;
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     VdData?.forEach((vd: any, indexvd: any) => {
@@ -837,7 +842,7 @@ export const getProductWiseMargin = (
       }
     }
     // }
-    if (((index as unknown) as number) === data.length - 1) {
+    if ((index as unknown as number) === data.length - 1) {
       costProfit =
         subTotal > 0 && totalProductCost > 0
           ? parseFloat(
@@ -1006,7 +1011,8 @@ export const calculate_volume_discount = (
   let pfRate = 0;
   let shippingTax = 0;
   try {
-    VdData.forEach((product: any, index: number) => { // eslint-disable-line @typescript-eslint/no-explicit-any
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    VdData.forEach((product: any, index: number) => {
       let shippingCompound = 0;
       // if(product?.volume_discount_obj?.Percentage && product?.volume_discount_obj?.DiscountId){
       //if disc changed manually, we dont need to check CantCombineWithOtherDiscounts..

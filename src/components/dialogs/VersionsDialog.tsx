@@ -93,6 +93,7 @@ export function VersionsDialog({
       <DialogContent
         className="fixed! top-31! right-0! left-auto! bottom-0! translate-x-0! translate-y-0! w-[20%]! min-w-[280px]! max-w-[380px]! h-[calc(100vh-3.5rem)]! rounded-tl-lg! rounded-bl-lg! p-0 shadow-[rgba(0,0,0,0.15)_-4px_0_12px_0] data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:slide-out-to-right data-[state=open]:slide-in-from-right data-[state=closed]:zoom-out-0 data-[state=open]:zoom-in-0"
         showCloseButton={false}
+        hideOverlay={true}
       >
         <div className="flex flex-col h-full bg-white overflow-hidden rounded-tl-lg rounded-bl-lg">
           {/* Header */}
@@ -113,7 +114,7 @@ export function VersionsDialog({
           </DialogHeader>
 
           {/* Content */}
-          <div className="flex-1 overflow-y-auto px-6 py-6 bg-white">
+          <div className="flex-1 overflow-y-auto px-6 pt-6 pb-10 bg-white">
             {loading ? (
               <div className="flex items-center justify-center py-12">
                 <div className="text-sm text-gray-500">Loading versions...</div>
@@ -125,7 +126,7 @@ export function VersionsDialog({
                 </div>
               </div>
             ) : (
-              <div className="space-y-4">
+              <div className="space-y-4 pb-8">
                 {displayVersions.map(version => {
                   const isSelected =
                     currentVersionNumber !== undefined
