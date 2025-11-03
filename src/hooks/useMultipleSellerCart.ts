@@ -4,7 +4,7 @@ import {
   getOverallCartSummary,
   groupCartItemsBySeller,
 } from "@/utils/calculation/sellerCartUtils";
-import { assign_pricelist_discounts_data_to_products } from "@/utils/functionalUtils";
+import { assignPricelistDiscountsDataToProducts } from "@/utils/functionalUtils";
 // Use individual lodash imports for better tree-shaking
 import isEmpty from "lodash/isEmpty";
 import { useEffect, useMemo, useState } from "react";
@@ -60,7 +60,7 @@ const useMultipleSellerCart = (cartItems: any, calculationParams: any = {}) => {
 
         if (itemPricing) {
           // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          const pricedItem: any = assign_pricelist_discounts_data_to_products(
+          const pricedItem: any = assignPricelistDiscountsDataToProducts(
             { ...item, showPrice: true },
             itemPricing
           );

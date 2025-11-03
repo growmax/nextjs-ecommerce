@@ -27,6 +27,36 @@ interface CurrentUser {
   role?: string;
 }
 
+// Helper function to extract user data from JWT payload
+const extractUserFromJWT = (): CurrentUser | null => {
+  const token = AuthStorage.getAccessToken();
+  if (!token) return null;
+
+  const jwtService = JWTService.getInstance();
+  const payload = jwtService.decodeToken(token);
+
+  if (!payload || (!payload.userId && !payload.companyId)) {
+    return null;
+  }
+
+  return {
+    currency: payload.currency || {
+      currencyCode: payload.currency?.currencyCode || "INR",
+      decimal: payload.currency?.decimal || ".",
+      description: payload.currency?.description || "INDIAN RUPEE",
+      id: payload.currency?.id || 96,
+      precision: payload.currency?.precision || 2,
+      symbol: payload.currency?.symbol || "INR ₹",
+      thousand: payload.currency?.thousand || ",",
+    },
+    userId: payload.userId || payload.id || 0,
+    companyId: payload.companyId || 0,
+    displayName: payload.displayName || "",
+    email: payload.email || "",
+    role: payload.accountRole || payload.roleName || "",
+  };
+};
+
 export function useCurrentUser() {
   const [user, setUser] = useState<CurrentUser | null>(null);
   const [loading, setLoading] = useState(true);
@@ -67,23 +97,50 @@ export function useCurrentUser() {
           return;
         }
 
-        // Fetch user data from API - UserServices.getUser returns UserApiResponse
-        const response = await UserServices.getUser({ sub });
-
-        // UserApiResponse has structure: { data: {...}, status: "success" }
-        if (response.data) {
-          const userData: CurrentUser = {
-            currency: response.data.currency,
-            userId: response.data.userId,
-            companyId: response.data.companyId,
-            displayName: response.data.displayName || "",
-            email: response.data.email || "",
-            role: response.data.roleName,
-          };
-
+        // Try to extract user data from JWT token directly (primary method)
+        const jwtUserData = extractUserFromJWT();
+        if (jwtUserData) {
           // Cache the user data in localStorage
-          localStorage.setItem("currentUser", JSON.stringify(userData));
-          setUser(userData);
+          localStorage.setItem("currentUser", JSON.stringify(jwtUserData));
+          setUser(jwtUserData);
+          setLoading(false);
+          return;
+        }
+
+        // Fallback: Try to fetch from API (but handle 404 gracefully)
+        try {
+          const response = await UserServices.getUser({ sub });
+          if (response.data) {
+            const userData: CurrentUser = {
+              currency: response.data.currency,
+              userId: response.data.userId,
+              companyId: response.data.companyId,
+              displayName: response.data.displayName || "",
+              email: response.data.email || "",
+              role: response.data.roleName,
+            };
+
+            // Cache the user data in localStorage
+            localStorage.setItem("currentUser", JSON.stringify(userData));
+            setUser(userData);
+          }
+        } catch (apiErr) {
+          // API endpoint doesn't exist (404) or other error - use JWT data as fallback
+          // eslint-disable-next-line no-console
+          console.warn(
+            "Failed to fetch user from API, using JWT data:",
+            apiErr
+          );
+
+          // Try JWT extraction as last resort
+          const fallbackUserData = extractUserFromJWT();
+          if (fallbackUserData) {
+            localStorage.setItem(
+              "currentUser",
+              JSON.stringify(fallbackUserData)
+            );
+            setUser(fallbackUserData);
+          }
         }
       } catch (err) {
         setError(err instanceof Error ? err.message : "Unknown error");

@@ -1,5 +1,5 @@
+import { discountClient, RequestContext } from "../client";
 import { BaseService } from "./BaseService";
-import { coreCommerceClient } from "../client";
 
 export interface Discount {
   Value: number;
@@ -27,7 +27,10 @@ export interface DiscountItem {
 }
 
 export interface DiscountApiResponse {
+  success?: boolean;
   data: DiscountItem[];
+  message?: string;
+  status?: string;
 }
 
 export interface DiscountRequest {
@@ -35,6 +38,20 @@ export interface DiscountRequest {
   CurrencyId: number;
   BaseCurrencyId: number;
   sellerId: string;
+}
+
+export interface DiscountRequestBody {
+  Productid: number[];
+  CurrencyId: number;
+  BaseCurrencyId: number;
+  companyId: number;
+  currencyCode?: string;
+}
+
+export interface DiscountRequestWithContext {
+  userId: number;
+  tenantId: string;
+  body: DiscountRequestBody;
 }
 
 export interface GetAllSellerPricesRequest {
@@ -61,13 +78,50 @@ export interface GetAllSellerPricesResponse {
   message: string;
 }
 export class DiscountService extends BaseService<DiscountService> {
-  protected defaultClient = coreCommerceClient;
+  protected defaultClient = discountClient;
 
-  async getDiscount(body: DiscountRequest): Promise<DiscountApiResponse> {
+  /**
+   * Get discount with context (userId, tenantId)
+   * Payload format: { userId, tenantId, body: { Productid, CurrencyId, BaseCurrencyId, companyId, currencyCode } }
+   *
+   * Matches the old API route handler pattern:
+   * - Sends full payload with userId, tenantId, and body to backend
+   * - Backend expects: { userId, tenantId, body: {...} }
+   * - Returns: { success: true, data: [...] }
+   */
+  async getDiscount(
+    request: DiscountRequestWithContext
+  ): Promise<DiscountApiResponse> {
+    // Use callWith to pass context with tenantCode for x-tenant header
+    const context: RequestContext = {
+      userId: request.userId,
+      companyId: request.body.companyId,
+      tenantCode: request.tenantId,
+    };
+
+    return (await this.callWith(
+      `/discount/getDiscount`,
+      {
+        userId: request.userId,
+        tenantId: request.tenantId,
+        body: request.body,
+      },
+      {
+        method: "POST",
+        context,
+      }
+    )) as DiscountApiResponse;
+  }
+
+  /**
+   * Legacy method - maintains backward compatibility
+   * @deprecated Use getDiscount with DiscountRequestWithContext instead
+   */
+  async getDiscountLegacy(body: DiscountRequest): Promise<DiscountApiResponse> {
     return (await this.call(
       `/discount/getDiscount`,
       body,
-      "POST" // Your curl shows it's actually a POST with body
+      "POST"
     )) as DiscountApiResponse;
   }
 

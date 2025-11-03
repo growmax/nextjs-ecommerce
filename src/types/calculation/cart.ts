@@ -1,3 +1,12 @@
+// Import types
+import type {
+  DiscountDetails,
+  DiscountRange,
+  PriceListDiscountData,
+  VolumeDiscountDetails,
+} from "./discount";
+import type { HsnDetails, TaxBreakup, TaxReq } from "./tax";
+
 // Core cart item structure used throughout calculations
 export interface CartItem {
   productId: string | number;
@@ -5,11 +14,9 @@ export interface CartItem {
   quantity: number;
   askedQuantity?: number;
   unitPrice: number;
-  unitListPrice?: number;
   totalPrice: number;
   totalLP?: number;
   discount?: number;
-  discountPercentage?: number;
   discountedPrice?: number;
   initial_discounted_price_fe?: number;
   initial_unitListPrice_fe?: number;
@@ -46,8 +53,6 @@ export interface CartItem {
   packagingQuantity?: number;
   minOrderQuantity?: number;
   checkMOQ?: boolean;
-  bcProductCost?: number;
-  productCostLoad?: number;
   productCost?: number;
   addonCost?: number;
   addonCostBC?: number;
@@ -87,11 +92,10 @@ export interface CartItem {
   actualSellerId?: string | number;
   pricingConditionCode?: string | null;
   overrideDiscount?: number;
-  unitListPrice?: number;
   disc_prd_related_obj?: PriceListDiscountData;
   isApprovalRequired?: boolean;
   // Dynamic tax properties (added at runtime)
-  [taxName: string]: any;
+  [taxName: string]: unknown;
 }
 
 // Bundle product structure
@@ -133,7 +137,7 @@ export interface CartValue {
   insuranceCharges?: number;
   taxableAmount?: number;
   // Dynamic tax totals (added at runtime)
-  [taxName: string]: any;
+  [taxName: string]: unknown;
 }
 
 // Seller cart structure
