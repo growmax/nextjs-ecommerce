@@ -18,7 +18,7 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
 } from "@/components/ui/sidebar";
-import { useAuth } from "@/contexts/AuthContext";
+import { useUserDetails } from "@/contexts/UserDetailsContext";
 import Logo from "./custom/logo";
 import Link from "next/link";
 
@@ -66,7 +66,7 @@ const navMainItems = [
 ];
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated } = useUserDetails();
 
   // Filter nav items based on auth state
   const filteredNavMainItems = React.useMemo(() => {

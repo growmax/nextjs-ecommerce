@@ -25,14 +25,14 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Separator } from "@/components/ui/separator";
 import { useSidebar } from "@/components/ui/sidebar";
-import { useAuth } from "@/contexts/AuthContext";
+import { useUserDetails } from "@/contexts/UserDetailsContext";
 import { useCart } from "@/contexts/CartContext";
 import useLogout from "@/hooks/Auth/useLogout";
 import useUserProfile from "@/hooks/Profile/useUserProfile";
 
 export function SiteHeader() {
   const { toggleSidebar } = useSidebar();
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated } = useUserDetails();
   const { userProfile } = useUserProfile();
   const { isLoggingOut, handleLogout } = useLogout();
 

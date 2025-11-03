@@ -19,7 +19,7 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
-import { useAuth } from "@/contexts/AuthContext";
+import { useUserDetails } from "@/contexts/UserDetailsContext";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Edit, Eye, EyeOff, Home } from "lucide-react";
 import Link from "next/link";
@@ -65,7 +65,7 @@ export default function LoginPage() {
   const [showPasswordField, setShowPasswordField] = useState(false);
   const [_userInfo, setUserInfo] = useState<UserInfo | null>(null);
   const [currentUsername, setCurrentUsername] = useState("");
-  const { login } = useAuth();
+  const { login } = useUserDetails();
   const emailInputRef = useRef<HTMLInputElement>(null);
   const passwordInputRef = useRef<HTMLInputElement>(null);
 

@@ -1,10 +1,7 @@
-import {
-  homePageClient,
-  createClientWithContext,
-  RequestContext,
-} from "../client";
-import { TenantApiResponse } from "@/types/tenant";
 import { TenantConfigResponse } from "@/types/appconfig";
+import { TenantApiResponse } from "@/types/tenant";
+import { homePageClient } from "../client";
+import { BaseService } from "./BaseService";
 
 export interface TenantInfo {
   domainUrl: string;
@@ -12,17 +9,15 @@ export interface TenantInfo {
   tenantCode: string | null;
 }
 
-export class TenantService {
-  private static instance: TenantService;
-
-  private constructor() {}
-
-  public static getInstance(): TenantService {
-    if (!TenantService.instance) {
-      TenantService.instance = new TenantService();
-    }
-    return TenantService.instance;
-  }
+/**
+ * TenantService - Handles all tenant-related API calls
+ *
+ * Follows standard service pattern with BaseService.
+ * Provides tenant configuration, data fetching, and utility methods.
+ */
+export class TenantService extends BaseService<TenantService> {
+  // Use homePageClient for public tenant endpoints
+  protected defaultClient = homePageClient;
 
   /**
    * Extract tenant information from host
@@ -51,37 +46,64 @@ export class TenantService {
   }
 
   /**
-   * Fetch tenant configuration from external API
+   * Get tenant configuration (TenantConfigResponse format)
+   * Uses standard BaseService call() method
    */
-  async getTenantConfig(
-    domainUrl: string,
-    context?: RequestContext
-  ): Promise<TenantConfigResponse> {
-    const client = context
-      ? createClientWithContext(homePageClient, context)
-      : homePageClient;
-
-    const response = await client.get(
+  async getTenantConfig(domainUrl: string): Promise<TenantConfigResponse> {
+    return this.call(
       `/getTenantCodeCurrencyCompany?domainUrl=${domainUrl}`,
-      {}
-    );
-    return response.data;
+      {},
+      "GET"
+    ) as Promise<TenantConfigResponse>;
   }
 
   /**
-   * Fetch tenant data from external API (legacy method)
+   * Get tenant data (TenantApiResponse format) - Main method for layout
+   * Uses BaseService callWith() for custom context with origin header
+   */
+  async getTenantData(
+    domainUrl: string,
+    origin?: string
+  ): Promise<TenantApiResponse> {
+    return this.callWith(
+      `/getTenantCodeCurrencyCompany?domainUrl=${domainUrl}`,
+      {},
+      {
+        method: "GET",
+        client: homePageClient,
+        context: origin ? { origin } : undefined,
+      }
+    ) as Promise<TenantApiResponse>;
+  }
+
+  /**
+   * Server-side safe version - returns null on error
+   * Uses callWithSafe() for graceful error handling in server components
+   */
+  async getTenantDataServerSide(
+    domainUrl: string,
+    origin?: string
+  ): Promise<TenantApiResponse | null> {
+    return this.callWithSafe(
+      `/getTenantCodeCurrencyCompany?domainUrl=${domainUrl}`,
+      {},
+      {
+        method: "GET",
+        client: homePageClient,
+        context: origin ? { origin } : undefined,
+      }
+    ) as Promise<TenantApiResponse | null>;
+  }
+
+  /**
+   * Legacy method for backward compatibility
+   * @deprecated Use getTenantData() instead
    */
   async fetchTenantFromExternalAPI(
     domainUrl: string,
     origin: string
   ): Promise<TenantApiResponse> {
-    const response = await homePageClient.get(
-      `/getTenantCodeCurrencyCompany?domainUrl=${domainUrl}`,
-      {
-        headers: { origin },
-      }
-    );
-    return response.data;
+    return this.getTenantData(domainUrl, origin);
   }
 
   /**
@@ -135,32 +157,16 @@ export class TenantService {
   };
 
   /**
-   * Validate tenant domain
+   * Validate tenant domain - returns true if domain exists
+   * Uses callSafe() to gracefully handle non-existent domains
    */
   async validateTenantDomain(domain: string): Promise<boolean> {
-    try {
-      await this.getTenantConfig(domain);
-      return true;
-    } catch {
-      return false;
-    }
-  }
-
-  /**
-   * Get tenant configuration with caching
-   * 
-   * NOTE: For client-side caching, use React Query's useQuery hook with getTenantConfig().
-   * This method no longer uses localStorage to avoid server-side execution issues.
-   * React Query will handle caching automatically on the client side.
-   * 
-   * @deprecated Use getTenantConfig() with React Query for caching instead
-   */
-  async getTenantWithCache(
-    domainUrl: string,
-    context?: RequestContext
-  ): Promise<TenantConfigResponse> {
-    // Simply return fresh data - let React Query handle caching on client-side
-    return this.getTenantConfig(domainUrl, context);
+    const result = await this.callSafe(
+      `/getTenantCodeCurrencyCompany?domainUrl=${domain}`,
+      {},
+      "GET"
+    );
+    return result !== null;
   }
 }
 

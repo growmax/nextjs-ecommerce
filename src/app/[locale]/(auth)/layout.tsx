@@ -2,9 +2,8 @@ import { NextIntlClientProvider } from "next-intl";
 import { getMessages } from "next-intl/server";
 import { headers } from "next/headers";
 import { TenantProvider } from "@/contexts/TenantContext";
-import { AuthProvider } from "@/contexts/AuthContext";
-import { UserSessionProvider } from "@/contexts/UserSessionContext";
-import { fetchTenantFromExternalAPI } from "@/lib/tenant";
+import { UserDetailsProvider } from "@/contexts/UserDetailsContext";
+import TenantService from "@/lib/api/services/TenantService";
 import { ServerUserService } from "@/lib/services/ServerUserService";
 import { getServerAuthState } from "@/lib/auth-server";
 
@@ -25,7 +24,7 @@ export default async function AuthLayout({
   let tenantData = null;
   if (tenantCode && tenantDomain && tenantOrigin) {
     try {
-      tenantData = await fetchTenantFromExternalAPI(tenantDomain, tenantOrigin);
+      tenantData = await TenantService.getTenantDataServerSide(tenantDomain, tenantOrigin);
     } catch {
       tenantData = null;
     }
@@ -48,15 +47,13 @@ export default async function AuthLayout({
   return (
     <NextIntlClientProvider messages={messages}>
       <TenantProvider initialData={tenantData}>
-        <AuthProvider
+        <UserDetailsProvider
           initialAuthState={authState.isAuthenticated}
-          initialUser={authState.user}
+          initialUserData={userData?.data || null}
         >
-          <UserSessionProvider initialUserData={userData?.data || null}>
-            {/* Auth pages: No nav, no footer */}
-            <main className="min-h-screen">{children}</main>
-          </UserSessionProvider>
-        </AuthProvider>
+          {/* Auth pages: No nav, no footer */}
+          <main className="min-h-screen">{children}</main>
+        </UserDetailsProvider>
       </TenantProvider>
     </NextIntlClientProvider>
   );

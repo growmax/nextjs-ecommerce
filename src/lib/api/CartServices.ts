@@ -63,35 +63,35 @@ export class CartService extends BaseService<CartService> {
   protected defaultClient = coreCommerceClient;
   async getCart(params: number): Promise<unknown> {
     return this.call(
-      `carts?userId=${params}&find=ByUserId&pos=0`,
+      `/carts?userId=${params}&find=ByUserId&pos=0`,
       {}, // Empty body as per the original API route
       "GET"
     );
   }
   async geBilling(params: cartBilling): Promise<unknown> {
     return this.call(
-      `branches/readBillingBranch/${params?.userId}?companyId=${params?.companyId}`,
+      `/branches/readBillingBranch/${params?.userId}?companyId=${params?.companyId}`,
       {}, // Empty body as per the original API route
       "GET"
     );
   }
   async getModule(params: cartBilling): Promise<unknown> {
     return this.call(
-      `module_setting/getAllModuleSettings?userId=${params?.userId}&companyId=${params?.companyId}`,
+      `/module_setting/getAllModuleSettings?userId=${params?.userId}&companyId=${params?.companyId}`,
       {}, // Empty body as per the original API route
       "GET"
     );
   }
   async getShipping(params: cartBilling): Promise<unknown> {
     return this.call(
-      `branches/readShippingBranch/${params?.userId}?companyId=${params?.companyId}`,
+      `/branches/readShippingBranch/${params?.userId}?companyId=${params?.companyId}`,
       {}, // Empty body as per the original API route
       "GET"
     );
   }
   async getCurrencyModuleSettings(params: cartBilling): Promise<unknown> {
     return this.call(
-      `module_setting/getAllCurrencyModuleSettings?userId=${params?.userId}&companyId=${params?.companyId}`,
+      `/module_setting/getAllCurrencyModuleSettings?userId=${params?.userId}&companyId=${params?.companyId}`,
       {}, // Empty body as per the original API route
       "GET"
     );
@@ -100,7 +100,7 @@ export class CartService extends BaseService<CartService> {
     params: SellerPrice & { body: unknown }
   ): Promise<unknown> {
     return this.callWith(
-      `discount/getAllSellerPrices`,
+      `/discount/getAllSellerPrices`,
       params.body, // Pass the actual body data here instead of {}
       {
         method: "POST",
@@ -112,7 +112,7 @@ export class CartService extends BaseService<CartService> {
     params: DiscountRequest & { body: unknown }
   ): Promise<unknown> {
     return this.callWith(
-      `discount/getDiscount`,
+      `/discount/getDiscount`,
       params.body, // Pass the actual body data here instead of {}
       {
         method: "POST",
@@ -125,7 +125,7 @@ export class CartService extends BaseService<CartService> {
   ): Promise<unknown> {
     const { userId, method = "PUT" } = params;
 
-    return this.callWith(`carts?userId=${userId}&pos=0`, params.body, {
+    return this.callWith(`/carts?userId=${userId}&pos=0`, params.body, {
       method: method as "POST" | "PUT" | "DELETE", // Support POST, PUT, and DELETE methods
       client: coreCommerceClient, // Use coreCommerceClient for cart operations
     });
@@ -134,7 +134,7 @@ export class CartService extends BaseService<CartService> {
     const { userId, tenantId, productId, itemNo, sellerId, pos } = params;
 
     return this.call(
-      `carts/${userId}?productsId=${productId}&itemNo=${itemNo}&pos=0`,
+      `/carts/${userId}?productsId=${productId}&itemNo=${itemNo}&pos=0`,
       {
         userId,
         productId,
@@ -148,7 +148,7 @@ export class CartService extends BaseService<CartService> {
   }
   async emptyCart(params: emptyCart): Promise<unknown> {
     return this.call(
-      `carts?userId=${params?.userId}&find=ByUserId&pos=0`,
+      `/carts?userId=${params?.userId}&find=ByUserId&pos=0`,
       {},
       "DELETE"
     );

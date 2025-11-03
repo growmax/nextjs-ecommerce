@@ -74,6 +74,7 @@ export interface FilterPreferenceResponse {
 export interface OrderPreferencesRequest {
   userId: number;
   companyId: number;
+  tenantCode: string;
   module: string;
   isMobile?: boolean;
 }
@@ -168,9 +169,9 @@ export class PreferenceService extends BaseService<PreferenceService> {
    * @returns User preferences
    */
   async findPreferences(module: string): Promise<UserPreference> {
-    const { userId, companyId } = this.getUserDataFromToken();
+    const { userId, companyId, tenantCode } = this.getUserDataFromToken();
     return (await this.call(
-      `/preferences/find?userId=${userId}&module=${module}&companyId=${companyId}&isMobile=false`,
+      `/preferences/find?userId=${userId}&module=${module}&tenantCode=${tenantCode}&isMobile=false`,
       {},
       "GET"
     )) as UserPreference;
@@ -191,18 +192,18 @@ export class PreferenceService extends BaseService<PreferenceService> {
    * Find user preferences with explicit parameters (for advanced usage)
    * @param userId - The user ID
    * @param module - The module type (order, quote, etc.)
-   * @param companyId - The company ID
+   * @param tenantCode - The tenant code
    * @param isMobile - Mobile flag
    * @returns User preferences
    */
   async findPreferencesWithParams(
     userId: number,
     module: string,
-    companyId: number,
+    tenantCode: string,
     isMobile: boolean = false
   ): Promise<UserPreference> {
     return (await this.call(
-      `/preferences/find?userId=${userId}&module=${module}&companyId=${companyId}&isMobile=${isMobile}`,
+      `/preferences/find?userId=${userId}&module=${module}&tenantCode=${tenantCode}&isMobile=${isMobile}`,
       {},
       "GET"
     )) as UserPreference;
@@ -245,10 +246,10 @@ export class PreferenceService extends BaseService<PreferenceService> {
   async findOrderPreferences(
     requestData: OrderPreferencesRequest
   ): Promise<OrderPreferencesResponse> {
-    const { userId, companyId, module, isMobile = false } = requestData;
+    const { userId, tenantCode, module, isMobile = false } = requestData;
 
     return (await this.call(
-      `/preferences/find?userId=${userId}&module=${module}&companyId=${companyId}&isMobile=${isMobile}`,
+      `/preferences/find?userId=${userId}&module=${module}&tenantCode=${tenantCode}&isMobile=${isMobile}`,
       requestData,
       "GET"
     )) as OrderPreferencesResponse;
@@ -262,17 +263,18 @@ export class PreferenceService extends BaseService<PreferenceService> {
   async findOrderPreferencesAuto(
     isMobile: boolean = false
   ): Promise<OrderPreferencesResponse> {
-    const { userId, companyId } = this.getUserDataFromToken();
+    const { userId, companyId, tenantCode } = this.getUserDataFromToken();
 
     const requestData: OrderPreferencesRequest = {
       userId: parseInt(userId),
       companyId: parseInt(companyId),
+      tenantCode,
       module: "order",
       isMobile,
     };
 
     return (await this.call(
-      `/preferences/find?userId=${userId}&module=order&companyId=${companyId}&isMobile=${isMobile}`,
+      `/preferences/find?userId=${userId}&module=order&tenantCode=${tenantCode}&isMobile=${isMobile}`,
       requestData,
       "GET"
     )) as OrderPreferencesResponse;
@@ -297,9 +299,9 @@ export class PreferenceService extends BaseService<PreferenceService> {
   async findFilterPreferences(
     module: string
   ): Promise<FilterPreferenceResponse> {
-    const { userId, companyId } = this.getUserDataFromToken();
+    const { userId, companyId, tenantCode } = this.getUserDataFromToken();
     return (await this.call(
-      `/preferences/find?userId=${userId}&module=${module}&companyId=${companyId}&isMobile=false`,
+      `/preferences/find?userId=${userId}&module=${module}&tenantCode=${tenantCode}&isMobile=false`,
       {},
       "GET"
     )) as FilterPreferenceResponse;

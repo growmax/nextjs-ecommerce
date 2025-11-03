@@ -1,6 +1,6 @@
 "use client";
 
-import { useAuth } from "@/contexts/AuthContext";
+import { useUserDetails } from "@/contexts/UserDetailsContext";
 import { ReactNode } from "react";
 
 interface AuthGuardProps {
@@ -38,7 +38,7 @@ export function AuthGuard({
   showWhenAuthenticated,
   showWhenUnauthenticated = false,
 }: AuthGuardProps) {
-  const { isAuthenticated, isLoading } = useAuth();
+  const { isAuthenticated, isLoading } = useUserDetails();
 
   // Don't render anything while loading authentication state
   if (isLoading) {

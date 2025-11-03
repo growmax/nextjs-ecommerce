@@ -12,7 +12,7 @@ export class UserServices extends BaseService<UserServices> {
 
   async getUser(params: GetUserParams): Promise<UserApiResponse> {
     return (await this.call(
-      `userses/findByName?name=${params.sub}`,
+      `users/findByName?name=${params.sub}`,
       {},
       "GET"
     )) as UserApiResponse;

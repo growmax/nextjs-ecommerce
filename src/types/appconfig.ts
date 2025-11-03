@@ -112,6 +112,7 @@ export interface SellerCompany {
   website: string;
   defaultEmail: string;
   reportEmail: string;
+  inventoryEmail: string;
   companyIdentifier: string;
   verified: boolean;
   activated: boolean;

@@ -38,6 +38,7 @@ export class ServerAuth {
 
   /**
    * Check if user is authenticated (server-side)
+   * Simplified to just check cookie existence since client-side handles token refresh
    *
    * @returns Promise<boolean> - Authentication status
    */
@@ -48,18 +49,8 @@ export class ServerAuth {
         ServerAuth.ACCESS_TOKEN_COOKIE
       )?.value;
 
-      if (!accessToken) {
-        return false;
-      }
-
-      // Check if token is expired
-      if (this.isTokenExpired(accessToken)) {
-        // Token is expired, attempt refresh
-        const refreshSuccess = await this.attemptServerSideRefresh();
-        return refreshSuccess;
-      }
-
-      return true;
+      // Just check if access token exists - client-side handles expiration/refresh
+      return !!accessToken;
     } catch (_error) {
       return false;
     }
@@ -175,47 +166,6 @@ export class ServerAuth {
     return !isAuth;
   }
 
-  /**
-   * Check if refresh token exists (indicates user should stay logged in)
-   *
-   * @returns Promise<boolean> - True if refresh token exists
-   */
-  private static async attemptServerSideRefresh(): Promise<boolean> {
-    try {
-      const cookieStore = await cookies();
-      const refreshToken = cookieStore.get("refresh_token")?.value;
-
-      // If refresh token exists, assume user should stay authenticated
-      // The client-side token refresh will handle the actual token refresh
-      return !!refreshToken;
-    } catch (_error) {
-      return false;
-    }
-  }
-
-  /**
-   * Check if JWT token is expired
-   *
-   * @param token - JWT token to check
-   * @returns boolean - True if expired
-   */
-  private static isTokenExpired(token: string): boolean {
-    try {
-      // Decode JWT payload
-      const parts = token.split(".");
-      if (parts.length !== 3 || !parts[1]) {
-        return true; // Invalid token format
-      }
-
-      const payload = JSON.parse(atob(parts[1]));
-      const currentTime = Math.floor(Date.now() / 1000);
-
-      // Check if token has exp claim and if it's expired
-      return payload.exp ? payload.exp < currentTime : false;
-    } catch (_error) {
-      return true; // Treat invalid tokens as expired
-    }
-  }
 
   /**
    * Utility to create secure cookie string for setting cookies

@@ -3,7 +3,7 @@
 import { ServerUser } from "@/lib/auth-server";
 import { useHybridAuth } from "@/hooks/useHybridAuth";
 import { useGlobalLoader } from "@/hooks/useGlobalLoader";
-import { useAuth } from "@/contexts/AuthContext";
+import { useUserDetails } from "@/contexts/UserDetailsContext";
 import Link from "next/link";
 import Image from "next/image";
 
@@ -33,7 +33,7 @@ export function AuthAwareNav({
   );
 
   const { withLogoutLoader } = useGlobalLoader();
-  const { logout: clientLogout } = useAuth();
+  const { logout: clientLogout } = useUserDetails();
 
   const handleLogout = async () => {
     await withLogoutLoader(async () => {

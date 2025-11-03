@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useAuth } from "@/contexts/AuthContext";
+import { useUserDetails } from "@/contexts/UserDetailsContext";
 import useShipping from "./useShipping";
 
 interface ShippingAddress {
@@ -17,7 +17,7 @@ interface UserData {
 export default function useCurrentShippingAddress(
   userData: UserData | null = null
 ) {
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated } = useUserDetails();
   const [currentData, setCurrentData] = useState<ShippingAddress>({});
   const { ShippingAddressData, ShippingAddressDataLoading } =
     useShipping(userData);
