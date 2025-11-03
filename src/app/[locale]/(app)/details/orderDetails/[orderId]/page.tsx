@@ -392,7 +392,7 @@ export default function OrderDetailsPage({ params }: OrderDetailsPageProps) {
 
   // Update order details when version data is loaded
   useEffect(() => {
-    if (versionData && !versionLoading && selectedVersion) {
+    if (versionData && selectedVersion) {
       // Create a unique key for this version to prevent duplicate processing
       const versionKey = `${selectedVersion.versionNumber}-${selectedVersion.orderVersion}`;
 
@@ -407,20 +407,22 @@ export default function OrderDetailsPage({ params }: OrderDetailsPageProps) {
       // Reset trigger after successful fetch
       setTriggerVersionCall(false);
 
-      // Show success toast
-      const versionName =
-        versions.find(
-          (v: Version) => v.versionNumber === selectedVersion.versionNumber
-        )?.versionName || `Version ${selectedVersion.versionNumber}`;
-      toast.success(`Loaded ${versionName} details`);
-
-      // Close the dialog after successful API call
-      setVersionsDialogOpen(false);
+      // Show success toast only if data is freshly loaded (not from cache)
+      if (!versionLoading) {
+        const versionName =
+          versions.find(
+            (v: Version) => v.versionNumber === selectedVersion.versionNumber
+          )?.versionName || `Version ${selectedVersion.versionNumber}`;
+        toast.success(`Loaded ${versionName} details`);
+      }
     }
   }, [versionData, versionLoading, selectedVersion, versions]);
 
   // Handle version selection
   const handleVersionSelect = (version: Version) => {
+    // Close dialog immediately
+    setVersionsDialogOpen(false);
+
     // If version 1 is selected, reset to original order details
     if (version.versionNumber === 1) {
       // Reset to original order details
@@ -442,7 +444,9 @@ export default function OrderDetailsPage({ params }: OrderDetailsPageProps) {
     setSelectedVersion({
       versionNumber: version.versionNumber,
       orderVersion: version.orderVersion || version.versionNumber,
-      orderIdentifier: version.orderIdentifier,
+      ...(version.orderIdentifier && {
+        orderIdentifier: version.orderIdentifier,
+      }),
     });
     setTriggerVersionCall(true);
   };
@@ -576,7 +580,6 @@ export default function OrderDetailsPage({ params }: OrderDetailsPageProps) {
             {isCancelled &&
               cancelMsg &&
               !loading &&
-              !versionLoading &&
               (orderDetails || displayOrderDetails) && (
                 <div className="mt-17 bg-gray-50 rounded-lg p-4 sm:p-5 border border-gray-200 shadow-sm">
                   <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
@@ -612,10 +615,10 @@ export default function OrderDetailsPage({ params }: OrderDetailsPageProps) {
               )}
             {/* Status Tracker */}
             {!loading &&
-              !versionLoading &&
               !error &&
-              (orderDetails || displayOrderDetails) && (
-                <div className={isCancelled && cancelMsg ? "" : "mt-17"}>
+              (orderDetails || displayOrderDetails) &&
+              !isCancelled && (
+                <div className="mt-17">
                   <OrderStatusTracker
                     {...(orderId && { orderId })}
                     {...(displayOrderDetails?.createdDate && {
@@ -642,252 +645,281 @@ export default function OrderDetailsPage({ params }: OrderDetailsPageProps) {
                     })}
                     {...(paymentHistory && { paymentHistory })}
                     {...(lastDateToPay && { lastDateToPay })}
-                    className={isCancelled && cancelMsg ? "mt-0" : undefined}
                   />
                 </div>
               )}
 
             {/* Products Table */}
-            {!loading &&
-              !versionLoading &&
-              !error &&
-              (orderDetails || displayOrderDetails) && (
-                <OrderProductsTable
-                  products={
+            {!loading && !error && (orderDetails || displayOrderDetails) && (
+              <OrderProductsTable
+                products={
+                  displayOrderDetails?.orderDetails?.[0]?.dbProductDetails ||
+                  orderDetails?.data?.orderDetails?.[0]?.dbProductDetails ||
+                  []
+                }
+                {...((displayOrderDetails?.orderDetails?.[0]?.dbProductDetails
+                  ?.length ||
+                  orderDetails?.data?.orderDetails?.[0]?.dbProductDetails
+                    ?.length) && {
+                  totalCount:
+                    displayOrderDetails?.orderDetails?.[0]?.dbProductDetails
+                      ?.length ||
+                    orderDetails?.data?.orderDetails?.[0]?.dbProductDetails
+                      ?.length ||
+                    0,
+                })}
+                onExport={() => {
+                  const products =
                     displayOrderDetails?.orderDetails?.[0]?.dbProductDetails ||
                     orderDetails?.data?.orderDetails?.[0]?.dbProductDetails ||
-                    []
-                  }
-                  {...((displayOrderDetails?.orderDetails?.[0]?.dbProductDetails
-                    ?.length ||
-                    orderDetails?.data?.orderDetails?.[0]?.dbProductDetails
-                      ?.length) && {
-                    totalCount:
-                      displayOrderDetails?.orderDetails?.[0]?.dbProductDetails
-                        ?.length ||
-                      orderDetails?.data?.orderDetails?.[0]?.dbProductDetails
-                        ?.length ||
-                      0,
-                  })}
-                  onExport={() => {
-                    const products =
-                      displayOrderDetails?.orderDetails?.[0]
-                        ?.dbProductDetails ||
-                      orderDetails?.data?.orderDetails?.[0]?.dbProductDetails ||
-                      [];
-                    const filename = `Order_${orderId}_Products.csv`;
-                    exportProductsToCsv(products as ProductCsvRow[], filename);
-                  }}
-                />
-              )}
+                    [];
+                  const filename = `Order_${orderId}_Products.csv`;
+                  exportProductsToCsv(products as ProductCsvRow[], filename);
+                }}
+              />
+            )}
 
             {/* Contact Details and Terms Cards - Side by Side */}
-            {!loading &&
-              !versionLoading &&
-              !error &&
-              (orderDetails || displayOrderDetails) && (
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-3 sm:gap-4 md:gap-6">
-                  {/* Contact Details Card */}
-                  <OrderContactDetails
-                    billingAddress={
+            {!loading && !error && (orderDetails || displayOrderDetails) && (
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3 sm:gap-4 md:gap-6">
+                {/* Contact Details Card */}
+                <OrderContactDetails
+                  billingAddress={
+                    (displayOrderDetails?.orderDetails?.[0]
+                      ?.billingAddressDetails ||
+                      orderDetails?.data?.orderDetails?.[0]
+                        ?.billingAddressDetails) as unknown as AddressDetails
+                  }
+                  shippingAddress={
+                    (displayOrderDetails?.orderDetails?.[0]
+                      ?.shippingAddressDetails ||
+                      orderDetails?.data?.orderDetails?.[0]
+                        ?.shippingAddressDetails) as unknown as AddressDetails
+                  }
+                  registerAddress={
+                    (displayOrderDetails?.orderDetails?.[0]
+                      ?.registerAddressDetails ||
+                      orderDetails?.data?.orderDetails?.[0]
+                        ?.registerAddressDetails) as unknown as AddressDetails
+                  }
+                  sellerAddress={
+                    (displayOrderDetails?.orderDetails?.[0]
+                      ?.sellerAddressDetail ||
+                      orderDetails?.data?.orderDetails?.[0]
+                        ?.sellerAddressDetail) as unknown as AddressDetails
+                  }
+                  buyerCompanyName={
+                    (displayOrderDetails?.orderDetails?.[0]?.buyerCompanyName ||
+                      orderDetails?.data?.orderDetails?.[0]
+                        ?.buyerCompanyName) as unknown as string
+                  }
+                  buyerBranchName={
+                    (displayOrderDetails?.orderDetails?.[0]?.buyerBranchName ||
+                      orderDetails?.data?.orderDetails?.[0]
+                        ?.buyerBranchName) as unknown as string
+                  }
+                  warehouseName={
+                    ((
                       (displayOrderDetails?.orderDetails?.[0]
-                        ?.billingAddressDetails ||
+                        ?.dbProductDetails?.[0] ||
                         orderDetails?.data?.orderDetails?.[0]
-                          ?.billingAddressDetails) as unknown as AddressDetails
-                    }
-                    shippingAddress={
-                      (displayOrderDetails?.orderDetails?.[0]
-                        ?.shippingAddressDetails ||
-                        orderDetails?.data?.orderDetails?.[0]
-                          ?.shippingAddressDetails) as unknown as AddressDetails
-                    }
-                    registerAddress={
-                      (displayOrderDetails?.orderDetails?.[0]
-                        ?.registerAddressDetails ||
-                        orderDetails?.data?.orderDetails?.[0]
-                          ?.registerAddressDetails) as unknown as AddressDetails
-                    }
-                    sellerAddress={
-                      (displayOrderDetails?.orderDetails?.[0]
-                        ?.sellerAddressDetail ||
-                        orderDetails?.data?.orderDetails?.[0]
-                          ?.sellerAddressDetail) as unknown as AddressDetails
-                    }
-                    buyerCompanyName={
-                      (displayOrderDetails?.orderDetails?.[0]
-                        ?.buyerCompanyName ||
-                        orderDetails?.data?.orderDetails?.[0]
-                          ?.buyerCompanyName) as unknown as string
-                    }
-                    buyerBranchName={
-                      (displayOrderDetails?.orderDetails?.[0]
-                        ?.buyerBranchName ||
-                        orderDetails?.data?.orderDetails?.[0]
-                          ?.buyerBranchName) as unknown as string
-                    }
-                    warehouseName={
-                      ((
-                        (displayOrderDetails?.orderDetails?.[0]
-                          ?.dbProductDetails?.[0] ||
-                          orderDetails?.data?.orderDetails?.[0]
-                            ?.dbProductDetails?.[0]) as unknown as Record<
-                          string,
-                          Record<string, string>
-                        >
-                      )?.wareHouse?.wareHouseName ||
-                        (
-                          (displayOrderDetails?.orderDetails?.[0]
-                            ?.dbProductDetails?.[0] ||
-                            orderDetails?.data?.orderDetails?.[0]
-                              ?.dbProductDetails?.[0]) as unknown as Record<
-                            string,
-                            string
-                          >
-                        )?.orderWareHouseName) as string | undefined
-                    }
-                    warehouseAddress={
+                          ?.dbProductDetails?.[0]) as unknown as Record<
+                        string,
+                        Record<string, string>
+                      >
+                    )?.wareHouse?.wareHouseName ||
                       (
                         (displayOrderDetails?.orderDetails?.[0]
                           ?.dbProductDetails?.[0] ||
                           orderDetails?.data?.orderDetails?.[0]
                             ?.dbProductDetails?.[0]) as unknown as Record<
                           string,
-                          Record<string, Record<string, string>>
+                          string
                         >
-                      )?.wareHouse?.addressId as unknown as {
-                        addressLine?: string;
-                        district?: string;
-                        city?: string;
-                        state?: string;
-                        pinCodeId?: string;
-                        country?: string;
-                      }
-                    }
-                    salesBranch={
+                      )?.orderWareHouseName) as string | undefined
+                  }
+                  warehouseAddress={
+                    (
                       (displayOrderDetails?.orderDetails?.[0]
-                        ?.sellerBranchName ||
+                        ?.dbProductDetails?.[0] ||
                         orderDetails?.data?.orderDetails?.[0]
-                          ?.sellerBranchName) as unknown as string | undefined
+                          ?.dbProductDetails?.[0]) as unknown as Record<
+                        string,
+                        Record<string, Record<string, string>>
+                      >
+                    )?.wareHouse?.addressId as unknown as {
+                      addressLine?: string;
+                      district?: string;
+                      city?: string;
+                      state?: string;
+                      pinCodeId?: string;
+                      country?: string;
                     }
-                    requiredDate={
-                      (displayOrderDetails?.orderDetails?.[0]
+                  }
+                  salesBranch={
+                    (displayOrderDetails?.orderDetails?.[0]?.sellerBranchName ||
+                      orderDetails?.data?.orderDetails?.[0]
+                        ?.sellerBranchName) as unknown as string | undefined
+                  }
+                  requiredDate={
+                    (displayOrderDetails?.orderDetails?.[0]
+                      ?.customerRequiredDate ||
+                      displayOrderDetails?.orderDeliveryDate ||
+                      orderDetails?.data?.orderDetails?.[0]
                         ?.customerRequiredDate ||
-                        displayOrderDetails?.orderDeliveryDate ||
-                        orderDetails?.data?.orderDetails?.[0]
-                          ?.customerRequiredDate ||
-                        orderDetails?.data?.orderDeliveryDate) as unknown as
-                        | string
-                        | undefined
-                    }
-                    referenceNumber={
-                      ((displayOrderDetails?.buyerReferenceNumber ||
-                        orderDetails?.data?.buyerReferenceNumber) as string) ||
-                      "-"
-                    }
-                  />
+                      orderDetails?.data?.orderDeliveryDate) as unknown as
+                      | string
+                      | undefined
+                  }
+                  referenceNumber={
+                    ((displayOrderDetails?.buyerReferenceNumber ||
+                      orderDetails?.data?.buyerReferenceNumber) as string) ||
+                    "-"
+                  }
+                />
 
-                  {/* Terms Card */}
-                  <OrderTermsCard
-                    orderTerms={
-                      (displayOrderDetails?.orderDetails?.[0]?.orderTerms ||
-                        orderDetails?.data?.orderDetails?.[0]
-                          ?.orderTerms) as unknown as OrderTerms
-                    }
-                  />
-                </div>
-              )}
-          </div>
-
-          {/* Right Side - Price Details - 40% */}
-          {!loading &&
-            !versionLoading &&
-            !error &&
-            (orderDetails || displayOrderDetails) && (
-              <div className="w-full lg:w-[40%] mt-17 lg:mr-6">
-                <OrderPriceDetails
-                  totalItems={
-                    displayOrderDetails?.orderDetails?.[0]?.dbProductDetails
-                      ?.length ||
-                    orderDetails?.data?.orderDetails?.[0]?.dbProductDetails
-                      ?.length ||
-                    0
-                  }
-                  totalLP={
-                    (
-                      displayOrderDetails?.orderDetails?.[0]
-                        ?.dbProductDetails ||
-                      orderDetails?.data?.orderDetails?.[0]?.dbProductDetails ||
-                      []
-                    ).reduce(
-                      (sum, product) => sum + (product.unitListPrice || 0),
-                      0
-                    ) || 0
-                  }
-                  discount={(() => {
-                    const products =
-                      displayOrderDetails?.orderDetails?.[0]
-                        ?.dbProductDetails ||
-                      orderDetails?.data?.orderDetails?.[0]?.dbProductDetails ||
-                      [];
-                    let totalDiscount = 0;
-
-                    products.forEach(product => {
-                      const unitListPrice = product.unitListPrice || 0;
-                      const discountPercentage = product.discount || 0;
-                      if (discountPercentage > 0) {
-                        const productDiscount =
-                          (unitListPrice * discountPercentage) / 100;
-                        totalDiscount += productDiscount;
-                      }
-                    });
-
-                    return totalDiscount;
-                  })()}
-                  subtotal={
-                    Number(
-                      displayOrderDetails?.orderDetails?.[0]?.subTotal ||
-                        orderDetails?.data?.orderDetails?.[0]?.subTotal
-                    ) || 0
-                  }
-                  taxableAmount={
-                    Number(
-                      displayOrderDetails?.orderDetails?.[0]?.taxableAmount ||
-                        orderDetails?.data?.orderDetails?.[0]?.taxableAmount
-                    ) || 0
-                  }
-                  tax={
-                    Number(
-                      displayOrderDetails?.orderDetails?.[0]?.overallTax ||
-                        orderDetails?.data?.orderDetails?.[0]?.overallTax
-                    ) || 0
-                  }
-                  taxDetails={[
-                    {
-                      name: "IGST",
-                      value:
-                        Number(
-                          displayOrderDetails?.orderDetails?.[0]?.overallTax ||
-                            orderDetails?.data?.orderDetails?.[0]?.overallTax
-                        ) || 0,
-                    },
-                  ]}
-                  total={
-                    Number(
-                      displayOrderDetails?.orderDetails?.[0]?.grandTotal ||
-                        orderDetails?.data?.orderDetails?.[0]?.grandTotal
-                    ) || 0
-                  }
-                  currency={
-                    (
-                      (displayOrderDetails?.buyerCurrencySymbol ||
-                        orderDetails?.data?.buyerCurrencySymbol) as {
-                        symbol?: string;
-                      }
-                    )?.symbol || "INR ₹"
+                {/* Terms Card */}
+                <OrderTermsCard
+                  orderTerms={
+                    (displayOrderDetails?.orderDetails?.[0]?.orderTerms ||
+                      orderDetails?.data?.orderDetails?.[0]
+                        ?.orderTerms) as unknown as OrderTerms
                   }
                 />
               </div>
             )}
+          </div>
+
+          {/* Right Side - Price Details - 40% */}
+          {!loading && !error && (orderDetails || displayOrderDetails) && (
+            <div className="w-full lg:w-[40%] mt-17 lg:mr-6">
+              <OrderPriceDetails
+                products={
+                  displayOrderDetails?.orderDetails?.[0]?.dbProductDetails ||
+                  orderDetails?.data?.orderDetails?.[0]?.dbProductDetails ||
+                  []
+                }
+                isInter={(() => {
+                  // Determine if inter-state based on product taxes (IGST = inter-state, SGST/CGST = intra-state)
+                  const products =
+                    displayOrderDetails?.orderDetails?.[0]?.dbProductDetails ||
+                    orderDetails?.data?.orderDetails?.[0]?.dbProductDetails ||
+                    [];
+                  if (products.length > 0 && products[0]) {
+                    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                    const firstProduct = products[0] as any;
+                    if (
+                      firstProduct.productTaxes &&
+                      Array.isArray(firstProduct.productTaxes)
+                    ) {
+                      const hasIGST = firstProduct.productTaxes.some(
+                        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                        (t: any) => t.taxName === "IGST"
+                      );
+                      return hasIGST;
+                    }
+                  }
+                  // Default to false (intra-state) if we can't determine
+                  return false;
+                })()}
+                insuranceCharges={
+                  Number(
+                    displayOrderDetails?.orderDetails?.[0]?.insuranceCharges ||
+                      orderDetails?.data?.orderDetails?.[0]?.insuranceCharges
+                  ) || 0
+                }
+                precision={2}
+                Settings={{
+                  roundingAdjustment:
+                    displayOrderDetails?.orderDetails?.[0]
+                      ?.roundingAdjustmentEnabled ||
+                    orderDetails?.data?.orderDetails?.[0]
+                      ?.roundingAdjustmentEnabled ||
+                    false,
+                }}
+                isSeller={(user as { isSeller?: boolean })?.isSeller || false}
+                taxExemption={
+                  (user as { taxExemption?: boolean })?.taxExemption || false
+                }
+                currency={
+                  (
+                    (displayOrderDetails?.buyerCurrencySymbol ||
+                      orderDetails?.data?.buyerCurrencySymbol) as {
+                      symbol?: string;
+                    }
+                  )?.symbol || "INR ₹"
+                }
+                {...(displayOrderDetails?.orderDetails?.[0]?.overallShipping !==
+                  undefined ||
+                orderDetails?.data?.orderDetails?.[0]?.overallShipping !==
+                  undefined
+                  ? {
+                      overallShipping: Number(
+                        displayOrderDetails?.orderDetails?.[0]
+                          ?.overallShipping ||
+                          orderDetails?.data?.orderDetails?.[0]
+                            ?.overallShipping ||
+                          0
+                      ),
+                    }
+                  : {})}
+                {...(displayOrderDetails?.orderDetails?.[0]?.overallTax !==
+                  undefined ||
+                orderDetails?.data?.orderDetails?.[0]?.overallTax !== undefined
+                  ? {
+                      overallTax: Number(
+                        displayOrderDetails?.orderDetails?.[0]?.overallTax ||
+                          orderDetails?.data?.orderDetails?.[0]?.overallTax ||
+                          0
+                      ),
+                    }
+                  : {})}
+                {...(displayOrderDetails?.orderDetails?.[0]?.calculatedTotal !==
+                  undefined ||
+                orderDetails?.data?.orderDetails?.[0]?.calculatedTotal !==
+                  undefined ||
+                displayOrderDetails?.orderDetails?.[0]?.grandTotal !==
+                  undefined ||
+                orderDetails?.data?.orderDetails?.[0]?.grandTotal !== undefined
+                  ? {
+                      calculatedTotal: Number(
+                        displayOrderDetails?.orderDetails?.[0]
+                          ?.calculatedTotal ||
+                          orderDetails?.data?.orderDetails?.[0]
+                            ?.calculatedTotal ||
+                          displayOrderDetails?.orderDetails?.[0]?.grandTotal ||
+                          orderDetails?.data?.orderDetails?.[0]?.grandTotal ||
+                          0
+                      ),
+                    }
+                  : {})}
+                {...(displayOrderDetails?.orderDetails?.[0]?.subTotal !==
+                  undefined ||
+                orderDetails?.data?.orderDetails?.[0]?.subTotal !== undefined
+                  ? {
+                      subTotal: Number(
+                        displayOrderDetails?.orderDetails?.[0]?.subTotal ||
+                          orderDetails?.data?.orderDetails?.[0]?.subTotal ||
+                          0
+                      ),
+                    }
+                  : {})}
+                {...(displayOrderDetails?.orderDetails?.[0]?.taxableAmount !==
+                  undefined ||
+                orderDetails?.data?.orderDetails?.[0]?.taxableAmount !==
+                  undefined
+                  ? {
+                      taxableAmount: Number(
+                        displayOrderDetails?.orderDetails?.[0]?.taxableAmount ||
+                          orderDetails?.data?.orderDetails?.[0]
+                            ?.taxableAmount ||
+                          0
+                      ),
+                    }
+                  : {})}
+              />
+            </div>
+          )}
         </div>
       </div>
 
@@ -923,7 +955,7 @@ export default function OrderDetailsPage({ params }: OrderDetailsPageProps) {
         onOpenChange={setVersionsDialogOpen}
         versions={versions}
         orderId={orderId}
-        loading={loading || versionLoading}
+        loading={loading}
         currentVersionNumber={selectedVersion?.versionNumber || 1}
         onVersionSelect={handleVersionSelect}
       />

@@ -76,7 +76,8 @@ export function useGetVersionDetails({
       return response;
     },
     enabled: shouldFetch,
-    staleTime: 0, // Always fetch fresh data
-    gcTime: 0, // Don't cache version data
+    staleTime: 5 * 60 * 1000, // Cache for 5 minutes
+    gcTime: 10 * 60 * 1000, // Keep in cache for 10 minutes
+    placeholderData: previousData => previousData, // Show previous data while fetching
   });
 }
