@@ -1,38 +1,44 @@
-import _, { maxBy, toNumber } from "lodash";
+import { z } from "zod";
+import filter from "lodash/filter";
+import sortBy from "lodash/sortBy";
+import first from "lodash/first";
+import maxBy from "lodash/maxBy";
+import toNumber from "lodash/toNumber";
 
-interface DiscountRange {
-  min_qty: number;
-  max_qty: number;
-  Value: number;
-}
+import type { DiscountRange, DiscountResult } from "@/types/calculation/discount";
 
-interface DiscountResult {
-  suitableDiscount: DiscountRange | undefined;
-  nextSuitableDiscount: DiscountRange | undefined;
-}
+const quantitySchema = z.union([z.number(), z.string()]).transform(toNumber);
+const discountListSchema = z.array(z.object({
+  min_qty: z.number(),
+  max_qty: z.number(),
+  Value: z.number(),
+})).min(1, "Discount list cannot be empty");
 
-/**
- *
- * @param quantity - Value to check the range between the list values
- * @param discountsList - Array to check the comparison
- * @param qtyIncrease - Value to compare for nextSuitable obj
- * @returns return matched discount with the product
- */
 export function getSuitableDiscountByQuantity(
-  quantity: number | string,
-  discountsList: DiscountRange[],
-  qtyIncrease: number | string
+  quantityInput: number | string,
+  discountRanges: DiscountRange[],
+  _quantityIncrease: number | string
 ): DiscountResult {
-  const { resultArr: ranges, nextSuitableDiscount } = getObjectsByQuantityValue(
-    toNumber(quantity),
-    discountsList,
-    toNumber(qtyIncrease)
+  const quantity = quantitySchema.parse(quantityInput);
+  const validatedRanges = discountListSchema.parse(discountRanges);
+
+  if (quantity <= 0) {
+    throw new Error("Quantity must be greater than 0");
+  }
+
+  const applicableRanges = validatedRanges.filter(range =>
+    range.min_qty <= quantity && quantity <= range.max_qty
   );
-  const suitableDiscount = maxBy(ranges, "Value");
-  // let nextSuitableDiscount =  last(nextSuitableDiscArr)
-  // if(nextSuitableDiscount?.Value === suitableDiscount?.Value || nextSuitableDiscount?.Value < suitableDiscount?.Value){
-  //     nextSuitableDiscount = maxBy(discountsList, 'Value') ?  maxBy(discountsList, 'Value') : null
-  // }
+
+  const suitableDiscount = maxBy(applicableRanges, "Value");
+
+  const nextSuitableDiscount = first(
+    sortBy(
+      filter(validatedRanges, range => range.min_qty > quantity),
+      "min_qty"
+    )
+  );
+
   return { suitableDiscount, nextSuitableDiscount };
 }
 
@@ -41,34 +47,32 @@ interface QuantityValueResult {
   nextSuitableDiscount: DiscountRange | undefined;
 }
 
-/**
- * Function that returns the ranges which lies between the quantity
- * @param quantity - Quantity to check the ranges between
- * @param arr - Array to check the comparison for the quantity
- * @param qtyIncrease - Value to compare for nextSuitable obj (currently unused)
- * @returns
- */
 function getObjectsByQuantityValue(
   quantity: number,
-  arr: DiscountRange[] = [],
-  _qtyIncrease: number
+  discountRanges: DiscountRange[] = [],
+  _quantityIncrease: number
 ): QuantityValueResult {
-  const resultArr: DiscountRange[] = [];
-  // const nextSuitableDiscArr = [];
-  for (const obj of arr) {
-    if (obj.min_qty <= quantity && quantity <= obj.max_qty) {
-      resultArr.push(obj);
-    }
-    // if (obj.min_qty >= (quantity + qtyIncrease) && (quantity + qtyIncrease) <= obj.max_qty) {
-    //   nextSuitableDiscArr.push(obj)
-    // }
+  if (!Array.isArray(discountRanges)) {
+    throw new Error("Discount ranges must be an array");
   }
-  const nextSuitableDiscount = _.chain(arr)
-    .filter((discount: DiscountRange) => {
-      return discount.min_qty > quantity;
-    })
-    .sortBy("min_qty")
-    .first()
-    .value();
-  return { resultArr, nextSuitableDiscount };
+
+  const applicableRanges: DiscountRange[] = [];
+
+  for (const range of discountRanges) {
+    if (range.min_qty <= quantity && quantity <= range.max_qty) {
+      applicableRanges.push(range);
+    }
+  }
+
+  const nextSuitableDiscount = first(
+    sortBy(
+      filter(discountRanges, range => range.min_qty > quantity),
+      "min_qty"
+    )
+  );
+
+  return {
+    resultArr: applicableRanges,
+    nextSuitableDiscount
+  };
 }

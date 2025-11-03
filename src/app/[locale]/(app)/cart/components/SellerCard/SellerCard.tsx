@@ -9,7 +9,7 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover";
 import { Separator } from "@/components/ui/separator";
-import { Title } from "@/utils/Typo";
+import { Title } from "@/components/ui/typography";
 import { EllipsisVertical, Minus, Plus, School, Trash } from "lucide-react";
 import CartSkeleton from "../CartSkeleton";
 interface CartProduct {

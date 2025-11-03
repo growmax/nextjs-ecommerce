@@ -4,7 +4,7 @@ import { Input } from "@/components/ui/input";
 import { useTenantInfo } from "@/contexts/TenantContext";
 import { useCurrentUser } from "@/hooks/useCurrentUser";
 import SearchService from "@/lib/api/services/SearchService";
-import { serchquery } from "@/utils/query/elasticQueries";
+import { serchquery } from "@/utils/elasticsearch/search-queries";
 // Use individual lodash imports for better tree-shaking
 import debounce from "lodash/debounce";
 import { ImageIcon, Loader2, Search } from "lucide-react";

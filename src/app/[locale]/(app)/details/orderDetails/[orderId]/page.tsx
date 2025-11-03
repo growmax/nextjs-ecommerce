@@ -39,7 +39,7 @@ import {
   OrderDetailsPageProps,
   OrderTerms,
 } from "@/types/details/orderdetails/index.types";
-import { zoneDateTimeCalculator } from "@/utils/dateformat";
+import { zoneDateTimeCalculator } from "@/utils/date-format";
 import { decodeUnicode } from "@/utils/general";
 import { differenceInDays, isAfter } from "date-fns";
 

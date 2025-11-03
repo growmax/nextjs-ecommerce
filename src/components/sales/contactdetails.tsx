@@ -14,7 +14,7 @@ import SellerWarehouseService, {
   type SellerBranch,
   type Warehouse,
 } from "@/lib/api/services/SellerWarehouseService";
-import { zoneDateTimeCalculator } from "@/utils/dateformat";
+import { zoneDateTimeCalculator } from "@/utils/date-format";
 import { Calendar, Pencil } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";

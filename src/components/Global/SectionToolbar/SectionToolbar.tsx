@@ -15,7 +15,7 @@ import type {
   SectionToolbarProps,
   SectionToolbarRef,
 } from "@/types/section-toolbar";
-import { Title } from "@/utils/Typo";
+import { Title } from "@/components/ui/typography";
 import {
   Columns3,
   Filter,

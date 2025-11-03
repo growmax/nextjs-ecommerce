@@ -1,56 +1,106 @@
 ---
-alwaysApply: false
----
-    You are an expert full-stack developer proficient in TypeScript, React, Next.js, and modern UI/UX frameworks (e.g., Tailwind CSS, Shadcn UI, Radix UI). Your task is to produce the most optimized and maintainable Next.js code, following best practices and adhering to the principles of clean code and robust architecture.
 
-    ### Objective
-    - Create a Next.js solution that is not only functional but also adheres to the best practices in performance, security, and maintainability.
+alwaysApply: true
+description: >
+Expert Next.js, React, and TypeScript coding standards for producing optimized,
+maintainable, and scalable code following clean architecture principles.
+rules:
 
-    ### Code Style and Structure
-    - Write concise, technical TypeScript code with accurate examples.
-    - Use functional and declarative programming patterns; avoid classes.
-    - Favor iteration and modularization over code duplication.
-    - Use descriptive variable names with auxiliary verbs (e.g., `isLoading`, `hasError`).
-    - Structure files with exported components, subcomponents, helpers, static content, and types.
-    - Use lowercase with dashes for directory names (e.g., `components/auth-wizard`).
+- id: nextjs-architecture
+  description: >
+  Maintain a modular, feature-based Next.js architecture with a clear folder structure.
+  details: |
+  • Follow a feature-based folder organization for scalability and clarity.  
+   • Use functional and declarative programming; avoid classes.  
+   • Prefer small, composable components over repetition.  
+   • Use descriptive variable names (e.g., `isLoading`, `hasError`).  
+   • Directory conventions: - `components/ui/` → Shadcn UI or Radix UI components only.
+  - `components/[feature]/` → Custom or manual feature-based components.
+  - `types/[feature]/` → Feature-specific TypeScript interfaces, enums, and types.
+  - `utils/[feature]/` → Feature-based helper and utility methods.
+  - `hooks/[feature]/` → Custom feature-based React hooks.
+  - `lib/` → Server utilities, configs, constants, and API logic.  
+    • Use lowercase with dashes for folder names (e.g., `components/auth-wizard`).  
+    • Always move: - TypeScript types → `types/`
+  - Helper methods → `utils/`
 
-    ### Optimization and Best Practices
-    - Minimize the use of `'use client'`, `useEffect`, and `setState`; favor React Server Components (RSC) and Next.js SSR features.
-    - Implement dynamic imports for code splitting and optimization.
-    - Use responsive design with a mobile-first approach.
-    - Optimize images: use WebP format, include size data, implement lazy loading.
+- id: import-optimization
+  description: >
+  Keep imports clean, minimal, and optimized for bundle size.
+  details: |
+  • Always import lodash functions individually for tree-shaking:
+  `import isEmpty from "lodash/isEmpty"`.  
+   • Group imports logically: 1. External libraries  
+   2. Internal modules  
+   3. Styles or assets  
+   • Remove unused imports automatically and sort consistently.
 
-    ### Error Handling and Validation
-    - Prioritize error handling and edge cases:
-      - Use early returns for error conditions.
-      - Implement guard clauses to handle preconditions and invalid states early.
-      - Use custom error types for consistent error handling.
+- id: performance-and-optimization
+  description: >
+  Optimize Next.js code for performance, scalability, and fast UI rendering.
+  details: |
+  • Avoid excessive `'use client'`, `useEffect`, and `setState`.  
+   • Favor React Server Components (RSC), SSR, or ISR wherever possible.  
+   • For client-side components: - Use dynamic imports (`next/dynamic`) to improve load performance and UI interactivity.
+  - Always provide a loading fallback for dynamic components.  
+    • Follow a mobile-first responsive design approach.  
+    • Optimize images: - Use WebP format
+  - Include width and height metadata
+  - Enable lazy loading (`loading="lazy"`)
 
-    ### UI and Styling
-    - Use modern UI frameworks (e.g., Tailwind CSS, Shadcn UI, Radix UI) for styling.
-    - Implement consistent design and responsive patterns across platforms.
+- id: error-handling-and-validation
+  description: >
+  Implement consistent and robust error handling and validation.
+  details: |
+  • Use guard clauses and early returns for invalid states.  
+   • Define custom error classes for consistent error propagation.  
+   • Use Zod for schema validation (input, forms, and API responses).  
+   • Handle async/await with try/catch blocks and typed errors.
 
-    ### State Management and Data Fetching
-    - Use modern state management solutions (e.g., Zustand, TanStack React Query) to handle global state and data fetching.
-    - Implement validation using Zod for schema validation.
+- id: ui-and-styling
+  description: >
+  Follow modern and consistent UI/UX standards.
+  details: |
+  • Use Tailwind CSS, Shadcn UI, and Radix UI for styling.  
+   • Keep Shadcn components isolated in `components/ui`.  
+   • Maintain consistent color palette, spacing, and typography scale.  
+   • Ensure accessibility (a11y) across all devices.  
+   • Apply consistent responsive breakpoints.
 
-    ### Security and Performance
-    - Implement proper error handling, user input validation, and secure coding practices.
-    - Follow performance optimization techniques, such as reducing load times and improving rendering efficiency.
+- id: state-and-data
+  description: >
+  Use efficient state management and typed data fetching.
+  details: |
+  • Use TanStack React Query or Zustand for global state management.  
+   • Implement caching and background revalidation where applicable.  
+   • Use async/await and handle errors with proper type definitions.  
+   • Always define interfaces or types for API responses and props in `types/[feature]`.
 
-    ### Testing and Documentation
-    - Write unit tests for components using Jest and React Testing Library.
-    - Provide clear and concise comments for complex logic.
-    - Use JSDoc comments for functions and components to improve IDE intellisense.
+- id: security-and-performance
+  description: >
+  Maintain secure, performant, and production-ready code.
+  details: |
+  • Sanitize and validate all user input.  
+   • Prevent XSS, CSRF, and injection vulnerabilities.  
+   • Apply edge caching, code splitting, and static optimizations.  
+   • Periodically audit dependencies for vulnerabilities.  
+   • Use dynamic imports for better client-side performance and faster TTI (Time to Interactive).
 
-    ### Methodology
-    1. **System 2 Thinking**: Approach the problem with analytical rigor. Break down the requirements into smaller, manageable parts and thoroughly consider each step before implementation.
-    2. **Tree of Thoughts**: Evaluate multiple possible solutions and their consequences. Use a structured approach to explore different paths and select the optimal one.
-    3. **Iterative Refinement**: Before finalizing the code, consider improvements, edge cases, and optimizations. Iterate through potential enhancements to ensure the final solution is robust.
+- id: testing-and-documentation
+  description: >
+  Ensure the codebase is testable and well-documented.
+  details: |
+  • Write unit tests using Jest and React Testing Library.  
+   • Add JSDoc comments for complex logic and exported utilities.  
+   • Document props, hooks, and utility functions clearly.  
+   • Include inline comments for edge-case logic and optimizations.
 
-    **Process**:
-    1. **Deep Dive Analysis**: Begin by conducting a thorough analysis of the task at hand, considering the technical requirements and constraints.
-    2. **Planning**: Develop a clear plan that outlines the architectural structure and flow of the solution, using <PLANNING> tags if necessary.
-    3. **Implementation**: Implement the solution step-by-step, ensuring that each part adheres to the specified best practices.
-    4. **Review and Optimize**: Perform a review of the code, looking for areas of potential optimization and improvement.
-    5. **Finalization**: Finalize the code by ensuring it meets all requirements, is secure, and is performant.
+- id: development-methodology
+  description: >
+  Follow a structured, analytical, and iterative workflow for all implementations.
+  details: |
+  1. System 2 Thinking → Analytical approach; break down complex requirements.
+  2. Tree of Thoughts → Explore multiple solutions and choose the optimal one.
+  3. Iterative Refinement → Continuously enhance readability, performance, and maintainability.
+  4. Use <PLANNING> tags before major implementations to outline structure.
+  5. Finalize only after validating against performance, security, and architecture standards.

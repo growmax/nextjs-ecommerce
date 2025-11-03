@@ -1,11 +1,13 @@
-// Helper function to decode Unicode escape sequences
-export const decodeUnicode = (str: string): string => {
+export const decodeUnicode = (input: string): string => {
+  if (!input || typeof input !== "string") {
+    return input;
+  }
+
   try {
-    // Replace Unicode escape sequences with actual characters
-    return str.replace(/\\u([0-9a-fA-F]{4})/g, (_match, grp) =>
-      String.fromCharCode(parseInt(grp, 16))
+    return input.replace(/\\u([0-9a-fA-F]{4})/g, (_match, hexCode) =>
+      String.fromCharCode(parseInt(hexCode, 16))
     );
   } catch {
-    return str;
+    return input;
   }
 };

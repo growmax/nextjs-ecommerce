@@ -7,7 +7,7 @@ import {
   cartCalculation,
   discountDetails,
 } from "@/utils/calculation/cartCalculation";
-import { TypographyMuted } from "@/utils/Typo";
+import { TypographyMuted } from "@/components/ui/typography";
 import each from "lodash/each";
 import { ChevronDown } from "lucide-react";
 import { useMemo, useState } from "react";
