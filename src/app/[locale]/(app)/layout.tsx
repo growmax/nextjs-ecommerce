@@ -18,32 +18,11 @@ export default async function AppLayout({
 }: {
   children: React.ReactNode;
 }) {
-  // Development-mode performance logging
-  const isDevelopment = process.env.NODE_ENV === "development";
-  if (isDevelopment) {
-    console.time("layout-data-fetch");
-  }
-
   // Parallelize independent API calls for better performance
   const [messages, _headersList, authState, tenantData] = await Promise.all([
-    (async () => {
-      if (isDevelopment) console.time("getMessages");
-      const result = await getMessages();
-      if (isDevelopment) console.timeEnd("getMessages");
-      return result;
-    })(),
-    (async () => {
-      if (isDevelopment) console.time("headers");
-      const result = await headers();
-      if (isDevelopment) console.timeEnd("headers");
-      return result;
-    })(),
-    (async () => {
-      if (isDevelopment) console.time("getServerAuthState");
-      const result = await getServerAuthState();
-      if (isDevelopment) console.timeEnd("getServerAuthState");
-      return result;
-    })(),
+    getMessages(),
+    headers(),
+    getServerAuthState(),
     (async () => {
       const hdrs = await headers();
       const tenantCode = hdrs.get("x-tenant-code");
@@ -53,38 +32,22 @@ export default async function AppLayout({
       if (!tenantCode || !tenantDomain || !tenantOrigin) return null;
 
       try {
-        if (isDevelopment) console.time("tenantData");
         // Use standard TenantService method
         const result = await TenantService.getTenantDataServerSide(tenantDomain, tenantOrigin);
-        if (isDevelopment) console.timeEnd("tenantData");
         return result;
       } catch {
-        if (isDevelopment) console.timeEnd("tenantData");
         return null;
       }
     })(),
   ]);
-
-  // Log total time in development
-  if (isDevelopment) {
-    console.timeEnd("layout-data-fetch");
-    console.log("Layout data fetch complete:", {
-      hasTenantData: !!tenantData,
-      isAuthenticated: authState.isAuthenticated,
-      hasUserData: !!authState.user,
-    });
-  }
 
   // Fetch user data server-side only if authenticated (depends on authState)
   const serverUserService = ServerUserService.getInstance();
   let userData = null;
   if (authState.isAuthenticated) {
     try {
-      if (isDevelopment) console.time("userData");
       userData = await serverUserService.fetchUserDataServerSide();
-      if (isDevelopment) console.timeEnd("userData");
     } catch {
-      if (isDevelopment) console.timeEnd("userData");
       userData = null;
     }
   }

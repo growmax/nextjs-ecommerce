@@ -61,6 +61,7 @@ export const useIsAuthenticated = () => {
 // Backward compatibility - these will work but are deprecated
 export const useUserSession = () => {
   const { user, isLoading, error } = useUserDetails();
+  // eslint-disable-next-line no-console
   console.warn('useUserSession is deprecated. Use useUserDetails() instead.');
   return { user, isLoading, error };
 };

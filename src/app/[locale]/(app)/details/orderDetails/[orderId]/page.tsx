@@ -34,62 +34,14 @@ import {
 } from "@/lib/api";
 import type { ProductCsvRow } from "@/lib/export-csv";
 import { exportProductsToCsv } from "@/lib/export-csv";
+import {
+  AddressDetails,
+  OrderDetailsPageProps,
+  OrderTerms,
+} from "@/types/details/orderdetails/index.types";
 import { zoneDateTimeCalculator } from "@/utils/dateformat";
+import { decodeUnicode } from "@/utils/general";
 import { differenceInDays, isAfter } from "date-fns";
-
-// Import types for proper typing
-interface AddressDetails {
-  addressLine?: string;
-  branchName?: string;
-  city?: string;
-  state?: string;
-  country?: string;
-  pinCodeId?: string;
-  gst?: string;
-  district?: string;
-  locality?: string;
-  mobileNo?: string;
-  phone?: string;
-  billToCode?: string;
-  shipToCode?: string;
-  soldToCode?: string;
-  sellerCompanyName?: string;
-  sellerBranchName?: string;
-}
-
-interface OrderTerms {
-  paymentTerms?: string;
-  paymentTermsCode?: string;
-  deliveryTerms?: string;
-  deliveryTermsCode?: string;
-  deliveryTermsCode2?: string;
-  freight?: string;
-  insurance?: string;
-  packageForwarding?: string;
-  packageForwardingCode?: string;
-  dispatchInstructions?: string;
-  dispatchInstructionsCode?: string;
-  additionalTerms?: string;
-}
-
-interface OrderDetailsPageProps {
-  params: Promise<{
-    orderId: string;
-    locale: string;
-  }>;
-}
-
-// Helper function to decode Unicode escape sequences
-const decodeUnicode = (str: string): string => {
-  try {
-    // Replace Unicode escape sequences with actual characters
-    return str.replace(/\\u([0-9a-fA-F]{4})/g, (_match, grp) =>
-      String.fromCharCode(parseInt(grp, 16))
-    );
-  } catch {
-    return str;
-  }
-};
 
 export default function OrderDetailsPage({ params }: OrderDetailsPageProps) {
   const router = useRouter();

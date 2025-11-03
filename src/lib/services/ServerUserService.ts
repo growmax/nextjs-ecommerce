@@ -49,6 +49,7 @@ export class ServerUserService {
         tenantCode,
         token
       );
+
       return userData;
     } catch {
       return null;

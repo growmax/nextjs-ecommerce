@@ -38,7 +38,7 @@ export class ServerAuth {
 
   /**
    * Check if user is authenticated (server-side)
-   * Simplified to just check cookie existence since client-side handles token refresh
+   * Checks both token existence and validity (including expiration)
    *
    * @returns Promise<boolean> - Authentication status
    */
@@ -49,8 +49,19 @@ export class ServerAuth {
         ServerAuth.ACCESS_TOKEN_COOKIE
       )?.value;
 
-      // Just check if access token exists - client-side handles expiration/refresh
-      return !!accessToken;
+      // Check if token exists
+      if (!accessToken) {
+        return false;
+      }
+
+      // Import SessionValidator dynamically to avoid circular imports
+      const { SessionValidator } = await import("@/lib/services/SessionValidator");
+
+      // Validate token (including expiration check)
+      const sessionValidator = SessionValidator.getInstance();
+      const validation = sessionValidator.validateToken(accessToken);
+
+      return validation.isValid;
     } catch (_error) {
       return false;
     }
