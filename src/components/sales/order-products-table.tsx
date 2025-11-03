@@ -1,8 +1,9 @@
 "use client";
 
-import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { CustomPagination } from "@/components/ui/custom-pagination";
+import { Input } from "@/components/ui/input";
 import {
   Table,
   TableBody,
@@ -11,10 +12,12 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { Input } from "@/components/ui/input";
-import { Download } from "lucide-react";
+import useProductAssets from "@/hooks/useProductAssets";
 import { cn } from "@/lib/utils";
-import { CustomPagination } from "@/components/ui/custom-pagination";
+import { Download } from "lucide-react";
+import { useState } from "react";
+import ImageWithFallback from "../ImageWithFallback";
+import PricingFormat from "../PricingFormat";
 
 export interface ProductItem {
   itemNo?: number;
@@ -54,14 +57,7 @@ export interface OrderProductsTableProps {
   editedQuantities?: Record<string, number>;
 }
 
-// Format currency
-const formatCurrency = (amount?: number) => {
-  if (amount === undefined || amount === null) return "INR ₹0.00";
-  return `INR ₹${amount.toLocaleString("en-IN", {
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 2,
-  })}`;
-};
+//
 
 export default function OrderProductsTable({
   products = [],
@@ -76,6 +72,37 @@ export default function OrderProductsTable({
   const [currentPage, setCurrentPage] = useState(1);
   const displayCount = totalCount || products.length;
   const totalPages = Math.ceil(displayCount / itemsPerPage);
+
+  // Fetch product assets
+  const { productAssets } = useProductAssets(products);
+
+  // Helper function to get product image from assets
+  const getProductImage = (product: ProductItem): string | null => {
+    // Try to get productId from the product object
+    const productId = (product as { productId?: number }).productId;
+    if (!productId) return null;
+
+    // Find assets for this product ID
+    // The API returns an array of ProductAsset objects, each with productId.id
+    const productAssetsForProduct = productAssets.filter(
+      (asset: { productId?: { id?: number } }) =>
+        asset.productId?.id === productId
+    );
+
+    if (productAssetsForProduct.length > 0) {
+      // Find default image (isDefault can be 0 or 1, or boolean)
+      const defaultImage = productAssetsForProduct.find(
+        (asset: { isDefault?: number | boolean }) => {
+          const isDefault = asset.isDefault;
+          return isDefault === 1 || isDefault === true;
+        }
+      );
+      // Return default image if found, otherwise return first image
+      return defaultImage?.source || productAssetsForProduct[0]?.source || null;
+    }
+
+    return null;
+  };
 
   // Sort products by itemNo to ensure correct order
   const sortedProducts = [...products].sort((a, b) => {
@@ -200,34 +227,64 @@ export default function OrderProductsTable({
                       product.igstPercentage ??
                       0;
 
+                    // Get product image
+                    const productImage = getProductImage(product);
+                    const firstLetter =
+                      itemName && itemName !== "-"
+                        ? itemName.charAt(0).toUpperCase()
+                        : itemCode
+                          ? itemCode.charAt(0).toUpperCase()
+                          : "?";
+
                     return (
                       <TableRow
                         key={product.itemNo || index}
                         className="group hover:bg-muted/30 h-12 border-b"
                       >
                         <TableCell className="sticky left-0 bg-white dark:bg-gray-950 group-hover:bg-muted/30 z-10 min-w-[150px] sm:min-w-[200px] shadow-[2px_0_4px_-2px_rgba(0,0,0,0.1)] transition-colors py-3 before:absolute before:inset-0 before:bg-white dark:before:bg-gray-950 before:-z-10">
-                          <div className="flex flex-col gap-0.5 relative z-10">
-                            <span className="font-medium text-sm">
-                              {itemName}
-                            </span>
-                            {itemCode && (
-                              <span className="text-xs text-muted-foreground">
-                                {itemCode}
-                              </span>
+                          <div className="flex items-center gap-3 relative z-10">
+                            {/* Product Image or Placeholder */}
+                            {productImage ? (
+                              <div className="shrink-0 w-10 h-10 rounded-lg overflow-hidden flex items-center justify-center bg-gray-100">
+                                <ImageWithFallback
+                                  src={productImage}
+                                  alt={itemName}
+                                  width={40}
+                                  height={40}
+                                  className="w-full h-full object-cover rounded-lg"
+                                />
+                              </div>
+                            ) : (
+                              <div className="shrink-0 w-10 h-10 rounded-lg bg-gray-300 flex items-center justify-center">
+                                <span className="text-white font-semibold text-sm">
+                                  {firstLetter}
+                                </span>
+                              </div>
                             )}
+                            {/* Product Name and Code */}
+                            <div className="flex flex-col gap-0.5 min-w-0 flex-1">
+                              <span className="font-medium text-sm truncate">
+                                {itemName}
+                              </span>
+                              {itemCode && (
+                                <span className="text-xs text-muted-foreground truncate">
+                                  {itemCode}
+                                </span>
+                              )}
+                            </div>
                           </div>
                         </TableCell>
                         <TableCell className="text-right min-w-[140px] py-3">
-                          {formatCurrency(basePrice)}
+                          <PricingFormat value={basePrice ?? 0} />
                         </TableCell>
                         <TableCell className="text-right min-w-[120px] py-3">
                           {`${discountValue}%`}
                         </TableCell>
                         <TableCell className="text-right min-w-[140px] py-3">
-                          {formatCurrency(product.unitPrice)}
+                          <PricingFormat value={product.unitPrice ?? 0} />
                         </TableCell>
                         <TableCell className="text-right min-w-[120px] py-3">
-                          {formatCurrency(product.usc || 0)}
+                          <PricingFormat value={product.usc ?? 0} />
                         </TableCell>
                         <TableCell className="text-center min-w-[100px] py-3">
                           {isEditable ? (
@@ -288,7 +345,7 @@ export default function OrderProductsTable({
                           {invoicedQty}
                         </TableCell>
                         <TableCell className="text-right min-w-[150px] py-3">
-                          {formatCurrency(amount)}
+                          <PricingFormat value={amount ?? 0} />
                         </TableCell>
                         <TableCell className="text-right min-w-[100px] py-3 pr-5">
                           {igst}%

@@ -16,12 +16,12 @@ import { useCurrentUser } from "@/hooks/useCurrentUser";
 import { useTenantData } from "@/hooks/useTenantData";
 import type { OrderDetailsResponse } from "@/lib/api";
 import { OrderDetailsService } from "@/lib/api";
-import { exportProductsToCsv } from "@/lib/export-csv";
-import type { ProductCsvRow } from "@/lib/export-csv";
 import {
   type SellerBranch,
   type Warehouse,
 } from "@/lib/api/services/SellerWarehouseService";
+import type { ProductCsvRow } from "@/lib/export-csv";
+import { exportProductsToCsv } from "@/lib/export-csv";
 
 // Import types for proper typing
 interface AddressDetails {
@@ -224,15 +224,15 @@ export default function EditOrderPage({ params }: EditOrderPageProps) {
     setEditedWarehouse(warehouse);
   };
 
-  const handleSave = async () => {
+  const handlePlaceOrder = async () => {
     setSaving(true);
     try {
-      // TODO: Implement actual save API call
+      // TODO: Implement actual place order API call
       // For now, just show success message
-      toast.success("Order updated successfully");
+      toast.success("Order placed successfully");
       router.push(`/${locale}/details/orderDetails/${orderId}`);
     } catch (_error) {
-      toast.error("Failed to save order");
+      toast.error("Failed to place order");
     } finally {
       setSaving(false);
     }
@@ -278,14 +278,9 @@ export default function EditOrderPage({ params }: EditOrderPageProps) {
         menuOptions={[]}
         buttons={[
           {
-            label: "CANCEL",
-            variant: "outline",
-            onClick: handleCancel,
-          },
-          {
-            label: "SAVE",
+            label: "PLACE ORDER",
             variant: "default",
-            onClick: handleSave,
+            onClick: handlePlaceOrder,
             disabled: saving,
           },
         ]}

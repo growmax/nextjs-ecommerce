@@ -1,11 +1,12 @@
 "use client";
 
+import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
-import { Button } from "@/components/ui/button";
 import { TypographyMuted } from "@/utils/Typo";
 import { ChevronDown } from "lucide-react";
 import { useState } from "react";
+import PricingFormat from "../PricingFormat";
 
 interface TaxDetail {
   name: string;
@@ -33,14 +34,14 @@ export default function OrderPriceDetails({
   tax = 0,
   taxDetails = [],
   total = 0,
-  currency = "INR ₹",
+  currency: _currency = "INR ₹",
 }: OrderPriceDetailsProps) {
   const hasDiscount = discount > 0;
   const [taxExpanded, setTaxExpanded] = useState(false);
 
   return (
     <Card className="shadow-sm bg-white p-0! m-0!">
-      <CardHeader className="px-4 py-2 bg-green-50 rounded-t-lg">
+      <CardHeader className="px-4 py-2 bg-green-100 rounded-t-lg">
         <CardTitle className="text-lg font-semibold text-gray-800">
           Price Details
         </CardTitle>
@@ -64,11 +65,7 @@ export default function OrderPriceDetails({
           </div>
           <div className="text-right">
             <TypographyMuted>
-              {currency}
-              {totalLP.toLocaleString("en-IN", {
-                minimumFractionDigits: 2,
-                maximumFractionDigits: 2,
-              })}
+              <PricingFormat value={totalLP} />
             </TypographyMuted>
           </div>
         </div>
@@ -81,11 +78,7 @@ export default function OrderPriceDetails({
             </div>
             <div className="text-right">
               <h5 className="text-sm font-normal text-green-600">
-                -{currency}
-                {discount.toLocaleString("en-IN", {
-                  minimumFractionDigits: 2,
-                  maximumFractionDigits: 2,
-                })}
+                -<PricingFormat value={discount} />
               </h5>
             </div>
           </div>
@@ -98,16 +91,9 @@ export default function OrderPriceDetails({
           </div>
           <div className="text-right">
             <h6 className="text-sm font-semibold text-gray-800">
-              {currency}
-              {hasDiscount
-                ? (totalLP - discount).toLocaleString("en-IN", {
-                    minimumFractionDigits: 2,
-                    maximumFractionDigits: 2,
-                  })
-                : subtotal.toLocaleString("en-IN", {
-                    minimumFractionDigits: 2,
-                    maximumFractionDigits: 2,
-                  })}
+              <PricingFormat
+                value={hasDiscount ? totalLP - discount : subtotal}
+              />
             </h6>
           </div>
         </div>
@@ -123,11 +109,7 @@ export default function OrderPriceDetails({
           </div>
           <div className="text-right">
             <h6 className="text-sm font-semibold text-gray-800">
-              {currency}
-              {taxableAmount.toLocaleString("en-IN", {
-                minimumFractionDigits: 2,
-                maximumFractionDigits: 2,
-              })}
+              <PricingFormat value={taxableAmount} />
             </h6>
           </div>
         </div>
@@ -155,11 +137,7 @@ export default function OrderPriceDetails({
           </div>
           <div className="text-right">
             <TypographyMuted>
-              {currency}
-              {tax.toLocaleString("en-IN", {
-                minimumFractionDigits: 2,
-                maximumFractionDigits: 2,
-              })}
+              <PricingFormat value={tax} />
             </TypographyMuted>
           </div>
         </div>
@@ -172,11 +150,7 @@ export default function OrderPriceDetails({
                 <TypographyMuted>{taxDetail.name}</TypographyMuted>
                 <div className="text-right">
                   <TypographyMuted>
-                    {currency}
-                    {taxDetail.value.toLocaleString("en-IN", {
-                      minimumFractionDigits: 2,
-                      maximumFractionDigits: 2,
-                    })}
+                    <PricingFormat value={taxDetail.value} />
                   </TypographyMuted>
                 </div>
               </div>
@@ -193,11 +167,7 @@ export default function OrderPriceDetails({
           </div>
           <div className="text-right">
             <h4 className="text-lg font-bold text-gray-800">
-              {currency}
-              {total.toLocaleString("en-IN", {
-                minimumFractionDigits: 2,
-                maximumFractionDigits: 2,
-              })}
+              <PricingFormat value={total} />
             </h4>
           </div>
         </div>

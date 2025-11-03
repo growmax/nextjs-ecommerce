@@ -1,22 +1,23 @@
 "use client";
 
+import { AddressDetailsDialog } from "@/components/dialogs/AddressDetailsDialog";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Separator } from "@/components/ui/separator";
 import {
   HoverCard,
   HoverCardContent,
   HoverCardTrigger,
 } from "@/components/ui/hover-card";
 import { Input } from "@/components/ui/input";
-import { Calendar, Pencil } from "lucide-react";
-import { AddressDetailsDialog } from "@/components/dialogs/AddressDetailsDialog";
+import { Separator } from "@/components/ui/separator";
 import { type BillingAddress } from "@/lib/api";
-import { useState } from "react";
-import { toast } from "sonner";
 import SellerWarehouseService, {
   type SellerBranch,
   type Warehouse,
 } from "@/lib/api/services/SellerWarehouseService";
+import { zoneDateTimeCalculator } from "@/utils/dateformat";
+import { Calendar, Pencil } from "lucide-react";
+import { useState } from "react";
+import { toast } from "sonner";
 
 interface AddressDetails {
   addressLine?: string | undefined;
@@ -371,6 +372,30 @@ export default function OrderContactDetails({
   const [billingDialogOpen, setBillingDialogOpen] = useState(false);
   const [shippingDialogOpen, setShippingDialogOpen] = useState(false);
 
+  // Get user preferences for date/time formatting
+  const getUserPreferences = () => {
+    try {
+      const savedPrefs = localStorage.getItem("userPreferences");
+      if (savedPrefs) {
+        const prefs = JSON.parse(savedPrefs);
+        return {
+          timeZone: prefs.timeZone || "Asia/Kolkata",
+          dateFormat: prefs.dateFormat || "dd/MM/yyyy",
+          timeFormat: prefs.timeFormat || "hh:mm a",
+        };
+      }
+    } catch {
+      // Fallback to defaults
+    }
+    return {
+      timeZone: "Asia/Kolkata",
+      dateFormat: "dd/MM/yyyy",
+      timeFormat: "hh:mm a",
+    };
+  };
+
+  const preferences = getUserPreferences();
+
   const handleBillingAddressSelect = (address: BillingAddress) => {
     // Convert BillingAddress to AddressDetails format
     const updatedBillingAddress: AddressDetails = {
@@ -486,7 +511,7 @@ export default function OrderContactDetails({
   };
   return (
     <Card className="shadow-sm h-full">
-      <CardHeader className="px-6 -my-5  bg-gray-50 rounded-t-lg">
+      <CardHeader className="px-6 -my-5  bg-gray-50 rounded-t-lg items-end">
         <CardTitle className="text-xl font-semibold text-gray-900 m-0!">
           Contact Details
         </CardTitle>
@@ -549,7 +574,20 @@ export default function OrderContactDetails({
               onChange={onRequiredDateChange}
             />
           ) : (
-            <DetailRow label="Required Date" value={requiredDate} />
+            <DetailRow
+              label="Required Date"
+              value={
+                requiredDate
+                  ? zoneDateTimeCalculator(
+                      requiredDate,
+                      preferences.timeZone,
+                      preferences.dateFormat,
+                      preferences.timeFormat,
+                      false
+                    ) || "-"
+                  : "-"
+              }
+            />
           )}
 
           {/* Reference Number */}

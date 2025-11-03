@@ -96,6 +96,27 @@ export class OrderDetailsService extends BaseService<OrderDetailsService> {
   }
 
   /**
+   * 🚀 SIMPLIFIED: Fetch order details by version (auto-context)
+   * Usage: OrderDetailsService.fetchOrderDetailsByVersion(params)
+   */
+  async fetchOrderDetailsByVersion(params: {
+    userId: number;
+    companyId: number;
+    orderIdentifier: string;
+    orderVersion: number;
+  }): Promise<OrderDetailsResponse> {
+    const { userId, companyId, orderIdentifier, orderVersion } = params;
+
+    const queryString = `userId=${userId}&companyId=${companyId}&orderIdentifier=${orderIdentifier}&orderVersion=${orderVersion}`;
+
+    return this.call(
+      `orders/fetchOrderDetailsByVersion?${queryString}`,
+      {},
+      "GET"
+    ) as Promise<OrderDetailsResponse>;
+  }
+
+  /**
    * 🔧 ADVANCED: Fetch order details with custom context (when needed)
    */
   async fetchOrderDetailsWithContext(
