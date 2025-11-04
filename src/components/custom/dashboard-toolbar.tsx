@@ -408,9 +408,8 @@ const DashboardToolbar = forwardRef<DashboardToolbarRef, DashboardToolbarProps>(
         >
           <div
             className={cn(
-              "py-1",
-              "flex flex-col sm:flex-row sm:justify-between gap-1 sm:gap-2",
-              "max-w-screen-2xl"
+              "py-1 px-4",
+              "flex flex-col sm:flex-row sm:justify-between gap-1 sm:gap-2 sm:items-center"
             )}
           >
             <ToolbarContent />
@@ -437,9 +436,8 @@ const DashboardToolbar = forwardRef<DashboardToolbarRef, DashboardToolbarProps>(
         >
           <div
             className={cn(
-              "py-1",
-              "flex flex-col sm:flex-row sm:justify-between gap-1 sm:gap-2",
-              "max-w-screen-2xl"
+              "py-1 px-4",
+              "flex flex-col sm:flex-row sm:justify-between gap-1 sm:gap-2 sm:items-center"
             )}
           >
             <ToolbarContent />
