@@ -96,27 +96,14 @@ export function useOrderCalculation(input: OrderCalculationInput) {
   const {
     products,
     isInter = true,
-    taxExemption = false,
+    taxExemption: _taxExemption = false,
     insuranceCharges = 0,
     shippingCharges = 0,
     pfRate = 0,
-    currencyFactor = 1,
     precision = 2,
     settings,
     options = {},
   } = input;
-
-  // Default options
-  const calculationOptions: Required<CalculationOptions> = {
-    applyVolumeDiscount: options.applyVolumeDiscount ?? true,
-    applyCashDiscount: options.applyCashDiscount ?? true,
-    applyBasicDiscount: options.applyBasicDiscount ?? true,
-    handleBundles: options.handleBundles ?? true,
-    checkMOQ: options.checkMOQ ?? true,
-    applyRounding: options.applyRounding ?? true,
-    resetShipping: options.resetShipping ?? false,
-    resetDiscounts: options.resetDiscounts ?? false,
-  };
 
   // ============================================================================
   // CALCULATION LOGIC
@@ -126,8 +113,57 @@ export function useOrderCalculation(input: OrderCalculationInput) {
     const startTime = Date.now();
     const warnings: CalculationWarning[] = [];
 
+    // Default options - moved inside useMemo to avoid dependency issues
+    const calculationOptions: Required<CalculationOptions> = {
+      applyVolumeDiscount: options.applyVolumeDiscount ?? true,
+      applyCashDiscount: options.applyCashDiscount ?? true,
+      applyBasicDiscount: options.applyBasicDiscount ?? true,
+      handleBundles: options.handleBundles ?? true,
+      checkMOQ: options.checkMOQ ?? true,
+      applyRounding: options.applyRounding ?? true,
+      resetShipping: options.resetShipping ?? false,
+      resetDiscounts: options.resetDiscounts ?? false,
+    };
+
+    // Ensure products is always an array
+    if (!Array.isArray(products) || products.length === 0) {
+      return {
+        products: [],
+        cartValue: {
+          totalItems: 0,
+          totalLP: 0,
+          totalBasicDiscount: 0,
+          totalCashDiscount: 0,
+          cashDiscountValue: 0,
+          totalValue: 0,
+          totalTax: 0,
+          totalShipping: 0,
+          pfRate: 0,
+          taxableAmount: 0,
+          grandTotal: 0,
+          hideListPricePublic: false,
+        },
+        breakup: {},
+        warnings: [],
+        metadata: {
+          totalProducts: 0,
+          productsWithPrice: 0,
+          productsWithoutPrice: 0,
+          hasVolumeDiscount: false,
+          hasCashDiscount: false,
+          hasNegativePrices: false,
+          calculationTimestamp: startTime,
+        },
+      };
+    }
+
     // Step 1: Clone products to avoid mutation
     let processedProducts = cloneDeep(products);
+
+    // Ensure processedProducts is still an array after cloneDeep
+    if (!Array.isArray(processedProducts)) {
+      processedProducts = [];
+    }
 
     // Step 2: Reset fields if needed (for edit/reorder scenarios)
     if (calculationOptions.resetShipping || calculationOptions.resetDiscounts) {
@@ -140,7 +176,9 @@ export function useOrderCalculation(input: OrderCalculationInput) {
 
     // Step 3: Handle bundles
     if (calculationOptions.handleBundles) {
-      processedProducts = handleBundleProductsLogic(processedProducts);
+      processedProducts = processedProducts.map(product =>
+        handleBundleProductsLogic(product)
+      );
     }
 
     // Step 4: Apply discounts (basic, quantity-based, cash)
@@ -180,12 +218,14 @@ export function useOrderCalculation(input: OrderCalculationInput) {
           updatedProduct.discountPercentage = suitableDiscount.Value;
           updatedProduct.appliedDiscount = suitableDiscount.Value;
           updatedProduct.CantCombineWithOtherDisCounts =
-            suitableDiscount.CantCombineWithOtherDisCounts;
+            suitableDiscount.CantCombineWithOtherDisCounts ?? false;
           updatedProduct.pricingConditionCode =
-            suitableDiscount.pricingConditionCode;
+            suitableDiscount.pricingConditionCode ?? null;
         }
 
-        updatedProduct.nextSuitableDiscount = nextSuitableDiscount;
+        if (nextSuitableDiscount) {
+          updatedProduct.nextSuitableDiscount = nextSuitableDiscount;
+        }
       }
 
       // Calculate discounted price
@@ -272,20 +312,31 @@ export function useOrderCalculation(input: OrderCalculationInput) {
           }));
 
         if (volumeDiscountData.length > 0) {
-          const volumeResult = calculateVolumeDiscount({
-            products: processedProducts,
-            volumeDiscountData,
+          // Calculate subtotal and overall shipping for volume discount
+          const subTotal = cartValue.totalValue || 0;
+          const overallShipping = cartValue.totalShipping || 0;
+
+          const volumeResult = calculateVolumeDiscount(
             isInter,
-            taxExemption,
-            precision,
+            processedProducts,
+            volumeDiscountData,
+            subTotal,
+            overallShipping,
             settings,
-          });
+            false, // beforeTax
+            0, // beforeTaxPercentage
+            precision
+          );
 
           if (volumeResult) {
             processedProducts = volumeResult.products;
+            // Update cart value with volume discount results
             finalCartValue = {
               ...cartValue,
-              ...volumeResult.cartValue,
+              totalValue: volumeResult.vdDetails.subTotal,
+              grandTotal: volumeResult.vdDetails.grandTotal,
+              taxableAmount: volumeResult.vdDetails.taxableAmount,
+              totalTax: volumeResult.vdDetails.overallTax,
             };
           }
         }
@@ -333,13 +384,12 @@ export function useOrderCalculation(input: OrderCalculationInput) {
   }, [
     products,
     isInter,
-    taxExemption,
     insuranceCharges,
     shippingCharges,
     pfRate,
     precision,
     settings,
-    calculationOptions,
+    options,
   ]);
 
   // ============================================================================
@@ -381,7 +431,9 @@ function resetProductFields(
     if (resetDiscounts) {
       updated.cashdiscountValue = 0;
       updated.cashDiscountedPrice = 0;
-      updated.originalUnitPrice = undefined;
+      updated.discount = 0;
+      updated.discountPercentage = 0;
+      updated.originalUnitPrice = 0;
     }
 
     return updated;

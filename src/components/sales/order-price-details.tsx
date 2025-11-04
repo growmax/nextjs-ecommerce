@@ -52,8 +52,32 @@ export default function OrderPriceDetails({
 }: OrderPriceDetailsProps) {
   const [taxExpanded, setTaxExpanded] = useState(false);
 
-  // Calculate price details using cartCalculation
+  // Use calculated values from props if available, otherwise calculate
   const cartValue = useMemo(() => {
+    // If calculated values are provided, use them directly
+    // Check if calculatedTotal is explicitly provided (not undefined, even if 0)
+    const hasCalculatedValues =
+      calculatedTotal !== undefined &&
+      subTotal !== undefined &&
+      taxableAmount !== undefined;
+
+    if (hasCalculatedValues) {
+      return {
+        totalItems: products?.length || 0,
+        totalLP: 0,
+        totalBasicDiscount: 0,
+        totalCashDiscount: 0,
+        totalValue: subTotal,
+        totalTax: overallTax !== undefined ? overallTax : 0,
+        totalShipping: overallShipping !== undefined ? overallShipping : 0,
+        pfRate: 0,
+        taxableAmount,
+        grandTotal: calculatedTotal,
+        hideListPricePublic: false,
+      };
+    }
+
+    // Otherwise, calculate from products
     if (!products || products.length === 0) {
       return {
         totalItems: 0,
@@ -201,6 +225,11 @@ export default function OrderPriceDetails({
     Settings,
     isSeller,
     taxExemption,
+    calculatedTotal,
+    subTotal,
+    taxableAmount,
+    overallShipping,
+    overallTax,
   ]);
 
   // Extract tax breakdown from processed products and cartValue
