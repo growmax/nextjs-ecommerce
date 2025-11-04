@@ -42,6 +42,7 @@ import PreferenceService from "./services/PreferenceService";
 import ProductAssetsService from "./services/ProductAssetsService";
 import QuotesService from "./services/QuotesService";
 import QuoteStatusService from "./services/StatusService";
+import RequestEditService from "./services/RequestEditService";
 
 // Export services
 export {
@@ -62,6 +63,7 @@ export {
   ProductAssetsService,
   QuotesService,
   QuoteStatusService,
+  RequestEditService,
   RequestQueueService,
   StoreFrontService,
   TenantService,
@@ -128,6 +130,11 @@ export type {
   UpdateOrderNameRequest,
   UpdateOrderNameResponse,
 } from "./services/OrderNameService";
+
+export type {
+  RequestEditParams,
+  RequestEditResponse,
+} from "./services/RequestEditService";
 
 export type {
   OverallPaymentsResponse,
@@ -247,6 +254,7 @@ export const API = {
   ProductAssets: ProductAssetsService,
   Quotes: QuotesService,
   QuoteStatus: QuoteStatusService,
+  RequestEdit: RequestEditService,
   StoreFront: StoreFrontService,
   Tenant: TenantService,
   User: UserService,

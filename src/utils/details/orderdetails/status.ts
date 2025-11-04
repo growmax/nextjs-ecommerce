@@ -25,7 +25,9 @@ export function getStatusStyle(status?: string): string {
  * Check if order is cancelled
  */
 export function isOrderCancelled(status?: string): boolean {
-  return status?.toUpperCase() === "ORDER CANCELLED";
+  if (!status) return false;
+  const statusUpper = status.toUpperCase();
+  return statusUpper === "ORDER CANCELLED" || statusUpper === "CANCELLED";
 }
 
 /**

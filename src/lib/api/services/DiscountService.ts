@@ -82,12 +82,10 @@ export class DiscountService extends BaseService<DiscountService> {
 
   /**
    * Get discount with context (userId, tenantId)
-   * Payload format: { userId, tenantId, body: { Productid, CurrencyId, BaseCurrencyId, companyId, currencyCode } }
+   * Payload format: { Productid, CurrencyId, BaseCurrencyId }
+   * CompanyId is sent as a query parameter in the URL
    *
-   * Matches the old API route handler pattern:
-   * - Sends full payload with userId, tenantId, and body to backend
-   * - Backend expects: { userId, tenantId, body: {...} }
-   * - Returns: { success: true, data: [...] }
+   * Note: tenantId is sent via x-tenant header (from context), not in request body
    */
   async getDiscount(
     request: DiscountRequestWithContext
@@ -99,12 +97,19 @@ export class DiscountService extends BaseService<DiscountService> {
       tenantCode: request.tenantId,
     };
 
+    // Extract only required fields (exclude companyId and currencyCode from body)
+    const { companyId, currencyCode: _currencyCode, ...payload } = request.body;
+
+    // Build endpoint URL with CompanyId as query parameter
+    const endpoint = `/discount/getDiscount?CompanyId=${companyId}`;
+
+    // Send payload directly without wrapper: { Productid, CurrencyId, BaseCurrencyId }
     return (await this.callWith(
-      `/discount/getDiscount`,
+      endpoint,
       {
-        userId: request.userId,
-        tenantId: request.tenantId,
-        body: request.body,
+        Productid: payload.Productid,
+        CurrencyId: payload.CurrencyId,
+        BaseCurrencyId: payload.BaseCurrencyId,
       },
       {
         method: "POST",

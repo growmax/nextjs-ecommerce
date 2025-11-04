@@ -1,6 +1,7 @@
 "use client";
 
 import { Skeleton } from "@/components/ui/skeleton";
+import { Toaster } from "@/components/ui/sonner";
 import { Layers } from "lucide-react";
 import { useLocale } from "next-intl";
 import dynamic from "next/dynamic";
@@ -9,6 +10,7 @@ import { Suspense, useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
 
 import { EditOrderNameDialog } from "@/components/dialogs/EditOrderNameDialog";
+import { RequestEditDialog } from "@/components/dialogs/RequestEditDialog";
 import {
   VersionsDialog,
   type Version,
@@ -21,6 +23,7 @@ import {
 import { useOrderDetails } from "@/hooks/details/orderdetails/useOrderDetails";
 import { useCurrentUser } from "@/hooks/useCurrentUser";
 import { useGetVersionDetails } from "@/hooks/useGetVersionDetails";
+import useModuleSettings from "@/hooks/useModuleSettings";
 import { useTenantData } from "@/hooks/useTenantData";
 import type {
   OrderDetailsResponse,
@@ -31,6 +34,7 @@ import {
   OrderDetailsService,
   OrderNameService,
   PaymentService,
+  RequestEditService,
 } from "@/lib/api";
 import type { ProductCsvRow } from "@/lib/export-csv";
 import { exportProductsToCsv } from "@/lib/export-csv";
@@ -89,6 +93,7 @@ export default function OrderDetailsClient({ params }: OrderDetailsPageProps) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [editDialogOpen, setEditDialogOpen] = useState(false);
+  const [requestEditDialogOpen, setRequestEditDialogOpen] = useState(false);
   const [versionsDialogOpen, setVersionsDialogOpen] = useState(false);
   const [selectedVersion, setSelectedVersion] =
     useState<SelectedVersion | null>(null);
@@ -296,11 +301,9 @@ export default function OrderDetailsClient({ params }: OrderDetailsPageProps) {
         orderId,
       });
       setOrderDetails(response);
-      toast.success("Order details refreshed successfully");
     } catch (error) {
       // eslint-disable-next-line no-console
       console.error("Error refreshing order details:", error);
-      toast.error("Failed to refresh order details");
     } finally {
       setLoading(false);
     }
@@ -350,8 +353,143 @@ export default function OrderDetailsClient({ params }: OrderDetailsPageProps) {
     }
   };
 
+  // Extract data for header - use version data if available, otherwise use order details
+  const displayOrderDetails = useMemo(() => {
+    if (versionData && selectedVersion && versionData.data) {
+      return versionData.data;
+    }
+    return orderDetails?.data;
+  }, [versionData, selectedVersion, orderDetails?.data]);
+
+  const status = (displayOrderDetails?.updatedBuyerStatus ||
+    orderDetails?.data?.updatedBuyerStatus) as string | undefined;
+
+  // Get module settings for order settings and SPR check
+  const { orderSettings } = useModuleSettings(user);
+
+  // Check if order is SPR requested
+  const isSPRRequested = useMemo(() => {
+    // Check if any product in the order has SPR requested
+    const products =
+      displayOrderDetails?.orderDetails?.[0]?.dbProductDetails ||
+      orderDetails?.data?.orderDetails?.[0]?.dbProductDetails ||
+      [];
+    return products.some(
+      (product: any) => product?.isSprRequested || product?.sprRequested // eslint-disable-line @typescript-eslint/no-explicit-any
+    );
+  }, [displayOrderDetails, orderDetails]);
+
+  // Request edit check function - matches JS logic exactly
+  const requestEditCheck = () => {
+    const sellerStatus = (displayOrderDetails?.updatedSellerStatus ||
+      orderDetails?.data?.updatedSellerStatus) as string | undefined;
+
+    // First check: Seller status conditions (if)
+    if (
+      sellerStatus === "INVOICED" ||
+      sellerStatus === "INVOICED PARTIALLY" ||
+      sellerStatus === "SHIPPED" ||
+      (sellerStatus === "ORDER BOOKED" &&
+        orderSettings?.editOrder === "ORDER ACCEPTED")
+    ) {
+      toast.info(
+        `Order ${
+          orderSettings?.editOrder === "ORDER BOOKED"
+            ? "invoice"
+            : "booked or invoiced"
+        } already, edit is not possible`,
+        {
+          style: {
+            backgroundColor: "#22c55e", // green-500
+            color: "#ffffff", // white
+            fontSize: "0.875rem", // text-sm
+            padding: "0.5rem 0.75rem", // smaller padding
+          },
+          className: "text-sm px-3 py-2",
+        }
+      );
+    }
+    // Second check: Status is REQUESTED EDIT (else if)
+    else if (status?.toUpperCase() === "REQUESTED EDIT") {
+      toast.info("Requested for edit already, wait for seller to respond", {
+        style: {
+          backgroundColor: "#ABE7B2", // green-500
+          color: "#ffffff", // white
+          fontSize: "0.875rem", // text-sm
+          padding: "0.5rem 0.75rem", // smaller padding
+        },
+        className: "text-sm px-3 py-2",
+      });
+    }
+    // Third check: SPR requested (else)
+    else {
+      if (isSPRRequested) {
+        toast.info(
+          "Edit access is not possible for SPR orders, contact seller for any queries",
+          {
+            style: {
+              backgroundColor: "#22c55e", // green-500
+              color: "#ffffff", // white
+              fontSize: "0.875rem", // text-sm
+              padding: "0.5rem 0.75rem", // smaller padding
+            },
+            className: "text-sm px-3 py-2",
+          }
+        );
+      } else {
+        // Open the request edit dialog
+        setRequestEditDialogOpen(true);
+      }
+    }
+  };
+
+  // Handle request edit button click
   const handleRequestEdit = () => {
-    toast.info("Request edit functionality coming soon");
+    // Check if order is cancelled using the utility function
+    if (isOrderCancelled(status)) {
+      toast.info("Order was cancelled already", {
+        style: {
+          backgroundColor: "#22c55e", // green-500
+          color: "#ffffff", // white
+          fontSize: "0.875rem", // text-sm
+          padding: "0.5rem 0.75rem", // smaller padding
+        },
+        className: "text-sm px-3 py-2",
+      });
+      return;
+    }
+
+    // Run request edit checks
+    requestEditCheck();
+  };
+
+  // Handle confirm request edit
+  const handleConfirmRequestEdit = async () => {
+    if (!user || !orderId) {
+      toast.error("Missing required information");
+      return;
+    }
+
+    try {
+      await RequestEditService.requestEdit({
+        userId: user.userId,
+        companyId: user.companyId,
+        orderId,
+        data: {}, // Empty data object as per API
+      });
+
+      toast.success("Edit request submitted successfully");
+
+      // Refresh order details to get updated status
+      await handleRefresh();
+    } catch (error) {
+      const errorMessage =
+        error instanceof Error
+          ? error.message
+          : "Failed to submit edit request";
+      toast.error(errorMessage);
+      throw error; // Re-throw to let dialog handle it
+    }
   };
 
   const handleClone = () => {
@@ -395,19 +533,9 @@ export default function OrderDetailsClient({ params }: OrderDetailsPageProps) {
     setTriggerVersionCall(true);
   };
 
-  // Extract data for header - use version data if available, otherwise use order details
-  const displayOrderDetails = useMemo(() => {
-    if (versionData && selectedVersion && versionData.data) {
-      return versionData.data;
-    }
-    return orderDetails?.data;
-  }, [versionData, selectedVersion, orderDetails?.data]);
-
   const orderName =
     displayOrderDetails?.orderDetails?.[0]?.orderName ||
     orderDetails?.data?.orderDetails?.[0]?.orderName;
-  const status = (displayOrderDetails?.updatedBuyerStatus ||
-    orderDetails?.data?.updatedBuyerStatus) as string | undefined;
   const cancelled = isOrderCancelled(status);
   const editInProgress = isEditInProgress(status);
   const cancelMsg = (displayOrderDetails?.orderDetails?.[0]?.cancelMsg ||
@@ -861,6 +989,13 @@ export default function OrderDetailsClient({ params }: OrderDetailsPageProps) {
         loading={loading}
       />
 
+      <RequestEditDialog
+        open={requestEditDialogOpen}
+        onOpenChange={setRequestEditDialogOpen}
+        onConfirm={handleConfirmRequestEdit}
+        loading={loading}
+      />
+
       {/* Versions Dialog */}
       <VersionsDialog
         open={versionsDialogOpen}
@@ -870,6 +1005,19 @@ export default function OrderDetailsClient({ params }: OrderDetailsPageProps) {
         loading={loading}
         currentVersionNumber={selectedVersion?.versionNumber || 1}
         onVersionSelect={handleVersionSelect}
+      />
+
+      {/* Toaster for toast notifications - positioned bottom-left with smaller size */}
+      <Toaster
+        position="bottom-left"
+        richColors
+        toastOptions={{
+          style: {
+            fontSize: "0.875rem", // text-sm
+            padding: "0.5rem 0.75rem", // smaller padding
+          },
+          className: "text-sm px-3 py-2",
+        }}
       />
     </div>
   );

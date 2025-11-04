@@ -127,7 +127,9 @@ export async function getLatestTaxData({
     // Parallel API calls using existing services
     const [discountsResult, elasticProducts] = await Promise.all([
       // Use DiscountService.getDiscount() with proper payload structure
-      // Payload format: { userId, tenantId, body: { Productid, CurrencyId, BaseCurrencyId, companyId, currencyCode } }
+      // Payload format: { Productid, CurrencyId, BaseCurrencyId }
+      // CompanyId is sent as query parameter: /discount/getDiscount?CompanyId=8690
+      // Note: tenantId is sent via x-tenant header
       DiscountService.getDiscount({
         userId,
         tenantId: tenantCode,
@@ -206,12 +208,31 @@ export async function getLatestTaxData({
                 disc => disc["ProductVariantId"] === item["productId"]
               ) || {};
 
+            // Normalize discount data: map PricelistCode to priceListCode and extract sellerId/sellerName
+            const normalizedDiscountData = {
+              ...prd_wise_discData,
+              // Map PricelistCode (from API) to priceListCode (used in code)
+              priceListCode:
+                (prd_wise_discData as any)?.PricelistCode || // eslint-disable-line @typescript-eslint/no-explicit-any
+                (prd_wise_discData as any)?.priceListCode, // eslint-disable-line @typescript-eslint/no-explicit-any
+            };
+
             // Assign pricelist discounts to product
             item = assignPricelistDiscountsDataToProducts(
               item,
-              prd_wise_discData,
+              normalizedDiscountData,
               false
             );
+
+            // Update sellerId and sellerName from discount response
+            if ((prd_wise_discData as any)?.sellerId) {
+              // eslint-disable-line @typescript-eslint/no-explicit-any
+              (item as any).sellerId = (prd_wise_discData as any).sellerId; // eslint-disable-line @typescript-eslint/no-explicit-any
+            }
+            if ((prd_wise_discData as any)?.sellerName) {
+              // eslint-disable-line @typescript-eslint/no-explicit-any
+              (item as any).sellerName = (prd_wise_discData as any).sellerName; // eslint-disable-line @typescript-eslint/no-explicit-any
+            }
 
             // Check for latest product discounts (equivalent to check_latest_product_discounts)
             if (!isCloneReOrder) {
@@ -280,10 +301,30 @@ export async function getLatestTaxData({
               item.discount = item.discountPercentage || 0;
               item.quantity = item.askedQuantity || item.quantity;
 
+              // Normalize discount data for clone/reorder
+              const normalizedDiscountDataClone = {
+                ...prd_wise_discData,
+                priceListCode:
+                  (prd_wise_discData as any)?.PricelistCode || // eslint-disable-line @typescript-eslint/no-explicit-any
+                  (prd_wise_discData as any)?.priceListCode, // eslint-disable-line @typescript-eslint/no-explicit-any
+              };
+
               item = assignPricelistDiscountsDataToProducts(
                 item,
-                prd_wise_discData
+                normalizedDiscountDataClone
               );
+
+              // Update sellerId and sellerName from discount response
+              if ((prd_wise_discData as any)?.sellerId) {
+                // eslint-disable-line @typescript-eslint/no-explicit-any
+                (item as any).sellerId = (prd_wise_discData as any).sellerId; // eslint-disable-line @typescript-eslint/no-explicit-any
+              }
+              if ((prd_wise_discData as any)?.sellerName) {
+                // eslint-disable-line @typescript-eslint/no-explicit-any
+                (item as any).sellerName = (
+                  prd_wise_discData as any
+                ).sellerName; // eslint-disable-line @typescript-eslint/no-explicit-any
+              }
 
               // This unitprice will sets the default pricing while reorder and clone.
               item.unitPrice = round(
@@ -324,6 +365,46 @@ export async function getLatestTaxData({
           item.MasterPrice = MasterPrice;
           item.BasePrice = BasePrice;
           item.CantCombineWithOtherDisCounts = CantCombineWithOtherDisCounts;
+
+          // Update priceListCode (map from PricelistCode), sellerId, and sellerName from discount response
+          if (discountsList) {
+            // Map PricelistCode to priceListCode
+            if ((discountsList as any)?.PricelistCode) {
+              // eslint-disable-line @typescript-eslint/no-explicit-any
+              (item as any).priceListCode = (
+                discountsList as any
+              ).PricelistCode; // eslint-disable-line @typescript-eslint/no-explicit-any
+            } else if ((discountsList as any)?.priceListCode) {
+              // eslint-disable-line @typescript-eslint/no-explicit-any
+              (item as any).priceListCode = (
+                discountsList as any
+              ).priceListCode; // eslint-disable-line @typescript-eslint/no-explicit-any
+            }
+
+            // Update sellerId and sellerName
+            if ((discountsList as any)?.sellerId) {
+              // eslint-disable-line @typescript-eslint/no-explicit-any
+              (item as any).sellerId = (discountsList as any).sellerId; // eslint-disable-line @typescript-eslint/no-explicit-any
+            }
+            if ((discountsList as any)?.sellerName) {
+              // eslint-disable-line @typescript-eslint/no-explicit-any
+              (item as any).sellerName = (discountsList as any).sellerName; // eslint-disable-line @typescript-eslint/no-explicit-any
+            }
+
+            // Update plnErpCode if available
+            if ((discountsList as any)?.plnErpCode) {
+              // eslint-disable-line @typescript-eslint/no-explicit-any
+              (item as any).plnErpCode = (discountsList as any).plnErpCode; // eslint-disable-line @typescript-eslint/no-explicit-any
+            }
+
+            // Update isApprovalRequired if available
+            if ((discountsList as any)?.isApprovalRequired !== undefined) {
+              // eslint-disable-line @typescript-eslint/no-explicit-any
+              (item as any).isApprovalRequired = (
+                discountsList as any
+              ).isApprovalRequired; // eslint-disable-line @typescript-eslint/no-explicit-any
+            }
+          }
 
           const discounts = discountsList?.["discounts"] || [];
 
