@@ -1,11 +1,11 @@
-import { NextIntlClientProvider } from "next-intl";
-import { getMessages } from "next-intl/server";
-import { headers } from "next/headers";
 import { TenantProvider } from "@/contexts/TenantContext";
 import { UserDetailsProvider } from "@/contexts/UserDetailsContext";
 import TenantService from "@/lib/api/services/TenantService";
-import { ServerUserService } from "@/lib/services/ServerUserService";
 import { getServerAuthState } from "@/lib/auth-server";
+import { ServerUserService } from "@/lib/services/ServerUserService";
+import { NextIntlClientProvider } from "next-intl";
+import { getMessages } from "next-intl/server";
+import { headers } from "next/headers";
 
 export default async function AuthLayout({
   children,
@@ -24,7 +24,10 @@ export default async function AuthLayout({
   let tenantData = null;
   if (tenantCode && tenantDomain && tenantOrigin) {
     try {
-      tenantData = await TenantService.getTenantDataServerSide(tenantDomain, tenantOrigin);
+      tenantData = await TenantService.getTenantDataServerSide(
+        tenantDomain,
+        tenantOrigin
+      );
     } catch {
       tenantData = null;
     }
@@ -34,11 +37,10 @@ export default async function AuthLayout({
   const authState = await getServerAuthState();
 
   // Fetch user data server-side only if authenticated
-  const serverUserService = ServerUserService.getInstance();
   let userData = null;
   if (authState.isAuthenticated) {
     try {
-      userData = await serverUserService.fetchUserDataServerSide();
+      userData = await ServerUserService.fetchUserDataServerSide();
     } catch {
       userData = null;
     }

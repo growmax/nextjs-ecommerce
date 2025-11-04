@@ -165,13 +165,6 @@ export class OrdersFilterService extends BaseService<OrdersFilterService> {
     const queryString = this.buildQueryParams(params);
     const payload = this.buildPayload(params);
 
-    // Log the payload being sent for debugging
-    // eslint-disable-next-line no-console
-    console.log(
-      "Sending filter payload to orders/findByFilter:",
-      JSON.stringify(payload, null, 2)
-    );
-
     // Send the filter directly as the body, like quotes API
     return this.call(`orders/findByFilter?${queryString}`, payload, "POST");
   }

@@ -71,17 +71,23 @@ export function CartProvider({ children, userId }: CartProviderProps) {
       if (Array.isArray(res)) {
         // API returns cart items array directly
         cartData = res;
-      } else if (res && typeof res === 'object' && 'data' in res && Array.isArray(res.data)) {
+      } else if (
+        res &&
+        typeof res === "object" &&
+        "data" in res &&
+        Array.isArray(res.data)
+      ) {
         // API returns { data: CartItem[] }
         cartData = res.data;
-      } else if (res && typeof res === 'object' && 'cartItems' in res && Array.isArray(res.cartItems)) {
+      } else if (
+        res &&
+        typeof res === "object" &&
+        "cartItems" in res &&
+        Array.isArray(res.cartItems)
+      ) {
         // Alternative structure: { cartItems: CartItem[] }
         cartData = res.cartItems;
       } else {
-        // Log the actual response for debugging in development
-        if (process.env.NODE_ENV === 'development') {
-          console.log('Unexpected cart API response structure:', res);
-        }
       }
 
       setCart(cartData);
@@ -109,8 +115,12 @@ export function CartProvider({ children, userId }: CartProviderProps) {
         }
       } else if (error instanceof Error) {
         // Handle network or other errors
-        if (error.message.includes("Network Error") || error.message.includes("ERR_NETWORK")) {
-          errorMessage = "Network connection failed. Please check your internet connection.";
+        if (
+          error.message.includes("Network Error") ||
+          error.message.includes("ERR_NETWORK")
+        ) {
+          errorMessage =
+            "Network connection failed. Please check your internet connection.";
         } else {
           errorMessage = error.message || "Failed to fetch cart";
         }

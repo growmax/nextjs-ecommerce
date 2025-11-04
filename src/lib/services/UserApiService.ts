@@ -1,7 +1,7 @@
 // User API Service class for handling user-related API calls
 // DEPRECATED: Use API.User instead (from @/lib/api)
-import { UserApiResponse } from "@/lib/interfaces/UserInterfaces";
 import API from "@/lib/api";
+import { UserApiResponse } from "@/lib/interfaces/UserInterfaces";
 
 export class UserApiService {
   private static instance: UserApiService;
@@ -24,11 +24,17 @@ export class UserApiService {
   }
 
   public async fetchUserDetailsServerSide(
-    userId: string,
+    sub: string,
     tenantCode: string,
     accessToken: string
   ): Promise<UserApiResponse | null> {
-    return API.User.getUserDetailsServerSide(userId, {
+    console.log(
+      userId,
+      tenantCode,
+      accessToken,
+      "userId, tenantCode, accessToken"
+    );
+    return API.User.getUserDetailsServerSide(sub, {
       tenantCode,
       accessToken,
     });

@@ -1,16 +1,15 @@
 "use client";
 
-import { useState, useEffect, useMemo, useCallback } from "react";
-import { useRouter } from "next/navigation";
-import { useLocale } from "next-intl";
-import { toast } from "sonner";
 import { ColumnDef } from "@tanstack/react-table";
+import { useLocale } from "next-intl";
+import { useRouter } from "next/navigation";
+import { useCallback, useEffect, useMemo, useState } from "react";
+import { toast } from "sonner";
 
 import DashboardTable from "@/components/custom/DashBoardTable";
+import SideDrawer from "@/components/custom/sidedrawer";
 import FilterDrawer from "@/components/sales/FilterDrawer";
 import { QuoteFilterFormData } from "@/components/sales/QuoteFilterForm";
-import { FilterTabs } from "@/components/custom/FilterTabs";
-import SideDrawer from "@/components/custom/sidedrawer";
 import {
   Dialog,
   DialogContent,
@@ -20,17 +19,17 @@ import {
 } from "@/components/ui/dialog";
 import { Skeleton } from "@/components/ui/skeleton";
 
+import { statusColor } from "@/components/custom/statuscolors";
 import { useCurrentUser } from "@/hooks/useCurrentUser";
-import orderService, { OrdersParams } from "@/lib/api/services/OrdersService";
 import ordersFilterService, {
   OrderFilter,
 } from "@/lib/api/services/OrdersFilterService";
+import orderService, { OrdersParams } from "@/lib/api/services/OrdersService";
 import PreferenceService, {
-  FilterPreferenceResponse,
   FilterPreference,
+  FilterPreferenceResponse,
 } from "@/lib/api/services/PreferenceService";
 import { type Order } from "@/types/dashboard/DasbordOrderstable/DashboardOrdersTable";
-import { statusColor } from "@/components/custom/statuscolors";
 import { OrdersLandingTableProps } from "../../types/ordertypes";
 
 // Helper functions
@@ -130,7 +129,6 @@ function OrdersLandingTable({
     null
   );
 
-  // Table columns
   const columns = useMemo<ColumnDef<Order>[]>(
     () => [
       {
@@ -373,16 +371,16 @@ function OrdersLandingTable({
   );
 
   // Load filter preferences
-  const loadFilterPreferences = useCallback(async () => {
-    try {
-      const preferences =
-        await PreferenceService.findFilterPreferences("order");
-      setFilterPreferences(preferences);
-      return preferences;
-    } catch {
-      return null;
-    }
-  }, []);
+  // const loadFilterPreferences = useCallback(async () => {
+  //   try {
+  //     const preferences =
+  //       await PreferenceService.findFilterPreferences("order");
+  //     setFilterPreferences(preferences);
+  //     return preferences;
+  //   } catch {
+  //     return null;
+  //   }
+  // }, []);
 
   // Fetch orders
   const fetchOrders = useCallback(async () => {
@@ -649,13 +647,13 @@ function OrdersLandingTable({
           companyId,
           filter
         );
-        await loadFilterPreferences();
+        // await loadFilterPreferences(); // Temporarily removed
         toast.success("Filter saved successfully!");
       } catch {
         toast.error("Failed to save filter");
       }
     },
-    [user?.userId, user?.companyId, createFilterFromData, loadFilterPreferences]
+    [user?.userId, user?.companyId, createFilterFromData] // Removed loadFilterPreferences from dependencies
   );
 
   // Define tabs
@@ -689,9 +687,9 @@ function OrdersLandingTable({
     setPagination({ pageIndex: page, pageSize: rowPerPage });
   }, [page, rowPerPage]);
 
-  useEffect(() => {
-    loadFilterPreferences();
-  }, [loadFilterPreferences]);
+  // useEffect(() => {
+  //   loadFilterPreferences();
+  // }, [loadFilterPreferences]);
 
   useEffect(() => {
     fetchOrders();
@@ -742,7 +740,7 @@ function OrdersLandingTable({
       </SideDrawer>
 
       <div className="flex flex-col h-[calc(100vh-140px)]">
-        <div className="flex-shrink-0 mb-1">
+        {/* <div className="flex-shrink-0 mb-1">
           <FilterTabs
             tabs={tabs}
             defaultValue={
@@ -777,7 +775,7 @@ function OrdersLandingTable({
               toast.info("Settings functionality coming soon!")
             }
           />
-        </div>
+        </div> */}
 
         <div className="flex-1 overflow-hidden">
           {loading ? (

@@ -27,21 +27,6 @@ import {
 import { forwardRef, useImperativeHandle, useRef } from "react";
 import { LoadingButton } from "./loading-button";
 import SearchBox from "./search";
-
-/**
- * Modern Dashboard Toolbar Component
- *
- * A comprehensive toolbar component for dashboard pages that provides:
- * - Search functionality
- * - Filter controls with active indicators
- * - Primary and secondary actions
- * - View toggle buttons (list/grid/board)
- * - Settings and more options
- * - Refresh capability
- * - Mobile-responsive design
- * - Loading states
- * - Customizable positioning and styling
- */
 const DashboardToolbar = forwardRef<DashboardToolbarRef, DashboardToolbarProps>(
   (
     {
@@ -102,16 +87,15 @@ const DashboardToolbar = forwardRef<DashboardToolbarRef, DashboardToolbarProps>(
 
     const ToolbarContent = () => (
       <>
-        {/* Loading State */}
         {loading ? (
-          <div className="flex items-center gap-4 flex-1">
+          <div className="flex justify-between gap-4 flex-1">
             <Skeleton className="h-6 w-48" />
             <Skeleton className="h-8 w-20" />
           </div>
         ) : (
           <>
             {/* Left Section - Title and Info */}
-            <div className="flex items-center gap-3 flex-1 min-w-0">
+            <div className="flex justify-between flex-1">
               {/* Title */}
               {title && (
                 <div className={cn("min-w-0", noWrap && "max-w-[300px]")}>
@@ -210,14 +194,14 @@ const DashboardToolbar = forwardRef<DashboardToolbarRef, DashboardToolbarProps>(
 
               {/* Filter Chips */}
               {filterChips.condition && filterChips.value && !isMobile && (
-                <div className="flex items-center gap-2">
+                <div className="flex justify-center gap-2">
                   {filterChips.value}
                 </div>
               )}
             </div>
 
             {/* Right Section - Actions */}
-            <div className="flex items-center gap-2">
+            <div className="flex justify-center gap-2">
               {/* Secondary Action */}
               {secondary.condition &&
                 (secondary.loadingButton ? (
@@ -424,9 +408,9 @@ const DashboardToolbar = forwardRef<DashboardToolbarRef, DashboardToolbarProps>(
         >
           <div
             className={cn(
-              "px-4 sm:px-6 py-1",
-              "flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-2",
-              "max-w-screen-2xl mx-auto"
+              "py-1",
+              "flex flex-col sm:flex-row sm:justify-between gap-1 sm:gap-2",
+              "max-w-screen-2xl"
             )}
           >
             <ToolbarContent />
@@ -453,9 +437,9 @@ const DashboardToolbar = forwardRef<DashboardToolbarRef, DashboardToolbarProps>(
         >
           <div
             className={cn(
-              "px-4 sm:px-6 py-1",
-              "flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-2",
-              "max-w-screen-2xl mx-auto"
+              "py-1",
+              "flex flex-col sm:flex-row sm:justify-between gap-1 sm:gap-2",
+              "max-w-screen-2xl"
             )}
           >
             <ToolbarContent />

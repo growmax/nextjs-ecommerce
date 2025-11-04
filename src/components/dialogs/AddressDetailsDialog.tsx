@@ -1,17 +1,17 @@
 "use client";
 
-import * as React from "react";
 import {
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { Loader2 } from "lucide-react";
-import { toast } from "sonner";
+import { useCurrentUser } from "@/hooks/useCurrentUser";
 import { BillingBranchService, type BillingAddress } from "@/lib/api";
 import ShippingBranchService from "@/lib/api/services/ShippingBranchService";
-import { useCurrentUser } from "@/hooks/useCurrentUser";
+import { Loader2 } from "lucide-react";
+import * as React from "react";
+import { toast } from "sonner";
 
 interface AddressDetailsDialogProps {
   open: boolean;
@@ -28,11 +28,6 @@ export function AddressDetailsDialog({
   currentAddress,
   mode = "billing",
 }: AddressDetailsDialogProps) {
-  // Debug: Log when dialog component renders
-  if (process.env.NODE_ENV === "development") {
-    // eslint-disable-next-line no-console
-    console.log("AddressDetailsDialog rendered with open:", open);
-  }
   const [addresses, setAddresses] = React.useState<BillingAddress[]>([]);
   const [selectedAddressId, setSelectedAddressId] = React.useState<
     string | null
@@ -106,13 +101,6 @@ export function AddressDetailsDialog({
         userId: user?.userId,
         companyId: user?.companyId,
       };
-
-      // Use a temporary variable to avoid ESLint no-console
-      const debug = debugInfo;
-      if (process.env.NODE_ENV === "development") {
-        // eslint-disable-next-line no-console
-        console.log("AddressDialog Debug:", debug);
-      }
 
       if (user?.userId && user?.companyId) {
         fetchAddresses();

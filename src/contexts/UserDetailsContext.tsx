@@ -77,7 +77,9 @@ export function UserDetailsProvider({
   initialAuthState = false,
   initialUserData,
 }: UserDetailsProviderProps) {
-  const [user, setUser] = useState<UserDetails | null>(() => initialUserData || null);
+  const [user, setUser] = useState<UserDetails | null>(() => {
+    return initialUserData || null;
+  });
   const [isAuthenticated, setIsAuthenticated] = useState(() => {
     // Use server state if provided, otherwise check client-side
     if (initialAuthState !== undefined) {

@@ -75,12 +75,10 @@ export function ProductsPage() {
       primary={{
         condition: true,
         value: "Add Product",
-        handleClick: () => console.log("Add clicked"),
         startIcon: <Plus className="h-4 w-4" />,
       }}
       refresh={{
         condition: true,
-        handleRefresh: () => console.log("Refresh clicked"),
       }}
     />
   );
@@ -104,7 +102,6 @@ export function ProductsList() {
       primaryAction={{
         condition: true,
         text: "Delete Selected",
-        clickAction: () => console.log("Delete clicked"),
         variant: "destructive",
         icon: <Trash2 className="h-4 w-4" />,
       }}

@@ -271,10 +271,6 @@ const AddressRow = ({
               className="h-4 w-4 text-gray-400 opacity-0 group-hover:opacity-100 transition-opacity duration-200 shrink-0 cursor-pointer hover:text-gray-600"
               onClick={e => {
                 e.stopPropagation();
-                if (process.env.NODE_ENV === "development") {
-                  // eslint-disable-next-line no-console
-                  console.log("Edit icon clicked for Bill To");
-                }
                 onEditClick?.();
               }}
             />
@@ -545,10 +541,6 @@ export default function OrderContactDetails({
             addressDetails={billingAddress}
             isEditable={isEditable}
             onEditClick={() => {
-              if (process.env.NODE_ENV === "development") {
-                // eslint-disable-next-line no-console
-                console.log("Setting billing dialog open to true");
-              }
               setBillingDialogOpen(true);
             }}
           />

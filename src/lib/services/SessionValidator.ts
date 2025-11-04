@@ -1,6 +1,6 @@
 // Server-side JWT session validation
-import { JWTService } from "./JWTService";
 import { JWTPayload } from "@/lib/interfaces/UserInterfaces";
+import { JWTService } from "./JWTService";
 
 export class SessionValidator {
   private static instance: SessionValidator;
@@ -60,14 +60,14 @@ export class SessionValidator {
 
   public extractUserCredentials(
     token: string
-  ): { userId: string; tenantCode: string } | null {
+  ): { sub: string; tenantCode: string } | null {
     const validation = this.validateToken(token);
     if (!validation.isValid || !validation.payload) {
       return null;
     }
 
     return {
-      userId: validation.payload.sub,
+      sub: validation.payload.sub,
       tenantCode: validation.payload.iss,
     };
   }

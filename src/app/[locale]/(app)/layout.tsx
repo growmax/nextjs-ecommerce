@@ -6,9 +6,9 @@ import { TenantDataProvider } from "@/components/TenantDataProvider";
 import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
 import { TenantProvider } from "@/contexts/TenantContext";
 import { UserDetailsProvider } from "@/contexts/UserDetailsContext";
-import { getServerAuthState } from "@/lib/auth-server";
-import { ServerUserService } from "@/lib/services/ServerUserService";
 import TenantService from "@/lib/api/services/TenantService";
+import { ServerAuth } from "@/lib/auth-server";
+import { ServerUserService } from "@/lib/services/ServerUserService";
 import { NextIntlClientProvider } from "next-intl";
 import { getMessages } from "next-intl/server";
 import { headers } from "next/headers";
@@ -19,10 +19,10 @@ export default async function AppLayout({
   children: React.ReactNode;
 }) {
   // Parallelize independent API calls for better performance
-  const [messages, _headersList, authState, tenantData] = await Promise.all([
+  const [messages, _headersList, accessToken, tenantData] = await Promise.all([
     getMessages(),
     headers(),
-    getServerAuthState(),
+    ServerAuth.getAccessToken(),
     (async () => {
       const hdrs = await headers();
       const tenantCode = hdrs.get("x-tenant-code");
@@ -33,7 +33,10 @@ export default async function AppLayout({
 
       try {
         // Use standard TenantService method
-        const result = await TenantService.getTenantDataServerSide(tenantDomain, tenantOrigin);
+        const result = await TenantService.getTenantDataServerSide(
+          tenantDomain,
+          tenantOrigin
+        );
         return result;
       } catch {
         return null;
@@ -41,12 +44,16 @@ export default async function AppLayout({
     })(),
   ]);
 
-  // Fetch user data server-side only if authenticated (depends on authState)
-  const serverUserService = ServerUserService.getInstance();
+  // Simple authentication check: if access token exists, user is authenticated
+  const isAuthenticated = !!accessToken;
+
+  // Fetch user data server-side only if authenticated
   let userData = null;
-  if (authState.isAuthenticated) {
+  console.log(isAuthenticated, "isAuthenticated");
+  if (isAuthenticated) {
     try {
-      userData = await serverUserService.fetchUserDataServerSide();
+      userData = await ServerUserService.fetchUserDataServerSide();
+      console.log(userData, "userData");
     } catch {
       userData = null;
     }
@@ -56,7 +63,7 @@ export default async function AppLayout({
     <NextIntlClientProvider messages={messages}>
       <TenantProvider initialData={tenantData}>
         <UserDetailsProvider
-          initialAuthState={authState.isAuthenticated}
+          initialAuthState={isAuthenticated}
           initialUserData={userData?.data || null}
         >
           <CartProviderWrapper>
@@ -67,7 +74,7 @@ export default async function AppLayout({
                   <div className="flex flex-1">
                     <AppSidebar />
                     <SidebarInset className="overflow-x-hidden">
-                      <main className="min-h-screen pb-8 overflow-x-hidden [&_.landing-page]:!pt-0 [&_.landing-page]:!pb-0 [&_.landing-page]:!min-h-0 [&_.landing-page]:!h-[calc(100vh-105px)]">
+                      <main className="overflow-x-hidden [&_.landing-page]:!pt-0 [&_.landing-page]:!pb-0 [&_.landing-page]:!min-h-0">
                         {children}
                       </main>
                       <ConditionalFooter />

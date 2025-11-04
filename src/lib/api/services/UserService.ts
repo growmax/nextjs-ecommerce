@@ -50,12 +50,12 @@ export class UserService {
    * Fetch user details by user ID/name
    */
   async getUserDetails(
-    userId: string,
+    sub: string,
     context: RequestContext
   ): Promise<UserApiResponse> {
     const client = createClientWithContext(coreCommerceClient, context);
 
-    const response = await client.get(`/users/findByName?name=${userId}`);
+    const response = await client.get(`/users/findByName?name=${sub}`);
 
     return response.data;
   }
@@ -64,11 +64,11 @@ export class UserService {
    * Fetch user details for server-side rendering
    */
   async getUserDetailsServerSide(
-    userId: string,
+    sub: string,
     context: RequestContext
   ): Promise<UserApiResponse | null> {
     try {
-      return await this.getUserDetails(userId, context);
+      return await this.getUserDetails(sub, context);
     } catch {
       return null;
     }
