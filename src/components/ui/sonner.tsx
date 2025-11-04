@@ -3,7 +3,7 @@
 import { useTheme } from "next-themes";
 import { Toaster as Sonner, ToasterProps } from "sonner";
 
-const Toaster = ({ ...props }: ToasterProps) => {
+const Toaster = ({ position = "bottom-left", ...props }: ToasterProps) => {
   const { theme = "system" } = useTheme();
 
   return (
@@ -13,6 +13,7 @@ const Toaster = ({ ...props }: ToasterProps) => {
           ? theme
           : "system"
       }
+      position={position}
       className="toaster group"
       style={
         {

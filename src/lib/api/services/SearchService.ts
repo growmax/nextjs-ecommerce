@@ -349,6 +349,48 @@ export class SearchService {
   }
 
   /**
+   * Get multiple products by their IDs from Elasticsearch
+   *
+   * @param productIds - Array of product IDs to retrieve
+   * @param elasticIndex - Elasticsearch index name
+   * @param context - Request context
+   * @returns Array of formatted products
+   */
+  async getProductsByIds(
+    productIds: number[],
+    elasticIndex: string,
+    context?: RequestContext
+  ): Promise<FormattedProduct[]> {
+    if (!productIds || productIds.length === 0) {
+      return [];
+    }
+
+    const query: ElasticSearchQuery = {
+      query: {
+        bool: {
+          must: [
+            {
+              terms: {
+                productId: productIds,
+              },
+            },
+          ],
+        },
+      },
+      size: productIds.length,
+      from: 0,
+    };
+
+    const result = await this.searchProducts({
+      elasticIndex,
+      query,
+      context,
+    });
+
+    return result.data || [];
+  }
+
+  /**
    * Search products with advanced filters
    *
    * @param filters - Advanced filter options

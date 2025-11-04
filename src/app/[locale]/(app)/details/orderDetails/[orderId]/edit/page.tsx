@@ -2,7 +2,7 @@
 
 import { useLocale } from "next-intl";
 import { useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 
 import {
@@ -13,6 +13,7 @@ import {
   SalesHeader,
 } from "@/components/sales";
 import { useCurrentUser } from "@/hooks/useCurrentUser";
+import { useLatestOrderProducts } from "@/hooks/useLatestOrderProducts";
 import { useTenantData } from "@/hooks/useTenantData";
 import type { OrderDetailsResponse } from "@/lib/api";
 import { OrderDetailsService } from "@/lib/api";
@@ -112,6 +113,66 @@ export default function EditOrderPage({ params }: EditOrderPageProps) {
 
   const { user } = useCurrentUser();
   const { tenantData } = useTenantData();
+
+  // Extract products and currency info for latest data hook
+  const orderDetailsData = orderDetails?.data?.orderDetails;
+  const firstOrderDetail = orderDetailsData?.[0];
+  const products = useMemo(
+    () => firstOrderDetail?.dbProductDetails || [],
+    [firstOrderDetail?.dbProductDetails]
+  );
+
+  const currency = useMemo(
+    () => orderDetails?.data?.buyerCurrencyId,
+    [orderDetails?.data?.buyerCurrencyId]
+  );
+
+  const sellerCurrency = useMemo(
+    () => orderDetails?.data?.sellerCurrencyId,
+    [orderDetails?.data?.sellerCurrencyId]
+  );
+
+  // Use hook to get latest product pricing, discounts, and tax data
+  const { updatedProducts, isLoading: updatingProducts } =
+    useLatestOrderProducts({
+      products,
+      currency,
+      sellerCurrency,
+      isInter: true,
+      taxExemption: false,
+      isCloneReOrder: false,
+      isPlaceOrder: false,
+      enabled: !loading && products.length > 0,
+    });
+
+  // Update order details when products are updated
+  useEffect(() => {
+    if (
+      updatedProducts &&
+      Array.isArray(updatedProducts) &&
+      updatedProducts.length > 0 &&
+      !updatingProducts &&
+      orderDetails
+    ) {
+      setOrderDetails(prev => {
+        if (!prev || !prev.data?.orderDetails) return prev;
+        return {
+          ...prev,
+          data: {
+            ...prev.data,
+            orderDetails: prev.data.orderDetails.map((order, idx) =>
+              idx === 0
+                ? {
+                    ...order,
+                    dbProductDetails: updatedProducts,
+                  }
+                : order
+            ),
+          },
+        };
+      });
+    }
+  }, [updatedProducts, updatingProducts, orderDetails]);
 
   // Load params asynchronously
   useEffect(() => {
@@ -297,7 +358,10 @@ export default function EditOrderPage({ params }: EditOrderPageProps) {
             {!loading && !error && orderDetails && (
               <OrderProductsTable
                 products={
-                  orderDetails.data?.orderDetails?.[0]?.dbProductDetails || []
+                  updatedProducts.length > 0
+                    ? updatedProducts
+                    : orderDetails.data?.orderDetails?.[0]?.dbProductDetails ||
+                      []
                 }
                 {...(orderDetails.data?.orderDetails?.[0]?.dbProductDetails
                   ?.length && {
@@ -427,62 +491,40 @@ export default function EditOrderPage({ params }: EditOrderPageProps) {
           {!loading && !error && orderDetails && (
             <div className="w-full lg:w-[30%] mt-[52px]">
               <OrderPriceDetails
-                totalItems={
-                  orderDetails.data?.orderDetails?.[0]?.dbProductDetails
-                    ?.length || 0
+                products={
+                  updatedProducts.length > 0
+                    ? updatedProducts
+                    : orderDetails.data?.orderDetails?.[0]?.dbProductDetails ||
+                      []
                 }
-                totalLP={
-                  orderDetails.data?.orderDetails?.[0]?.dbProductDetails?.reduce(
-                    (sum, product) => sum + (product.unitListPrice || 0),
-                    0
-                  ) || 0
-                }
-                discount={(() => {
-                  const products =
-                    orderDetails.data?.orderDetails?.[0]?.dbProductDetails ||
-                    [];
-                  let totalDiscount = 0;
-
-                  products.forEach(product => {
-                    const unitListPrice = product.unitListPrice || 0;
-                    const discountPercentage = product.discount || 0;
-                    if (discountPercentage > 0) {
-                      const productDiscount =
-                        (unitListPrice * discountPercentage) / 100;
-                      totalDiscount += productDiscount;
-                    }
-                  });
-
-                  return totalDiscount;
-                })()}
-                subtotal={
-                  Number(orderDetails.data?.orderDetails?.[0]?.subTotal) || 0
-                }
-                taxableAmount={
-                  Number(orderDetails.data?.orderDetails?.[0]?.taxableAmount) ||
-                  0
-                }
-                tax={
-                  Number(orderDetails.data?.orderDetails?.[0]?.overallTax) || 0
-                }
-                taxDetails={[
-                  {
-                    name: "IGST",
-                    value:
-                      Number(
-                        orderDetails.data?.orderDetails?.[0]?.overallTax
-                      ) || 0,
-                  },
-                ]}
-                total={
-                  Number(orderDetails.data?.orderDetails?.[0]?.grandTotal) || 0
-                }
+                isInter={true}
+                taxExemption={false}
+                precision={2}
                 currency={
                   (
                     orderDetails.data?.buyerCurrencySymbol as {
                       symbol?: string;
                     }
                   )?.symbol || "INR ₹"
+                }
+                // Use API values when available, fallback to calculated
+                overallShipping={
+                  Number(
+                    orderDetails.data?.orderDetails?.[0]?.overallShipping
+                  ) || 0
+                }
+                overallTax={
+                  Number(orderDetails.data?.orderDetails?.[0]?.overallTax) || 0
+                }
+                calculatedTotal={
+                  Number(orderDetails.data?.orderDetails?.[0]?.grandTotal) || 0
+                }
+                subTotal={
+                  Number(orderDetails.data?.orderDetails?.[0]?.subTotal) || 0
+                }
+                taxableAmount={
+                  Number(orderDetails.data?.orderDetails?.[0]?.taxableAmount) ||
+                  0
                 }
               />
             </div>
