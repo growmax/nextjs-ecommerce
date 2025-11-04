@@ -43,6 +43,7 @@ import ProductAssetsService from "./services/ProductAssetsService";
 import QuotesService from "./services/QuotesService";
 import QuoteStatusService from "./services/StatusService";
 import RequestEditService from "./services/RequestEditService";
+import SearchService from "./services/SearchService";
 
 // Export services
 export {
@@ -65,6 +66,7 @@ export {
   QuoteStatusService,
   RequestEditService,
   RequestQueueService,
+  SearchService,
   StoreFrontService,
   TenantService,
   TokenRefreshService,
@@ -154,6 +156,13 @@ export type {
   ProductAsset,
   ProductAssetsResponse,
 } from "./services/ProductAssetsService";
+
+export type {
+  ElasticSearchOptions,
+  ElasticSearchQuery,
+  FormattedProduct,
+  SearchProductsResponse,
+} from "./services/SearchService";
 
 export type {
   Discount,
@@ -255,6 +264,7 @@ export const API = {
   Quotes: QuotesService,
   QuoteStatus: QuoteStatusService,
   RequestEdit: RequestEditService,
+  Search: SearchService,
   StoreFront: StoreFrontService,
   Tenant: TenantService,
   User: UserService,

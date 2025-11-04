@@ -12,8 +12,11 @@ import {
   OrderTermsCard,
   SalesHeader,
 } from "@/components/sales";
+import type { ProductSearchResult } from "@/components/sales/ProductSearchInput";
 import { useCurrentUser } from "@/hooks/useCurrentUser";
 import { useLatestOrderProducts } from "@/hooks/useLatestOrderProducts";
+import useModuleSettings from "@/hooks/useModuleSettings";
+import { useOrderCalculation } from "@/hooks/useOrderCalculation";
 import { useTenantData } from "@/hooks/useTenantData";
 import type { OrderDetailsResponse } from "@/lib/api";
 import { OrderDetailsService } from "@/lib/api";
@@ -21,8 +24,7 @@ import {
   type SellerBranch,
   type Warehouse,
 } from "@/lib/api/services/SellerWarehouseService";
-import type { ProductCsvRow } from "@/lib/export-csv";
-import { exportProductsToCsv } from "@/lib/export-csv";
+import type { CartItem } from "@/types/calculation/cart";
 
 // Import types for proper typing
 interface AddressDetails {
@@ -113,6 +115,7 @@ export default function EditOrderPage({ params }: EditOrderPageProps) {
 
   const { user } = useCurrentUser();
   const { tenantData } = useTenantData();
+  const { quoteSettings } = useModuleSettings(user);
 
   // Extract products and currency info for latest data hook
   const orderDetailsData = orderDetails?.data?.orderDetails;
@@ -144,6 +147,132 @@ export default function EditOrderPage({ params }: EditOrderPageProps) {
       isPlaceOrder: false,
       enabled: !loading && products.length > 0,
     });
+
+  // Apply edited quantities to products and ensure CartItem format
+  const productsWithEditedQuantities = useMemo(() => {
+    // Ensure we have a valid array
+    const baseProductsArray =
+      updatedProducts.length > 0
+        ? updatedProducts
+        : orderDetails?.data?.orderDetails?.[0]?.dbProductDetails || [];
+
+    // Ensure it's actually an array
+    const baseProducts = Array.isArray(baseProductsArray)
+      ? baseProductsArray
+      : [];
+
+    // Return empty array if no products
+    if (baseProducts.length === 0) {
+      return [];
+    }
+
+    return baseProducts.map((product: Record<string, unknown>) => {
+      const productId =
+        (product.productId as string | number) ||
+        (product.brandProductId as string) ||
+        (product.itemCode as string) ||
+        (product.orderIdentifier as string) ||
+        "";
+
+      // Get current quantity or use edited quantity
+      let quantity =
+        (product.quantity as number) ||
+        (product.unitQuantity as number) ||
+        (product.askedQuantity as number) ||
+        1;
+
+      // Only check editedQuantities if productId is a valid string/number
+      // Check multiple possible productId formats
+      const possibleIds = [
+        productId,
+        product.brandProductId as string,
+        product.itemCode as string,
+        product.orderIdentifier as string,
+        product.productId as string | number,
+      ].filter(Boolean);
+
+      // Check if any of the possible IDs match editedQuantities
+      for (const id of possibleIds) {
+        if (id && editedQuantities[id] !== undefined) {
+          quantity = editedQuantities[id];
+          break;
+        }
+      }
+
+      const unitPrice =
+        (product.unitPrice as number) || (product.unitListPrice as number) || 0;
+      const unitListPrice =
+        (product.unitListPrice as number) ||
+        (product.unitLP as number) ||
+        unitPrice;
+
+      // Ensure product has required CartItem fields
+      const finalProductId =
+        (product.productId as string | number) ||
+        productId ||
+        `product-${Math.random()}`;
+
+      return {
+        ...product,
+        productId: finalProductId,
+        quantity,
+        unitQuantity: quantity,
+        askedQuantity: quantity,
+        unitPrice,
+        unitListPrice,
+        totalPrice: unitPrice * quantity,
+        // Ensure all required fields have defaults
+        discount:
+          (product.discount as number) ||
+          (product.discountPercentage as number) ||
+          0,
+        discountPercentage:
+          (product.discountPercentage as number) ||
+          (product.discount as number) ||
+          0,
+        tax: (product.tax as number) || 0,
+        totalTax: (product.totalTax as number) || 0,
+        shippingCharges: (product.shippingCharges as number) || 0,
+        cashdiscountValue:
+          (product.cashdiscountValue as number) ||
+          (product.cashDiscountValue as number) ||
+          0,
+        showPrice:
+          typeof product.showPrice === "boolean"
+            ? product.showPrice
+            : product.showPrice !== undefined
+              ? true
+              : true,
+        priceNotAvailable:
+          typeof product.priceNotAvailable === "boolean"
+            ? product.priceNotAvailable
+            : false,
+      } as CartItem;
+    });
+  }, [updatedProducts, editedQuantities, orderDetails]);
+
+  // Calculate order using the calculation hook
+  // Only calculate if we have products
+  const { calculatedData } = useOrderCalculation({
+    products:
+      productsWithEditedQuantities.length > 0
+        ? (productsWithEditedQuantities as CartItem[])
+        : [],
+    isInter: true,
+    taxExemption: false,
+    precision: 2,
+    settings: {
+      roundingAdjustment: quoteSettings?.roundingAdjustment || false,
+      itemWiseShippingTax: false,
+    },
+    options: {
+      applyVolumeDiscount: true,
+      applyCashDiscount: true,
+      applyBasicDiscount: true,
+      checkMOQ: true,
+      applyRounding: true,
+    },
+  });
 
   // Update order details when products are updated
   useEffect(() => {
@@ -285,6 +414,80 @@ export default function EditOrderPage({ params }: EditOrderPageProps) {
     setEditedWarehouse(warehouse);
   };
 
+  // Get elastic index from tenant data
+  const elasticIndex = useMemo(() => {
+    if (tenantData?.tenant?.elasticCode) {
+      return `${tenantData.tenant.elasticCode}pgandproducts`;
+    }
+    return undefined;
+  }, [tenantData?.tenant?.elasticCode]);
+
+  // Handle adding a product to the order
+  const handleProductAdd = (product: ProductSearchResult) => {
+    if (!orderDetails || !orderDetails.data?.orderDetails?.[0]) {
+      toast.error("Order details not loaded");
+      return;
+    }
+
+    try {
+      // Create a new product detail from the search result
+      const newProduct = {
+        productId: product.productId,
+        brandProductId: product.brandProductId || product.id,
+        productShortDescription:
+          product.productShortDescription ||
+          product.productName ||
+          product.brandProductId ||
+          "Unknown Product",
+        itemName:
+          product.productShortDescription ||
+          product.productName ||
+          product.brandProductId ||
+          "Unknown Product",
+        itemCode: product.brandProductId || product.id,
+        unitQuantity: 1,
+        quantity: 1,
+        unitPrice: 0,
+        unitListPrice: 0,
+        discount: 0,
+        discountPercentage: 0,
+        itemTaxableAmount: 0,
+        totalPrice: 0,
+        tax: 0,
+        itemNo:
+          (orderDetails.data.orderDetails[0].dbProductDetails?.length || 0) + 1,
+      };
+
+      // Update order details with the new product
+      setOrderDetails(prev => {
+        if (!prev || !prev.data?.orderDetails) return prev;
+        return {
+          ...prev,
+          data: {
+            ...prev.data,
+            orderDetails: prev.data.orderDetails.map((order, idx) =>
+              idx === 0
+                ? {
+                    ...order,
+                    dbProductDetails: [
+                      ...(order.dbProductDetails || []),
+                      newProduct,
+                    ],
+                  }
+                : order
+            ),
+          },
+        };
+      });
+
+      toast.success(
+        `${product.brandProductId || product.productName || "Product"} added to order`
+      );
+    } catch {
+      toast.error("Failed to add product to order");
+    }
+  };
+
   const handlePlaceOrder = async () => {
     setSaving(true);
     try {
@@ -368,16 +571,11 @@ export default function EditOrderPage({ params }: EditOrderPageProps) {
                   totalCount:
                     orderDetails.data.orderDetails[0].dbProductDetails.length,
                 })}
-                onExport={() => {
-                  const products =
-                    orderDetails.data?.orderDetails?.[0]?.dbProductDetails ||
-                    [];
-                  const filename = `Order_${orderId}_Products.csv`;
-                  exportProductsToCsv(products as ProductCsvRow[], filename);
-                }}
                 isEditable={true}
                 onQuantityChange={handleQuantityChange}
                 editedQuantities={editedQuantities}
+                onProductAdd={handleProductAdd}
+                elasticIndex={elasticIndex}
               />
             )}
 
@@ -492,14 +690,24 @@ export default function EditOrderPage({ params }: EditOrderPageProps) {
             <div className="w-full lg:w-[30%] mt-[52px]">
               <OrderPriceDetails
                 products={
-                  updatedProducts.length > 0
-                    ? updatedProducts
-                    : orderDetails.data?.orderDetails?.[0]?.dbProductDetails ||
-                      []
+                  calculatedData?.products && calculatedData.products.length > 0
+                    ? (calculatedData.products as unknown as Array<
+                        Record<string, unknown>
+                      >)
+                    : productsWithEditedQuantities.length > 0
+                      ? productsWithEditedQuantities
+                      : updatedProducts.length > 0
+                        ? updatedProducts
+                        : orderDetails.data?.orderDetails?.[0]
+                            ?.dbProductDetails || []
                 }
                 isInter={true}
                 taxExemption={false}
                 precision={2}
+                Settings={{
+                  roundingAdjustment:
+                    quoteSettings?.roundingAdjustment || false,
+                }}
                 currency={
                   (
                     orderDetails.data?.buyerCurrencySymbol as {
@@ -507,25 +715,33 @@ export default function EditOrderPage({ params }: EditOrderPageProps) {
                     }
                   )?.symbol || "INR ₹"
                 }
-                // Use API values when available, fallback to calculated
+                // Use calculated values when available, fallback to API values
                 overallShipping={
-                  Number(
-                    orderDetails.data?.orderDetails?.[0]?.overallShipping
-                  ) || 0
+                  calculatedData?.cartValue?.totalShipping !== undefined
+                    ? calculatedData.cartValue.totalShipping
+                    : Number(
+                        orderDetails.data?.orderDetails?.[0]?.overallShipping
+                      ) || 0
                 }
                 overallTax={
-                  Number(orderDetails.data?.orderDetails?.[0]?.overallTax) || 0
+                  calculatedData?.cartValue?.totalTax !== undefined
+                    ? calculatedData.cartValue.totalTax
+                    : Number(
+                        orderDetails.data?.orderDetails?.[0]?.overallTax
+                      ) || 0
                 }
-                calculatedTotal={
-                  Number(orderDetails.data?.orderDetails?.[0]?.grandTotal) || 0
-                }
-                subTotal={
-                  Number(orderDetails.data?.orderDetails?.[0]?.subTotal) || 0
-                }
-                taxableAmount={
-                  Number(orderDetails.data?.orderDetails?.[0]?.taxableAmount) ||
-                  0
-                }
+                {...(calculatedData?.cartValue?.grandTotal !== undefined &&
+                calculatedData?.cartValue?.grandTotal !== null &&
+                calculatedData?.cartValue?.totalValue !== undefined &&
+                calculatedData?.cartValue?.totalValue !== null &&
+                calculatedData?.cartValue?.taxableAmount !== undefined &&
+                calculatedData?.cartValue?.taxableAmount !== null
+                  ? {
+                      calculatedTotal: calculatedData.cartValue.grandTotal,
+                      subTotal: calculatedData.cartValue.totalValue,
+                      taxableAmount: calculatedData.cartValue.taxableAmount,
+                    }
+                  : {})}
               />
             </div>
           )}

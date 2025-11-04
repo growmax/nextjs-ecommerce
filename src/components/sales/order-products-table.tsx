@@ -18,6 +18,8 @@ import { Download } from "lucide-react";
 import { useState } from "react";
 import ImageWithFallback from "../ImageWithFallback";
 import PricingFormat from "../PricingFormat";
+import type { ProductSearchResult } from "./ProductSearchInput";
+import ProductSearchInput from "./ProductSearchInput";
 
 export interface ProductItem {
   itemNo?: number;
@@ -55,6 +57,8 @@ export interface OrderProductsTableProps {
   isEditable?: boolean;
   onQuantityChange?: (productId: string, quantity: number) => void;
   editedQuantities?: Record<string, number>;
+  onProductAdd?: (product: ProductSearchResult) => void;
+  elasticIndex?: string | undefined;
 }
 
 //
@@ -68,6 +72,8 @@ export default function OrderProductsTable({
   isEditable = false,
   onQuantityChange,
   editedQuantities = {},
+  onProductAdd,
+  elasticIndex,
 }: OrderProductsTableProps) {
   const [currentPage, setCurrentPage] = useState(1);
   const displayCount = totalCount || products.length;
@@ -123,21 +129,34 @@ export default function OrderProductsTable({
   return (
     <Card className={cn("", className)}>
       {/* Header */}
-      <CardHeader className="py-0 px-4 -my-1 flex flex-row items-center justify-between">
-        <CardTitle className="text-base font-semibold py-0 my-0 leading-none -mt-1 -mb-1">
-          Products ({displayCount})
-        </CardTitle>
-        {onExport && (
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={onExport}
-            className="h-2.5 px-1 py-0! text-[10px] font-medium border-gray-300 text-gray-700 hover:bg-gray-50 -my-1"
-          >
-            <Download className="h-1 w-1 mr-0.5" />
-            EXPORT
-          </Button>
-        )}
+      <CardHeader className="py-0 px-4 -my-1 flex flex-row items-center justify-between gap-4">
+        <div className="flex-1 flex items-center justify-between">
+          <CardTitle className="text-base font-semibold py-0 my-0 leading-none -mt-1 -mb-1">
+            Products ({displayCount})
+          </CardTitle>
+          {/* Show search input in edit mode, export button in view mode */}
+          {onProductAdd ? (
+            <div className="w-full max-w-[calc(28rem-120px)] ml-4">
+              <ProductSearchInput
+                onProductSelect={onProductAdd}
+                placeholder="Search and add products..."
+                elasticIndex={elasticIndex}
+              />
+            </div>
+          ) : (
+            onExport && (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={onExport}
+                className="h-2.5 px-1 py-0! text-[10px] font-medium border-gray-300 text-gray-700 hover:bg-gray-50 -my-1"
+              >
+                <Download className="h-1 w-1 mr-0.5" />
+                EXPORT
+              </Button>
+            )
+          )}
+        </div>
       </CardHeader>
 
       {/* Products Table */}
