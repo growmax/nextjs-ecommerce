@@ -21,8 +21,16 @@ rules:
   - `hooks/[feature]/` → Custom feature-based React hooks.
   - `lib/` → Server utilities, configs, constants, and API logic.  
     • Use lowercase with dashes for folder names (e.g., `components/auth-wizard`).  
-    • Always move: - TypeScript types → `types/`
-  - Helper methods → `utils/`
+    • Always move: - TypeScript types → `types/[feature]/` for better readability and reusability.
+  - Helper methods → `utils/[feature]/`
+  - UI/Layout logic → Separate component files (e.g., `ProductLayout.tsx` in `components/[feature]/`)  
+    • Page files (`page.tsx`) should focus on: - Data fetching and server-side logic
+  - Metadata generation (`generateMetadata`)
+  - Static params generation (`generateStaticParams`)
+  - Minimal JSX - just composing layout components  
+    • Keep `page.tsx` lean and readable: - Extract complex UI structures into dedicated layout/container components
+  - Move JSX markup exceeding ~20-30 lines to separate components
+  - Example: `page.tsx` → fetches data → renders `<ProductLayout />` component
 
 - id: import-optimization
   description: >
@@ -104,3 +112,13 @@ rules:
   3. Iterative Refinement → Continuously enhance readability, performance, and maintainability.
   4. Use <PLANNING> tags before major implementations to outline structure.
   5. Finalize only after validating against performance, security, and architecture standards.
+
+## Service Creation Guidelines
+Always follow the guidelines in CREATE_SERVICE_GUIDE.md when creating or adapting new services:
+- Extend BaseService<T> for consistency.
+- Use this.call() and this.callSafe() for API requests.
+- Implement singleton pattern with getInstance().
+- Add server-safe method versions for server-side usage.
+- Define types within the service file and export them.
+- Add the service and types to src/lib/api/index.ts for easy importing.
+- Choose the appropriate client (e.g., coreCommerceClient, localApiClient) based on the microservice or API needs.

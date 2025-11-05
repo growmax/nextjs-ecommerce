@@ -1,5 +1,5 @@
 // Server-side JWT session validation
-import { JWTPayload } from "@/lib/interfaces/UserInterfaces";
+import { JWTPayload } from "@/lib/interfaces/JWTInterfaces";
 import { JWTService } from "./JWTService";
 
 export class SessionValidator {

@@ -33,17 +33,3 @@ export interface UserApiResponse {
   message: string;
   status: "success" | "error";
 }
-
-export interface JWTPayload {
-  sub: string; // User ID
-  iss: string; // Tenant ID
-  userId: number;
-  tenantId: string;
-  email: string;
-  displayName: string;
-  companyId: number;
-  roleId: number;
-  roleName: string;
-  exp: number;
-  iat: number;
-}

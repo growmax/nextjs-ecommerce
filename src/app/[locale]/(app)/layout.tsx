@@ -32,8 +32,8 @@ export default async function AppLayout({
       if (!tenantCode || !tenantDomain || !tenantOrigin) return null;
 
       try {
-        // Use standard TenantService method
-        const result = await TenantService.getTenantDataServerSide(
+        // Use cached TenantService method
+        const result = await TenantService.getTenantDataCached(
           tenantDomain,
           tenantOrigin
         );
@@ -49,11 +49,9 @@ export default async function AppLayout({
 
   // Fetch user data server-side only if authenticated
   let userData = null;
-  console.log(isAuthenticated, "isAuthenticated");
   if (isAuthenticated) {
     try {
       userData = await ServerUserService.fetchUserDataServerSide();
-      console.log(userData, "userData");
     } catch {
       userData = null;
     }

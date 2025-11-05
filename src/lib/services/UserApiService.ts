@@ -28,12 +28,6 @@ export class UserApiService {
     tenantCode: string,
     accessToken: string
   ): Promise<UserApiResponse | null> {
-    console.log(
-      userId,
-      tenantCode,
-      accessToken,
-      "userId, tenantCode, accessToken"
-    );
     return API.User.getUserDetailsServerSide(sub, {
       tenantCode,
       accessToken,

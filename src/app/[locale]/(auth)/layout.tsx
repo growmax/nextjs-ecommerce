@@ -24,7 +24,7 @@ export default async function AuthLayout({
   let tenantData = null;
   if (tenantCode && tenantDomain && tenantOrigin) {
     try {
-      tenantData = await TenantService.getTenantDataServerSide(
+      tenantData = await TenantService.getTenantDataCached(
         tenantDomain,
         tenantOrigin
       );

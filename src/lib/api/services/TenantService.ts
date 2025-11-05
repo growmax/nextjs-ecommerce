@@ -95,6 +95,26 @@ export class TenantService extends BaseService<TenantService> {
     ) as Promise<TenantApiResponse | null>;
   }
 
+  async getTenantDataCached(
+    domainUrl: string,
+    origin?: string
+  ): Promise<TenantApiResponse | null> {
+    if (typeof window !== "undefined") {
+      return this.getTenantDataServerSide(domainUrl, origin);
+    }
+
+    try {
+      const { withRedisCache } = await import("@/lib/cache");
+      return withRedisCache(
+        `tenant:${domainUrl}`,
+        () => this.getTenantDataServerSide(domainUrl, origin),
+        3600
+      );
+    } catch (error) {
+      return this.getTenantDataServerSide(domainUrl, origin);
+    }
+  }
+
   /**
    * Legacy method for backward compatibility
    * @deprecated Use getTenantData() instead

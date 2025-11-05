@@ -36,7 +36,7 @@ const nextConfig = {
   poweredByHeader: false,
   compress: true,
   // Windows-specific optimizations for development
-  webpack: (config, { dev }) => {
+  webpack: (config, { dev, isServer }) => {
     if (dev) {
       config.watchOptions = {
         poll: 1000,
@@ -47,6 +47,24 @@ const nextConfig = {
         level: "error",
       };
     }
+
+    if (!isServer) {
+      config.resolve.fallback = {
+        ...config.resolve.fallback,
+        net: false,
+        tls: false,
+        fs: false,
+        dns: false,
+        child_process: false,
+        crypto: false,
+      };
+
+      config.externals = config.externals || [];
+      config.externals.push({
+        ioredis: "ioredis",
+      });
+    }
+
     return config;
   },
   images: {

@@ -21,6 +21,9 @@ const API_CONFIG = {
   PREFERENCE_URL: process.env.PREFERENCE_URL || "/api/userpreference",
   DISCOUNT_URL:
     process.env.DISCOUNT_URL || "https://api.myapptino.com/discounts/",
+  OPENSEARCH_URL:
+    process.env.OPENSEARCH_URL ||
+    "https://api.myapptino.com/opensearch/invocations",
 } as const;
 
 // Types
@@ -93,12 +96,11 @@ function getTokenFromCookie(cookieName: string): string | null {
   return null;
 }
 
-// Extract tenant from JWT
+// Helper to extract tenant from JWT
 function getTenantFromToken(token: string): string | null {
   try {
     const parts = token.split(".");
     if (parts.length !== 3) return null;
-
     const payload = JSON.parse(atob(parts[1]!));
     return payload.iss || null;
   } catch {
@@ -286,6 +288,10 @@ export const discountClient = createApiClient({
   baseURL: `${API_CONFIG.DISCOUNT_URL}`,
 });
 
+export const openSearchClient = createApiClient({
+  baseURL: API_CONFIG.OPENSEARCH_URL,
+});
+
 // Generic API client
 export const apiClient = createApiClient({
   baseURL: API_CONFIG.API_BASE_URL,
@@ -321,6 +327,7 @@ export const createClientWithContext = (
           ...(context.module && { "x-module": context.module }),
           ...(context.userId && { "x-user-id": context.userId }),
           ...(context.origin && { origin: context.origin }),
+          ...(context.tenantCode && { "x-tenant": context.tenantCode }),
         },
       }),
 
@@ -339,6 +346,7 @@ export const createClientWithContext = (
           ...(context.module && { "x-module": context.module }),
           ...(context.userId && { "x-user-id": context.userId }),
           ...(context.origin && { origin: context.origin }),
+          ...(context.tenantCode && { "x-tenant": context.tenantCode }),
         },
       }),
 
@@ -357,6 +365,7 @@ export const createClientWithContext = (
           ...(context.module && { "x-module": context.module }),
           ...(context.userId && { "x-user-id": context.userId }),
           ...(context.origin && { origin: context.origin }),
+          ...(context.tenantCode && { "x-tenant": context.tenantCode }),
         },
       }),
 
@@ -375,6 +384,7 @@ export const createClientWithContext = (
           ...(context.module && { "x-module": context.module }),
           ...(context.userId && { "x-user-id": context.userId }),
           ...(context.origin && { origin: context.origin }),
+          ...(context.tenantCode && { "x-tenant": context.tenantCode }),
         },
       }),
   };

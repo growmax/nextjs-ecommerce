@@ -9,6 +9,7 @@ export {
   coreCommerceClient,
   createClientWithContext,
   homePageClient,
+  openSearchClient,
   storefrontClient,
   type ApiClientConfig,
   type ApiError,
@@ -33,6 +34,7 @@ import TokenRefreshService from "../services/TokenRefreshService";
 
 // Import dashboard services from the new location
 import DashboardService from "./services/DashboardService";
+import OpenSearchService from "./services/OpenSearchService";
 import OrderDetailsService from "./services/OrderDetailsService";
 import OrderNameService from "./services/OrderNameService";
 import OrdersService from "./services/OrdersService";
@@ -41,9 +43,9 @@ import PaymentService from "./services/PaymentService";
 import PreferenceService from "./services/PreferenceService";
 import ProductAssetsService from "./services/ProductAssetsService";
 import QuotesService from "./services/QuotesService";
-import QuoteStatusService from "./services/StatusService";
 import RequestEditService from "./services/RequestEditService";
 import SearchService from "./services/SearchService";
+import QuoteStatusService from "./services/StatusService";
 
 // Export services
 export {
@@ -55,6 +57,7 @@ export {
   CompanyService,
   DashboardService,
   DiscountService,
+  OpenSearchService,
   OrderDetailsService,
   OrderNameService,
   OrdersService,
@@ -170,6 +173,23 @@ export type {
   DiscountItem,
   DiscountRequest,
 } from "./services/DiscountService";
+
+// Update product detail types export
+export type {
+  CatalogCode,
+  HsnTaxBreakup,
+  InventoryInfo,
+  PriceListCode,
+  ProductAccessory,
+  // Remove duplicate: ProductAsset (already from ProductAssetsService)
+  ProductAttribute,
+  ProductCategory,
+  ProductDetail,
+  ProductDetailResponse,
+  ProductSpecification,
+  TaxGroup,
+  TaxRequirement,
+} from "@/types/product/product-detail";
 
 // Export CompanyService types
 export type {

@@ -1,5 +1,5 @@
 // JWT Service class for token management
-import { JWTPayload } from "@/lib/interfaces/UserInterfaces";
+import { JWTPayload } from "@/lib/interfaces/JWTInterfaces";
 
 export class JWTService {
   private static instance: JWTService;
