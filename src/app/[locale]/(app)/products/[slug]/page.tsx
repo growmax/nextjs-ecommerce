@@ -1,4 +1,9 @@
-import { CenteredLayout } from "@/components/layout/PageContent";
+import { PageContent } from "@/components/layout/PageContent";
+import MobileCartAction from "@/components/product/MobileCartAction";
+import ProductBreadcrumb from "@/components/product/ProductBreadcrumb";
+import ProductImageGallery from "@/components/product/ProductImageGallery";
+import ProductInfo from "@/components/product/ProductInfo";
+import ProductVariants from "@/components/product/ProductVariants";
 import { ProductStructuredData } from "@/components/seo/ProductStructuredData";
 import { OpenSearchService, TenantService } from "@/lib/api";
 import { RequestContext } from "@/lib/api/client";
@@ -243,6 +248,7 @@ export default async function ProductPage({ params }: ProductPageProps) {
     }
     const product = productData as ProductDetail;
     const productUrl = `${origin}/${locale}/products/${slug}`;
+
     return (
       <>
         <ProductStructuredData
@@ -250,8 +256,45 @@ export default async function ProductPage({ params }: ProductPageProps) {
           url={productUrl}
           locale={locale}
         />
-        <CenteredLayout>{" In the UI Product Page..."}</CenteredLayout>
+
+        <PageContent layout="auto">
+          <div className="py-3">
+            <ProductBreadcrumb product={product} locale={locale} />
+          </div>
+
+          {/* Two-Column Layout: Image Gallery (Left) + Product Details (Right) */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-12 pb-24 lg:pb-8">
+            {/* Left Column: Sticky Image Gallery */}
+            <div className="lg:sticky lg:top-8 lg:h-fit">
+              <ProductImageGallery
+                images={product.product_assetss || []}
+                productTitle={product.title}
+              />
+            </div>
+
+            {/* Right Column: Product Information */}
+            <div className="space-y-6">
+              <ProductInfo product={product} locale={locale} />
+              <ProductVariants attributes={product.set_product_atributes} />
+            </div>
+          </div>
+
+          {/* Mobile Only: Fixed Bottom Cart Action */}
+          <MobileCartAction product={product} />
+        </PageContent>
       </>
     );
-  } catch {}
+  } catch (_error) {
+    return (
+      <div className="container mx-auto px-4 py-16 text-center">
+        <h1 className="text-3xl font-bold text-destructive mb-4">
+          Error Loading Product
+        </h1>
+        <p className="text-muted-foreground">
+          An unexpected error occurred while loading this product. Please try
+          again later.
+        </p>
+      </div>
+    );
+  }
 }

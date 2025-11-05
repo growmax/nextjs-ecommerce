@@ -18,8 +18,8 @@ export function PageContent({
   // Layout-specific classes
   const layoutClasses = {
     "full-width": "w-full",
-    centered: "max-w-6xl mx-auto px-4 sm:px-6 lg:px-8",
-    auto: "max-w-7xl mx-auto px-4 sm:px-6 lg:px-8", // Default fallback
+    centered: "max-w-7xl mx-auto px-6 sm:px-8 lg:px-10",
+    auto: "max-w-8xl mx-auto px-2 sm:px-4 sm:mx-12 lg:mx-60", // Added px-2 for mobile spacing
   };
 
   return <div className={cn(layoutClasses[layout], className)}>{children}</div>;
