@@ -508,7 +508,7 @@ export default function OrderPriceDetails({
         </div>
 
         {/* Tax + expand button */}
-        {finalTax > 0 && (
+        {finalTax !== undefined && finalTax !== null && (
           <div className="grid grid-cols-2 gap-2 items-center">
             <div className="flex items-center gap-1">
               <TypographyMuted>Tax</TypographyMuted>

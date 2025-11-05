@@ -77,6 +77,13 @@ export interface GetAllSellerPricesResponse {
   status: string;
   message: string;
 }
+
+export interface CheckVolumeDiscountEnabledResponse {
+  data?: boolean | unknown;
+  message?: string;
+  status?: string;
+}
+
 export class DiscountService extends BaseService<DiscountService> {
   protected defaultClient = discountClient;
 
@@ -152,6 +159,62 @@ export class DiscountService extends BaseService<DiscountService> {
         method: "POST",
       }
     )) as GetAllSellerPricesResponse | null;
+  }
+
+  /**
+   * Check if volume discount is enabled for a company
+   * Usage: DiscountService.checkIsVDEnabledByCompanyId(companyId)
+   * @param companyId - The company ID to check
+   * @returns Promise<CheckVolumeDiscountEnabledResponse>
+   */
+  async checkIsVDEnabledByCompanyId(
+    companyId: number | string
+  ): Promise<CheckVolumeDiscountEnabledResponse> {
+    const endpoint = `/discount/CheckorderDiscount?CompanyId=${companyId}`;
+    return (await this.call(
+      endpoint,
+      {},
+      "POST"
+    )) as CheckVolumeDiscountEnabledResponse;
+  }
+
+  /**
+   * Server-side version that returns null on error
+   * Usage: DiscountService.checkIsVDEnabledByCompanyIdServerSide(companyId)
+   * @param companyId - The company ID to check
+   * @returns Promise<CheckVolumeDiscountEnabledResponse | null>
+   */
+  async checkIsVDEnabledByCompanyIdServerSide(
+    companyId: number | string
+  ): Promise<CheckVolumeDiscountEnabledResponse | null> {
+    const endpoint = `/discount/CheckorderDiscount?CompanyId=${companyId}`;
+    return (await this.callSafe(
+      endpoint,
+      {},
+      "POST"
+    )) as CheckVolumeDiscountEnabledResponse | null;
+  }
+
+  /**
+   * Server-side version with context (for API routes)
+   * Usage: DiscountService.checkIsVDEnabledByCompanyIdWithContext(companyId, context)
+   * @param companyId - The company ID to check
+   * @param context - Request context with accessToken and tenantCode
+   * @returns Promise<CheckVolumeDiscountEnabledResponse | null>
+   */
+  async checkIsVDEnabledByCompanyIdWithContext(
+    companyId: number | string,
+    context: RequestContext
+  ): Promise<CheckVolumeDiscountEnabledResponse | null> {
+    const endpoint = `/discount/CheckorderDiscount?CompanyId=${companyId}`;
+    return (await this.callWithSafe(
+      endpoint,
+      {},
+      {
+        context,
+        method: "POST",
+      }
+    )) as CheckVolumeDiscountEnabledResponse | null;
   }
 }
 export default DiscountService.getInstance();

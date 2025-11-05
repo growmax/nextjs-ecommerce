@@ -37,10 +37,12 @@ import OrderDetailsService from "./services/OrderDetailsService";
 import OrderNameService from "./services/OrderNameService";
 import OrdersService from "./services/OrdersService";
 import OrderStatusService from "./services/OrderStatusService";
+import OrderVersionService from "./services/OrderVersionService";
 import PaymentService from "./services/PaymentService";
 import PreferenceService from "./services/PreferenceService";
 import ProductAssetsService from "./services/ProductAssetsService";
 import QuotesService from "./services/QuotesService";
+import QuoteDetailsService from "./services/QuoteDetailsService";
 import QuoteStatusService from "./services/StatusService";
 import RequestEditService from "./services/RequestEditService";
 import SearchService from "./services/SearchService";
@@ -59,10 +61,12 @@ export {
   OrderNameService,
   OrdersService,
   OrderStatusService,
+  OrderVersionService,
   PaymentService,
   PreferenceService,
   ProductAssetsService,
   QuotesService,
+  QuoteDetailsService,
   QuoteStatusService,
   RequestEditService,
   RequestQueueService,
@@ -145,6 +149,8 @@ export type {
   PaymentDueOrderData,
   PaymentDueResponse,
   PaymentHistoryItem,
+  PaymentTerm,
+  PaymentTermsResponse,
 } from "./services/PaymentService";
 
 export type {
@@ -165,6 +171,7 @@ export type {
 } from "./services/SearchService";
 
 export type {
+  CheckVolumeDiscountEnabledResponse,
   Discount,
   DiscountApiResponse,
   DiscountItem,
@@ -222,6 +229,18 @@ export type {
   QuoteStatusResponse,
 } from "./services/StatusService";
 
+export type {
+  FetchQuotationDetailsParams,
+  QuotationDetailsResponse,
+  QuotationDetailsData,
+  QuotationDetailItem,
+  DbProductDetail,
+  QuoteTerms,
+  AddressDetails,
+  QuoteUser,
+  CurrencySymbol,
+} from "./services/QuoteDetailsService";
+
 // Export token management service types
 export type {
   QueuedRequest,
@@ -258,10 +277,12 @@ export const API = {
   OrderName: OrderNameService,
   Orders: OrdersService,
   OrderStatus: OrderStatusService,
+  OrderVersion: OrderVersionService,
   Payment: PaymentService,
   Preference: PreferenceService,
   ProductAssets: ProductAssetsService,
   Quotes: QuotesService,
+  QuoteDetails: QuoteDetailsService,
   QuoteStatus: QuoteStatusService,
   RequestEdit: RequestEditService,
   Search: SearchService,

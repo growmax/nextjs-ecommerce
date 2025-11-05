@@ -1,4 +1,4 @@
-import { coreCommerceClient } from "../client";
+import { coreCommerceClient, RequestContext } from "../client";
 import { BaseService } from "./BaseService";
 
 // Payment history item interface
@@ -59,6 +59,27 @@ export interface PaymentDueResponse {
   [key: string]: unknown;
 }
 
+// Payment terms item interface
+export interface PaymentTerm {
+  id?: number;
+  paymentTermsId?: number;
+  paymentTerms?: string;
+  paymentTermsCode?: string;
+  description?: string;
+  cashdiscount?: boolean;
+  cashdiscountValue?: number;
+  payOnDelivery?: boolean;
+  bnplEnabled?: boolean;
+  isMandatory?: boolean;
+}
+
+// Payment terms response interface
+export interface PaymentTermsResponse {
+  data?: PaymentTerm[];
+  message?: string | null;
+  status?: string;
+}
+
 export class PaymentService extends BaseService<PaymentService> {
   // Configure default client for payment operations
   protected defaultClient = coreCommerceClient;
@@ -107,6 +128,58 @@ export class PaymentService extends BaseService<PaymentService> {
       {},
       "GET"
     ) as Promise<PaymentDueResponse | null>;
+  }
+
+  /**
+   * Fetch payment terms for a user
+   * Usage: PaymentService.fetchPaymentTerms(userId)
+   * @param userId - The user ID
+   * @returns Promise<PaymentTermsResponse>
+   */
+  async fetchPaymentTerms(
+    userId: number | string
+  ): Promise<PaymentTermsResponse> {
+    const endpoint = `PaymentTerms/fetchPaymentTerms?userId=${userId}&isB2C=false`;
+    return (await this.call(endpoint, {}, "POST")) as PaymentTermsResponse;
+  }
+
+  /**
+   * Server-side version that returns null on error
+   * Usage: PaymentService.fetchPaymentTermsServerSide(userId)
+   * @param userId - The user ID
+   * @returns Promise<PaymentTermsResponse | null>
+   */
+  async fetchPaymentTermsServerSide(
+    userId: number | string
+  ): Promise<PaymentTermsResponse | null> {
+    const endpoint = `PaymentTerms/fetchPaymentTerms?userId=${userId}&isB2C=false`;
+    return (await this.callSafe(
+      endpoint,
+      {},
+      "POST"
+    )) as PaymentTermsResponse | null;
+  }
+
+  /**
+   * Server-side version with context (for API routes)
+   * Usage: PaymentService.fetchPaymentTermsWithContext(userId, context)
+   * @param userId - The user ID
+   * @param context - Request context with accessToken and tenantCode
+   * @returns Promise<PaymentTermsResponse | null>
+   */
+  async fetchPaymentTermsWithContext(
+    userId: number | string,
+    context: RequestContext
+  ): Promise<PaymentTermsResponse | null> {
+    const endpoint = `PaymentTerms/fetchPaymentTerms?userId=${userId}&isB2C=false`;
+    return (await this.callWithSafe(
+      endpoint,
+      {},
+      {
+        context,
+        method: "POST",
+      }
+    )) as PaymentTermsResponse | null;
   }
 }
 

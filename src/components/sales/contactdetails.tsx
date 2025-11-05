@@ -15,8 +15,8 @@ import SellerWarehouseService, {
   type Warehouse,
 } from "@/lib/api/services/SellerWarehouseService";
 import { zoneDateTimeCalculator } from "@/utils/date-format";
-import { Calendar, Pencil } from "lucide-react";
-import { useState } from "react";
+import { Pencil } from "lucide-react";
+import { useMemo, useState } from "react";
 import { toast } from "sonner";
 
 interface AddressDetails {
@@ -108,7 +108,7 @@ const EditableDateRow = ({
   onChange?: ((date: string) => void) | undefined;
 }) => {
   return (
-    <div className="grid grid-cols-2 gap-4 py-1.5">
+    <div className="grid grid-cols-2 gap-4 py-1.5 items-center">
       <div>
         <p className="text-sm font-normal text-gray-900">{label}</p>
       </div>
@@ -117,10 +117,8 @@ const EditableDateRow = ({
           type="date"
           value={value || ""}
           onChange={e => onChange?.(e.target.value)}
-          className="text-sm border-gray-300 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 bg-gray-50"
-          placeholder={label}
+          className="text-sm h-9 border-gray-300 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 bg-gray-50 pr-10"
         />
-        <Calendar className="absolute right-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400 pointer-events-none" />
       </div>
     </div>
   );
@@ -138,7 +136,7 @@ const EditableTextRow = ({
   placeholder?: string | undefined;
 }) => {
   return (
-    <div className="grid grid-cols-2 gap-4 py-1.5">
+    <div className="grid grid-cols-2 gap-4 py-1.5 items-center">
       <div>
         <p className="text-sm font-normal text-gray-900">{label}</p>
       </div>
@@ -147,7 +145,7 @@ const EditableTextRow = ({
           type="text"
           value={value || ""}
           onChange={e => onChange?.(e.target.value)}
-          className="text-sm border-gray-300 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 bg-gray-50"
+          className="text-sm h-9 border-gray-300 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 bg-gray-50"
           placeholder={placeholder || label}
         />
       </div>
@@ -368,6 +366,96 @@ export default function OrderContactDetails({
   const [billingDialogOpen, setBillingDialogOpen] = useState(false);
   const [shippingDialogOpen, setShippingDialogOpen] = useState(false);
 
+  // Memoize current billing address to prevent unnecessary recreations
+  const currentBillingAddress = useMemo(() => {
+    if (!billingAddress) return undefined;
+    return {
+      id: billingAddress.billToCode || "",
+      name: billingAddress.branchName || "",
+      addressId: {
+        addressLine: billingAddress.addressLine || "",
+        billToCode: billingAddress.billToCode || null,
+        branchName: billingAddress.branchName || "",
+        city: billingAddress.city || "",
+        country: billingAddress.country || "",
+        countryCode: "",
+        district: "",
+        email: billingAddress.email || null,
+        gst: billingAddress.gst || "",
+        id: 0,
+        isBilling: true,
+        isCustAddress: false,
+        isShipping: false,
+        lattitude: "",
+        locality: "",
+        locationUrl: null,
+        longitude: "",
+        mobileNo: billingAddress.mobileNo || "",
+        nationalMobileNum: "",
+        phone: billingAddress.phone || "",
+        pinCodeId: billingAddress.pincode || "",
+        primaryContact: "",
+        regAddress: false,
+        shipToCode: null,
+        soldToCode: null,
+        state: billingAddress.state || "",
+        tenantId: 0,
+        vendorID: null,
+        vendorId: null,
+        wareHouse: false,
+      },
+      companyId: {
+        id: 0,
+        name: "",
+      },
+    } as BillingAddress;
+  }, [billingAddress]);
+
+  // Memoize current shipping address to prevent unnecessary recreations
+  const currentShippingAddress = useMemo(() => {
+    if (!shippingAddress) return undefined;
+    return {
+      id: shippingAddress.shipToCode || "",
+      name: shippingAddress.branchName || "",
+      addressId: {
+        addressLine: shippingAddress.addressLine || "",
+        billToCode: null,
+        branchName: shippingAddress.branchName || "",
+        city: shippingAddress.city || "",
+        country: shippingAddress.country || "",
+        countryCode: "",
+        district: "",
+        email: shippingAddress.email || null,
+        gst: shippingAddress.gst || "",
+        id: 0,
+        isBilling: false,
+        isCustAddress: false,
+        isShipping: true,
+        lattitude: "",
+        locality: "",
+        locationUrl: null,
+        longitude: "",
+        mobileNo: shippingAddress.mobileNo || "",
+        nationalMobileNum: "",
+        phone: shippingAddress.phone || "",
+        pinCodeId: shippingAddress.pincode || "",
+        primaryContact: "",
+        regAddress: false,
+        shipToCode: shippingAddress.shipToCode || null,
+        soldToCode: null,
+        state: shippingAddress.state || "",
+        tenantId: 0,
+        vendorID: null,
+        vendorId: null,
+        wareHouse: false,
+      },
+      companyId: {
+        id: 0,
+        name: "",
+      },
+    } as BillingAddress;
+  }, [shippingAddress]);
+
   // Get user preferences for date/time formatting
   const getUserPreferences = () => {
     try {
@@ -417,34 +505,60 @@ export default function OrderContactDetails({
     toast.success("Billing address updated successfully");
 
     // Call APIs to update seller branch and warehouse immediately
-    // Use buyerBranchId from order details (it represents the buyer's branch)
+    // Use the selected address's branch ID
+    // address.id is typically the branch ID (string), but we need to check the actual structure
+    // For billing addresses, the branch ID might be in address.id or we need to extract it from the address
+    // Try to parse address.id as number, or use address.addressId.id as fallback
+    let selectedBranchId: number | undefined = undefined;
+
+    if (address.id) {
+      // address.id is a string, try to parse it as number
+      const parsedId = parseInt(address.id.toString(), 10);
+      if (!isNaN(parsedId)) {
+        selectedBranchId = parsedId;
+      }
+    }
+
+    // If address.id couldn't be parsed, try address.addressId.id
+    if (!selectedBranchId && address.addressId?.id) {
+      selectedBranchId =
+        typeof address.addressId.id === "number"
+          ? address.addressId.id
+          : parseInt(address.addressId.id.toString(), 10);
+    }
+
+    // Fallback to buyerBranchId if we couldn't extract branch ID from address
+    if (!selectedBranchId) {
+      selectedBranchId = buyerBranchId;
+    }
+
     if (
       userId &&
-      buyerBranchId &&
+      selectedBranchId &&
       buyerCompanyId &&
       productIds &&
       productIds.length > 0 &&
       sellerCompanyId
     ) {
-      // Call API immediately in background
+      // Call API immediately in background with the selected address's branch ID
       SellerWarehouseService.getSellerBranchAndWarehouse(
         userId,
         buyerCompanyId.toString(),
         {
           userId: parseInt(userId),
-          buyerBranchId,
+          buyerBranchId: selectedBranchId,
           buyerCompanyId,
           productIds,
           sellerCompanyId,
         }
       )
         .then(({ sellerBranch, warehouse }) => {
-          // Update seller branch immediately (call even if null to clear previous state)
+          // Update seller branch in UI immediately
           if (onSellerBranchChange) {
             onSellerBranchChange(sellerBranch);
           }
 
-          // Update warehouse immediately (call even if null to clear previous state)
+          // Update warehouse in UI immediately
           if (onWarehouseChange) {
             onWarehouseChange(warehouse);
           }
@@ -463,14 +577,12 @@ export default function OrderContactDetails({
         .catch(() => {
           // Show error message
           toast.error("Failed to sync seller branch and warehouse with server");
-          // Still try to update seller branch if it was partially successful
-          // This ensures UI updates even on partial failures
         });
     } else {
       // Debug: Show what's missing
       const missing = [];
       if (!userId) missing.push("userId");
-      if (!buyerBranchId) missing.push("buyerBranchId");
+      if (!selectedBranchId) missing.push("selectedBranchId");
       if (!buyerCompanyId) missing.push("buyerCompanyId");
       if (!productIds || productIds.length === 0) missing.push("productIds");
       if (!sellerCompanyId) missing.push("sellerCompanyId");
@@ -504,6 +616,94 @@ export default function OrderContactDetails({
 
     // Show success message
     toast.success("Shipping address updated successfully");
+
+    // Call APIs to update seller branch and warehouse immediately
+    // Use the selected address's branch ID
+    // address.id is typically the branch ID (string), but we need to check the actual structure
+    // For shipping addresses, the branch ID might be in address.id or we need to extract it from the address
+    // Try to parse address.id as number, or use address.addressId.id as fallback
+    let selectedBranchId: number | undefined = undefined;
+
+    if (address.id) {
+      // address.id is a string, try to parse it as number
+      const parsedId = parseInt(address.id.toString(), 10);
+      if (!isNaN(parsedId)) {
+        selectedBranchId = parsedId;
+      }
+    }
+
+    // If address.id couldn't be parsed, try address.addressId.id
+    if (!selectedBranchId && address.addressId?.id) {
+      selectedBranchId =
+        typeof address.addressId.id === "number"
+          ? address.addressId.id
+          : parseInt(address.addressId.id.toString(), 10);
+    }
+
+    // Fallback to buyerBranchId if we couldn't extract branch ID from address
+    if (!selectedBranchId) {
+      selectedBranchId = buyerBranchId;
+    }
+
+    if (
+      userId &&
+      selectedBranchId &&
+      buyerCompanyId &&
+      productIds &&
+      productIds.length > 0 &&
+      sellerCompanyId
+    ) {
+      // Call API immediately in background with the selected address's branch ID
+      SellerWarehouseService.getSellerBranchAndWarehouse(
+        userId,
+        buyerCompanyId.toString(),
+        {
+          userId: parseInt(userId),
+          buyerBranchId: selectedBranchId,
+          buyerCompanyId,
+          productIds,
+          sellerCompanyId,
+        }
+      )
+        .then(({ sellerBranch, warehouse }) => {
+          // Update seller branch in UI immediately
+          if (onSellerBranchChange) {
+            onSellerBranchChange(sellerBranch);
+          }
+
+          // Update warehouse in UI immediately
+          if (onWarehouseChange) {
+            onWarehouseChange(warehouse);
+          }
+
+          // Show appropriate success message
+          if (sellerBranch && warehouse) {
+            toast.success("Seller branch and warehouse updated successfully");
+          } else if (sellerBranch) {
+            toast.success("Seller branch updated successfully");
+          } else if (warehouse) {
+            toast.success("Warehouse updated successfully");
+          } else {
+            toast.error("No seller branch or warehouse found");
+          }
+        })
+        .catch(() => {
+          // Show error message
+          toast.error("Failed to sync seller branch and warehouse with server");
+        });
+    } else {
+      // Debug: Show what's missing
+      const missing = [];
+      if (!userId) missing.push("userId");
+      if (!selectedBranchId) missing.push("selectedBranchId");
+      if (!buyerCompanyId) missing.push("buyerCompanyId");
+      if (!productIds || productIds.length === 0) missing.push("productIds");
+      if (!sellerCompanyId) missing.push("sellerCompanyId");
+
+      if (process.env.NODE_ENV === "development") {
+        toast.error(`Missing required data: ${missing.join(", ")}`);
+      }
+    }
   };
   return (
     <Card className="shadow-sm h-full">
@@ -606,50 +806,7 @@ export default function OrderContactDetails({
         onOpenChange={setBillingDialogOpen}
         onAddressSelect={handleBillingAddressSelect}
         mode="billing"
-        currentAddress={
-          billingAddress
-            ? ({
-                id: billingAddress.billToCode || "",
-                name: billingAddress.branchName || "",
-                addressId: {
-                  addressLine: billingAddress.addressLine || "",
-                  billToCode: billingAddress.billToCode || null,
-                  branchName: billingAddress.branchName || "",
-                  city: billingAddress.city || "",
-                  country: billingAddress.country || "",
-                  countryCode: "",
-                  district: "",
-                  email: billingAddress.email || null,
-                  gst: billingAddress.gst || "",
-                  id: 0,
-                  isBilling: true,
-                  isCustAddress: false,
-                  isShipping: false,
-                  lattitude: "",
-                  locality: "",
-                  locationUrl: null,
-                  longitude: "",
-                  mobileNo: billingAddress.mobileNo || "",
-                  nationalMobileNum: "",
-                  phone: billingAddress.phone || "",
-                  pinCodeId: billingAddress.pincode || "",
-                  primaryContact: "",
-                  regAddress: false,
-                  shipToCode: null,
-                  soldToCode: null,
-                  state: billingAddress.state || "",
-                  tenantId: 0,
-                  vendorID: null,
-                  vendorId: null,
-                  wareHouse: false,
-                },
-                companyId: {
-                  id: 0,
-                  name: "",
-                },
-              } as BillingAddress)
-            : undefined
-        }
+        currentAddress={currentBillingAddress}
       />
 
       {/* Shipping Address Dialog */}
@@ -658,50 +815,7 @@ export default function OrderContactDetails({
         onOpenChange={setShippingDialogOpen}
         onAddressSelect={handleShippingAddressSelect}
         mode="shipping"
-        currentAddress={
-          shippingAddress
-            ? ({
-                id: shippingAddress.shipToCode || "",
-                name: shippingAddress.branchName || "",
-                addressId: {
-                  addressLine: shippingAddress.addressLine || "",
-                  billToCode: null,
-                  branchName: shippingAddress.branchName || "",
-                  city: shippingAddress.city || "",
-                  country: shippingAddress.country || "",
-                  countryCode: "",
-                  district: "",
-                  email: shippingAddress.email || null,
-                  gst: shippingAddress.gst || "",
-                  id: 0,
-                  isBilling: false,
-                  isCustAddress: false,
-                  isShipping: true,
-                  lattitude: "",
-                  locality: "",
-                  locationUrl: null,
-                  longitude: "",
-                  mobileNo: shippingAddress.mobileNo || "",
-                  nationalMobileNum: "",
-                  phone: shippingAddress.phone || "",
-                  pinCodeId: shippingAddress.pincode || "",
-                  primaryContact: "",
-                  regAddress: false,
-                  shipToCode: shippingAddress.shipToCode || null,
-                  soldToCode: null,
-                  state: shippingAddress.state || "",
-                  tenantId: 0,
-                  vendorID: null,
-                  vendorId: null,
-                  wareHouse: false,
-                },
-                companyId: {
-                  id: 0,
-                  name: "",
-                },
-              } as BillingAddress)
-            : undefined
-        }
+        currentAddress={currentShippingAddress}
       />
     </Card>
   );
