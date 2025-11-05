@@ -1,5 +1,5 @@
-import React from "react";
 import { cn } from "@/lib/utils";
+import React from "react";
 
 type TypographyProps = {
   children: React.ReactNode;
@@ -9,7 +9,10 @@ type TypographyProps = {
 export function Title({ children, className }: TypographyProps) {
   return (
     <h3
-      className={cn("scroll-m-20 text-2xl font-semibold tracking-tight", className)}
+      className={cn(
+        "scroll-m-20 text-2xl font-semibold tracking-tight",
+        className
+      )}
     >
       {children}
     </h3>
@@ -19,7 +22,10 @@ export function Title({ children, className }: TypographyProps) {
 export function Subtitle({ children, className }: TypographyProps) {
   return (
     <h4
-      className={cn("scroll-m-20 text-xl font-semibold tracking-tight", className)}
+      className={cn(
+        "scroll-m-20 text-xl font-semibold tracking-tight",
+        className
+      )}
     >
       {children}
     </h4>
@@ -27,15 +33,13 @@ export function Subtitle({ children, className }: TypographyProps) {
 }
 
 export function Info({ children, className }: TypographyProps) {
-  return (
-    <p className={cn("leading-7 [&:not(:first-child)]:mt-6", className)}>
-      {children}
-    </p>
-  );
+  return <p className={cn("leading-7", className)}>{children}</p>;
 }
 
 export function TypographyLarge({ children, className }: TypographyProps) {
-  return <div className={cn("text-lg font-semibold", className)}>{children}</div>;
+  return (
+    <div className={cn("text-lg font-semibold", className)}>{children}</div>
+  );
 }
 
 export function TypographySmall({ children, className }: TypographyProps) {
