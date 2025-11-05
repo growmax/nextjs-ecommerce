@@ -1,3 +1,4 @@
+import { CenteredLayout } from "@/components/layout/PageContent";
 import { ProductStructuredData } from "@/components/seo/ProductStructuredData";
 import { OpenSearchService, TenantService } from "@/lib/api";
 import { RequestContext } from "@/lib/api/client";
@@ -8,16 +9,25 @@ import { getPrimaryImageUrl } from "@/utils/product/product-formatter";
 import { parseProductSlug } from "@/utils/product/slug-generator";
 import { Metadata } from "next";
 
-export const revalidate = 300; // Revalidate every 5 minutes
+// Configs...
+export const revalidate = 3600;
 
 export const dynamicParams = true;
 
-const getProductCached = async (
+// Data Methods...
+async function getContext() {
+  const { domainUrl, origin } = getDomainInfo();
+  const tenantData = await TenantService.getTenantDataCached(domainUrl, origin);
+  return { tenantData, origin };
+}
+
+async function fetchProduct(
   productId: string,
-  elasticIndex: string,
-  origin: string,
-  tenantCode: string
-) => {
+  elasticCode: string,
+  tenantCode: string,
+  origin: string
+): Promise<ProductDetail | null> {
+  const elasticIndex = `${elasticCode}pgandproducts`;
   const context: RequestContext = { origin, tenantCode };
   return await OpenSearchService.getProductCached(
     productId,
@@ -26,16 +36,13 @@ const getProductCached = async (
     "get",
     context
   );
-};
+}
+
+// Next js Methods...
 
 export async function generateStaticParams() {
   try {
-    const { domainUrl, origin } = getDomainInfo();
-
-    const tenantData = await TenantService.getTenantDataCached(
-      domainUrl,
-      origin
-    );
+    const { tenantData } = await getContext();
 
     if (!tenantData?.data?.tenant?.elasticCode) {
       return [];
@@ -77,7 +84,6 @@ export async function generateStaticParams() {
     // Return empty array for now - on-demand generation only
     return [];
   } catch (_error) {
-    // Silently fail - ISR will generate pages on-demand
     return [];
   }
 }
@@ -86,13 +92,9 @@ export async function generateMetadata({
   params,
 }: ProductPageProps): Promise<Metadata> {
   const { slug, locale } = await params;
-  const { domainUrl, origin } = getDomainInfo();
+  const { tenantData, origin } = await getContext();
 
   try {
-    const tenantData = await TenantService.getTenantDataCached(
-      domainUrl,
-      origin
-    );
     if (!tenantData?.data?.tenant?.elasticCode) {
       return {
         title: "Product Not Found",
@@ -110,12 +112,11 @@ export async function generateMetadata({
       };
     }
 
-    const elasticIndex = `${elasticCode}pgandproducts`;
-    const product = await getProductData(
+    const product = await fetchProduct(
       productId,
-      elasticIndex,
-      origin,
-      tenantCode
+      elasticCode,
+      tenantCode,
+      origin
     );
 
     if (!product) {
@@ -142,7 +143,9 @@ export async function generateMetadata({
         brandName,
         product.hsn_code,
         product.product_index_name,
-        ...(product.product_categories?.map(cat => cat.categoryName) || []),
+        ...(product.product_categories?.map(
+          (cat: { categoryName: string }) => cat.categoryName
+        ) || []),
       ]
         .filter(Boolean)
         .join(", "),
@@ -197,26 +200,22 @@ export async function generateMetadata({
 }
 
 export default async function ProductPage({ params }: ProductPageProps) {
-  const { slug, locale } = await params;
-  const { domainUrl, origin } = getDomainInfo();
+  const { slug, locale } = params;
+  const { tenantData, origin } = await getContext();
+  if (!tenantData?.data?.tenant?.elasticCode) {
+    return (
+      <div className="container mx-auto px-4 py-16 text-center">
+        <h1 className="text-3xl font-bold text-destructive mb-4">
+          Tenant Configuration Error
+        </h1>
+        <p className="text-muted-foreground">
+          Unable to load store configuration. Please contact support.
+        </p>
+      </div>
+    );
+  }
 
   try {
-    const tenantData = await TenantService.getTenantDataCached(
-      domainUrl,
-      origin
-    );
-    if (!tenantData?.data?.tenant?.elasticCode) {
-      return (
-        <div className="container mx-auto px-4 py-16 text-center">
-          <h1 className="text-3xl font-bold text-destructive mb-4">
-            Tenant Configuration Error
-          </h1>
-          <p className="text-muted-foreground">
-            Unable to load store configuration. Please contact support.
-          </p>
-        </div>
-      );
-    }
     const { elasticCode, tenantCode } = tenantData.data.tenant;
     const productId = parseProductSlug(slug);
     if (!productId) {
@@ -231,12 +230,11 @@ export default async function ProductPage({ params }: ProductPageProps) {
         </div>
       );
     }
-    const elasticIndex = `${elasticCode}pgandproducts`;
-    const productData = await getProductCached(
+    const productData = await fetchProduct(
       productId,
-      elasticIndex,
-      origin,
-      tenantCode
+      elasticCode,
+      tenantCode,
+      origin
     );
 
     if (!productData) {
@@ -252,25 +250,8 @@ export default async function ProductPage({ params }: ProductPageProps) {
           url={productUrl}
           locale={locale}
         />
+        <CenteredLayout>{" In the UI Product Page..."}</CenteredLayout>
       </>
     );
-  } catch (error) {
-    /* eslint-disable no-console */
-    console.error("Product page error:", error);
-    /* eslint-enable no-console */
-
-    return (
-      <div className="container mx-auto px-4 py-16 text-center">
-        <h1 className="text-3xl font-bold text-destructive mb-4">
-          Unexpected Error
-        </h1>
-        <p className="text-muted-foreground mb-4">
-          We encountered an error while loading this product.
-        </p>
-        <p className="text-sm text-muted-foreground">
-          {error instanceof Error ? error.message : "Unknown error occurred"}
-        </p>
-      </div>
-    );
-  }
+  } catch {}
 }

@@ -105,10 +105,8 @@ export class TenantService extends BaseService<TenantService> {
 
     try {
       const { withRedisCache } = await import("@/lib/cache");
-      return withRedisCache(
-        `tenant:${domainUrl}`,
-        () => this.getTenantDataServerSide(domainUrl, origin),
-        3600
+      return withRedisCache(`tenant:${domainUrl}`, () =>
+        this.getTenantDataServerSide(domainUrl, origin)
       );
     } catch (error) {
       return this.getTenantDataServerSide(domainUrl, origin);

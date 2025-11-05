@@ -1,5 +1,4 @@
 import { AppSidebar } from "@/components/app-sidebar";
-import { ConditionalFooter } from "@/components/ConditionalFooter";
 import { CartProviderWrapper } from "@/components/providers/CartProviderWrapper";
 import { SiteHeader } from "@/components/site-header";
 import { TenantDataProvider } from "@/components/TenantDataProvider";
@@ -67,7 +66,7 @@ export default async function AppLayout({
           <CartProviderWrapper>
             <TenantDataProvider>
               <div className="[--header-height:calc(theme(spacing.14))]">
-                <SidebarProvider className="flex flex-col">
+                <SidebarProvider defaultOpen={false} className="flex flex-col">
                   <SiteHeader />
                   <div className="flex flex-1">
                     <AppSidebar />
@@ -75,7 +74,6 @@ export default async function AppLayout({
                       <main className="overflow-x-hidden [&_.landing-page]:!pt-0 [&_.landing-page]:!pb-0 [&_.landing-page]:!min-h-0">
                         {children}
                       </main>
-                      <ConditionalFooter />
                     </SidebarInset>
                   </div>
                 </SidebarProvider>

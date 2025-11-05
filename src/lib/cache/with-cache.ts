@@ -108,7 +108,9 @@ export async function invalidateCachePattern(pattern: string): Promise<number> {
 
     if (process.env.NODE_ENV === "development") {
       /* eslint-disable no-console */
-      console.log(`[Redis Cache] INVALIDATED PATTERN: ${pattern} (${result} keys)`);
+      console.log(
+        `[Redis Cache] INVALIDATED PATTERN: ${pattern} (${result} keys)`
+      );
       /* eslint-enable no-console */
     }
 
@@ -125,4 +127,3 @@ export async function invalidateCachePattern(pattern: string): Promise<number> {
     return 0;
   }
 }
-

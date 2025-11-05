@@ -89,17 +89,14 @@ export class OpenSearchService extends BaseService<OpenSearchService> {
 
     try {
       const { withRedisCache } = await import("@/lib/cache");
-      return withRedisCache(
-        key,
-        () =>
-          this.getProductServerSide(
-            identifier,
-            elasticIndex,
-            elasticType,
-            queryType,
-            context
-          ),
-        300 // 5 minutes
+      return withRedisCache(key, () =>
+        this.getProductServerSide(
+          identifier,
+          elasticIndex,
+          elasticType,
+          queryType,
+          context
+        )
       );
     } catch (error) {
       return this.getProductServerSide(
