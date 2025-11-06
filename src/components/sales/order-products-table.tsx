@@ -13,6 +13,10 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import useProductAssets from "@/hooks/useProductAssets";
+import { cn } from "@/lib/utils";
+import { Download } from "lucide-react";
+import { useState } from "react";
+import PricingFormat from "../PricingFormat";
 import type { ProductSearchResult } from "./ProductSearchInput";
 import ProductSearchInput from "./ProductSearchInput";
 
