@@ -1,5 +1,6 @@
 // Export main components
 export { default as OrderContactDetails } from "./contactdetails";
+export { default as CustomerInfoCard } from "./customer-info-card";
 export { default as FilterDrawer } from "./FilterDrawer";
 export { default as OrderPriceDetails } from "./order-price-details";
 export { default as OrderProductsTable } from "./order-products-table";

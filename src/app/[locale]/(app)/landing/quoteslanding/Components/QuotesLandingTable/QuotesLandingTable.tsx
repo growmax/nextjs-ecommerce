@@ -48,9 +48,9 @@ function QuotesLandingTable({
   const [filterData, setFilterData] = useState<QuoteFilterFormData | null>(
     null
   );
-  const [initialFilterData] = useState<
-    QuoteFilterFormData | undefined
-  >(undefined);
+  const [initialFilterData] = useState<QuoteFilterFormData | undefined>(
+    undefined
+  );
   const [filterPreferences, setFilterPreferences] =
     useState<FilterPreferenceResponse | null>(null);
   const [isAddDrawerOpen, setIsAddDrawerOpen] = useState(false);
@@ -229,7 +229,6 @@ function QuotesLandingTable({
     },
     [pagination]
   );
-
 
   // Load filter preferences
   const loadFilterPreferences = useCallback(async () => {
@@ -648,7 +647,6 @@ function QuotesLandingTable({
 
   const handleDrawerClose = () => setIsDrawerOpen(false);
 
-
   const handleAddDrawerClose = () => setIsAddDrawerOpen(false);
 
   const handleQuoteFilterSubmit = (data: QuoteFilterFormData) => {
@@ -727,7 +725,8 @@ function QuotesLandingTable({
           isLoading={loading}
           onRowClick={row => {
             const quoteId = row.original.quotationIdentifier;
-            if (quoteId) router.push(`/${locale}/quotes/${quoteId}`);
+            if (quoteId)
+              router.push(`/${locale}/details/quoteDetails/${quoteId}`);
           }}
           pageSizeOptions={[20, 50, 100]}
           showPagination={true}

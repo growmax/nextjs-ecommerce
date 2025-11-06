@@ -521,10 +521,11 @@ export default function OrderContactDetails({
 
     // If address.id couldn't be parsed, try address.addressId.id
     if (!selectedBranchId && address.addressId?.id) {
+      const addressIdValue = address.addressId.id;
       selectedBranchId =
-        typeof address.addressId.id === "number"
-          ? address.addressId.id
-          : parseInt(address.addressId.id.toString(), 10);
+        typeof addressIdValue === "number"
+          ? addressIdValue
+          : parseInt(String(addressIdValue), 10);
     }
 
     // Fallback to buyerBranchId if we couldn't extract branch ID from address
@@ -634,10 +635,11 @@ export default function OrderContactDetails({
 
     // If address.id couldn't be parsed, try address.addressId.id
     if (!selectedBranchId && address.addressId?.id) {
+      const addressIdValue = address.addressId.id;
       selectedBranchId =
-        typeof address.addressId.id === "number"
-          ? address.addressId.id
-          : parseInt(address.addressId.id.toString(), 10);
+        typeof addressIdValue === "number"
+          ? addressIdValue
+          : parseInt(String(addressIdValue), 10);
     }
 
     // Fallback to buyerBranchId if we couldn't extract branch ID from address
@@ -713,7 +715,7 @@ export default function OrderContactDetails({
         </CardTitle>
       </CardHeader>
       <Separator />
-      <CardContent className="px-6 ">
+      <CardContent className="px-6 pt-2 pb-0">
         <div className="divide-y divide-gray-100">
           {/* Company */}
           <DetailRow label="Company" value={sellerAddress?.sellerCompanyName} />

@@ -85,6 +85,7 @@ export default function OrderTermsCard({ orderTerms }: OrderTermsCardProps) {
           <TermRow
             label="Delivery Place"
             value={orderTerms.deliveryTermsCode2}
+            showEmpty={true}
           />
 
           {/* Payment Terms */}
@@ -95,6 +96,7 @@ export default function OrderTermsCard({ orderTerms }: OrderTermsCardProps) {
                 ? `${orderTerms.paymentTerms} - (${orderTerms.paymentTermsCode})`
                 : orderTerms.paymentTerms
             }
+            showEmpty={true}
           />
 
           {/* Packing & Forwarding */}
@@ -105,6 +107,7 @@ export default function OrderTermsCard({ orderTerms }: OrderTermsCardProps) {
                 ? `${orderTerms.packageForwarding} - (${orderTerms.packageForwardingCode})`
                 : orderTerms.packageForwarding
             }
+            showEmpty={true}
           />
 
           {/* Mode of Dispatch */}
@@ -116,13 +119,22 @@ export default function OrderTermsCard({ orderTerms }: OrderTermsCardProps) {
                 ? `${orderTerms.dispatchInstructions} - (${orderTerms.dispatchInstructionsCode})`
                 : orderTerms.dispatchInstructions
             }
+            showEmpty={true}
           />
 
           {/* Freight */}
-          <TermRow label="Freight" value={orderTerms.freight} />
+          <TermRow
+            label="Freight"
+            value={orderTerms.freight}
+            showEmpty={true}
+          />
 
           {/* Insurance */}
-          <TermRow label="Insurance" value={orderTerms.insurance} />
+          <TermRow
+            label="Insurance"
+            value={orderTerms.insurance}
+            showEmpty={true}
+          />
 
           {/* Additional Terms */}
           <TermRow

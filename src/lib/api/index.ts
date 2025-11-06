@@ -41,11 +41,12 @@ import OrderVersionService from "./services/OrderVersionService";
 import PaymentService from "./services/PaymentService";
 import PreferenceService from "./services/PreferenceService";
 import ProductAssetsService from "./services/ProductAssetsService";
+import QuotationDetailsService from "./services/QuotationDetailsService";
 import QuotesService from "./services/QuotesService";
-import QuoteDetailsService from "./services/QuoteDetailsService";
-import QuoteStatusService from "./services/StatusService";
+
 import RequestEditService from "./services/RequestEditService";
 import SearchService from "./services/SearchService";
+import QuoteStatusService from "./services/StatusService";
 
 // Export services
 export {
@@ -65,8 +66,8 @@ export {
   PaymentService,
   PreferenceService,
   ProductAssetsService,
+  QuotationDetailsService,
   QuotesService,
-  QuoteDetailsService,
   QuoteStatusService,
   RequestEditService,
   RequestQueueService,
@@ -224,22 +225,18 @@ export type {
 } from "./services/QuotesService";
 
 export type {
+  FetchQuotationDetailsRequest,
+  QuotationData,
+  QuotationDetail,
+  QuotationDetailsResponse,
+  QuotationProductDetail,
+} from "./services/QuotationDetailsService";
+
+export type {
   QuoteStatusApiResponse,
   QuoteStatusParams,
   QuoteStatusResponse,
 } from "./services/StatusService";
-
-export type {
-  FetchQuotationDetailsParams,
-  QuotationDetailsResponse,
-  QuotationDetailsData,
-  QuotationDetailItem,
-  DbProductDetail,
-  QuoteTerms,
-  AddressDetails,
-  QuoteUser,
-  CurrencySymbol,
-} from "./services/QuoteDetailsService";
 
 // Export token management service types
 export type {
@@ -282,7 +279,6 @@ export const API = {
   Preference: PreferenceService,
   ProductAssets: ProductAssetsService,
   Quotes: QuotesService,
-  QuoteDetails: QuoteDetailsService,
   QuoteStatus: QuoteStatusService,
   RequestEdit: RequestEditService,
   Search: SearchService,

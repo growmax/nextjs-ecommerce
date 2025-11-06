@@ -49,11 +49,9 @@ export default async function AppLayout({
 
   // Fetch user data server-side only if authenticated
   let userData = null;
-  console.log(isAuthenticated, "isAuthenticated");
   if (isAuthenticated) {
     try {
       userData = await ServerUserService.fetchUserDataServerSide();
-      console.log(userData, "userData");
     } catch {
       userData = null;
     }
@@ -68,13 +66,13 @@ export default async function AppLayout({
         >
           <CartProviderWrapper>
             <TenantDataProvider>
-              <div className="[--header-height:calc(theme(spacing.14))]">
+              <div className="[--header-height:calc(--spacing(14))]">
                 <SidebarProvider className="flex flex-col">
                   <SiteHeader />
                   <div className="flex flex-1">
                     <AppSidebar />
                     <SidebarInset className="overflow-x-hidden">
-                      <main className="overflow-x-hidden [&_.landing-page]:!pt-0 [&_.landing-page]:!pb-0 [&_.landing-page]:!min-h-0">
+                      <main className="overflow-x-hidden [&_.landing-page]:pt-0! [&_.landing-page]:pb-0! [&_.landing-page]:min-h-0!">
                         {children}
                       </main>
                       <ConditionalFooter />
