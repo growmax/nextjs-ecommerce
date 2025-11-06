@@ -60,7 +60,6 @@ export interface OrderProductsTableProps {
 }
 
 //
-
 export default function OrderProductsTable({
   products = [],
   totalCount = 0,
