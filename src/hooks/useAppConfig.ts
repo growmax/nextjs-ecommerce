@@ -29,7 +29,7 @@ async function getTokenForRequest(): Promise<string | null> {
     const authToken = await ServerAuth.getAccessToken();
     if (authToken) return authToken;
 
-    // Fall back to anonymous token from cookie (set by middleware)
+    // Fall back to anonymous token from cookie (set by client-side API route)
     const cookieStore = await cookies();
     return cookieStore.get("anonymous_token")?.value || null;
   }

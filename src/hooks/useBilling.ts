@@ -1,6 +1,6 @@
 import CartServices from "@/lib/api/CartServices";
+import { useQuery } from "@tanstack/react-query";
 import { useMemo } from "react";
-import useSWR from "swr";
 
 interface UserData {
   userId?: number;
@@ -11,21 +11,19 @@ export default function useBilling(userData: UserData | null = null) {
   const userId = userData?.userId;
   const companyId = userData?.companyId;
 
-  const fetcher = () => {
-    if (!userId || !companyId) {
-      return Promise.reject(new Error("Missing userId or companyId"));
-    }
-    return CartServices.geBilling({ userId, companyId });
-  };
-
-  const { data, error } = useSWR(
-    userId && companyId ? [userId, "Billing", companyId] : null,
-    fetcher,
-    {
-      revalidateOnFocus: false,
-      dedupingInterval: 30000, // Cache for 30 seconds
-    }
-  );
+  const { data, error, isLoading } = useQuery({
+    queryKey: [userId, "Billing", companyId],
+    queryFn: async () => {
+      if (!userId || !companyId) {
+        throw new Error("Missing userId or companyId");
+      }
+      return CartServices.geBilling({ userId, companyId });
+    },
+    enabled: !!(userId && companyId),
+    staleTime: 5 * 60 * 1000, // 5 minutes - billing addresses don't change often
+    gcTime: 10 * 60 * 1000, // 10 minutes
+    refetchOnWindowFocus: false, // was revalidateOnFocus: false
+  });
 
   const formatAddress = useMemo(() => {
     const billingData = (data as { data?: unknown[] })?.data;
@@ -38,7 +36,7 @@ export default function useBilling(userData: UserData | null = null) {
 
   return {
     billingDatas: formatAddress,
-    loading: !error && !data,
+    loading: isLoading,
     error,
     formatAddress,
   };

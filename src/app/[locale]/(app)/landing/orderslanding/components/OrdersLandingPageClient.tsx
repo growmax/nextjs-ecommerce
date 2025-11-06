@@ -35,7 +35,7 @@ export default function OrdersLandingPageClient() {
           condition: true,
           value: "Export",
           handleClick: handleExport,
-          startIcon: <Download className="h-4 w-4" />,
+          startIcon: <Download />,
         }}
         refresh={{
           condition: true,

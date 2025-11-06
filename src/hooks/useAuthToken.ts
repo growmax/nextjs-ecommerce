@@ -2,10 +2,10 @@
 
 import { useState, useCallback } from "react";
 import { AuthStorage } from "@/lib/auth";
-import { useAuth } from "@/contexts/AuthContext";
+import { useUserDetails } from "@/contexts/UserDetailsContext";
 
 export function useAuthToken() {
-  const { logout } = useAuth();
+  const { logout } = useUserDetails();
   const [isRefreshing, setIsRefreshing] = useState(false);
 
   const getValidToken = useCallback(async (): Promise<string | null> => {

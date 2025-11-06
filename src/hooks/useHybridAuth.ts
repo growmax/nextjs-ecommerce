@@ -1,6 +1,6 @@
 "use client";
 
-import { useAuth } from "@/contexts/AuthContext";
+import { useUserDetails } from "@/contexts/UserDetailsContext";
 import { ServerUser } from "@/lib/auth-server";
 import { useEffect, useState } from "react";
 import { useGlobalLoader } from "@/hooks/useGlobalLoader";
@@ -19,7 +19,7 @@ export function useHybridAuth(
   initialAuth?: boolean,
   initialUser?: ServerUser | null
 ) {
-  const clientAuth = useAuth();
+  const clientAuth = useUserDetails();
   const [isHydrated, setIsHydrated] = useState(false);
 
   // Track hydration status

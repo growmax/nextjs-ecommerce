@@ -1,6 +1,6 @@
 import CartServices from "@/lib/api/CartServices";
+import { useQuery } from "@tanstack/react-query";
 import find from "lodash/find";
-import useSWR from "swr";
 
 interface UserData {
   userId?: number;
@@ -16,17 +16,22 @@ export default function useModuleSettings(userData: UserData | null = null) {
   const userId = userData?.userId;
   const companyId = userData?.companyId;
 
-  const fetcher = () => {
-    if (!userId || !companyId) {
-      return Promise.reject(new Error("Missing userId or companyId"));
-    }
-    return CartServices.getModule({ userId, companyId });
-  };
-
-  const { data, error } = useSWR(
-    userId && companyId ? [userId, "ModuleSettings", companyId] : null,
-    () => fetcher() as Promise<ModuleData>
-  );
+  const { data, error } = useQuery<ModuleData>({
+    queryKey: [userId, "ModuleSettings", companyId],
+    queryFn: async (): Promise<ModuleData> => {
+      if (!userId || !companyId) {
+        throw new Error("Missing userId or companyId");
+      }
+      return CartServices.getModule({
+        userId,
+        companyId,
+      }) as Promise<ModuleData>;
+    },
+    enabled: !!(userId && companyId),
+    staleTime: 30 * 60 * 1000, // 30 minutes - settings rarely change
+    gcTime: 60 * 60 * 1000, // 1 hour - keep in cache longer
+    refetchOnWindowFocus: false,
+  });
 
   let quoteSettings;
   let orderSettings;

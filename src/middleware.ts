@@ -1,5 +1,4 @@
 import { locales } from "@/i18n/config";
-import AuthService from "@/lib/api/services/AuthService";
 import { getDomain } from "@/lib/domain";
 import createIntlMiddleware from "next-intl/middleware";
 import { NextRequest, NextResponse } from "next/server";
@@ -45,23 +44,37 @@ export async function middleware(request: NextRequest) {
   const pathname = request.nextUrl.pathname;
   const isAuthenticated = hasAccessToken(request);
 
-  // Authentication-based redirects
-  if (isProtectedRoute(pathname) && !isAuthenticated) {
-    // Redirect unauthenticated users to login
-    const loginUrl = new URL("/login", request.url);
-    loginUrl.searchParams.set("callbackUrl", pathname);
+  // Handle internationalization FIRST to ensure locale is in the pathname
+  const intlResponse = intlMiddleware(request);
+  const response = intlResponse || NextResponse.next();
+
+  // Get the pathname after intl middleware processing (with locale prefix)
+  const finalPathname = response.headers.get("x-middleware-rewrite")
+    ? new URL(response.headers.get("x-middleware-rewrite") || request.url)
+        .pathname
+    : pathname;
+
+  // Authentication-based redirects (check after locale is added)
+  if (isProtectedRoute(finalPathname) && !isAuthenticated) {
+    // Extract locale from pathname or use default
+    const localeMatch = finalPathname.match(/^\/([a-z]{2}(-[A-Z]{2})?)/);
+    const locale = localeMatch ? localeMatch[1] : "en";
+
+    // Redirect unauthenticated users to login with proper locale
+    const loginUrl = new URL(`/${locale}/login`, request.url);
+    loginUrl.searchParams.set("callbackUrl", finalPathname);
     return NextResponse.redirect(loginUrl);
   }
 
-  if (isAuthRoute(pathname) && isAuthenticated) {
+  if (isAuthRoute(finalPathname) && isAuthenticated) {
+    // Extract locale from pathname or use default
+    const localeMatch = finalPathname.match(/^\/([a-z]{2}(-[A-Z]{2})?)/);
+    const locale = localeMatch ? localeMatch[1] : "en";
+
     // Redirect authenticated users away from auth pages
-    const dashboardUrl = new URL("/dashboard", request.url);
+    const dashboardUrl = new URL(`/${locale}/dashboard`, request.url);
     return NextResponse.redirect(dashboardUrl);
   }
-
-  // Handle internationalization
-  const intlResponse = intlMiddleware(request);
-  const response = intlResponse || NextResponse.next();
 
   // Add pathname to headers for server-side layout decisions
   response.headers.set("x-pathname", pathname);
@@ -80,39 +93,9 @@ export async function middleware(request: NextRequest) {
       : request.nextUrl.origin;
   response.headers.set("x-tenant-origin", tenantOrigin);
 
-  // Check if anonymous token cookie exists
-  const existingToken = request.cookies.get("anonymous_token");
-
-  // Only call API if cookie is missing, user is not authenticated, and not on static routes
-  const shouldFetchAnonymousToken =
-    !existingToken &&
-    !isAuthenticated &&
-    !pathname.startsWith("/_next") &&
-    !pathname.startsWith("/api") &&
-    !pathname.includes(".");
-
-  if (shouldFetchAnonymousToken) {
-    try {
-      // Add timeout to prevent middleware from blocking too long
-      const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 2000); // 2 second timeout
-
-      const tokenResponse = await AuthService.getAnonymousToken(domain);
-
-      clearTimeout(timeoutId);
-
-      response.cookies.set("anonymous_token", tokenResponse.accessToken, {
-        httpOnly: true,
-        secure: process.env.NODE_ENV === "production",
-        sameSite: "lax",
-        path: "/",
-        maxAge: 7 * 24 * 60 * 60, // 7 days
-      });
-    } catch {
-      // Log error but don't block the request
-      // Continue without token
-    }
-  }
+  // Anonymous token is now handled client-side via /api/auth/anonymous route
+  // This prevents blocking middleware requests and improves initial page load performance
+  // The token will be fetched asynchronously on the client side when needed
 
   return response;
 }

@@ -6,7 +6,15 @@ import {
   HoverCardContent,
   HoverCardTrigger,
 } from "@/components/ui/hover-card";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
 import { cn } from "@/lib/utils";
+import { zoneDateTimeCalculator } from "@/utils/date-format";
+import { Info } from "lucide-react";
+import PricingFormat from "../PricingFormat";
 
 export interface OrderStatusStep {
   key: string;
@@ -25,7 +33,18 @@ export interface OrderStatusTrackerProps {
   toPay?: number;
   lastDateToPay?: string;
   currencySymbol?: string;
+  paymentHistory?: PaymentHistoryItem[];
 }
+
+type PaymentHistoryItem = {
+  amountReceived: number;
+  gatewayName?: string | null;
+  invoiceIdentifier?: string | null;
+  orderIdentifier?: string | null;
+  paymentDate?: string | null;
+  paymentMode?: string | null;
+  referenceNumber?: string | null;
+};
 
 // Define the order status flow
 const ORDER_STATUS_STEPS: OrderStatusStep[] = [
@@ -63,60 +82,43 @@ export default function OrderStatusTracker({
   paid,
   toPay,
   lastDateToPay,
-  currencySymbol = "INR ₹",
+  currencySymbol: _currencySymbol = "INR ₹",
+  paymentHistory,
 }: OrderStatusTrackerProps) {
   // Get the current step order from the status
   const currentStepOrder = currentStatus
     ? STATUS_ORDER_MAP[currentStatus.toUpperCase()] || 0
     : 0;
 
-  // Format date to match the image format (DD/MM/YYYY HH:MM AM/PM)
-  const formatDate = (dateString?: string) => {
-    if (!dateString) return "";
+  // Compute toPay dynamically when total and paid are provided
+  const computedToPay =
+    total !== undefined && paid !== undefined
+      ? Math.max((total || 0) - (paid || 0), 0)
+      : toPay;
 
+  // Get user preferences for date/time formatting
+  const getUserPreferences = () => {
     try {
-      const date = new Date(dateString);
-
-      // Get date parts
-      const day = String(date.getDate()).padStart(2, "0");
-      const month = String(date.getMonth() + 1).padStart(2, "0");
-      const year = date.getFullYear();
-
-      // Get time parts
-      let hours = date.getHours();
-      const minutes = String(date.getMinutes()).padStart(2, "0");
-      const ampm = hours >= 12 ? "PM" : "AM";
-      hours = hours % 12 || 12; // Convert to 12-hour format
-      const hoursStr = String(hours).padStart(2, "0");
-
-      return `${day}/${month}/${year} ${hoursStr}:${minutes} ${ampm}`;
+      const savedPrefs = localStorage.getItem("userPreferences");
+      if (savedPrefs) {
+        const prefs = JSON.parse(savedPrefs);
+        return {
+          timeZone: prefs.timeZone || "Asia/Kolkata",
+          dateFormat: prefs.dateFormat || "dd/MM/yyyy",
+          timeFormat: prefs.timeFormat || "hh:mm a",
+        };
+      }
     } catch {
-      return dateString;
+      // Fallback to defaults
     }
+    return {
+      timeZone: "Asia/Kolkata",
+      dateFormat: "dd/MM/yyyy",
+      timeFormat: "hh:mm a",
+    };
   };
 
-  // Format currency value
-  const formatCurrency = (value?: number) => {
-    if (value === undefined || value === null) return "0.00";
-    return value.toLocaleString("en-IN", {
-      minimumFractionDigits: 2,
-      maximumFractionDigits: 2,
-    });
-  };
-
-  // Format due date
-  const formatDueDate = (dateString?: string) => {
-    if (!dateString) return "No due";
-    try {
-      const date = new Date(dateString);
-      const day = String(date.getDate()).padStart(2, "0");
-      const month = String(date.getMonth() + 1).padStart(2, "0");
-      const year = date.getFullYear();
-      return `${day}/${month}/${year}`;
-    } catch {
-      return "No due";
-    }
-  };
+  const preferences = getUserPreferences();
 
   return (
     <Card className={cn("p-4 sm:p-6 mt-[50px]", className)}>
@@ -129,7 +131,13 @@ export default function OrderStatusTracker({
             )}
             {createdDate && (
               <p className="text-xs text-gray-600 mt-1">
-                {formatDate(createdDate)}
+                {zoneDateTimeCalculator(
+                  createdDate,
+                  preferences.timeZone,
+                  preferences.dateFormat,
+                  preferences.timeFormat,
+                  true
+                ) || ""}
               </p>
             )}
           </div>
@@ -142,23 +150,92 @@ export default function OrderStatusTracker({
               <div className="flex flex-col">
                 <span className="text-gray-600 font-medium">TOTAL:</span>
                 <span className="text-gray-900 font-semibold">
-                  {currencySymbol} {formatCurrency(total)}
+                  <PricingFormat value={total} />
                 </span>
               </div>
             )}
             {paid !== undefined && (
               <div className="flex flex-col">
-                <span className="text-gray-600 font-medium">PAID:</span>
+                <span className="text-gray-600 font-medium inline-flex items-center gap-1">
+                  PAID:
+                  <Popover>
+                    <PopoverTrigger asChild>
+                      <Info
+                        className="h-3.5 w-3.5 text-gray-400 cursor-pointer"
+                        aria-hidden="true"
+                      />
+                    </PopoverTrigger>
+                    <PopoverContent className="w-[360px] p-4">
+                      <div className="text-base font-semibold mb-2">
+                        Payment Details
+                      </div>
+                      {Array.isArray(paymentHistory) &&
+                      paymentHistory.length > 0 ? (
+                        <div className="space-y-3 max-h-56 overflow-auto pr-1">
+                          {paymentHistory.map(
+                            (p: PaymentHistoryItem, idx: number) => (
+                              <div
+                                key={idx}
+                                className="grid grid-cols-[140px_1fr] gap-x-3 text-sm"
+                              >
+                                <div className="text-gray-600">Amount:</div>
+                                <div className="text-gray-900 font-medium">
+                                  <PricingFormat
+                                    value={p.amountReceived || 0}
+                                  />
+                                </div>
+
+                                <div className="text-gray-600">Gateway:</div>
+                                <div className="text-gray-900">
+                                  {p.gatewayName || "-"}
+                                </div>
+
+                                <div className="text-gray-600">Method:</div>
+                                <div className="text-gray-900">
+                                  {p.paymentMode || "-"}
+                                </div>
+
+                                <div className="text-gray-600">Date:</div>
+                                <div className="text-gray-900">
+                                  {p.paymentDate
+                                    ? zoneDateTimeCalculator(
+                                        p.paymentDate,
+                                        preferences.timeZone,
+                                        preferences.dateFormat,
+                                        preferences.timeFormat,
+                                        true
+                                      ) || "-"
+                                    : "-"}
+                                </div>
+
+                                <div className="text-gray-600">
+                                  Reference Id:
+                                </div>
+                                <div className="text-gray-900 break-all">
+                                  {p.referenceNumber || "-"}
+                                </div>
+                              </div>
+                            )
+                          )}
+                        </div>
+                      ) : (
+                        <div className="text-sm text-gray-600">
+                          No payments yet
+                        </div>
+                      )}
+                    </PopoverContent>
+                  </Popover>
+                </span>
                 <span className="text-gray-900 font-semibold">
-                  {currencySymbol} {formatCurrency(paid)}
+                  <PricingFormat value={paid} />
                 </span>
               </div>
             )}
-            {toPay !== undefined && (
+            {computedToPay !== undefined && (
               <div className="flex flex-col">
                 <span className="text-gray-600 font-medium">TO PAY:</span>
                 <span className="text-red-600 font-semibold">
-                  {currencySymbol} {formatCurrency(toPay)}
+                  <PricingFormat value={computedToPay || 0} />
                 </span>
               </div>
             )}
@@ -167,7 +244,19 @@ export default function OrderStatusTracker({
                 LAST DATE TO PAY:
               </span>
               <span className="text-red-600 font-semibold">
-                {formatDueDate(lastDateToPay)}
+                {lastDateToPay
+                  ? // Check if the string is already formatted (contains "Overdue" or starts with "-")
+                    lastDateToPay.startsWith("Overdue") ||
+                    lastDateToPay.startsWith("-")
+                    ? lastDateToPay
+                    : zoneDateTimeCalculator(
+                        lastDateToPay,
+                        preferences.timeZone,
+                        preferences.dateFormat,
+                        preferences.timeFormat,
+                        false
+                      ) || "No due"
+                  : "No due"}
               </span>
             </div>
           </div>

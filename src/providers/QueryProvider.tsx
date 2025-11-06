@@ -14,7 +14,8 @@ export function QueryProvider({ children }: QueryProviderProps) {
       new QueryClient({
         defaultOptions: {
           queries: {
-            // Stale time: Data is considered fresh for 5 minutes
+            // Default stale time: Data is considered fresh for 5 minutes
+            // Individual queries can override this with query-specific stale times
             staleTime: 5 * 60 * 1000,
             // Garbage collection time: Data is removed from cache after 10 minutes
             gcTime: 10 * 60 * 1000,

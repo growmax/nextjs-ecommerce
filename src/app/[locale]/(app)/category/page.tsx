@@ -1,20 +1,17 @@
-import { Grid } from "lucide-react";
+"use client";
+import { PageLoader } from "@/components/Loaders/PageLoader/page-loader";
+import dynamic from "next/dynamic";
+import { Suspense } from "react";
 
-export default async function CategoryPage() {
+const CategoryPageClient = dynamic(() => import("./CategoryPageClient"), {
+  ssr: false,
+  loading: () => <PageLoader message="Loading CategoryPage..." />,
+});
 
+export default function CategoryPage() {
   return (
-    <div className="flex flex-col gap-6 p-6">
-      <div className="flex items-center gap-3">
-        <Grid className="h-8 w-8" />
-        <h1 className="text-3xl font-bold">Categories</h1>
-      </div>
-
-      <div className="rounded-lg border bg-card p-6">
-        <p className="text-muted-foreground">
-          Category Page
-        </p>
-        {/* Add your category content here */}
-      </div>
-    </div>
+    <Suspense fallback={<PageLoader message="Loading CategoryPage..." />}>
+      <CategoryPageClient />
+    </Suspense>
   );
 }

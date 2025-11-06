@@ -36,7 +36,7 @@ const nextConfig = {
   poweredByHeader: false,
   compress: true,
   // Windows-specific optimizations for development
-  webpack: (config, { dev }) => {
+  webpack: (config, { dev, isServer }) => {
     if (dev) {
       config.watchOptions = {
         poll: 1000,
@@ -47,6 +47,24 @@ const nextConfig = {
         level: "error",
       };
     }
+
+    if (!isServer) {
+      config.resolve.fallback = {
+        ...config.resolve.fallback,
+        net: false,
+        tls: false,
+        fs: false,
+        dns: false,
+        child_process: false,
+        crypto: false,
+      };
+
+      config.externals = config.externals || [];
+      config.externals.push({
+        ioredis: "ioredis",
+      });
+    }
+
     return config;
   },
   images: {
@@ -65,6 +83,22 @@ const nextConfig = {
       {
         protocol: "https",
         hostname: "**.myapptino.com",
+      },
+      {
+        protocol: "https",
+        hostname: "schwing-dev-app-assets.s3.ap-south-1.amazonaws.com",
+      },
+      {
+        protocol: "https",
+        hostname: "growmax-dev-app-assets.s3.ap-northeast-1.amazonaws.com",
+      },
+      {
+        protocol: "https",
+        hostname: "**.s3.amazonaws.com",
+      },
+      {
+        protocol: "https",
+        hostname: "**.s3.*.amazonaws.com",
       },
     ],
     unoptimized: false,

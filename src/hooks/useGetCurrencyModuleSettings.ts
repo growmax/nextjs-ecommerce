@@ -1,7 +1,8 @@
 import CartServices from "@/lib/api/CartServices";
-import { find } from "lodash";
+// Use individual lodash imports for better tree-shaking
+import { useQuery } from "@tanstack/react-query";
+import find from "lodash/find";
 import { useMemo } from "react";
-import useSWR from "swr";
 
 interface CurrencySection {
   sectionDetailName: string;
@@ -34,26 +35,21 @@ export default function useGetCurrencyModuleSettings(
   const companyId = user?.companyId;
   const currency = user?.currency;
 
-  const fetcher = () => {
-    if (!userId || !companyId) {
-      return Promise.reject(new Error("Missing userId or companyId"));
-    }
-    return CartServices.getCurrencyModuleSettings({
-      userId: userId as string | number,
-      companyId: companyId as string | number,
-    });
-  };
-
-  const { data } = useSWR(
-    userId && companyId && condition
-      ? [userId, "CurrencyModuleSettings", companyId]
-      : null,
-    fetcher,
-    {
-      revalidateOnFocus: false,
-      dedupingInterval: 60000, // Cache for 60 seconds (settings rarely change)
-    }
-  );
+  const { data } = useQuery({
+    queryKey: [userId, "CurrencyModuleSettings", companyId],
+    queryFn: async () => {
+      if (!userId || !companyId) {
+        throw new Error("Missing userId or companyId");
+      }
+      return CartServices.getCurrencyModuleSettings({
+        userId: userId as string | number,
+        companyId: companyId as string | number,
+      });
+    },
+    enabled: !!(userId && companyId && condition),
+    staleTime: 60000, // Cache for 60 seconds (was dedupingInterval)
+    refetchOnWindowFocus: false, // was revalidateOnFocus: false
+  });
 
   const { minimumOrderValue, minimumQuoteValue } = useMemo(() => {
     const currencyModule = (data as { data?: CurrencyModuleData })?.data;

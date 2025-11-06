@@ -11,7 +11,7 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
 } from "@/components/ui/sidebar";
-import { useAuth } from "@/contexts/AuthContext";
+import { useUserDetails } from "@/contexts/UserDetailsContext";
 import { Home, LayoutDashboard, Settings, ShoppingBag } from "lucide-react";
 import Link from "next/link";
 import * as React from "react";
@@ -61,7 +61,7 @@ const navMainItems = [
 ];
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated } = useUserDetails();
 
   // Filter nav items based on auth state
   const filteredNavMainItems = React.useMemo(() => {

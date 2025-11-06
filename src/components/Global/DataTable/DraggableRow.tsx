@@ -1,6 +1,7 @@
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import { flexRender, type Row } from "@tanstack/react-table";
+import * as React from "react";
 
 import { TableCell, TableRow } from "@/components/ui/table";
 
@@ -9,7 +10,7 @@ interface DraggableRowProps<TData> {
   getRowId: (row: TData) => string | number;
 }
 
-export function DraggableRow<TData>({
+function DraggableRowComponent<TData>({
   row,
   getRowId,
 }: DraggableRowProps<TData>) {
@@ -36,3 +37,8 @@ export function DraggableRow<TData>({
     </TableRow>
   );
 }
+
+// Memoize to prevent unnecessary re-renders when parent table updates
+export const DraggableRow = React.memo(
+  DraggableRowComponent
+) as typeof DraggableRowComponent;

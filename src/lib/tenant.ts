@@ -1,52 +1,27 @@
+import TenantService from "@/lib/api/services/TenantService";
 import { TenantApiResponse } from "@/types/tenant";
 
+/**
+ * Extract tenant information from host - DEPRECATED
+ * @deprecated Use TenantService.extractTenantFromHost() instead
+ */
 export function extractTenantFromHost(host: string): {
   domainUrl: string;
   origin: string;
   tenantCode: string | null;
 } {
-  // Extract subdomain from host
-  // e.g., schwingstetter.myapptino.com → schwingstetter
-  const parts = host.split(".");
-  const subdomain = parts[0];
-
-  // Handle localhost development
-  if (host.includes("localhost")) {
-    // For development, use environment variables
-    return {
-      domainUrl: process.env.DEFAULT_DOMAIN!,
-      origin: process.env.DEFAULT_ORIGIN!,
-      tenantCode: process.env.DEFAULT_TENANT_CODE!,
-    };
-  }
-
-  return {
-    domainUrl: host,
-    origin: host,
-    tenantCode: subdomain && subdomain !== "www" ? subdomain : null,
-  };
+  return TenantService.extractTenantFromHost(host);
 }
 
+/**
+ * Fetch tenant data from external API - DEPRECATED
+ * @deprecated Use TenantService.getTenantDataServerSide() instead
+ */
 export async function fetchTenantFromExternalAPI(
   domainUrl: string,
   origin: string
 ): Promise<TenantApiResponse> {
-  const url = `${process.env.API_BASE_URL}/homepagepublic/getTenantCodeCurrencyCompany?domainUrl=${domainUrl}`;
-
-  const response = await fetch(url, {
-    headers: {
-      origin,
-      "Content-Type": "application/json",
-    },
-    cache: "force-cache", // Cache tenant data as it doesn't change frequently
-    next: { revalidate: 3600 }, // Revalidate every hour
-  });
-
-  if (!response.ok) {
-    throw new Error(`Failed to fetch tenant data: ${response.status}`);
-  }
-
-  return response.json();
+  return TenantService.getTenantData(domainUrl, origin);
 }
 
 export function getTenantStorageKey(key: string, tenantId: number): string {

@@ -1,6 +1,7 @@
 "use client";
 
 import CartServices from "@/lib/api/CartServices";
+import { ApiClientError } from "@/lib/api/client";
 import React, {
   createContext,
   useCallback,
@@ -62,15 +63,70 @@ export function CartProvider({ children, userId }: CartProviderProps) {
 
     try {
       setIsLoading(true);
-      const res = (await CartServices.getCart(Number(userId))) as {
-        data?: CartItem[];
-      };
-      if (res?.data) {
-        setCart(res.data);
-        setCartCount(res.data.length);
+      const res = await CartServices.getCart(Number(userId));
+
+      // Handle different possible response structures
+      let cartData: CartItem[] = [];
+
+      if (Array.isArray(res)) {
+        // API returns cart items array directly
+        cartData = res;
+      } else if (
+        res &&
+        typeof res === "object" &&
+        "data" in res &&
+        Array.isArray(res.data)
+      ) {
+        // API returns { data: CartItem[] }
+        cartData = res.data;
+      } else if (
+        res &&
+        typeof res === "object" &&
+        "cartItems" in res &&
+        Array.isArray(res.cartItems)
+      ) {
+        // Alternative structure: { cartItems: CartItem[] }
+        cartData = res.cartItems;
+      } else {
       }
-    } catch (_error) {
-      toast.error("Failed to fetch cart");
+
+      setCart(cartData);
+      setCartCount(cartData.length);
+    } catch (error) {
+      let errorMessage = "Failed to fetch cart";
+
+      if (error instanceof ApiClientError) {
+        // Handle specific API errors
+        switch (error.status) {
+          case 401:
+            errorMessage = "Authentication required. Please log in again.";
+            break;
+          case 403:
+            errorMessage = "You don't have permission to access your cart.";
+            break;
+          case 404:
+            errorMessage = "Cart service not found. Please try again later.";
+            break;
+          case 500:
+            errorMessage = "Server error. Please try again later.";
+            break;
+          default:
+            errorMessage = error.message || "Failed to fetch cart";
+        }
+      } else if (error instanceof Error) {
+        // Handle network or other errors
+        if (
+          error.message.includes("Network Error") ||
+          error.message.includes("ERR_NETWORK")
+        ) {
+          errorMessage =
+            "Network connection failed. Please check your internet connection.";
+        } else {
+          errorMessage = error.message || "Failed to fetch cart";
+        }
+      }
+
+      toast.error(errorMessage);
       setCart([]);
       setCartCount(0);
     } finally {

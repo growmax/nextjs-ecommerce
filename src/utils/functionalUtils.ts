@@ -1,137 +1,228 @@
-import _, { maxBy, toNumber } from "lodash";
+import { z } from "zod";
+import { getSuitableDiscountByQuantity } from "./calculation/discountCalculation";
 
-export function getSuitableDiscountByQuantity(
-  quantity: any, // eslint-disable-line @typescript-eslint/no-explicit-any
-  discountsList: any, // eslint-disable-line @typescript-eslint/no-explicit-any
-  qtyIncrease: any // eslint-disable-line @typescript-eslint/no-explicit-any
-) {
-  const { resultArr: ranges, nextSuitableDiscount } = getObjectsByQuantityValue(
-    toNumber(quantity),
-    discountsList
+import type { CartItem } from "@/types/calculation/cart";
+import type {
+  DiscountDetails,
+  DiscountRange,
+  PriceListDiscountData,
+} from "@/types/calculation/discount";
+
+const PRODUCT_DEFAULTS = {
+  MIN_ORDER_QUANTITY: 1,
+  PACKAGING_QUANTITY: 1,
+  DISCOUNT_PERCENTAGE: 0,
+  PRODUCT_COST: 0,
+  ADDON_COST: 0,
+} as const;
+
+const productSchema = z
+  .object({
+    productId: z.union([z.string(), z.number()]).optional(),
+    quantity: z.coerce.number().optional(),
+    minOrderQuantity: z.coerce.number().optional(),
+    packagingQty: z.coerce.number().optional(),
+    packagingQuantity: z.coerce.number().optional(),
+    discountsList: z.array(z.any()).optional(),
+  })
+  .passthrough();
+
+const discountDataSchema = z
+  .object({
+    MasterPrice: z.number().nullable().optional(),
+    BasePrice: z.number().nullable().optional(),
+    isProductAvailableInPriceList: z.boolean().optional(),
+    discounts: z.array(z.any()).optional(),
+    priceListCode: z.string().optional(),
+    plnErpCode: z.string().optional(),
+    pricingConditionCode: z.string().nullable().optional(),
+    isOveridePricelist: z.boolean().optional(),
+    PricingCondition: z.string().optional(),
+    isApprovalRequired: z.boolean().optional(),
+  })
+  .passthrough();
+
+export function assignPricelistDiscountsDataToProducts(
+  inputProduct: Record<string, unknown>,
+  discountData: Record<string, unknown> = {},
+  shouldUpdateDiscounts: boolean = true
+): CartItem {
+  const validatedProduct = productSchema.parse(inputProduct);
+  const validatedDiscountData = discountDataSchema.parse(discountData);
+
+  // Determine initial pricing
+  const masterPrice = validatedDiscountData.MasterPrice || 0;
+  const basePrice = validatedDiscountData.BasePrice || 0;
+
+  // Calculate quantity with fallbacks
+  const calculatedQuantity =
+    validatedProduct.quantity ||
+    (validatedProduct.minOrderQuantity
+      ? Number(validatedProduct.minOrderQuantity)
+      : validatedProduct.packagingQty || validatedProduct.packagingQuantity
+        ? Number(
+            validatedProduct.packagingQty || validatedProduct.packagingQuantity
+          )
+        : PRODUCT_DEFAULTS.MIN_ORDER_QUANTITY);
+
+  // Create a new product object to avoid mutation
+  // Build product object with explicit property handling to avoid exactOptionalPropertyTypes issues
+
+  // Create proper PriceListDiscountData object (converting undefined to null)
+  const priceListDiscountData: PriceListDiscountData = {
+    MasterPrice: validatedDiscountData.MasterPrice ?? null,
+    BasePrice: validatedDiscountData.BasePrice ?? null,
+    ...(validatedDiscountData.isProductAvailableInPriceList !== undefined && {
+      isProductAvailableInPriceList:
+        validatedDiscountData.isProductAvailableInPriceList,
+    }),
+    ...(validatedDiscountData.discounts !== undefined && {
+      discounts: validatedDiscountData.discounts as DiscountRange[],
+    }),
+    ...(validatedDiscountData.priceListCode !== undefined && {
+      priceListCode: validatedDiscountData.priceListCode,
+    }),
+    ...(validatedDiscountData.plnErpCode !== undefined && {
+      plnErpCode: validatedDiscountData.plnErpCode,
+    }),
+    ...(validatedDiscountData.pricingConditionCode !== undefined && {
+      pricingConditionCode: validatedDiscountData.pricingConditionCode,
+    }),
+    ...(validatedDiscountData.isOveridePricelist !== undefined && {
+      isOveridePricelist: validatedDiscountData.isOveridePricelist,
+    }),
+    ...(validatedDiscountData.PricingCondition !== undefined && {
+      PricingCondition: validatedDiscountData.PricingCondition,
+    }),
+    ...(validatedDiscountData.isApprovalRequired !== undefined && {
+      isApprovalRequired: validatedDiscountData.isApprovalRequired,
+    }),
+  };
+
+  const product: CartItem = {
+    productId: (validatedProduct.productId as string | number) || "",
+    quantity: calculatedQuantity,
+    unitPrice: basePrice || masterPrice || 0,
+    totalPrice: (basePrice || masterPrice || 0) * calculatedQuantity,
+    disc_prd_related_obj: priceListDiscountData,
+    isProductAvailableInPriceList:
+      validatedDiscountData.isProductAvailableInPriceList || false,
+    MasterPrice: masterPrice,
+    BasePrice: basePrice,
+  };
+
+  // Copy over other properties from validatedProduct, only if they're defined
+  Object.keys(validatedProduct).forEach(key => {
+    const value = validatedProduct[key as keyof typeof validatedProduct];
+    if (value !== undefined && key !== "productId" && key !== "quantity") {
+      (product as Record<string, unknown>)[key] = value;
+    }
+  });
+
+  // Determine if price is not available
+  const isPriceNotAvailable =
+    shouldUpdateDiscounts &&
+    (validatedDiscountData.MasterPrice === null ||
+      validatedDiscountData.BasePrice === null ||
+      !validatedDiscountData.isProductAvailableInPriceList);
+
+  if (shouldUpdateDiscounts) {
+    product.priceNotAvailable = isPriceNotAvailable;
+  }
+
+  // Set pricelist data
+  if (validatedDiscountData.priceListCode !== undefined) {
+    product.priceListCode = validatedDiscountData.priceListCode;
+  }
+  if (validatedDiscountData.plnErpCode !== undefined) {
+    product.plnErpCode = validatedDiscountData.plnErpCode;
+  }
+
+  // Set discounts data
+  const discountsList = (validatedDiscountData.discounts ||
+    []) as DiscountRange[];
+  (product as Record<string, unknown>).discountsList = discountsList;
+
+  // Get suitable discount
+  const packagingQty =
+    validatedProduct.packagingQty ||
+    validatedProduct.packagingQuantity ||
+    PRODUCT_DEFAULTS.PACKAGING_QUANTITY;
+
+  const discountResult = getSuitableDiscountByQuantity(
+    product.quantity,
+    discountsList,
+    packagingQty
   );
-  const suitableDiscount = maxBy(ranges, "Value");
-  // let nextSuitableDiscount =  last(nextSuitableDiscArr)
-  // if(nextSuitableDiscount?.Value === suitableDiscount?.Value || nextSuitableDiscount?.Value < suitableDiscount?.Value){
-  //     nextSuitableDiscount = maxBy(discountsList, 'Value') ?  maxBy(discountsList, 'Value') : null
-  // }
-  return { suitableDiscount, nextSuitableDiscount };
-}
 
-function getObjectsByQuantityValue(
-  quantity: any,
-  arr: any = [],
-  _qtyIncrease?: any
-) {
-  // eslint-disable-line @typescript-eslint/no-explicit-any
-  const resultArr = [];
-  // const nextSuitableDiscArr = [];
-  for (const obj of arr) {
-    if (obj.min_qty <= quantity && quantity <= obj.max_qty) {
-      resultArr.push(obj);
-    }
-    // if (obj.min_qty >= (quantity + qtyIncrease) && (quantity + qtyIncrease) <= obj.max_qty) {
-    //   nextSuitableDiscArr.push(obj)
-    // }
+  if (
+    discountResult.suitableDiscount?.CantCombineWithOtherDisCounts !== undefined
+  ) {
+    product.CantCombineWithOtherDisCounts =
+      discountResult.suitableDiscount.CantCombineWithOtherDisCounts;
   }
-  const nextSuitableDiscount = _.chain(arr)
-    .filter((discount: any) => {
-      return discount.min_qty > quantity;
-    })
-    .sortBy("min_qty")
-    .first()
-    .value();
-  return { resultArr, nextSuitableDiscount };
-}
-
-export const assign_pricelist_discounts_data_to_products = (
-  product: any = {}, // eslint-disable-line @typescript-eslint/no-explicit-any
-  prd_wise_discData: any = {}, // eslint-disable-line @typescript-eslint/no-explicit-any
-  updateDiscounts: any = true // eslint-disable-line @typescript-eslint/no-explicit-any
-) => {
-  product.disc_prd_related_obj = prd_wise_discData
-    ? prd_wise_discData
-    : product.disc_prd_related_obj || {};
-  product.isProductAvailableInPriceList =
-    product.disc_prd_related_obj.isProductAvailableInPriceList;
-  if (updateDiscounts) {
-    if (
-      product.disc_prd_related_obj.MasterPrice === null ||
-      product.disc_prd_related_obj.BasePrice === null ||
-      !product.disc_prd_related_obj.isProductAvailableInPriceList
-    ) {
-      product.priceNotAvailable = true;
-    } else {
-      product.priceNotAvailable = false;
-    }
+  if (discountResult.nextSuitableDiscount !== undefined) {
+    product.nextSuitableDiscount = discountResult.nextSuitableDiscount;
   }
 
-  //Pricing....
-  product.MasterPrice = product.disc_prd_related_obj.MasterPrice;
-  product.BasePrice = product.disc_prd_related_obj.BasePrice;
+  // Create discount details
+  if (discountResult.suitableDiscount) {
+    const basePriceValue = product.BasePrice ?? 0;
+    const discountDetails: DiscountDetails = {
+      ...discountResult.suitableDiscount,
+      BasePrice: basePriceValue,
+      ...(product.plnErpCode !== undefined && {
+        plnErpCode: product.plnErpCode,
+      }),
+      ...(product.priceListCode !== undefined && {
+        priceListCode: product.priceListCode,
+      }),
+      ...(validatedDiscountData.pricingConditionCode !== undefined && {
+        pricingConditionCode: validatedDiscountData.pricingConditionCode,
+      }),
+    };
+    product.discountDetails = discountDetails;
+  }
 
-  //Pricelist...
-  product.priceListCode = product.disc_prd_related_obj.priceListCode;
-  product.plnErpCode = product.disc_prd_related_obj.plnErpCode;
-
-  //Discounts...
-  product.discountsList = product.disc_prd_related_obj.discounts || [];
-  product.quantity = product.quantity
-    ? product.quantity
-    : product?.minOrderQuantity
-      ? parseFloat(product?.minOrderQuantity)
-      : product?.packagingQuantity
-        ? parseFloat(product?.packagingQuantity)
-        : 1;
-  const { suitableDiscount, nextSuitableDiscount } =
-    getSuitableDiscountByQuantity(
-      product?.quantity,
-      product.discountsList,
-      product?.packagingQty
-        ? product?.packagingQty
-        : product?.packagingQuantity || 1
-    );
-  product.CantCombineWithOtherDisCounts = (
-    suitableDiscount as any
-  )?.CantCombineWithOtherDisCounts;
-  product.nextSuitableDiscount = nextSuitableDiscount;
-  product.discountDetails = { ...(suitableDiscount as any) };
-
-  product.discountDetails.BasePrice = product.BasePrice;
-  product.discountDetails.plnErpCode = product.plnErpCode;
-  product.discountDetails.priceListCode = product.priceListCode;
-  product.discountDetails.pricingConditionCode =
-    product.disc_prd_related_obj?.pricingConditionCode || null;
-
+  // Calculate override discount
+  const masterPriceValue = product.MasterPrice ?? 0;
   product.overrideDiscount =
-    ((product.MasterPrice - product.BasePrice) / product.MasterPrice) * 100 ||
-    0;
+    masterPriceValue > 0
+      ? ((masterPriceValue - (product.BasePrice || 0)) / masterPriceValue) * 100
+      : 0;
 
-  if (updateDiscounts) {
-    //Setting master, base, and discount based on pricelist override data..
-    if (product.disc_prd_related_obj?.isOveridePricelist === false) {
-      product.unitListPrice = product.MasterPrice;
+  if (shouldUpdateDiscounts) {
+    const isOverridePricelist =
+      validatedDiscountData.isOveridePricelist !== false;
 
-      product.discount =
-        product.overrideDiscount + (product.discountDetails?.Value || 0);
-
-      // When isOveridePricelist is false, apply total discount (override + additional) on MasterPrice
-
+    if (!isOverridePricelist) {
+      // Use MasterPrice as base
+      product.unitListPrice = masterPriceValue;
+      const discountValue = discountResult.suitableDiscount?.Value || 0;
+      product.discount = (product.overrideDiscount || 0) + discountValue;
       product.discountedPrice =
-        product.MasterPrice - (product.MasterPrice - product.BasePrice);
+        masterPriceValue - (masterPriceValue - (product.BasePrice || 0));
     } else {
-      product.unitListPrice = product.BasePrice;
-
-      product.discount = product.discountDetails?.Value || 0;
-      product.discountedPrice =
-        product.BasePrice - (product.BasePrice * product.discount) / 100;
+      // Use BasePrice as base
+      product.unitListPrice = product.BasePrice || 0;
+      const discountValue =
+        discountResult.suitableDiscount?.Value ||
+        PRODUCT_DEFAULTS.DISCOUNT_PERCENTAGE;
+      product.discount = discountValue;
+      const basePrice = product.BasePrice || 0;
+      product.discountedPrice = basePrice - (basePrice * discountValue) / 100;
     }
+
     product.pricingConditionCode =
-      product.disc_prd_related_obj?.PricingCondition || null;
+      validatedDiscountData.PricingCondition || null;
   }
 
-  product.discountPercentage = product.discount;
+  product.discountPercentage =
+    product.discount || PRODUCT_DEFAULTS.DISCOUNT_PERCENTAGE;
 
-  //reorder scenario
-  product.isApprovalRequired = product.disc_prd_related_obj.isApprovalRequired;
+  // Set approval requirement
+  product.isApprovalRequired =
+    validatedDiscountData.isApprovalRequired || false;
+
   return product;
-};
+}

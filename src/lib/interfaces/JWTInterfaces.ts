@@ -1,0 +1,47 @@
+export interface JWTPayload {
+  access_group_id: number;
+  accountRole: string;
+  companyId: number;
+  companyLogo: string;
+  companyName: string;
+  currency: {
+    currencyCode: string;
+    decimal: string;
+    description: string;
+    id: number;
+    precision: number;
+    symbol: string;
+    tenantId: number;
+    thousand: string;
+  };
+  dateFormat: string;
+  elasticCode: string;
+  roleId: number;
+  roleName: string;
+  roundOff: number | null;
+  s3BucketName: string;
+  taxExempted: boolean;
+  tenantId: string;
+  timeFormat: string;
+  timeZone: string;
+  userId: number;
+  vendorCode: string | null;
+  email: string;
+  emailVerified: boolean;
+  status: string;
+  displayName: string;
+  isSeller: boolean;
+  phoneNumber: string;
+  phoneNumberVerified: boolean;
+  secondaryEmail: string;
+  secondaryPhoneNumber: string;
+  id: string;
+  sub: string;
+  iss: string;
+  aud: string;
+  allowAutoRegsiter: boolean;
+  isSmsConfigured: boolean;
+  type: string;
+  iat: number;
+  exp: number;
+}

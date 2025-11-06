@@ -9,14 +9,16 @@ export {
   coreCommerceClient,
   createClientWithContext,
   homePageClient,
+  openSearchClient,
   storefrontClient,
   type ApiClientConfig,
   type ApiError,
-  type RequestContext
+  type RequestContext,
 } from "./client";
 
 // Import services
 import AuthService from "./services/AuthService";
+import BillingBranchService from "./services/BillingBranchService";
 import CartService from "./services/CartService";
 import CatalogService from "./services/CatalogService";
 import CompanyService from "./services/CompanyService";
@@ -34,57 +36,77 @@ import TokenRefreshService from "../services/TokenRefreshService";
 
 // Import dashboard services from the new location
 import DashboardService from "./services/DashboardService";
+import OpenSearchService from "./services/OpenSearchService";
 import OrderDetailsService from "./services/OrderDetailsService";
+import OrderNameService from "./services/OrderNameService";
 import OrdersService from "./services/OrdersService";
 import OrderStatusService from "./services/OrderStatusService";
+import PaymentService from "./services/PaymentService";
 import PreferenceService from "./services/PreferenceService";
+import ProductAssetsService from "./services/ProductAssetsService";
 import QuotesService from "./services/QuotesService";
+import RequestEditService from "./services/RequestEditService";
+import SearchService from "./services/SearchService";
 import QuoteStatusService from "./services/StatusService";
 
 // Export services
 export {
   AuthService,
   AuthTokenService,
+  BillingBranchService,
   CartService,
   CatalogService,
   CompanyService,
   DashboardService,
   DiscountService,
+  OpenSearchService,
   OrderDetailsService,
+  OrderNameService,
   OrdersService,
   OrderStatusService,
-  PreferenceService, QuotesService, QuoteStatusService, RequestQueueService,
+  PaymentService,
+  PreferenceService,
+  ProductAssetsService,
+  QuotesService,
+  QuoteStatusService,
+  RequestEditService,
+  RequestQueueService,
+  SearchService,
   StoreFrontService,
   TenantService,
   TokenRefreshService,
-  UserService
+  UserService,
 };
 
 // Export service types
-  export type {
-    LoginRequest,
-    LoginResponse,
-    RefreshTokenResponse
-  } from "./services/AuthService";
+export type {
+  LoginRequest,
+  LoginResponse,
+  RefreshTokenResponse,
+} from "./services/AuthService";
 
+export type {
+  BillingAddress,
+  BillingBranchResponse,
+} from "./services/BillingBranchService";
 export type { TenantInfo } from "./services/TenantService";
 
 export type {
   CompanyDetails,
   UserDetails,
-  UserProfile
+  UserProfile,
 } from "./services/UserService";
 
 export type {
   CatalogSettings,
   Category,
-  ProductSearchOptions
+  ProductSearchOptions,
 } from "./services/CatalogService";
 
 export type {
   GraphQLQuery,
   GraphQLResponse,
-  StoreFrontConfig
+  StoreFrontConfig,
 } from "./services/StoreFrontService";
 
 export type { Cart, CartCount, CartParams } from "./services/CartService";
@@ -93,14 +115,14 @@ export type { Cart, CartCount, CartParams } from "./services/CartService";
 export type {
   DashboardApiResponse,
   DashboardFilterParams,
-  TopPerformerItem
+  TopPerformerItem,
 } from "@/types/dashboard";
 
 export type { OrdersParams } from "./services/OrdersService";
 
 export type {
   OrderStatusResponse,
-  StatusOption
+  StatusOption,
 } from "./services/OrderStatusService";
 
 export type {
@@ -112,16 +134,64 @@ export type {
 } from "./services/OrderDetailsService";
 
 export type {
+  UpdateOrderNameRequest,
+  UpdateOrderNameResponse,
+} from "./services/OrderNameService";
+
+export type {
+  RequestEditParams,
+  RequestEditResponse,
+} from "./services/RequestEditService";
+
+export type {
+  OverallPaymentsResponse,
+  PaymentDueBreakup,
+  PaymentDueDataItem,
+  PaymentDueOrderData,
+  PaymentDueResponse,
+  PaymentHistoryItem,
+} from "./services/PaymentService";
+
+export type {
   PreferenceModule,
-  UserPreference
+  UserPreference,
 } from "./services/PreferenceService";
+
+export type {
+  ProductAsset,
+  ProductAssetsResponse,
+} from "./services/ProductAssetsService";
+
+export type {
+  ElasticSearchOptions,
+  ElasticSearchQuery,
+  FormattedProduct,
+  SearchProductsResponse,
+} from "./services/SearchService";
 
 export type {
   Discount,
   DiscountApiResponse,
   DiscountItem,
-  DiscountRequest
+  DiscountRequest,
 } from "./services/DiscountService";
+
+// Update product detail types export
+export type {
+  CatalogCode,
+  HsnTaxBreakup,
+  InventoryInfo,
+  PriceListCode,
+  ProductAccessory,
+  // Remove duplicate: ProductAsset (already from ProductAssetsService)
+  ProductAttribute,
+  ProductCategory,
+  ProductDetail,
+  ProductDetailResponse,
+  ProductSpecification,
+  TaxGroup,
+  TaxRequirement,
+} from "@/types/product/product-detail";
 
 // Export CompanyService types
 export type {
@@ -141,7 +211,9 @@ export type {
   DashboardResponse,
   DeleteAddressResponse,
   DeleteBranchParams,
-  DistrictData, getSubIndustrysbyid, Industry,
+  DistrictData,
+  getSubIndustrysbyid,
+  Industry,
   OrderGraphItem,
   QuoteGraphItem,
   QuoteStatusGraphItem,
@@ -152,44 +224,48 @@ export type {
   UpdateBranchResponse,
   Warehouse,
   Zone,
-  ZoneInfo
+  ZoneInfo,
 } from "./services/CompanyService";
 
 export type {
   ApprovalGroup,
   CurrencySymbol,
-  QuoteItem, QuotesApiResponse,
+  QuoteItem,
+  QuotesApiResponse,
   QuotesQueryParams,
   QuotesRequestBody,
-  QuotesResponseData, QuoteUser
+  QuotesResponseData,
+  QuoteUser,
 } from "./services/QuotesService";
 
 export type {
-  QuoteStatusApiResponse, QuoteStatusParams, QuoteStatusResponse
+  QuoteStatusApiResponse,
+  QuoteStatusParams,
+  QuoteStatusResponse,
 } from "./services/StatusService";
 
 // Export token management service types
 export type {
   QueuedRequest,
-  RefreshTokenResult
+  RefreshTokenResult,
 } from "../services/TokenRefreshService";
 
 export type {
   EnhancedQueuedRequest,
-  QueuedRequestOptions
+  QueuedRequestOptions,
 } from "../services/RequestQueueService";
 
 // Export utility functions
 export {
   getCommonApiHeaders,
   getOriginHeader,
-  getTenantApiHeaders
+  getTenantApiHeaders,
 } from "../utils/originUtils";
 
 export type {
   OrdersApiResponse,
   OrdersRequestParams,
-  OrdersResponse
+  OrdersResponse,
 } from "./services/Dasboard/DashboardOrdersTable";
 
 // Convenience re-exports for common patterns
@@ -201,11 +277,16 @@ export const API = {
   Dashboard: DashboardService,
   Discount: DiscountService,
   OrderDetails: OrderDetailsService,
+  OrderName: OrderNameService,
   Orders: OrdersService,
   OrderStatus: OrderStatusService,
+  Payment: PaymentService,
   Preference: PreferenceService,
+  ProductAssets: ProductAssetsService,
   Quotes: QuotesService,
   QuoteStatus: QuoteStatusService,
+  RequestEdit: RequestEditService,
+  Search: SearchService,
   StoreFront: StoreFrontService,
   Tenant: TenantService,
   User: UserService,

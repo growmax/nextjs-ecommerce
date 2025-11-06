@@ -4,7 +4,7 @@ import { useTenantStore } from "@/store/useTenantStore";
 import TenantService from "@/lib/api/services/TenantService";
 import { TenantConfigResponse } from "@/types/appconfig";
 import { TenantData } from "@/store/useTenantStore";
-import { useAuth } from "@/contexts/AuthContext";
+import { useUserDetails } from "@/contexts/UserDetailsContext";
 import { useEffect } from "react";
 
 /**
@@ -16,7 +16,7 @@ import { useEffect } from "react";
 export function useTenantData() {
   const { tenantData, loading, error, setTenantData, setLoading, setError } =
     useTenantStore();
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated } = useUserDetails();
 
   useEffect(() => {
     // Only fetch if authenticated and tenant data not already loaded

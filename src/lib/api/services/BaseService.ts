@@ -1,9 +1,5 @@
 import { AxiosInstance } from "axios";
-import {
-  coreCommerceClient,
-  createClientWithContext,
-  RequestContext,
-} from "../client";
+import { createClientWithContext, RequestContext } from "../client";
 
 /**
  * Abstract base service class that handles singleton pattern and common functionality
@@ -21,8 +17,8 @@ export abstract class BaseService<
 > {
   private static instances: Map<string, unknown> = new Map();
 
-  // Each service can override this with their preferred client
-  protected defaultClient: AxiosInstance = coreCommerceClient;
+  // Each service MUST explicitly define which client it uses - no defaults!
+  protected abstract defaultClient: AxiosInstance;
 
   constructor() {}
 
@@ -46,7 +42,7 @@ export abstract class BaseService<
     data: unknown = {},
     context: RequestContext,
     method: "GET" | "POST" | "PUT" | "DELETE" = "POST",
-    client: AxiosInstance = coreCommerceClient
+    client: AxiosInstance
   ): Promise<unknown> {
     const clientWithContext = createClientWithContext(client, context);
     switch (method) {
@@ -77,11 +73,27 @@ export abstract class BaseService<
     data: unknown = {},
     context: RequestContext,
     method: "GET" | "POST" | "PUT" | "DELETE" = "POST",
-    client: AxiosInstance = coreCommerceClient
+    client: AxiosInstance
   ): Promise<unknown | null> {
     try {
-      return await this.callApi(endpoint, data, context, method, client);
-    } catch {
+      const result = await this.callApi(
+        endpoint,
+        data,
+        context,
+        method,
+        client
+      );
+      return result;
+    } catch (error) {
+      /* eslint-disable no-console */
+      console.error(
+        "❌ BaseService.callApiSafe - Error:",
+        error instanceof Error ? error.message : String(error)
+      );
+      if (error instanceof Error && error.stack) {
+        console.error("Stack:", error.stack);
+      }
+      /* eslint-enable no-console */
       return null;
     }
   }
@@ -156,6 +168,7 @@ export abstract class BaseService<
     const context = options?.context || BaseService.getClientContext();
     const method = options?.method || "POST";
     const client = options?.client || this.defaultClient;
+
     return this.callApiSafe(endpoint, data, context, method, client);
   }
 

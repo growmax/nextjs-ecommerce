@@ -2,6 +2,7 @@
 
 import { Skeleton } from "@/components/ui/skeleton";
 import dynamic from "next/dynamic";
+import { Suspense } from "react";
 
 // Lazy load heavy components to reduce initial bundle size
 const DashboardChart = dynamic(
@@ -37,10 +38,28 @@ export default function DashboardPageClient() {
       <main className="container mx-auto px-4 py-6 sm:py-8">
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 items-start">
           <div className="w-full">
-            <DashboardChart />
+            <Suspense
+              fallback={
+                <div className="space-y-4">
+                  <Skeleton className="h-8 w-48" />
+                  <Skeleton className="h-64 w-full" />
+                </div>
+              }
+            >
+              <DashboardChart />
+            </Suspense>
           </div>
           <div className="w-full">
-            <DashboardOrdersTable />
+            <Suspense
+              fallback={
+                <div className="space-y-4">
+                  <Skeleton className="h-8 w-48" />
+                  <Skeleton className="h-64 w-full" />
+                </div>
+              }
+            >
+              <DashboardOrdersTable />
+            </Suspense>
           </div>
         </div>
       </main>

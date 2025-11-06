@@ -74,37 +74,17 @@ export class CatalogService {
 
   /**
    * Get categories with caching
+   * 
+   * NOTE: For client-side caching, use React Query's useQuery hook with this method.
+   * This method no longer uses localStorage to avoid server-side execution issues.
+   * React Query will handle caching automatically on the client side.
+   * 
+   * @deprecated Use getCategories() with React Query for caching instead
    */
   async getCategoriesWithCache(context?: RequestContext): Promise<Category[]> {
-    const cacheKey = `categories_${context?.tenantCode || "default"}`;
-
-    // Try to get from cache first
-    if (typeof window !== "undefined") {
-      const cached = localStorage.getItem(cacheKey);
-      if (cached) {
-        const { data, timestamp } = JSON.parse(cached);
-        // Cache for 30 minutes
-        if (Date.now() - timestamp < 1800000) {
-          return data;
-        }
-      }
-    }
-
-    // Fetch fresh data
+    // Simply return fresh data - let React Query handle caching on client-side
     const categoriesResponse = await this.getCategories(context);
     const categories = categoriesResponse.data || [];
-
-    // Cache the result
-    if (typeof window !== "undefined") {
-      localStorage.setItem(
-        cacheKey,
-        JSON.stringify({
-          data: categories,
-          timestamp: Date.now(),
-        })
-      );
-    }
-
     return categories as unknown as Category[];
   }
 

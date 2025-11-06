@@ -1,4 +1,5 @@
 // Dashboard Toolbar Components
+export { DashboardToolbar } from "./dashboard-toolbar";
 export { ActionToolbar, pluralize } from "./action-toolbar";
 
 // Search Components
@@ -15,6 +16,10 @@ export { GlobalLoaderWrapper } from "./global-loader-wrapper";
 export { default as Logo } from "./logo";
 
 // Type exports
+export type {
+  DashboardToolbarProps,
+  DashboardToolbarRef,
+} from "@/types/dashboard-toolbar";
 export type {
   ActionToolbarProps,
   ActionToolbarRef,

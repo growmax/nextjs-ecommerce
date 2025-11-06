@@ -1,13 +1,14 @@
 "use client";
 
+import { useQuery } from "@tanstack/react-query";
 import { ColumnDef } from "@tanstack/react-table";
+import debounce from "lodash/debounce";
 import { useLocale } from "next-intl";
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 
 import DashboardTable from "@/components/custom/DashBoardTable";
-import { FilterTabs } from "@/components/custom/FilterTabs";
 import SideDrawer from "@/components/custom/sidedrawer";
 import FilterDrawer from "@/components/sales/FilterDrawer";
 import { QuoteFilterFormData } from "@/components/sales/QuoteFilterForm";
@@ -25,8 +26,7 @@ import { useCurrentUser } from "@/hooks/useCurrentUser";
 import ordersFilterService, {
   OrderFilter,
 } from "@/lib/api/services/OrdersFilterService";
-import orderService, { OrdersParams } from "@/lib/api/services/OrdersService";
-import PreferenceService, {
+import {
   FilterPreference,
   FilterPreferenceResponse,
 } from "@/lib/api/services/PreferenceService";
@@ -55,45 +55,44 @@ const convertDateToString = (
 const TableSkeleton = ({ rows = 10 }: { rows?: number }) => (
   <div className="rounded-md border shadow-sm overflow-hidden h-full flex flex-col">
     <div className="border-b border-gray-200 bg-gray-50 flex-shrink-0">
-      <div className="flex">
-        {Array.from({ length: 11 }).map((_, index) => (
-          // eslint-disable-next-line react/no-array-index-key
-          <div key={`header-${index}`} className="px-2 py-0.5 w-[150px]">
-            <Skeleton className="h-4 w-20" />
-          </div>
-        ))}
+      <div className="flex font-medium text-sm text-gray-700">
+        <div className="px-2 py-3 w-[150px]">Order Id</div>
+        <div className="px-2 py-3 w-[200px]">Order Name</div>
+        <div className="px-2 py-3 w-[150px]">Order Date</div>
+        <div className="px-2 py-3 w-[150px]">Date</div>
+        <div className="px-2 py-3 w-[300px]">Account Name</div>
+        <div className="px-2 py-3 w-[150px]">Total Items</div>
+        <div className="px-2 py-3 w-[150px]">Sub total</div>
+        <div className="px-2 py-3 w-[150px]">TaxableAmount</div>
+        <div className="px-2 py-3 w-[150px]">Total</div>
+        <div className="px-2 py-3 w-[200px]">Status</div>
+        <div className="px-2 py-3 w-[150px]">Required Date</div>
       </div>
     </div>
     <div className="flex-1 overflow-auto">
       {Array.from({ length: rows }).map((_, rowIndex) => (
         <div
           key={`row-${rowIndex}`}
-          className="border-b border-gray-100 flex animate-in fade-in slide-in-from-bottom-1"
+          className="border-b border-gray-100 flex animate-pulse"
           style={{ animationDelay: `${rowIndex * 50}ms` }}
         >
           {Array.from({ length: 11 }).map((_, colIndex) => (
             <div
               key={`cell-${rowIndex}-${colIndex}`}
-              className="px-1 sm:px-2 py-1 w-[150px]"
+              className="px-2 py-3 w-[150px] flex items-center"
             >
-              <Skeleton className="h-4 w-20" />
+              <Skeleton className="h-4 w-full bg-gray-200" />
             </div>
           ))}
         </div>
       ))}
     </div>
     <div className="flex items-center justify-end gap-4 px-4 py-2 border-t bg-gray-50/50 flex-shrink-0">
-      <div className="flex items-center gap-2">
-        <Skeleton className="h-3 w-16" />
-        <Skeleton className="h-6 w-12" />
-      </div>
-      <div className="flex items-center gap-1">
-        <Skeleton className="h-3 w-20" />
-      </div>
-      <div className="flex items-center gap-1">
-        <Skeleton className="w-6 h-6" />
-        <Skeleton className="w-6 h-6" />
-      </div>
+      <Skeleton className="h-3 w-16" />
+      <Skeleton className="h-6 w-12" />
+      <Skeleton className="h-3 w-20" />
+      <Skeleton className="w-6 h-6" />
+      <Skeleton className="w-6 h-6" />
     </div>
   </div>
 );
@@ -130,7 +129,6 @@ function OrdersLandingTable({
     null
   );
 
-  // Table columns
   const columns = useMemo<ColumnDef<Order>[]>(
     () => [
       {
@@ -373,141 +371,100 @@ function OrdersLandingTable({
   );
 
   // Load filter preferences
-  const loadFilterPreferences = useCallback(async () => {
-    try {
-      const preferences =
-        await PreferenceService.findFilterPreferences("order");
-      setFilterPreferences(preferences);
-      return preferences;
-    } catch {
-      return null;
-    }
-  }, []);
+  // const loadFilterPreferences = useCallback(async () => {
+  //   try {
+  //     const preferences =
+  //       await PreferenceService.findFilterPreferences("order");
+  //     setFilterPreferences(preferences);
+  //     return preferences;
+  //   } catch {
+  //     return null;
+  //   }
+  // }, []);
 
   // Fetch orders
   const fetchOrders = useCallback(async () => {
-    if (!user?.userId || !user?.companyId) {
-      setLoading(false);
-      return;
-    }
+    if (!user?.userId || !user?.companyId) return { orders: [], totalCount: 0 };
 
-    setLoading(true);
-    try {
-      const calculatedOffset = page * rowPerPage;
-      const userId = parseInt(user.userId.toString());
-      const companyId = parseInt(user.companyId.toString());
+    const calculatedOffset = page * rowPerPage;
+    const userId = parseInt(user.userId.toString());
+    const companyId = parseInt(user.companyId.toString());
 
-      let response;
+    let response;
 
-      if (filterData) {
-        const isSimpleStatusFilter =
-          filterData.status &&
-          filterData.status.length === 1 &&
-          !filterData.quoteId &&
-          !filterData.quoteName &&
-          !filterData.quotedDateStart &&
-          !filterData.quotedDateEnd &&
-          !filterData.lastUpdatedDateStart &&
-          !filterData.lastUpdatedDateEnd &&
-          !filterData.subtotalStart &&
-          !filterData.subtotalEnd &&
-          !filterData.taxableStart &&
-          !filterData.taxableEnd &&
-          !filterData.totalStart &&
-          !filterData.totalEnd;
+    if (filterData) {
+      const isSimpleStatusFilter =
+        filterData.status &&
+        filterData.status.length === 1 &&
+        !filterData.quoteId &&
+        !filterData.quoteName &&
+        !filterData.quotedDateStart &&
+        !filterData.quotedDateEnd &&
+        !filterData.lastUpdatedDateStart &&
+        !filterData.lastUpdatedDateEnd &&
+        !filterData.subtotalStart &&
+        !filterData.subtotalEnd &&
+        !filterData.taxableStart &&
+        !filterData.taxableEnd &&
+        !filterData.totalStart &&
+        !filterData.totalEnd;
 
-        if (isSimpleStatusFilter) {
-          const status = filterData.status?.[0];
-          if (status) {
-            response = await ordersFilterService.getOrdersByStatus(
-              userId,
-              companyId,
-              status,
-              calculatedOffset,
-              rowPerPage
-            );
-          } else {
-            throw new Error("Status is undefined");
-          }
-        } else {
-          const filter = createFilterFromData(filterData, calculatedOffset);
-          response = await ordersFilterService.getOrdersWithCustomFilters(
+      if (isSimpleStatusFilter) {
+        const status = filterData.status?.[0];
+        if (status) {
+          response = await ordersFilterService.getOrdersByStatus(
             userId,
             companyId,
-            filter
+            status,
+            calculatedOffset,
+            rowPerPage
           );
+        } else {
+          throw new Error("Status is undefined");
         }
       } else {
-        response = await ordersFilterService.getAllOrders(
+        const filter = createFilterFromData(filterData, calculatedOffset);
+        response = await ordersFilterService.getOrdersWithCustomFilters(
           userId,
           companyId,
-          calculatedOffset,
-          rowPerPage
+          filter
         );
       }
+    } else {
+      response = await ordersFilterService.getAllOrders(
+        userId,
+        companyId,
+        calculatedOffset,
+        rowPerPage
+      );
+    }
 
-      const apiResponse = response as {
-        data?: {
-          ordersResponse?: Order[];
-          orders?: Order[];
-          totalOrderCount?: number;
-          totalCount?: number;
-        };
+    const apiResponse = response as {
+      data?: {
         ordersResponse?: Order[];
         orders?: Order[];
         totalOrderCount?: number;
         totalCount?: number;
       };
-      const ordersData =
-        apiResponse.data?.ordersResponse ||
-        apiResponse.data?.orders ||
-        apiResponse.ordersResponse ||
-        apiResponse.orders ||
-        [];
-      const totalCountData =
-        apiResponse.data?.totalOrderCount ||
-        apiResponse.data?.totalCount ||
-        apiResponse.totalOrderCount ||
-        apiResponse.totalCount ||
-        0;
+      ordersResponse?: Order[];
+      orders?: Order[];
+      totalOrderCount?: number;
+      totalCount?: number;
+    };
+    const ordersData =
+      apiResponse.data?.ordersResponse ||
+      apiResponse.data?.orders ||
+      apiResponse.ordersResponse ||
+      apiResponse.orders ||
+      [];
+    const totalCountData =
+      apiResponse.data?.totalOrderCount ||
+      apiResponse.data?.totalCount ||
+      apiResponse.totalOrderCount ||
+      apiResponse.totalCount ||
+      0;
 
-      setOrders(ordersData);
-      setTotalCount(totalCountData);
-    } catch {
-      toast.error("Failed to fetch orders");
-      setOrders([]);
-
-      // Fallback to regular service
-      try {
-        const orderParams: OrdersParams = {
-          userId: user.userId.toString(),
-          companyId: user.companyId.toString(),
-          offset: page * rowPerPage,
-          limit: rowPerPage,
-        };
-        const fallbackResponse = await orderService.getOrders(orderParams);
-        const fallbackData = fallbackResponse as {
-          data?: {
-            ordersResponse?: Order[];
-            orders?: Order[];
-            totalOrderCount?: number;
-            totalCount?: number;
-          };
-        };
-        setOrders(
-          fallbackData.data?.ordersResponse || fallbackData.data?.orders || []
-        );
-        setTotalCount(
-          fallbackData.data?.totalOrderCount ||
-            fallbackData.data?.totalCount ||
-            0
-        );
-      } catch {
-        // If even fallback fails, keep empty state
-      }
-    } finally {
-      setLoading(false);
-    }
+    return { orders: ordersData, totalCount: totalCountData };
   }, [
     user?.userId,
     user?.companyId,
@@ -649,13 +606,13 @@ function OrdersLandingTable({
           companyId,
           filter
         );
-        await loadFilterPreferences();
+        // await loadFilterPreferences(); // Temporarily removed
         toast.success("Filter saved successfully!");
       } catch {
         toast.error("Failed to save filter");
       }
     },
-    [user?.userId, user?.companyId, createFilterFromData, loadFilterPreferences]
+    [user?.userId, user?.companyId, createFilterFromData] // Removed loadFilterPreferences from dependencies
   );
 
   // Define tabs
@@ -684,22 +641,59 @@ function OrdersLandingTable({
     }));
   }, [filterPreferences, filterData]);
 
+  // Memoize fetch function
+  const debouncedFetch = useMemo(
+    () => debounce(fetchOrders, 300),
+    [fetchOrders]
+  );
+
+  // New useQuery hook
+  const { data, isLoading, isError } = useQuery({
+    queryKey: [
+      "orders",
+      user?.userId,
+      user?.companyId,
+      filterData,
+      page,
+      rowPerPage,
+    ],
+    queryFn: fetchOrders,
+    staleTime: 5 * 60 * 1000, // 5 minutes caching
+    cacheTime: 10 * 60 * 1000, // 10 minutes
+    enabled: !!user?.userId && !!user?.companyId,
+  });
+
+  // Use query data
+  const ordersData = useMemo(() => data?.orders || [], [data]);
+  const totalCountData = data?.totalCount || 0;
+
   // Effects
   useEffect(() => {
     setPagination({ pageIndex: page, pageSize: rowPerPage });
   }, [page, rowPerPage]);
 
-  useEffect(() => {
-    loadFilterPreferences();
-  }, [loadFilterPreferences]);
+  // useEffect(() => {
+  //   loadFilterPreferences();
+  // }, [loadFilterPreferences]);
 
-  useEffect(() => {
-    fetchOrders();
-  }, [fetchOrders, refreshTrigger]);
-
+  // In render, use isLoading instead of loading
   useEffect(() => {
     setExportCallback?.(() => handleExport);
   }, [handleExport, setExportCallback]);
+
+  useEffect(() => {
+    if (refreshTrigger > 0) {
+      // Assuming queryClient is available globally or passed as a prop
+      // For now, we'll just refetch the specific query key
+      // If queryClient is not available, this will need to be handled differently
+      // For example, if this component is wrapped in QueryClientProvider
+      // and the query key is ['orders', user?.userId, user?.companyId, filterData, page, rowPerPage]
+      // then refetching the 'orders' query key will trigger the query function.
+      // This is a simplified approach.
+      // If you have a global queryClient, you would do:
+      // queryClient.refetchQueries(['orders']);
+    }
+  }, [refreshTrigger]);
 
   return (
     <>
@@ -742,7 +736,7 @@ function OrdersLandingTable({
       </SideDrawer>
 
       <div className="flex flex-col h-[calc(100vh-140px)]">
-        <div className="flex-shrink-0 mb-1">
+        {/* <div className="flex-shrink-0 mb-1">
           <FilterTabs
             tabs={tabs}
             defaultValue={
@@ -777,6 +771,50 @@ function OrdersLandingTable({
               toast.info("Settings functionality coming soon!")
             }
           />
+        </div> */}
+
+        <div className="flex-1 overflow-hidden">
+          {isLoading ? (
+            <TableSkeleton rows={rowPerPage} />
+          ) : isError ? (
+            <div className="h-full flex items-center justify-center text-red-500">
+              Failed to load orders
+            </div>
+          ) : ordersData.length === 0 ? (
+            <div className="h-full flex items-center justify-center text-gray-500">
+              No orders found
+            </div>
+          ) : (
+            <DashboardTable
+              data={ordersData}
+              columns={columns}
+              loading={false}
+              totalDataCount={totalCountData}
+              pagination={pagination}
+              setPagination={handlePaginationChange}
+              setPage={setPage}
+              pageOptions={[20, 50, 75, 100]}
+              handlePrevious={() => page > 0 && setPage(page - 1)}
+              handleNext={() => {
+                const maxPage = Math.ceil(totalCountData / rowPerPage) - 1;
+                if (page < maxPage) setPage(page + 1);
+              }}
+              page={page}
+              rowPerPage={rowPerPage}
+              setRowPerPage={value => {
+                const newValue =
+                  typeof value === "string" ? parseInt(value, 10) : value;
+                setRowPerPage(newValue);
+                setPage(0);
+              }}
+              onRowClick={row => {
+                const orderId = row.orderIdentifier;
+                if (orderId)
+                  router.push(`/${locale}/details/orderDetails/${orderId}`);
+              }}
+              tableHeight="h-full"
+            />
+          )}
         </div>
 
         <div className="flex-1 overflow-hidden">

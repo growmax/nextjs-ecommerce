@@ -50,12 +50,12 @@ export class UserService {
    * Fetch user details by user ID/name
    */
   async getUserDetails(
-    userId: string,
+    sub: string,
     context: RequestContext
   ): Promise<UserApiResponse> {
     const client = createClientWithContext(coreCommerceClient, context);
 
-    const response = await client.get(`/userses/findByName?name=${userId}`);
+    const response = await client.get(`/users/findByName?name=${sub}`);
 
     return response.data;
   }
@@ -64,11 +64,11 @@ export class UserService {
    * Fetch user details for server-side rendering
    */
   async getUserDetailsServerSide(
-    userId: string,
+    sub: string,
     context: RequestContext
   ): Promise<UserApiResponse | null> {
     try {
-      return await this.getUserDetails(userId, context);
+      return await this.getUserDetails(sub, context);
     } catch {
       return null;
     }
@@ -138,7 +138,7 @@ export class UserService {
   ): Promise<UserDetails> {
     const client = createClientWithContext(coreCommerceClient, context);
 
-    const response = await client.put(`/userses/${userId}`, updates);
+    const response = await client.put(`/users/${userId}`, updates);
     return response.data;
   }
 
@@ -170,7 +170,7 @@ export class UserService {
   ): Promise<{ users: UserDetails[]; total: number }> {
     const client = createClientWithContext(coreCommerceClient, context);
 
-    const response = await client.get("/userses/search", {
+    const response = await client.get("/users/search", {
       params: {
         q: query,
         limit: options?.limit || 10,
@@ -191,7 +191,7 @@ export class UserService {
   ): Promise<string[]> {
     const client = createClientWithContext(coreCommerceClient, context);
 
-    const response = await client.get(`/userses/${userId}/permissions`);
+    const response = await client.get(`/users/${userId}/permissions`);
     return response.data.permissions || [];
   }
 
@@ -208,7 +208,7 @@ export class UserService {
     const formData = new FormData();
     formData.append("avatar", file);
 
-    const response = await client.post(`/userses/${userId}/avatar`, formData, {
+    const response = await client.post(`/users/${userId}/avatar`, formData, {
       headers: {
         "Content-Type": "multipart/form-data",
       },
@@ -226,7 +226,7 @@ export class UserService {
   ): Promise<{ success: boolean }> {
     const client = createClientWithContext(coreCommerceClient, context);
 
-    const response = await client.delete(`/userses/${userId}`);
+    const response = await client.delete(`/users/${userId}`);
     return response.data;
   }
 }

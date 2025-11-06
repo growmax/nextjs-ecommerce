@@ -1,8 +1,9 @@
 "use client";
 
-import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { CustomPagination } from "@/components/ui/custom-pagination";
+import { Input } from "@/components/ui/input";
 import {
   Table,
   TableBody,
@@ -11,15 +12,14 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { Download } from "lucide-react";
-import { cn } from "@/lib/utils";
-import { CustomPagination } from "@/components/ui/custom-pagination";
+import useProductAssets from "@/hooks/useProductAssets";
+import type { ProductSearchResult } from "./ProductSearchInput";
+import ProductSearchInput from "./ProductSearchInput";
 
 export interface ProductItem {
   itemNo?: number;
   productShortDescription?: string;
   brandProductId?: string;
-  itemName?: string;
   itemCode?: string;
   orderName?: string;
   orderIdentifier?: string;
@@ -48,16 +48,14 @@ export interface OrderProductsTableProps {
   onExport?: () => void;
   className?: string;
   itemsPerPage?: number;
+  isEditable?: boolean;
+  onQuantityChange?: (productId: string, quantity: number) => void;
+  editedQuantities?: Record<string, number>;
+  onProductAdd?: (product: ProductSearchResult) => void;
+  elasticIndex?: string | undefined;
 }
 
-// Format currency
-const formatCurrency = (amount?: number) => {
-  if (amount === undefined || amount === null) return "INR ₹0.00";
-  return `INR ₹${amount.toLocaleString("en-IN", {
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 2,
-  })}`;
-};
+//
 
 export default function OrderProductsTable({
   products = [],
@@ -65,10 +63,46 @@ export default function OrderProductsTable({
   onExport,
   className,
   itemsPerPage = 5,
+  isEditable = false,
+  onQuantityChange,
+  editedQuantities = {},
+  onProductAdd,
+  elasticIndex,
 }: OrderProductsTableProps) {
   const [currentPage, setCurrentPage] = useState(1);
   const displayCount = totalCount || products.length;
   const totalPages = Math.ceil(displayCount / itemsPerPage);
+
+  // Fetch product assets
+  const { productAssets } = useProductAssets(products);
+
+  // Helper function to get product image from assets
+  const getProductImage = (product: ProductItem): string | null => {
+    // Try to get productId from the product object
+    const productId = (product as { productId?: number }).productId;
+    if (!productId) return null;
+
+    // Find assets for this product ID
+    // The API returns an array of ProductAsset objects, each with productId.id
+    const productAssetsForProduct = productAssets.filter(
+      (asset: { productId?: { id?: number } }) =>
+        asset.productId?.id === productId
+    );
+
+    if (productAssetsForProduct.length > 0) {
+      // Find default image (isDefault can be 0 or 1, or boolean)
+      const defaultImage = productAssetsForProduct.find(
+        (asset: { isDefault?: number | boolean }) => {
+          const isDefault = asset.isDefault;
+          return isDefault === 1 || isDefault === true;
+        }
+      );
+      // Return default image if found, otherwise return first image
+      return defaultImage?.source || productAssetsForProduct[0]?.source || null;
+    }
+
+    return null;
+  };
 
   // Sort products by itemNo to ensure correct order
   const sortedProducts = [...products].sort((a, b) => {
@@ -89,21 +123,34 @@ export default function OrderProductsTable({
   return (
     <Card className={cn("", className)}>
       {/* Header */}
-      <CardHeader className="py-0 px-4 -my-1 flex flex-row items-center justify-between">
-        <CardTitle className="text-base font-semibold py-0 my-0 leading-none -mt-1 -mb-1">
-          Products ({displayCount})
-        </CardTitle>
-        {onExport && (
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={onExport}
-            className="h-3.5 px-1.5 py-0! text-xs font-medium border-gray-300 text-gray-700 hover:bg-gray-50 -my-0.5"
-          >
-            <Download className="h-2 w-2 mr-0.5" />
-            EXPORT
-          </Button>
-        )}
+      <CardHeader className="py-0 px-4 -my-1 flex flex-row items-center justify-between gap-4">
+        <div className="flex-1 flex items-center justify-between">
+          <CardTitle className="text-base font-semibold py-0 my-0 leading-none -mt-1 -mb-1">
+            Products ({displayCount})
+          </CardTitle>
+          {/* Show search input in edit mode, export button in view mode */}
+          {onProductAdd ? (
+            <div className="w-full max-w-[calc(28rem-120px)] ml-4">
+              <ProductSearchInput
+                onProductSelect={onProductAdd}
+                placeholder="Search and add products..."
+                elasticIndex={elasticIndex}
+              />
+            </div>
+          ) : (
+            onExport && (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={onExport}
+                className="h-2.5 px-1 py-0! text-[10px] font-medium border-gray-300 text-gray-700 hover:bg-gray-50 -my-1"
+              >
+                <Download className="h-1 w-1 mr-0.5" />
+                EXPORT
+              </Button>
+            )
+          )}
+        </div>
       </CardHeader>
 
       {/* Products Table */}
@@ -173,8 +220,17 @@ export default function OrderProductsTable({
                       product.itemTaxableAmount ??
                       product.unitPrice ??
                       product.basePrice;
-                    const quantity =
+                    const originalQuantity =
                       product.unitQuantity ?? product.quantity ?? 0;
+                    const productId =
+                      product.brandProductId ||
+                      product.itemCode ||
+                      product.orderIdentifier ||
+                      "";
+                    const quantity =
+                      isEditable && editedQuantities[productId] !== undefined
+                        ? editedQuantities[productId]
+                        : originalQuantity;
                     const invoicedQty =
                       product.invoiceQuantity ?? product.invoicedQty ?? 0;
                     const amount = product.totalPrice ?? product.amount;
@@ -184,43 +240,125 @@ export default function OrderProductsTable({
                       product.igstPercentage ??
                       0;
 
+                    // Get product image
+                    const productImage = getProductImage(product);
+                    const firstLetter =
+                      itemName && itemName !== "-"
+                        ? itemName.charAt(0).toUpperCase()
+                        : itemCode
+                          ? itemCode.charAt(0).toUpperCase()
+                          : "?";
+
                     return (
                       <TableRow
                         key={product.itemNo || index}
                         className="group hover:bg-muted/30 h-12 border-b"
                       >
                         <TableCell className="sticky left-0 bg-white dark:bg-gray-950 group-hover:bg-muted/30 z-10 min-w-[150px] sm:min-w-[200px] shadow-[2px_0_4px_-2px_rgba(0,0,0,0.1)] transition-colors py-3 before:absolute before:inset-0 before:bg-white dark:before:bg-gray-950 before:-z-10">
-                          <div className="flex flex-col gap-0.5 relative z-10">
-                            <span className="font-medium text-sm">
-                              {itemName}
-                            </span>
-                            {itemCode && (
-                              <span className="text-xs text-muted-foreground">
-                                {itemCode}
-                              </span>
+                          <div className="flex items-center gap-3 relative z-10">
+                            {/* Product Image or Placeholder */}
+                            {productImage ? (
+                              <div className="shrink-0 w-10 h-10 rounded-lg overflow-hidden flex items-center justify-center bg-gray-100">
+                                <ImageWithFallback
+                                  src={productImage}
+                                  alt={itemName}
+                                  width={40}
+                                  height={40}
+                                  className="w-full h-full object-cover rounded-lg"
+                                />
+                              </div>
+                            ) : (
+                              <div className="shrink-0 w-10 h-10 rounded-lg bg-gray-300 flex items-center justify-center">
+                                <span className="text-white font-semibold text-sm">
+                                  {firstLetter}
+                                </span>
+                              </div>
                             )}
+                            {/* Product Name and Code */}
+                            <div className="flex flex-col gap-0.5 min-w-0 flex-1">
+                              <span className="font-medium text-sm truncate">
+                                {itemName}
+                              </span>
+                              {itemCode && (
+                                <span className="text-xs text-muted-foreground truncate">
+                                  {itemCode}
+                                </span>
+                              )}
+                            </div>
                           </div>
                         </TableCell>
                         <TableCell className="text-right min-w-[140px] py-3">
-                          {formatCurrency(basePrice)}
+                          <PricingFormat value={basePrice ?? 0} />
                         </TableCell>
                         <TableCell className="text-right min-w-[120px] py-3">
                           {`${discountValue}%`}
                         </TableCell>
                         <TableCell className="text-right min-w-[140px] py-3">
-                          {formatCurrency(product.unitPrice)}
+                          <PricingFormat value={product.unitPrice ?? 0} />
                         </TableCell>
                         <TableCell className="text-right min-w-[120px] py-3">
-                          {formatCurrency(product.usc || 0)}
+                          <PricingFormat value={product.usc ?? 0} />
                         </TableCell>
                         <TableCell className="text-center min-w-[100px] py-3">
-                          {quantity}
+                          {isEditable ? (
+                            <Input
+                              type="number"
+                              value={quantity}
+                              onChange={e => {
+                                const inputValue = e.target.value;
+                                // Remove leading zeros and handle empty input
+                                let newQuantity = 0;
+                                if (inputValue !== "") {
+                                  // Remove leading zeros (e.g., "033" becomes "33")
+                                  const cleanValue =
+                                    inputValue.replace(/^0+/, "") || "0";
+                                  newQuantity = parseInt(cleanValue) || 0;
+                                }
+                                onQuantityChange?.(productId, newQuantity);
+                              }}
+                              onKeyDown={e => {
+                                // If current value is "0" and user presses backspace, clear the field
+                                if (
+                                  e.key === "Backspace" &&
+                                  e.currentTarget.value === "0"
+                                ) {
+                                  e.currentTarget.value = "";
+                                  onQuantityChange?.(productId, 0);
+                                }
+                                // If user types a number when field shows "0", replace it
+                                if (
+                                  e.key >= "0" &&
+                                  e.key <= "9" &&
+                                  e.currentTarget.value === "0"
+                                ) {
+                                  e.currentTarget.value = "";
+                                }
+                              }}
+                              onWheel={e => {
+                                e.preventDefault();
+                                e.currentTarget.blur();
+                              }}
+                              onFocus={e => {
+                                e.target.addEventListener(
+                                  "wheel",
+                                  event => {
+                                    event.preventDefault();
+                                  },
+                                  { passive: false }
+                                );
+                              }}
+                              className="w-20 h-8 text-center text-sm border-gray-300 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none [-moz-appearance:textfield]"
+                              min="0"
+                            />
+                          ) : (
+                            quantity
+                          )}
                         </TableCell>
                         <TableCell className="text-center min-w-[140px] py-3">
                           {invoicedQty}
                         </TableCell>
                         <TableCell className="text-right min-w-[150px] py-3">
-                          {formatCurrency(amount)}
+                          <PricingFormat value={amount ?? 0} />
                         </TableCell>
                         <TableCell className="text-right min-w-[100px] py-3 pr-5">
                           {igst}%
@@ -236,7 +374,7 @@ export default function OrderProductsTable({
                     ),
                   }).map((_, index) => (
                     <TableRow
-                      key={`empty-${index}`}
+                      key={`empty-row-${currentPage}-${startIndex + index}`}
                       className="h-12 border-b-0"
                     >
                       <TableCell className="sticky left-0 bg-white dark:bg-gray-950 z-10 min-w-[150px] sm:min-w-[200px] shadow-[2px_0_4px_-2px_rgba(0,0,0,0.1)] py-3 before:absolute before:inset-0 before:bg-white dark:before:bg-gray-950 before:-z-10">

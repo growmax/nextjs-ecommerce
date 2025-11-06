@@ -41,6 +41,39 @@ export interface TaxDetails {
   tenantId: number;
 }
 
+export interface AddressInfo {
+  id: number;
+  addressLine: string;
+  city: string;
+  state: string;
+  country: string;
+  countryCode: string;
+  pinCodeId: string;
+  district: string;
+  locality: string;
+  branchName: string;
+  gst: string;
+  phone: string | null;
+  mobileNo: string;
+  email: string | null;
+  lattitude: string | null;
+  longitude: string | null;
+  locationUrl: string | null;
+  regAddress: boolean;
+  isBilling: boolean;
+  isShipping: boolean;
+  wareHouse: boolean;
+  isCustAddress: boolean;
+  primaryContact: string | null;
+  nationalMobileNum: string | null;
+  billToCode: string | null;
+  shipToCode: string | null;
+  soldToCode: string | null;
+  vendorID: string | null;
+  vendorId: string | null;
+  tenantId: number;
+}
+
 export interface Company {
   id: number;
   name: string;
@@ -48,9 +81,10 @@ export interface Company {
   companyIdentifier: string;
   defaultEmail: string;
   reportEmail: string;
+  inventoryEmail: string;
   website: string;
   tenantId: number;
-  vendorId: number;
+  vendorId: number | null;
   verified: boolean;
   activated: boolean;
   profileAccess: boolean;
@@ -59,7 +93,7 @@ export interface Company {
   bnplPhone: string | null;
   bnplCustomerId: string | null;
   inviteAccess: string | null;
-  addressId: string | null;
+  addressId: AddressInfo | null;
   taxExemptionId: string | null;
   finStartDate: string | null;
   finEndDate: string | null;
@@ -82,6 +116,7 @@ export interface Tenant {
   typeSenseKey: string | null;
   assertS3BucketName: string;
   apikey: string | null;
+  enablePartnerToPartnerPurchase: boolean;
   plainId: string;
   SSLCreated: boolean;
   sslCreatedDate: string | null;

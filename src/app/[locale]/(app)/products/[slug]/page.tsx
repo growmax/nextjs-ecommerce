@@ -1,0 +1,300 @@
+import { PageContent } from "@/components/layout/PageContent";
+import MobileCartAction from "@/components/product/MobileCartAction";
+import ProductBreadcrumb from "@/components/product/ProductBreadcrumb";
+import ProductImageGallery from "@/components/product/ProductImageGallery";
+import ProductInfo from "@/components/product/ProductInfo";
+import ProductVariants from "@/components/product/ProductVariants";
+import { ProductStructuredData } from "@/components/seo/ProductStructuredData";
+import { OpenSearchService, TenantService } from "@/lib/api";
+import { RequestContext } from "@/lib/api/client";
+import { getDomainInfo } from "@/lib/utils/getDomainInfo";
+import { ProductDetail } from "@/types/product/product-detail";
+import { ProductPageProps } from "@/types/product/product-page";
+import { getPrimaryImageUrl } from "@/utils/product/product-formatter";
+import { parseProductSlug } from "@/utils/product/slug-generator";
+import { Metadata } from "next";
+
+// Configs...
+export const revalidate = 3600;
+
+export const dynamicParams = true;
+
+// Data Methods...
+async function getContext() {
+  const { domainUrl, origin } = getDomainInfo();
+  const tenantData = await TenantService.getTenantDataCached(domainUrl, origin);
+  return { tenantData, origin };
+}
+
+async function fetchProduct(
+  productId: string,
+  elasticCode: string,
+  tenantCode: string,
+  origin: string
+): Promise<ProductDetail | null> {
+  const elasticIndex = `${elasticCode}pgandproducts`;
+  const context: RequestContext = { origin, tenantCode };
+  return await OpenSearchService.getProductCached(
+    productId,
+    elasticIndex,
+    "pgproduct",
+    "get",
+    context
+  );
+}
+
+// Next js Methods...
+
+export async function generateStaticParams() {
+  try {
+    const { tenantData } = await getContext();
+
+    if (!tenantData?.data?.tenant?.elasticCode) {
+      return [];
+    }
+
+    // TODO: Replace with actual API call to fetch popular/featured products
+    // Example: Fetch top 100 products by views, sales, or featured flag
+    // const popularProducts = await fetchPopularProducts(elasticIndex, 100);
+
+    // For now, return empty array - all pages will be generated on-demand
+    // Uncomment and modify when you have a popular products API
+    /*
+    const popularProducts = await OpenSearchService.searchProducts({
+      index: elasticIndex,
+      size: 100,
+      query: {
+        bool: {
+          must: [
+            { term: { is_published: true } },
+            { range: { view_count: { gte: 100 } } } // Example: products with 100+ views
+          ]
+        }
+      },
+      sort: [{ view_count: { order: "desc" } }]
+    });
+
+    // Generate slugs for all locales
+    const locales = ['en', 'es', 'fr'];
+    const paths = popularProducts.flatMap(product => 
+      locales.map(locale => ({
+        locale,
+        slug: generateProductSlug(product)
+      }))
+    );
+
+    return paths;
+    */
+
+    // Return empty array for now - on-demand generation only
+    return [];
+  } catch (_error) {
+    return [];
+  }
+}
+
+export async function generateMetadata({
+  params,
+}: ProductPageProps): Promise<Metadata> {
+  const { slug, locale } = await params;
+  const { tenantData, origin } = await getContext();
+
+  try {
+    if (!tenantData?.data?.tenant?.elasticCode) {
+      return {
+        title: "Product Not Found",
+        description: "The requested product could not be found.",
+      };
+    }
+
+    const { elasticCode, tenantCode } = tenantData.data.tenant;
+    const productId = parseProductSlug(slug);
+
+    if (!productId) {
+      return {
+        title: "Invalid Product",
+        description: "Invalid product identifier.",
+      };
+    }
+
+    const product = await fetchProduct(
+      productId,
+      elasticCode,
+      tenantCode,
+      origin
+    );
+
+    if (!product) {
+      return {
+        title: "Product Not Found",
+        description: "The requested product could not be found.",
+      };
+    }
+
+    const brandName = product.brand_name || product.brands_name || "Generic";
+    const title = `${product.title} - ${brandName}`;
+    const description =
+      product.product_short_description ||
+      product.product_description ||
+      `Buy ${product.title} from ${brandName}`;
+    const primaryImage = getPrimaryImageUrl(product);
+    const productUrl = `${origin}/${locale}/products/${slug}`;
+
+    return {
+      title,
+      description: description.substring(0, 160), // SEO best practice: 150-160 chars
+      keywords: [
+        product.title,
+        brandName,
+        product.hsn_code,
+        product.product_index_name,
+        ...(product.product_categories?.map(
+          (cat: { categoryName: string }) => cat.categoryName
+        ) || []),
+      ]
+        .filter(Boolean)
+        .join(", "),
+      authors: [{ name: brandName }],
+      creator: brandName,
+      publisher: brandName,
+      robots: {
+        index: product.is_published ? true : false,
+        follow: true,
+        googleBot: {
+          index: product.is_published ? true : false,
+          follow: true,
+        },
+      },
+      openGraph: {
+        type: "website",
+        url: productUrl,
+        title,
+        description,
+        siteName: tenantData.data.tenant.tenantCode || "E-Commerce Store",
+        locale,
+        images: [
+          {
+            url: primaryImage,
+            width: 1200,
+            height: 630,
+            alt: product.title,
+          },
+        ],
+      },
+      twitter: {
+        card: "summary_large_image",
+        title,
+        description,
+        images: [primaryImage],
+      },
+      alternates: {
+        canonical: productUrl,
+        languages: {
+          en: `${origin}/en/products/${slug}`,
+          es: `${origin}/es/products/${slug}`,
+          fr: `${origin}/fr/products/${slug}`,
+        },
+      },
+    };
+  } catch (_error) {
+    return {
+      title: "Error Loading Product",
+      description: "An error occurred while loading the product.",
+    };
+  }
+}
+
+export default async function ProductPage({ params }: ProductPageProps) {
+  const { slug, locale } = params;
+  const { tenantData, origin } = await getContext();
+  if (!tenantData?.data?.tenant?.elasticCode) {
+    return (
+      <div className="container mx-auto px-4 py-16 text-center">
+        <h1 className="text-3xl font-bold text-destructive mb-4">
+          Tenant Configuration Error
+        </h1>
+        <p className="text-muted-foreground">
+          Unable to load store configuration. Please contact support.
+        </p>
+      </div>
+    );
+  }
+
+  try {
+    const { elasticCode, tenantCode } = tenantData.data.tenant;
+    const productId = parseProductSlug(slug);
+    if (!productId) {
+      return (
+        <div className="container mx-auto px-4 py-16 text-center">
+          <h1 className="text-3xl font-bold text-destructive mb-4">
+            Invalid Product URL
+          </h1>
+          <p className="text-muted-foreground">
+            The product identifier in the URL is invalid.
+          </p>
+        </div>
+      );
+    }
+    const productData = await fetchProduct(
+      productId,
+      elasticCode,
+      tenantCode,
+      origin
+    );
+
+    if (!productData) {
+      const { notFound } = await import("next/navigation");
+      return notFound();
+    }
+    const product = productData as ProductDetail;
+    const productUrl = `${origin}/${locale}/products/${slug}`;
+
+    return (
+      <>
+        <ProductStructuredData
+          product={product}
+          url={productUrl}
+          locale={locale}
+        />
+
+        <PageContent layout="auto">
+          <div className="py-3">
+            <ProductBreadcrumb product={product} locale={locale} />
+          </div>
+
+          {/* Two-Column Layout: Image Gallery (Left) + Product Details (Right) */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-12 pb-24 lg:pb-8">
+            {/* Left Column: Sticky Image Gallery */}
+            <div className="lg:sticky lg:top-8 lg:h-fit">
+              <ProductImageGallery
+                images={product.product_assetss || []}
+                productTitle={product.title}
+              />
+            </div>
+
+            {/* Right Column: Product Information */}
+            <div className="space-y-6">
+              <ProductInfo product={product} locale={locale} />
+              <ProductVariants attributes={product.set_product_atributes} />
+            </div>
+          </div>
+
+          {/* Mobile Only: Fixed Bottom Cart Action */}
+          <MobileCartAction product={product} />
+        </PageContent>
+      </>
+    );
+  } catch (_error) {
+    return (
+      <div className="container mx-auto px-4 py-16 text-center">
+        <h1 className="text-3xl font-bold text-destructive mb-4">
+          Error Loading Product
+        </h1>
+        <p className="text-muted-foreground">
+          An unexpected error occurred while loading this product. Please try
+          again later.
+        </p>
+      </div>
+    );
+  }
+}

@@ -38,6 +38,7 @@ export class ServerAuth {
 
   /**
    * Check if user is authenticated (server-side)
+   * Checks both token existence and validity (including expiration)
    *
    * @returns Promise<boolean> - Authentication status
    */
@@ -48,18 +49,19 @@ export class ServerAuth {
         ServerAuth.ACCESS_TOKEN_COOKIE
       )?.value;
 
+      // Check if token exists
       if (!accessToken) {
         return false;
       }
 
-      // Check if token is expired
-      if (this.isTokenExpired(accessToken)) {
-        // Token is expired, attempt refresh
-        const refreshSuccess = await this.attemptServerSideRefresh();
-        return refreshSuccess;
-      }
+      // Import SessionValidator dynamically to avoid circular imports
+      const { SessionValidator } = await import("@/lib/services/SessionValidator");
 
-      return true;
+      // Validate token (including expiration check)
+      const sessionValidator = SessionValidator.getInstance();
+      const validation = sessionValidator.validateToken(accessToken);
+
+      return validation.isValid;
     } catch (_error) {
       return false;
     }
@@ -175,47 +177,6 @@ export class ServerAuth {
     return !isAuth;
   }
 
-  /**
-   * Check if refresh token exists (indicates user should stay logged in)
-   *
-   * @returns Promise<boolean> - True if refresh token exists
-   */
-  private static async attemptServerSideRefresh(): Promise<boolean> {
-    try {
-      const cookieStore = await cookies();
-      const refreshToken = cookieStore.get("refresh_token")?.value;
-
-      // If refresh token exists, assume user should stay authenticated
-      // The client-side token refresh will handle the actual token refresh
-      return !!refreshToken;
-    } catch (_error) {
-      return false;
-    }
-  }
-
-  /**
-   * Check if JWT token is expired
-   *
-   * @param token - JWT token to check
-   * @returns boolean - True if expired
-   */
-  private static isTokenExpired(token: string): boolean {
-    try {
-      // Decode JWT payload
-      const parts = token.split(".");
-      if (parts.length !== 3 || !parts[1]) {
-        return true; // Invalid token format
-      }
-
-      const payload = JSON.parse(atob(parts[1]));
-      const currentTime = Math.floor(Date.now() / 1000);
-
-      // Check if token has exp claim and if it's expired
-      return payload.exp ? payload.exp < currentTime : false;
-    } catch (_error) {
-      return true; // Treat invalid tokens as expired
-    }
-  }
 
   /**
    * Utility to create secure cookie string for setting cookies

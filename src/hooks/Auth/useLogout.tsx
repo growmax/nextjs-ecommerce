@@ -1,10 +1,10 @@
 "use client";
 
-import { useAuth } from "@/contexts/AuthContext";
+import { useUserDetails } from "@/contexts/UserDetailsContext";
 import { useState } from "react";
 
 export default function useLogout() {
-  const { logout } = useAuth();
+  const { logout } = useUserDetails();
   const [isLoggingOut, setIsLoggingOut] = useState(false);
 
   const handleLogout = async () => {

@@ -118,22 +118,12 @@ export default function CartPageClient() {
 
   // Handle Order submission
   const handleOrder = (sellerId: string | number) => {
-
-            router.push(
-             `/ordersummary/${sellerId}`
-
-            );
-
+    router.push(`/ordersummary/${sellerId}`);
   };
 
   // Handle Quote submission
   const handleQuote = (sellerId: string | number) => {
-
-        router.push(
-        `/quotesummary/${sellerId}`
-           );
-
-
+    router.push(`/quotesummary/${sellerId}`);
   };
 
   // Change quantity in cart - Following reference pattern from useCart.js
@@ -353,7 +343,13 @@ export default function CartPageClient() {
             <DialogTitle>Remove Item from Cart?</DialogTitle>
             <DialogDescription>
               {deleteDialog.productName ? (
-                <>Are you sure you want to remove <span className="font-semibold">{deleteDialog.productName}</span> from your cart?</>
+                <>
+                  Are you sure you want to remove{" "}
+                  <span className="font-semibold">
+                    {deleteDialog.productName}
+                  </span>{" "}
+                  from your cart?
+                </>
               ) : (
                 "Are you sure you want to remove this item from your cart?"
               )}

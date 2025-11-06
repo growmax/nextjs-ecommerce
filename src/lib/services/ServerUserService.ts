@@ -4,89 +4,46 @@ import { CookieService } from "./CookieService";
 import { SessionValidator } from "./SessionValidator";
 import { UserApiService } from "./UserApiService";
 
+/**
+ * ServerUserService - Handles server-side user data fetching
+ * Consistent with TenantService pattern using static methods
+ */
 export class ServerUserService {
-  private static instance: ServerUserService;
-  private cookieService: CookieService;
-  private sessionValidator: SessionValidator;
-  private userApiService: UserApiService;
-
-  private constructor() {
-    this.cookieService = CookieService.getInstance();
-    this.sessionValidator = SessionValidator.getInstance();
-    this.userApiService = UserApiService.getInstance();
-  }
-
-  public static getInstance(): ServerUserService {
-    if (!ServerUserService.instance) {
-      ServerUserService.instance = new ServerUserService();
-    }
-    return ServerUserService.instance;
-  }
-
-  public async fetchUserDataServerSide(): Promise<UserApiResponse | null> {
+  public static async fetchUserDataServerSide(): Promise<UserApiResponse | null> {
     try {
+      // Get services from singletons (consistent with other services)
+      const cookieService = CookieService.getInstance();
+      const sessionValidator = SessionValidator.getInstance();
+      const userApiService = UserApiService.getInstance();
+
       // Get token from server-side cookies
-      const token = await this.cookieService.getTokenFromCookies();
+      const token = await cookieService.getTokenFromCookies();
       if (!token) {
         return null;
       }
 
       // Validate token and extract credentials
-      const validation = this.sessionValidator.validateToken(token);
+      const validation = sessionValidator.validateToken(token);
       if (!validation.isValid || !validation.payload) {
         return null;
       }
 
-      const { userId, tenantCode } =
-        this.sessionValidator.extractUserCredentials(token) || {};
-      if (!userId || !tenantCode) {
+      const { sub, tenantCode } =
+        sessionValidator.extractUserCredentials(token) || {};
+      if (!sub || !tenantCode) {
         return null;
       }
 
       // Fetch user data from API
-      const userData = await this.userApiService.fetchUserDetailsServerSide(
-        userId,
+      const userData = await userApiService.fetchUserDetailsServerSide(
+        sub,
         tenantCode,
         token
       );
+
       return userData;
     } catch {
       return null;
-    }
-  }
-
-  public async getUserSessionStatus(): Promise<{
-    hasSession: boolean;
-    userId?: string;
-    tenantCode?: string;
-    error?: string;
-  }> {
-    try {
-      const token = await this.cookieService.getTokenFromCookies();
-      if (!token) {
-        return { hasSession: false, error: "No token found" };
-      }
-
-      const validation = this.sessionValidator.validateToken(token);
-      if (!validation.isValid) {
-        return {
-          hasSession: false,
-          error: validation.error || "Token validation failed",
-        };
-      }
-
-      const credentials = this.sessionValidator.extractUserCredentials(token);
-      if (!credentials) {
-        return { hasSession: false, error: "Invalid credentials" };
-      }
-
-      return {
-        hasSession: true,
-        userId: credentials.userId,
-        tenantCode: credentials.tenantCode,
-      };
-    } catch {
-      return { hasSession: false, error: "Session validation failed" };
     }
   }
 }

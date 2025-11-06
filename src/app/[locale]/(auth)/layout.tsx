@@ -1,12 +1,12 @@
+import { TenantProvider } from "@/contexts/TenantContext";
+import { UserDetailsProvider } from "@/contexts/UserDetailsContext";
+import TenantService from "@/lib/api/services/TenantService";
+import { getServerAuthState } from "@/lib/auth-server";
+import { ServerUserService } from "@/lib/services/ServerUserService";
 import { NextIntlClientProvider } from "next-intl";
 import { getMessages } from "next-intl/server";
 import { headers } from "next/headers";
-import { TenantProvider } from "@/contexts/TenantContext";
-import { AuthProvider } from "@/contexts/AuthContext";
-import { UserSessionProvider } from "@/contexts/UserSessionContext";
-import { fetchTenantFromExternalAPI } from "@/lib/tenant";
-import { ServerUserService } from "@/lib/services/ServerUserService";
-import { getServerAuthState } from "@/lib/auth-server";
+import { NavigationProgress } from "@/components/Loaders/NavigationProgress";
 
 export default async function AuthLayout({
   children,
@@ -25,7 +25,10 @@ export default async function AuthLayout({
   let tenantData = null;
   if (tenantCode && tenantDomain && tenantOrigin) {
     try {
-      tenantData = await fetchTenantFromExternalAPI(tenantDomain, tenantOrigin);
+      tenantData = await TenantService.getTenantDataCached(
+        tenantDomain,
+        tenantOrigin
+      );
     } catch {
       tenantData = null;
     }
@@ -35,11 +38,10 @@ export default async function AuthLayout({
   const authState = await getServerAuthState();
 
   // Fetch user data server-side only if authenticated
-  const serverUserService = ServerUserService.getInstance();
   let userData = null;
   if (authState.isAuthenticated) {
     try {
-      userData = await serverUserService.fetchUserDataServerSide();
+      userData = await ServerUserService.fetchUserDataServerSide();
     } catch {
       userData = null;
     }
@@ -48,15 +50,20 @@ export default async function AuthLayout({
   return (
     <NextIntlClientProvider messages={messages}>
       <TenantProvider initialData={tenantData}>
-        <AuthProvider
+        <UserDetailsProvider
           initialAuthState={authState.isAuthenticated}
-          initialUser={authState.user}
+          initialUserData={userData?.data || null}
         >
-          <UserSessionProvider initialUserData={userData?.data || null}>
-            {/* Auth pages: No nav, no footer */}
-            <main className="min-h-screen">{children}</main>
-          </UserSessionProvider>
-        </AuthProvider>
+          {/* Navigation Progress Bar - placed early to catch all navigation */}
+          <NavigationProgress 
+            height="sm" 
+            color="bg-primary" 
+            zIndex={50}
+            autoDetect={true}
+          />
+          {/* Auth pages: No nav, no footer */}
+          <main className="min-h-screen">{children}</main>
+        </UserDetailsProvider>
       </TenantProvider>
     </NextIntlClientProvider>
   );

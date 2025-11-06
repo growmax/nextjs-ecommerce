@@ -89,8 +89,9 @@ export function useDashboardData(
 
       return DashboardService.getDashboardData(finalParams, finalFilters);
     },
-    staleTime: 5 * 60 * 1000, // 5 minutes
-    gcTime: 10 * 60 * 1000, // 10 minutes
+    // Dashboard data changes less frequently - longer stale time
+    staleTime: 10 * 60 * 1000, // 10 minutes (was 5 minutes)
+    gcTime: 15 * 60 * 1000, // 15 minutes (was 10 minutes)
     enabled: true, // Always enabled since we handle auth checks inside
     ...options,
   });
