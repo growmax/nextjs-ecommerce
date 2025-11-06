@@ -6,6 +6,9 @@ import {
   Sidebar,
   SidebarContent,
   SidebarFooter,
+  SidebarGroup,
+  SidebarGroupContent,
+  SidebarGroupLabel,
   SidebarHeader,
   SidebarMenu,
   SidebarMenuButton,
@@ -72,23 +75,37 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   }, [isAuthenticated]);
 
   return (
-    <Sidebar
-      className="top-(--header-height) h-[calc(100svh-var(--header-height))]!"
-      {...props}
-    >
-      <SidebarHeader>
+    <Sidebar collapsible="icon" className="border-r" {...props}>
+      <SidebarHeader className="border-b p-2">
         <SidebarMenu>
           <SidebarMenuItem>
-            <SidebarMenuButton size="lg" asChild>
-              <Link href="/" className="flex items-center gap-2">
-                <Logo />
+            <SidebarMenuButton
+              size="lg"
+              asChild
+              className="justify-start gap-2 overflow-hidden"
+            >
+              <Link
+                href="/"
+                className="flex items-center gap-2 overflow-hidden"
+              >
+                <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-sidebar-foreground/10 text-sidebar-foreground">
+                  <Home className="size-5" />
+                </span>
+                <Logo className="!text-sidebar-foreground !text-base !font-semibold whitespace-nowrap group-data-[collapsible=icon]:hidden" />
               </Link>
             </SidebarMenuButton>
           </SidebarMenuItem>
         </SidebarMenu>
       </SidebarHeader>
       <SidebarContent>
-        <NavMain items={filteredNavMainItems} />
+        <SidebarGroup>
+          <SidebarGroupLabel className="text-xs uppercase tracking-wide text-sidebar-foreground/70 group-data-[collapsible=icon]:hidden">
+          
+          </SidebarGroupLabel>
+          <SidebarGroupContent>
+            <NavMain items={filteredNavMainItems} />
+          </SidebarGroupContent>
+        </SidebarGroup>
       </SidebarContent>
       {isAuthenticated && (
         <SidebarFooter>

@@ -65,17 +65,15 @@ export default async function AppLayout({
         >
           <CartProviderWrapper>
             <TenantDataProvider>
-              <div className="[--header-height:calc(--spacing(14))]">
-                <SidebarProvider className="flex flex-col">
-                  <SiteHeader />
-                  <div className="flex flex-1">
-                    <AppSidebar />
-                    <SidebarInset className="overflow-x-hidden">
-                      <main className="overflow-x-hidden [&_.landing-page]:pt-0! [&_.landing-page]:pb-0! [&_.landing-page]:min-h-0!">
-                        {children}
-                      </main>
-                    </SidebarInset>
-                  </div>
+              <div className="min-h-screen">
+                <SidebarProvider defaultOpen className="flex min-h-screen">
+                  <AppSidebar />
+                  <SidebarInset className="flex flex-1 flex-col overflow-x-hidden">
+                    <SiteHeader />
+                    <main className="flex-1 overflow-x-hidden [&_.landing-page]:pt-0! [&_.landing-page]:pb-0! [&_.landing-page]:min-h-0!">
+                      {children}
+                    </main>
+                  </SidebarInset>
                 </SidebarProvider>
               </div>
             </TenantDataProvider>
