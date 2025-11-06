@@ -41,9 +41,11 @@ import OrderDetailsService from "./services/OrderDetailsService";
 import OrderNameService from "./services/OrderNameService";
 import OrdersService from "./services/OrdersService";
 import OrderStatusService from "./services/OrderStatusService";
+import OrderVersionService from "./services/OrderVersionService";
 import PaymentService from "./services/PaymentService";
 import PreferenceService from "./services/PreferenceService";
 import ProductAssetsService from "./services/ProductAssetsService";
+import QuotationDetailsService from "./services/QuotationDetailsService";
 import QuotesService from "./services/QuotesService";
 import RequestEditService from "./services/RequestEditService";
 import SearchService from "./services/SearchService";
@@ -64,9 +66,11 @@ export {
   OrderNameService,
   OrdersService,
   OrderStatusService,
+  OrderVersionService,
   PaymentService,
   PreferenceService,
   ProductAssetsService,
+  QuotationDetailsService,
   QuotesService,
   QuoteStatusService,
   RequestEditService,
@@ -150,6 +154,8 @@ export type {
   PaymentDueOrderData,
   PaymentDueResponse,
   PaymentHistoryItem,
+  PaymentTerm,
+  PaymentTermsResponse,
 } from "./services/PaymentService";
 
 export type {
@@ -170,6 +176,7 @@ export type {
 } from "./services/SearchService";
 
 export type {
+  CheckVolumeDiscountEnabledResponse,
   Discount,
   DiscountApiResponse,
   DiscountItem,
@@ -239,6 +246,14 @@ export type {
 } from "./services/QuotesService";
 
 export type {
+  FetchQuotationDetailsRequest,
+  QuotationData,
+  QuotationDetail,
+  QuotationDetailsResponse,
+  QuotationProductDetail,
+} from "./services/QuotationDetailsService";
+
+export type {
   QuoteStatusApiResponse,
   QuoteStatusParams,
   QuoteStatusResponse,
@@ -280,6 +295,7 @@ export const API = {
   OrderName: OrderNameService,
   Orders: OrdersService,
   OrderStatus: OrderStatusService,
+  OrderVersion: OrderVersionService,
   Payment: PaymentService,
   Preference: PreferenceService,
   ProductAssets: ProductAssetsService,

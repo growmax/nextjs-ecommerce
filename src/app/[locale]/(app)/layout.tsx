@@ -1,5 +1,4 @@
 import { AppSidebar } from "@/components/app-sidebar";
-import { NavigationProgress } from "@/components/Loaders/NavigationProgress";
 import { CartProviderWrapper } from "@/components/providers/CartProviderWrapper";
 import { SiteHeader } from "@/components/site-header";
 import { TenantDataProvider } from "@/components/TenantDataProvider";
@@ -66,20 +65,13 @@ export default async function AppLayout({
         >
           <CartProviderWrapper>
             <TenantDataProvider>
-              {/* Navigation Progress Bar - placed early to catch all navigation */}
-              <NavigationProgress
-                height="sm"
-                color="bg-primary"
-                zIndex={50}
-                autoDetect={true}
-              />
-              <div className="[--header-height:calc(theme(spacing.14))]">
-                <SidebarProvider defaultOpen={false} className="flex flex-col">
+              <div className="[--header-height:calc(--spacing(14))]">
+                <SidebarProvider className="flex flex-col">
                   <SiteHeader />
                   <div className="flex flex-1">
                     <AppSidebar />
                     <SidebarInset className="overflow-x-hidden">
-                      <main className="overflow-x-hidden [&_.landing-page]:!pt-0 [&_.landing-page]:!pb-0 [&_.landing-page]:!min-h-0">
+                      <main className="overflow-x-hidden [&_.landing-page]:pt-0! [&_.landing-page]:pb-0! [&_.landing-page]:min-h-0!">
                         {children}
                       </main>
                     </SidebarInset>

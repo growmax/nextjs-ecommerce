@@ -12,6 +12,7 @@ export function ConditionalFooter() {
     "/orders",
     "/cart",
     "/details/orderDetails",
+    "/details/quoteDetails",
   ];
 
   // Check if current path matches any of the paths where footer should be hidden

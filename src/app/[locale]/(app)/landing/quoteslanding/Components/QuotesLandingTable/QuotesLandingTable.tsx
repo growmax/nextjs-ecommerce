@@ -725,7 +725,8 @@ function QuotesLandingTable({
           isLoading={loading}
           onRowClick={row => {
             const quoteId = row.original.quotationIdentifier;
-            if (quoteId) router.push(`/${locale}/quotes/${quoteId}`);
+            if (quoteId)
+              router.push(`/${locale}/details/quoteDetails/${quoteId}`);
           }}
           pageSizeOptions={[20, 50, 100]}
           showPagination={true}

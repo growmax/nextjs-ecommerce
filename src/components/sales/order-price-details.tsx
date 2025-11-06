@@ -8,7 +8,6 @@ import {
   cartCalculation,
   discountDetails,
 } from "@/utils/calculation/cartCalculation";
-import each from "lodash/each";
 import { ChevronDown } from "lucide-react";
 import { useMemo, useState } from "react";
 import PricingFormat from "../PricingFormat";
@@ -240,148 +239,79 @@ export default function OrderPriceDetails({
       return breakup;
     }
 
-    // Normalize products to ensure they have the expected structure
-    const normalizedProducts = products.map(product => {
-      // Convert productTaxes to hsnDetails structure if needed
-      let hsnDetails = product.hsnDetails;
+    // Collect all taxes from products
+    const taxMap = new Map<string, number>();
 
-      if (
-        !hsnDetails &&
-        product.productTaxes &&
-        Array.isArray(product.productTaxes)
-      ) {
-        // Calculate total tax from productTaxes
-        const totalTax = product.productTaxes.reduce(
-          (sum: number, tax: { taxPercentage?: number }) =>
-            sum + (tax.taxPercentage || 0),
-          product.tax || 0
-        );
-
-        // Convert productTaxes to taxReqLs format
-        const taxReqLs = product.productTaxes.map(
+    products.forEach(product => {
+      // Check for productTaxes array (from API)
+      if (product.productTaxes && Array.isArray(product.productTaxes)) {
+        product.productTaxes.forEach(
           (tax: {
             taxName?: string;
             taxPercentage?: number;
             compound?: boolean;
-          }) => ({
-            taxName: tax.taxName || "",
-            rate: tax.taxPercentage || 0,
-            compound: tax.compound || false,
-          })
+          }) => {
+            const taxName = tax.taxName || "";
+            const taxPercentage = tax.taxPercentage || 0;
+
+            if (taxName && taxPercentage > 0) {
+              // Calculate tax amount for this product
+              const quantity = product.quantity || product.askedQuantity || 1;
+              const unitPrice =
+                product.unitPrice ||
+                product.discountedPrice ||
+                product.totalPrice / quantity ||
+                0;
+              const productTotal = product.totalPrice || quantity * unitPrice;
+              const taxAmount = (productTotal * taxPercentage) / 100;
+
+              const currentTotal = taxMap.get(taxName) || 0;
+              taxMap.set(taxName, currentTotal + taxAmount);
+            }
+          }
         );
+      } else if (product.hsnDetails) {
+        // Fallback to hsnDetails structure
+        const hsnDetails = product.hsnDetails;
+        const taxReqLs = isInter
+          ? hsnDetails.interTax?.taxReqLs
+          : hsnDetails.intraTax?.taxReqLs;
 
-        hsnDetails = {
-          hsnCode: product.hsnCode || "",
-          tax: totalTax,
-          interTax: {
-            totalTax,
-            taxReqLs,
-          },
-          intraTax: {
-            totalTax,
-            taxReqLs,
-          },
-        };
-      }
+        if (taxReqLs && Array.isArray(taxReqLs)) {
+          taxReqLs.forEach((tax: { taxName?: string; rate?: number }) => {
+            const taxName = tax.taxName || "";
+            const taxRate = tax.rate || 0;
 
-      // Calculate pfItemValue from pfPercentage or pfValue
-      // pfPercentage is the percentage (e.g., 12 means 12%)
-      let pfItemValue = product.pfItemValue;
-      if (!pfItemValue && pfItemValue !== 0) {
-        if (
-          product.pfPercentage !== undefined &&
-          product.pfPercentage !== null
-        ) {
-          pfItemValue = product.pfPercentage;
-        } else if (
-          product.pfValue !== undefined &&
-          product.pfValue !== null &&
-          product.pfValue < 100
-        ) {
-          // If pfValue is less than 100, it's likely a percentage
-          pfItemValue = product.pfValue;
-        } else {
-          pfItemValue = 0;
+            if (taxName && taxRate > 0) {
+              const quantity = product.quantity || product.askedQuantity || 1;
+              const unitPrice =
+                product.unitPrice ||
+                product.discountedPrice ||
+                product.totalPrice / quantity ||
+                0;
+              const productTotal = product.totalPrice || quantity * unitPrice;
+              const taxAmount = (productTotal * taxRate) / 100;
+
+              const currentTotal = taxMap.get(taxName) || 0;
+              taxMap.set(taxName, currentTotal + taxAmount);
+            }
+          });
         }
       }
-
-      // Use existing totalPrice from API if available, otherwise calculate
-      const quantity = product.quantity || product.askedQuantity || 1;
-      const unitPrice =
-        product.unitPrice ||
-        product.discountedPrice ||
-        product.unitListPrice ||
-        0;
-      // Don't overwrite totalPrice if it's already calculated correctly in the API
-      const totalPrice =
-        product.totalPrice !== undefined && product.totalPrice !== null
-          ? product.totalPrice
-          : quantity * unitPrice;
-
-      return {
-        ...product,
-        quantity,
-        askedQuantity: quantity,
-        unitListPrice: product.unitListPrice || product.unitLP || 0,
-        unitPrice,
-        totalPrice,
-        shippingCharges: product.shippingCharges || 0,
-        pfItemValue,
-        pfPercentage: pfItemValue,
-        cashdiscountValue:
-          product.cashdiscountValue || product.cashDiscountValue || 0,
-        hsnDetails: hsnDetails || {},
-        listPricePublic:
-          product.listPricePublic !== undefined
-            ? product.listPricePublic
-            : true,
-        discount: product.discount || product.discountPercentage || 0,
-        discountPercentage: product.discount || product.discountPercentage || 0,
-        tax: product.tax || hsnDetails?.tax || 0,
-        showPrice: product.showPrice !== undefined ? product.showPrice : true,
-        priceNotAvailable: product.priceNotAvailable || false,
-        volumeDiscountApplied: product.volumeDiscountApplied || false,
-      };
     });
 
-    // Preprocess products to get tax breakup structure
-    const processedProducts = discountDetails(
-      normalizedProducts,
-      isSeller,
-      taxExemption,
-      precision
-    );
-
-    // Get unique tax names from processed products
-    const taxNames = new Set<string>();
-
-    // Collect tax names from processed products
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    processedProducts.forEach((product: any) => {
-      if (isInter && product.interTaxBreakup) {
-        each(product.interTaxBreakup, tax => {
-          taxNames.add(tax.taxName);
-        });
-      } else if (!isInter && product.intraTaxBreakup) {
-        each(product.intraTaxBreakup, tax => {
-          taxNames.add(tax.taxName);
-        });
-      }
-    });
-
-    // Build tax details array from cartValue totals
-    taxNames.forEach(taxName => {
-      const taxTotal = cartValue[`${taxName}Total`] as number;
-      if (taxTotal && taxTotal > 0) {
+    // Convert map to array
+    taxMap.forEach((value, name) => {
+      if (value > 0) {
         breakup.push({
-          name: taxName,
-          value: taxTotal || 0,
+          name,
+          value,
         });
       }
     });
 
     return breakup;
-  }, [products, cartValue, isInter, isSeller, taxExemption, precision]);
+  }, [products, isInter]);
 
   // Use API values when available, otherwise use calculated values
   const finalShipping =
@@ -508,7 +438,7 @@ export default function OrderPriceDetails({
         </div>
 
         {/* Tax + expand button */}
-        {finalTax > 0 && (
+        {finalTax !== undefined && finalTax !== null && (
           <div className="grid grid-cols-2 gap-2 items-center">
             <div className="flex items-center gap-1">
               <TypographyMuted>Tax</TypographyMuted>

@@ -1,11 +1,15 @@
-import { Card, CardContent, CardTitle } from "@/components/ui/card";
+import { PageLoader } from "@/components/Loaders/PageLoader/page-loader";
+import { Suspense } from "react";
+import QuoteDetailsClient from "./components/QuoteDetailsClient";
 
-export default function QuoteDetailsPage() {
+export default function QuoteDetailsPage({
+  params,
+}: {
+  params: Promise<{ quoteSlug: string[] }>;
+}) {
   return (
-    <Card className="container mx-auto px-4 py-8">
-      <CardContent>
-        <CardTitle className="text-2xl font-bold">Quote Details</CardTitle>
-      </CardContent>
-    </Card>
+    <Suspense fallback={<PageLoader message="Loading Quote Details..." />}>
+      <QuoteDetailsClient params={params} />
+    </Suspense>
   );
 }

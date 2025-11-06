@@ -8,6 +8,7 @@ import React, {
   useContext,
   useEffect,
   useMemo,
+  useRef,
   useState,
 } from "react";
 import { toast } from "sonner";
@@ -142,11 +143,31 @@ export function CartProvider({ children, userId }: CartProviderProps) {
     setCartCount(count);
   }, []);
 
+  // Track if we've already fetched to prevent multiple calls
+  const hasFetchedCartRef = useRef<boolean>(false);
+  const prevUserIdRef = useRef<string | number | null | undefined>(userId);
+
   useEffect(() => {
-    if (userId) {
-      getCart();
+    // Only fetch if userId changed and is valid
+    if (
+      userId &&
+      userId !== prevUserIdRef.current &&
+      !hasFetchedCartRef.current
+    ) {
+      hasFetchedCartRef.current = true;
+      prevUserIdRef.current = userId;
+      getCart().finally(() => {
+        hasFetchedCartRef.current = false;
+      });
+    } else if (!userId) {
+      // Reset cart when userId becomes undefined
+      setCart([]);
+      setCartCount(0);
+      prevUserIdRef.current = userId;
+      hasFetchedCartRef.current = false;
     }
-  }, [userId, getCart]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [userId]);
 
   const contextValue = useMemo(
     () => ({
