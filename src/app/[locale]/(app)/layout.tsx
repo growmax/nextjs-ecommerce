@@ -11,6 +11,7 @@ import { ServerUserService } from "@/lib/services/ServerUserService";
 import { NextIntlClientProvider } from "next-intl";
 import { getMessages } from "next-intl/server";
 import { headers } from "next/headers";
+import { NavigationProgress } from "@/components/Loaders/NavigationProgress";
 
 export default async function AppLayout({
   children,
@@ -65,6 +66,13 @@ export default async function AppLayout({
         >
           <CartProviderWrapper>
             <TenantDataProvider>
+              {/* Navigation Progress Bar - placed early to catch all navigation */}
+              <NavigationProgress 
+                height="sm" 
+                color="bg-primary" 
+                zIndex={50}
+                autoDetect={true}
+              />
               <div className="[--header-height:calc(theme(spacing.14))]">
                 <SidebarProvider defaultOpen={false} className="flex flex-col">
                   <SiteHeader />
