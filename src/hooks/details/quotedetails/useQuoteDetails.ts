@@ -52,12 +52,7 @@ export function useQuoteDetails({
       return versionWithIdentifier.orderIdentifier;
     }
     return quoteDetails?.data?.quotationIdentifier || quoteIdentifier || "";
-  }, [
-    versions,
-    selectedVersion,
-    quoteDetails?.data?.quotationIdentifier,
-    quoteIdentifier,
-  ]);
+  }, [versions, selectedVersion, quoteDetails?.data?.quotationIdentifier, quoteIdentifier]);
 
   const quotationVersion = useMemo(() => {
     if (!selectedVersion) return null;

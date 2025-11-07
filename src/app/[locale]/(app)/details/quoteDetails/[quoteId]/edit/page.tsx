@@ -144,12 +144,7 @@ export default function EditQuotePage({ params }: EditQuotePageProps) {
   // Fetch quote details
   useEffect(() => {
     const fetchQuoteDetails = async () => {
-      if (
-        !paramsLoaded ||
-        !quoteIdentifier ||
-        !user?.userId ||
-        !user?.companyId
-      ) {
+      if (!paramsLoaded || !quoteIdentifier || !user?.userId || !user?.companyId) {
         return;
       }
 
@@ -273,9 +268,9 @@ export default function EditQuotePage({ params }: EditQuotePageProps) {
         "";
 
       let quantity =
+        (product.askedQuantity as number) ||
         (product.quantity as number) ||
         (product.unitQuantity as number) ||
-        (product.askedQuantity as number) ||
         1;
 
       const possibleIds = [
@@ -938,19 +933,18 @@ export default function EditQuotePage({ params }: EditQuotePageProps) {
                     : quoteDetails.data?.quotationDetails?.[0]
                         ?.dbProductDetails || []
                 }
-                {...(quoteDetails.data?.quotationDetails?.[0]?.dbProductDetails
-                  ?.length && {
+                {...(quoteDetails.data?.quotationDetails?.[0]
+                  ?.dbProductDetails?.length && {
                   totalCount:
                     quoteDetails.data.quotationDetails[0].dbProductDetails
                       .length,
                 })}
                 isEditable={true}
+                showInvoicedQty={false}
                 onQuantityChange={handleQuantityChange}
                 editedQuantities={editedQuantities}
                 onProductAdd={handleProductAdd}
                 elasticIndex={elasticIndex}
-                useAskedQuantity={true}
-                hideInvoicedQty={true}
               />
             )}
 
@@ -1084,51 +1078,16 @@ export default function EditQuotePage({ params }: EditQuotePageProps) {
                         ? productsWithEditedQuantities
                         : updatedProducts.length > 0
                           ? updatedProducts
-                          : products
+                          : quoteDetails.data?.quotationDetails?.[0]
+                              ?.dbProductDetails || []
                 }
-                isInter={(() => {
-                  // Determine if inter-state based on product taxes (IGST = inter-state, SGST/CGST = intra-state)
-                  const productList =
-                    calculatedData?.products &&
-                    calculatedData.products.length > 0
-                      ? calculatedData.products
-                      : productsWithCashDiscount.length > 0
-                        ? productsWithCashDiscount
-                        : productsWithEditedQuantities.length > 0
-                          ? productsWithEditedQuantities
-                          : updatedProducts.length > 0
-                            ? updatedProducts
-                            : products;
-
-                  if (productList.length > 0 && productList[0]) {
-                    const firstProduct = productList[0] as Record<
-                      string,
-                      unknown
-                    >;
-                    if (
-                      firstProduct.productTaxes &&
-                      Array.isArray(firstProduct.productTaxes)
-                    ) {
-                      const hasIGST = firstProduct.productTaxes.some(
-                        (t: Record<string, unknown>) => t.taxName === "IGST"
-                      );
-                      return hasIGST;
-                    }
-                  }
-                  return false;
-                })()}
-                insuranceCharges={
-                  Number(firstQuoteDetail?.insuranceCharges) || 0
-                }
+                isInter={true}
+                taxExemption={false}
                 precision={2}
                 Settings={{
                   roundingAdjustment:
-                    firstQuoteDetail?.roundingAdjustmentEnabled || false,
+                    quoteSettings?.roundingAdjustment || false,
                 }}
-                isSeller={(user as { isSeller?: boolean })?.isSeller || false}
-                taxExemption={
-                  (user as { taxExemption?: boolean })?.taxExemption || false
-                }
                 currency={
                   (
                     quoteDetails.data?.buyerCurrencySymbol as {
@@ -1139,32 +1098,30 @@ export default function EditQuotePage({ params }: EditQuotePageProps) {
                 overallShipping={
                   calculatedData?.cartValue?.totalShipping !== undefined
                     ? calculatedData.cartValue.totalShipping
-                    : Number(firstQuoteDetail?.overallShipping || 0)
+                    : Number(
+                        quoteDetails.data?.quotationDetails?.[0]
+                          ?.overallShipping
+                      ) || 0
                 }
                 overallTax={
                   calculatedData?.cartValue?.totalTax !== undefined
                     ? calculatedData.cartValue.totalTax
-                    : Number(firstQuoteDetail?.overallTax || 0)
-                }
-                calculatedTotal={
-                  calculatedData?.cartValue?.grandTotal !== undefined
-                    ? calculatedData.cartValue.grandTotal
                     : Number(
-                        firstQuoteDetail?.calculatedTotal ||
-                          firstQuoteDetail?.grandTotal ||
-                          0
-                      )
+                        quoteDetails.data?.quotationDetails?.[0]?.overallTax
+                      ) || 0
                 }
-                subTotal={
-                  calculatedData?.cartValue?.totalValue !== undefined
-                    ? calculatedData.cartValue.totalValue
-                    : Number(firstQuoteDetail?.subTotal || 0)
-                }
-                taxableAmount={
-                  calculatedData?.cartValue?.taxableAmount !== undefined
-                    ? calculatedData.cartValue.taxableAmount
-                    : Number(firstQuoteDetail?.taxableAmount || 0)
-                }
+                {...(calculatedData?.cartValue?.grandTotal !== undefined &&
+                calculatedData?.cartValue?.grandTotal !== null &&
+                calculatedData?.cartValue?.totalValue !== undefined &&
+                calculatedData?.cartValue?.totalValue !== null &&
+                calculatedData?.cartValue?.taxableAmount !== undefined &&
+                calculatedData?.cartValue?.taxableAmount !== null
+                  ? {
+                      calculatedTotal: calculatedData.cartValue.grandTotal,
+                      subTotal: calculatedData.cartValue.totalValue,
+                      taxableAmount: calculatedData.cartValue.taxableAmount,
+                    }
+                  : {})}
               />
 
               <CashDiscountCard
@@ -1221,8 +1178,7 @@ export default function EditQuotePage({ params }: EditQuotePageProps) {
                 isSummaryPage={false}
                 isEdit={true}
                 cashDiscountValue={
-                  quoteDetails?.data?.quotationDetails?.[0]
-                    ?.cashdiscountValue ||
+                  quoteDetails?.data?.quotationDetails?.[0]?.cashdiscountValue ||
                   cashDiscountTerms?.cashdiscountValue ||
                   (quoteDetails?.data?.quotationDetails?.[0]?.quoteTerms &&
                   typeof quoteDetails.data.quotationDetails[0].quoteTerms ===

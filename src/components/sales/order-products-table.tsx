@@ -58,8 +58,7 @@ export interface OrderProductsTableProps {
   editedQuantities?: Record<string, number>;
   onProductAdd?: (product: ProductSearchResult) => void;
   elasticIndex?: string | undefined;
-  useAskedQuantity?: boolean; // New prop to use askedQuantity field for quotes
-  hideInvoicedQty?: boolean; // New prop to hide invoiced quantity column for quotes
+  showInvoicedQty?: boolean;
 }
 
 //
@@ -74,8 +73,7 @@ export default function OrderProductsTable({
   editedQuantities = {},
   onProductAdd,
   elasticIndex,
-  useAskedQuantity = false,
-  hideInvoicedQty = false,
+  showInvoicedQty = true,
 }: OrderProductsTableProps) {
   const [currentPage, setCurrentPage] = useState(1);
   const displayCount = totalCount || products.length;
@@ -185,7 +183,7 @@ export default function OrderProductsTable({
                 <TableHead className="font-medium text-primary text-center min-w-[100px] py-3">
                   QUANTITY
                 </TableHead>
-                {!hideInvoicedQty && (
+                {showInvoicedQty && (
                   <TableHead className="font-medium text-primary text-center min-w-[140px] py-3">
                     INVOICED QTY
                   </TableHead>
@@ -202,7 +200,7 @@ export default function OrderProductsTable({
               {currentPageProducts.length === 0 ? (
                 <TableRow>
                   <TableCell
-                    colSpan={hideInvoicedQty ? 8 : 9}
+                    colSpan={showInvoicedQty ? 9 : 8}
                     className="text-center py-8 text-muted-foreground"
                   >
                     No products found
@@ -230,15 +228,8 @@ export default function OrderProductsTable({
                       product.itemTaxableAmount ??
                       product.unitPrice ??
                       product.basePrice;
-                    // Use askedQuantity for quotes, or fallback to unitQuantity/quantity for orders
-                    const originalQuantity = useAskedQuantity
-                      ? Number(
-                          product.askedQuantity ??
-                            product.unitQuantity ??
-                            product.quantity ??
-                            0
-                        )
-                      : Number(product.unitQuantity ?? product.quantity ?? 0);
+                    const originalQuantity =
+                      product.unitQuantity ?? product.quantity ?? 0;
                     const productId =
                       product.brandProductId ||
                       product.itemCode ||
@@ -371,7 +362,7 @@ export default function OrderProductsTable({
                             quantity
                           )}
                         </TableCell>
-                        {!hideInvoicedQty && (
+                        {showInvoicedQty && (
                           <TableCell className="text-center min-w-[140px] py-3">
                             {invoicedQty}
                           </TableCell>
@@ -414,7 +405,7 @@ export default function OrderProductsTable({
                       <TableCell className="min-w-[100px] py-3">
                         <div className="h-6"></div>
                       </TableCell>
-                      {!hideInvoicedQty && (
+                      {showInvoicedQty && (
                         <TableCell className="min-w-[140px] py-3">
                           <div className="h-6"></div>
                         </TableCell>

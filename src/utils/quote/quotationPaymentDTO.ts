@@ -154,8 +154,13 @@ interface QuotationPaymentDTOParams {
 export const quotationPaymentDTO = (
   params: QuotationPaymentDTOParams
 ): Record<string, unknown> => {
-  const { values, overviewValues, initialValues, displayName, companyName } =
-    params;
+  const {
+    values,
+    overviewValues,
+    initialValues,
+    displayName,
+    companyName,
+  } = params;
 
   const quoteBody = cloneDeep(values) as Record<string, unknown>;
 

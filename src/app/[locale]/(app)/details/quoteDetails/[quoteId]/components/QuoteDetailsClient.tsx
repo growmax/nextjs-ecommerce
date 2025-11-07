@@ -351,12 +351,18 @@ export default function QuoteDetailsClient({
     // Transform to match ProductItem interface while preserving all fields including productTaxes
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     return rawProducts.map((product: any) => {
+      // Prioritize askedQuantity for quantity display
+      const quantity = product.askedQuantity || product.quantity || product.unitQuantity || 0;
+      
       const transformed: Record<string, unknown> = {
         ...product,
         itemNo:
           typeof product.itemNo === "string"
             ? parseInt(product.itemNo, 10)
             : (product.itemNo as number),
+        // Set all quantity fields to use askedQuantity as the source
+        quantity,
+        unitQuantity: quantity,
       };
 
       // Preserve productTaxes if it exists
@@ -370,9 +376,8 @@ export default function QuoteDetailsClient({
 
   // Extract quote details from the nested structure
   const quoteDetailData =
-    (
-      displayQuoteDetails?.quotationDetails as Array<Record<string, unknown>>
-    )?.[0] || quoteDetails?.data?.quotationDetails?.[0];
+    (displayQuoteDetails?.quotationDetails as Array<Record<string, unknown>>)?.[0] ||
+    quoteDetails?.data?.quotationDetails?.[0];
   const buyerCurrencySymbol =
     displayQuoteDetails?.buyerCurrencySymbol ||
     quoteDetails?.data?.buyerCurrencySymbol;
@@ -435,8 +440,7 @@ export default function QuoteDetailsClient({
                     {...(products.length && {
                       totalCount: products.length,
                     })}
-                    useAskedQuantity={true}
-                    hideInvoicedQty={true}
+                    showInvoicedQty={false}
                     onExport={() => {
                       const filename = `Quote_${quoteIdentifier}_Products.csv`;
                       exportProductsToCsv(
@@ -486,27 +490,21 @@ export default function QuoteDetailsClient({
                   }
                   warehouseName={
                     (
-                      (
-                        quoteDetailData?.dbProductDetails as Array<
-                          Record<string, unknown>
-                        >
-                      )?.[0] as Record<string, Record<string, string>>
+                      (quoteDetailData?.dbProductDetails as Array<
+                        Record<string, unknown>
+                      >)?.[0] as Record<string, Record<string, string>>
                     )?.wareHouse?.wareHouseName ||
                     (
-                      (
-                        quoteDetailData?.dbProductDetails as Array<
-                          Record<string, unknown>
-                        >
-                      )?.[0] as Record<string, string>
+                      (quoteDetailData?.dbProductDetails as Array<
+                        Record<string, unknown>
+                      >)?.[0] as Record<string, string>
                     )?.orderWareHouseName
                   }
                   warehouseAddress={
                     (
-                      (
-                        quoteDetailData?.dbProductDetails as Array<
-                          Record<string, unknown>
-                        >
-                      )?.[0] as Record<
+                      (quoteDetailData?.dbProductDetails as Array<
+                        Record<string, unknown>
+                      >)?.[0] as Record<
                         string,
                         Record<string, Record<string, string>>
                       >
