@@ -1,6 +1,5 @@
-import { AppSidebar } from "@/components/app-sidebar";
+import { AppSidebar } from "@/components/AppSideBar/app-sidebar";
 import { CartProviderWrapper } from "@/components/providers/CartProviderWrapper";
-import { SiteHeader } from "@/components/site-header";
 import { TenantDataProvider } from "@/components/TenantDataProvider";
 import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
 import { TenantProvider } from "@/contexts/TenantContext";
@@ -11,6 +10,9 @@ import { ServerUserService } from "@/lib/services/ServerUserService";
 import { NextIntlClientProvider } from "next-intl";
 import { getMessages } from "next-intl/server";
 import { headers } from "next/headers";
+
+// Import the AppHeader component
+import { AppHeader } from "@/components/AppHeader/app-header";
 
 export default async function AppLayout({
   children,
@@ -65,17 +67,15 @@ export default async function AppLayout({
         >
           <CartProviderWrapper>
             <TenantDataProvider>
-              <div className="min-h-screen">
-                <SidebarProvider defaultOpen className="flex min-h-screen">
-                  <AppSidebar />
-                  <SidebarInset className="flex flex-1 flex-col overflow-x-hidden">
-                    <SiteHeader />
-                    <main className="flex-1 overflow-x-hidden [&_.landing-page]:pt-0! [&_.landing-page]:pb-0! [&_.landing-page]:min-h-0!">
-                      {children}
-                    </main>
-                  </SidebarInset>
-                </SidebarProvider>
-              </div>
+              <SidebarProvider>
+                <AppSidebar />
+                <SidebarInset>
+                  <AppHeader />
+                  <main className="flex-1 overflow-x-hidden [&_.landing-page]:pt-0! [&_.landing-page]:pb-0! [&_.landing-page]:min-h-0!">
+                    {children}
+                  </main>
+                </SidebarInset>
+              </SidebarProvider>
             </TenantDataProvider>
           </CartProviderWrapper>
         </UserDetailsProvider>
