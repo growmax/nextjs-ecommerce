@@ -6,7 +6,6 @@ import { ServerUserService } from "@/lib/services/ServerUserService";
 import { NextIntlClientProvider } from "next-intl";
 import { getMessages } from "next-intl/server";
 import { headers } from "next/headers";
-import { NavigationProgress } from "@/components/Loaders/NavigationProgress";
 
 export default async function AuthLayout({
   children,
@@ -54,13 +53,6 @@ export default async function AuthLayout({
           initialAuthState={authState.isAuthenticated}
           initialUserData={userData?.data || null}
         >
-          {/* Navigation Progress Bar - placed early to catch all navigation */}
-          <NavigationProgress 
-            height="sm" 
-            color="bg-primary" 
-            zIndex={50}
-            autoDetect={true}
-          />
           {/* Auth pages: No nav, no footer */}
           <main className="min-h-screen">{children}</main>
         </UserDetailsProvider>

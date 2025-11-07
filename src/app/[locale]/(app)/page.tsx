@@ -1,4 +1,3 @@
-import InteractiveDemoWrapper from "@/components/demo/InteractiveDemoWrapper";
 import type { Metadata } from "next";
 import { Suspense } from "react";
 
@@ -116,9 +115,7 @@ export default function HomePage() {
               <p className="text-gray-600">Loading interactive section...</p>
             </div>
           }
-        >
-          <InteractiveDemoWrapper />
-        </Suspense>
+        ></Suspense>
       </section>
 
       {/* Performance Summary */}

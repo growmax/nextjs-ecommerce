@@ -1,192 +1,102 @@
-@import "tailwindcss";
-@import "tw-animate-css";
+@tailwind base;
 
 @custom-variant dark (&:is(.dark *));
+@tailwind components;
+@tailwind utilities;
 
-/* No static theme - everything comes from API dynamically */
-/* Dark theme will also be injected dynamically from API response */
-
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --color-card: var(--card);
-  --color-card-foreground: var(--card-foreground);
-  --color-popover: var(--popover);
-  --color-popover-foreground: var(--popover-foreground);
-  --color-primary: var(--primary);
-  --color-primary-foreground: var(--primary-foreground);
-  --color-secondary: var(--secondary);
-  --color-secondary-foreground: var(--secondary-foreground);
-  --color-muted: var(--muted);
-  --color-muted-foreground: var(--muted-foreground);
-  --color-accent: var(--accent);
-  --color-accent-foreground: var(--accent-foreground);
-  --color-destructive: var(--destructive);
-  --color-destructive-foreground: var(--destructive-foreground);
-  --color-border: var(--border);
-  --color-input: var(--input);
-  --color-ring: var(--ring);
-  --color-chart-1: var(--chart-1);
-  --color-chart-2: var(--chart-2);
-  --color-chart-3: var(--chart-3);
-  --color-chart-4: var(--chart-4);
-  --color-chart-5: var(--chart-5);
-  --color-sidebar: var(--sidebar);
-  --color-sidebar-foreground: var(--sidebar-foreground);
-  --color-sidebar-primary: var(--sidebar-primary);
-  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
-  --color-sidebar-accent: var(--sidebar-accent);
-  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
-  --color-sidebar-border: var(--sidebar-border);
-  --color-sidebar-ring: var(--sidebar-ring);
-
-  --font-sans: var(--font-sans);
-  --font-mono: var(--font-mono);
-  --font-serif: var(--font-serif);
-
-  --radius-sm: calc(var(--radius) - 4px);
-  --radius-md: calc(var(--radius) - 2px);
-  --radius-lg: var(--radius);
-  --radius-xl: calc(var(--radius) + 4px);
-
-  --shadow-2xs: var(--shadow-2xs);
-  --shadow-xs: var(--shadow-xs);
-  --shadow-sm: var(--shadow-sm);
-  --shadow: var(--shadow);
-  --shadow-md: var(--shadow-md);
-  --shadow-lg: var(--shadow-lg);
-  --shadow-xl: var(--shadow-xl);
-  --shadow-2xl: var(--shadow-2xl);
-}
-
-/* TweakCN Tenant Theme Support */
-.tenant-theme-override {
-  --primary: var(--tenant-primary, var(--primary));
-  --secondary: var(--tenant-secondary, var(--secondary));
-  --accent: var(--tenant-accent, var(--accent));
-  --background: var(--tenant-background, var(--background));
-  --foreground: var(--tenant-foreground, var(--foreground));
-}
-
-/* Mobile-First Base Styles */
 @layer base {
+  :root {
+    --background: 0 0% 100%;
+    --foreground: 222.2 84% 4.9%;
+
+    --muted: 210 40% 96.1%;
+    --muted-foreground: 215.4 16.3% 46.9%;
+
+    --popover: 0 0% 100%;
+    --popover-foreground: 222.2 84% 4.9%;
+
+    --card: 0 0% 100%;
+    --card-foreground: 222.2 84% 4.9%;
+
+    --border: 214.3 31.8% 91.4%;
+    --input: 214.3 31.8% 91.4%;
+
+    --primary: 221.2 83.2% 53.3%;
+    --primary-foreground: 210 40% 98%;
+
+    --secondary: 210 40% 96.1%;
+    --secondary-foreground: 222.2 47.4% 11.2%;
+
+    --accent: 210 40% 96.1%;
+    --accent-foreground: 222.2 47.4% 11.2%;
+
+    --destructive: 0 84.2% 60.2%;
+    --destructive-foreground: 210 40% 98%;
+
+    --ring: 221.2 83.2% 53.3%;
+
+    --radius: 0.75rem;
+
+    --sidebar-background: 0 0% 98%;
+    --sidebar-foreground: 240 5.3% 26.1%;
+    --sidebar-primary: 240 5.9% 10%;
+    --sidebar-primary-foreground: 0 0% 98%;
+    --sidebar-accent: 240 4.8% 95.9%;
+    --sidebar-accent-foreground: 240 5.9% 10%;
+    --sidebar-border: 220 13% 91%;
+    --sidebar-ring: 217.2 91.2% 59.8%;
+
+    --font-sans:
+      "Inter", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI",
+      sans-serif;
+  }
+
+  .dark {
+    --background: 222.2 84% 4.9%;
+    --foreground: 210 40% 98%;
+
+    --muted: 217.2 32.6% 17.5%;
+    --muted-foreground: 215 20.2% 65.1%;
+
+    --popover: 222.2 84% 4.9%;
+    --popover-foreground: 210 40% 98%;
+
+    --card: 222.2 84% 4.9%;
+    --card-foreground: 210 40% 98%;
+
+    --border: 217.2 32.6% 17.5%;
+    --input: 217.2 32.6% 17.5%;
+
+    --primary: 217.2 91.2% 59.8%;
+    --primary-foreground: 222.2 47.4% 11.2%;
+
+    --secondary: 217.2 32.6% 17.5%;
+    --secondary-foreground: 210 40% 98%;
+
+    --accent: 217.2 32.6% 17.5%;
+    --accent-foreground: 210 40% 98%;
+
+    --destructive: 0 62.8% 30.6%;
+    --destructive-foreground: 210 40% 98%;
+
+    --ring: 224.3 76.3% 48%;
+
+    --sidebar-background: 240 5.9% 10%;
+    --sidebar-foreground: 240 4.8% 95.9%;
+    --sidebar-primary: 224.3 76.3% 48%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 240 3.7% 15.9%;
+    --sidebar-accent-foreground: 240 4.8% 95.9%;
+    --sidebar-border: 240 3.7% 15.9%;
+    --sidebar-ring: 217.2 91.2% 59.8%;
+  }
+
   * {
     @apply border-border;
   }
 
   body {
-    @apply bg-background text-foreground;
-    /* Mobile-first font sizing */
-    font-size: 14px;
-    line-height: 1.5;
-    /* Apply TweakCN custom fonts */
-    font-family: var(--font-sans) !important;
-  }
-
-  /* Force font inheritance for all text elements */
-  h1,
-  h2,
-  h3,
-  h4,
-  h5,
-  h6,
-  p,
-  span,
-  div,
-  button,
-  input,
-  textarea,
-  select {
-    font-family: inherit !important;
-  }
-
-  /* Apply serif font to specific elements if needed */
-  .font-serif {
-    font-family: var(--font-serif) !important;
-  }
-
-  /* Apply mono font to code elements */
-  code,
-  pre,
-  .font-mono {
-    font-family: var(--font-mono) !important;
-  }
-
-  /* Ensure font loading and fallback */
-  @supports (font-display: swap) {
-    .font-loading {
-      font-display: swap;
-    }
-  }
-
-  /* Debug font loading - remove after testing */
-  .debug-font::after {
-    content: " (Font: " attr(data-font) ")";
-    font-size: 0.75em;
-    color: var(--muted-foreground);
-  }
-
-  /* Mobile-First Typography Scale */
-  h1 {
-    font-size: 1.75rem;
-  } /* 28px mobile */
-  h2 {
-    font-size: 1.5rem;
-  } /* 24px mobile */
-  h3 {
-    font-size: 1.25rem;
-  } /* 20px mobile */
-
-  /* Tablet and up */
-  @media (min-width: 768px) {
-    body {
-      font-size: 16px;
-    }
-    h1 {
-      font-size: 2.25rem;
-    } /* 36px tablet+ */
-    h2 {
-      font-size: 1.875rem;
-    } /* 30px tablet+ */
-    h3 {
-      font-size: 1.5rem;
-    } /* 24px tablet+ */
-  }
-
-  /* Desktop */
-  @media (min-width: 1024px) {
-    h1 {
-      font-size: 3rem;
-    } /* 48px desktop */
-    h2 {
-      font-size: 2.25rem;
-    } /* 36px desktop */
-    h3 {
-      font-size: 1.875rem;
-    } /* 30px desktop */
-  }
-
-  /* Mobile-First Touch Targets */
-  button,
-  [role="button"],
-  input,
-  select,
-  textarea {
-    min-height: 44px;
-    min-width: 44px;
-  }
-
-  /* Mobile-First Container */
-  .container {
-    padding-left: 1rem;
-    padding-right: 1rem;
-  }
-
-  @media (min-width: 768px) {
-    .container {
-      padding-left: 2rem;
-      padding-right: 2rem;
-    }
+    @apply bg-background text-foreground font-sans antialiased;
   }
 }
 
@@ -212,123 +122,22 @@
   --sidebar-ring: hsl(217.2 91.2% 59.8%);
 }
 
+@theme inline {
+  --color-sidebar: var(--sidebar);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-ring: var(--sidebar-ring);
+}
+
 @layer base {
   * {
-    @apply border-border;
+    @apply border-border outline-ring/50;
   }
-
   body {
     @apply bg-background text-foreground;
-    /* Mobile-first font sizing */
-    font-size: 14px;
-    line-height: 1.5;
-    /* Apply TweakCN custom fonts */
-    font-family: var(--font-sans) !important;
-  }
-
-  /* Force font inheritance for all text elements */
-  h1,
-  h2,
-  h3,
-  h4,
-  h5,
-  h6,
-  p,
-  span,
-  div,
-  button,
-  input,
-  textarea,
-  select {
-    font-family: inherit !important;
-  }
-
-  /* Apply serif font to specific elements if needed */
-  .font-serif {
-    font-family: var(--font-serif) !important;
-  }
-
-  /* Apply mono font to code elements */
-  code,
-  pre,
-  .font-mono {
-    font-family: var(--font-mono) !important;
-  }
-
-  /* Ensure font loading and fallback */
-  @supports (font-display: swap) {
-    .font-loading {
-      font-display: swap;
-    }
-  }
-
-  /* Debug font loading - remove after testing */
-  .debug-font::after {
-    content: " (Font: " attr(data-font) ")";
-    font-size: 0.75em;
-    color: var(--muted-foreground);
-  }
-
-  /* Mobile-First Typography Scale */
-  h1 {
-    font-size: 1.75rem;
-  } /* 28px mobile */
-  h2 {
-    font-size: 1.5rem;
-  } /* 24px mobile */
-  h3 {
-    font-size: 1.25rem;
-  } /* 20px mobile */
-
-  /* Tablet and up */
-  @media (min-width: 768px) {
-    body {
-      font-size: 16px;
-    }
-    h1 {
-      font-size: 2.25rem;
-    } /* 36px tablet+ */
-    h2 {
-      font-size: 1.875rem;
-    } /* 30px tablet+ */
-    h3 {
-      font-size: 1.5rem;
-    } /* 24px tablet+ */
-  }
-
-  /* Desktop */
-  @media (min-width: 1024px) {
-    h1 {
-      font-size: 3rem;
-    } /* 48px desktop */
-    h2 {
-      font-size: 2.25rem;
-    } /* 36px desktop */
-    h3 {
-      font-size: 1.875rem;
-    } /* 30px desktop */
-  }
-
-  /* Mobile-First Touch Targets */
-  button,
-  [role="button"],
-  input,
-  select,
-  textarea {
-    min-height: 44px;
-    min-width: 44px;
-  }
-
-  /* Mobile-First Container */
-  .container {
-    padding-left: 1rem;
-    padding-right: 1rem;
-  }
-
-  @media (min-width: 768px) {
-    .container {
-      padding-left: 2rem;
-      padding-right: 2rem;
-    }
   }
 }
