@@ -42,7 +42,7 @@ const discountDataSchema = z
   })
   .passthrough();
 
-export function assignPricelistDiscountsDataToProducts(
+export function assign_pricelist_discounts_data_to_products (
   inputProduct: Record<string, unknown>,
   discountData: Record<string, unknown> = {},
   shouldUpdateDiscounts: boolean = true
@@ -143,46 +143,42 @@ export function assignPricelistDiscountsDataToProducts(
     []) as DiscountRange[];
   (product as Record<string, unknown>).discountsList = discountsList;
 
-  // Get suitable discount
-  const packagingQty =
-    validatedProduct.packagingQty ||
-    validatedProduct.packagingQuantity ||
-    PRODUCT_DEFAULTS.PACKAGING_QUANTITY;
+  let suitableDiscount: DiscountRange | undefined;
+  let nextSuitableDiscount: DiscountRange | undefined;
 
-  const discountResult = getSuitableDiscountByQuantity(
-    product.quantity,
-    discountsList,
-    packagingQty
-  );
+  if (Array.isArray(product.discountsList) && product.discountsList.length > 0) {
+    const discountResult = getSuitableDiscountByQuantity(
+      product?.quantity,
+      product.discountsList,
+      product?.packagingQty
+        ? product?.packagingQty
+        : product?.packagingQuantity || 1
+    );
 
-  if (
-    discountResult.suitableDiscount?.CantCombineWithOtherDisCounts !== undefined
-  ) {
-    product.CantCombineWithOtherDisCounts =
-      discountResult.suitableDiscount.CantCombineWithOtherDisCounts;
-  }
-  if (discountResult.nextSuitableDiscount !== undefined) {
-    product.nextSuitableDiscount = discountResult.nextSuitableDiscount;
+    suitableDiscount = discountResult.suitableDiscount || undefined;
+    nextSuitableDiscount = discountResult.nextSuitableDiscount || undefined;
   }
 
-  // Create discount details
-  if (discountResult.suitableDiscount) {
-    const basePriceValue = product.BasePrice ?? 0;
-    const discountDetails: DiscountDetails = {
-      ...discountResult.suitableDiscount,
-      BasePrice: basePriceValue,
-      ...(product.plnErpCode !== undefined && {
-        plnErpCode: product.plnErpCode,
-      }),
-      ...(product.priceListCode !== undefined && {
-        priceListCode: product.priceListCode,
-      }),
-      ...(validatedDiscountData.pricingConditionCode !== undefined && {
-        pricingConditionCode: validatedDiscountData.pricingConditionCode,
-      }),
-    };
-    product.discountDetails = discountDetails;
+  product.CantCombineWithOtherDisCounts = suitableDiscount?.CantCombineWithOtherDisCounts ?? false;
+  if (nextSuitableDiscount !== undefined) {
+    product.nextSuitableDiscount = nextSuitableDiscount;
+  } else if ("nextSuitableDiscount" in product) {
+    delete (product as Record<string, unknown>).nextSuitableDiscount;
   }
+  const discountValue = suitableDiscount?.Value ?? 0;
+
+  const discountDetails: DiscountDetails = {
+    BasePrice: product.BasePrice || 0,
+  };
+  if (product.plnErpCode !== undefined) {
+    discountDetails.plnErpCode = product.plnErpCode;
+  }
+  if (product.priceListCode !== undefined) {
+    discountDetails.priceListCode = product.priceListCode;
+  }
+  discountDetails.pricingConditionCode =
+    product.disc_prd_related_obj?.pricingConditionCode || null;
+  product.discountDetails = discountDetails;
 
   // Calculate override discount
   const masterPriceValue = product.MasterPrice ?? 0;
@@ -198,19 +194,17 @@ export function assignPricelistDiscountsDataToProducts(
     if (!isOverridePricelist) {
       // Use MasterPrice as base
       product.unitListPrice = masterPriceValue;
-      const discountValue = discountResult.suitableDiscount?.Value || 0;
       product.discount = (product.overrideDiscount || 0) + discountValue;
       product.discountedPrice =
         masterPriceValue - (masterPriceValue - (product.BasePrice || 0));
     } else {
       // Use BasePrice as base
       product.unitListPrice = product.BasePrice || 0;
-      const discountValue =
-        discountResult.suitableDiscount?.Value ||
-        PRODUCT_DEFAULTS.DISCOUNT_PERCENTAGE;
-      product.discount = discountValue;
+      const overriddenDiscount =
+        discountValue || PRODUCT_DEFAULTS.DISCOUNT_PERCENTAGE;
+      product.discount = overriddenDiscount;
       const basePrice = product.BasePrice || 0;
-      product.discountedPrice = basePrice - (basePrice * discountValue) / 100;
+      product.discountedPrice = basePrice - (basePrice * product.discount) / 100;
     }
 
     product.pricingConditionCode =
