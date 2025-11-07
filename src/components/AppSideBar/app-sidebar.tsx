@@ -35,11 +35,11 @@ const data = {
       items: [
         {
           title: "Orders",
-          url: "/orders",
+          url: "/landing/orderslanding",
         },
         {
           title: "Quotes",
-          url: "/quotesummary",
+          url: "/landing/quoteslanding",
         },
       ],
     },
@@ -50,11 +50,11 @@ const data = {
       items: [
         {
           title: "Company",
-          url: "/settings/company",
+          url: "/settings/profile",
         },
         {
           title: "Profile",
-          url: "/settings/profile",
+          url: "/settings/company",
         },
       ],
     },

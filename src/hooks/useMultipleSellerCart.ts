@@ -6,6 +6,7 @@ import {
   groupCartItemsBySeller,
 } from "@/utils/calculation/sellerCartUtils";
 // Use individual lodash imports for better tree-shaking
+import { assign_pricelist_discounts_data_to_products } from "@/utils/functionalUtils";
 import isEmpty from "lodash/isEmpty";
 import { useEffect, useMemo, useState } from "react";
 import useMultipleSellerPricing from "./useMultipleSellerPricing";
@@ -140,6 +141,7 @@ const useMultipleSellerCart = (cartItems: any, calculationParams: any = {}) => {
   }, [processedSellerCarts]);
 
   // Handle seller selection
+
   const handleSellerSelect = (sellerId: any) => {
     setSelectedSellerId(sellerId);
     // Persist to localStorage
