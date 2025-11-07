@@ -1,10 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { Search, Command, Command as CommandIcon, Bell, ShoppingCart, User, LogOut, Settings, Building2, IdCard } from "lucide-react";
-
-import { SidebarTrigger } from "@/components/ui/sidebar";
-import { Separator } from "@/components/ui/separator";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import {
   CommandDialog,
@@ -15,7 +11,6 @@ import {
   CommandList,
   CommandShortcut,
 } from "@/components/ui/command";
-import { Input } from "@/components/ui/input";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -24,17 +19,22 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import useUserProfile from "@/hooks/Profile/useUserProfile";
+import { Input } from "@/components/ui/input";
+import { Separator } from "@/components/ui/separator";
+import { SidebarTrigger } from "@/components/ui/sidebar";
 import useLogout from "@/hooks/Auth/useLogout";
+import useUserProfile from "@/hooks/Profile/useUserProfile";
+import { Bell, Building2, Command as CommandIcon, IdCard, LogOut, Search, ShoppingCart, User } from "lucide-react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { useEffect, useState } from "react";
 
 export function AppHeader() {
   const [open, setOpen] = useState(false);
   const [searchValue, setSearchValue] = useState("");
   const { userProfile } = useUserProfile();
   const { isLoggingOut, handleLogout } = useLogout();
-
+  const router = useRouter();
   // Sample product search results - you can replace with real API call
   const searchResults = [
     { name: "Product 1", category: "Electronics" },
@@ -140,7 +140,7 @@ export function AppHeader() {
               </Button>
 
               {/* Cart */}
-              <Button variant="ghost" size="icon" className="h-8 w-8 relative">
+              <Button variant="ghost" size="icon" className="h-8 w-8 relative" onClick={()=>router.push('/cart')}>
                 <ShoppingCart className="h-4 w-4" />
                 {cartItemsCount > 0 && (
                   <span className="absolute -top-1 -right-1 h-4 w-4 rounded-full bg-blue-500 text-xs text-white flex items-center justify-center">
