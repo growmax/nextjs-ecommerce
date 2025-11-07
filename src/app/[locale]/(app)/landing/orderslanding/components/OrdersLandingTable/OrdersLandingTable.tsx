@@ -817,41 +817,7 @@ function OrdersLandingTable({
           )}
         </div>
 
-        <div className="flex-1 overflow-hidden">
-          {loading ? (
-            <TableSkeleton rows={rowPerPage} />
-          ) : (
-            <DashboardTable
-              data={orders}
-              columns={columns}
-              loading={false}
-              totalDataCount={totalCount}
-              pagination={pagination}
-              setPagination={handlePaginationChange}
-              setPage={setPage}
-              pageOptions={[20, 50, 75, 100]}
-              handlePrevious={() => page > 0 && setPage(page - 1)}
-              handleNext={() => {
-                const maxPage = Math.ceil(totalCount / rowPerPage) - 1;
-                if (page < maxPage) setPage(page + 1);
-              }}
-              page={page}
-              rowPerPage={rowPerPage}
-              setRowPerPage={value => {
-                const newValue =
-                  typeof value === "string" ? parseInt(value, 10) : value;
-                setRowPerPage(newValue);
-                setPage(0);
-              }}
-              onRowClick={row => {
-                const orderId = row.orderIdentifier;
-                if (orderId)
-                  router.push(`/${locale}/details/orderDetails/${orderId}`);
-              }}
-              tableHeight="h-full"
-            />
-          )}
-        </div>
+    
       </div>
 
       <Dialog open={isItemsDialogOpen} onOpenChange={setIsItemsDialogOpen}>
