@@ -1,7 +1,7 @@
 "use client";
 
-import * as React from "react";
 import { ChevronsUpDown, Plus } from "lucide-react";
+import * as React from "react";
 
 import {
   DropdownMenu,
@@ -48,8 +48,12 @@ export function TeamSwitcher() {
               </div>
               {!isCollapsed && (
                 <div className="grid flex-1 text-left text-sm leading-tight">
-                  <span className="truncate font-medium">{activeTeam.name}</span>
-                  <span className="truncate text-xs text-sidebar-foreground/70">{activeTeam.plan}</span>
+                  <span className="truncate font-medium">
+                    {activeTeam.name}
+                  </span>
+                  <span className="truncate text-xs text-sidebar-foreground/70">
+                    {activeTeam.plan}
+                  </span>
                 </div>
               )}
               {!isCollapsed && <ChevronsUpDown className="ml-auto" />}
@@ -80,7 +84,9 @@ export function TeamSwitcher() {
               <div className="flex size-6 items-center justify-center rounded-md border bg-transparent">
                 <Plus className="size-4" />
               </div>
-              <div className="text-muted-foreground font-medium">Add company</div>
+              <div className="text-muted-foreground font-medium">
+                Add company
+              </div>
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>

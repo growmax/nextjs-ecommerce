@@ -29,6 +29,7 @@ import { cn } from "@/lib/utils";
 
 export function NavMain({
   items,
+  onNavigate,
 }: {
   items: {
     title: string;
@@ -40,6 +41,7 @@ export function NavMain({
       url: string;
     }[];
   }[];
+  onNavigate?: (url: string) => void;
 }) {
   const pathname = usePathname();
   const { state } = useSidebar();
@@ -75,6 +77,7 @@ export function NavMain({
                       "flex items-center gap-2",
                       isCollapsed && "justify-center gap-0"
                     )}
+                    onClick={() => onNavigate?.(item.url)}
                   >
                     <Icon className="size-5" />
                     {!isCollapsed && <span className="text-sm font-medium">{item.title}</span>}
@@ -109,6 +112,7 @@ export function NavMain({
                           key={subItem.title}
                           href={subItem.url}
                           className="text-sm font-medium text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground rounded-md px-3 py-1.5"
+                          onClick={() => onNavigate?.(subItem.url)}
                         >
                           {subItem.title}
                         </Link>
@@ -149,6 +153,7 @@ export function NavMain({
                         <SidebarMenuSubButton
                           asChild
                           isActive={isActive(subItem.url)}
+                          onClick={() => onNavigate?.(subItem.url)}
                         >
                           <Link href={subItem.url}>
                             <span>{subItem.title}</span>
