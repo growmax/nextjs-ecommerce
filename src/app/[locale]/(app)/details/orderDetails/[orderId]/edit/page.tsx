@@ -567,7 +567,6 @@ export default function EditOrderPage({ params }: EditOrderPageProps) {
       await fetchOrderResponseMutate();
       toast.success("Order details refreshed successfully");
     } catch (error) {
-      // eslint-disable-next-line no-console
       console.error("Error refreshing order details:", error);
       toast.error("Failed to refresh order details");
     }
@@ -937,7 +936,6 @@ export default function EditOrderPage({ params }: EditOrderPageProps) {
       // Step 6: Navigate back to order details page
       router.push(`/${locale}/details/orderDetails/${orderId}`);
     } catch (error) {
-      // eslint-disable-next-line no-console
       console.error("Error placing order:", error);
       toast.error(
         error instanceof Error
@@ -1136,8 +1134,12 @@ export default function EditOrderPage({ params }: EditOrderPageProps) {
                 {/* Terms Card */}
                 <OrderTermsCard
                   orderTerms={
-                    orderDetails.data?.orderDetails?.[0]
-                      ?.orderTerms as unknown as OrderTerms
+                    {
+                      ...(orderDetails.data?.orderDetails?.[0]?.orderTerms ||
+                        {}),
+                      additionalTerms: orderDetails.data?.orderDetails?.[0]
+                        ?.additionalTerms as string | undefined,
+                    } as OrderTerms
                   }
                 />
               </div>

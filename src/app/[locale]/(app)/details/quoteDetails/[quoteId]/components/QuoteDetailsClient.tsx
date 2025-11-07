@@ -224,12 +224,65 @@ export default function QuoteDetailsClient({
     (displayQuoteDetails?.quotationDetails as any)?.[0]?.quotationIdentifier ||
     quoteDetails?.data?.quotationDetails?.[0]?.quotationIdentifier ||
     quoteIdentifier ||
-    "..."; // Get module settings
+    "...";
+
+  // Get module settings
   const { quoteSettings: _quoteSettings } = useModuleSettings(user);
 
   // Handler functions
   const handleEditQuote = () => {
-    router.push(`/${locale}/details/quoteDetails/${quoteIdentifier}/edit`);
+    // Get current status and other relevant data
+    const updatedBuyerStatus =
+      displayQuoteDetails?.updatedBuyerStatus ||
+      quoteDetails?.data?.updatedBuyerStatus;
+    const reorder = displayQuoteDetails?.reorder || quoteDetails?.data?.reorder;
+    const validityTill = (displayQuoteDetails?.validityTill ||
+      quoteDetails?.data?.validityTill) as string | undefined;
+
+    // Check if cancelled
+    if (updatedBuyerStatus === "CANCELLED") {
+      toast.info("Quote was cancelled already", {
+        position: "bottom-left",
+      });
+      return;
+    }
+
+    // Check if allowed status (can edit)
+    if (
+      updatedBuyerStatus === "QUOTE RECEIVED" ||
+      updatedBuyerStatus === "OPEN"
+    ) {
+      // Navigate to edit page
+      router.push(`/${locale}/details/quoteDetails/${quoteIdentifier}/edit`);
+      return;
+    }
+
+    // Check reorder validity
+    if (reorder && validityTill) {
+      const validityDate = new Date(validityTill);
+      const endOfValidityDay = new Date(validityDate);
+      endOfValidityDay.setHours(23, 59, 59, 999);
+
+      if (new Date() > endOfValidityDay) {
+        toast.info("Contract validity expired", {
+          position: "bottom-left",
+        });
+        return;
+      }
+    }
+
+    // Check if order placed
+    if (updatedBuyerStatus === "ORDER PLACED") {
+      toast.info("Quote was converted to order already", {
+        position: "bottom-left",
+      });
+      return;
+    }
+
+    // Default message for other statuses
+    toast.info("Quote owner is working on this quote", {
+      position: "bottom-left",
+    });
   };
 
   const handleEditQuoteName = () => {
@@ -352,8 +405,9 @@ export default function QuoteDetailsClient({
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     return rawProducts.map((product: any) => {
       // Prioritize askedQuantity for quantity display
-      const quantity = product.askedQuantity || product.quantity || product.unitQuantity || 0;
-      
+      const quantity =
+        product.askedQuantity || product.quantity || product.unitQuantity || 0;
+
       const transformed: Record<string, unknown> = {
         ...product,
         itemNo:
@@ -376,8 +430,9 @@ export default function QuoteDetailsClient({
 
   // Extract quote details from the nested structure
   const quoteDetailData =
-    (displayQuoteDetails?.quotationDetails as Array<Record<string, unknown>>)?.[0] ||
-    quoteDetails?.data?.quotationDetails?.[0];
+    (
+      displayQuoteDetails?.quotationDetails as Array<Record<string, unknown>>
+    )?.[0] || quoteDetails?.data?.quotationDetails?.[0];
   const buyerCurrencySymbol =
     displayQuoteDetails?.buyerCurrencySymbol ||
     quoteDetails?.data?.buyerCurrencySymbol;
@@ -490,21 +545,27 @@ export default function QuoteDetailsClient({
                   }
                   warehouseName={
                     (
-                      (quoteDetailData?.dbProductDetails as Array<
-                        Record<string, unknown>
-                      >)?.[0] as Record<string, Record<string, string>>
+                      (
+                        quoteDetailData?.dbProductDetails as Array<
+                          Record<string, unknown>
+                        >
+                      )?.[0] as Record<string, Record<string, string>>
                     )?.wareHouse?.wareHouseName ||
                     (
-                      (quoteDetailData?.dbProductDetails as Array<
-                        Record<string, unknown>
-                      >)?.[0] as Record<string, string>
+                      (
+                        quoteDetailData?.dbProductDetails as Array<
+                          Record<string, unknown>
+                        >
+                      )?.[0] as Record<string, string>
                     )?.orderWareHouseName
                   }
                   warehouseAddress={
                     (
-                      (quoteDetailData?.dbProductDetails as Array<
-                        Record<string, unknown>
-                      >)?.[0] as Record<
+                      (
+                        quoteDetailData?.dbProductDetails as Array<
+                          Record<string, unknown>
+                        >
+                      )?.[0] as Record<
                         string,
                         Record<string, Record<string, string>>
                       >

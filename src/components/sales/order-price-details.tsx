@@ -58,7 +58,8 @@ export default function OrderPriceDetails({
     const hasCalculatedValues =
       calculatedTotal !== undefined &&
       subTotal !== undefined &&
-      taxableAmount !== undefined;
+      taxableAmount !== undefined &&
+      overallTax !== undefined;
 
     if (hasCalculatedValues) {
       return {
@@ -67,7 +68,7 @@ export default function OrderPriceDetails({
         totalBasicDiscount: 0,
         totalCashDiscount: 0,
         totalValue: subTotal,
-        totalTax: overallTax !== undefined ? overallTax : 0,
+        totalTax: overallTax,
         totalShipping: overallShipping !== undefined ? overallShipping : 0,
         pfRate: 0,
         taxableAmount,

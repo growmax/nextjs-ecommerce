@@ -190,7 +190,6 @@ export default function OrderDetailsClient({ params }: OrderDetailsPageProps) {
         const items = Array.isArray(response?.data) ? response.data : [];
         setPaymentHistory(items);
       } catch (err) {
-        // eslint-disable-next-line no-console
         console.error("Failed to fetch payments:", err);
         setPaymentHistory([]);
       }
@@ -229,7 +228,6 @@ export default function OrderDetailsClient({ params }: OrderDetailsPageProps) {
         }
         setPaymentDueData(data);
       } catch (err) {
-        // eslint-disable-next-line no-console
         console.error("Failed to fetch payment due details:", err);
         setPaymentDueData([]);
       }
@@ -302,7 +300,6 @@ export default function OrderDetailsClient({ params }: OrderDetailsPageProps) {
       });
       setOrderDetails(response);
     } catch (error) {
-      // eslint-disable-next-line no-console
       console.error("Error refreshing order details:", error);
     } finally {
       setLoading(false);
@@ -813,9 +810,15 @@ export default function OrderDetailsClient({ params }: OrderDetailsPageProps) {
                 {/* Terms Card */}
                 <OrderTermsCard
                   orderTerms={
-                    (displayOrderDetails?.orderDetails?.[0]?.orderTerms ||
-                      orderDetails?.data?.orderDetails?.[0]
-                        ?.orderTerms) as unknown as OrderTerms
+                    {
+                      ...(displayOrderDetails?.orderDetails?.[0]?.orderTerms ||
+                        orderDetails?.data?.orderDetails?.[0]?.orderTerms ||
+                        {}),
+                      additionalTerms: (displayOrderDetails?.orderDetails?.[0]
+                        ?.additionalTerms ||
+                        orderDetails?.data?.orderDetails?.[0]
+                          ?.additionalTerms) as string | undefined,
+                    } as OrderTerms
                   }
                 />
               </div>
