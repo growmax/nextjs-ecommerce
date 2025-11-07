@@ -1,20 +1,20 @@
 "use client";
 
-import * as React from "react";
+import { Button } from "@/components/ui/button";
 import {
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { zodResolver } from "@hookform/resolvers/zod";
 import { Loader2 } from "lucide-react";
+import * as React from "react";
+import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { z } from "zod";
-import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
 
 // Validation schema for order name
 const orderNameSchema = z.object({
@@ -147,7 +147,7 @@ export function EditOrderNameDialog({
                 !currentFormValue ||
                 currentFormValue.trim() === currentOrderName.trim()
               }
-              className="min-w-[80px]"
+              className="min-w-20"
             >
               {isSubmitting ? (
                 <>

@@ -2,6 +2,7 @@
 
 import { Skeleton } from "@/components/ui/skeleton";
 import { Toaster } from "@/components/ui/sonner";
+import { Layers } from "lucide-react";
 import { useLocale } from "next-intl";
 import dynamic from "next/dynamic";
 import { useRouter } from "next/navigation";
@@ -10,12 +11,18 @@ import { toast } from "sonner";
 
 import { EditOrderNameDialog } from "@/components/dialogs/EditOrderNameDialog";
 import {
+  VersionsDialog,
+  type Version,
+} from "@/components/dialogs/VersionsDialog";
+import {
   CustomerInfoCard,
   OrderContactDetails,
   OrderTermsCard,
   SalesHeader,
 } from "@/components/sales";
+import { useQuoteDetails } from "@/hooks/details/quotedetails/useQuoteDetails";
 import { useCurrentUser } from "@/hooks/useCurrentUser";
+import { useGetVersionDetails } from "@/hooks/useGetVersionDetails";
 import useModuleSettings from "@/hooks/useModuleSettings";
 import { useTenantData } from "@/hooks/useTenantData";
 import type { QuotationDetailsResponse } from "@/lib/api";
@@ -23,6 +30,7 @@ import { QuotationDetailsService } from "@/lib/api";
 import QuotationNameService from "@/lib/api/services/QuotationNameService";
 import type { ProductCsvRow } from "@/lib/export-csv";
 import { exportProductsToCsv } from "@/lib/export-csv";
+import type { SelectedVersion } from "@/types/details/orderdetails/version.types";
 import { getStatusStyle } from "@/utils/details/orderdetails";
 import { decodeUnicode } from "@/utils/general";
 
@@ -44,7 +52,7 @@ const OrderPriceDetails = dynamic(
 );
 
 interface QuoteDetailsClientProps {
-  params: Promise<{ quoteSlug: string[] }>;
+  params: Promise<{ quoteId: string }>;
 }
 
 export default function QuoteDetailsClient({
@@ -61,12 +69,19 @@ export default function QuoteDetailsClient({
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [editDialogOpen, setEditDialogOpen] = useState(false);
+  const [versionsDialogOpen, setVersionsDialogOpen] = useState(false);
+  const [selectedVersion, setSelectedVersion] =
+    useState<SelectedVersion | null>(null);
+  const [triggerVersionCall, setTriggerVersionCall] = useState(false);
 
   const { user } = useCurrentUser();
   const { tenantData } = useTenantData();
 
   // Prevent duplicate fetches for the same identifiers
   const lastFetchKeyRef = useRef<string | null>(null);
+
+  // Track processed versions to prevent duplicate processing
+  const processedVersionRef = useRef<string | null>(null);
 
   // Derive only primitive dependencies
   const userId = user?.userId;
@@ -77,8 +92,8 @@ export default function QuoteDetailsClient({
   useEffect(() => {
     const loadParams = async () => {
       const resolvedParams = await params;
-      // Extract quote identifier from slug
-      const identifier = resolvedParams.quoteSlug?.[0] || "";
+      // Extract quote identifier from the dynamic segment
+      const identifier = resolvedParams.quoteId || "";
       setQuoteIdentifier(identifier);
       setParamsLoaded(true);
     };
@@ -135,16 +150,78 @@ export default function QuoteDetailsClient({
     fetchQuoteDetails();
   }, [paramsLoaded, quoteIdentifier, userId, companyId, tenantCode]);
 
+  // Use custom hook for quote details logic
+  const {
+    versions: quoteVersions,
+    quotationIdentifier,
+    quotationVersion,
+  } = useQuoteDetails({
+    quoteDetails,
+    quoteIdentifier,
+    selectedVersion,
+  });
+
+  const { data: versionData, isLoading: versionLoading } = useGetVersionDetails(
+    {
+      orderIdentifier: quotationIdentifier,
+      orderVersion: quotationVersion,
+      triggerVersionCall,
+    }
+  );
+
+  // Update quote details when version data is loaded
+  useEffect(() => {
+    if (versionData && selectedVersion) {
+      // Create a unique key for this version to prevent duplicate processing
+      const versionKey = `${selectedVersion.versionNumber}-${selectedVersion.orderVersion}`;
+
+      // Skip if we've already processed this version
+      if (processedVersionRef.current === versionKey) {
+        return;
+      }
+
+      // Mark this version as processed
+      processedVersionRef.current = versionKey;
+
+      // Reset trigger after successful fetch
+      setTriggerVersionCall(false);
+
+      // Show success toast only if data is freshly loaded (not from cache)
+      if (!versionLoading) {
+        const versionName =
+          quoteVersions.find(
+            (v: Version) => v.versionNumber === selectedVersion.versionNumber
+          )?.versionName || `Version ${selectedVersion.versionNumber}`;
+        toast.success(`Loaded ${versionName} details`);
+      }
+    }
+  }, [versionData, versionLoading, selectedVersion, quoteVersions]);
+
+  // Extract data for header - use version data if available, otherwise use quote details
+  const displayQuoteDetails = useMemo(() => {
+    if (versionData && selectedVersion && versionData.data) {
+      return versionData.data;
+    }
+    return quoteDetails?.data;
+  }, [versionData, selectedVersion, quoteDetails?.data]);
+
   // Extract data for header - quoteName is inside quotationDetails[0]
   const quoteName =
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    (displayQuoteDetails?.quotationDetails as any)?.[0]?.quoteName ||
     quoteDetails?.data?.quotationDetails?.[0]?.quoteName ||
     quoteDetails?.data?.quoteName ||
     "";
-  const status = quoteDetails?.data?.updatedBuyerStatus;
+  const status =
+    displayQuoteDetails?.updatedBuyerStatus ||
+    quoteDetails?.data?.updatedBuyerStatus;
 
   // Get the actual quotationIdentifier from API response or fall back to URL param
   const displayQuoteId =
+    displayQuoteDetails?.quotationIdentifier ||
     quoteDetails?.data?.quotationIdentifier ||
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    (displayQuoteDetails?.quotationDetails as any)?.[0]?.quotationIdentifier ||
     quoteDetails?.data?.quotationDetails?.[0]?.quotationIdentifier ||
     quoteIdentifier ||
     "..."; // Get module settings
@@ -231,12 +308,49 @@ export default function QuoteDetailsClient({
     toast.info("Convert to order functionality will be implemented soon");
   };
 
+  // Handle version selection
+  const handleVersionSelect = (version: Version) => {
+    // Close dialog immediately
+    setVersionsDialogOpen(false);
+
+    // If version 1 is selected, reset to original quote details
+    if (version.versionNumber === 1) {
+      // Reset to original quote details
+      if (quoteDetails) {
+        // Reset processed version ref
+        processedVersionRef.current = null;
+        // Re-fetch original quote details
+        setSelectedVersion(null);
+        setTriggerVersionCall(false);
+        handleRefresh();
+      }
+      return;
+    }
+
+    // Reset processed version ref for new version selection
+    processedVersionRef.current = null;
+
+    // Set selected version and trigger fetch
+    setSelectedVersion({
+      versionNumber: version.versionNumber,
+      orderVersion: version.orderVersion || version.versionNumber,
+      ...(version.orderIdentifier && {
+        orderIdentifier: version.orderIdentifier,
+      }),
+    });
+    setTriggerVersionCall(true);
+  };
+
   // Extract products for display
   const products = useMemo(() => {
     const rawProducts =
-      quoteDetails?.data?.quotationDetails?.[0]?.dbProductDetails || [];
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      (displayQuoteDetails?.quotationDetails as any)?.[0]?.dbProductDetails ||
+      quoteDetails?.data?.quotationDetails?.[0]?.dbProductDetails ||
+      [];
     // Transform to match ProductItem interface while preserving all fields including productTaxes
-    return rawProducts.map(product => {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    return rawProducts.map((product: any) => {
       const transformed: Record<string, unknown> = {
         ...product,
         itemNo:
@@ -252,11 +366,16 @@ export default function QuoteDetailsClient({
 
       return transformed;
     });
-  }, [quoteDetails?.data]);
+  }, [displayQuoteDetails?.quotationDetails, quoteDetails?.data]);
 
   // Extract quote details from the nested structure
-  const quoteDetailData = quoteDetails?.data?.quotationDetails?.[0];
-  const buyerCurrencySymbol = quoteDetails?.data?.buyerCurrencySymbol;
+  const quoteDetailData =
+    (
+      displayQuoteDetails?.quotationDetails as Array<Record<string, unknown>>
+    )?.[0] || quoteDetails?.data?.quotationDetails?.[0];
+  const buyerCurrencySymbol =
+    displayQuoteDetails?.buyerCurrencySymbol ||
+    quoteDetails?.data?.buyerCurrencySymbol;
 
   // Header buttons - Using primary color for main actions
   const headerButtons = [
@@ -316,6 +435,8 @@ export default function QuoteDetailsClient({
                     {...(products.length && {
                       totalCount: products.length,
                     })}
+                    useAskedQuantity={true}
+                    hideInvoicedQty={true}
                     onExport={() => {
                       const filename = `Quote_${quoteIdentifier}_Products.csv`;
                       exportProductsToCsv(
@@ -357,28 +478,35 @@ export default function QuoteDetailsClient({
                       unknown
                     >
                   }
-                  buyerCompanyName={quoteDetailData?.buyerCompanyName || ""}
-                  buyerBranchName={quoteDetailData?.buyerBranchName || ""}
+                  buyerCompanyName={
+                    (quoteDetailData?.buyerCompanyName as string) || ""
+                  }
+                  buyerBranchName={
+                    (quoteDetailData?.buyerBranchName as string) || ""
+                  }
                   warehouseName={
                     (
-                      quoteDetailData
-                        ?.dbProductDetails?.[0] as unknown as Record<
-                        string,
-                        Record<string, string>
-                      >
+                      (
+                        quoteDetailData?.dbProductDetails as Array<
+                          Record<string, unknown>
+                        >
+                      )?.[0] as Record<string, Record<string, string>>
                     )?.wareHouse?.wareHouseName ||
                     (
-                      quoteDetailData
-                        ?.dbProductDetails?.[0] as unknown as Record<
-                        string,
-                        string
-                      >
+                      (
+                        quoteDetailData?.dbProductDetails as Array<
+                          Record<string, unknown>
+                        >
+                      )?.[0] as Record<string, string>
                     )?.orderWareHouseName
                   }
                   warehouseAddress={
                     (
-                      quoteDetailData
-                        ?.dbProductDetails?.[0] as unknown as Record<
+                      (
+                        quoteDetailData?.dbProductDetails as Array<
+                          Record<string, unknown>
+                        >
+                      )?.[0] as Record<
                         string,
                         Record<string, Record<string, string>>
                       >
@@ -391,7 +519,9 @@ export default function QuoteDetailsClient({
                       country?: string;
                     }
                   }
-                  salesBranch={quoteDetailData?.sellerBranchName}
+                  salesBranch={
+                    (quoteDetailData?.sellerBranchName as string) || undefined
+                  }
                   requiredDate={
                     (quoteDetailData?.customerRequiredDate ||
                       quoteDetails?.data?.validityTill) as string | undefined
@@ -501,14 +631,17 @@ export default function QuoteDetailsClient({
                   <CustomerInfoCard
                     quoteValidity={{
                       from:
-                        (quoteDetails?.data?.validityFrom as string) ||
+                        ((displayQuoteDetails?.validityFrom ||
+                          quoteDetails?.data?.validityFrom) as string) ||
                         undefined,
                       till:
-                        (quoteDetails?.data?.validityTill as string) ||
+                        ((displayQuoteDetails?.validityTill ||
+                          quoteDetails?.data?.validityTill) as string) ||
                         undefined,
                     }}
                     contractEnabled={
-                      (quoteDetails?.data?.purchaseOrder as boolean) || false
+                      ((displayQuoteDetails?.purchaseOrder ||
+                        quoteDetails?.data?.purchaseOrder) as boolean) || false
                     }
                     endCustomerName={
                       (
@@ -554,6 +687,23 @@ export default function QuoteDetailsClient({
         </div>
       </div>
 
+      {/* Right Sidebar Icons */}
+      <div className="fixed right-0 top-32 z-50 bg-white border-l border-gray-200 shadow-md rounded-l-lg p-0.5">
+        <button
+          className={`p-1.5 hover:bg-gray-100 rounded transition-colors ${
+            versionsDialogOpen ? "bg-purple-50" : ""
+          }`}
+          aria-label="Layers"
+          onClick={() => setVersionsDialogOpen(true)}
+        >
+          <Layers
+            className={`w-5 h-5 transition-colors ${
+              versionsDialogOpen ? "text-purple-600" : "text-gray-700"
+            }`}
+          />
+        </button>
+      </div>
+
       {/* Toaster for toast notifications - positioned bottom-left with smaller size */}
       <Toaster
         position="bottom-left"
@@ -574,6 +724,17 @@ export default function QuoteDetailsClient({
         currentOrderName={quoteName || ""}
         onSave={handleSaveQuoteName}
         loading={loading}
+      />
+
+      {/* Versions Dialog */}
+      <VersionsDialog
+        open={versionsDialogOpen}
+        onOpenChange={setVersionsDialogOpen}
+        versions={quoteVersions}
+        orderId={quoteIdentifier}
+        loading={loading}
+        currentVersionNumber={selectedVersion?.versionNumber || 1}
+        onVersionSelect={handleVersionSelect}
       />
     </div>
   );

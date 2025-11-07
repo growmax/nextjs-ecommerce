@@ -16,6 +16,7 @@ import useProductAssets from "@/hooks/useProductAssets";
 import { cn } from "@/lib/utils";
 import { Download } from "lucide-react";
 import { useState } from "react";
+import ImageWithFallback from "../ImageWithFallback";
 import PricingFormat from "../PricingFormat";
 import type { ProductSearchResult } from "./ProductSearchInput";
 import ProductSearchInput from "./ProductSearchInput";
@@ -57,6 +58,8 @@ export interface OrderProductsTableProps {
   editedQuantities?: Record<string, number>;
   onProductAdd?: (product: ProductSearchResult) => void;
   elasticIndex?: string | undefined;
+  useAskedQuantity?: boolean; // New prop to use askedQuantity field for quotes
+  hideInvoicedQty?: boolean; // New prop to hide invoiced quantity column for quotes
 }
 
 //
@@ -71,6 +74,8 @@ export default function OrderProductsTable({
   editedQuantities = {},
   onProductAdd,
   elasticIndex,
+  useAskedQuantity = false,
+  hideInvoicedQty = false,
 }: OrderProductsTableProps) {
   const [currentPage, setCurrentPage] = useState(1);
   const displayCount = totalCount || products.length;
@@ -180,9 +185,11 @@ export default function OrderProductsTable({
                 <TableHead className="font-medium text-primary text-center min-w-[100px] py-3">
                   QUANTITY
                 </TableHead>
-                <TableHead className="font-medium text-primary text-center min-w-[140px] py-3">
-                  INVOICED QTY
-                </TableHead>
+                {!hideInvoicedQty && (
+                  <TableHead className="font-medium text-primary text-center min-w-[140px] py-3">
+                    INVOICED QTY
+                  </TableHead>
+                )}
                 <TableHead className="font-medium text-primary text-right min-w-[150px] py-3">
                   AMOUNT(INR₹)
                 </TableHead>
@@ -191,11 +198,11 @@ export default function OrderProductsTable({
                 </TableHead>
               </TableRow>
             </TableHeader>
-            <TableBody className="min-h-[240px]">
+            <TableBody className="min-h-60">
               {currentPageProducts.length === 0 ? (
                 <TableRow>
                   <TableCell
-                    colSpan={9}
+                    colSpan={hideInvoicedQty ? 8 : 9}
                     className="text-center py-8 text-muted-foreground"
                   >
                     No products found
@@ -205,15 +212,15 @@ export default function OrderProductsTable({
                 <>
                   {currentPageProducts.map((product, index) => {
                     // Map API fields to display fields
-                    const itemName =
-                      product.productShortDescription ||
-                      product.itemName ||
-                      product.orderName ||
+                    const itemName: string =
+                      (product.productShortDescription as string) ||
+                      (product.itemName as string) ||
+                      (product.orderName as string) ||
                       "-";
-                    const itemCode =
-                      product.brandProductId ||
-                      product.itemCode ||
-                      product.orderIdentifier ||
+                    const itemCode: string =
+                      (product.brandProductId as string) ||
+                      (product.itemCode as string) ||
+                      (product.orderIdentifier as string) ||
                       "";
                     const discountValue =
                       product.discount ?? product.discountPercentage ?? 0;
@@ -223,8 +230,15 @@ export default function OrderProductsTable({
                       product.itemTaxableAmount ??
                       product.unitPrice ??
                       product.basePrice;
-                    const originalQuantity =
-                      product.unitQuantity ?? product.quantity ?? 0;
+                    // Use askedQuantity for quotes, or fallback to unitQuantity/quantity for orders
+                    const originalQuantity = useAskedQuantity
+                      ? Number(
+                          product.askedQuantity ??
+                            product.unitQuantity ??
+                            product.quantity ??
+                            0
+                        )
+                      : Number(product.unitQuantity ?? product.quantity ?? 0);
                     const productId =
                       product.brandProductId ||
                       product.itemCode ||
@@ -357,9 +371,11 @@ export default function OrderProductsTable({
                             quantity
                           )}
                         </TableCell>
-                        <TableCell className="text-center min-w-[140px] py-3">
-                          {invoicedQty}
-                        </TableCell>
+                        {!hideInvoicedQty && (
+                          <TableCell className="text-center min-w-[140px] py-3">
+                            {invoicedQty}
+                          </TableCell>
+                        )}
                         <TableCell className="text-right min-w-[150px] py-3">
                           <PricingFormat value={amount ?? 0} />
                         </TableCell>
@@ -398,9 +414,11 @@ export default function OrderProductsTable({
                       <TableCell className="min-w-[100px] py-3">
                         <div className="h-6"></div>
                       </TableCell>
-                      <TableCell className="min-w-[140px] py-3">
-                        <div className="h-6"></div>
-                      </TableCell>
+                      {!hideInvoicedQty && (
+                        <TableCell className="min-w-[140px] py-3">
+                          <div className="h-6"></div>
+                        </TableCell>
+                      )}
                       <TableCell className="min-w-[150px] py-3">
                         <div className="h-6"></div>
                       </TableCell>

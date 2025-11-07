@@ -46,6 +46,7 @@ import PaymentService from "./services/PaymentService";
 import PreferenceService from "./services/PreferenceService";
 import ProductAssetsService from "./services/ProductAssetsService";
 import QuotationDetailsService from "./services/QuotationDetailsService";
+import QuotationVersionService from "./services/QuotationVersionService";
 import QuotesService from "./services/QuotesService";
 import RequestEditService from "./services/RequestEditService";
 import SearchService from "./services/SearchService";
@@ -71,6 +72,7 @@ export {
   PreferenceService,
   ProductAssetsService,
   QuotationDetailsService,
+  QuotationVersionService,
   QuotesService,
   QuoteStatusService,
   RequestEditService,
@@ -252,6 +254,11 @@ export type {
   QuotationDetailsResponse,
   QuotationProductDetail,
 } from "./services/QuotationDetailsService";
+
+export type {
+  CreateQuotationVersionRequest,
+  CreateQuotationVersionResponse,
+} from "./services/QuotationVersionService";
 
 export type {
   QuoteStatusApiResponse,

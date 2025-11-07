@@ -5,7 +5,7 @@ import QuoteDetailsClient from "./components/QuoteDetailsClient";
 export default function QuoteDetailsPage({
   params,
 }: {
-  params: Promise<{ quoteSlug: string[] }>;
+  params: Promise<{ quoteId: string }>;
 }) {
   return (
     <Suspense fallback={<PageLoader message="Loading Quote Details..." />}>
