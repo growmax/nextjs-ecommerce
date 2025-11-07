@@ -22,6 +22,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Separator } from "@/components/ui/separator";
 import { SidebarTrigger } from "@/components/ui/sidebar";
+import { useCart } from "@/contexts/CartContext";
 import useLogout from "@/hooks/Auth/useLogout";
 import useUserProfile from "@/hooks/Profile/useUserProfile";
 import { Bell, Building2, Command as CommandIcon, IdCard, LogOut, Search, ShoppingCart, User } from "lucide-react";
@@ -45,7 +46,7 @@ export function AppHeader() {
   ];
 
   // Sample cart and notification counts
-  const cartItemsCount = 3;
+  const { cartCount } = useCart();
   const notificationsCount = 5;
 
   // Generate user initials from real data
@@ -142,9 +143,9 @@ export function AppHeader() {
               {/* Cart */}
               <Button variant="ghost" size="icon" className="h-8 w-8 relative" onClick={()=>router.push('/cart')}>
                 <ShoppingCart className="h-4 w-4" />
-                {cartItemsCount > 0 && (
+                {cartCount > 0 && (
                   <span className="absolute -top-1 -right-1 h-4 w-4 rounded-full bg-blue-500 text-xs text-white flex items-center justify-center">
-                    {cartItemsCount > 9 ? "9+" : cartItemsCount}
+                    {cartCount > 9 ? "9+" : cartCount}
                   </span>
                 )}
               </Button>
@@ -219,9 +220,9 @@ export function AppHeader() {
               {/* Cart Icon */}
               <Button variant="ghost" size="icon" className="h-8 w-8 relative">
                 <ShoppingCart className="h-4 w-4" />
-                {cartItemsCount > 0 && (
+                {cartCount > 0 && (
                   <span className="absolute -top-1 -right-1 h-3 w-3 rounded-full bg-blue-500 text-[10px] text-white flex items-center justify-center">
-                    {cartItemsCount > 9 ? "9+" : cartItemsCount}
+                    {cartCount > 9 ? "9+" : cartCount}
                   </span>
                 )}
               </Button>
