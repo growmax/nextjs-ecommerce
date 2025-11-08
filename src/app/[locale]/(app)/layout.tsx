@@ -71,7 +71,7 @@ export default async function AppLayout({
                 <AppSidebar />
                 <SidebarInset>
                   <AppHeader />
-                  <main className="flex-1 overflow-x-hidden p-4 pt-2 [&_.landing-page]:pt-0! [&_.landing-page]:pb-0! [&_.landing-page]:min-h-0!">
+                  <main className="flex-1 overflow-x-hidden p-.1 pt-2 [&_.landing-page]:pt-0! [&_.landing-page]:pb-0! [&_.landing-page]:min-h-0!">
                     {children}
                   </main>
                 </SidebarInset>
