@@ -1,0 +1,67 @@
+/* Viewport Scaler Styles */
+
+/* Container query support for responsive scaling */
+@supports (container-type: size) {
+  .viewport-scaler-responsive {
+    container-type: size;
+    container-name: viewport;
+  }
+
+  /* Scale content based on container size */
+  @container viewport (max-width: 640px) {
+    .viewport-scaler-responsive > * {
+      font-size: clamp(0.75rem, 2vw, 0.875rem);
+    }
+  }
+
+  @container viewport (max-width: 1024px) {
+    .viewport-scaler-responsive > * {
+      font-size: clamp(0.875rem, 1.5vw, 1rem);
+    }
+  }
+}
+
+/* Fallback for browsers without container query support */
+@supports not (container-type: size) {
+  .viewport-scaler-responsive {
+    width: 100%;
+  }
+
+  @media (max-width: 640px) {
+    .viewport-scaler-responsive {
+      font-size: 0.875rem;
+    }
+  }
+
+  @media (max-width: 1024px) {
+    .viewport-scaler-responsive {
+      font-size: 0.9375rem;
+    }
+  }
+}
+
+/* Dynamic scaling with transform */
+.viewport-scaler {
+  will-change: transform;
+}
+
+/* Smooth transitions */
+.viewport-scaler,
+.viewport-scaler-responsive {
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Ensure proper overflow handling */
+.viewport-fit-container {
+  width: 100vw;
+  height: 100vh;
+  overflow: hidden;
+  position: relative;
+}
+
+.viewport-fit-content {
+  position: absolute;
+  top: 0;
+  left: 0;
+  transform-origin: top left;
+}

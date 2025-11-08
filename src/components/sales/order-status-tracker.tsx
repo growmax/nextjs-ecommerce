@@ -121,16 +121,18 @@ export default function OrderStatusTracker({
   const preferences = getUserPreferences();
 
   return (
-    <Card className={cn("p-4 sm:p-6 mt-[50px]", className)}>
+    <Card className={cn("p-3 sm:p-4 mt-14", className)}>
       {/* Order ID and Date at top left, Financial Summary at top right */}
-      <div className="flex justify-between items-start mb-4">
+      <div className="flex flex-col sm:flex-row justify-between items-start gap-3 mb-3">
         {(orderId || createdDate) && (
-          <div className="mt-15 sm:mt-0">
+          <div className="flex-shrink-0">
             {orderId && (
-              <p className="text-sm font-semibold text-gray-900">{orderId}</p>
+              <p className="text-xs sm:text-sm font-semibold text-gray-900">
+                {orderId}
+              </p>
             )}
             {createdDate && (
-              <p className="text-xs text-gray-600 mt-1">
+              <p className="text-[10px] sm:text-xs text-gray-600 mt-0.5">
                 {zoneDateTimeCalculator(
                   createdDate,
                   preferences.timeZone,
@@ -145,9 +147,9 @@ export default function OrderStatusTracker({
 
         {/* Financial Summary - Right side */}
         {(total !== undefined || paid !== undefined || toPay !== undefined) && (
-          <div className="flex flex-col sm:flex-row gap-2 sm:gap-8 text-xs sm:text-sm">
+          <div className="flex flex-wrap gap-2 sm:gap-4 text-[10px] sm:text-xs">
             {total !== undefined && (
-              <div className="flex flex-col">
+              <div className="flex flex-col min-w-[70px]">
                 <span className="text-gray-600 font-medium">TOTAL:</span>
                 <span className="text-gray-900 font-semibold">
                   <PricingFormat value={total} />
@@ -155,28 +157,28 @@ export default function OrderStatusTracker({
               </div>
             )}
             {paid !== undefined && (
-              <div className="flex flex-col">
+              <div className="flex flex-col min-w-[70px]">
                 <span className="text-gray-600 font-medium inline-flex items-center gap-1">
                   PAID:
                   <Popover>
                     <PopoverTrigger asChild>
                       <Info
-                        className="h-3.5 w-3.5 text-gray-400 cursor-pointer"
+                        className="h-3 w-3 text-gray-400 cursor-pointer"
                         aria-hidden="true"
                       />
                     </PopoverTrigger>
-                    <PopoverContent className="w-[360px] p-4">
-                      <div className="text-base font-semibold mb-2">
+                    <PopoverContent className="w-[300px] sm:w-[360px] p-3">
+                      <div className="text-sm font-semibold mb-2">
                         Payment Details
                       </div>
                       {Array.isArray(paymentHistory) &&
                       paymentHistory.length > 0 ? (
-                        <div className="space-y-3 max-h-56 overflow-auto pr-1">
+                        <div className="space-y-2 max-h-48 overflow-auto pr-1">
                           {paymentHistory.map(
                             (p: PaymentHistoryItem, idx: number) => (
                               <div
-                                key={idx}
-                                className="grid grid-cols-[140px_1fr] gap-x-3 text-sm"
+                                key={`payment-${p.referenceNumber || p.paymentDate || idx}`}
+                                className="grid grid-cols-[100px_1fr] gap-x-2 text-xs"
                               >
                                 <div className="text-gray-600">Amount:</div>
                                 <div className="text-gray-900 font-medium">
@@ -219,7 +221,7 @@ export default function OrderStatusTracker({
                           )}
                         </div>
                       ) : (
-                        <div className="text-sm text-gray-600">
+                        <div className="text-xs text-gray-600">
                           No payments yet
                         </div>
                       )}
@@ -232,18 +234,18 @@ export default function OrderStatusTracker({
               </div>
             )}
             {computedToPay !== undefined && (
-              <div className="flex flex-col">
+              <div className="flex flex-col min-w-[70px]">
                 <span className="text-gray-600 font-medium">TO PAY:</span>
                 <span className="text-red-600 font-semibold">
                   <PricingFormat value={computedToPay || 0} />
                 </span>
               </div>
             )}
-            <div className="flex flex-col">
-              <span className="text-gray-600 font-medium">
-                LAST DATE TO PAY:
+            <div className="flex flex-col min-w-[90px]">
+              <span className="text-gray-600 font-medium whitespace-nowrap">
+                LAST DATE:
               </span>
-              <span className="text-red-600 font-semibold">
+              <span className="text-red-600 font-semibold text-[10px] sm:text-xs">
                 {lastDateToPay
                   ? // Check if the string is already formatted (contains "Overdue" or starts with "-")
                     lastDateToPay.startsWith("Overdue") ||
@@ -274,7 +276,7 @@ export default function OrderStatusTracker({
               <HoverCardTrigger asChild>
                 <div
                   className={cn(
-                    "flex-1 h-8 sm:h-7 flex items-center justify-center font-medium transition-all duration-300 ease-in-out relative cursor-pointer group",
+                    "flex-1 h-7 sm:h-8 flex items-center justify-center font-medium transition-all duration-300 ease-in-out relative cursor-pointer group",
                     isActive
                       ? "bg-primary text-primary-foreground shadow-sm hover:bg-primary/90 hover:shadow-md"
                       : "bg-gray-100 text-gray-600 hover:bg-gray-200 hover:shadow-sm hover:scale-[1.02] hover:text-gray-800",
@@ -286,7 +288,7 @@ export default function OrderStatusTracker({
                     !isLast && "border-r border-gray-300/50"
                   )}
                 >
-                  <span className="text-xs sm:text-sm px-2 sm:px-3 text-center font-semibold tracking-wide transition-all duration-300 ease-in-out group-hover:scale-105">
+                  <span className="text-[10px] sm:text-xs px-1 sm:px-2 text-center font-semibold tracking-wide transition-all duration-300 ease-in-out group-hover:scale-105">
                     {step.label}
                   </span>
                   {/* Add a subtle inner shadow for depth */}

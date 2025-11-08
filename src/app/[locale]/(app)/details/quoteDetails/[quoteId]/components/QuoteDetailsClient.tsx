@@ -452,43 +452,45 @@ export default function QuoteDetailsClient({
   ];
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      {/* Sales Header */}
-      <SalesHeader
-        title={quoteName ? decodeUnicode(quoteName) : "Quote Details"}
-        identifier={displayQuoteId}
-        {...(status && {
-          status: {
-            label: status,
-            className: getStatusStyle(status),
-          },
-        })}
-        onEdit={handleEditQuoteName}
-        onRefresh={handleRefresh}
-        onClose={handleClose}
-        menuOptions={[
-          {
-            label: "Clone",
-            onClick: handleClone,
-          },
-          {
-            label: "Download PDF",
-            onClick: handleDownloadPDF,
-          },
-        ]}
-        buttons={headerButtons}
-        showEditIcon={true}
-        loading={loading}
-      />
+    <div className="flex flex-col h-full overflow-hidden bg-gray-50">
+      {/* Sales Header - Fixed at top */}
+      <div className="flex-shrink-0">
+        <SalesHeader
+          title={quoteName ? decodeUnicode(quoteName) : "Quote Details"}
+          identifier={displayQuoteId}
+          {...(status && {
+            status: {
+              label: status,
+              className: getStatusStyle(status),
+            },
+          })}
+          onEdit={handleEditQuoteName}
+          onRefresh={handleRefresh}
+          onClose={handleClose}
+          menuOptions={[
+            {
+              label: "Clone",
+              onClick: handleClone,
+            },
+            {
+              label: "Download PDF",
+              onClick: handleDownloadPDF,
+            },
+          ]}
+          buttons={headerButtons}
+          showEditIcon={true}
+          loading={loading}
+        />
+      </div>
 
-      {/* Quote Details Content */}
-      <div className="container mx-auto px-3 sm:px-4 md:px-6 py-3 sm:py-4 md:py-6 relative pt-28">
-        <div className="flex flex-col lg:flex-row gap-3 sm:gap-4 md:gap-6">
-          {/* Left Side - Products Table, Contact & Terms - 65% */}
-          <div className="w-full lg:w-[65%] space-y-3 sm:space-y-4 md:space-y-6">
-            {/* Products Table */}
-            {!loading && !error && quoteDetails && (
-              <div className="mt-17">
+      {/* Quote Details Content - Scrollable area */}
+      <div className="flex-1 overflow-y-auto overflow-x-hidden">
+        <div className="container mx-auto px-2 sm:px-3 md:px-4 py-2 sm:py-3">
+          <div className="flex flex-col lg:flex-row gap-2 sm:gap-3 md:gap-4">
+            {/* Left Side - Products Table, Contact & Terms - 65% */}
+            <div className="w-full lg:w-[65%] space-y-2 sm:space-y-3 mt-[60px]">
+              {/* Products Table */}
+              {!loading && !error && quoteDetails && (
                 <Suspense fallback={<Skeleton className="h-64 w-full" />}>
                   <OrderProductsTable
                     products={products}
@@ -505,259 +507,264 @@ export default function QuoteDetailsClient({
                     }}
                   />
                 </Suspense>
-              </div>
-            )}
+              )}
 
-            {/* Contact Details and Terms Cards - Side by Side */}
-            {!loading && !error && quoteDetails && (
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-3 sm:gap-4 md:gap-6">
-                {/* Contact Details Card */}
-                <OrderContactDetails
-                  billingAddress={
-                    quoteDetailData?.billingAddressDetails as unknown as Record<
-                      string,
-                      unknown
-                    >
-                  }
-                  shippingAddress={
-                    quoteDetailData?.shippingAddressDetails as unknown as Record<
-                      string,
-                      unknown
-                    >
-                  }
-                  registerAddress={
-                    quoteDetailData?.registerAddressDetails as unknown as Record<
-                      string,
-                      unknown
-                    >
-                  }
-                  sellerAddress={
-                    quoteDetailData?.sellerAddressDetail as unknown as Record<
-                      string,
-                      unknown
-                    >
-                  }
-                  buyerCompanyName={
-                    (quoteDetailData?.buyerCompanyName as string) || ""
-                  }
-                  buyerBranchName={
-                    (quoteDetailData?.buyerBranchName as string) || ""
-                  }
-                  warehouseName={
-                    (
-                      (
-                        quoteDetailData?.dbProductDetails as Array<
-                          Record<string, unknown>
-                        >
-                      )?.[0] as Record<string, Record<string, string>>
-                    )?.wareHouse?.wareHouseName ||
-                    (
-                      (
-                        quoteDetailData?.dbProductDetails as Array<
-                          Record<string, unknown>
-                        >
-                      )?.[0] as Record<string, string>
-                    )?.orderWareHouseName
-                  }
-                  warehouseAddress={
-                    (
-                      (
-                        quoteDetailData?.dbProductDetails as Array<
-                          Record<string, unknown>
-                        >
-                      )?.[0] as Record<
-                        string,
-                        Record<string, Record<string, string>>
-                      >
-                    )?.wareHouse?.addressId as unknown as {
-                      addressLine?: string;
-                      district?: string;
-                      city?: string;
-                      state?: string;
-                      pinCodeId?: string;
-                      country?: string;
-                    }
-                  }
-                  salesBranch={
-                    (quoteDetailData?.sellerBranchName as string) || undefined
-                  }
-                  requiredDate={
-                    (quoteDetailData?.customerRequiredDate ||
-                      quoteDetails?.data?.validityTill) as string | undefined
-                  }
-                  referenceNumber={
-                    (quoteDetails?.data?.buyerReferenceNumber as string) || "-"
-                  }
-                />
-
-                {/* Terms Card */}
-                <OrderTermsCard
-                  orderTerms={
-                    {
-                      ...(quoteDetailData?.quoteTerms as unknown as Record<
+              {/* Contact Details and Terms Cards - Side by Side */}
+              {!loading && !error && quoteDetails && (
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-2 sm:gap-3 md:gap-4">
+                  {/* Contact Details Card */}
+                  <OrderContactDetails
+                    billingAddress={
+                      quoteDetailData?.billingAddressDetails as unknown as Record<
                         string,
                         unknown
-                      >),
-                      // Add additionalTerms from quotationDetails level
-                      additionalTerms:
-                        quoteDetailData?.additionalTerms as string,
-                    } as unknown as Record<string, unknown>
-                  }
-                />
-              </div>
-            )}
+                      >
+                    }
+                    shippingAddress={
+                      quoteDetailData?.shippingAddressDetails as unknown as Record<
+                        string,
+                        unknown
+                      >
+                    }
+                    registerAddress={
+                      quoteDetailData?.registerAddressDetails as unknown as Record<
+                        string,
+                        unknown
+                      >
+                    }
+                    sellerAddress={
+                      quoteDetailData?.sellerAddressDetail as unknown as Record<
+                        string,
+                        unknown
+                      >
+                    }
+                    buyerCompanyName={
+                      (quoteDetailData?.buyerCompanyName as string) || ""
+                    }
+                    buyerBranchName={
+                      (quoteDetailData?.buyerBranchName as string) || ""
+                    }
+                    warehouseName={
+                      (
+                        (
+                          quoteDetailData?.dbProductDetails as Array<
+                            Record<string, unknown>
+                          >
+                        )?.[0] as Record<string, Record<string, string>>
+                      )?.wareHouse?.wareHouseName ||
+                      (
+                        (
+                          quoteDetailData?.dbProductDetails as Array<
+                            Record<string, unknown>
+                          >
+                        )?.[0] as Record<string, string>
+                      )?.orderWareHouseName
+                    }
+                    warehouseAddress={
+                      (
+                        (
+                          quoteDetailData?.dbProductDetails as Array<
+                            Record<string, unknown>
+                          >
+                        )?.[0] as Record<
+                          string,
+                          Record<string, Record<string, string>>
+                        >
+                      )?.wareHouse?.addressId as unknown as {
+                        addressLine?: string;
+                        district?: string;
+                        city?: string;
+                        state?: string;
+                        pinCodeId?: string;
+                        country?: string;
+                      }
+                    }
+                    salesBranch={
+                      (quoteDetailData?.sellerBranchName as string) || undefined
+                    }
+                    requiredDate={
+                      (quoteDetailData?.customerRequiredDate ||
+                        quoteDetails?.data?.validityTill) as string | undefined
+                    }
+                    referenceNumber={
+                      (quoteDetails?.data?.buyerReferenceNumber as string) ||
+                      "-"
+                    }
+                  />
 
-            {/* Loading State */}
-            {loading && (
-              <div className="space-y-4">
-                <Skeleton className="h-64 w-full" />
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-3 sm:gap-4 md:gap-6">
-                  <Skeleton className="h-48 w-full" />
-                  <Skeleton className="h-48 w-full" />
+                  {/* Terms Card */}
+                  <OrderTermsCard
+                    orderTerms={
+                      {
+                        ...(quoteDetailData?.quoteTerms as unknown as Record<
+                          string,
+                          unknown
+                        >),
+                        // Add additionalTerms from quotationDetails level
+                        additionalTerms:
+                          quoteDetailData?.additionalTerms as string,
+                      } as unknown as Record<string, unknown>
+                    }
+                  />
+                </div>
+              )}
+
+              {/* Loading State */}
+              {loading && (
+                <div className="space-y-4">
+                  <Skeleton className="h-64 w-full" />
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3 sm:gap-4 md:gap-6">
+                    <Skeleton className="h-48 w-full" />
+                    <Skeleton className="h-48 w-full" />
+                  </div>
+                </div>
+              )}
+
+              {/* Error State */}
+              {error && !loading && (
+                <div className="bg-red-50 border border-red-200 rounded-lg p-6 text-center">
+                  <p className="text-red-600 font-medium">{error}</p>
+                  <button
+                    onClick={handleRefresh}
+                    className="mt-4 px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 transition-colors"
+                  >
+                    Retry
+                  </button>
+                </div>
+              )}
+            </div>
+
+            {/* Right Side - Price Details - 40% */}
+            {!loading && !error && quoteDetails && (
+              <div className="w-full lg:w-[40%] space-y-2 sm:space-y-3 mt-[60px]">
+                <Suspense fallback={<Skeleton className="h-96 w-full" />}>
+                  <OrderPriceDetails
+                    products={products}
+                    isInter={(() => {
+                      // Determine if inter-state based on product taxes (IGST = inter-state, SGST/CGST = intra-state)
+                      if (products.length > 0 && products[0]) {
+                        const firstProduct = products[0] as Record<
+                          string,
+                          unknown
+                        >;
+                        if (
+                          firstProduct.productTaxes &&
+                          Array.isArray(firstProduct.productTaxes)
+                        ) {
+                          const hasIGST = firstProduct.productTaxes.some(
+                            (t: Record<string, unknown>) => t.taxName === "IGST"
+                          );
+                          return hasIGST;
+                        }
+                      }
+                      return false;
+                    })()}
+                    insuranceCharges={
+                      Number(quoteDetailData?.insuranceCharges) || 0
+                    }
+                    precision={2}
+                    Settings={{
+                      roundingAdjustment:
+                        quoteDetailData?.roundingAdjustmentEnabled || false,
+                    }}
+                    isSeller={
+                      (user as { isSeller?: boolean })?.isSeller || false
+                    }
+                    taxExemption={
+                      (user as { taxExemption?: boolean })?.taxExemption ||
+                      false
+                    }
+                    currency={buyerCurrencySymbol?.symbol || "INR ₹"}
+                    overallShipping={Number(
+                      quoteDetailData?.overallShipping || 0
+                    )}
+                    overallTax={Number(quoteDetailData?.overallTax || 0)}
+                    calculatedTotal={Number(
+                      quoteDetailData?.calculatedTotal ||
+                        quoteDetailData?.grandTotal ||
+                        0
+                    )}
+                    subTotal={Number(quoteDetailData?.subTotal || 0)}
+                    taxableAmount={Number(quoteDetailData?.taxableAmount || 0)}
+                  />
+                </Suspense>
+
+                {/* Customer Information Card */}
+                <div className="mt-4">
+                  <Suspense fallback={<Skeleton className="h-64 w-full" />}>
+                    <CustomerInfoCard
+                      quoteValidity={{
+                        from:
+                          ((displayQuoteDetails?.validityFrom ||
+                            quoteDetails?.data?.validityFrom) as string) ||
+                          undefined,
+                        till:
+                          ((displayQuoteDetails?.validityTill ||
+                            quoteDetails?.data?.validityTill) as string) ||
+                          undefined,
+                      }}
+                      contractEnabled={
+                        ((displayQuoteDetails?.purchaseOrder ||
+                          quoteDetails?.data?.purchaseOrder) as boolean) ||
+                        false
+                      }
+                      endCustomerName={
+                        (
+                          quoteDetailData?.sprDetails as
+                            | { companyName?: string }
+                            | undefined
+                        )?.companyName || undefined
+                      }
+                      projectName={
+                        (
+                          quoteDetailData?.sprDetails as
+                            | { projectName?: string }
+                            | undefined
+                        )?.projectName || undefined
+                      }
+                      competitorNames={
+                        (
+                          quoteDetailData?.sprDetails as
+                            | { competitorNames?: string[] }
+                            | undefined
+                        )?.competitorNames || []
+                      }
+                      priceJustification={
+                        (
+                          quoteDetailData?.sprDetails as
+                            | { priceJustification?: string }
+                            | undefined
+                        )?.priceJustification || undefined
+                      }
+                    />
+                  </Suspense>
                 </div>
               </div>
             )}
 
-            {/* Error State */}
-            {error && !loading && (
-              <div className="bg-red-50 border border-red-200 rounded-lg p-6 text-center">
-                <p className="text-red-600 font-medium">{error}</p>
-                <button
-                  onClick={handleRefresh}
-                  className="mt-4 px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 transition-colors"
-                >
-                  Retry
-                </button>
+            {/* Loading State for Right Side */}
+            {loading && (
+              <div className="w-full lg:w-[40%] space-y-2 sm:space-y-3 mt-[60px]">
+                <Skeleton className="h-96 w-full" />
+                <Skeleton className="h-64 w-full" />
               </div>
             )}
           </div>
-
-          {/* Right Side - Price Details - 40% */}
-          {!loading && !error && quoteDetails && (
-            <div className="w-full lg:w-[40%] mt-17 lg:mr-6 space-y-3 sm:space-y-4 md:space-y-6">
-              <Suspense fallback={<Skeleton className="h-96 w-full" />}>
-                <OrderPriceDetails
-                  products={products}
-                  isInter={(() => {
-                    // Determine if inter-state based on product taxes (IGST = inter-state, SGST/CGST = intra-state)
-                    if (products.length > 0 && products[0]) {
-                      const firstProduct = products[0] as Record<
-                        string,
-                        unknown
-                      >;
-                      if (
-                        firstProduct.productTaxes &&
-                        Array.isArray(firstProduct.productTaxes)
-                      ) {
-                        const hasIGST = firstProduct.productTaxes.some(
-                          (t: Record<string, unknown>) => t.taxName === "IGST"
-                        );
-                        return hasIGST;
-                      }
-                    }
-                    return false;
-                  })()}
-                  insuranceCharges={
-                    Number(quoteDetailData?.insuranceCharges) || 0
-                  }
-                  precision={2}
-                  Settings={{
-                    roundingAdjustment:
-                      quoteDetailData?.roundingAdjustmentEnabled || false,
-                  }}
-                  isSeller={(user as { isSeller?: boolean })?.isSeller || false}
-                  taxExemption={
-                    (user as { taxExemption?: boolean })?.taxExemption || false
-                  }
-                  currency={buyerCurrencySymbol?.symbol || "INR ₹"}
-                  overallShipping={Number(
-                    quoteDetailData?.overallShipping || 0
-                  )}
-                  overallTax={Number(quoteDetailData?.overallTax || 0)}
-                  calculatedTotal={Number(
-                    quoteDetailData?.calculatedTotal ||
-                      quoteDetailData?.grandTotal ||
-                      0
-                  )}
-                  subTotal={Number(quoteDetailData?.subTotal || 0)}
-                  taxableAmount={Number(quoteDetailData?.taxableAmount || 0)}
-                />
-              </Suspense>
-
-              {/* Customer Information Card */}
-              <div className="mt-4">
-                <Suspense fallback={<Skeleton className="h-64 w-full" />}>
-                  <CustomerInfoCard
-                    quoteValidity={{
-                      from:
-                        ((displayQuoteDetails?.validityFrom ||
-                          quoteDetails?.data?.validityFrom) as string) ||
-                        undefined,
-                      till:
-                        ((displayQuoteDetails?.validityTill ||
-                          quoteDetails?.data?.validityTill) as string) ||
-                        undefined,
-                    }}
-                    contractEnabled={
-                      ((displayQuoteDetails?.purchaseOrder ||
-                        quoteDetails?.data?.purchaseOrder) as boolean) || false
-                    }
-                    endCustomerName={
-                      (
-                        quoteDetailData?.sprDetails as
-                          | { companyName?: string }
-                          | undefined
-                      )?.companyName || undefined
-                    }
-                    projectName={
-                      (
-                        quoteDetailData?.sprDetails as
-                          | { projectName?: string }
-                          | undefined
-                      )?.projectName || undefined
-                    }
-                    competitorNames={
-                      (
-                        quoteDetailData?.sprDetails as
-                          | { competitorNames?: string[] }
-                          | undefined
-                      )?.competitorNames || []
-                    }
-                    priceJustification={
-                      (
-                        quoteDetailData?.sprDetails as
-                          | { priceJustification?: string }
-                          | undefined
-                      )?.priceJustification || undefined
-                    }
-                  />
-                </Suspense>
-              </div>
-            </div>
-          )}
-
-          {/* Loading State for Right Side */}
-          {loading && (
-            <div className="w-full lg:w-[40%] mt-17 lg:mr-6 space-y-3 sm:space-y-4 md:space-y-6">
-              <Skeleton className="h-96 w-full" />
-              <Skeleton className="h-64 w-full" />
-            </div>
-          )}
         </div>
       </div>
 
-      {/* Right Sidebar Icons */}
-      <div className="fixed right-0 top-32 z-50 bg-white border-l border-gray-200 shadow-md rounded-l-lg p-0.5">
+      {/* Right Sidebar Icons - Positioned just below the SalesHeader component, flush to right edge */}
+      <div className="fixed right-0 top-[116px] z-50 bg-white border-l border-t border-b border-gray-200 shadow-lg rounded-l-lg p-1">
         <button
           className={`p-1.5 hover:bg-gray-100 rounded transition-colors ${
-            versionsDialogOpen ? "bg-purple-50" : ""
+            versionsDialogOpen ? "bg-primary/10" : ""
           }`}
           aria-label="Layers"
           onClick={() => setVersionsDialogOpen(true)}
         >
           <Layers
             className={`w-5 h-5 transition-colors ${
-              versionsDialogOpen ? "text-purple-600" : "text-gray-700"
+              versionsDialogOpen ? "text-primary" : "text-gray-700"
             }`}
           />
         </button>

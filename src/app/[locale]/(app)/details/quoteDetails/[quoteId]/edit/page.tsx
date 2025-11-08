@@ -810,558 +810,571 @@ export default function EditQuotePage({ params }: EditQuotePageProps) {
   const status = quoteDetails?.data?.updatedBuyerStatus;
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <SalesHeader
-        title={quoteName ? decodeUnicode(quoteName) : "Edit Quote"}
-        identifier={quoteIdentifier || "..."}
-        {...(status && {
-          status: {
-            label: status,
-            className: getStatusStyle(status),
-          },
-        })}
-        onRefresh={handleRefresh}
-        onClose={handleCancel}
-        menuOptions={[]}
-        buttons={[
-          {
-            label: "Submit",
-            variant: "default",
-            onClick: handleSaveQuote,
-            disabled: saving || isSubmitting,
-          },
-        ]}
-        showEditIcon={false}
-        loading={loading}
-      />
+    <div className="flex flex-col h-full overflow-hidden bg-gray-50">
+      {/* Sales Header - Fixed at top */}
+      <div className="flex-shrink-0">
+        <SalesHeader
+          title={quoteName ? decodeUnicode(quoteName) : "Edit Quote"}
+          identifier={quoteIdentifier || "..."}
+          {...(status && {
+            status: {
+              label: status,
+              className: getStatusStyle(status),
+            },
+          })}
+          onRefresh={handleRefresh}
+          onClose={handleCancel}
+          menuOptions={[]}
+          buttons={[
+            {
+              label: "Submit",
+              variant: "default",
+              onClick: handleSaveQuote,
+              disabled: saving || isSubmitting,
+            },
+          ]}
+          showEditIcon={false}
+          loading={loading}
+        />
+      </div>
 
-      <div className="container mx-auto px-3 sm:px-4 md:px-6 py-3 sm:py-4 md:py-6 relative pt-28">
-        <div className="flex flex-col lg:flex-row gap-3 sm:gap-4 md:gap-6">
-          <div className="w-full lg:w-[70%] space-y-3 sm:space-y-4 md:space-y-6 mt-14">
-            {!loading && !error && quoteDetails && (
-              <OrderProductsTable
-                products={
-                  productsWithEditedQuantities.length > 0
-                    ? productsWithEditedQuantities
-                    : updatedProducts.length > 0
-                      ? updatedProducts
-                      : quoteDetails.data?.quotationDetails?.[0]
-                          ?.dbProductDetails || []
-                }
-                {...(quoteDetails.data?.quotationDetails?.[0]?.dbProductDetails
-                  ?.length && {
-                  totalCount:
-                    quoteDetails.data.quotationDetails[0].dbProductDetails
-                      .length,
-                })}
-                isEditable={true}
-                showInvoicedQty={false}
-                onQuantityChange={handleQuantityChange}
-                editedQuantities={editedQuantities}
-                onProductAdd={handleProductAdd}
-                elasticIndex={elasticIndex}
-              />
-            )}
+      {/* Quote Details Content - Scrollable area */}
+      <div className="flex-1 overflow-y-auto overflow-x-hidden">
+        <div className="container mx-auto px-2 sm:px-3 md:px-4 py-2 sm:py-3">
+          <div className="flex flex-col lg:flex-row gap-2 sm:gap-3 md:gap-4">
+            <div className="w-full lg:w-[70%] space-y-2 sm:space-y-3 mt-[60px]">
+              {!loading && !error && quoteDetails && (
+                <OrderProductsTable
+                  products={
+                    productsWithEditedQuantities.length > 0
+                      ? productsWithEditedQuantities
+                      : updatedProducts.length > 0
+                        ? updatedProducts
+                        : quoteDetails.data?.quotationDetails?.[0]
+                            ?.dbProductDetails || []
+                  }
+                  {...(quoteDetails.data?.quotationDetails?.[0]
+                    ?.dbProductDetails?.length && {
+                    totalCount:
+                      quoteDetails.data.quotationDetails[0].dbProductDetails
+                        .length,
+                  })}
+                  isEditable={true}
+                  showInvoicedQty={false}
+                  onQuantityChange={handleQuantityChange}
+                  editedQuantities={editedQuantities}
+                  onProductAdd={handleProductAdd}
+                  elasticIndex={elasticIndex}
+                />
+              )}
 
-            {!loading && !error && quoteDetails && (
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-3 sm:gap-4 md:gap-6">
-                <OrderContactDetails
-                  billingAddress={
-                    editedBillingAddress ||
-                    (quoteDetails.data?.quotationDetails?.[0]
-                      ?.billingAddressDetails as unknown as AddressDetails)
-                  }
-                  shippingAddress={
-                    editedShippingAddress ||
-                    (quoteDetails.data?.quotationDetails?.[0]
-                      ?.shippingAddressDetails as unknown as AddressDetails)
-                  }
-                  registerAddress={
-                    quoteDetails.data?.quotationDetails?.[0]
-                      ?.registerAddressDetails as unknown as AddressDetails
-                  }
-                  sellerAddress={
-                    quoteDetails.data?.quotationDetails?.[0]
-                      ?.sellerAddressDetail as unknown as AddressDetails
-                  }
-                  buyerCompanyName={
-                    quoteDetails.data?.quotationDetails?.[0]
-                      ?.buyerCompanyName as unknown as string
-                  }
-                  buyerBranchName={
-                    quoteDetails.data?.quotationDetails?.[0]
-                      ?.buyerBranchName as unknown as string
-                  }
-                  warehouseName={
-                    editedWarehouse?.name ||
-                    (((
+              {!loading && !error && quoteDetails && (
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-2 sm:gap-3 md:gap-4">
+                  <OrderContactDetails
+                    billingAddress={
+                      editedBillingAddress ||
+                      (quoteDetails.data?.quotationDetails?.[0]
+                        ?.billingAddressDetails as unknown as AddressDetails)
+                    }
+                    shippingAddress={
+                      editedShippingAddress ||
+                      (quoteDetails.data?.quotationDetails?.[0]
+                        ?.shippingAddressDetails as unknown as AddressDetails)
+                    }
+                    registerAddress={
                       quoteDetails.data?.quotationDetails?.[0]
-                        ?.dbProductDetails?.[0] as unknown as Record<
-                        string,
-                        Record<string, string>
-                      >
-                    )?.wareHouse?.wareHouseName ||
+                        ?.registerAddressDetails as unknown as AddressDetails
+                    }
+                    sellerAddress={
+                      quoteDetails.data?.quotationDetails?.[0]
+                        ?.sellerAddressDetail as unknown as AddressDetails
+                    }
+                    buyerCompanyName={
+                      quoteDetails.data?.quotationDetails?.[0]
+                        ?.buyerCompanyName as unknown as string
+                    }
+                    buyerBranchName={
+                      quoteDetails.data?.quotationDetails?.[0]
+                        ?.buyerBranchName as unknown as string
+                    }
+                    warehouseName={
+                      editedWarehouse?.name ||
+                      (((
+                        quoteDetails.data?.quotationDetails?.[0]
+                          ?.dbProductDetails?.[0] as unknown as Record<
+                          string,
+                          Record<string, string>
+                        >
+                      )?.wareHouse?.wareHouseName ||
+                        (
+                          quoteDetails.data?.quotationDetails?.[0]
+                            ?.dbProductDetails?.[0] as unknown as Record<
+                            string,
+                            string
+                          >
+                        )?.orderWareHouseName) as string | undefined)
+                    }
+                    warehouseAddress={
                       (
                         quoteDetails.data?.quotationDetails?.[0]
                           ?.dbProductDetails?.[0] as unknown as Record<
                           string,
-                          string
+                          Record<string, Record<string, string>>
                         >
-                      )?.orderWareHouseName) as string | undefined)
-                  }
-                  warehouseAddress={
-                    (
-                      quoteDetails.data?.quotationDetails?.[0]
-                        ?.dbProductDetails?.[0] as unknown as Record<
-                        string,
-                        Record<string, Record<string, string>>
-                      >
-                    )?.wareHouse?.addressId as unknown as {
-                      addressLine?: string;
-                      district?: string;
-                      city?: string;
-                      state?: string;
-                      pinCodeId?: string;
-                      country?: string;
+                      )?.wareHouse?.addressId as unknown as {
+                        addressLine?: string;
+                        district?: string;
+                        city?: string;
+                        state?: string;
+                        pinCodeId?: string;
+                        country?: string;
+                      }
                     }
+                    salesBranch={
+                      editedSellerBranch?.name ||
+                      (quoteDetails.data?.quotationDetails?.[0]
+                        ?.sellerBranchName as unknown as string | undefined)
+                    }
+                    requiredDate={editedRequiredDate}
+                    referenceNumber={editedReferenceNumber}
+                    isEditable={true}
+                    onRequiredDateChange={handleRequiredDateChange}
+                    onReferenceNumberChange={handleReferenceNumberChange}
+                    onBillingAddressChange={
+                      handleBillingAddressChange as unknown as (
+                        address: Parameters<
+                          typeof OrderContactDetails
+                        >[0]["billingAddress"]
+                      ) => void
+                    }
+                    onShippingAddressChange={
+                      handleShippingAddressChange as unknown as (
+                        address: Parameters<
+                          typeof OrderContactDetails
+                        >[0]["shippingAddress"]
+                      ) => void
+                    }
+                    onSellerBranchChange={handleSellerBranchChange}
+                    onWarehouseChange={handleWarehouseChange}
+                    userId={user?.userId?.toString()}
+                    buyerBranchId={
+                      quoteDetails.data?.quotationDetails?.[0]
+                        ?.buyerBranchId as number
+                    }
+                    buyerCompanyId={user?.companyId}
+                    productIds={
+                      (quoteDetails.data?.quotationDetails?.[0]?.dbProductDetails
+                        ?.map(p => p.productId)
+                        .filter((id): id is string => typeof id === "string") ||
+                        []) as unknown as number[]
+                    }
+                    sellerCompanyId={
+                      quoteDetails.data?.quotationDetails?.[0]
+                        ?.sellerCompanyId as number
+                    }
+                  />
+
+                  <OrderTermsCard
+                    orderTerms={
+                      {
+                        ...(quoteDetails.data?.quotationDetails?.[0]
+                          ?.quoteTerms || {}),
+                        additionalTerms: quoteDetails.data
+                          ?.quotationDetails?.[0]?.additionalTerms as
+                          | string
+                          | undefined,
+                      } as QuoteTerms
+                    }
+                  />
+                </div>
+              )}
+            </div>
+
+            {!loading && !error && quoteDetails && (
+              <div className="w-full lg:w-[30%] mt-[60px] space-y-3">
+                <OrderPriceDetails
+                  products={
+                    calculatedData?.products &&
+                    calculatedData.products.length > 0
+                      ? (calculatedData.products as unknown as Array<
+                          Record<string, unknown>
+                        >)
+                      : productsWithCashDiscount.length > 0
+                        ? productsWithCashDiscount
+                        : productsWithEditedQuantities.length > 0
+                          ? productsWithEditedQuantities
+                          : updatedProducts.length > 0
+                            ? updatedProducts
+                            : quoteDetails.data?.quotationDetails?.[0]
+                                ?.dbProductDetails || []
                   }
-                  salesBranch={
-                    editedSellerBranch?.name ||
-                    (quoteDetails.data?.quotationDetails?.[0]
-                      ?.sellerBranchName as unknown as string | undefined)
+                  isInter={(() => {
+                    // Determine if inter-state based on product taxes (IGST = inter-state, SGST/CGST = intra-state)
+                    const firstProduct =
+                      productsWithEditedQuantities[0] ||
+                      quoteDetails.data?.quotationDetails?.[0]
+                        ?.dbProductDetails?.[0];
+                    if (
+                      firstProduct &&
+                      firstProduct.productTaxes &&
+                      Array.isArray(firstProduct.productTaxes)
+                    ) {
+                      const hasIGST = firstProduct.productTaxes.some(
+                        (t: Record<string, unknown>) => t.taxName === "IGST"
+                      );
+                      return hasIGST;
+                    }
+                    return true; // default to inter-state
+                  })()}
+                  taxExemption={false}
+                  precision={2}
+                  Settings={{
+                    roundingAdjustment:
+                      quoteSettings?.roundingAdjustment || false,
+                  }}
+                  currency={
+                    (
+                      quoteDetails.data?.buyerCurrencySymbol as {
+                        symbol?: string;
+                      }
+                    )?.symbol || "INR ₹"
                   }
-                  requiredDate={editedRequiredDate}
-                  referenceNumber={editedReferenceNumber}
-                  isEditable={true}
-                  onRequiredDateChange={handleRequiredDateChange}
-                  onReferenceNumberChange={handleReferenceNumberChange}
-                  onBillingAddressChange={
-                    handleBillingAddressChange as unknown as (
-                      address: Parameters<
-                        typeof OrderContactDetails
-                      >[0]["billingAddress"]
-                    ) => void
+                  overallShipping={
+                    // Use calculated value if quantities edited or cash discount applied, otherwise use API value
+                    Object.keys(editedQuantities).length > 0 ||
+                    cashDiscountApplied
+                      ? (calculatedData?.cartValue?.totalShipping ??
+                        (Number(
+                          quoteDetails.data?.quotationDetails?.[0]
+                            ?.overallShipping
+                        ) ||
+                          0))
+                      : Number(
+                          quoteDetails.data?.quotationDetails?.[0]
+                            ?.overallShipping
+                        ) || 0
                   }
-                  onShippingAddressChange={
-                    handleShippingAddressChange as unknown as (
-                      address: Parameters<
-                        typeof OrderContactDetails
-                      >[0]["shippingAddress"]
-                    ) => void
+                  overallTax={
+                    // Use calculated tax if quantities edited or cash discount applied, otherwise use API value
+                    Object.keys(editedQuantities).length > 0 ||
+                    cashDiscountApplied
+                      ? (() => {
+                          // If calculatedData has totalTax and it's > 0, use it
+                          if (
+                            calculatedData?.cartValue?.totalTax &&
+                            calculatedData.cartValue.totalTax > 0
+                          ) {
+                            return calculatedData.cartValue.totalTax;
+                          }
+                          // Otherwise, calculate from products' productTaxes (like IGST does)
+                          const products =
+                            productsWithCashDiscount.length > 0
+                              ? productsWithCashDiscount
+                              : productsWithEditedQuantities;
+
+                          let totalTax = 0;
+                          products.forEach((product: CartItem) => {
+                            if (
+                              product.productTaxes &&
+                              Array.isArray(product.productTaxes)
+                            ) {
+                              product.productTaxes.forEach(
+                                (tax: {
+                                  taxPercentage?: number;
+                                  taxName?: string;
+                                }) => {
+                                  const taxPercentage = tax.taxPercentage || 0;
+                                  if (taxPercentage > 0) {
+                                    const quantity =
+                                      product.quantity ||
+                                      product.askedQuantity ||
+                                      1;
+                                    const unitPrice =
+                                      product.unitPrice ||
+                                      product.discountedPrice ||
+                                      0;
+                                    const productTotal =
+                                      product.totalPrice ||
+                                      quantity * unitPrice;
+                                    const taxAmount =
+                                      (productTotal * taxPercentage) / 100;
+                                    totalTax += taxAmount;
+                                  }
+                                }
+                              );
+                            }
+                          });
+
+                          return (
+                            totalTax ||
+                            (calculatedData?.cartValue?.totalTax ??
+                              (Number(
+                                quoteDetails.data?.quotationDetails?.[0]
+                                  ?.overallTax
+                              ) ||
+                                0))
+                          );
+                        })()
+                      : Number(
+                          quoteDetails.data?.quotationDetails?.[0]?.overallTax
+                        ) || 0
                   }
-                  onSellerBranchChange={handleSellerBranchChange}
-                  onWarehouseChange={handleWarehouseChange}
-                  userId={user?.userId?.toString()}
-                  buyerBranchId={
-                    quoteDetails.data?.quotationDetails?.[0]
-                      ?.buyerBranchId as number
+                  calculatedTotal={
+                    // Use calculated total if quantities edited or cash discount applied, otherwise use API value
+                    Object.keys(editedQuantities).length > 0 ||
+                    cashDiscountApplied
+                      ? (() => {
+                          // If calculatedData has grandTotal, use it
+                          if (calculatedData?.cartValue?.grandTotal) {
+                            return calculatedData.cartValue.grandTotal;
+                          }
+                          // Otherwise, calculate manually: subtotal + tax
+                          const products =
+                            productsWithCashDiscount.length > 0
+                              ? productsWithCashDiscount
+                              : productsWithEditedQuantities;
+
+                          // Calculate subtotal
+                          let subtotal = 0;
+                          products.forEach((product: CartItem) => {
+                            const quantity =
+                              product.quantity || product.askedQuantity || 1;
+                            const unitPrice =
+                              product.unitPrice || product.discountedPrice || 0;
+                            const productTotal =
+                              product.totalPrice || quantity * unitPrice;
+                            subtotal += productTotal;
+                          });
+
+                          // Calculate tax
+                          let totalTax = 0;
+                          products.forEach((product: CartItem) => {
+                            if (
+                              product.productTaxes &&
+                              Array.isArray(product.productTaxes)
+                            ) {
+                              product.productTaxes.forEach(
+                                (tax: {
+                                  taxPercentage?: number;
+                                  taxName?: string;
+                                }) => {
+                                  const taxPercentage = tax.taxPercentage || 0;
+                                  if (taxPercentage > 0) {
+                                    const quantity =
+                                      product.quantity ||
+                                      product.askedQuantity ||
+                                      1;
+                                    const unitPrice =
+                                      product.unitPrice ||
+                                      product.discountedPrice ||
+                                      0;
+                                    const productTotal =
+                                      product.totalPrice ||
+                                      quantity * unitPrice;
+                                    const taxAmount =
+                                      (productTotal * taxPercentage) / 100;
+                                    totalTax += taxAmount;
+                                  }
+                                }
+                              );
+                            }
+                          });
+
+                          const calculatedTotal = subtotal + totalTax;
+                          return (
+                            calculatedTotal ||
+                            Number(
+                              quoteDetails.data?.quotationDetails?.[0]
+                                ?.grandTotal ||
+                                quoteDetails.data?.quotationDetails?.[0]
+                                  ?.calculatedTotal
+                            ) ||
+                            0
+                          );
+                        })()
+                      : Number(
+                          quoteDetails.data?.quotationDetails?.[0]
+                            ?.grandTotal ||
+                            quoteDetails.data?.quotationDetails?.[0]
+                              ?.calculatedTotal
+                        ) || 0
                   }
-                  buyerCompanyId={user?.companyId}
-                  productIds={
-                    (quoteDetails.data?.quotationDetails?.[0]?.dbProductDetails
-                      ?.map(p => p.productId)
-                      .filter((id): id is string => typeof id === "string") ||
-                      []) as unknown as number[]
+                  subTotal={
+                    // Use calculated subtotal if quantities edited or cash discount applied, otherwise use API value
+                    Object.keys(editedQuantities).length > 0 ||
+                    cashDiscountApplied
+                      ? (() => {
+                          // If calculatedData has totalValue, use it
+                          if (calculatedData?.cartValue?.totalValue) {
+                            return calculatedData.cartValue.totalValue;
+                          }
+                          // Otherwise, calculate manually from products
+                          const products =
+                            productsWithCashDiscount.length > 0
+                              ? productsWithCashDiscount
+                              : productsWithEditedQuantities;
+
+                          let subtotal = 0;
+                          products.forEach((product: CartItem) => {
+                            const quantity =
+                              product.quantity || product.askedQuantity || 1;
+                            const unitPrice =
+                              product.unitPrice || product.discountedPrice || 0;
+                            const productTotal =
+                              product.totalPrice || quantity * unitPrice;
+                            subtotal += productTotal;
+                          });
+
+                          return (
+                            subtotal ||
+                            Number(
+                              quoteDetails.data?.quotationDetails?.[0]?.subTotal
+                            ) ||
+                            0
+                          );
+                        })()
+                      : Number(
+                          quoteDetails.data?.quotationDetails?.[0]?.subTotal
+                        ) || 0
                   }
+                  taxableAmount={
+                    // Use calculated taxable amount if quantities edited or cash discount applied, otherwise use API value
+                    Object.keys(editedQuantities).length > 0 ||
+                    cashDiscountApplied
+                      ? (() => {
+                          // If calculatedData has taxableAmount, use it
+                          if (calculatedData?.cartValue?.taxableAmount) {
+                            return calculatedData.cartValue.taxableAmount;
+                          }
+                          // Otherwise, use subtotal as taxable amount
+                          const products =
+                            productsWithCashDiscount.length > 0
+                              ? productsWithCashDiscount
+                              : productsWithEditedQuantities;
+
+                          let subtotal = 0;
+                          products.forEach((product: CartItem) => {
+                            const quantity =
+                              product.quantity || product.askedQuantity || 1;
+                            const unitPrice =
+                              product.unitPrice || product.discountedPrice || 0;
+                            const productTotal =
+                              product.totalPrice || quantity * unitPrice;
+                            subtotal += productTotal;
+                          });
+
+                          return (
+                            subtotal ||
+                            Number(
+                              quoteDetails.data?.quotationDetails?.[0]
+                                ?.taxableAmount
+                            ) ||
+                            0
+                          );
+                        })()
+                      : Number(
+                          quoteDetails.data?.quotationDetails?.[0]
+                            ?.taxableAmount
+                        ) || 0
+                  }
+                />
+
+                <CashDiscountCard
+                  handleCDApply={(
+                    cashDiscountValue,
+                    islatestTermAvailable,
+                    paymentTerms
+                  ) => {
+                    handleCDApply(
+                      cashDiscountValue,
+                      islatestTermAvailable,
+                      paymentTerms
+                    );
+                    if (islatestTermAvailable && paymentTerms) {
+                      setQuoteDetails(prev => {
+                        if (!prev || !prev.data?.quotationDetails) return prev;
+                        return {
+                          ...prev,
+                          data: {
+                            ...prev.data,
+                            quotationDetails: prev.data.quotationDetails.map(
+                              (quote, idx) =>
+                                idx === 0
+                                  ? ({
+                                      ...quote,
+                                      quoteTerms: {
+                                        ...(quote.quoteTerms &&
+                                        typeof quote.quoteTerms === "object"
+                                          ? quote.quoteTerms
+                                          : {}),
+                                        paymentTermsId:
+                                          paymentTerms.paymentTermsId ||
+                                          paymentTerms.id,
+                                        paymentTerms:
+                                          paymentTerms.paymentTerms ||
+                                          paymentTerms.description,
+                                        paymentTermsCode:
+                                          paymentTerms.paymentTermsCode,
+                                        cashdiscount: paymentTerms.cashdiscount,
+                                        cashdiscountValue:
+                                          paymentTerms.cashdiscountValue,
+                                      },
+                                    } as typeof quote)
+                                  : quote
+                            ),
+                          },
+                        };
+                      });
+                    }
+                  }}
+                  handleRemoveCD={handleRemoveCashDiscount}
+                  latestpaymentTerms={cashDiscountTerms}
+                  isCashDiscountApplied={cashDiscountApplied}
+                  isSummaryPage={false}
+                  isEdit={true}
+                  cashDiscountValue={
+                    quoteDetails?.data?.quotationDetails?.[0]
+                      ?.cashdiscountValue ||
+                    cashDiscountTerms?.cashdiscountValue ||
+                    (quoteDetails?.data?.quotationDetails?.[0]?.quoteTerms &&
+                    typeof quoteDetails.data.quotationDetails[0].quoteTerms ===
+                      "object" &&
+                    "cashdiscountValue" in
+                      quoteDetails.data.quotationDetails[0].quoteTerms
+                      ? (
+                          quoteDetails.data.quotationDetails[0].quoteTerms as {
+                            cashdiscountValue?: number;
+                          }
+                        ).cashdiscountValue
+                      : undefined) ||
+                    0
+                  }
+                  islatestTermAvailable={
+                    !isEmpty(cashDiscountTerms) && !cashDiscountApplied
+                  }
+                  prevPaymentTerms={prevPaymentTerms}
+                  isOrder={false}
+                  isQuoteToOrder={false}
+                  cashdiscount={cashDiscountApplied}
+                />
+
+                <SPRForm
                   sellerCompanyId={
                     quoteDetails.data?.quotationDetails?.[0]
                       ?.sellerCompanyId as number
                   }
-                />
-
-                <OrderTermsCard
-                  orderTerms={
-                    {
-                      ...(quoteDetails.data?.quotationDetails?.[0]
-                        ?.quoteTerms || {}),
-                      additionalTerms: quoteDetails.data?.quotationDetails?.[0]
-                        ?.additionalTerms as string | undefined,
-                    } as QuoteTerms
-                  }
+                  customerName={sprCustomerName}
+                  projectName={sprProjectName}
+                  competitors={sprCompetitors}
+                  priceJustification={sprPriceJustification}
+                  onCustomerNameChange={setSprCustomerName}
+                  onProjectNameChange={setSprProjectName}
+                  onCompetitorsChange={setSprCompetitors}
+                  onPriceJustificationChange={setSprPriceJustification}
                 />
               </div>
             )}
           </div>
-
-          {!loading && !error && quoteDetails && (
-            <div className="w-full lg:w-[30%] mt-[52px] space-y-3">
-              <OrderPriceDetails
-                products={
-                  calculatedData?.products && calculatedData.products.length > 0
-                    ? (calculatedData.products as unknown as Array<
-                        Record<string, unknown>
-                      >)
-                    : productsWithCashDiscount.length > 0
-                      ? productsWithCashDiscount
-                      : productsWithEditedQuantities.length > 0
-                        ? productsWithEditedQuantities
-                        : updatedProducts.length > 0
-                          ? updatedProducts
-                          : quoteDetails.data?.quotationDetails?.[0]
-                              ?.dbProductDetails || []
-                }
-                isInter={(() => {
-                  // Determine if inter-state based on product taxes (IGST = inter-state, SGST/CGST = intra-state)
-                  const firstProduct =
-                    productsWithEditedQuantities[0] ||
-                    quoteDetails.data?.quotationDetails?.[0]
-                      ?.dbProductDetails?.[0];
-                  if (
-                    firstProduct &&
-                    firstProduct.productTaxes &&
-                    Array.isArray(firstProduct.productTaxes)
-                  ) {
-                    const hasIGST = firstProduct.productTaxes.some(
-                      (t: Record<string, unknown>) => t.taxName === "IGST"
-                    );
-                    return hasIGST;
-                  }
-                  return true; // default to inter-state
-                })()}
-                taxExemption={false}
-                precision={2}
-                Settings={{
-                  roundingAdjustment:
-                    quoteSettings?.roundingAdjustment || false,
-                }}
-                currency={
-                  (
-                    quoteDetails.data?.buyerCurrencySymbol as {
-                      symbol?: string;
-                    }
-                  )?.symbol || "INR ₹"
-                }
-                overallShipping={
-                  // Use calculated value if quantities edited or cash discount applied, otherwise use API value
-                  Object.keys(editedQuantities).length > 0 ||
-                  cashDiscountApplied
-                    ? (calculatedData?.cartValue?.totalShipping ??
-                      (Number(
-                        quoteDetails.data?.quotationDetails?.[0]
-                          ?.overallShipping
-                      ) ||
-                        0))
-                    : Number(
-                        quoteDetails.data?.quotationDetails?.[0]
-                          ?.overallShipping
-                      ) || 0
-                }
-                overallTax={
-                  // Use calculated tax if quantities edited or cash discount applied, otherwise use API value
-                  Object.keys(editedQuantities).length > 0 ||
-                  cashDiscountApplied
-                    ? (() => {
-                        // If calculatedData has totalTax and it's > 0, use it
-                        if (
-                          calculatedData?.cartValue?.totalTax &&
-                          calculatedData.cartValue.totalTax > 0
-                        ) {
-                          return calculatedData.cartValue.totalTax;
-                        }
-                        // Otherwise, calculate from products' productTaxes (like IGST does)
-                        const products =
-                          productsWithCashDiscount.length > 0
-                            ? productsWithCashDiscount
-                            : productsWithEditedQuantities;
-
-                        let totalTax = 0;
-                        products.forEach((product: CartItem) => {
-                          if (
-                            product.productTaxes &&
-                            Array.isArray(product.productTaxes)
-                          ) {
-                            product.productTaxes.forEach(
-                              (tax: {
-                                taxPercentage?: number;
-                                taxName?: string;
-                              }) => {
-                                const taxPercentage = tax.taxPercentage || 0;
-                                if (taxPercentage > 0) {
-                                  const quantity =
-                                    product.quantity ||
-                                    product.askedQuantity ||
-                                    1;
-                                  const unitPrice =
-                                    product.unitPrice ||
-                                    product.discountedPrice ||
-                                    0;
-                                  const productTotal =
-                                    product.totalPrice || quantity * unitPrice;
-                                  const taxAmount =
-                                    (productTotal * taxPercentage) / 100;
-                                  totalTax += taxAmount;
-                                }
-                              }
-                            );
-                          }
-                        });
-
-                        return (
-                          totalTax ||
-                          (calculatedData?.cartValue?.totalTax ??
-                            (Number(
-                              quoteDetails.data?.quotationDetails?.[0]
-                                ?.overallTax
-                            ) ||
-                              0))
-                        );
-                      })()
-                    : Number(
-                        quoteDetails.data?.quotationDetails?.[0]?.overallTax
-                      ) || 0
-                }
-                calculatedTotal={
-                  // Use calculated total if quantities edited or cash discount applied, otherwise use API value
-                  Object.keys(editedQuantities).length > 0 ||
-                  cashDiscountApplied
-                    ? (() => {
-                        // If calculatedData has grandTotal, use it
-                        if (calculatedData?.cartValue?.grandTotal) {
-                          return calculatedData.cartValue.grandTotal;
-                        }
-                        // Otherwise, calculate manually: subtotal + tax
-                        const products =
-                          productsWithCashDiscount.length > 0
-                            ? productsWithCashDiscount
-                            : productsWithEditedQuantities;
-
-                        // Calculate subtotal
-                        let subtotal = 0;
-                        products.forEach((product: CartItem) => {
-                          const quantity =
-                            product.quantity || product.askedQuantity || 1;
-                          const unitPrice =
-                            product.unitPrice || product.discountedPrice || 0;
-                          const productTotal =
-                            product.totalPrice || quantity * unitPrice;
-                          subtotal += productTotal;
-                        });
-
-                        // Calculate tax
-                        let totalTax = 0;
-                        products.forEach((product: CartItem) => {
-                          if (
-                            product.productTaxes &&
-                            Array.isArray(product.productTaxes)
-                          ) {
-                            product.productTaxes.forEach(
-                              (tax: {
-                                taxPercentage?: number;
-                                taxName?: string;
-                              }) => {
-                                const taxPercentage = tax.taxPercentage || 0;
-                                if (taxPercentage > 0) {
-                                  const quantity =
-                                    product.quantity ||
-                                    product.askedQuantity ||
-                                    1;
-                                  const unitPrice =
-                                    product.unitPrice ||
-                                    product.discountedPrice ||
-                                    0;
-                                  const productTotal =
-                                    product.totalPrice || quantity * unitPrice;
-                                  const taxAmount =
-                                    (productTotal * taxPercentage) / 100;
-                                  totalTax += taxAmount;
-                                }
-                              }
-                            );
-                          }
-                        });
-
-                        const calculatedTotal = subtotal + totalTax;
-                        return (
-                          calculatedTotal ||
-                          Number(
-                            quoteDetails.data?.quotationDetails?.[0]
-                              ?.grandTotal ||
-                              quoteDetails.data?.quotationDetails?.[0]
-                                ?.calculatedTotal
-                          ) ||
-                          0
-                        );
-                      })()
-                    : Number(
-                        quoteDetails.data?.quotationDetails?.[0]?.grandTotal ||
-                          quoteDetails.data?.quotationDetails?.[0]
-                            ?.calculatedTotal
-                      ) || 0
-                }
-                subTotal={
-                  // Use calculated subtotal if quantities edited or cash discount applied, otherwise use API value
-                  Object.keys(editedQuantities).length > 0 ||
-                  cashDiscountApplied
-                    ? (() => {
-                        // If calculatedData has totalValue, use it
-                        if (calculatedData?.cartValue?.totalValue) {
-                          return calculatedData.cartValue.totalValue;
-                        }
-                        // Otherwise, calculate manually from products
-                        const products =
-                          productsWithCashDiscount.length > 0
-                            ? productsWithCashDiscount
-                            : productsWithEditedQuantities;
-
-                        let subtotal = 0;
-                        products.forEach((product: CartItem) => {
-                          const quantity =
-                            product.quantity || product.askedQuantity || 1;
-                          const unitPrice =
-                            product.unitPrice || product.discountedPrice || 0;
-                          const productTotal =
-                            product.totalPrice || quantity * unitPrice;
-                          subtotal += productTotal;
-                        });
-
-                        return (
-                          subtotal ||
-                          Number(
-                            quoteDetails.data?.quotationDetails?.[0]?.subTotal
-                          ) ||
-                          0
-                        );
-                      })()
-                    : Number(
-                        quoteDetails.data?.quotationDetails?.[0]?.subTotal
-                      ) || 0
-                }
-                taxableAmount={
-                  // Use calculated taxable amount if quantities edited or cash discount applied, otherwise use API value
-                  Object.keys(editedQuantities).length > 0 ||
-                  cashDiscountApplied
-                    ? (() => {
-                        // If calculatedData has taxableAmount, use it
-                        if (calculatedData?.cartValue?.taxableAmount) {
-                          return calculatedData.cartValue.taxableAmount;
-                        }
-                        // Otherwise, use subtotal as taxable amount
-                        const products =
-                          productsWithCashDiscount.length > 0
-                            ? productsWithCashDiscount
-                            : productsWithEditedQuantities;
-
-                        let subtotal = 0;
-                        products.forEach((product: CartItem) => {
-                          const quantity =
-                            product.quantity || product.askedQuantity || 1;
-                          const unitPrice =
-                            product.unitPrice || product.discountedPrice || 0;
-                          const productTotal =
-                            product.totalPrice || quantity * unitPrice;
-                          subtotal += productTotal;
-                        });
-
-                        return (
-                          subtotal ||
-                          Number(
-                            quoteDetails.data?.quotationDetails?.[0]
-                              ?.taxableAmount
-                          ) ||
-                          0
-                        );
-                      })()
-                    : Number(
-                        quoteDetails.data?.quotationDetails?.[0]?.taxableAmount
-                      ) || 0
-                }
-              />
-
-              <CashDiscountCard
-                handleCDApply={(
-                  cashDiscountValue,
-                  islatestTermAvailable,
-                  paymentTerms
-                ) => {
-                  handleCDApply(
-                    cashDiscountValue,
-                    islatestTermAvailable,
-                    paymentTerms
-                  );
-                  if (islatestTermAvailable && paymentTerms) {
-                    setQuoteDetails(prev => {
-                      if (!prev || !prev.data?.quotationDetails) return prev;
-                      return {
-                        ...prev,
-                        data: {
-                          ...prev.data,
-                          quotationDetails: prev.data.quotationDetails.map(
-                            (quote, idx) =>
-                              idx === 0
-                                ? ({
-                                    ...quote,
-                                    quoteTerms: {
-                                      ...(quote.quoteTerms &&
-                                      typeof quote.quoteTerms === "object"
-                                        ? quote.quoteTerms
-                                        : {}),
-                                      paymentTermsId:
-                                        paymentTerms.paymentTermsId ||
-                                        paymentTerms.id,
-                                      paymentTerms:
-                                        paymentTerms.paymentTerms ||
-                                        paymentTerms.description,
-                                      paymentTermsCode:
-                                        paymentTerms.paymentTermsCode,
-                                      cashdiscount: paymentTerms.cashdiscount,
-                                      cashdiscountValue:
-                                        paymentTerms.cashdiscountValue,
-                                    },
-                                  } as typeof quote)
-                                : quote
-                          ),
-                        },
-                      };
-                    });
-                  }
-                }}
-                handleRemoveCD={handleRemoveCashDiscount}
-                latestpaymentTerms={cashDiscountTerms}
-                isCashDiscountApplied={cashDiscountApplied}
-                isSummaryPage={false}
-                isEdit={true}
-                cashDiscountValue={
-                  quoteDetails?.data?.quotationDetails?.[0]
-                    ?.cashdiscountValue ||
-                  cashDiscountTerms?.cashdiscountValue ||
-                  (quoteDetails?.data?.quotationDetails?.[0]?.quoteTerms &&
-                  typeof quoteDetails.data.quotationDetails[0].quoteTerms ===
-                    "object" &&
-                  "cashdiscountValue" in
-                    quoteDetails.data.quotationDetails[0].quoteTerms
-                    ? (
-                        quoteDetails.data.quotationDetails[0].quoteTerms as {
-                          cashdiscountValue?: number;
-                        }
-                      ).cashdiscountValue
-                    : undefined) ||
-                  0
-                }
-                islatestTermAvailable={
-                  !isEmpty(cashDiscountTerms) && !cashDiscountApplied
-                }
-                prevPaymentTerms={prevPaymentTerms}
-                isOrder={false}
-                isQuoteToOrder={false}
-                cashdiscount={cashDiscountApplied}
-              />
-
-              <SPRForm
-                sellerCompanyId={
-                  quoteDetails.data?.quotationDetails?.[0]
-                    ?.sellerCompanyId as number
-                }
-                customerName={sprCustomerName}
-                projectName={sprProjectName}
-                competitors={sprCompetitors}
-                priceJustification={sprPriceJustification}
-                onCustomerNameChange={setSprCustomerName}
-                onProjectNameChange={setSprProjectName}
-                onCompetitorsChange={setSprCompetitors}
-                onPriceJustificationChange={setSprPriceJustification}
-              />
-            </div>
-          )}
         </div>
       </div>
 

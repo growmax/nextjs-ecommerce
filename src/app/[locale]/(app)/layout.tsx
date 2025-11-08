@@ -69,11 +69,9 @@ export default async function AppLayout({
             <TenantDataProvider>
               <SidebarProvider>
                 <AppSidebar />
-                <SidebarInset>
+                <SidebarInset className="flex flex-col h-screen overflow-hidden">
                   <AppHeader />
-                  <main className="flex-1 overflow-x-hidden p-.1 pt-2 [&_.landing-page]:pt-0! [&_.landing-page]:pb-0! [&_.landing-page]:min-h-0!">
-                    {children}
-                  </main>
+                  <main className="flex-1 overflow-hidden">{children}</main>
                 </SidebarInset>
               </SidebarProvider>
             </TenantDataProvider>

@@ -149,9 +149,9 @@ export default function OrderProductsTable({
                 variant="outline"
                 size="sm"
                 onClick={onExport}
-                className="h-2.5 px-1 py-0! text-[10px] font-medium border-gray-300 text-gray-700 hover:bg-gray-50 -my-1"
+                className="h-7 px-3 text-xs font-medium"
               >
-                <Download className="h-1 w-1 mr-0.5" />
+                <Download className="h-3.5 w-3.5 mr-1.5" />
                 EXPORT
               </Button>
             )
@@ -355,7 +355,11 @@ export default function OrderProductsTable({
                                   { passive: false }
                                 );
                               }}
-                              className="w-20 h-8 text-center text-sm border-gray-300 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none [-moz-appearance:textfield]"
+                              className={`w-20 h-8 text-center text-sm focus:ring-1 [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none [-moz-appearance:textfield] ${
+                                quantity === 0
+                                  ? "border-red-500 focus:border-red-500 focus:ring-red-500"
+                                  : "border-gray-300 focus:border-blue-500 focus:ring-blue-500"
+                              }`}
                               min="0"
                             />
                           ) : (

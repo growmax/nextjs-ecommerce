@@ -1,5 +1,6 @@
 "use client";
 
+import { statusColor } from "@/components/custom/statuscolors";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -7,9 +8,8 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Skeleton } from "@/components/ui/skeleton";
 import { useSidebar } from "@/components/ui/sidebar";
-import { statusColor } from "@/components/custom/statuscolors";
+import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
 import { MoreVertical, Pencil, RefreshCw, X } from "lucide-react";
 
@@ -140,7 +140,7 @@ export default function SalesHeader({
       </div>
 
       {/* Right Section - Action Buttons and Icons */}
-      <div className="flex items-center gap-4.5 md:gap-2 self-end md:self-auto">
+      <div className="flex items-center gap-2 self-end md:self-auto">
         {/* Custom Action Buttons */}
         {loading ? (
           <>
