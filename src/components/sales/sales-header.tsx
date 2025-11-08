@@ -73,19 +73,19 @@ export default function SalesHeader({
   loading = false,
 }: SalesHeaderProps) {
   const { state, isMobile } = useSidebar();
+  const leftOffset = isMobile
+    ? "0px"
+    : state === "expanded"
+      ? "var(--sidebar-width)"
+      : "var(--sidebar-width-icon)";
 
   return (
     <div
       className={cn(
-        "fixed top-14 z-40 flex flex-col md:flex-row md:items-center justify-between gap-2 md:gap-4 px-3 md:px-4 py-2 md:py-3 bg-white border-b shadow-sm transition-all duration-200",
-        // Responsive positioning based on sidebar state
-        isMobile
-          ? "left-0 right-0"
-          : state === "expanded"
-            ? "left-64 right-0" // 16rem = 256px = 64 * 4px
-            : "left-0 right-0", // When collapsed, start from very left edge
+        "fixed top-14 left-0 right-0 z-40 flex flex-col md:flex-row md:items-center justify-between gap-2 md:gap-4 px-3 md:px-4 py-2 md:py-3 bg-white border-b shadow-sm transition-all duration-200",
         className
       )}
+      style={{ left: leftOffset }}
     >
       {/* Left Section - Title, Identifier, and Status */}
       <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-3 flex-1 min-w-0">
