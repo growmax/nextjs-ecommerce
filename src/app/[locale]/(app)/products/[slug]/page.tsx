@@ -47,47 +47,83 @@ async function fetchProduct(
 
 export async function generateStaticParams() {
   try {
-    const { tenantData } = await getContext();
+    console.log(
+      `[Static Generation] Fetching product starging for build-time generation`
+    );
+    const { tenantData, origin } = await getContext();
 
     if (!tenantData?.data?.tenant?.elasticCode) {
       return [];
     }
 
-    // TODO: Replace with actual API call to fetch popular/featured products
-    // Example: Fetch top 100 products by views, sales, or featured flag
-    // const popularProducts = await fetchPopularProducts(elasticIndex, 100);
+    // Generate static params for specific products that should be pre-built
+    // Add your specific product IDs here that you want to generate at build time
+    const staticProducts = [
+      "Prod0000012390", // Specific product requested for build-time generation
+      // Add more products here as needed
+      // "Prod0000012345",
+      // "Prod0000016789",
+    ];
 
-    // For now, return empty array - all pages will be generated on-demand
-    // Uncomment and modify when you have a popular products API
-    /*
-    const popularProducts = await OpenSearchService.searchProducts({
-      index: elasticIndex,
-      size: 100,
-      query: {
-        bool: {
-          must: [
-            { term: { is_published: true } },
-            { range: { view_count: { gte: 100 } } } // Example: products with 100+ views
-          ]
+    // Generate paths for all supported locales
+    const locales = ["en", "es", "fr"];
+    const productPaths = [];
+
+    // Fetch product data and generate proper slugs
+    for (const productId of staticProducts) {
+      try {
+        // Fetch product data
+        console.log(
+          `[Static Generation] Fetching product ${productId} for build-time generation`
+        );
+        const product = await fetchProduct(
+          productId,
+          tenantData.data.tenant.elasticCode,
+          tenantData.data.tenant.tenantCode,
+          origin
+        );
+
+        if (product) {
+          console.log(
+            `[Static Generation] fetchProduct succeeded for ${productId}`
+          );
+          // Generate proper slug using the existing slug generator
+          const { generateProductSlug } = await import(
+            "@/utils/product/slug-generator"
+          );
+          const slug = generateProductSlug(product);
+
+          // Add paths for all locales
+          for (const locale of locales) {
+            productPaths.push({ locale, slug });
+          }
+
+          // Static generation logging (build-time only)
+          if (process.env.NODE_ENV === "development") {
+            console.log(
+              `[Static Generation] Pre-generating: ${productId} -> ${slug} for locales: ${locales.join(", ")}`
+            );
+          }
+        } else {
+          // Static generation warning (build-time only)
+          if (process.env.NODE_ENV === "development") {
+            console.warn(
+              `[Static Generation] Product ${productId} not found, skipping...`
+            );
+          }
         }
-      },
-      sort: [{ view_count: { order: "desc" } }]
-    });
+      } catch (error) {
+        // Static generation error (build-time only)
+        if (process.env.NODE_ENV === "development") {
+          console.warn(
+            `[Static Generation] Failed to fetch product ${productId}:`,
+            error
+          );
+        }
+      }
+    }
 
-    // Generate slugs for all locales
-    const locales = ['en', 'es', 'fr'];
-    const paths = popularProducts.flatMap(product => 
-      locales.map(locale => ({
-        locale,
-        slug: generateProductSlug(product)
-      }))
-    );
-
-    return paths;
-    */
-
-    // Return empty array for now - on-demand generation only
-    return [];
+    return productPaths;
   } catch (_error) {
     return [];
   }
@@ -235,12 +271,25 @@ export default async function ProductPage({ params }: ProductPageProps) {
         </div>
       );
     }
+
+    const startTime = Date.now();
+
     const productData = await fetchProduct(
       productId,
       elasticCode,
       tenantCode,
       origin
     );
+    const endTime = Date.now();
+    const duration = endTime - startTime;
+
+    // Performance timing (development only)
+    if (process.env.NODE_ENV === "development") {
+      console.log(`[Product Fetch] Duration: ${duration}ms`, {
+        timestamp: new Date().toISOString(),
+        productId: parseProductSlug(slug),
+      });
+    }
 
     if (!productData) {
       const { notFound } = await import("next/navigation");

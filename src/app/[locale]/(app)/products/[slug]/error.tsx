@@ -18,8 +18,10 @@ export default function ProductError({
   reset: () => void;
 }) {
   useEffect(() => {
-    // Log error to error reporting service
-    console.error("Product page error:", error);
+    // Error reporting (development only)
+    if (process.env.NODE_ENV === 'development') {
+      console.error("Product page error:", error);
+    }
   }, [error]);
 
   return (

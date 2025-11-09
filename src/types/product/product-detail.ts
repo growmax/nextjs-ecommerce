@@ -186,3 +186,29 @@ export interface ProductDetailResponse {
   message?: string;
 }
 
+/**
+ * OpenSearch API Response Structure
+ * Based on the OpenSearch invocation response format
+ */
+export interface OpenSearchProductResponse {
+  body: {
+    found: boolean;
+    _source: ProductDetail;
+  };
+}
+
+/**
+ * Product Display Data for UI components
+ * Extracted subset of ProductDetail for display purposes
+ */
+export interface ProductDisplayData {
+  product_id: number;
+  title: string;
+  brand_name: string;
+  product_short_description: string;
+  unit_list_price: number;
+  unit_mrp: number;
+  product_assetss: ProductAsset[];
+  product_specifications: ProductSpecification[];
+}
+

@@ -2,7 +2,6 @@
 
 import { useQuery } from "@tanstack/react-query";
 import { ColumnDef } from "@tanstack/react-table";
-import debounce from "lodash/debounce";
 import { useLocale } from "next-intl";
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useMemo, useState } from "react";
@@ -26,10 +25,6 @@ import { useCurrentUser } from "@/hooks/useCurrentUser";
 import ordersFilterService, {
   OrderFilter,
 } from "@/lib/api/services/OrdersFilterService";
-import {
-  FilterPreference,
-  FilterPreferenceResponse,
-} from "@/lib/api/services/PreferenceService";
 import { type Order } from "@/types/dashboard/DasbordOrderstable/DashboardOrdersTable";
 import { OrdersLandingTableProps } from "../../types/ordertypes";
 
@@ -107,22 +102,18 @@ function OrdersLandingTable({
 
   // State
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
-  const [drawerMode, setDrawerMode] = useState<"filter" | "create">("filter");
-  const [orders, setOrders] = useState<Order[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [totalCount, setTotalCount] = useState(0);
+  const [drawerMode] = useState<"filter" | "create">("filter");
+  const [orders] = useState<Order[]>([]);
   const [page, setPage] = useState(0);
   const [rowPerPage, setRowPerPage] = useState(20);
   const [pagination, setPagination] = useState({ pageIndex: 0, pageSize: 20 });
   const [filterData, setFilterData] = useState<QuoteFilterFormData | null>(
     null
   );
-  const [initialFilterData, setInitialFilterData] = useState<
+  const [initialFilterData] = useState<
     QuoteFilterFormData | undefined
   >(undefined);
-  const [filterPreferences, setFilterPreferences] =
-    useState<FilterPreferenceResponse | null>(null);
-  const [activeTab, setActiveTab] = useState("all");
+  const [activeTab] = useState("all");
   const [isAddDrawerOpen, setIsAddDrawerOpen] = useState(false);
   const [isItemsDialogOpen, setIsItemsDialogOpen] = useState(false);
   const [selectedOrderItems, setSelectedOrderItems] = useState<Order | null>(
@@ -343,33 +334,6 @@ function OrdersLandingTable({
     [rowPerPage]
   );
 
-  // Convert saved filter to form data
-  const convertToFormData = useCallback(
-    (filter: FilterPreference): QuoteFilterFormData => ({
-      filterName: filter.filter_name || "",
-      status: filter.status || [],
-      quoteId: filter.identifier || "",
-      quoteName: filter.name || "",
-      quotedDateStart: filter.startDate
-        ? new Date(filter.startDate)
-        : undefined,
-      quotedDateEnd: filter.endDate ? new Date(filter.endDate) : undefined,
-      lastUpdatedDateStart: filter.startCreatedDate
-        ? new Date(filter.startCreatedDate)
-        : undefined,
-      lastUpdatedDateEnd: filter.endCreatedDate
-        ? new Date(filter.endCreatedDate)
-        : undefined,
-      subtotalStart: filter.startValue?.toString() || "",
-      subtotalEnd: filter.endValue?.toString() || "",
-      taxableStart: filter.startTaxableAmount?.toString() || "",
-      taxableEnd: filter.endTaxableAmount?.toString() || "",
-      totalStart: filter.startGrandTotal?.toString() || "",
-      totalEnd: filter.endGrandTotal?.toString() || "",
-    }),
-    []
-  );
-
   // Load filter preferences
   // const loadFilterPreferences = useCallback(async () => {
   //   try {
@@ -542,53 +506,6 @@ function OrdersLandingTable({
     [pagination]
   );
 
-  const handleTabChange = useCallback(
-    (value: string) => {
-      setActiveTab(value);
-      setPage(0);
-
-      const currentTabs =
-        !filterPreferences?.preference?.filters ||
-        filterPreferences.preference.filters.length === 0
-          ? [
-              {
-                id: "all",
-                label: "All",
-                hasFilter: true,
-                isFilterActive: !!filterData,
-                filterIndex: undefined,
-              },
-            ]
-          : filterPreferences.preference.filters.map((filter, index) => ({
-              id: `filter-${index}`,
-              label: filter.filter_name,
-              hasFilter: true,
-              isFilterActive:
-                filterPreferences.preference.selected === index || !!filterData,
-              filterIndex: index,
-            }));
-
-      const selectedTab = currentTabs.find(tab => tab.id === value);
-      if (
-        selectedTab &&
-        filterPreferences &&
-        selectedTab.filterIndex !== undefined
-      ) {
-        const selectedFilter =
-          filterPreferences.preference.filters[selectedTab.filterIndex];
-        if (selectedFilter) {
-          const formData = convertToFormData(selectedFilter);
-          setFilterData(formData);
-          toast.success(`Applied "${selectedTab.label}" filter successfully`);
-        }
-      } else {
-        setFilterData(null);
-        toast.success(`Switched to "${selectedTab?.label || "All"}" view`);
-      }
-    },
-    [filterPreferences, filterData, convertToFormData]
-  );
-
   const handleSaveFilter = useCallback(
     async (filterData: QuoteFilterFormData) => {
       if (!user?.userId || !user?.companyId) {
@@ -615,38 +532,6 @@ function OrdersLandingTable({
     [user?.userId, user?.companyId, createFilterFromData] // Removed loadFilterPreferences from dependencies
   );
 
-  // Define tabs
-  const tabs = useMemo(() => {
-    if (
-      !filterPreferences?.preference?.filters ||
-      filterPreferences.preference.filters.length === 0
-    ) {
-      return [
-        {
-          id: "all",
-          label: "All",
-          hasFilter: true,
-          isFilterActive: !!filterData,
-          filterIndex: undefined,
-        },
-      ];
-    }
-    return filterPreferences.preference.filters.map((filter, index) => ({
-      id: `filter-${index}`,
-      label: filter.filter_name,
-      hasFilter: true,
-      isFilterActive:
-        filterPreferences.preference.selected === index || !!filterData,
-      filterIndex: index,
-    }));
-  }, [filterPreferences, filterData]);
-
-  // Memoize fetch function
-  const debouncedFetch = useMemo(
-    () => debounce(fetchOrders, 300),
-    [fetchOrders]
-  );
-
   // New useQuery hook
   const { data, isLoading, isError } = useQuery({
     queryKey: [
@@ -659,7 +544,7 @@ function OrdersLandingTable({
     ],
     queryFn: fetchOrders,
     staleTime: 5 * 60 * 1000, // 5 minutes caching
-    cacheTime: 10 * 60 * 1000, // 10 minutes
+    gcTime: 10 * 60 * 1000, // 10 minutes
     enabled: !!user?.userId && !!user?.companyId,
   });
 
@@ -682,7 +567,7 @@ function OrdersLandingTable({
   }, [handleExport, setExportCallback]);
 
   useEffect(() => {
-    if (refreshTrigger > 0) {
+    if (refreshTrigger && refreshTrigger > 0) {
       // Assuming queryClient is available globally or passed as a prop
       // For now, we'll just refetch the specific query key
       // If queryClient is not available, this will need to be handled differently

@@ -2,7 +2,7 @@
 
 import { useEffect, useRef } from "react";
 import { useRouter, usePathname } from "@/i18n/navigation";
-import { useLoading } from "@/contexts/LoadingContext";
+import { useLoading } from "@/hooks/useGlobalLoader";
 
 interface UseNavigationProgressOptions {
   /**
@@ -48,7 +48,7 @@ export function useNavigationProgress({
   const { isLoading: globalLoading, showLoading, hideLoading } = useLoading();
   
   const loadingId = "navigation";
-  const timeoutRef = useRef<NodeJS.Timeout>();
+  const timeoutRef = useRef<ReturnType<typeof setTimeout>>();
   const startTimeRef = useRef<number>();
   const isNavigatingRef = useRef(false);
   const mountedRef = useRef(false);
@@ -96,7 +96,7 @@ export function useNavigationProgress({
 
   // End navigation loading
   const endNavigation = (reason?: string) => {
-    if (!isNavigatingRef.current || !mountedRef.current) return;
+    if (!isNavigatingRef.current || !mountedRef.current) return undefined;
     
     isNavigatingRef.current = false;
     clearTimeout();
@@ -118,6 +118,8 @@ export function useNavigationProgress({
     } else {
       completeProgress();
     }
+    
+    return undefined;
   };
 
   // Handle route changes
@@ -136,50 +138,14 @@ export function useNavigationProgress({
   useEffect(() => {
     if (!autoDetect || !mountedRef.current) return;
 
-    // Safe event handler for navigation start
-    const handleStart = (url: string) => {
-      // Only trigger for external navigation (not hash changes or same page)
-      if (typeof url === "string" && !url.includes('#') && mountedRef.current) {
-        startNavigation();
-      }
+    // For app router, we don't have router.events like pages router
+    // Instead, we'll rely on the global loading context
+    // This is a simplified implementation for app router compatibility
+    
+    return () => {
+      // Cleanup
     };
-
-    // Safe event handler for navigation completion
-    const handleComplete = () => {
-      if (mountedRef.current) {
-        endNavigation("navigation_complete");
-      }
-    };
-
-    // Safe event handler for navigation error
-    const handleError = () => {
-      if (mountedRef.current) {
-        endNavigation("navigation_error");
-      }
-    };
-
-    // Listen for route changes if router events are available
-    if (typeof window !== "undefined" && router?.events) {
-      try {
-        router.events.on("routeChangeStart", handleStart);
-        router.events.on("routeChangeComplete", handleComplete);
-        router.events.on("routeChangeError", handleError);
-
-        return () => {
-          try {
-            router.events?.off("routeChangeStart", handleStart);
-            router.events?.off("routeChangeComplete", handleComplete);
-            router.events?.off("routeChangeError", handleError);
-          } catch {
-            // Ignore cleanup errors
-          }
-        };
-      } catch {
-        // If router events fail, silently continue without automatic detection
-        console.warn("Navigation progress: Unable to attach router events, falling back to LoadingContext only");
-      }
-    }
-  }, [router, autoDetect, mountedRef.current]);
+  }, [autoDetect, mountedRef.current]);
 
   // Handle global loading state changes
   useEffect(() => {

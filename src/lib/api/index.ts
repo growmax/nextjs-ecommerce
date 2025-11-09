@@ -28,6 +28,7 @@ import TenantService from "./services/TenantService";
 import UserService from "./services/UserService";
 
 // Import SubIndustry service
+import SubIndustryService from "./services/SubIndustryService";
 
 // Import token management services
 import { AuthTokenService } from "../services/AuthTokenService";
@@ -77,6 +78,7 @@ export {
   RequestQueueService,
   SearchService,
   StoreFrontService,
+  SubIndustryService,
   TenantService,
   TokenRefreshService,
   UserService,
