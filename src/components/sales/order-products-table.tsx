@@ -58,10 +58,10 @@ export interface OrderProductsTableProps {
   editedQuantities?: Record<string, number>;
   onProductAdd?: (product: ProductSearchResult) => void;
   elasticIndex?: string | undefined;
+  showInvoicedQty?: boolean;
 }
 
 //
-
 export default function OrderProductsTable({
   products = [],
   totalCount = 0,
@@ -73,6 +73,7 @@ export default function OrderProductsTable({
   editedQuantities = {},
   onProductAdd,
   elasticIndex,
+  showInvoicedQty = true,
 }: OrderProductsTableProps) {
   const [currentPage, setCurrentPage] = useState(1);
   const displayCount = totalCount || products.length;
@@ -148,9 +149,9 @@ export default function OrderProductsTable({
                 variant="outline"
                 size="sm"
                 onClick={onExport}
-                className="h-2.5 px-1 py-0! text-[10px] font-medium border-gray-300 text-gray-700 hover:bg-gray-50 -my-1"
+                className="h-7 px-3 text-xs font-medium"
               >
-                <Download className="h-1 w-1 mr-0.5" />
+                <Download className="h-3.5 w-3.5 mr-1.5" />
                 EXPORT
               </Button>
             )
@@ -182,9 +183,11 @@ export default function OrderProductsTable({
                 <TableHead className="font-medium text-primary text-center min-w-[100px] py-3">
                   QUANTITY
                 </TableHead>
-                <TableHead className="font-medium text-primary text-center min-w-[140px] py-3">
-                  INVOICED QTY
-                </TableHead>
+                {showInvoicedQty && (
+                  <TableHead className="font-medium text-primary text-center min-w-[140px] py-3">
+                    INVOICED QTY
+                  </TableHead>
+                )}
                 <TableHead className="font-medium text-primary text-right min-w-[150px] py-3">
                   AMOUNT(INR₹)
                 </TableHead>
@@ -193,11 +196,11 @@ export default function OrderProductsTable({
                 </TableHead>
               </TableRow>
             </TableHeader>
-            <TableBody className="min-h-[240px]">
+            <TableBody className="min-h-60">
               {currentPageProducts.length === 0 ? (
                 <TableRow>
                   <TableCell
-                    colSpan={9}
+                    colSpan={showInvoicedQty ? 9 : 8}
                     className="text-center py-8 text-muted-foreground"
                   >
                     No products found
@@ -207,15 +210,15 @@ export default function OrderProductsTable({
                 <>
                   {currentPageProducts.map((product, index) => {
                     // Map API fields to display fields
-                    const itemName =
-                      product.productShortDescription ||
-                      product.itemName ||
-                      product.orderName ||
+                    const itemName: string =
+                      (product.productShortDescription as string) ||
+                      (product.itemName as string) ||
+                      (product.orderName as string) ||
                       "-";
-                    const itemCode =
-                      product.brandProductId ||
-                      product.itemCode ||
-                      product.orderIdentifier ||
+                    const itemCode: string =
+                      (product.brandProductId as string) ||
+                      (product.itemCode as string) ||
+                      (product.orderIdentifier as string) ||
                       "";
                     const discountValue =
                       product.discount ?? product.discountPercentage ?? 0;
@@ -352,16 +355,22 @@ export default function OrderProductsTable({
                                   { passive: false }
                                 );
                               }}
-                              className="w-20 h-8 text-center text-sm border-gray-300 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none [-moz-appearance:textfield]"
+                              className={`w-20 h-8 text-center text-sm focus:ring-1 [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none [-moz-appearance:textfield] ${
+                                quantity === 0
+                                  ? "border-red-500 focus:border-red-500 focus:ring-red-500"
+                                  : "border-gray-300 focus:border-blue-500 focus:ring-blue-500"
+                              }`}
                               min="0"
                             />
                           ) : (
                             quantity
                           )}
                         </TableCell>
-                        <TableCell className="text-center min-w-[140px] py-3">
-                          {invoicedQty}
-                        </TableCell>
+                        {showInvoicedQty && (
+                          <TableCell className="text-center min-w-[140px] py-3">
+                            {invoicedQty}
+                          </TableCell>
+                        )}
                         <TableCell className="text-right min-w-[150px] py-3">
                           <PricingFormat value={amount ?? 0} />
                         </TableCell>
@@ -400,9 +409,11 @@ export default function OrderProductsTable({
                       <TableCell className="min-w-[100px] py-3">
                         <div className="h-6"></div>
                       </TableCell>
-                      <TableCell className="min-w-[140px] py-3">
-                        <div className="h-6"></div>
-                      </TableCell>
+                      {showInvoicedQty && (
+                        <TableCell className="min-w-[140px] py-3">
+                          <div className="h-6"></div>
+                        </TableCell>
+                      )}
                       <TableCell className="min-w-[150px] py-3">
                         <div className="h-6"></div>
                       </TableCell>

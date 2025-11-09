@@ -30,4 +30,5 @@ export type {
   SalesHeaderMenuOption,
   SalesHeaderProps,
 } from "./sales-header";
+export { default as SPRForm } from "./SPRForm";
 export { default as OrderTermsCard } from "./terms-card";

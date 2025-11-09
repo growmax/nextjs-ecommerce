@@ -91,13 +91,13 @@ export function VersionsDialog({
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent
-        className="fixed! top-31! right-0! left-auto! bottom-0! translate-x-0! translate-y-0! w-[20%]! min-w-[280px]! max-w-[380px]! h-[calc(100vh-3.5rem)]! rounded-tl-lg! rounded-bl-lg! p-0 shadow-[rgba(0,0,0,0.15)_-4px_0_12px_0] data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:slide-out-to-right data-[state=open]:slide-in-from-right data-[state=closed]:zoom-out-0 data-[state=open]:zoom-in-0"
+        className="fixed top-[116px] right-0 left-auto bottom-0 translate-x-0 translate-y-0 w-[280px] sm:w-[320px] max-w-[320px] h-[calc(100vh-116px)] rounded-tl-lg p-0 shadow-[-4px_0_12px_0_rgba(0,0,0,0.15)] data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:slide-out-to-right-full data-[state=open]:slide-in-from-right-full duration-300 border-l border-t border-gray-200 z-30"
         showCloseButton={false}
         hideOverlay={true}
       >
-        <div className="flex flex-col h-full bg-white overflow-hidden rounded-tl-lg rounded-bl-lg">
+        <div className="flex flex-col h-full bg-white overflow-hidden">
           {/* Header */}
-          <DialogHeader className="px-4 py-1 border-b border-gray-200 shrink-0">
+          <DialogHeader className="px-4 py-3 border-b border-gray-200 shrink-0">
             <div className="flex items-center justify-between gap-4">
               <DialogTitle className="text-base font-bold text-gray-900 flex-1">
                 Versions

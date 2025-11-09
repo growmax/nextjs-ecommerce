@@ -567,7 +567,6 @@ export default function EditOrderPage({ params }: EditOrderPageProps) {
       await fetchOrderResponseMutate();
       toast.success("Order details refreshed successfully");
     } catch (error) {
-      // eslint-disable-next-line no-console
       console.error("Error refreshing order details:", error);
       toast.error("Failed to refresh order details");
     }
@@ -937,7 +936,6 @@ export default function EditOrderPage({ params }: EditOrderPageProps) {
       // Step 6: Navigate back to order details page
       router.push(`/${locale}/details/orderDetails/${orderId}`);
     } catch (error) {
-      // eslint-disable-next-line no-console
       console.error("Error placing order:", error);
       toast.error(
         error instanceof Error
@@ -973,319 +971,328 @@ export default function EditOrderPage({ params }: EditOrderPageProps) {
   const status = orderDetails?.data?.updatedBuyerStatus;
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      {/* Sales Header */}
-      <SalesHeader
-        title={orderName ? decodeUnicode(orderName) : "Edit Order"}
-        identifier={orderId || "..."}
-        {...(status && {
-          status: {
-            label: status,
-            className: getStatusStyle(status),
-          },
-        })}
-        onRefresh={handleRefresh}
-        onClose={handleCancel}
-        menuOptions={[]}
-        buttons={[
-          {
-            label: "PLACE ORDER",
-            variant: "default",
-            onClick: handlePlaceOrder,
-            disabled: saving,
-          },
-        ]}
-        showEditIcon={false}
-        loading={loading}
-      />
+    <div className="flex flex-col h-full overflow-hidden bg-gray-50">
+      {/* Sales Header - Fixed at top */}
+      <div className="flex-shrink-0">
+        <SalesHeader
+          title={orderName ? decodeUnicode(orderName) : "Edit Order"}
+          identifier={orderId || "..."}
+          {...(status && {
+            status: {
+              label: status,
+              className: getStatusStyle(status),
+            },
+          })}
+          onRefresh={handleRefresh}
+          onClose={handleCancel}
+          menuOptions={[]}
+          buttons={[
+            {
+              label: "PLACE ORDER",
+              variant: "default",
+              onClick: handlePlaceOrder,
+              disabled: saving,
+            },
+          ]}
+          showEditIcon={false}
+          loading={loading}
+        />
+      </div>
 
-      {/* Order Details Content */}
-      <div className="container mx-auto px-3 sm:px-4 md:px-6 py-3 sm:py-4 md:py-6 relative pt-28">
-        <div className="flex flex-col lg:flex-row gap-3 sm:gap-4 md:gap-6">
-          {/* Left Side - Products Table and Contact/Terms Cards - 70% */}
-          <div className="w-full lg:w-[70%] space-y-3 sm:space-y-4 md:space-y-6 mt-14">
-            {/* Products Table */}
-            {!loading && !error && orderDetails && (
-              <OrderProductsTable
-                products={
-                  updatedProducts.length > 0
-                    ? updatedProducts
-                    : orderDetails.data?.orderDetails?.[0]?.dbProductDetails ||
-                      []
-                }
-                {...(orderDetails.data?.orderDetails?.[0]?.dbProductDetails
-                  ?.length && {
-                  totalCount:
-                    orderDetails.data.orderDetails[0].dbProductDetails.length,
-                })}
-                isEditable={true}
-                onQuantityChange={handleQuantityChange}
-                editedQuantities={editedQuantities}
-                onProductAdd={handleProductAdd}
-                elasticIndex={elasticIndex}
-              />
-            )}
+      {/* Order Details Content - Scrollable area */}
+      <div className="flex-1 overflow-y-auto overflow-x-hidden">
+        <div className="container mx-auto px-2 sm:px-3 md:px-4 py-2 sm:py-3">
+          <div className="flex flex-col lg:flex-row gap-2 sm:gap-3 md:gap-4">
+            {/* Left Side - Products Table and Contact/Terms Cards - 70% */}
+            <div className="w-full lg:w-[70%] space-y-2 sm:space-y-3 mt-[60px]">
+              {/* Products Table */}
+              {!loading && !error && orderDetails && (
+                <OrderProductsTable
+                  products={
+                    updatedProducts.length > 0
+                      ? updatedProducts
+                      : orderDetails.data?.orderDetails?.[0]
+                          ?.dbProductDetails || []
+                  }
+                  {...(orderDetails.data?.orderDetails?.[0]?.dbProductDetails
+                    ?.length && {
+                    totalCount:
+                      orderDetails.data.orderDetails[0].dbProductDetails.length,
+                  })}
+                  isEditable={true}
+                  onQuantityChange={handleQuantityChange}
+                  editedQuantities={editedQuantities}
+                  onProductAdd={handleProductAdd}
+                  elasticIndex={elasticIndex}
+                />
+              )}
 
-            {/* Contact Details and Terms Cards - Side by Side */}
-            {!loading && !error && orderDetails && (
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-3 sm:gap-4 md:gap-6">
-                {/* Contact Details Card */}
-                <OrderContactDetails
-                  billingAddress={
-                    editedBillingAddress ||
-                    (orderDetails.data?.orderDetails?.[0]
-                      ?.billingAddressDetails as unknown as AddressDetails)
-                  }
-                  shippingAddress={
-                    editedShippingAddress ||
-                    (orderDetails.data?.orderDetails?.[0]
-                      ?.shippingAddressDetails as unknown as AddressDetails)
-                  }
-                  registerAddress={
-                    orderDetails.data?.orderDetails?.[0]
-                      ?.registerAddressDetails as unknown as AddressDetails
-                  }
-                  sellerAddress={
-                    orderDetails.data?.orderDetails?.[0]
-                      ?.sellerAddressDetail as unknown as AddressDetails
-                  }
-                  buyerCompanyName={
-                    orderDetails.data?.orderDetails?.[0]
-                      ?.buyerCompanyName as unknown as string
-                  }
-                  buyerBranchName={
-                    orderDetails.data?.orderDetails?.[0]
-                      ?.buyerBranchName as unknown as string
-                  }
-                  warehouseName={
-                    editedWarehouse?.name ||
-                    (((
+              {/* Contact Details and Terms Cards - Side by Side */}
+              {!loading && !error && orderDetails && (
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-2 sm:gap-3 md:gap-4">
+                  {/* Contact Details Card */}
+                  <OrderContactDetails
+                    billingAddress={
+                      editedBillingAddress ||
+                      (orderDetails.data?.orderDetails?.[0]
+                        ?.billingAddressDetails as unknown as AddressDetails)
+                    }
+                    shippingAddress={
+                      editedShippingAddress ||
+                      (orderDetails.data?.orderDetails?.[0]
+                        ?.shippingAddressDetails as unknown as AddressDetails)
+                    }
+                    registerAddress={
                       orderDetails.data?.orderDetails?.[0]
-                        ?.dbProductDetails?.[0] as unknown as Record<
-                        string,
-                        Record<string, string>
-                      >
-                    )?.wareHouse?.wareHouseName ||
+                        ?.registerAddressDetails as unknown as AddressDetails
+                    }
+                    sellerAddress={
+                      orderDetails.data?.orderDetails?.[0]
+                        ?.sellerAddressDetail as unknown as AddressDetails
+                    }
+                    buyerCompanyName={
+                      orderDetails.data?.orderDetails?.[0]
+                        ?.buyerCompanyName as unknown as string
+                    }
+                    buyerBranchName={
+                      orderDetails.data?.orderDetails?.[0]
+                        ?.buyerBranchName as unknown as string
+                    }
+                    warehouseName={
+                      editedWarehouse?.name ||
+                      (((
+                        orderDetails.data?.orderDetails?.[0]
+                          ?.dbProductDetails?.[0] as unknown as Record<
+                          string,
+                          Record<string, string>
+                        >
+                      )?.wareHouse?.wareHouseName ||
+                        (
+                          orderDetails.data?.orderDetails?.[0]
+                            ?.dbProductDetails?.[0] as unknown as Record<
+                            string,
+                            string
+                          >
+                        )?.orderWareHouseName) as string | undefined)
+                    }
+                    warehouseAddress={
                       (
                         orderDetails.data?.orderDetails?.[0]
                           ?.dbProductDetails?.[0] as unknown as Record<
                           string,
-                          string
+                          Record<string, Record<string, string>>
                         >
-                      )?.orderWareHouseName) as string | undefined)
-                  }
-                  warehouseAddress={
-                    (
-                      orderDetails.data?.orderDetails?.[0]
-                        ?.dbProductDetails?.[0] as unknown as Record<
-                        string,
-                        Record<string, Record<string, string>>
-                      >
-                    )?.wareHouse?.addressId as unknown as {
-                      addressLine?: string;
-                      district?: string;
-                      city?: string;
-                      state?: string;
-                      pinCodeId?: string;
-                      country?: string;
+                      )?.wareHouse?.addressId as unknown as {
+                        addressLine?: string;
+                        district?: string;
+                        city?: string;
+                        state?: string;
+                        pinCodeId?: string;
+                        country?: string;
+                      }
                     }
+                    salesBranch={
+                      editedSellerBranch?.name ||
+                      (orderDetails.data?.orderDetails?.[0]
+                        ?.sellerBranchName as unknown as string | undefined)
+                    }
+                    requiredDate={editedRequiredDate}
+                    referenceNumber={editedReferenceNumber}
+                    isEditable={true}
+                    onRequiredDateChange={handleRequiredDateChange}
+                    onReferenceNumberChange={handleReferenceNumberChange}
+                    onBillingAddressChange={
+                      handleBillingAddressChange as unknown as (
+                        address: Parameters<
+                          typeof OrderContactDetails
+                        >[0]["billingAddress"]
+                      ) => void
+                    }
+                    onShippingAddressChange={
+                      handleShippingAddressChange as unknown as (
+                        address: Parameters<
+                          typeof OrderContactDetails
+                        >[0]["shippingAddress"]
+                      ) => void
+                    }
+                    onSellerBranchChange={handleSellerBranchChange}
+                    onWarehouseChange={handleWarehouseChange}
+                    userId={user?.userId?.toString()}
+                    buyerBranchId={
+                      orderDetails.data?.orderDetails?.[0]
+                        ?.buyerBranchId as number
+                    }
+                    buyerCompanyId={user?.companyId}
+                    productIds={
+                      orderDetails.data?.orderDetails?.[0]?.dbProductDetails?.map(
+                        p => p.productId
+                      ) as number[]
+                    }
+                    sellerCompanyId={
+                      orderDetails.data?.orderDetails?.[0]
+                        ?.sellerCompanyId as number
+                    }
+                  />
+
+                  {/* Terms Card */}
+                  <OrderTermsCard
+                    orderTerms={
+                      {
+                        ...(orderDetails.data?.orderDetails?.[0]?.orderTerms ||
+                          {}),
+                        additionalTerms: orderDetails.data?.orderDetails?.[0]
+                          ?.additionalTerms as string | undefined,
+                      } as OrderTerms
+                    }
+                  />
+                </div>
+              )}
+            </div>
+
+            {/* Right Side - Price Details - 30% */}
+            {!loading && !error && orderDetails && (
+              <div className="w-full lg:w-[30%] mt-[60px] space-y-3">
+                <OrderPriceDetails
+                  products={
+                    calculatedData?.products &&
+                    calculatedData.products.length > 0
+                      ? (calculatedData.products as unknown as Array<
+                          Record<string, unknown>
+                        >)
+                      : productsWithCashDiscount.length > 0
+                        ? productsWithCashDiscount
+                        : productsWithEditedQuantities.length > 0
+                          ? productsWithEditedQuantities
+                          : updatedProducts.length > 0
+                            ? updatedProducts
+                            : orderDetails.data?.orderDetails?.[0]
+                                ?.dbProductDetails || []
                   }
-                  salesBranch={
-                    editedSellerBranch?.name ||
-                    (orderDetails.data?.orderDetails?.[0]
-                      ?.sellerBranchName as unknown as string | undefined)
+                  isInter={true}
+                  taxExemption={false}
+                  precision={2}
+                  Settings={{
+                    roundingAdjustment:
+                      quoteSettings?.roundingAdjustment || false,
+                  }}
+                  currency={
+                    (
+                      orderDetails.data?.buyerCurrencySymbol as {
+                        symbol?: string;
+                      }
+                    )?.symbol || "INR ₹"
                   }
-                  requiredDate={editedRequiredDate}
-                  referenceNumber={editedReferenceNumber}
-                  isEditable={true}
-                  onRequiredDateChange={handleRequiredDateChange}
-                  onReferenceNumberChange={handleReferenceNumberChange}
-                  onBillingAddressChange={
-                    handleBillingAddressChange as unknown as (
-                      address: Parameters<
-                        typeof OrderContactDetails
-                      >[0]["billingAddress"]
-                    ) => void
+                  // Use calculated values when available, fallback to API values
+                  overallShipping={
+                    calculatedData?.cartValue?.totalShipping !== undefined
+                      ? calculatedData.cartValue.totalShipping
+                      : Number(
+                          orderDetails.data?.orderDetails?.[0]?.overallShipping
+                        ) || 0
                   }
-                  onShippingAddressChange={
-                    handleShippingAddressChange as unknown as (
-                      address: Parameters<
-                        typeof OrderContactDetails
-                      >[0]["shippingAddress"]
-                    ) => void
+                  overallTax={
+                    calculatedData?.cartValue?.totalTax !== undefined
+                      ? calculatedData.cartValue.totalTax
+                      : Number(
+                          orderDetails.data?.orderDetails?.[0]?.overallTax
+                        ) || 0
                   }
-                  onSellerBranchChange={handleSellerBranchChange}
-                  onWarehouseChange={handleWarehouseChange}
-                  userId={user?.userId?.toString()}
-                  buyerBranchId={
-                    orderDetails.data?.orderDetails?.[0]
-                      ?.buyerBranchId as number
-                  }
-                  buyerCompanyId={user?.companyId}
-                  productIds={
-                    orderDetails.data?.orderDetails?.[0]?.dbProductDetails?.map(
-                      p => p.productId
-                    ) as number[]
-                  }
-                  sellerCompanyId={
-                    orderDetails.data?.orderDetails?.[0]
-                      ?.sellerCompanyId as number
-                  }
+                  {...(calculatedData?.cartValue?.grandTotal !== undefined &&
+                  calculatedData?.cartValue?.grandTotal !== null &&
+                  calculatedData?.cartValue?.totalValue !== undefined &&
+                  calculatedData?.cartValue?.totalValue !== null &&
+                  calculatedData?.cartValue?.taxableAmount !== undefined &&
+                  calculatedData?.cartValue?.taxableAmount !== null
+                    ? {
+                        calculatedTotal: calculatedData.cartValue.grandTotal,
+                        subTotal: calculatedData.cartValue.totalValue,
+                        taxableAmount: calculatedData.cartValue.taxableAmount,
+                      }
+                    : {})}
                 />
 
-                {/* Terms Card */}
-                <OrderTermsCard
-                  orderTerms={
-                    orderDetails.data?.orderDetails?.[0]
-                      ?.orderTerms as unknown as OrderTerms
+                {/* Cash Discount Card */}
+                <CashDiscountCard
+                  handleCDApply={(
+                    cashDiscountValue,
+                    islatestTermAvailable,
+                    paymentTerms
+                  ) => {
+                    handleCDApply(
+                      cashDiscountValue,
+                      islatestTermAvailable,
+                      paymentTerms
+                    );
+                    // Update payment terms if available
+                    if (islatestTermAvailable && paymentTerms) {
+                      setOrderDetails(prev => {
+                        if (!prev || !prev.data?.orderDetails) return prev;
+                        return {
+                          ...prev,
+                          data: {
+                            ...prev.data,
+                            orderDetails: prev.data.orderDetails.map(
+                              (order, idx) =>
+                                idx === 0
+                                  ? {
+                                      ...order,
+                                      orderTerms: {
+                                        ...(order.orderTerms &&
+                                        typeof order.orderTerms === "object"
+                                          ? order.orderTerms
+                                          : {}),
+                                        paymentTermsId:
+                                          paymentTerms.paymentTermsId ||
+                                          paymentTerms.id,
+                                        paymentTerms:
+                                          paymentTerms.paymentTerms ||
+                                          paymentTerms.description,
+                                        paymentTermsCode:
+                                          paymentTerms.paymentTermsCode,
+                                        cashdiscount: paymentTerms.cashdiscount,
+                                        cashdiscountValue:
+                                          paymentTerms.cashdiscountValue,
+                                      },
+                                    }
+                                  : order
+                            ),
+                          },
+                        };
+                      });
+                    }
+                  }}
+                  handleRemoveCD={handleRemoveCashDiscount}
+                  latestpaymentTerms={cashDiscountTerms}
+                  isCashDiscountApplied={cashDiscountApplied}
+                  isSummaryPage={false}
+                  isEdit={true}
+                  cashDiscountValue={
+                    orderDetails?.data?.orderDetails?.[0]?.cashdiscountValue ||
+                    cashDiscountTerms?.cashdiscountValue ||
+                    (orderDetails?.data?.orderDetails?.[0]?.orderTerms &&
+                    typeof orderDetails.data.orderDetails[0].orderTerms ===
+                      "object" &&
+                    "cashdiscountValue" in
+                      orderDetails.data.orderDetails[0].orderTerms
+                      ? (
+                          orderDetails.data.orderDetails[0].orderTerms as {
+                            cashdiscountValue?: number;
+                          }
+                        ).cashdiscountValue
+                      : undefined) ||
+                    0
                   }
+                  islatestTermAvailable={
+                    !isEmpty(cashDiscountTerms) && !cashDiscountApplied
+                  }
+                  prevPaymentTerms={prevPaymentTerms}
+                  isOrder={true}
+                  isQuoteToOrder={false}
+                  cashdiscount={cashDiscountApplied}
                 />
               </div>
             )}
           </div>
-
-          {/* Right Side - Price Details - 30% */}
-          {!loading && !error && orderDetails && (
-            <div className="w-full lg:w-[30%] mt-[52px] space-y-3">
-              <OrderPriceDetails
-                products={
-                  calculatedData?.products && calculatedData.products.length > 0
-                    ? (calculatedData.products as unknown as Array<
-                        Record<string, unknown>
-                      >)
-                    : productsWithCashDiscount.length > 0
-                      ? productsWithCashDiscount
-                      : productsWithEditedQuantities.length > 0
-                        ? productsWithEditedQuantities
-                        : updatedProducts.length > 0
-                          ? updatedProducts
-                          : orderDetails.data?.orderDetails?.[0]
-                              ?.dbProductDetails || []
-                }
-                isInter={true}
-                taxExemption={false}
-                precision={2}
-                Settings={{
-                  roundingAdjustment:
-                    quoteSettings?.roundingAdjustment || false,
-                }}
-                currency={
-                  (
-                    orderDetails.data?.buyerCurrencySymbol as {
-                      symbol?: string;
-                    }
-                  )?.symbol || "INR ₹"
-                }
-                // Use calculated values when available, fallback to API values
-                overallShipping={
-                  calculatedData?.cartValue?.totalShipping !== undefined
-                    ? calculatedData.cartValue.totalShipping
-                    : Number(
-                        orderDetails.data?.orderDetails?.[0]?.overallShipping
-                      ) || 0
-                }
-                overallTax={
-                  calculatedData?.cartValue?.totalTax !== undefined
-                    ? calculatedData.cartValue.totalTax
-                    : Number(
-                        orderDetails.data?.orderDetails?.[0]?.overallTax
-                      ) || 0
-                }
-                {...(calculatedData?.cartValue?.grandTotal !== undefined &&
-                calculatedData?.cartValue?.grandTotal !== null &&
-                calculatedData?.cartValue?.totalValue !== undefined &&
-                calculatedData?.cartValue?.totalValue !== null &&
-                calculatedData?.cartValue?.taxableAmount !== undefined &&
-                calculatedData?.cartValue?.taxableAmount !== null
-                  ? {
-                      calculatedTotal: calculatedData.cartValue.grandTotal,
-                      subTotal: calculatedData.cartValue.totalValue,
-                      taxableAmount: calculatedData.cartValue.taxableAmount,
-                    }
-                  : {})}
-              />
-
-              {/* Cash Discount Card */}
-              <CashDiscountCard
-                handleCDApply={(
-                  cashDiscountValue,
-                  islatestTermAvailable,
-                  paymentTerms
-                ) => {
-                  handleCDApply(
-                    cashDiscountValue,
-                    islatestTermAvailable,
-                    paymentTerms
-                  );
-                  // Update payment terms if available
-                  if (islatestTermAvailable && paymentTerms) {
-                    setOrderDetails(prev => {
-                      if (!prev || !prev.data?.orderDetails) return prev;
-                      return {
-                        ...prev,
-                        data: {
-                          ...prev.data,
-                          orderDetails: prev.data.orderDetails.map(
-                            (order, idx) =>
-                              idx === 0
-                                ? {
-                                    ...order,
-                                    orderTerms: {
-                                      ...(order.orderTerms &&
-                                      typeof order.orderTerms === "object"
-                                        ? order.orderTerms
-                                        : {}),
-                                      paymentTermsId:
-                                        paymentTerms.paymentTermsId ||
-                                        paymentTerms.id,
-                                      paymentTerms:
-                                        paymentTerms.paymentTerms ||
-                                        paymentTerms.description,
-                                      paymentTermsCode:
-                                        paymentTerms.paymentTermsCode,
-                                      cashdiscount: paymentTerms.cashdiscount,
-                                      cashdiscountValue:
-                                        paymentTerms.cashdiscountValue,
-                                    },
-                                  }
-                                : order
-                          ),
-                        },
-                      };
-                    });
-                  }
-                }}
-                handleRemoveCD={handleRemoveCashDiscount}
-                latestpaymentTerms={cashDiscountTerms}
-                isCashDiscountApplied={cashDiscountApplied}
-                isSummaryPage={false}
-                isEdit={true}
-                cashDiscountValue={
-                  orderDetails?.data?.orderDetails?.[0]?.cashdiscountValue ||
-                  cashDiscountTerms?.cashdiscountValue ||
-                  (orderDetails?.data?.orderDetails?.[0]?.orderTerms &&
-                  typeof orderDetails.data.orderDetails[0].orderTerms ===
-                    "object" &&
-                  "cashdiscountValue" in
-                    orderDetails.data.orderDetails[0].orderTerms
-                    ? (
-                        orderDetails.data.orderDetails[0].orderTerms as {
-                          cashdiscountValue?: number;
-                        }
-                      ).cashdiscountValue
-                    : undefined) ||
-                  0
-                }
-                islatestTermAvailable={
-                  !isEmpty(cashDiscountTerms) && !cashDiscountApplied
-                }
-                prevPaymentTerms={prevPaymentTerms}
-                isOrder={true}
-                isQuoteToOrder={false}
-                cashdiscount={cashDiscountApplied}
-              />
-            </div>
-          )}
         </div>
       </div>
 

@@ -21,7 +21,7 @@ export default function HeaderBar({
       {/* Fixed Header */}
       <header
         className={cn(
-          "fixed top-[69px] left-64 right-0 flex-shrink-0 bg-background border-b border-border shadow-sm z-50",
+          "flex top-[69px] left-64 right-0 flex-shrink-0 bg-background border-b border-border shadow-sm z-50",
           className
         )}
         style={{
@@ -48,12 +48,6 @@ export default function HeaderBar({
                   {title}
                 </h4>
               </div>
-
-              {/* Empty divs for spacing (like MUI) */}
-              <div className="flex-shrink-0"></div>
-              <div className="flex-shrink-0"></div>
-              <div className="flex-shrink-0"></div>
-              <div className="flex-grow"></div>
             </div>
           </div>
 

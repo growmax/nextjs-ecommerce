@@ -9,18 +9,17 @@ import {
   setTaxDetails,
 } from "@/utils/calculation/salesCalculation";
 import { formatElasticResponse } from "@/utils/elasticsearch/format-response";
-// import { assignPricelistDiscountsDataToProducts } from "@/utils/functionalUtils";
+import { assign_pricelist_discounts_data_to_products } from "@/utils/functionalUtils";
 import filter from "lodash/filter";
 import find from "lodash/find";
 import map from "lodash/map";
 import round from "lodash/round";
 
 // Currency can be number (ID) or object with id/currencyCode
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
+
 type CurrencyType = any;
 
 interface GetLatestTaxDataParams {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   products: any[];
   isCloneReOrder?: boolean;
   taxExemption?: boolean;
@@ -35,7 +34,7 @@ interface GetLatestTaxDataParams {
   // user's currency object from useCurrentUser
   userCurrency?: CurrencyType;
   roundOff?: number;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
   quoteSettings?: any;
   elasticIndex?: string;
   context?: RequestContext;
@@ -148,19 +147,18 @@ export async function getLatestTaxData({
     // Handle response structure: { success: true, data: [...] } or { data: [...] }
     // The old API route returned { success: true, data: data?.data }
     // Keep discountsData as object with data property to match old JS logic
-    let discountsData: { data?: any[] } | null = null; // eslint-disable-line @typescript-eslint/no-explicit-any
+    let discountsData: { data?: any[] } | null = null;
 
     if (discountsResult) {
       const result = discountsResult as {
         success?: boolean;
-        data?: any[]; // eslint-disable-line @typescript-eslint/no-explicit-any
+        data?: any[];
       };
 
       if (result.success !== undefined && result.data) {
         // Response format: { success: true, data: [...] }
         discountsData = { data: result.data };
       } else {
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const dataResult = discountsResult as { data?: any[] };
         if (dataResult.data) {
           // Response format: { data: [...] }
@@ -169,7 +167,6 @@ export async function getLatestTaxData({
         } else if (Array.isArray(discountsResult)) {
           // Response is directly an array - wrap it
           discountsData = {
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
             data: discountsResult as any[],
           };
         }
@@ -182,13 +179,13 @@ export async function getLatestTaxData({
       elasticProducts.length > 0 ? { data: elasticProducts } : { data: [] }
     );
     const formattedData = manipulateProductsElasticData(
-      (Array.isArray(pdData) ? pdData : [pdData]) as any // eslint-disable-line @typescript-eslint/no-explicit-any
-    ) as any[]; // eslint-disable-line @typescript-eslint/no-explicit-any
+      (Array.isArray(pdData) ? pdData : [pdData]) as any
+    ) as any[];
     const formattedDataArray = Array.isArray(formattedData)
       ? formattedData
       : [formattedData];
 
-    let tempProducts: any[] = []; // eslint-disable-line @typescript-eslint/no-explicit-any
+    let tempProducts: any[] = [];
 
     if (!isPlaceOrder) {
       // Edit order flow
@@ -213,23 +210,23 @@ export async function getLatestTaxData({
               ...prd_wise_discData,
               // Map PricelistCode (from API) to priceListCode (used in code)
               priceListCode:
-                (prd_wise_discData as any)?.PricelistCode || // eslint-disable-line @typescript-eslint/no-explicit-any
-                (prd_wise_discData as any)?.priceListCode, // eslint-disable-line @typescript-eslint/no-explicit-any
+                (prd_wise_discData as any)?.PricelistCode ||
+                (prd_wise_discData as any)?.priceListCode,
             };
 
             // Assign pricelist discounts to product
-            // item = assignPricelistDiscountsDataToProducts(
-            //   item,
-            //   normalizedDiscountData,
-            //   false
-            // );
+            item = assign_pricelist_discounts_data_to_products(
+              item,
+              normalizedDiscountData,
+              false
+            );
 
             // Update sellerId and sellerName from discount response
             if ((prd_wise_discData as any)?.sellerId) {
-              (item as any).sellerId = (prd_wise_discData as any).sellerId; // eslint-disable-line @typescript-eslint/no-explicit-any
+              (item as any).sellerId = (prd_wise_discData as any).sellerId;
             }
             if ((prd_wise_discData as any)?.sellerName) {
-              (item as any).sellerName = (prd_wise_discData as any).sellerName; // eslint-disable-line @typescript-eslint/no-explicit-any
+              (item as any).sellerName = (prd_wise_discData as any).sellerName;
             }
 
             // Check for latest product discounts (equivalent to check_latest_product_discounts)
@@ -263,37 +260,36 @@ export async function getLatestTaxData({
             // Update tax and category info
             if (temp) {
               item.taxInclusive =
-                (temp as any)?.taxInclusive ?? item.taxInclusive; // eslint-disable-line @typescript-eslint/no-explicit-any
+                (temp as any)?.taxInclusive ?? item.taxInclusive;
               item.primary_products_categoryObjects =
-                (temp as any)?.primary_products_categoryObjects ?? // eslint-disable-line @typescript-eslint/no-explicit-any
+                (temp as any)?.primary_products_categoryObjects ??
                 item.primary_products_categoryObjects;
-              item.hsnDetails = (temp as any)?.hsnDetails || item.hsnDetails; // eslint-disable-line @typescript-eslint/no-explicit-any
+              item.hsnDetails = (temp as any)?.hsnDetails || item.hsnDetails;
               item.listPricePublic =
-                (temp as any)?.listPricePublic ?? item.listPricePublic; // eslint-disable-line @typescript-eslint/no-explicit-any
+                (temp as any)?.listPricePublic ?? item.listPricePublic;
               item.showPrice =
-                (temp as any)?.showPrice ?? item.priceNotAvailable; // eslint-disable-line @typescript-eslint/no-explicit-any
+                (temp as any)?.showPrice ?? item.priceNotAvailable;
             }
 
             // Clone/Reorder specific logic
             if (isCloneReOrder) {
               // Add bundle products (equivalent to addBundleProducts_In_AddMoreProducts)
-              // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
               if (temp && (temp as any).bundleProducts) {
-                // eslint-disable-next-line @typescript-eslint/no-explicit-any
                 item.bundleProducts = (temp as any).bundleProducts;
               }
 
               item.addonCost = 0;
               item.quantity = item.askedQuantity || item.quantity;
               item.listPricePublic =
-                (temp as any)?.listPricePublic ?? item.listPricePublic; // eslint-disable-line @typescript-eslint/no-explicit-any
+                (temp as any)?.listPricePublic ?? item.listPricePublic;
               item.showPrice =
-                (temp as any)?.showPrice ?? item.priceNotAvailable; // eslint-disable-line @typescript-eslint/no-explicit-any
-              item.hsnDetails = (temp as any)?.hsnDetails || item.hsnDetails; // eslint-disable-line @typescript-eslint/no-explicit-any
+                (temp as any)?.showPrice ?? item.priceNotAvailable;
+              item.hsnDetails = (temp as any)?.hsnDetails || item.hsnDetails;
 
               // Resetting latest unitListPrice
               item.initial_unitListPrice_fe =
-                (temp as any)?.unitListPrice ?? item.unitListPrice; // eslint-disable-line @typescript-eslint/no-explicit-any
+                (temp as any)?.unitListPrice ?? item.unitListPrice;
 
               item.discountPercentage = item.discountDetails?.Value || 0;
               item.discount = item.discountPercentage || 0;
@@ -303,18 +299,18 @@ export async function getLatestTaxData({
               const normalizedDiscountDataClone = {
                 ...prd_wise_discData,
                 priceListCode:
-                  (prd_wise_discData as any)?.PricelistCode || // eslint-disable-line @typescript-eslint/no-explicit-any
-                  (prd_wise_discData as any)?.priceListCode, // eslint-disable-line @typescript-eslint/no-explicit-any
+                  (prd_wise_discData as any)?.PricelistCode ||
+                  (prd_wise_discData as any)?.priceListCode,
               };
 
-              // item = assignPricelistDiscountsDataToProducts(
-              //   item,
-              //   normalizedDiscountDataClone
-              // );
+              item = assign_pricelist_discounts_data_to_products(
+                item,
+                normalizedDiscountDataClone
+              );
 
               // Update sellerId and sellerName from discount response
               if ((prd_wise_discData as any)?.sellerId) {
-                (item as any).sellerId = (prd_wise_discData as any).sellerId; // eslint-disable-line @typescript-eslint/no-explicit-any
+                (item as any).sellerId = (prd_wise_discData as any).sellerId;
               }
               if ((prd_wise_discData as any)?.sellerName) {
                 (item as any).sellerName = (
@@ -377,15 +373,15 @@ export async function getLatestTaxData({
 
             // Update sellerId and sellerName
             if ((discountsList as any)?.sellerId) {
-              (item as any).sellerId = (discountsList as any).sellerId; // eslint-disable-line @typescript-eslint/no-explicit-any
+              (item as any).sellerId = (discountsList as any).sellerId;
             }
             if ((discountsList as any)?.sellerName) {
-              (item as any).sellerName = (discountsList as any).sellerName; // eslint-disable-line @typescript-eslint/no-explicit-any
+              (item as any).sellerName = (discountsList as any).sellerName;
             }
 
             // Update plnErpCode if available
             if ((discountsList as any)?.plnErpCode) {
-              (item as any).plnErpCode = (discountsList as any).plnErpCode; // eslint-disable-line @typescript-eslint/no-explicit-any
+              (item as any).plnErpCode = (discountsList as any).plnErpCode;
             }
 
             // Update isApprovalRequired if available
@@ -429,11 +425,11 @@ export async function getLatestTaxData({
           const temp = find(formattedDataArray, ["productId", item.productId]);
           if (temp) {
             item.taxInclusive =
-              (temp as any)?.taxInclusive ?? item.taxInclusive; // eslint-disable-line @typescript-eslint/no-explicit-any
+              (temp as any)?.taxInclusive ?? item.taxInclusive;
             item.primary_products_categoryObjects =
-              (temp as any)?.primary_products_categoryObjects ?? // eslint-disable-line @typescript-eslint/no-explicit-any
+              (temp as any)?.primary_products_categoryObjects ??
               item.primary_products_categoryObjects;
-            item.hsnDetails = (temp as any)?.hsnDetails || item.hsnDetails; // eslint-disable-line @typescript-eslint/no-explicit-any
+            item.hsnDetails = (temp as any)?.hsnDetails || item.hsnDetails;
           }
 
           if (!isSprRequested) {
@@ -452,7 +448,7 @@ export async function getLatestTaxData({
     // Pre-process products with discountDetails
     // Cast to CartItem[] as discountDetails expects CartItem[]
     const processedProducts = discountDetails(
-      (tempProducts.length > 0 ? tempProducts : products) as any[], // eslint-disable-line @typescript-eslint/no-explicit-any
+      (tempProducts.length > 0 ? tempProducts : products) as any[],
       false, // isSeller
       taxExemption,
       roundOff
@@ -461,8 +457,8 @@ export async function getLatestTaxData({
     // Set tax details
     // Cast processedProducts to ExistingProduct[] as setTaxDetails expects it
     const resultSet = setTaxDetails(
-      processedProducts as any[], // eslint-disable-line @typescript-eslint/no-explicit-any
-      formattedDataArray as any[], // eslint-disable-line @typescript-eslint/no-explicit-any
+      processedProducts as any[],
+      formattedDataArray as any[],
       isInter,
       taxExemption
     );
@@ -473,7 +469,6 @@ export async function getLatestTaxData({
     // Use calculateCart instead of cartCalculation to get processedItems
     if (isCloneReOrder && resultSet) {
       const calculated = calculateCart({
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         cartData: resultSet as any[],
         isInter,
         insuranceCharges: 0,

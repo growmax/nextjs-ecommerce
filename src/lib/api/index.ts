@@ -23,6 +23,7 @@ import CartService from "./services/CartService";
 import CatalogService from "./services/CatalogService";
 import CompanyService from "./services/CompanyService";
 import DiscountService from "./services/DiscountService";
+import ManufacturerCompetitorService from "./services/ManufacturerCompetitorService";
 import StoreFrontService from "./services/StoreFrontService";
 import TenantService from "./services/TenantService";
 import UserService from "./services/UserService";
@@ -47,7 +48,9 @@ import PaymentService from "./services/PaymentService";
 import PreferenceService from "./services/PreferenceService";
 import ProductAssetsService from "./services/ProductAssetsService";
 import QuotationDetailsService from "./services/QuotationDetailsService";
+import QuotationVersionService from "./services/QuotationVersionService";
 import QuotesService from "./services/QuotesService";
+import QuoteSubmissionService from "./services/QuoteSubmissionService";
 import RequestEditService from "./services/RequestEditService";
 import SearchService from "./services/SearchService";
 import QuoteStatusService from "./services/StatusService";
@@ -62,6 +65,7 @@ export {
   CompanyService,
   DashboardService,
   DiscountService,
+  ManufacturerCompetitorService,
   OpenSearchService,
   OrderDetailsService,
   OrderNameService,
@@ -72,8 +76,10 @@ export {
   PreferenceService,
   ProductAssetsService,
   QuotationDetailsService,
+  QuotationVersionService,
   QuotesService,
   QuoteStatusService,
+  QuoteSubmissionService,
   RequestEditService,
   RequestQueueService,
   SearchService,
@@ -185,6 +191,12 @@ export type {
   DiscountRequest,
 } from "./services/DiscountService";
 
+export type {
+  CompetitorDetail,
+  FetchCompetitorsRequest,
+  FetchCompetitorsResponse,
+} from "./services/ManufacturerCompetitorService";
+
 // Update product detail types export
 export type {
   CatalogCode,
@@ -256,6 +268,11 @@ export type {
 } from "./services/QuotationDetailsService";
 
 export type {
+  CreateQuotationVersionRequest,
+  CreateQuotationVersionResponse,
+} from "./services/QuotationVersionService";
+
+export type {
   QuoteStatusApiResponse,
   QuoteStatusParams,
   QuoteStatusResponse,
@@ -285,6 +302,12 @@ export type {
   OrdersResponse,
 } from "./services/Dasboard/DashboardOrdersTable";
 
+export type {
+  QuoteSubmissionPayload,
+  QuoteSubmissionRequest,
+  QuoteSubmissionResponse,
+} from "./services/QuoteSubmissionService";
+
 // Convenience re-exports for common patterns
 export const API = {
   Auth: AuthService,
@@ -303,6 +326,7 @@ export const API = {
   ProductAssets: ProductAssetsService,
   Quotes: QuotesService,
   QuoteStatus: QuoteStatusService,
+  QuoteSubmission: QuoteSubmissionService,
   RequestEdit: RequestEditService,
   Search: SearchService,
   StoreFront: StoreFrontService,

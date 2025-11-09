@@ -190,7 +190,6 @@ export default function OrderDetailsClient({ params }: OrderDetailsPageProps) {
         const items = Array.isArray(response?.data) ? response.data : [];
         setPaymentHistory(items);
       } catch (err) {
-        // eslint-disable-next-line no-console
         console.error("Failed to fetch payments:", err);
         setPaymentHistory([]);
       }
@@ -229,7 +228,6 @@ export default function OrderDetailsClient({ params }: OrderDetailsPageProps) {
         }
         setPaymentDueData(data);
       } catch (err) {
-        // eslint-disable-next-line no-console
         console.error("Failed to fetch payment due details:", err);
         setPaymentDueData([]);
       }
@@ -302,7 +300,6 @@ export default function OrderDetailsClient({ params }: OrderDetailsPageProps) {
       });
       setOrderDetails(response);
     } catch (error) {
-      // eslint-disable-next-line no-console
       console.error("Error refreshing order details:", error);
     } finally {
       setLoading(false);
@@ -567,414 +564,444 @@ export default function OrderDetailsClient({ params }: OrderDetailsPageProps) {
   const lastDateToPay = getLastDateToPay(paymentDueData, preferences);
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      {/* Sales Header */}
-      <SalesHeader
-        title={orderName ? decodeUnicode(orderName) : "Order Details"}
-        identifier={orderId || "..."}
-        {...(status && {
-          status: {
-            label: status,
-            className: getStatusStyle(status),
-          },
-        })}
-        onEdit={handleEditOrder}
-        onRefresh={handleRefresh}
-        onClose={handleClose}
-        menuOptions={[
-          {
-            label: "Clone",
-            onClick: handleClone,
-          },
-          {
-            label: "Download PDF",
-            onClick: handleDownloadPDF,
-          },
-        ]}
-        buttons={headerButtons}
-        showEditIcon={true}
-        loading={loading}
-      />
+    <div className="flex flex-col h-full overflow-hidden bg-gray-50">
+      {/* Sales Header - Fixed at top */}
+      <div className="flex-shrink-0">
+        <SalesHeader
+          title={orderName ? decodeUnicode(orderName) : "Order Details"}
+          identifier={orderId || "..."}
+          {...(status && {
+            status: {
+              label: status,
+              className: getStatusStyle(status),
+            },
+          })}
+          onEdit={handleEditOrder}
+          onRefresh={handleRefresh}
+          onClose={handleClose}
+          menuOptions={[
+            {
+              label: "Clone",
+              onClick: handleClone,
+            },
+            {
+              label: "Download PDF",
+              onClick: handleDownloadPDF,
+            },
+          ]}
+          buttons={headerButtons}
+          showEditIcon={true}
+          loading={loading}
+        />
+      </div>
 
-      {/* Order Details Content */}
-      <div className="container mx-auto px-3 sm:px-4 md:px-6 py-3 sm:py-4 md:py-6 relative pt-28">
-        <div className="flex flex-col lg:flex-row gap-3 sm:gap-4 md:gap-6">
-          {/* Left Side - Status Tracker and Products Table - 60% */}
-          <div className="w-full lg:w-[65%] space-y-3 sm:space-y-4 md:space-y-6">
-            {/* Cancellation Card */}
-            {cancelled &&
-              cancelMsg &&
-              !loading &&
-              (orderDetails || displayOrderDetails) && (
-                <div className="mt-17 bg-gray-50 rounded-lg p-4 sm:p-5 border border-gray-200 shadow-sm">
-                  <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
-                    {/* Left Section - Order Identifier and Date */}
-                    <div className="flex flex-col gap-1">
-                      <div className="font-semibold text-gray-900 text-base sm:text-lg">
-                        {displayOrderDetails?.orderIdentifier ||
-                          orderDetails?.data?.orderIdentifier ||
-                          orderId}
+      {/* Order Details Content - Scrollable area */}
+      <div className="flex-1 overflow-y-auto overflow-x-hidden">
+        <div className="container mx-auto px-2 sm:px-3 md:px-4 py-2 sm:py-3">
+          <div className="flex flex-col lg:flex-row gap-2 sm:gap-3 md:gap-4">
+            {/* Left Side - Status Tracker and Products Table - 60% */}
+            <div className="w-full lg:w-[65%] space-y-2 sm:space-y-3">
+              {/* Cancellation Card */}
+              {cancelled &&
+                cancelMsg &&
+                !loading &&
+                (orderDetails || displayOrderDetails) && (
+                  <div className="bg-gray-50 rounded-lg p-3 sm:p-4 border border-gray-200 shadow-sm">
+                    <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
+                      {/* Left Section - Order Identifier and Date */}
+                      <div className="flex flex-col gap-1">
+                        <div className="font-semibold text-gray-900 text-base sm:text-lg">
+                          {displayOrderDetails?.orderIdentifier ||
+                            orderDetails?.data?.orderIdentifier ||
+                            orderId}
+                        </div>
+                        <div className="text-xs sm:text-sm text-gray-500">
+                          {zoneDateTimeCalculator(
+                            createdDate,
+                            preferences.timeZone,
+                            preferences.dateFormat,
+                            preferences.timeFormat,
+                            true
+                          ) || ""}
+                        </div>
                       </div>
-                      <div className="text-xs sm:text-sm text-gray-500">
-                        {zoneDateTimeCalculator(
-                          createdDate,
-                          preferences.timeZone,
-                          preferences.dateFormat,
-                          preferences.timeFormat,
-                          true
-                        ) || ""}
-                      </div>
-                    </div>
 
-                    {/* Right Section - Cancellation Reason */}
-                    <div className="flex flex-col gap-1 sm:text-right">
-                      <div className="text-xs sm:text-sm font-medium text-gray-700">
-                        Reason for cancellation
-                      </div>
-                      <div className="text-sm sm:text-base font-medium text-red-600">
-                        {cancelMsg || ""}
+                      {/* Right Section - Cancellation Reason */}
+                      <div className="flex flex-col gap-1 sm:text-right">
+                        <div className="text-xs sm:text-sm font-medium text-gray-700">
+                          Reason for cancellation
+                        </div>
+                        <div className="text-sm sm:text-base font-medium text-red-600">
+                          {cancelMsg || ""}
+                        </div>
                       </div>
                     </div>
                   </div>
-                </div>
-              )}
-            {/* Status Tracker */}
-            {!loading &&
-              !error &&
-              (orderDetails || displayOrderDetails) &&
-              !cancelled && (
-                <div className="mt-17">
-                  <Suspense fallback={<Skeleton className="h-48 w-full" />}>
-                    <OrderStatusTracker
-                      {...(orderId && { orderId })}
-                      {...(displayOrderDetails?.createdDate && {
-                        createdDate: displayOrderDetails.createdDate,
-                      })}
-                      {...(status && {
-                        currentStatus: status,
-                      })}
-                      {...(displayOrderDetails?.orderDetails?.[0]
-                        ?.grandTotal && {
-                        total: displayOrderDetails.orderDetails[0].grandTotal,
-                      })}
-                      paid={totalPaid}
-                      {...(displayOrderDetails?.orderDetails?.[0]
-                        ?.grandTotal && {
-                        toPay:
-                          (displayOrderDetails.orderDetails[0].grandTotal ||
-                            0) - (totalPaid || 0),
-                      })}
-                      {...((displayOrderDetails?.buyerCurrencySymbol?.symbol ||
-                        orderDetails?.data?.buyerCurrencySymbol?.symbol) && {
-                        currencySymbol:
-                          displayOrderDetails?.buyerCurrencySymbol?.symbol ||
-                          orderDetails?.data?.buyerCurrencySymbol?.symbol ||
-                          "",
-                      })}
-                      {...(paymentHistory && { paymentHistory })}
-                      {...(lastDateToPay && { lastDateToPay })}
-                    />
-                  </Suspense>
-                </div>
-              )}
+                )}
+              {/* Status Tracker */}
+              {!loading &&
+                !error &&
+                (orderDetails || displayOrderDetails) &&
+                !cancelled && (
+                  <div>
+                    <Suspense fallback={<Skeleton className="h-48 w-full" />}>
+                      <OrderStatusTracker
+                        {...(orderId && { orderId })}
+                        {...(displayOrderDetails?.createdDate && {
+                          createdDate: displayOrderDetails.createdDate,
+                        })}
+                        {...(status && {
+                          currentStatus: status,
+                        })}
+                        {...(displayOrderDetails?.orderDetails?.[0]
+                          ?.grandTotal && {
+                          total: displayOrderDetails.orderDetails[0].grandTotal,
+                        })}
+                        paid={totalPaid}
+                        {...(displayOrderDetails?.orderDetails?.[0]
+                          ?.grandTotal && {
+                          toPay:
+                            (displayOrderDetails.orderDetails[0].grandTotal ||
+                              0) - (totalPaid || 0),
+                        })}
+                        {...((displayOrderDetails?.buyerCurrencySymbol
+                          ?.symbol ||
+                          orderDetails?.data?.buyerCurrencySymbol?.symbol) && {
+                          currencySymbol:
+                            displayOrderDetails?.buyerCurrencySymbol?.symbol ||
+                            orderDetails?.data?.buyerCurrencySymbol?.symbol ||
+                            "",
+                        })}
+                        {...(paymentHistory && { paymentHistory })}
+                        {...(lastDateToPay && { lastDateToPay })}
+                      />
+                    </Suspense>
+                  </div>
+                )}
 
-            {/* Products Table */}
-            {!loading && !error && (orderDetails || displayOrderDetails) && (
-              <Suspense fallback={<Skeleton className="h-64 w-full" />}>
-                <OrderProductsTable
-                  products={
-                    displayOrderDetails?.orderDetails?.[0]?.dbProductDetails ||
-                    orderDetails?.data?.orderDetails?.[0]?.dbProductDetails ||
-                    []
-                  }
-                  {...((displayOrderDetails?.orderDetails?.[0]?.dbProductDetails
-                    ?.length ||
-                    orderDetails?.data?.orderDetails?.[0]?.dbProductDetails
-                      ?.length) && {
-                    totalCount:
-                      displayOrderDetails?.orderDetails?.[0]?.dbProductDetails
-                        ?.length ||
-                      orderDetails?.data?.orderDetails?.[0]?.dbProductDetails
-                        ?.length ||
-                      0,
-                  })}
-                  onExport={() => {
-                    const products =
+              {/* Products Table */}
+              {!loading && !error && (orderDetails || displayOrderDetails) && (
+                <Suspense fallback={<Skeleton className="h-64 w-full" />}>
+                  <OrderProductsTable
+                    products={
                       displayOrderDetails?.orderDetails?.[0]
                         ?.dbProductDetails ||
                       orderDetails?.data?.orderDetails?.[0]?.dbProductDetails ||
-                      [];
-                    const filename = `Order_${orderId}_Products.csv`;
-                    exportProductsToCsv(products as ProductCsvRow[], filename);
-                  }}
-                />
-              </Suspense>
-            )}
-
-            {/* Contact Details and Terms Cards - Side by Side */}
-            {!loading && !error && (orderDetails || displayOrderDetails) && (
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-3 sm:gap-4 md:gap-6">
-                {/* Contact Details Card */}
-                <OrderContactDetails
-                  billingAddress={
-                    (displayOrderDetails?.orderDetails?.[0]
-                      ?.billingAddressDetails ||
-                      orderDetails?.data?.orderDetails?.[0]
-                        ?.billingAddressDetails) as unknown as AddressDetails
-                  }
-                  shippingAddress={
-                    (displayOrderDetails?.orderDetails?.[0]
-                      ?.shippingAddressDetails ||
-                      orderDetails?.data?.orderDetails?.[0]
-                        ?.shippingAddressDetails) as unknown as AddressDetails
-                  }
-                  registerAddress={
-                    (displayOrderDetails?.orderDetails?.[0]
-                      ?.registerAddressDetails ||
-                      orderDetails?.data?.orderDetails?.[0]
-                        ?.registerAddressDetails) as unknown as AddressDetails
-                  }
-                  sellerAddress={
-                    (displayOrderDetails?.orderDetails?.[0]
-                      ?.sellerAddressDetail ||
-                      orderDetails?.data?.orderDetails?.[0]
-                        ?.sellerAddressDetail) as unknown as AddressDetails
-                  }
-                  buyerCompanyName={
-                    (displayOrderDetails?.orderDetails?.[0]?.buyerCompanyName ||
-                      orderDetails?.data?.orderDetails?.[0]
-                        ?.buyerCompanyName) as unknown as string
-                  }
-                  buyerBranchName={
-                    (displayOrderDetails?.orderDetails?.[0]?.buyerBranchName ||
-                      orderDetails?.data?.orderDetails?.[0]
-                        ?.buyerBranchName) as unknown as string
-                  }
-                  warehouseName={
-                    ((
-                      (displayOrderDetails?.orderDetails?.[0]
-                        ?.dbProductDetails?.[0] ||
+                      []
+                    }
+                    {...((displayOrderDetails?.orderDetails?.[0]
+                      ?.dbProductDetails?.length ||
+                      orderDetails?.data?.orderDetails?.[0]?.dbProductDetails
+                        ?.length) && {
+                      totalCount:
+                        displayOrderDetails?.orderDetails?.[0]?.dbProductDetails
+                          ?.length ||
+                        orderDetails?.data?.orderDetails?.[0]?.dbProductDetails
+                          ?.length ||
+                        0,
+                    })}
+                    onExport={() => {
+                      const products =
+                        displayOrderDetails?.orderDetails?.[0]
+                          ?.dbProductDetails ||
                         orderDetails?.data?.orderDetails?.[0]
-                          ?.dbProductDetails?.[0]) as unknown as Record<
-                        string,
-                        Record<string, string>
-                      >
-                    )?.wareHouse?.wareHouseName ||
+                          ?.dbProductDetails ||
+                        [];
+                      const filename = `Order_${orderId}_Products.csv`;
+                      exportProductsToCsv(
+                        products as ProductCsvRow[],
+                        filename
+                      );
+                    }}
+                  />
+                </Suspense>
+              )}
+
+              {/* Contact Details and Terms Cards - Side by Side */}
+              {!loading && !error && (orderDetails || displayOrderDetails) && (
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-2 sm:gap-3">
+                  {/* Contact Details Card */}
+                  <OrderContactDetails
+                    billingAddress={
+                      (displayOrderDetails?.orderDetails?.[0]
+                        ?.billingAddressDetails ||
+                        orderDetails?.data?.orderDetails?.[0]
+                          ?.billingAddressDetails) as unknown as AddressDetails
+                    }
+                    shippingAddress={
+                      (displayOrderDetails?.orderDetails?.[0]
+                        ?.shippingAddressDetails ||
+                        orderDetails?.data?.orderDetails?.[0]
+                          ?.shippingAddressDetails) as unknown as AddressDetails
+                    }
+                    registerAddress={
+                      (displayOrderDetails?.orderDetails?.[0]
+                        ?.registerAddressDetails ||
+                        orderDetails?.data?.orderDetails?.[0]
+                          ?.registerAddressDetails) as unknown as AddressDetails
+                    }
+                    sellerAddress={
+                      (displayOrderDetails?.orderDetails?.[0]
+                        ?.sellerAddressDetail ||
+                        orderDetails?.data?.orderDetails?.[0]
+                          ?.sellerAddressDetail) as unknown as AddressDetails
+                    }
+                    buyerCompanyName={
+                      (displayOrderDetails?.orderDetails?.[0]
+                        ?.buyerCompanyName ||
+                        orderDetails?.data?.orderDetails?.[0]
+                          ?.buyerCompanyName) as unknown as string
+                    }
+                    buyerBranchName={
+                      (displayOrderDetails?.orderDetails?.[0]
+                        ?.buyerBranchName ||
+                        orderDetails?.data?.orderDetails?.[0]
+                          ?.buyerBranchName) as unknown as string
+                    }
+                    warehouseName={
+                      ((
+                        (displayOrderDetails?.orderDetails?.[0]
+                          ?.dbProductDetails?.[0] ||
+                          orderDetails?.data?.orderDetails?.[0]
+                            ?.dbProductDetails?.[0]) as unknown as Record<
+                          string,
+                          Record<string, string>
+                        >
+                      )?.wareHouse?.wareHouseName ||
+                        (
+                          (displayOrderDetails?.orderDetails?.[0]
+                            ?.dbProductDetails?.[0] ||
+                            orderDetails?.data?.orderDetails?.[0]
+                              ?.dbProductDetails?.[0]) as unknown as Record<
+                            string,
+                            string
+                          >
+                        )?.orderWareHouseName) as string | undefined
+                    }
+                    warehouseAddress={
                       (
                         (displayOrderDetails?.orderDetails?.[0]
                           ?.dbProductDetails?.[0] ||
                           orderDetails?.data?.orderDetails?.[0]
                             ?.dbProductDetails?.[0]) as unknown as Record<
                           string,
-                          string
+                          Record<string, Record<string, string>>
                         >
-                      )?.orderWareHouseName) as string | undefined
-                  }
-                  warehouseAddress={
-                    (
-                      (displayOrderDetails?.orderDetails?.[0]
-                        ?.dbProductDetails?.[0] ||
-                        orderDetails?.data?.orderDetails?.[0]
-                          ?.dbProductDetails?.[0]) as unknown as Record<
-                        string,
-                        Record<string, Record<string, string>>
-                      >
-                    )?.wareHouse?.addressId as unknown as {
-                      addressLine?: string;
-                      district?: string;
-                      city?: string;
-                      state?: string;
-                      pinCodeId?: string;
-                      country?: string;
+                      )?.wareHouse?.addressId as unknown as {
+                        addressLine?: string;
+                        district?: string;
+                        city?: string;
+                        state?: string;
+                        pinCodeId?: string;
+                        country?: string;
+                      }
                     }
-                  }
-                  salesBranch={
-                    (displayOrderDetails?.orderDetails?.[0]?.sellerBranchName ||
-                      orderDetails?.data?.orderDetails?.[0]
-                        ?.sellerBranchName) as unknown as string | undefined
-                  }
-                  requiredDate={
-                    (displayOrderDetails?.orderDetails?.[0]
-                      ?.customerRequiredDate ||
-                      displayOrderDetails?.orderDeliveryDate ||
-                      orderDetails?.data?.orderDetails?.[0]
+                    salesBranch={
+                      (displayOrderDetails?.orderDetails?.[0]
+                        ?.sellerBranchName ||
+                        orderDetails?.data?.orderDetails?.[0]
+                          ?.sellerBranchName) as unknown as string | undefined
+                    }
+                    requiredDate={
+                      (displayOrderDetails?.orderDetails?.[0]
                         ?.customerRequiredDate ||
-                      orderDetails?.data?.orderDeliveryDate) as unknown as
-                      | string
-                      | undefined
-                  }
-                  referenceNumber={
-                    ((displayOrderDetails?.buyerReferenceNumber ||
-                      orderDetails?.data?.buyerReferenceNumber) as string) ||
-                    "-"
-                  }
-                />
+                        displayOrderDetails?.orderDeliveryDate ||
+                        orderDetails?.data?.orderDetails?.[0]
+                          ?.customerRequiredDate ||
+                        orderDetails?.data?.orderDeliveryDate) as unknown as
+                        | string
+                        | undefined
+                    }
+                    referenceNumber={
+                      ((displayOrderDetails?.buyerReferenceNumber ||
+                        orderDetails?.data?.buyerReferenceNumber) as string) ||
+                      "-"
+                    }
+                  />
 
-                {/* Terms Card */}
-                <OrderTermsCard
-                  orderTerms={
-                    (displayOrderDetails?.orderDetails?.[0]?.orderTerms ||
-                      orderDetails?.data?.orderDetails?.[0]
-                        ?.orderTerms) as unknown as OrderTerms
-                  }
-                />
-              </div>
-            )}
-          </div>
+                  {/* Terms Card */}
+                  <OrderTermsCard
+                    orderTerms={
+                      {
+                        ...(displayOrderDetails?.orderDetails?.[0]
+                          ?.orderTerms ||
+                          orderDetails?.data?.orderDetails?.[0]?.orderTerms ||
+                          {}),
+                        additionalTerms: (displayOrderDetails?.orderDetails?.[0]
+                          ?.additionalTerms ||
+                          orderDetails?.data?.orderDetails?.[0]
+                            ?.additionalTerms) as string | undefined,
+                      } as OrderTerms
+                    }
+                  />
+                </div>
+              )}
+            </div>
 
-          {/* Right Side - Price Details - 40% */}
-          {!loading && !error && (orderDetails || displayOrderDetails) && (
-            <div className="w-full lg:w-[40%] mt-17 lg:mr-6">
-              <Suspense fallback={<Skeleton className="h-96 w-full" />}>
-                <OrderPriceDetails
-                  products={
-                    displayOrderDetails?.orderDetails?.[0]?.dbProductDetails ||
-                    orderDetails?.data?.orderDetails?.[0]?.dbProductDetails ||
-                    []
-                  }
-                  isInter={(() => {
-                    // Determine if inter-state based on product taxes (IGST = inter-state, SGST/CGST = intra-state)
-                    const products =
+            {/* Right Side - Price Details - 40% */}
+            {!loading && !error && (orderDetails || displayOrderDetails) && (
+              <div className="w-full lg:w-[33%] mt-[55px]">
+                <Suspense fallback={<Skeleton className="h-96 w-full" />}>
+                  <OrderPriceDetails
+                    products={
                       displayOrderDetails?.orderDetails?.[0]
                         ?.dbProductDetails ||
                       orderDetails?.data?.orderDetails?.[0]?.dbProductDetails ||
-                      [];
-                    if (products.length > 0 && products[0]) {
-                      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                      const firstProduct = products[0] as any;
-                      if (
-                        firstProduct.productTaxes &&
-                        Array.isArray(firstProduct.productTaxes)
-                      ) {
-                        const hasIGST = firstProduct.productTaxes.some(
-                          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                          (t: any) => t.taxName === "IGST"
-                        );
-                        return hasIGST;
-                      }
+                      []
                     }
-                    // Default to false (intra-state) if we can't determine
-                    return false;
-                  })()}
-                  insuranceCharges={
-                    Number(
-                      displayOrderDetails?.orderDetails?.[0]
-                        ?.insuranceCharges ||
-                        orderDetails?.data?.orderDetails?.[0]?.insuranceCharges
-                    ) || 0
-                  }
-                  precision={2}
-                  Settings={{
-                    roundingAdjustment:
-                      displayOrderDetails?.orderDetails?.[0]
-                        ?.roundingAdjustmentEnabled ||
-                      orderDetails?.data?.orderDetails?.[0]
-                        ?.roundingAdjustmentEnabled ||
-                      false,
-                  }}
-                  isSeller={(user as { isSeller?: boolean })?.isSeller || false}
-                  taxExemption={
-                    (user as { taxExemption?: boolean })?.taxExemption || false
-                  }
-                  currency={
-                    (
-                      (displayOrderDetails?.buyerCurrencySymbol ||
-                        orderDetails?.data?.buyerCurrencySymbol) as {
-                        symbol?: string;
+                    isInter={(() => {
+                      // Determine if inter-state based on product taxes (IGST = inter-state, SGST/CGST = intra-state)
+                      const products =
+                        displayOrderDetails?.orderDetails?.[0]
+                          ?.dbProductDetails ||
+                        orderDetails?.data?.orderDetails?.[0]
+                          ?.dbProductDetails ||
+                        [];
+                      if (products.length > 0 && products[0]) {
+                        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                        const firstProduct = products[0] as any;
+                        if (
+                          firstProduct.productTaxes &&
+                          Array.isArray(firstProduct.productTaxes)
+                        ) {
+                          const hasIGST = firstProduct.productTaxes.some(
+                            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                            (t: any) => t.taxName === "IGST"
+                          );
+                          return hasIGST;
+                        }
                       }
-                    )?.symbol || "INR ₹"
-                  }
-                  {...(displayOrderDetails?.orderDetails?.[0]
-                    ?.overallShipping !== undefined ||
-                  orderDetails?.data?.orderDetails?.[0]?.overallShipping !==
-                    undefined
-                    ? {
-                        overallShipping: Number(
-                          displayOrderDetails?.orderDetails?.[0]
-                            ?.overallShipping ||
-                            orderDetails?.data?.orderDetails?.[0]
-                              ?.overallShipping ||
-                            0
-                        ),
-                      }
-                    : {})}
-                  {...(displayOrderDetails?.orderDetails?.[0]?.overallTax !==
-                    undefined ||
-                  orderDetails?.data?.orderDetails?.[0]?.overallTax !==
-                    undefined
-                    ? {
-                        overallTax: Number(
-                          displayOrderDetails?.orderDetails?.[0]?.overallTax ||
-                            orderDetails?.data?.orderDetails?.[0]?.overallTax ||
-                            0
-                        ),
-                      }
-                    : {})}
-                  {...(displayOrderDetails?.orderDetails?.[0]
-                    ?.calculatedTotal !== undefined ||
-                  orderDetails?.data?.orderDetails?.[0]?.calculatedTotal !==
-                    undefined ||
-                  displayOrderDetails?.orderDetails?.[0]?.grandTotal !==
-                    undefined ||
-                  orderDetails?.data?.orderDetails?.[0]?.grandTotal !==
-                    undefined
-                    ? {
-                        calculatedTotal: Number(
-                          displayOrderDetails?.orderDetails?.[0]
-                            ?.calculatedTotal ||
-                            orderDetails?.data?.orderDetails?.[0]
-                              ?.calculatedTotal ||
+                      // Default to false (intra-state) if we can't determine
+                      return false;
+                    })()}
+                    insuranceCharges={
+                      Number(
+                        displayOrderDetails?.orderDetails?.[0]
+                          ?.insuranceCharges ||
+                          orderDetails?.data?.orderDetails?.[0]
+                            ?.insuranceCharges
+                      ) || 0
+                    }
+                    precision={2}
+                    Settings={{
+                      roundingAdjustment:
+                        displayOrderDetails?.orderDetails?.[0]
+                          ?.roundingAdjustmentEnabled ||
+                        orderDetails?.data?.orderDetails?.[0]
+                          ?.roundingAdjustmentEnabled ||
+                        false,
+                    }}
+                    isSeller={
+                      (user as { isSeller?: boolean })?.isSeller || false
+                    }
+                    taxExemption={
+                      (user as { taxExemption?: boolean })?.taxExemption ||
+                      false
+                    }
+                    currency={
+                      (
+                        (displayOrderDetails?.buyerCurrencySymbol ||
+                          orderDetails?.data?.buyerCurrencySymbol) as {
+                          symbol?: string;
+                        }
+                      )?.symbol || "INR ₹"
+                    }
+                    {...(displayOrderDetails?.orderDetails?.[0]
+                      ?.overallShipping !== undefined ||
+                    orderDetails?.data?.orderDetails?.[0]?.overallShipping !==
+                      undefined
+                      ? {
+                          overallShipping: Number(
                             displayOrderDetails?.orderDetails?.[0]
-                              ?.grandTotal ||
-                            orderDetails?.data?.orderDetails?.[0]?.grandTotal ||
-                            0
-                        ),
-                      }
-                    : {})}
-                  {...(displayOrderDetails?.orderDetails?.[0]?.subTotal !==
-                    undefined ||
-                  orderDetails?.data?.orderDetails?.[0]?.subTotal !== undefined
-                    ? {
-                        subTotal: Number(
-                          displayOrderDetails?.orderDetails?.[0]?.subTotal ||
-                            orderDetails?.data?.orderDetails?.[0]?.subTotal ||
-                            0
-                        ),
-                      }
-                    : {})}
-                  {...(displayOrderDetails?.orderDetails?.[0]?.taxableAmount !==
-                    undefined ||
-                  orderDetails?.data?.orderDetails?.[0]?.taxableAmount !==
-                    undefined
-                    ? {
-                        taxableAmount: Number(
-                          displayOrderDetails?.orderDetails?.[0]
-                            ?.taxableAmount ||
-                            orderDetails?.data?.orderDetails?.[0]
+                              ?.overallShipping ||
+                              orderDetails?.data?.orderDetails?.[0]
+                                ?.overallShipping ||
+                              0
+                          ),
+                        }
+                      : {})}
+                    {...(displayOrderDetails?.orderDetails?.[0]?.overallTax !==
+                      undefined ||
+                    orderDetails?.data?.orderDetails?.[0]?.overallTax !==
+                      undefined
+                      ? {
+                          overallTax: Number(
+                            displayOrderDetails?.orderDetails?.[0]
+                              ?.overallTax ||
+                              orderDetails?.data?.orderDetails?.[0]
+                                ?.overallTax ||
+                              0
+                          ),
+                        }
+                      : {})}
+                    {...(displayOrderDetails?.orderDetails?.[0]
+                      ?.calculatedTotal !== undefined ||
+                    orderDetails?.data?.orderDetails?.[0]?.calculatedTotal !==
+                      undefined ||
+                    displayOrderDetails?.orderDetails?.[0]?.grandTotal !==
+                      undefined ||
+                    orderDetails?.data?.orderDetails?.[0]?.grandTotal !==
+                      undefined
+                      ? {
+                          calculatedTotal: Number(
+                            displayOrderDetails?.orderDetails?.[0]
+                              ?.calculatedTotal ||
+                              orderDetails?.data?.orderDetails?.[0]
+                                ?.calculatedTotal ||
+                              displayOrderDetails?.orderDetails?.[0]
+                                ?.grandTotal ||
+                              orderDetails?.data?.orderDetails?.[0]
+                                ?.grandTotal ||
+                              0
+                          ),
+                        }
+                      : {})}
+                    {...(displayOrderDetails?.orderDetails?.[0]?.subTotal !==
+                      undefined ||
+                    orderDetails?.data?.orderDetails?.[0]?.subTotal !==
+                      undefined
+                      ? {
+                          subTotal: Number(
+                            displayOrderDetails?.orderDetails?.[0]?.subTotal ||
+                              orderDetails?.data?.orderDetails?.[0]?.subTotal ||
+                              0
+                          ),
+                        }
+                      : {})}
+                    {...(displayOrderDetails?.orderDetails?.[0]
+                      ?.taxableAmount !== undefined ||
+                    orderDetails?.data?.orderDetails?.[0]?.taxableAmount !==
+                      undefined
+                      ? {
+                          taxableAmount: Number(
+                            displayOrderDetails?.orderDetails?.[0]
                               ?.taxableAmount ||
-                            0
-                        ),
-                      }
-                    : {})}
-                />
-              </Suspense>
-            </div>
-          )}
+                              orderDetails?.data?.orderDetails?.[0]
+                                ?.taxableAmount ||
+                              0
+                          ),
+                        }
+                      : {})}
+                  />
+                </Suspense>
+              </div>
+            )}
+          </div>
         </div>
       </div>
 
-      {/* Right Sidebar Icons */}
-      <div className="fixed right-0 top-32 z-50 bg-white border-l border-gray-200 shadow-md rounded-l-lg p-0.5">
+      {/* Right Sidebar Icons - Positioned just below the SalesHeader component, flush to right edge */}
+      <div className="fixed right-0 top-[116px] z-50 bg-white border-l border-t border-b border-gray-200 shadow-lg rounded-l-lg p-1">
         <button
           className={`p-1.5 hover:bg-gray-100 rounded transition-colors ${
-            versionsDialogOpen ? "bg-purple-50" : ""
+            versionsDialogOpen ? "bg-primary/10" : ""
           }`}
           aria-label="Layers"
           onClick={() => setVersionsDialogOpen(true)}
         >
           <Layers
             className={`w-5 h-5 transition-colors ${
-              versionsDialogOpen ? "text-purple-600" : "text-gray-700"
+              versionsDialogOpen ? "text-primary" : "text-gray-700"
             }`}
           />
         </button>
