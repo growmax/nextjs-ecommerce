@@ -6,6 +6,8 @@ import { QueryProvider } from "@/providers/QueryProvider";
 import type { Metadata } from "next";
 import "./globals.css";
 
+// Testing Pull Request .....
+
 export const metadata: Metadata = {
   title: "E-commerce Store",
   description: "Multi-tenant e-commerce platform",
