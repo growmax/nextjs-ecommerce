@@ -1,6 +1,5 @@
 "use client";
 
-import { useQuery } from "@tanstack/react-query";
 import { ColumnDef } from "@tanstack/react-table";
 import { useLocale } from "next-intl";
 import { useRouter } from "next/navigation";
@@ -110,9 +109,9 @@ function OrdersLandingTable({
   const [filterData, setFilterData] = useState<QuoteFilterFormData | null>(
     null
   );
-  const [initialFilterData] = useState<
-    QuoteFilterFormData | undefined
-  >(undefined);
+  const [initialFilterData] = useState<QuoteFilterFormData | undefined>(
+    undefined
+  );
   const [activeTab] = useState("all");
   const [isAddDrawerOpen, setIsAddDrawerOpen] = useState(false);
   const [isItemsDialogOpen, setIsItemsDialogOpen] = useState(false);
@@ -122,16 +121,6 @@ function OrdersLandingTable({
 
   const columns = useMemo<ColumnDef<Order>[]>(
     () => [
-      {
-        accessorKey: "orderIdentifier",
-        header: () => <span className="pl-2">Order Id</span>,
-        size: 150,
-        cell: ({ row }) => (
-          <span className="font-medium text-blue-600 pl-2">
-            {row.original.orderIdentifier || "-"}
-          </span>
-        ),
-      },
       {
         accessorKey: "orderName",
         header: "Order Name",
@@ -146,17 +135,28 @@ function OrdersLandingTable({
         ),
       },
       {
-        accessorKey: "orderDate",
-        header: "Order Date",
-        size: 150,
-        cell: ({ row }) => formatDate(row.original.createdDate),
-      },
-      {
         accessorKey: "lastModifiedDate",
         header: "Date",
         size: 150,
         cell: ({ row }) => formatDate(row.original.lastUpdatedDate),
       },
+      {
+        accessorKey: "orderIdentifier",
+        header: () => <span className="pl-2">Order Id</span>,
+        size: 150,
+        cell: ({ row }) => (
+          <span className="font-medium text-blue-600 pl-2">
+            {row.original.orderIdentifier || "-"}
+          </span>
+        ),
+      },
+      {
+        accessorKey: "orderDate",
+        header: "Order Date",
+        size: 150,
+        cell: ({ row }) => formatDate(row.original.createdDate),
+      },
+
       {
         accessorKey: "accountName",
         header: "Account Name",
@@ -250,7 +250,8 @@ function OrdersLandingTable({
     ],
     []
   );
-
+  console.log(page);
+  console.log(rowPerPage);
   // Create filter from form data
   const createFilterFromData = useCallback(
     (
@@ -272,7 +273,7 @@ function OrdersLandingTable({
         : null,
       identifier: filterData?.quoteId || "",
       limit: rowPerPage,
-      offset: calculatedOffset,
+      offset: page,
       name: filterData?.quoteName || "",
       pageNumber: Math.floor(calculatedOffset / rowPerPage) + 1,
       startDate: convertDateToString(filterData?.quotedDateStart) || "",
@@ -348,87 +349,105 @@ function OrdersLandingTable({
 
   // Fetch orders
   const fetchOrders = useCallback(async () => {
-    if (!user?.userId || !user?.companyId) return { orders: [], totalCount: 0 };
+    if (!user?.userId || !user?.companyId) {
+      setOrders([]);
+      setTotalCount(0);
+      setLoading(false);
+      return;
+    }
 
-    const calculatedOffset = page * rowPerPage;
+    setLoading(true);
+
+    const calculatedOffset = page;
     const userId = parseInt(user.userId.toString());
     const companyId = parseInt(user.companyId.toString());
 
-    let response;
+    try {
+      let response;
 
-    if (filterData) {
-      const isSimpleStatusFilter =
-        filterData.status &&
-        filterData.status.length === 1 &&
-        !filterData.quoteId &&
-        !filterData.quoteName &&
-        !filterData.quotedDateStart &&
-        !filterData.quotedDateEnd &&
-        !filterData.lastUpdatedDateStart &&
-        !filterData.lastUpdatedDateEnd &&
-        !filterData.subtotalStart &&
-        !filterData.subtotalEnd &&
-        !filterData.taxableStart &&
-        !filterData.taxableEnd &&
-        !filterData.totalStart &&
-        !filterData.totalEnd;
+      if (filterData) {
+        const isSimpleStatusFilter =
+          filterData.status &&
+          filterData.status.length === 1 &&
+          !filterData.quoteId &&
+          !filterData.quoteName &&
+          !filterData.quotedDateStart &&
+          !filterData.quotedDateEnd &&
+          !filterData.lastUpdatedDateStart &&
+          !filterData.lastUpdatedDateEnd &&
+          !filterData.subtotalStart &&
+          !filterData.subtotalEnd &&
+          !filterData.taxableStart &&
+          !filterData.taxableEnd &&
+          !filterData.totalStart &&
+          !filterData.totalEnd;
 
-      if (isSimpleStatusFilter) {
-        const status = filterData.status?.[0];
-        if (status) {
-          response = await ordersFilterService.getOrdersByStatus(
+        if (isSimpleStatusFilter) {
+          const status = filterData.status?.[0];
+          if (status) {
+            response = await ordersFilterService.getOrdersByStatus(
+              userId,
+              companyId,
+              status,
+              calculatedOffset,
+              rowPerPage
+            );
+          } else {
+            throw new Error("Status is undefined");
+          }
+        } else {
+          const filter = createFilterFromData(filterData, calculatedOffset);
+          response = await ordersFilterService.getOrdersWithCustomFilters(
             userId,
             companyId,
-            status,
-            calculatedOffset,
-            rowPerPage
+            filter
           );
-        } else {
-          throw new Error("Status is undefined");
         }
       } else {
-        const filter = createFilterFromData(filterData, calculatedOffset);
-        response = await ordersFilterService.getOrdersWithCustomFilters(
+        response = await ordersFilterService.getAllOrders(
           userId,
           companyId,
-          filter
+          calculatedOffset,
+          rowPerPage
         );
       }
-    } else {
-      response = await ordersFilterService.getAllOrders(
-        userId,
-        companyId,
-        calculatedOffset,
-        rowPerPage
-      );
-    }
 
-    const apiResponse = response as {
-      data?: {
+      const apiResponse = response as {
+        data?: {
+          ordersResponse?: Order[];
+          orders?: Order[];
+          totalOrderCount?: number;
+          totalCount?: number;
+        };
         ordersResponse?: Order[];
         orders?: Order[];
         totalOrderCount?: number;
         totalCount?: number;
       };
-      ordersResponse?: Order[];
-      orders?: Order[];
-      totalOrderCount?: number;
-      totalCount?: number;
-    };
-    const ordersData =
-      apiResponse.data?.ordersResponse ||
-      apiResponse.data?.orders ||
-      apiResponse.ordersResponse ||
-      apiResponse.orders ||
-      [];
-    const totalCountData =
-      apiResponse.data?.totalOrderCount ||
-      apiResponse.data?.totalCount ||
-      apiResponse.totalOrderCount ||
-      apiResponse.totalCount ||
-      0;
 
-    return { orders: ordersData, totalCount: totalCountData };
+      const ordersData =
+        apiResponse.data?.ordersResponse ||
+        apiResponse.data?.orders ||
+        apiResponse.ordersResponse ||
+        apiResponse.orders ||
+        [];
+      const totalCountData =
+        apiResponse.data?.totalOrderCount ||
+        apiResponse.data?.totalCount ||
+        apiResponse.totalOrderCount ||
+        apiResponse.totalCount ||
+        0;
+
+      setOrders(ordersData);
+      setTotalCount(totalCountData);
+    } catch (error) {
+      console.error("Failed to fetch orders:", error);
+      toast.error("Failed to fetch orders");
+      setOrders([]);
+      setTotalCount(0);
+    } finally {
+      setLoading(false);
+    }
   }, [
     user?.userId,
     user?.companyId,
@@ -532,26 +551,33 @@ function OrdersLandingTable({
     [user?.userId, user?.companyId, createFilterFromData] // Removed loadFilterPreferences from dependencies
   );
 
-  // New useQuery hook
-  const { data, isLoading, isError } = useQuery({
-    queryKey: [
-      "orders",
-      user?.userId,
-      user?.companyId,
-      filterData,
-      page,
-      rowPerPage,
-    ],
-    queryFn: fetchOrders,
-    staleTime: 5 * 60 * 1000, // 5 minutes caching
-    gcTime: 10 * 60 * 1000, // 10 minutes
-    enabled: !!user?.userId && !!user?.companyId,
-  });
+  // Define tabs
+  const tabs = useMemo(() => {
+    if (
+      !filterPreferences?.preference?.filters ||
+      filterPreferences.preference.filters.length === 0
+    ) {
+      return [
+        {
+          id: "all",
+          label: "All",
+          hasFilter: true,
+          isFilterActive: !!filterData,
+          filterIndex: undefined,
+        },
+      ];
+    }
+    return filterPreferences.preference.filters.map((filter, index) => ({
+      id: `filter-${index}`,
+      label: filter.filter_name,
+      hasFilter: true,
+      isFilterActive:
+        filterPreferences.preference.selected === index || !!filterData,
+      filterIndex: index,
+    }));
+  }, [filterPreferences, filterData]);
 
-  // Use query data
-  const ordersData = useMemo(() => data?.orders || [], [data]);
-  const totalCountData = data?.totalCount || 0;
-
+  // Memoize fetch function
   // Effects
   useEffect(() => {
     setPagination({ pageIndex: page, pageSize: rowPerPage });
@@ -567,18 +593,22 @@ function OrdersLandingTable({
   }, [handleExport, setExportCallback]);
 
   useEffect(() => {
+    fetchOrders();
+  }, [fetchOrders]);
+
+  useEffect(() => {
     if (refreshTrigger && refreshTrigger > 0) {
-      // Assuming queryClient is available globally or passed as a prop
-      // For now, we'll just refetch the specific query key
-      // If queryClient is not available, this will need to be handled differently
-      // For example, if this component is wrapped in QueryClientProvider
-      // and the query key is ['orders', user?.userId, user?.companyId, filterData, page, rowPerPage]
-      // then refetching the 'orders' query key will trigger the query function.
-      // This is a simplified approach.
-      // If you have a global queryClient, you would do:
-      // queryClient.refetchQueries(['orders']);
+      fetchOrders();
+      toast.success("Orders refreshed");
     }
-  }, [refreshTrigger]);
+  }, [refreshTrigger, fetchOrders]);
+  const handlePrevious = () => {
+    setPage(prev => prev - 1);
+  };
+
+  const handleNext = () => {
+    setPage(prev => prev + 1);
+  };
 
   return (
     <>
@@ -659,31 +689,24 @@ function OrdersLandingTable({
         </div> */}
 
         <div className="flex-1 overflow-hidden">
-          {isLoading ? (
+          {loading ? (
             <TableSkeleton rows={rowPerPage} />
-          ) : isError ? (
-            <div className="h-full flex items-center justify-center text-red-500">
-              Failed to load orders
-            </div>
-          ) : ordersData.length === 0 ? (
+          ) : orders.length === 0 ? (
             <div className="h-full flex items-center justify-center text-gray-500">
               No orders found
             </div>
           ) : (
             <DashboardTable
-              data={ordersData}
+              data={orders}
               columns={columns}
-              loading={false}
-              totalDataCount={totalCountData}
+              loading={loading}
+              totalDataCount={totalCount}
               pagination={pagination}
               setPagination={handlePaginationChange}
               setPage={setPage}
               pageOptions={[20, 50, 75, 100]}
-              handlePrevious={() => page > 0 && setPage(page - 1)}
-              handleNext={() => {
-                const maxPage = Math.ceil(totalCountData / rowPerPage) - 1;
-                if (page < maxPage) setPage(page + 1);
-              }}
+              handlePrevious={handlePrevious}
+              handleNext={handleNext}
               page={page}
               rowPerPage={rowPerPage}
               setRowPerPage={value => {
@@ -701,8 +724,6 @@ function OrdersLandingTable({
             />
           )}
         </div>
-
-    
       </div>
 
       <Dialog open={isItemsDialogOpen} onOpenChange={setIsItemsDialogOpen}>

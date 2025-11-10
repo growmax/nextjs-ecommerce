@@ -151,6 +151,58 @@ export default function EditOrderPage({ params }: EditOrderPageProps) {
   // Extract products and currency info for latest data hook
   const orderDetailsData = orderDetails?.data?.orderDetails;
   const firstOrderDetail = orderDetailsData?.[0];
+
+  // Derive pricing context (tax flags, charges) from order details
+  const orderPricingContext = useMemo(() => {
+    const detail = firstOrderDetail;
+    const header = orderDetails?.data;
+
+    const resolvedIsInter =
+      typeof detail?.isInter === "boolean"
+        ? detail.isInter
+        : typeof header?.isInter === "boolean"
+          ? header.isInter
+          : true;
+
+    const resolvedTaxExemption =
+      typeof detail?.taxExemption === "boolean"
+        ? detail.taxExemption
+        : typeof header?.taxExemption === "boolean"
+          ? header.taxExemption
+          : Boolean((user as { taxExemption?: boolean })?.taxExemption);
+
+    const resolvedInsurance = Number(
+      detail?.insuranceCharges ?? header?.insuranceCharges ?? 0
+    );
+
+    const resolvedShipping = Number(
+      detail?.overallShipping ?? header?.overallShipping ?? 0
+    );
+
+    const detailOrderTerms = detail?.orderTerms as
+      | Record<string, unknown>
+      | undefined;
+    const detailPfValue =
+      detailOrderTerms && typeof detailOrderTerms["pfValue"] === "number"
+        ? (detailOrderTerms["pfValue"] as number)
+        : undefined;
+
+    const resolvedPfRate = Number(
+      detail?.pfRate ?? detailPfValue ?? header?.pfRate ?? 0
+    );
+
+    return {
+      isInter: resolvedIsInter,
+      taxExemption: resolvedTaxExemption,
+      insuranceCharges: Number.isFinite(resolvedInsurance)
+        ? resolvedInsurance
+        : 0,
+      overallShipping: Number.isFinite(resolvedShipping)
+        ? resolvedShipping
+        : 0,
+      pfRate: Number.isFinite(resolvedPfRate) ? resolvedPfRate : 0,
+    };
+  }, [firstOrderDetail, orderDetails?.data, user]);
   const products = useMemo(
     () => firstOrderDetail?.dbProductDetails || [],
     [firstOrderDetail?.dbProductDetails]
@@ -205,8 +257,8 @@ export default function EditOrderPage({ params }: EditOrderPageProps) {
       products,
       currency,
       sellerCurrency,
-      isInter: true,
-      taxExemption: false,
+      isInter: orderPricingContext.isInter,
+      taxExemption: orderPricingContext.taxExemption,
       isCloneReOrder: false,
       isPlaceOrder: false,
       enabled: !loading && products.length > 0,
@@ -294,8 +346,10 @@ export default function EditOrderPage({ params }: EditOrderPageProps) {
           (product.discountPercentage as number) ||
           (product.discount as number) ||
           0,
-        tax: (product.tax as number) || 0,
-        totalTax: (product.totalTax as number) || 0,
+        tax: ((product.tax as number) || 0) * quantity,
+        totalTax: 0,
+        interTaxBreakup: [],
+        intraTaxBreakup: [],
         shippingCharges: (product.shippingCharges as number) || 0,
         cashdiscountValue:
           (product.cashdiscountValue as number) ||
@@ -349,13 +403,13 @@ export default function EditOrderPage({ params }: EditOrderPageProps) {
   // Cash discount handlers
   const { handleCDApply, handleRemoveCD } = useCashDiscountHandlers({
     products: productsWithCashDiscount,
-    setProducts: updatedProducts => {
-      setProductsWithCashDiscount(updatedProducts);
+    setProducts: nextProducts => {
+      setProductsWithCashDiscount(nextProducts);
       // Update order details with new products
       setOrderDetails(prev => {
         if (!prev || !prev.data?.orderDetails) return prev;
         // Convert CartItem[] to DbProductDetail[] format
-        const dbProductDetails = updatedProducts.map(product => {
+        const dbProductDetails = nextProducts.map(product => {
           const dbProduct: Record<string, unknown> = { ...product };
           // Ensure itemNo is a number if it exists
           if (dbProduct.itemNo !== undefined && dbProduct.itemNo !== null) {
@@ -377,6 +431,7 @@ export default function EditOrderPage({ params }: EditOrderPageProps) {
                   dbProductDetails:
                     dbProductDetails as unknown as typeof order.dbProductDetails,
                   cashdiscount: true,
+                  cashdiscountValue: nextProducts[0]?.cashdiscountValue ?? 0,
                 };
                 return updatedOrder as OrderDetailItem;
               }
@@ -408,6 +463,7 @@ export default function EditOrderPage({ params }: EditOrderPageProps) {
                   ? {
                       ...order,
                       cashdiscount: false,
+                      cashdiscountValue: 0,
                       orderTerms:
                         prevTerms as unknown as typeof order.orderTerms,
                     }
@@ -423,15 +479,32 @@ export default function EditOrderPage({ params }: EditOrderPageProps) {
 
   // Calculate order using the calculation hook
   // Only calculate if we have products
+  const calculationInputProducts = useMemo(() => {
+    if (productsWithCashDiscount.length > 0) {
+      return productsWithCashDiscount as CartItem[];
+    }
+    if (productsWithEditedQuantities.length > 0) {
+      return productsWithEditedQuantities as CartItem[];
+    }
+    if (updatedProducts.length > 0) {
+      return updatedProducts as CartItem[];
+    }
+    return (orderDetails?.data?.orderDetails?.[0]?.dbProductDetails ||
+      []) as CartItem[];
+  }, [
+    productsWithCashDiscount,
+    productsWithEditedQuantities,
+    updatedProducts,
+    orderDetails?.data?.orderDetails,
+  ]);
+
   const { calculatedData } = useOrderCalculation({
-    products:
-      productsWithCashDiscount.length > 0
-        ? productsWithCashDiscount
-        : productsWithEditedQuantities.length > 0
-          ? (productsWithEditedQuantities as CartItem[])
-          : [],
-    isInter: true,
-    taxExemption: false,
+    products: calculationInputProducts,
+    isInter: orderPricingContext.isInter,
+    taxExemption: orderPricingContext.taxExemption,
+    insuranceCharges: orderPricingContext.insuranceCharges,
+    shippingCharges: orderPricingContext.overallShipping,
+    pfRate: orderPricingContext.pfRate,
     precision: 2,
     settings: {
       roundingAdjustment: quoteSettings?.roundingAdjustment || false,
@@ -445,6 +518,13 @@ export default function EditOrderPage({ params }: EditOrderPageProps) {
       applyRounding: true,
     },
   });
+
+  const effectiveProducts = useMemo(() => {
+    if (calculatedData?.products && calculatedData.products.length > 0) {
+      return calculatedData.products as CartItem[];
+    }
+    return calculationInputProducts;
+  }, [calculatedData?.products, calculationInputProducts]);
 
   // Track previous updatedProducts to prevent infinite loops
   const prevUpdatedProductsRef = useRef<unknown[]>([]);
@@ -718,7 +798,7 @@ export default function EditOrderPage({ params }: EditOrderPageProps) {
       // Use edited values if available, otherwise use original values
       const orderBody = orderPaymentDTO({
         values: {
-          dbProductDetails: updatedProducts as CartItem[],
+          dbProductDetails: effectiveProducts as CartItem[],
           removedDbProductDetails: [],
           VDapplied: calculatedData?.metadata.hasVolumeDiscount || false,
           ...(calculatedData?.breakup
@@ -1153,23 +1233,9 @@ export default function EditOrderPage({ params }: EditOrderPageProps) {
             {!loading && !error && orderDetails && (
               <div className="w-full lg:w-[30%] mt-[60px] space-y-3">
                 <OrderPriceDetails
-                  products={
-                    calculatedData?.products &&
-                    calculatedData.products.length > 0
-                      ? (calculatedData.products as unknown as Array<
-                          Record<string, unknown>
-                        >)
-                      : productsWithCashDiscount.length > 0
-                        ? productsWithCashDiscount
-                        : productsWithEditedQuantities.length > 0
-                          ? productsWithEditedQuantities
-                          : updatedProducts.length > 0
-                            ? updatedProducts
-                            : orderDetails.data?.orderDetails?.[0]
-                                ?.dbProductDetails || []
-                  }
-                  isInter={true}
-                  taxExemption={false}
+                  products={effectiveProducts}
+                  isInter={orderPricingContext.isInter}
+                  taxExemption={orderPricingContext.taxExemption}
                   precision={2}
                   Settings={{
                     roundingAdjustment:
@@ -1197,6 +1263,7 @@ export default function EditOrderPage({ params }: EditOrderPageProps) {
                           orderDetails.data?.orderDetails?.[0]?.overallTax
                         ) || 0
                   }
+                  insuranceCharges={orderPricingContext.insuranceCharges}
                   {...(calculatedData?.cartValue?.grandTotal !== undefined &&
                   calculatedData?.cartValue?.grandTotal !== null &&
                   calculatedData?.cartValue?.totalValue !== undefined &&
@@ -1267,6 +1334,7 @@ export default function EditOrderPage({ params }: EditOrderPageProps) {
                   isSummaryPage={false}
                   isEdit={true}
                   cashDiscountValue={
+                    calculatedData?.cartValue?.cashDiscountValue ||
                     orderDetails?.data?.orderDetails?.[0]?.cashdiscountValue ||
                     cashDiscountTerms?.cashdiscountValue ||
                     (orderDetails?.data?.orderDetails?.[0]?.orderTerms &&

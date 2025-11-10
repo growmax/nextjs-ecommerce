@@ -361,6 +361,56 @@ export default function OrderDetailsClient({ params }: OrderDetailsPageProps) {
   const status = (displayOrderDetails?.updatedBuyerStatus ||
     orderDetails?.data?.updatedBuyerStatus) as string | undefined;
 
+  const pricingContext = useMemo(() => {
+    const primaryHeader = displayOrderDetails || orderDetails?.data;
+    const detail = primaryHeader?.orderDetails?.[0];
+
+    const resolvedIsInter =
+      typeof detail?.isInter === "boolean"
+        ? detail.isInter
+        : typeof primaryHeader?.isInter === "boolean"
+          ? primaryHeader.isInter
+          : true;
+
+    const resolvedTaxExemption =
+      typeof detail?.taxExemption === "boolean"
+        ? detail.taxExemption
+        : typeof primaryHeader?.taxExemption === "boolean"
+          ? primaryHeader.taxExemption
+          : Boolean((user as { taxExemption?: boolean })?.taxExemption);
+
+    const resolvedInsurance = Number(
+      detail?.insuranceCharges ?? primaryHeader?.insuranceCharges ?? 0
+    );
+
+    const resolvedShipping = Number(
+      detail?.overallShipping ?? primaryHeader?.overallShipping ?? 0
+    );
+
+    const detailOrderTerms = detail?.orderTerms as
+      | { pfValue?: number }
+      | undefined;
+
+    const resolvedPfRate = Number(
+      detail?.pfRate ??
+        detailOrderTerms?.pfValue ??
+        primaryHeader?.pfRate ??
+        0
+    );
+
+    return {
+      isInter: resolvedIsInter,
+      taxExemption: resolvedTaxExemption,
+      insuranceCharges: Number.isFinite(resolvedInsurance)
+        ? resolvedInsurance
+        : 0,
+      overallShipping: Number.isFinite(resolvedShipping)
+        ? resolvedShipping
+        : 0,
+      pfRate: Number.isFinite(resolvedPfRate) ? resolvedPfRate : 0,
+    };
+  }, [displayOrderDetails, orderDetails?.data, user]);
+
   // Get module settings for order settings and SPR check
   const { orderSettings } = useModuleSettings(user);
 
@@ -849,39 +899,8 @@ export default function OrderDetailsClient({ params }: OrderDetailsPageProps) {
                       orderDetails?.data?.orderDetails?.[0]?.dbProductDetails ||
                       []
                     }
-                    isInter={(() => {
-                      // Determine if inter-state based on product taxes (IGST = inter-state, SGST/CGST = intra-state)
-                      const products =
-                        displayOrderDetails?.orderDetails?.[0]
-                          ?.dbProductDetails ||
-                        orderDetails?.data?.orderDetails?.[0]
-                          ?.dbProductDetails ||
-                        [];
-                      if (products.length > 0 && products[0]) {
-                        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                        const firstProduct = products[0] as any;
-                        if (
-                          firstProduct.productTaxes &&
-                          Array.isArray(firstProduct.productTaxes)
-                        ) {
-                          const hasIGST = firstProduct.productTaxes.some(
-                            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                            (t: any) => t.taxName === "IGST"
-                          );
-                          return hasIGST;
-                        }
-                      }
-                      // Default to false (intra-state) if we can't determine
-                      return false;
-                    })()}
-                    insuranceCharges={
-                      Number(
-                        displayOrderDetails?.orderDetails?.[0]
-                          ?.insuranceCharges ||
-                          orderDetails?.data?.orderDetails?.[0]
-                            ?.insuranceCharges
-                      ) || 0
-                    }
+                    isInter={pricingContext.isInter}
+                    insuranceCharges={pricingContext.insuranceCharges}
                     precision={2}
                     Settings={{
                       roundingAdjustment:
@@ -894,10 +913,7 @@ export default function OrderDetailsClient({ params }: OrderDetailsPageProps) {
                     isSeller={
                       (user as { isSeller?: boolean })?.isSeller || false
                     }
-                    taxExemption={
-                      (user as { taxExemption?: boolean })?.taxExemption ||
-                      false
-                    }
+                    taxExemption={pricingContext.taxExemption}
                     currency={
                       (
                         (displayOrderDetails?.buyerCurrencySymbol ||
@@ -911,13 +927,7 @@ export default function OrderDetailsClient({ params }: OrderDetailsPageProps) {
                     orderDetails?.data?.orderDetails?.[0]?.overallShipping !==
                       undefined
                       ? {
-                          overallShipping: Number(
-                            displayOrderDetails?.orderDetails?.[0]
-                              ?.overallShipping ||
-                              orderDetails?.data?.orderDetails?.[0]
-                                ?.overallShipping ||
-                              0
-                          ),
+                          overallShipping: pricingContext.overallShipping,
                         }
                       : {})}
                     {...(displayOrderDetails?.orderDetails?.[0]?.overallTax !==
