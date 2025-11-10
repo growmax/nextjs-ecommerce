@@ -1,16 +1,22 @@
+import HeaderBar from "@/components/Global/HeaderBar/HeaderBar";
 import CompanyBranchTable from "./CompanyBranchTable";
 import CompanyDetail from "./CompanyDetail";
 
 const ComanyPageClient = () => {
   return (
-    <div className="p-6 md:p-8 flex flex-col items-stretch gap-6">
-      <div className="w-full">
-        <CompanyDetail />
+    <>
+      <div id="profile-header" className="h-[24px] md:h-[32px]">
+        <HeaderBar title="Company Settings" />
       </div>
-      <div className="w-full">
-        <CompanyBranchTable />
+      <div className="p-6 md:p-8 flex flex-col items-stretch gap-6">
+        <div className="w-full">
+          <CompanyDetail />
+        </div>
+        <div className="w-full">
+          <CompanyBranchTable />
+        </div>
       </div>
-    </div>
+    </>
   );
 };
 

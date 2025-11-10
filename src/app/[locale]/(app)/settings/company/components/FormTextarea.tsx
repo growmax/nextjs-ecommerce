@@ -4,11 +4,11 @@ import {
   FormItem,
   FormLabel,
 } from "@/components/ui/form";
-import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Textarea } from "@/components/ui/textarea";
 import { Control } from "react-hook-form";
 
-interface FormInputProps {
+interface FormTextareaProps {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   control: Control<any>;
   name: string;
@@ -19,7 +19,7 @@ interface FormInputProps {
   required?: boolean;
 }
 
-const FormInput = ({
+const FormTextarea = ({
   control,
   name,
   label,
@@ -27,7 +27,7 @@ const FormInput = ({
   disabled = false,
   loading = false,
   required = false,
-}: FormInputProps) => {
+}: FormTextareaProps) => {
   return (
     <FormField
       control={control}
@@ -40,9 +40,14 @@ const FormInput = ({
           </FormLabel>
           <FormControl>
             {loading ? (
-              <Skeleton className="h-10 w-full rounded-md" />
+              <Skeleton className="h-20 w-full rounded-md" />
             ) : (
-              <Input placeholder={placeholder} {...field} disabled={disabled} />
+              <Textarea
+                placeholder={placeholder}
+                {...field}
+                disabled={disabled}
+                className="min-h-20"
+              />
             )}
           </FormControl>
         </FormItem>
@@ -51,4 +56,4 @@ const FormInput = ({
   );
 };
 
-export default FormInput;
+export default FormTextarea;

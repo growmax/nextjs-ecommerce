@@ -1,108 +1,390 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import SectionCard from "@/components/custom/SectionCard";
+import { DataTable } from "@/components/Global/DataTable";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import CompanyService from "@/lib/api/services/CompanyService";
-import { useEffect, useState } from "react";
+import type { ColumnDef } from "@tanstack/react-table";
+import { Loader2, Plus, Search, Trash2 } from "lucide-react";
+import { useEffect, useMemo, useState } from "react";
+import CompanyDialogBox from "./CompanyDialogBox";
 
-interface TableComponentProps {
-  data: any[];
-  loading?: boolean;
-  onDelete?: (id: string | number) => void;
-  // Add other props as needed
+// Define the Branch interface for better type safety
+interface BranchAddress {
+  id: string | number;
+  branchName?: string;
+  addressLine?: string;
+  city?: string;
+  state?: string;
+  pinCodeId?: string;
+  country?: string;
+  gst?: string;
+  primaryContact?: string;
+  mobileNo?: string;
+  nationalMobileNum?: string;
+  phone?: string;
+  isBilling?: boolean;
+  isShipping?: boolean;
+  locality?: string;
+  district?: string;
+  lattitude?: string;
+  longitude?: string;
 }
 
-// Simple Table Component inline
-const TableComponent: React.FC<TableComponentProps> = ({ data, loading, onDelete }) => {
-  if (loading) {
-    return <div className="animate-pulse">Loading branches...</div>;
-  }
-
-  return (
-    <div className="overflow-x-auto">
-      <table className="min-w-full divide-y divide-gray-200">
-        <thead className="bg-gray-50">
-          <tr>
-            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-              Branch Name
-            </th>
-            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-              Address
-            </th>
-            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-              Actions
-            </th>
-          </tr>
-        </thead>
-        <tbody className="bg-white divide-y divide-gray-200">
-          {data.map((branch: any, index: number) => (
-            <tr key={branch.id || index}>
-              <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                {branch.name || branch.branchName || `Branch ${index + 1}`}
-              </td>
-              <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                {branch.address || branch.fullAddress || "N/A"}
-              </td>
-              <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                {onDelete && (
-                  <button
-                    onClick={() => onDelete(branch.id)}
-                    className="text-red-600 hover:text-red-900"
-                  >
-                    Delete
-                  </button>
-                )}
-              </td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
-      {data.length === 0 && (
-        <div className="text-center py-4 text-gray-500">
-          No branches found.
-        </div>
-      )}
-    </div>
-  );
-};
+interface Branch {
+  id: string | number;
+  name?: string;
+  addressId?: BranchAddress;
+  zoneId?: {
+    zoneId?: {
+      zoneName?: string;
+    };
+  };
+}
 
 const CompanyBranchTable = () => {
-  const [branches, setBranches] = useState<any[]>([]);
+  const [branches, setBranches] = useState<Branch[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [isError, setIsError] = useState(false);
+  const [deletingAddressId, setDeletingAddressId] = useState<
+    string | number | null
+  >(null);
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [dialogMode, setDialogMode] = useState<"create" | "edit">("create");
+  const [selectedBranch, setSelectedBranch] = useState<Branch | null>(null);
+
+  // Pagination state
+  const [pagination, setPagination] = useState({
+    pageIndex: 0,
+    pageSize: 5, // Default page size is 5
+  });
+  const [totalCount, setTotalCount] = useState(0);
+
+  // Search state
+  const [searchQuery, setSearchQuery] = useState("");
 
   useEffect(() => {
     let mounted = true;
-    (async () => {
+
+    // Debounce search to avoid too many API calls
+    const timeoutId = setTimeout(async () => {
       try {
+        setIsLoading(true);
+        setIsError(false);
+
+        // Calculate offset based on current page
+        const offset = pagination.pageIndex;
+
         const response = await CompanyService.getAllBranchesWithPagination({
-          offset: 0,
-          limit: 10,
-          searchString: "",
+          offset,
+          limit: pagination.pageSize,
+          searchString: searchQuery,
         });
+        console.log("Fetched branches:", response);
         if (!mounted) return;
-        setBranches(
-          (response as any)?.branchResponse ?? response?.data ?? response ?? []
-        );
+
+        // Extract branches from response based on the actual API structure
+        // API returns: { data: { branchResponse: [...], totalCount: 11 }, message: '...', status: '...' }
+        const branchData =
+          (response as any)?.data?.branchResponse ??
+          (response as any)?.branchResponse ??
+          (response as any)?.data ??
+          response;
+
+        // Extract total count for pagination
+        const total =
+          (response as any)?.data?.totalCount ??
+          (response as any)?.totalCount ??
+          0;
+
+        // Ensure we always set an array
+        const branchesArray = Array.isArray(branchData) ? branchData : [];
+        setBranches(branchesArray);
+        setTotalCount(total);
       } catch (_error) {
-        // Error handled silently
+        if (!mounted) return;
+        setIsError(true);
+      } finally {
+        if (mounted) {
+          setIsLoading(false);
+        }
       }
-    })();
+    }, 150); // 150ms debounce delay
 
     return () => {
       mounted = false;
+      clearTimeout(timeoutId);
     };
-  }, []);
+  }, [pagination.pageIndex, pagination.pageSize, searchQuery]); // Refetch when pagination or search changes
 
-  const handleDelete = (_id: string | number, _name?: string) => {
-    // TODO: implement delete functionality
+  // Handle search input change
+  const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setSearchQuery(e.target.value);
+    // Reset to first page when searching
+    setPagination(prev => ({ ...prev, pageIndex: 0 }));
   };
 
+  // Transform branch data to form format
+  const transformBranchToFormData = (branch: Branch) => {
+    return {
+      companyName: "",
+      branchName: branch.name || branch.addressId?.branchName || "",
+      addressLine: branch.addressId?.addressLine || "",
+      locality: branch.addressId?.locality || "",
+      country: branch.addressId?.country || "",
+      state: branch.addressId?.state || "",
+      district: branch.addressId?.district || "",
+      pinCode: branch.addressId?.pinCodeId || "",
+      city: branch.addressId?.city || "",
+      latitude: branch.addressId?.lattitude || "",
+      longitude: branch.addressId?.longitude || "",
+      isBilling: branch.addressId?.isBilling ?? false,
+      isShipping: branch.addressId?.isShipping ?? false,
+      gst: branch.addressId?.gst || "",
+      contactName: branch.addressId?.primaryContact || "",
+      contactNumber: branch.addressId?.mobileNo || "",
+    };
+  };
+
+  const handleEdit = (branch: Branch) => {
+    console.log("Edit branch:", branch);
+    setDialogMode("edit");
+    setSelectedBranch(branch);
+    setIsDialogOpen(true);
+  };
+
+  const handleDelete = async (id: string | number, name?: string) => {
+    setDeletingAddressId(id);
+
+    try {
+      await CompanyService.deleteRecordBranchesWithPagination({
+        addressId: Number(id),
+      });
+
+      console.log("Successfully deleted branch:", id, name);
+
+      // Refresh the branch list after successful deletion
+      // Trigger a re-fetch by updating pagination state
+      setPagination(prev => ({ ...prev }));
+    } catch (error) {
+      console.error("Failed to delete branch:", error);
+      // TODO: Show error toast notification
+    } finally {
+      setDeletingAddressId(null);
+    }
+  };
+
+  // Define columns using TanStack Table's ColumnDef
+  const columns = useMemo<ColumnDef<Branch>[]>(
+    () => [
+      {
+        accessorKey: "name",
+        header: "Branch",
+        size: 120,
+        minSize: 100,
+        cell: ({ row }) => {
+          const branch = row.original;
+          return (
+            <div className="font-medium text-xs sm:text-sm whitespace-nowrap">
+              {branch.name || branch.addressId?.branchName || "-"}
+            </div>
+          );
+        },
+      },
+      {
+        accessorKey: "address",
+        header: "Address",
+        size: 120,
+        minSize: 180,
+        cell: ({ row }) => {
+          const branch = row.original;
+          return (
+            <div className="space-y-1 min-w-[180px]">
+              <div className="text-xs sm:text-sm">
+                {branch.addressId?.addressLine || "-"}
+              </div>
+              <div className="text-xs sm:text-sm text-muted-foreground">
+                {[
+                  branch.addressId?.city,
+                  branch.addressId?.state,
+                  branch.addressId?.pinCodeId,
+                ]
+                  .filter(Boolean)
+                  .join(", ") || "-"}
+              </div>
+              <div className="text-xs sm:text-sm text-muted-foreground">
+                {branch.addressId?.country || "-"}
+              </div>
+              <div className="flex gap-1.5 mt-2">
+                {branch.addressId?.isBilling && (
+                  <Badge
+                    variant="secondary"
+                    className="text-xs font-medium px-2.5 py-0.5 bg-primary/10 text-primary hover:bg-primary/20 border-primary/20"
+                  >
+                    Billing
+                  </Badge>
+                )}
+                {branch.addressId?.isShipping && (
+                  <Badge
+                    variant="outline"
+                    className="text-xs font-medium px-2.5 py-0.5 hover:bg-accent/20"
+                  >
+                    Shipping
+                  </Badge>
+                )}
+              </div>
+            </div>
+          );
+        },
+      },
+      {
+        accessorKey: "gst",
+        header: "Tax ID / GST",
+        size: 120,
+        minSize: 100,
+        cell: ({ row }) => (
+          <div className="text-xs sm:text-sm whitespace-nowrap">
+            {row.original.addressId?.gst || "-"}
+          </div>
+        ),
+      },
+      {
+        accessorKey: "primaryContact",
+        header: "Contact Person",
+        size: 120,
+        minSize: 100,
+        cell: ({ row }) => (
+          <div className="text-xs sm:text-sm whitespace-nowrap">
+            {row.original.addressId?.primaryContact || "-"}
+          </div>
+        ),
+      },
+      {
+        accessorKey: "phone",
+        header: "Phone",
+        size: 130,
+        minSize: 110,
+        cell: ({ row }) => {
+          const branch = row.original;
+          return (
+            <div className="text-xs sm:text-sm whitespace-nowrap">
+              {branch.addressId?.mobileNo || "-"}
+            </div>
+          );
+        },
+      },
+    ],
+    []
+  );
+
   return (
-    <>
-      <SectionCard title="Company Branches">
-        <TableComponent
-          data={branches}
-          onDelete={handleDelete}
-        />
-      </SectionCard>
-    </>
+    <SectionCard
+      title="Company Branches"
+      className="h-full flex flex-col"
+      contentClassName="p-0 flex-1 overflow-hidden"
+      showSeparator={false}
+      headerActions={
+        <div className="flex items-center gap-2">
+          {/* Search Input - real-time search */}
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+            <Input
+              placeholder="Search branches..."
+              className="pl-9 h-9 w-[200px] sm:w-[250px]"
+              value={searchQuery}
+              onChange={handleSearchChange}
+            />
+          </div>
+          {/* Add Button */}
+          <Button
+            size="sm"
+            className="h-9"
+            onClick={() => {
+              setDialogMode("create");
+              setSelectedBranch(null);
+              setIsDialogOpen(true);
+            }}
+          >
+            <Plus className="h-4 w-4 mr-2" />
+            Add Branch
+          </Button>
+        </div>
+      }
+    >
+      <DataTable
+        data={branches}
+        columns={columns}
+        isLoading={isLoading}
+        emptyMessage={
+          isError
+            ? "Failed to load branches. Please try again."
+            : "No branches found. Add a branch to get started."
+        }
+        enableActions
+        renderRowActions={row => (
+          <Button
+            variant="ghost"
+            size="sm"
+            className="h-7 w-7 p-0 text-red-500 hover:text-red-700 hover:bg-red-50"
+            disabled={
+              deletingAddressId ===
+              (row.original.addressId?.id || row.original.id)
+            }
+            onClick={() =>
+              handleDelete(
+                row.original.addressId?.id || row.original.id,
+                row.original.name ||
+                  row.original.addressId?.branchName ||
+                  "Unknown"
+              )
+            }
+          >
+            {deletingAddressId ===
+            (row.original.addressId?.id || row.original.id) ? (
+              <Loader2 className="h-3.5 w-3.5 animate-spin" />
+            ) : (
+              <Trash2 className="h-3.5 w-3.5" />
+            )}
+            <span className="sr-only">Delete branch</span>
+          </Button>
+        )}
+        enableSorting
+        enableColumnVisibility={false}
+        showPagination
+        showPaginationBorder={false}
+        pageSizeOptions={[5, 10, 20, 30]}
+        // Server-side pagination props
+        manualPagination={true}
+        totalCount={totalCount}
+        pagination={pagination}
+        onPaginationChange={setPagination}
+        getRowId={row => String(row.id)}
+        onRowClick={row => handleEdit(row.original)}
+        className="h-full w-full"
+        tableClassName="w-full min-w-[800px] md:table-auto md:min-w-0"
+      />
+
+      {/* Add/Edit Branch Dialog */}
+      <CompanyDialogBox
+        open={isDialogOpen}
+        onOpenChange={open => {
+          setIsDialogOpen(open);
+          if (!open) {
+            setSelectedBranch(null);
+            setDialogMode("create");
+          }
+        }}
+        mode={dialogMode}
+        initialData={
+          selectedBranch ? transformBranchToFormData(selectedBranch) : null
+        }
+        branchId={selectedBranch?.addressId?.id || selectedBranch?.id || null}
+        onSuccess={() => {
+          // Refresh the branch list after successful create/update
+          setPagination(prev => ({ ...prev }));
+        }}
+      />
+    </SectionCard>
   );
 };
 

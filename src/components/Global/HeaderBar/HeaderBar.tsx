@@ -21,7 +21,7 @@ export default function HeaderBar({
       {/* Fixed Header */}
       <header
         className={cn(
-          "flex top-[69px] left-64 right-0 flex-shrink-0 bg-background border-b border-border shadow-sm z-50",
+          "flex top-[32px] left-64 right-0 flex-shrink-0 bg-background border-b border-border shadow-sm z-50",
           className
         )}
         style={{
@@ -57,9 +57,10 @@ export default function HeaderBar({
           )}
         </div>
       </header>
-
-      {/* Automatic Spacer - pushes content below the fixed header */}
-      <div className="h-[130px]" />
+      {/* Automatic Spacer - pushes content below the fixed header
+          Keep the spacer in sync with header height: 48px mobile, 64px desktop.
+          Adjust if your header's min-height changes. */}
+      {/* <div className="h-[24px] md:h-[32px]" /> */}
     </>
   );
 }

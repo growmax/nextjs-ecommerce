@@ -336,7 +336,9 @@ export interface UpdateBranchRequest extends CreateBranchRequest {
 
 // Update Branch Response Interface
 export interface UpdateBranchResponse {
-  data: null;
+  // The API returns the updated branch payload. Use UpdateBranchRequest shape
+  // (nullable) so callers can read the returned object directly.
+  data: UpdateBranchRequest | null;
   message: string;
   status: string;
 }
@@ -423,27 +425,30 @@ export interface DashboardResponse {
 export class CompanyService extends BaseService<CompanyService> {
   protected defaultClient = coreCommerceClient;
 
-  async getAllBranchesWithPagination(
-    params: BranchPaginationParams
-  ): Promise<BranchApiResponse> {
-    const { offset, limit, searchString = "" } = params;
+  /**
+   * Resolve userId and companyId from params or from stored JWT token.
+   * Throws an Error when ids cannot be resolved.
+   */
+  private async resolveUserAndCompany(params: {
+    userId?: unknown;
+    companyId?: unknown;
+  }): Promise<{ userId: number; companyId: number }> {
+    // prefer provided values, fall back to token
+    let userId = params.userId as unknown;
+    let companyId = params.companyId as unknown;
 
-    let userId = params.userId;
-    let companyId = params.companyId;
-
-    // Auto-read from JWT if not provided
     if (!userId || !companyId) {
-      const accessToken = AuthStorage.getAccessToken();
+      // try to get a valid access token (refresh if needed)
+      const accessToken = await AuthStorage.getValidAccessToken();
       if (accessToken) {
         try {
           // eslint-disable-next-line @typescript-eslint/no-explicit-any
           const payload: any =
             JWTService.getInstance().decodeToken(accessToken);
-          // common token field names - try a few fallbacks
           userId = userId ?? payload?.userId ?? payload?.id ?? payload?.sub;
           companyId = companyId ?? payload?.companyId;
         } catch (_e) {
-          // decoding failed -> let the missing id check below handle it
+          // ignore decode error; handled below
         }
       }
     }
@@ -454,10 +459,23 @@ export class CompanyService extends BaseService<CompanyService> {
       companyId === undefined ||
       companyId === null
     ) {
-      return Promise.reject(
-        new Error("Missing userId or companyId. Ensure user is authenticated.")
+      throw new Error(
+        "Missing userId or companyId. Ensure user is authenticated."
       );
     }
+
+    return {
+      userId: Number(userId as unknown as string | number),
+      companyId: Number(companyId as unknown as string | number),
+    };
+  }
+
+  async getAllBranchesWithPagination(
+    params: BranchPaginationParams
+  ): Promise<BranchApiResponse> {
+    const { offset, limit, searchString = "" } = params;
+
+    const { userId, companyId } = await this.resolveUserAndCompany(params);
 
     return (await this.call(
       `/branches/readBranchwithPagination/${userId}?companyId=${companyId}&offset=${offset}&limit=${limit}&searchString=${encodeURIComponent(
@@ -523,7 +541,7 @@ export class CompanyService extends BaseService<CompanyService> {
   async createBranchAddress(
     params: CreateBranchRequest
   ): Promise<CreateBranchResponse> {
-    const { userId, companyId } = params;
+    const { userId, companyId } = await this.resolveUserAndCompany(params);
 
     return (await this.call(
       `/branches/createBranch/${userId}?companyId=${companyId}`,
@@ -535,7 +553,8 @@ export class CompanyService extends BaseService<CompanyService> {
   async updateBranchAddress(
     params: UpdateBranchRequest
   ): Promise<UpdateBranchResponse> {
-    const { userId, companyId, addressId } = params;
+    const { userId, companyId } = await this.resolveUserAndCompany(params);
+    const addressId = params.addressId;
 
     return (await this.call(
       `/addresses/updateBrnAddress/${userId}?companyId=${companyId}&addressId=${addressId.id}`,

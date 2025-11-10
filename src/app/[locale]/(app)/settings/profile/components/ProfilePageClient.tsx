@@ -10,7 +10,9 @@ import { OTPDialog } from "@/components/profile/OTPDialog";
 import { PasswordChangeDialog } from "@/components/profile/PasswordChangeDialog";
 import { ProfileCard } from "@/components/profile/ProfileCard";
 import { UserPreferencesCard } from "@/components/profile/UserPreferencesCard";
+import { Button } from "@/components/ui/button";
 import { useProfileData } from "@/hooks/Profile/useProfileData";
+import { Shield } from "lucide-react";
 
 export default function ProfilePageClient() {
   const {
@@ -180,7 +182,9 @@ export default function ProfilePageClient() {
 
   return (
     <>
-      <HeaderBar title="Profile Settings" />
+      <div id="profile-header" className="h-[48px] md:h-[64px]">
+        <HeaderBar title="Profile Settings" />
+      </div>
 
       <main
         className={`flex-1 px-4 pb-4 overflow-x-hidden ${hasChanges ? "pb-32 md:pb-24" : "pb-16"}`}
@@ -195,6 +199,17 @@ export default function ProfilePageClient() {
             phoneVerified={phoneVerified}
             isLoading={isSaving}
             dataLoading={dataLoading}
+            headerActions={
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setShowPasswordDialog(true)}
+                aria-label="Change Password"
+              >
+                <Shield className="h-4 w-4" />
+                Change Password
+              </Button>
+            }
           />
 
           {/* User Preferences */}
@@ -220,7 +235,8 @@ export default function ProfilePageClient() {
         isLoading={isSaving}
         saveText="Save Changes"
         cancelText="Cancel"
-        className="fixed bottom-4 left-0 right-0 md:bottom-auto md:top-[69px] md:left-0 lg:left-64 z-50"
+        className="bottom-4 left-0 right-0 md:bottom-auto md:top-[69px] md:left-0 lg:left-64 z-50"
+        anchorSelector="#profile-header"
       />
 
       {/* Phone Verification Dialog */}
