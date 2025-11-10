@@ -4,7 +4,7 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Minus, Plus, ShoppingCart } from "lucide-react";
 import { toast } from "sonner";
-import { CartService } from "@/lib/api/services/CartService";
+import { CartService } from "@/lib/api/CartServices";
 import { useCurrentUser } from "@/hooks/useCurrentUser";
 import { useTenantData } from "@/hooks/useTenantData";
 import { useRouter } from "@/i18n/navigation";
@@ -19,7 +19,6 @@ const CartServices = new CartService();
 
 export default function AddToCartSection({
   productId,
-  productTitle,
   isAvailable,
 }: AddToCartSectionProps) {
   const [quantity, setQuantity] = useState(1);
@@ -54,7 +53,7 @@ export default function AddToCartSection({
 
       await CartServices.postCart({
         userId: Number(user.userId),
-        tenantId: tenantData?.data?.tenant?.tenantCode || "",
+        tenantId: tenantData?.tenant?.tenantCode || "",
         useMultiSellerCart: true,
         body: {
           productsId: productId,

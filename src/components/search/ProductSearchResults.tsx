@@ -3,14 +3,8 @@
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { 
-  CommandGroup, 
-  CommandItem, 
-  CommandShortcut 
-} from "@/components/ui/command";
-import { 
-  Star, 
   ShoppingCart, 
   Eye, 
   ArrowRight,
@@ -67,16 +61,6 @@ export default function ProductSearchResults({
   const formatPrice = (price: string | null | undefined) => {
     if (!price) return null;
     return price;
-  };
-
-  // Get brand initials for avatar fallback
-  const getBrandInitials = (brandName: string) => {
-    return brandName
-      .split(" ")
-      .map(word => word.charAt(0))
-      .join("")
-      .toUpperCase()
-      .slice(0, 2);
   };
 
   if (isLoading) {

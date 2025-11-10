@@ -32,18 +32,21 @@ export function AuthAwareNav({
     user ?? initialUser
   );
 
-  const { withLogoutLoader } = useGlobalLoader();
+  const { showLogoutLoader, hideLoading } = useGlobalLoader();
   const { logout: clientLogout } = useUserDetails();
 
   const handleLogout = async () => {
-    await withLogoutLoader(async () => {
-      clientLogout();
+    showLogoutLoader();
+    try {
+      await clientLogout();
       // Redirect will be handled by AuthContext
-    });
+    } finally {
+      hideLoading();
+    }
   };
 
-  if (auth.isAuthenticated) {
-    return <AuthenticatedNav user={auth.user} onLogout={handleLogout} />;
+  if (auth.isAuthenticated && auth.user) {
+    return <AuthenticatedNav user={auth.user as ServerUser} onLogout={handleLogout} />;
   } else {
     return <PublicNav />;
   }

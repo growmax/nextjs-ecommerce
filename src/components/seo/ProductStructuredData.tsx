@@ -17,8 +17,7 @@ interface ProductStructuredDataProps {
 
 export function ProductStructuredData({ 
   product, 
-  url,
-  locale = "en" 
+  url
 }: ProductStructuredDataProps) {
   const brandName = product.brand_name || product.brands_name || "Generic";
   const availability = getProductAvailability(product);

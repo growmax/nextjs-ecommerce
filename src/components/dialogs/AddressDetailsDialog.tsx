@@ -93,15 +93,6 @@ export function AddressDetailsDialog({
   // Fetch addresses when dialog opens
   React.useEffect(() => {
     if (open) {
-      // Debug: Check what data is available
-      const debugInfo = {
-        hasUser: !!user,
-        hasUserId: !!user?.userId,
-        hasCompanyId: !!user?.companyId,
-        userId: user?.userId,
-        companyId: user?.companyId,
-      };
-
       if (user?.userId && user?.companyId) {
         fetchAddresses();
       } else {
@@ -109,7 +100,7 @@ export function AddressDetailsDialog({
         setLoading(false);
       }
     }
-  }, [open, user?.userId, user?.companyId, fetchAddresses, user]);
+  }, [open, user?.userId, user?.companyId]);
 
   const handleAddressSelect = (address: BillingAddress) => {
     setSelectedAddressId(address.id);

@@ -43,12 +43,11 @@ export function useNavigationProgress({
   respectReducedMotion = true,
   timeoutMs = 30000,
 }: UseNavigationProgressOptions = {}) {
-  const router = useRouter();
   const pathname = usePathname();
   const { isLoading: globalLoading, showLoading, hideLoading } = useLoading();
   
   const loadingId = "navigation";
-  const timeoutRef = useRef<ReturnType<typeof setTimeout>>();
+  const timeoutRef = useRef<NodeJS.Timeout>();
   const startTimeRef = useRef<number>();
   const isNavigatingRef = useRef(false);
   const mountedRef = useRef(false);
@@ -71,7 +70,7 @@ export function useNavigationProgress({
   const clearTimeout = () => {
     if (timeoutRef.current) {
       clearTimeout(timeoutRef.current);
-      timeoutRef.current = undefined;
+      timeoutRef.current = undefined as any;
     }
   };
 
@@ -91,11 +90,11 @@ export function useNavigationProgress({
     clearTimeout();
     timeoutRef.current = setTimeout(() => {
       endNavigation("timeout");
-    }, timeoutMs);
+    }, timeoutMs) as any;
   };
 
   // End navigation loading
-  const endNavigation = (reason?: string) => {
+  const endNavigation = (_reason?: string) => {
     if (!isNavigatingRef.current || !mountedRef.current) return undefined;
     
     isNavigatingRef.current = false;
@@ -171,7 +170,7 @@ export function useNavigationProgress({
         console.warn("Navigation progress: Possible stuck state detected, forcing completion");
         endNavigation("safety_timeout");
       }
-    }, timeoutMs * 2);
+    }, timeoutMs * 2) as any;
 
     return () => clearTimeout(safetyTimeout);
   }, [isNavigatingRef.current, autoDetect, timeoutMs, mountedRef.current]);

@@ -12,8 +12,8 @@ interface ProductVariantsProps {
 }
 
 export interface VariantSelection {
-  color?: string;
-  size?: string;
+  color?: string | undefined;
+  size?: string | undefined;
   [key: string]: string | undefined;
 }
 

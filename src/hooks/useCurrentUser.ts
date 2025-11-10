@@ -33,14 +33,14 @@ const extractUserFromJWT = (): CurrentUser | null => {
   if (!token) return null;
 
   const jwtService = JWTService.getInstance();
-  const payload = jwtService.decodeToken(token);
+  const payload = jwtService.decodeToken(token) as any;
 
   if (!payload || (!payload.userId && !payload.companyId)) {
     return null;
   }
 
   return {
-    currency: payload.currency || {
+    currency: {
       currencyCode: payload.currency?.currencyCode || "INR",
       decimal: payload.currency?.decimal || ".",
       description: payload.currency?.description || "INDIAN RUPEE",
@@ -49,8 +49,8 @@ const extractUserFromJWT = (): CurrentUser | null => {
       symbol: payload.currency?.symbol || "INR ₹",
       thousand: payload.currency?.thousand || ",",
     },
-    userId: payload.userId || payload.id || 0,
-    companyId: payload.companyId || 0,
+    userId: Number(payload.userId || payload.id) || 0,
+    companyId: Number(payload.companyId) || 0,
     displayName: payload.displayName || "",
     email: payload.email || "",
     role: payload.accountRole || payload.roleName || "",

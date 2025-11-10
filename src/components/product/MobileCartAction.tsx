@@ -7,7 +7,7 @@ import { ShoppingCart, Minus, Plus } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { formatPrice, getProductAvailability } from "@/utils/product/product-formatter";
 import { toast } from "sonner";
-import { CartService } from "@/lib/api/services/CartService";
+import { CartService } from "@/lib/api/CartServices";
 import { useCurrentUser } from "@/hooks/useCurrentUser";
 import { useTenantData } from "@/hooks/useTenantData";
 import { useRouter } from "@/i18n/navigation";
@@ -60,7 +60,7 @@ export default function MobileCartAction({ product }: MobileCartActionProps) {
       
       await CartServices.postCart({
         userId: Number(user.userId),
-        tenantId: tenantData?.data?.tenant?.tenantCode || "",
+        tenantId: tenantData?.tenant?.tenantCode || "",
         useMultiSellerCart: true,
         body: {
           productsId: product.product_id,

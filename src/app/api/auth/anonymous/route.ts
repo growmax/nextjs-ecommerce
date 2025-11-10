@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import AuthService from "@/lib/api/services/AuthService";
-import { getDomain } from "@/lib/domain";
+import { AuthService } from "@/lib/api/services/AuthService";
 
 /**
  * GET /api/auth/anonymous
@@ -33,16 +32,15 @@ export async function GET(request: NextRequest) {
  * POST /api/auth/anonymous
  * Initialize anonymous session (non-blocking, client-side call)
  */
-export async function POST(request: NextRequest) {
+export async function POST(_request: NextRequest) {
   try {
-    const domain = getDomain(request.headers.get("host") || "localhost:3000");
     const origin =
-      request.headers.get("x-tenant-origin") ||
+      _request.headers.get("x-tenant-origin") ||
       process.env.DEFAULT_ORIGIN ||
-      request.nextUrl.origin;
+      _request.nextUrl.origin;
 
     // Check if token already exists
-    const existingToken = request.cookies.get("anonymous_token")?.value;
+    const existingToken = _request.cookies.get("anonymous_token")?.value;
     if (existingToken) {
       return NextResponse.json({
         token: existingToken,
@@ -51,11 +49,11 @@ export async function POST(request: NextRequest) {
     }
 
     // Fetch new anonymous token
-    const tokenResponse = await AuthService.getAnonymousToken(origin);
+    const tokenResponse = await AuthService.getInstance().getAnonymousToken(origin);
 
     const response = NextResponse.json({
       token: tokenResponse.accessToken,
-      userId: tokenResponse.userId || null,
+      userId: (tokenResponse as any).userId || null,
     });
 
     // Set cookie with secure settings
@@ -63,19 +61,22 @@ export async function POST(request: NextRequest) {
       httpOnly: true,
       secure: process.env.NODE_ENV === "production",
       sameSite: "lax",
-      path: "/",
-      maxAge: 7 * 24 * 60 * 60, // 7 days
+      maxAge: 60 * 60 * 24 * 30, // 30 days
+    });
+
+    // Set origin cookie for tenant detection
+    response.cookies.set("tenant_origin", origin, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: "lax",
+      maxAge: 60 * 60 * 24 * 30, // 30 days
     });
 
     return response;
-  } catch (error) {
-    // Return error but don't block - client can retry
+  } catch {
+    console.error("Anonymous token creation failed");
     return NextResponse.json(
-      {
-        error: "Failed to initialize anonymous session",
-        message:
-          error instanceof Error ? error.message : "Unknown error occurred",
-      },
+      { error: "Failed to create anonymous token" },
       { status: 500 }
     );
   }
@@ -85,7 +86,7 @@ export async function POST(request: NextRequest) {
  * DELETE /api/auth/anonymous
  * Clear anonymous session
  */
-export async function DELETE(request: NextRequest) {
+export async function DELETE(_request: NextRequest) {
   const response = NextResponse.json({ success: true });
 
   // Clear the anonymous token cookie

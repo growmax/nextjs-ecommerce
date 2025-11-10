@@ -19,7 +19,7 @@ const nextConfig = {
   reactStrictMode: true,
   typescript: {
     // Allow production builds to succeed even when there are TypeScript errors
-    ignoreBuildErrors: true,
+    ignoreBuildErrors: false,
   },
   experimental: {
     optimizePackageImports: [

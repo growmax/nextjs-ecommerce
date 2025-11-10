@@ -88,14 +88,17 @@ export function useAuthWithLoader(
   initialUser?: ServerUser | null
 ) {
   const auth = useHybridAuth(initialAuth, initialUser);
-  const { withLogoutLoader } = useGlobalLoader();
+  const { showLogoutLoader, hideLoading } = useGlobalLoader();
 
   const handleLogout = async () => {
     if (!auth.isAuthenticated) return;
 
-    await withLogoutLoader(async () => {
-      auth.logout();
-    });
+    showLogoutLoader();
+    try {
+      await auth.logout();
+    } finally {
+      hideLoading();
+    }
   };
 
   return {
