@@ -28,12 +28,9 @@ import UserService from "./services/UserService";
 
 // Import SubIndustry service
 import SubIndustryService from "./services/SubIndustryService";
-<<<<<<< HEAD
-=======
 
 // Import Location service
 import LocationService from "./services/LocationService";
->>>>>>> 4bfe67a9046d544e974695dae9f95e1596f818ed
 
 // Import token management services
 import { AuthTokenService } from "../services/AuthTokenService";
