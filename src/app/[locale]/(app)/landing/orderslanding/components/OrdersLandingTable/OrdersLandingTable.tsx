@@ -107,7 +107,7 @@ function OrdersLandingTable({
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const [drawerMode, setDrawerMode] = useState<"filter" | "create">("filter");
   const [orders, setOrders] = useState<Order[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [isLoading, setIsLoading] = useState(true);
   const [totalCount, setTotalCount] = useState(0);
   const [page, setPage] = useState(0);
   const [rowPerPage, setRowPerPage] = useState(20);
@@ -390,11 +390,11 @@ function OrdersLandingTable({
     if (!user?.userId || !user?.companyId) {
       setOrders([]);
       setTotalCount(0);
-      setLoading(false);
+      setIsLoading(false);
       return;
     }
 
-    setLoading(true);
+    setIsLoading(true);
 
     const calculatedOffset = page ;
     const userId = parseInt(user.userId.toString());
@@ -484,7 +484,7 @@ function OrdersLandingTable({
       setOrders([]);
       setTotalCount(0);
     } finally {
-      setLoading(false);
+      setIsLoading(false);
     }
   }, [
     user?.userId,
