@@ -107,7 +107,7 @@ function OrdersLandingTable({
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const [drawerMode, setDrawerMode] = useState<"filter" | "create">("filter");
   const [orders, setOrders] = useState<Order[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
+  const [loading, setLoading] = useState(true);
   const [totalCount, setTotalCount] = useState(0);
   const [page, setPage] = useState(0);
   const [rowPerPage, setRowPerPage] = useState(20);
@@ -164,10 +164,7 @@ function OrdersLandingTable({
         size: 150,
         cell: ({ row }) => formatDate(row.original.createdDate),
       },
-   
-    
-   
-     
+
       {
         accessorKey: "accountName",
         header: "Account Name",
@@ -390,13 +387,13 @@ function OrdersLandingTable({
     if (!user?.userId || !user?.companyId) {
       setOrders([]);
       setTotalCount(0);
-      setIsLoading(false);
+      setLoading(false);
       return;
     }
 
-    setIsLoading(true);
+    setLoading(true);
 
-    const calculatedOffset = page ;
+    const calculatedOffset = page;
     const userId = parseInt(user.userId.toString());
     const companyId = parseInt(user.companyId.toString());
 
@@ -484,7 +481,7 @@ function OrdersLandingTable({
       setOrders([]);
       setTotalCount(0);
     } finally {
-      setIsLoading(false);
+      setLoading(false);
     }
   }, [
     user?.userId,
@@ -809,8 +806,6 @@ function OrdersLandingTable({
             />
           )}
         </div>
-
-    
       </div>
 
       <Dialog open={isItemsDialogOpen} onOpenChange={setIsItemsDialogOpen}>
