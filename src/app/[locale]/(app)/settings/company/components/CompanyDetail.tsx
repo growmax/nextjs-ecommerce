@@ -24,6 +24,7 @@ import { CompanyService, SubIndustryService } from "@/lib/api";
 import Image from "next/image";
 import React, { useEffect, useRef, useState } from "react";
 import { useForm } from "react-hook-form";
+import { toast } from "sonner";
 import CompanyFormInput from "./FormInput";
 
 const CompanyDetail = () => {
@@ -78,7 +79,6 @@ const CompanyDetail = () => {
         defaultValuesRef.current = initialData;
 
         // Set form values
-        // @ts-expect-error - initialData structure is complex
         form.reset(initialData);
         // Set form ready after initial data is loaded
         setIsFormReady(true);
@@ -126,7 +126,6 @@ const CompanyDetail = () => {
 
   const {
     formState: { isDirty, dirtyFields },
-    handleSubmit,
     reset,
   } = form;
 
@@ -145,18 +144,19 @@ const CompanyDetail = () => {
     };
   }, []);
 
-  // Simplified cancel handler
+  // Unified cancel handler
   const handleCancel = () => {
-    if (window.confirm("Are you sure you want to discard changes?")) {
-      // Reset to initial values
-      form.reset(defaultValuesRef.current);
-      // Reset image if needed
-      setProfileImage(null);
-    }
+    // Reset to initial values
+    form.reset(defaultValuesRef.current);
+    // Reset image if needed
+    setProfileImage(null);
+    toast.info("All changes cancelled");
   };
 
-  const onSubmit = async (formData: any) => {
+  // Unified save handler
+  const handleSave = async () => {
     // Define changedFields outside try block so it's available in catch block
+    const formData = form.getValues();
     const changedFields = Object.keys(dirtyFields).reduce((acc: any, key) => {
       const value = key
         .split(".")
@@ -182,18 +182,23 @@ const CompanyDetail = () => {
             type: "validate",
             message: "Please select a valid sub-industry.",
           });
+          toast.error("Please select a valid sub-industry.");
           return;
         }
       }
 
       // API call with full formData (backend might need all fields)
-      // @ts-expect-error - updateBranch method exists but not in type definition
       await CompanyService.updateBranch(formData);
+
+      // Update original values after successful save
+      defaultValuesRef.current = formData;
 
       // Reset form state after successful save
       reset(formData);
+
+      toast.success("Changes saved successfully!");
     } catch (_error) {
-      // Error handled silently
+      toast.error("Failed to save changes. Please try again.");
     } finally {
       setIsSaving(false);
     }
@@ -203,10 +208,7 @@ const CompanyDetail = () => {
     <div>
       <SectionCard title="Company Detail">
         <Form {...form}>
-          <form
-            onSubmit={form.handleSubmit(onSubmit)}
-            className="grid grid-cols-1 md:grid-cols-4 gap-4"
-          >
+          <form className="grid grid-cols-1 md:grid-cols-4 gap-4">
             {/* Image Upload Section */}
             <div className="p-6 md:p-8 flex flex-col items-stretch gap-6">
               <div className="relative w-32 h-32 border-2 border-dashed border-muted-foreground rounded-lg flex items-center justify-center overflow-hidden bg-muted/5 hover:bg-muted/10 transition-colors">
@@ -413,14 +415,13 @@ const CompanyDetail = () => {
 
       {isDirty && isFormReady && !loading && (
         <SaveCancelToolbar
-          show={true}
-          onSave={handleSubmit(onSubmit)}
+          show={isDirty}
+          onSave={handleSave}
           onCancel={handleCancel}
           isLoading={isSaving}
           saveText="Save Changes"
           cancelText="Cancel"
-          className="fixed top-4 right-4 left-0 z-50"
-          data-save-cancel-toolbar="true"
+          className="bottom-4 left-0 right-0 md:bottom-auto md:top-[69px] md:left-0 lg:left-64 z-50"
         />
       )}
     </div>
