@@ -3,13 +3,13 @@ import React from "react";
 import {
   Cell,
   ColumnDef,
+  ColumnResizeMode,
   Header,
   HeaderGroup,
   Row,
   flexRender,
   getCoreRowModel,
   useReactTable,
-  ColumnResizeMode,
 } from "@tanstack/react-table";
 
 import {
@@ -204,7 +204,7 @@ const DashboardTable = <T,>({
             </select>
           </label>
         </div>
-        <div className="flex gap-1">
+        <div className="flex gap-3">
           <Button
             variant="outline"
             size="sm"

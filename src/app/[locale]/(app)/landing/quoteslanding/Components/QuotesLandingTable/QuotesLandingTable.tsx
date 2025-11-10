@@ -1,8 +1,8 @@
 "use client";
 
 import SideDrawer from "@/components/custom/sidedrawer";
+import DashboardTable from "@/components/custom/DashBoardTable";
 import { statusColor } from "@/components/custom/statuscolors";
-import { DataTable } from "@/components/Global/DataTable";
 import FilterDrawer from "@/components/sales/FilterDrawer";
 import { QuoteFilterFormData } from "@/components/sales/QuoteFilterForm";
 import {
@@ -24,6 +24,7 @@ import { useLocale } from "next-intl";
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
+import { Skeleton } from "@/components/ui/skeleton";
 
 interface QuotesLandingTableProps {
   refreshTrigger?: number;
@@ -58,19 +59,55 @@ function QuotesLandingTable({
   const [selectedQuoteItems, setSelectedQuoteItems] =
     useState<QuoteItem | null>(null);
 
+  const TableSkeleton = ({ rows = 10 }: { rows?: number }) => (
+    <div className="rounded-md border shadow-sm overflow-hidden h-full flex flex-col">
+      <div className="border-b border-gray-200 bg-gray-50 flex-shrink-0">
+        <div className="flex font-medium text-sm text-gray-700">
+          <div className="px-2 py-3 w-[200px]">Quote Name</div>
+          <div className="px-2 py-3 w-[150px]">Quote Id</div>
+          <div className="px-2 py-3 w-[150px]">Quoted Date</div>
+          <div className="px-2 py-3 w-[150px]">Last Modified</div>
+          <div className="px-2 py-3 w-[300px]">Account Name</div>
+          <div className="px-2 py-3 w-[150px]">Total Items</div>
+          <div className="px-2 py-3 w-[150px]">Sub total</div>
+          <div className="px-2 py-3 w-[150px]">Taxable Amount</div>
+          <div className="px-2 py-3 w-[150px]">Total</div>
+          <div className="px-2 py-3 w-[200px]">Status</div>
+          <div className="px-2 py-3 w-[150px]">Required Date</div>
+        </div>
+      </div>
+      <div className="flex-1 overflow-auto">
+        {Array.from({ length: rows }).map((_, rowIndex) => (
+          <div
+            key={`row-${rowIndex}`}
+            className="border-b border-gray-100 flex animate-pulse"
+            style={{ animationDelay: `${rowIndex * 50}ms` }}
+          >
+            {Array.from({ length: 11 }).map((_, colIndex) => (
+              <div
+                key={`cell-${rowIndex}-${colIndex}`}
+                className="px-2 py-3 w-[150px] flex items-center"
+              >
+                <Skeleton className="h-4 w-full bg-gray-200" />
+              </div>
+            ))}
+          </div>
+        ))}
+      </div>
+      <div className="flex items-center justify-end gap-4 px-4 py-2 border-t bg-gray-50/50 flex-shrink-0">
+        <Skeleton className="h-3 w-16" />
+        <Skeleton className="h-6 w-12" />
+        <Skeleton className="h-3 w-20" />
+        <Skeleton className="w-6 h-6" />
+        <Skeleton className="w-6 h-6" />
+      </div>
+    </div>
+  );
+
   // Define table columns
   const columns = useMemo<ColumnDef<QuoteItem>[]>(
     () => [
-      {
-        accessorKey: "quotationIdentifier",
-        header: "Quote Id",
-        size: 150,
-        cell: ({ row }) => (
-          <span className="font-medium text-blue-600">
-            {row.original.quotationIdentifier || "-"}
-          </span>
-        ),
-      },
+   
       {
         accessorKey: "quoteName",
         header: "Quote Name",
@@ -82,6 +119,16 @@ function QuotesLandingTable({
           >
             {row.original.quoteName || "-"}
           </div>
+        ),
+      },
+      {
+        accessorKey: "quotationIdentifier",
+        header: "Quote Id",
+        size: 150,
+        cell: ({ row }) => (
+          <span className="font-medium text-blue-600">
+            {row.original.quotationIdentifier || "-"}
+          </span>
         ),
       },
       {
@@ -683,6 +730,14 @@ function QuotesLandingTable({
     }
   };
 
+  const handlePrevious = () => {
+    setPage(prev => Math.max(prev - 1, 0));
+  };
+
+  const handleNext = () => {
+    setPage(prev => prev + 1);
+  };
+
   return (
     <>
       <FilterDrawer
@@ -714,28 +769,43 @@ function QuotesLandingTable({
         </div>
       </SideDrawer>
 
-      <div className="mt-6">
-        <DataTable
-          data={quotes}
-          columns={columns}
-          pagination={pagination}
-          onPaginationChange={handlePaginationChange}
-          totalCount={totalCount}
-          manualPagination={true}
-          isLoading={loading}
-          onRowClick={row => {
-            const quoteId = row.original.quotationIdentifier;
-            if (quoteId)
-              router.push(`/${locale}/details/quoteDetails/${quoteId}`);
-          }}
-          pageSizeOptions={[20, 50, 100]}
-          showPagination={true}
-          showPageSizeSelector={true}
-          showFirstLastButtons={true}
-          emptyMessage="No quotes found"
-          enableToolbar={false}
-          className="flex flex-col"
-        />
+      <div className="flex flex-col h-[calc(100vh-140px)] mt-6">
+        <div className="flex-1 overflow-hidden">
+          {loading ? (
+            <TableSkeleton rows={rowPerPage} />
+          ) : quotes.length === 0 ? (
+            <div className="h-full flex items-center justify-center text-gray-500">
+              No quotes found
+            </div>
+          ) : (
+            <DashboardTable
+              data={quotes}
+              columns={columns}
+              loading={loading}
+              totalDataCount={totalCount}
+              pagination={pagination}
+              setPagination={handlePaginationChange}
+              setPage={setPage}
+              pageOptions={[20, 50, 100]}
+              handlePrevious={handlePrevious}
+              handleNext={handleNext}
+              page={page}
+              rowPerPage={rowPerPage}
+              setRowPerPage={value => {
+                const newValue =
+                  typeof value === "string" ? parseInt(value, 10) : value;
+                setRowPerPage(newValue);
+                setPage(0);
+              }}
+              onRowClick={row => {
+                const quoteId = row.quotationIdentifier;
+                if (quoteId)
+                  router.push(`/${locale}/details/quoteDetails/${quoteId}`);
+              }}
+              tableHeight="h-full"
+            />
+          )}
+        </div>
       </div>
 
       {/* Items Dialog */}
