@@ -21,6 +21,7 @@ import CartService from "./services/CartService";
 import CatalogService from "./services/CatalogService";
 import CompanyService from "./services/CompanyService";
 import DiscountService from "./services/DiscountService";
+import OpenSearchService from "./services/OpenSearchService";
 import StoreFrontService from "./services/StoreFrontService";
 import TenantService from "./services/TenantService";
 import UserService from "./services/UserService";
@@ -59,6 +60,7 @@ export {
   LocationService,
   OrdersService,
   OrderStatusService,
+  OpenSearchService,
   PreferenceService,
   QuotesService,
   QuoteStatusService,
@@ -218,6 +220,7 @@ export const API = {
   Discount: DiscountService,
   Orders: OrdersService,
   OrderStatus: OrderStatusService,
+  OpenSearch: OpenSearchService,
   Preference: PreferenceService,
   Quotes: QuotesService,
   QuoteStatus: QuoteStatusService,
