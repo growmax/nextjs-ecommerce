@@ -75,12 +75,8 @@ export class SellerWarehouseService extends BaseService<SellerWarehouseService> 
   }
 
   // Find warehouse by branch ID (GET method)
-  async findWarehouseByBranchId(
-    branchId: number,
-    request: FindWarehouseRequest
-  ): Promise<Warehouse | null> {
-    // Only sellerBranchId is used
-    const url = `/branches/findWareHouseByBranchId/2?branchId=${branchId}&sellerBranchId=${request.sellerBranchId}`;
+  async findWarehouseByBranchId(branchId: number): Promise<Warehouse | null> {
+    const url = `/branches/findWareHouseByBranchId/2?branchId=${branchId}`;
 
     try {
       const response = await this.call(url, undefined, "GET");
@@ -142,9 +138,7 @@ export class SellerWarehouseService extends BaseService<SellerWarehouseService> 
     if (sellerBranchId) {
       try {
         // Explicitly call warehouse API
-        warehouse = await this.findWarehouseByBranchId(sellerBranchId, {
-          sellerBranchId,
-        });
+        warehouse = await this.findWarehouseByBranchId(sellerBranchId);
       } catch {
         // Warehouse API failed, but still return seller branch if available
         warehouse = null;

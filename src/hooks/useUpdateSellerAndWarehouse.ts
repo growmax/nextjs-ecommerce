@@ -3,7 +3,8 @@ import {
   type FindSellerBranchRequest,
   type SellerWarehouse,
 } from "@/lib/api";
-import { useCallback } from "react";
+import getProductIds from "@/utils/getProductIds";
+// no React hooks imports needed
 import { UseFormSetValue, UseFormWatch } from "react-hook-form";
 import { useCurrentUser } from "./useCurrentUser";
 
@@ -46,112 +47,92 @@ export function useUpdateSellerAndWarehouse(
   const userId = user?.userId;
   const companyId = user?.companyId;
 
-  /**
-   * Get product IDs from the order details
-   */
-  const getProductIds = useCallback(
-    (products?: DbProductDetail[]): number[] => {
-      if (!products || !Array.isArray(products)) return [];
-      return products
-        .map(product => {
-          // Try to get productId from common field names
-          const productId =
-            product.productId ||
-            product.id ||
-            product.dbProductId ||
-            product.product_id;
-          return typeof productId === "number" ? productId : null;
-        })
-        .filter((id): id is number => id !== null);
-    },
-    []
-  );
+  // Use shared util to get product ids
+  // getProductIds(products?: DbProductDetail[]): number[]
 
   /**
    * Update seller branch and warehouse when billing address changes
    */
-  const updateSellerAndWarehouse = useCallback(
-    async (billingAddressValue: BillingAddressValue) => {
-      if (!userId || !companyId) {
-        console.error("User ID or Company ID not available");
-        return;
+  async function updateSellerAndWarehouse(
+    billingAddressValue: BillingAddressValue
+  ) {
+    if (!userId || !companyId) {
+      console.error("User ID or Company ID not available");
+      return;
+    }
+
+    try {
+      // Get current product IDs
+      const dbProductDetails = watch("orderDetails.0.dbProductDetails");
+      const productIds = getProductIds(
+        dbProductDetails as DbProductDetail[] | undefined
+      );
+
+      // Prepare request payload
+      const request: FindSellerBranchRequest = {
+        userId: Number(userId),
+        buyerBranchId: billingAddressValue.id,
+        buyerCompanyId: Number(companyId),
+        productIds,
+        sellerCompanyId: billingAddressValue.vendorID || 0,
+      };
+
+      // Call the service to get seller branch and warehouse
+      const { sellerBranch, warehouse } =
+        await SellerWarehouseService.getSellerBranchAndWarehouse(
+          String(userId),
+          String(companyId),
+          request
+        );
+
+      if (sellerBranch) {
+        // Update seller branch details
+        setValue("orderDetails.0.sellerBranchId", sellerBranch.id);
+        setValue("orderDetails.0.sellerBranchName", sellerBranch.name);
+        setValue("orderDetails.0.sellerCompanyId", sellerBranch.companyId);
+
+        // Note: You may need to fetch company name separately if not in response
+        // setValue("orderDetails.0.sellerCompanyName", sellerBranch.companyName);
       }
 
-      try {
-        // Get current product IDs
-        const dbProductDetails = watch("orderDetails.0.dbProductDetails");
-        const productIds = getProductIds(dbProductDetails);
+      if (warehouse) {
+        // Update warehouse in all product details
+        const updatedProducts = dbProductDetails?.map(product => ({
+          ...product,
+          wareHouse: warehouse,
+        }));
 
-        // Prepare request payload
-        const request: FindSellerBranchRequest = {
-          userId: Number(userId),
-          buyerBranchId: billingAddressValue.id,
-          buyerCompanyId: Number(companyId),
-          productIds,
-          sellerCompanyId: billingAddressValue.vendorID || 0,
-        };
-
-        // Call the service to get seller branch and warehouse
-        const { sellerBranch, warehouse } =
-          await SellerWarehouseService.getSellerBranchAndWarehouse(
-            String(userId),
-            String(companyId),
-            request
-          );
-
-        if (sellerBranch) {
-          // Update seller branch details
-          setValue("orderDetails.0.sellerBranchId", sellerBranch.id);
-          setValue("orderDetails.0.sellerBranchName", sellerBranch.name);
-          setValue("orderDetails.0.sellerCompanyId", sellerBranch.companyId);
-
-          // Note: You may need to fetch company name separately if not in response
-          // setValue("orderDetails.0.sellerCompanyName", sellerBranch.companyName);
+        if (updatedProducts) {
+          setValue("orderDetails.0.dbProductDetails", updatedProducts);
         }
 
-        if (warehouse) {
-          // Update warehouse in all product details
-          const updatedProducts = dbProductDetails?.map(product => ({
-            ...product,
-            wareHouse: warehouse,
-          }));
-
-          if (updatedProducts) {
-            setValue("orderDetails.0.dbProductDetails", updatedProducts);
-          }
-
-          // Note: Update delivery terms if your warehouse object has city info
-          // setValue("orderDetails.0.orderTerms.deliveryTermsCode2", warehouse.city);
-        }
-
-        return { sellerBranch, warehouse };
-      } catch (error) {
-        console.error("Error updating seller and warehouse:", error);
-        throw error;
+        // Note: Update delivery terms if your warehouse object has city info
+        // setValue("orderDetails.0.orderTerms.deliveryTermsCode2", warehouse.city);
       }
-    },
-    [userId, companyId, watch, setValue, getProductIds]
-  );
+
+      return { sellerBranch, warehouse };
+    } catch (error) {
+      console.error("Error updating seller and warehouse:", error);
+      throw error;
+    }
+  }
 
   /**
    * Handle billing address change
    * Updates billing address and triggers seller/warehouse update
    */
-  const handleBillingAddressChange = useCallback(
-    async (newValue: BillingAddressValue) => {
-      // Update billing address fields
-      setValue("orderDetails.0.billingAddressDetails", newValue);
-      setValue("orderDetails.0.buyerBranchId", newValue.id);
-      setValue("orderDetails.0.buyerBranchName", newValue.branchName);
-      if (newValue.vendorID) {
-        setValue("orderDetails.0.vendorID", newValue.vendorID);
-      }
+  async function handleBillingAddressChange(newValue: BillingAddressValue) {
+    // Update billing address fields
+    setValue("orderDetails.0.billingAddressDetails", newValue);
+    setValue("orderDetails.0.buyerBranchId", newValue.id);
+    setValue("orderDetails.0.buyerBranchName", newValue.branchName);
+    if (newValue.vendorID) {
+      setValue("orderDetails.0.vendorID", newValue.vendorID);
+    }
 
-      // Update seller and warehouse
-      await updateSellerAndWarehouse(newValue);
-    },
-    [setValue, updateSellerAndWarehouse]
-  );
+    // Update seller and warehouse
+    await updateSellerAndWarehouse(newValue);
+  }
 
   return {
     handleBillingAddressChange,
