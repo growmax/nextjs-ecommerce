@@ -197,9 +197,7 @@ export default function EditOrderPage({ params }: EditOrderPageProps) {
       insuranceCharges: Number.isFinite(resolvedInsurance)
         ? resolvedInsurance
         : 0,
-      overallShipping: Number.isFinite(resolvedShipping)
-        ? resolvedShipping
-        : 0,
+      overallShipping: Number.isFinite(resolvedShipping) ? resolvedShipping : 0,
       pfRate: Number.isFinite(resolvedPfRate) ? resolvedPfRate : 0,
     };
   }, [firstOrderDetail, orderDetails?.data, user]);
@@ -642,6 +640,7 @@ export default function EditOrderPage({ params }: EditOrderPageProps) {
   const handleRefresh = async () => {
     if (!orderId) return;
 
+    setLoading(true);
     try {
       // Use the hook's mutate function to refresh data
       await fetchOrderResponseMutate();
@@ -649,6 +648,8 @@ export default function EditOrderPage({ params }: EditOrderPageProps) {
     } catch (error) {
       console.error("Error refreshing order details:", error);
       toast.error("Failed to refresh order details");
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -1064,6 +1065,7 @@ export default function EditOrderPage({ params }: EditOrderPageProps) {
             },
           })}
           onRefresh={handleRefresh}
+          showRefresh={true}
           onClose={handleCancel}
           menuOptions={[]}
           buttons={[

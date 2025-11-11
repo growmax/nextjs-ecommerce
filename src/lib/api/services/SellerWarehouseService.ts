@@ -48,7 +48,7 @@ export interface FindWarehouseRequest {
 export class SellerWarehouseService extends BaseService<SellerWarehouseService> {
   protected defaultClient = coreCommerceClient;
 
-  // Find seller branch based on buyer details and products
+  // Find seller branch based on buyer details and products (POST method)
   async findSellerBranch(
     userId: string,
     companyId: string,
@@ -74,15 +74,16 @@ export class SellerWarehouseService extends BaseService<SellerWarehouseService> 
     return [];
   }
 
-  // Find warehouse by branch ID
+  // Find warehouse by branch ID (GET method)
   async findWarehouseByBranchId(
     branchId: number,
     request: FindWarehouseRequest
   ): Promise<Warehouse | null> {
-    const url = `/branches/findWareHouseByBranchId/2?branchId=${branchId}`;
+    // Only sellerBranchId is used
+    const url = `/branches/findWareHouseByBranchId/2?branchId=${branchId}&sellerBranchId=${request.sellerBranchId}`;
 
     try {
-      const response = await this.call(url, request, "POST");
+      const response = await this.call(url, undefined, "GET");
 
       // Normalize API response - response format: { success: true, data: { wareHouseName: "...", id: ... } }
       if (response && typeof response === "object" && "data" in response) {

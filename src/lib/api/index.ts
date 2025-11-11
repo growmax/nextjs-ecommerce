@@ -45,23 +45,51 @@ import PreferenceService from "./services/PreferenceService";
 import QuotesService from "./services/QuotesService";
 import QuoteStatusService from "./services/StatusService";
 
+// Import additional services
+import BillingBranchService from "./services/BillingBranchService";
+import ManufacturerCompetitorService from "./services/ManufacturerCompetitorService";
+import OrderDetailsService from "./services/OrderDetailsService";
+import OrderNameService from "./services/OrderNameService";
+import OrderVersionService from "./services/OrderVersionService";
+import PaymentService from "./services/PaymentService";
+import ProductAssetsService from "./services/ProductAssetsService";
+import QuotationDetailsService from "./services/QuotationDetailsService";
+import QuotationNameService from "./services/QuotationNameService";
+import QuotationVersionService from "./services/QuotationVersionService";
+import QuoteSubmissionService from "./services/QuoteSubmissionService";
+import RequestEditService from "./services/RequestEditService";
+import SellerWarehouseService from "./services/SellerWarehouseService";
+
 // Export services
 export {
   AuthService,
   AuthTokenService,
+  BillingBranchService,
   CartService,
   CatalogService,
   CompanyService,
   DashboardService,
   DiscountService,
   LocationService,
+  ManufacturerCompetitorService,
+  OpenSearchService,
+  OrderDetailsService,
+  OrderNameService,
   OrdersService,
   OrderStatusService,
-  OpenSearchService,
+  OrderVersionService,
+  PaymentService,
   PreferenceService,
+  ProductAssetsService,
+  QuotationDetailsService,
+  QuotationNameService,
+  QuotationVersionService,
   QuotesService,
   QuoteStatusService,
+  QuoteSubmissionService,
+  RequestEditService,
   RequestQueueService,
+  SellerWarehouseService,
   StoreFrontService,
   SubIndustryService,
   TenantService,
@@ -182,6 +210,100 @@ export type {
   QuoteStatusParams,
   QuoteStatusResponse,
 } from "./services/StatusService";
+
+// Export BillingBranchService types
+export type {
+  BillingAddress,
+  BillingBranchResponse,
+} from "./services/BillingBranchService";
+
+// Export ProductAssetsService types
+export type {
+  ProductAsset,
+  ProductAssetsResponse,
+} from "./services/ProductAssetsService";
+
+// Export OrderDetailsService types
+export type {
+  DbProductDetail,
+  FetchOrderDetailsParams,
+  OrderDetailItem,
+  OrderDetailsData,
+  OrderDetailsResponse,
+} from "./services/OrderDetailsService";
+
+// Export ManufacturerCompetitorService types
+export type {
+  CompetitorDetail,
+  FetchCompetitorsRequest,
+  FetchCompetitorsResponse,
+} from "./services/ManufacturerCompetitorService";
+
+// Export PaymentService types
+export type {
+  OverallPaymentsResponse,
+  PaymentDueBreakup,
+  PaymentDueDataItem,
+  PaymentDueOrderData,
+  PaymentDueResponse,
+  PaymentHistoryItem,
+  PaymentTerm,
+  PaymentTermsResponse,
+} from "./services/PaymentService";
+
+// Export OrderNameService types
+export type {
+  UpdateOrderNameRequest,
+  UpdateOrderNameResponse,
+} from "./services/OrderNameService";
+
+// Export OrderVersionService types
+export type {
+  CreateOrderVersionRequest,
+  CreateOrderVersionResponse,
+} from "./services/OrderVersionService";
+
+// Export RequestEditService types
+export type {
+  RequestEditParams,
+  RequestEditResponse,
+} from "./services/RequestEditService";
+
+// Export QuotationDetailsService types
+export type {
+  FetchQuotationDetailsRequest,
+  QuotationData,
+  QuotationDetail,
+  QuotationDetailsResponse,
+  QuotationProductDetail,
+} from "./services/QuotationDetailsService";
+
+// Export QuotationNameService types
+export type {
+  UpdateQuotationNameRequest,
+  UpdateQuotationNameResponse,
+} from "./services/QuotationNameService";
+
+// Export QuotationVersionService types
+export type {
+  CreateQuotationVersionRequest,
+  CreateQuotationVersionResponse,
+} from "./services/QuotationVersionService";
+
+// Export QuoteSubmissionService types
+export type {
+  QuoteSubmissionPayload,
+  QuoteSubmissionRequest,
+  QuoteSubmissionResponse,
+} from "./services/QuoteSubmissionService";
+
+// Export SellerWarehouseService types
+export type {
+  FindSellerBranchRequest,
+  FindWarehouseRequest,
+  SellerBranch,
+  Warehouse as SellerWarehouse,
+} from "./services/SellerWarehouseService";
 
 // Export token management service types
 export type {
