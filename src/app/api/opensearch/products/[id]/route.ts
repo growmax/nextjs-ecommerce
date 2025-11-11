@@ -21,14 +21,8 @@ const OPENSEARCH_URL =
   process.env.NEXT_PUBLIC_OPENSEARCH_URL ||
   "https://api.myapptino.com/opensearch/invocations";
 
-interface RouteParams {
-  params: {
-    id: string;
-  };
-}
-
-export async function GET(request: NextRequest, { params }: RouteParams) {
-  const { id } = params;
+export async function GET(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params;
 
   try {
     // Extract headers for multi-tenant support

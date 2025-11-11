@@ -64,7 +64,7 @@ const data = {
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const { isMobile, setOpenMobile } = useSidebar();
 
-  const handleNavigation = (url: string) => {
+  const handleNavigation = (_url: string) => {
     // Auto-close sidebar on mobile after navigation
     if (isMobile) {
       setOpenMobile(false);

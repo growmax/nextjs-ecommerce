@@ -1,0 +1,13 @@
+{
+  "alwaysApply": true,
+
+  "contexts": {
+    "core_doctrine": {
+      "url": "./context/01-core.md"
+    }
+  },
+
+  "context": ["core_doctrine"],
+
+  "systemMessage": "You must load and follow all core principles and instructions from ./context/01-core.md immediately at startup before processing any other directives. Confirm this by showing 'Doctrine Loaded ✅' once applied."
+}

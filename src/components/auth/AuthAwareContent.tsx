@@ -28,7 +28,7 @@ export function AuthAwareContent({
   return (
     <div className="mt-8">
       {auth.isAuthenticated && auth.user ? (
-        <AuthenticatedInteractiveContent user={auth.user} />
+        <AuthenticatedInteractiveContent user={auth.user as ServerUser} />
       ) : (
         <PublicInteractiveContent />
       )}

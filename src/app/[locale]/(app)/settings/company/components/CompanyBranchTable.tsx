@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import SectionCard from "@/components/custom/SectionCard";
 import { DataTable } from "@/components/Global/DataTable";
 import { Badge } from "@/components/ui/badge";

@@ -202,7 +202,7 @@ export default function SellerCard({
           const items = sellerCart?.items || [];
           const sellerName = sellerCart?.seller?.name || "Unknown Seller";
           const sellerLocation =
-            items[0]?.sellerLocation || sellerCart?.seller?.location || "";
+            String(items[0]?.sellerLocation || sellerCart?.seller?.location || "");
           const sellerPricing = sellerCart?.pricing;
           return (
             <div

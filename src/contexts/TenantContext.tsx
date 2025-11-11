@@ -7,6 +7,12 @@ import {
   Currency,
   Tenant,
   TenantApiResponse,
+  BusinessType,
+  SubIndustry,
+  Industry,
+  AccountType,
+  TaxDetails,
+  AddressInfo,
 } from "@/types/tenant";
 
 /**

@@ -10,28 +10,45 @@ export function getDomainInfo() {
   const isServer = typeof window === "undefined";
   const env = process.env.NODE_ENV;
 
-  let domainUrl: string;
-  let origin: string;
-
   if (isServer) {
-    // Server-side: Use next/headers
-    const headersList = headers();
-    domainUrl =
-      headersList.get("x-tenant-domain") ||
-      process.env.DEFAULT_DOMAIN ||
-      "sandbox.myapptino.com";
-    origin =
-      headersList.get("x-tenant-origin") ||
+    const defaultDomain =
+      process.env.DEFAULT_DOMAIN || "shwingstetter.myapptino.com";
+    const defaultOrigin =
       process.env.DEFAULT_ORIGIN ||
-      (env === "production" ? `https://${domainUrl}` : `http://${domainUrl}`);
+      (env === "production"
+        ? `https://${defaultDomain}`
+        : `http://${defaultDomain}`);
+
+    try {
+      const headersList = headers();
+      const headerDomain =
+        headersList.get("x-tenant-domain") ||
+        headersList.get("host") ||
+        defaultDomain;
+      const headerOrigin =
+        headersList.get("x-tenant-origin") ||
+        headersList.get("origin") ||
+        (env === "production"
+          ? `https://${headerDomain}`
+          : `http://${headerDomain}`);
+
+      return { domainUrl: headerDomain, origin: headerOrigin };
+    } catch {
+      return { domainUrl: defaultDomain, origin: defaultOrigin };
+    }
   } else {
     // Client-side: Use window.location
-    domainUrl = window.location.hostname;
-    origin = window.location.origin;
-
-    // Development override if env vars are set (though env vars are server-only, perhaps use localStorage or assume no override on client)
-    // For simplicity, no override on client unless we add more logic
+    const domainUrl = window.location.hostname;
+    const origin = window.location.origin;
+    return { domainUrl, origin };
   }
-
-  return { domainUrl, origin };
+  // Fallback (should not reach here)
+  return {
+    domainUrl: process.env.DEFAULT_DOMAIN || "shwingstetter.myapptino.com",
+    origin:
+      process.env.DEFAULT_ORIGIN ||
+      (env === "production"
+        ? `https://${process.env.DEFAULT_DOMAIN || "shwingstetter.myapptino.com"}`
+        : `http://${process.env.DEFAULT_DOMAIN || "shwingstetter.myapptino.com"}`),
+  };
 }

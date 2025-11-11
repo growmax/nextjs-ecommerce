@@ -17,6 +17,10 @@ const bundleAnalyzer = withBundleAnalyzer({
 const nextConfig = {
   // Enable React.StrictMode for better performance warnings and debugging
   reactStrictMode: true,
+  typescript: {
+    // Allow production builds to succeed even when there are TypeScript errors
+    ignoreBuildErrors: false,
+  },
   experimental: {
     optimizePackageImports: [
       "lucide-react",

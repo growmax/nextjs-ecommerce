@@ -79,7 +79,7 @@ export function NavMain({
                     )}
                     onClick={() => onNavigate?.(item.url)}
                   >
-                    <Icon className="size-5" />
+                    {item.icon && <item.icon className="size-5" />}
                     {!isCollapsed && <span className="text-sm font-medium">{item.title}</span>}
                   </Link>
                 </SidebarMenuButton>
@@ -97,7 +97,7 @@ export function NavMain({
                       isActive={hasActiveSub}
                       className="justify-center w-full"
                     >
-                      <Icon className="size-5" />
+                      {Icon && <Icon className="size-5" />}
                     </SidebarMenuButton>
                   </PopoverTrigger>
                   <PopoverContent
@@ -141,7 +141,7 @@ export function NavMain({
                     isActive={hasActiveSub}
                     className="gap-2"
                   >
-                    <Icon className="size-5" />
+                    {Icon && <Icon className="size-5" />}
                     <span className="text-sm font-medium">{item.title}</span>
                     <ChevronRight className="ml-auto size-4 shrink-0 transition-transform duration-200 group-data-[state=open]/collapsible:rotate-90" />
                   </SidebarMenuButton>

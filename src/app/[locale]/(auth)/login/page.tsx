@@ -197,14 +197,32 @@ export default function LoginPage() {
                 ? loginData.tokens.payload
                 : loginData;
               const userData = {
-                id: payload.id || payload.sub || "",
+                userId: Number(payload.id || payload.sub) || 0,
+                userCode: payload.userCode || `USER-${payload.id || payload.sub}`,
                 email: payload.email || currentUsername,
-                phone: payload.phoneNumber,
-                name: payload.displayName || "",
-                role: payload.accountRole || payload.roleName || "user",
-                companyName: payload.companyName,
-                companyId: payload.companyId,
-                picture: payload.picture,
+                displayName: payload.displayName || payload.name || "",
+                picture: payload.picture || "",
+                companyId: Number(payload.companyId) || 0,
+                companyName: payload.companyName || "",
+                companyLogo: payload.companyLogo || "",
+                currency: {
+                  currencyCode: payload.currencyCode || "USD",
+                  symbol: payload.symbol || "$",
+                  precision: payload.precision || 2,
+                  decimal: payload.decimal || ".",
+                  thousand: payload.thousand || ",",
+                },
+                roleId: Number(payload.roleId) || 1,
+                roleName: payload.accountRole || payload.roleName || "user",
+                tenantId: payload.tenantId || "default",
+                timeZone: payload.timeZone || "UTC",
+                dateFormat: payload.dateFormat || "MM/DD/YYYY",
+                timeFormat: payload.timeFormat || "12h",
+                isUserActive: Number(payload.isUserActive) || 1,
+                verified: Boolean(payload.verified),
+                seller: Boolean(payload.seller),
+                lastLoginAt: payload.lastLoginAt || new Date().toISOString(),
+                listAccessElements: payload.listAccessElements || [],
               };
 
               // Calculate expiresIn from JWT exp claim

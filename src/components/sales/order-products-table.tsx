@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { CustomPagination } from "@/components/ui/custom-pagination";
@@ -12,12 +13,11 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import useProductAssets from "@/hooks/useProductAssets";
-import { cn } from "@/lib/utils";
 import { Download } from "lucide-react";
-import { useState } from "react";
-import ImageWithFallback from "../ImageWithFallback";
-import PricingFormat from "../PricingFormat";
+import { cn } from "@/lib/utils";
+import ImageWithFallback from "@/components/ImageWithFallback";
+import PricingFormat from "@/components/PricingFormat";
+import useProductAssets from "@/hooks/useProductAssets";
 import type { ProductSearchResult } from "./ProductSearchInput";
 import ProductSearchInput from "./ProductSearchInput";
 
