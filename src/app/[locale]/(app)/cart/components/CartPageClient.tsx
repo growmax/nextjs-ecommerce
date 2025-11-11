@@ -1,232 +1,386 @@
 "use client";
 
-import { useCart } from "@/contexts/CartContext";
-import { useCurrentUser } from "@/hooks/useCurrentUser";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Separator } from "@/components/ui/separator";
-import { ShoppingCart, Trash2, Plus, Minus } from "lucide-react";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { useCart } from "@/contexts/CartContext";
+import { useTenantInfo } from "@/contexts/TenantContext";
+import { useCurrentUser } from "@/hooks/useCurrentUser";
+import useSelectedSellerCart from "@/hooks/useSelectedSellerCart";
+import CartServices from "@/lib/api/CartServices";
+import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { toast } from "sonner";
+import SellerCard from "./SellerCard/SellerCard";
+
+interface CartItem {
+  productId: number;
+  quantity: number;
+  replacement?: boolean;
+  showPrice?: boolean;
+  inventoryResponse?: {
+    inStock: boolean;
+  };
+  itemNo: string;
+  sellerId?: string | number;
+  sellerName?: string;
+  sellerLocation?: string;
+  productName?: string;
+  shortDescription?: string;
+  brandName?: string;
+  unitPrice?: number;
+  unitListPrice?: number;
+  discount?: number;
+  discountPercentage?: number;
+  _updated?: number;
+  [key: string]: unknown;
+}
 
 export default function CartPageClient() {
+  const router = useRouter();
   const { user } = useCurrentUser();
-  const { 
-    cart, 
-    cartCount, 
-    refreshCart, 
-    isLoading: isCartLoading 
+  const tenantInfo = useTenantInfo();
+  const currency = user?.currency;
+  const userId = user?.userId;
+  const tenantId = tenantInfo?.tenantCode || "";
+
+  // Use cart context
+  const {
+    cart,
+    cartCount,
+    setCart,
+    updateCartCount,
+    refreshCart,
+    isLoading: isCartLoading,
   } = useCart();
 
-  const [updatingItems, setUpdatingItems] = useState<Set<number>>(new Set());
+  // Commented out - address check disabled
+  // const billingDatas: unknown[] = [];
+  // const SelectedShippingAddressData: unknown = null;
+  // const { billingDatas } = useBilling(user);
+  // const { SelectedShippingAddressData } = useCurrentShippingAddress(user);
 
-  // If user is not logged in, show a message
-  if (!user) {
-    return (
-      <div className="container mx-auto p-4">
-        <Card>
-          <CardContent className="p-8 text-center">
-            <ShoppingCart className="h-12 w-12 mx-auto text-gray-400 mb-4" />
-            <h2 className="text-xl font-semibold mb-2">Please log in to view your cart</h2>
-            <p className="text-gray-600">You need to be signed in to see your shopping cart items.</p>
-          </CardContent>
-        </Card>
-      </div>
-    );
-  }
+  // Initialize selectedSellerId from localStorage if available
+  const [selectedSellerId, setSelectedSellerId] = useState<string | null>(
+    () => {
+      if (typeof window !== "undefined") {
+        return localStorage.getItem("selectedSellerId") || null;
+      }
+      return null;
+    }
+  );
 
-  // If cart is loading, show loading state
-  if (isCartLoading) {
-    return (
-      <div className="container mx-auto p-4">
-        <div className="animate-pulse space-y-4">
-          <div className="h-8 bg-gray-200 rounded w-1/4"></div>
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            <div className="lg:col-span-2 space-y-4">
-              <div className="h-48 bg-gray-200 rounded"></div>
-              <div className="h-48 bg-gray-200 rounded"></div>
-            </div>
-            <div className="h-64 bg-gray-200 rounded"></div>
-          </div>
-        </div>
-      </div>
-    );
-  }
+  // Delete confirmation dialog state
+  const [deleteDialog, setDeleteDialog] = useState<{
+    isOpen: boolean;
+    productId: number | null;
+    itemNo: string | null;
+    sellerId?: string | number | null;
+    productName?: string | null;
+  }>({
+    isOpen: false,
+    productId: null,
+    itemNo: null,
+    sellerId: null,
+    productName: null,
+  });
 
-  // If cart is empty, show empty state
-  if (!cart || cart.length === 0) {
-    return (
-      <div className="container mx-auto p-4">
-        <Card>
-          <CardContent className="p-8 text-center">
-            <ShoppingCart className="h-12 w-12 mx-auto text-gray-400 mb-4" />
-            <h2 className="text-xl font-semibold mb-2">Your cart is empty</h2>
-            <p className="text-gray-600 mb-4">Start adding some products to your cart.</p>
-            <Button onClick={() => window.location.href = "/products"}>
-              Continue Shopping
-            </Button>
-          </CardContent>
-        </Card>
-      </div>
-    );
-  }
+  const {
+    selectedSellerCart,
+    selectedSellerItems,
+    selectedSellerPricing,
+    hasMultipleSellers,
+    isPricingLoading,
+    sellerCarts,
+    sellerIds,
+  } = useSelectedSellerCart(cart, selectedSellerId);
 
-  // Update quantity handler
-  const updateQuantity = async (productId: number, newQuantity: number) => {
-    if (newQuantity < 1) return;
-    
-    setUpdatingItems(prev => new Set(prev).add(productId));
-    
-    try {
-      // Here you would implement the actual cart update logic
-      // await CartService.updateQuantity(productId, newQuantity);
-      toast.success("Cart updated successfully");
-      await refreshCart();
-    } catch (error) {
-      toast.error("Failed to update cart");
-    } finally {
-      setUpdatingItems(prev => {
-        const newSet = new Set(prev);
-        newSet.delete(productId);
-        return newSet;
-      });
+  // Handle seller selection
+  const handleSellerSelection = (sellerId: string) => {
+    setSelectedSellerId(sellerId);
+    // Persist to localStorage
+    if (typeof window !== "undefined" && sellerId) {
+      localStorage.setItem("selectedSellerId", sellerId);
     }
   };
 
-  // Remove item handler
-  const removeItem = async (productId: number) => {
-    setUpdatingItems(prev => new Set(prev).add(productId));
-    
+  // Address validation check
+  const addressCheck = (_isOrder: boolean): boolean => {
+    // TODO: Add address validation when billingDatas and SelectedShippingAddressData are properly defined
+    return true;
+  };
+
+  // Handle Order submission
+  const handleOrder = (sellerId: string | number) => {
+    router.push(`/ordersummary/${sellerId}`);
+  };
+
+  // Handle Quote submission
+  const handleQuote = (sellerId: string | number) => {
+    router.push(`/quotesummary/${sellerId}`);
+  };
+
+  // Change quantity in cart - Following reference pattern from useCart.js
+  const changeQty = async (item: CartItem, newQuantity: number) => {
+    if (!userId || newQuantity <= 0) return;
+
     try {
-      // Here you would implement the actual cart removal logic
-      // await CartService.removeFromCart(productId);
-      toast.success("Item removed from cart");
-      await refreshCart();
-    } catch (error) {
-      toast.error("Failed to remove item");
-    } finally {
-      setUpdatingItems(prev => {
-        const newSet = new Set(prev);
-        newSet.delete(productId);
-        return newSet;
+      // Add timestamp to trigger pricing refetch
+      const timestamp = Date.now();
+
+      // Update cart locally first for better UX (following reference pattern)
+      const updatedCart = cart.map(cartItem => {
+        if (item.sellerId) {
+          // Multi-seller cart: match by productId and sellerId
+          if (
+            cartItem.productId === item.productId &&
+            String(cartItem.sellerId) === String(item.sellerId)
+          ) {
+            return { ...cartItem, quantity: newQuantity, _updated: timestamp };
+          }
+        } else {
+          // Single seller: match by productId only
+          if (cartItem.productId === item.productId) {
+            return { ...cartItem, quantity: newQuantity, _updated: timestamp };
+          }
+        }
+        return cartItem;
       });
+
+      setCart(updatedCart);
+
+      // Call postCart API with PUT method (following reference useCart.js line 344)
+      await CartServices.postCart({
+        userId: Number(userId),
+        tenantId,
+        useMultiSellerCart: true,
+        body: {
+          productsId: item.productId,
+          productId: item.productId,
+          quantity: newQuantity,
+          itemNo: item.itemNo ? Number(item.itemNo) : 0,
+          pos: 0,
+          addBundle: true,
+          sellerId: item.sellerId ? Number(item.sellerId) : 0,
+          sellerName: item.sellerName || "",
+          sellerLocation: item.sellerLocation || "",
+          price: item.unitListPrice || item.unitPrice || 0,
+        },
+      });
+
+      // The pricing hooks will automatically refetch due to _updated timestamp change
+      toast.success("Quantity updated successfully");
+    } catch (_error) {
+      toast.error("Failed to update quantity");
+      // Revert on error
+      await refreshCart();
+    }
+  };
+
+  // Open delete confirmation dialog
+  const openDeleteDialog = (
+    productId: number,
+    _itemNo: string,
+    _sellerId?: string | number,
+    productName?: string
+  ) => {
+    setDeleteDialog({
+      isOpen: true,
+      productId,
+      itemNo: _itemNo,
+      sellerId: _sellerId,
+      productName,
+    });
+  };
+
+  // Close delete confirmation dialog
+  const closeDeleteDialog = () => {
+    setDeleteDialog({
+      isOpen: false,
+      productId: null,
+      itemNo: null,
+      sellerId: null,
+      productName: null,
+    });
+  };
+
+  // Delete item from cart
+  const deleteCart = async (
+    productId: number,
+    _itemNo: string,
+    _sellerId?: string | number
+  ) => {
+    if (!userId) return;
+
+    try {
+      // Update cart locally first (filter by productId and sellerId for multi-seller support)
+      const updatedCart = cart.filter(item => {
+        if (_sellerId) {
+          return !(
+            item.productId === productId &&
+            String(item.sellerId) === String(_sellerId)
+          );
+        }
+        return item.productId !== productId;
+      });
+      setCart(updatedCart);
+      updateCartCount(updatedCart.length);
+
+      // Call API to delete item from server (following reference pattern with DELETE method)
+      await CartServices.deleteCart({
+        userId: Number(userId),
+        tenantId,
+        productId,
+        itemNo: Number(_itemNo),
+        sellerId: Number(_sellerId || 0),
+        pos: 0,
+      });
+
+      closeDeleteDialog();
+      toast.success("Item removed from cart");
+    } catch (_error) {
+      toast.error("Failed to remove item");
+      // Revert on error
+      await refreshCart();
+    }
+  };
+
+  // Empty entire cart
+  const emptyCart = async () => {
+    if (!userId) return;
+
+    try {
+      await CartServices.emptyCart({ userId });
+      setCart([]);
+      updateCartCount(0);
+      toast.success("Cart cleared successfully");
+      // Refresh cart to ensure UI is in sync with backend
+      await refreshCart();
+    } catch (_error) {
+      toast.error("Failed to clear cart");
+    }
+  };
+
+  // Handle adding product from search
+  const handleAddProduct = async (product: unknown) => {
+    if (!userId) {
+      toast.info("Please login to add products to cart");
+      return;
+    }
+
+    try {
+      const prod = product as {
+        productId: number;
+        brandProductId?: string;
+        productName?: string;
+      };
+
+      // Add product to cart via API
+      await CartServices.postCart({
+        userId: Number(userId),
+        tenantId,
+        useMultiSellerCart: true,
+        body: {
+          productsId: prod.productId,
+          productId: prod.productId,
+          quantity: 1,
+          itemNo: 0,
+          pos: 0,
+          addBundle: true,
+          sellerId: 0,
+          sellerName: "",
+          sellerLocation: "",
+          price: 0,
+        },
+      });
+
+      toast.success(
+        `${prod.brandProductId || prod.productName || "Product"} added to cart`
+      );
+
+      // Refresh cart to show the newly added item
+      await refreshCart();
+    } catch (_error) {
+      toast.error("Failed to add product to cart");
     }
   };
 
   return (
-    <div className="container mx-auto p-4">
-      <div className="mb-6">
-        <h1 className="text-3xl font-bold mb-2">Shopping Cart</h1>
-        <p className="text-gray-600">
-          {cartCount} {cartCount === 1 ? "item" : "items"} in your cart
-        </p>
-      </div>
+    <>
+      <SellerCard
+        totalCart={cartCount}
+        cart={cart}
+        user={user}
+        selectedSellerId={selectedSellerId}
+        onSellerSelect={handleSellerSelection}
+        selectedSellerPricing={selectedSellerPricing}
+        selectedSellerCart={selectedSellerCart}
+        selectedSellerItems={selectedSellerItems}
+        hasMultipleSellers={hasMultipleSellers}
+        isPricingLoading={isPricingLoading}
+        isLoading={isCartLoading}
+        onItemUpdate={changeQty}
+        onItemDelete={openDeleteDialog}
+        onClearCart={emptyCart}
+        handleOrder={handleOrder}
+        handleQuote={handleQuote}
+        currency={currency}
+        sellerCarts={sellerCarts}
+        sellerIds={sellerIds}
+        onAddProduct={handleAddProduct}
+      />
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Cart Items */}
-        <div className="lg:col-span-2 space-y-4">
-          {cart.map((item, index) => (
-            <Card key={`${item.productId}-${index}`}>
-              <CardContent className="p-6">
-                <div className="flex items-center justify-between">
-                  <div className="flex-1">
-                    <h3 className="font-semibold text-lg mb-1">
-                      {item.productName || `Product ${item.productId}`}
-                    </h3>
-                    <p className="text-gray-600 mb-2">
-                      {item.shortDescription || "No description available"}
-                    </p>
-                    <div className="flex items-center space-x-4">
-                      <span className="font-semibold">
-                        ${item.unitPrice?.toFixed(2) || "0.00"}
-                      </span>
-                      <span className="text-sm text-gray-500">
-                        Qty: {item.quantity}
-                      </span>
-                    </div>
-                  </div>
-                  
-                  <div className="flex items-center space-x-2">
-                    {/* Quantity Controls */}
-                    <div className="flex items-center space-x-1">
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        onClick={() => updateQuantity(item.productId, item.quantity - 1)}
-                        disabled={updatingItems.has(item.productId)}
-                      >
-                        <Minus className="h-4 w-4" />
-                      </Button>
-                      
-                      <span className="w-12 text-center font-medium">
-                        {item.quantity}
-                      </span>
-                      
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        onClick={() => updateQuantity(item.productId, item.quantity + 1)}
-                        disabled={updatingItems.has(item.productId)}
-                      >
-                        <Plus className="h-4 w-4" />
-                      </Button>
-                    </div>
-
-                    {/* Remove Button */}
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      onClick={() => removeItem(item.productId)}
-                      disabled={updatingItems.has(item.productId)}
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </Button>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          ))}
-        </div>
-
-        {/* Order Summary */}
-        <div>
-          <Card className="sticky top-4">
-            <CardHeader>
-              <CardTitle>Order Summary</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="flex justify-between">
-                <span>Subtotal ({cartCount} items)</span>
-                <span>$0.00</span>
-              </div>
-              
-              <div className="flex justify-between">
-                <span>Shipping</span>
-                <span>Calculated at checkout</span>
-              </div>
-              
-              <Separator />
-              
-              <div className="flex justify-between font-semibold text-lg">
-                <span>Total</span>
-                <span>$0.00</span>
-              </div>
-              
-              <Button className="w-full" size="lg">
-                Proceed to Checkout
-              </Button>
-              
-              <Button 
-                variant="outline" 
-                className="w-full"
-                onClick={() => window.location.href = "/products"}
-              >
-                Continue Shopping
-              </Button>
-            </CardContent>
-          </Card>
-        </div>
-      </div>
-    </div>
+      {/* Delete Confirmation Dialog */}
+      <Dialog open={deleteDialog.isOpen} onOpenChange={closeDeleteDialog}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Remove Item from Cart?</DialogTitle>
+            <DialogDescription>
+              {deleteDialog.productName ? (
+                <>
+                  Are you sure you want to remove{" "}
+                  <span className="font-semibold">
+                    {deleteDialog.productName}
+                  </span>{" "}
+                  from your cart?
+                </>
+              ) : (
+                "Are you sure you want to remove this item from your cart?"
+              )}
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter className="gap-2 sm:gap-0">
+            <Button
+              variant="outline"
+              onClick={closeDeleteDialog}
+              className="w-full sm:w-auto"
+            >
+              Cancel
+            </Button>
+            <Button
+              variant="destructive"
+              onClick={() => {
+                if (deleteDialog.productId && deleteDialog.itemNo) {
+                  deleteCart(
+                    deleteDialog.productId,
+                    deleteDialog.itemNo,
+                    deleteDialog.sellerId
+                  );
+                }
+              }}
+              className="w-full sm:w-auto"
+            >
+              Remove Item
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    </>
   );
 }
