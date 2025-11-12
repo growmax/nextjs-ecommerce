@@ -87,7 +87,7 @@ export async function GET(
     // External API Response processed successfully
 
     return NextResponse.json(data);
-  } catch (_error) {
+  } catch {
     // Error in branches API route
     return NextResponse.json(
       { error: "Internal server error" },

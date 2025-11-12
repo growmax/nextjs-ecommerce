@@ -321,8 +321,7 @@ export async function fetchThemeFromTweakCN(
     const response = await fetch(`/api/tweakcn/theme/${clientId}`);
     const theme = await response.json();
     return theme;
-  } catch (error) {
-    console.error("Failed to fetch TweakCN theme:", error);
+  } catch {
     return getDefaultTweakCNTheme();
   }
 }
@@ -523,9 +522,7 @@ export async function GET(
       css: themeData.css, // The complete CSS with OKLCH values
       metadata: themeData.metadata || {},
     });
-  } catch (error) {
-    console.error("TweakCN theme fetch error:", error);
-
+  } catch {
     // Return default theme on error
     return NextResponse.json(getDefaultTweakCNTheme());
   }

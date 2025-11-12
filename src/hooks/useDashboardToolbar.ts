@@ -1,7 +1,7 @@
 "use client";
 
 import type { SectionToolbarRef } from "@/types/section-toolbar";
-import { useCallback, useRef, useState } from "react";
+import { useCallback, useRef, useState, useMemo } from "react";
 
 interface UseDashboardToolbarOptions {
   /** Initial search query */
@@ -113,17 +113,28 @@ export function useDashboardToolbar(options: UseDashboardToolbarOptions = {}) {
   }, []);
 
   // Actions
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  const actions: DashboardToolbarActions = {
-    setSearchQuery,
-    clearSearch,
-    setViewMode,
-    toggleFilters,
-    setFilters,
-    clearFilters,
-    setLoading,
-    refresh,
-  };
+  const actions: DashboardToolbarActions = useMemo(
+    () => ({
+      setSearchQuery,
+      clearSearch,
+      setViewMode,
+      toggleFilters,
+      setFilters,
+      clearFilters,
+      setLoading,
+      refresh,
+    }),
+    [
+      setSearchQuery,
+      clearSearch,
+      setViewMode,
+      toggleFilters,
+      setFilters,
+      clearFilters,
+      setLoading,
+      refresh,
+    ]
+  );
 
   // Computed values
   const activeFiltersCount = Object.values(state.activeFilters).filter(

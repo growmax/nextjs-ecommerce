@@ -1,16 +1,19 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { ProductDetail } from "@/types/product/product-detail";
 import { Button } from "@/components/ui/button";
-import { ShoppingCart, Minus, Plus } from "lucide-react";
-import { cn } from "@/lib/utils";
-import { formatPrice, getProductAvailability } from "@/utils/product/product-formatter";
-import { toast } from "sonner";
-import { CartService } from "@/lib/api/CartServices";
 import { useCurrentUser } from "@/hooks/useCurrentUser";
 import { useTenantData } from "@/hooks/useTenantData";
 import { useRouter } from "@/i18n/navigation";
+import { CartService } from "@/lib/api/CartServices";
+import { cn } from "@/lib/utils";
+import { ProductDetail } from "@/types/product/product-detail";
+import {
+  formatPrice,
+  getProductAvailability,
+} from "@/utils/product/product-formatter";
+import { Minus, Plus, ShoppingCart } from "lucide-react";
+import { useEffect, useState } from "react";
+import { toast } from "sonner";
 
 interface MobileCartActionProps {
   product: ProductDetail;
@@ -35,7 +38,7 @@ export default function MobileCartAction({ product }: MobileCartActionProps) {
   }, []);
 
   const handleQuantityChange = (action: "increment" | "decrement") => {
-    setQuantity((prev) => {
+    setQuantity(prev => {
       if (action === "increment") {
         return prev + 1;
       }
@@ -57,7 +60,7 @@ export default function MobileCartAction({ product }: MobileCartActionProps) {
 
     try {
       setIsAddingToCart(true);
-      
+
       await CartServices.postCart({
         userId: Number(user.userId),
         tenantId: tenantData?.tenant?.tenantCode || "",
@@ -72,10 +75,11 @@ export default function MobileCartAction({ product }: MobileCartActionProps) {
         },
       });
 
-      toast.success(`${quantity} ${quantity > 1 ? "items" : "item"} added to cart`);
+      toast.success(
+        `${quantity} ${quantity > 1 ? "items" : "item"} added to cart`
+      );
       setQuantity(1); // Reset quantity after adding
-    } catch (error) {
-      console.error("Failed to add to cart:", error);
+    } catch {
       toast.error("Failed to add product to cart. Please try again.");
     } finally {
       setIsAddingToCart(false);
@@ -143,4 +147,3 @@ export default function MobileCartAction({ product }: MobileCartActionProps) {
     </div>
   );
 }
-

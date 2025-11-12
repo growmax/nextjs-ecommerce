@@ -62,7 +62,7 @@ export async function GET(request: NextRequest) {
     };
 
     return NextResponse.json(profile);
-  } catch (error) {
+  } catch (error: unknown) {
     // Profile API error logged
     return NextResponse.json(
       {
@@ -112,7 +112,7 @@ export async function PUT(request: NextRequest) {
         secondaryEmail: body.altEmail,
       },
     });
-  } catch (error) {
+  } catch (error: unknown) {
     return NextResponse.json(
       {
         error: "Failed to update profile",

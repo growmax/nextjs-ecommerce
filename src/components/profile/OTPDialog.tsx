@@ -1,7 +1,6 @@
 "use client";
 
-import { useState } from "react";
-import { Shield } from "lucide-react";
+import { Button } from "@/components/ui/button";
 import {
   Dialog,
   DialogContent,
@@ -9,9 +8,10 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Shield } from "lucide-react";
+import { useState } from "react";
 
 interface OTPDialogProps {
   open: boolean;
@@ -42,7 +42,7 @@ export function OTPDialog({
     try {
       await onVerify(otp);
       handleClose();
-    } catch (_error) {
+    } catch {
       // Error handling should be done by parent component
     } finally {
       setIsVerifying(false);
@@ -53,7 +53,7 @@ export function OTPDialog({
     if (onResend) {
       try {
         await onResend();
-      } catch (_error) {
+      } catch {
         // Error handling should be done by parent component
       }
     }

@@ -1,5 +1,5 @@
-import { NextRequest, NextResponse } from "next/server";
 import { AuthService } from "@/lib/api/services/AuthService";
+import { NextRequest, NextResponse } from "next/server";
 
 /**
  * GET /api/auth/anonymous
@@ -49,7 +49,8 @@ export async function POST(_request: NextRequest) {
     }
 
     // Fetch new anonymous token
-    const tokenResponse = await AuthService.getInstance().getAnonymousToken(origin);
+    const tokenResponse =
+      await AuthService.getInstance().getAnonymousToken(origin);
 
     const response = NextResponse.json({
       token: tokenResponse.accessToken,
@@ -74,7 +75,6 @@ export async function POST(_request: NextRequest) {
 
     return response;
   } catch {
-    console.error("Anonymous token creation failed");
     return NextResponse.json(
       { error: "Failed to create anonymous token" },
       { status: 500 }
@@ -100,4 +100,3 @@ export async function DELETE(_request: NextRequest) {
 
   return response;
 }
-

@@ -7,7 +7,7 @@ describe("SellerWarehouseService", () => {
 
   beforeEach(() => {
     service = new SellerWarehouseService();
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+     
     callApiSpy = jest.spyOn(BaseService.prototype as any, "callApi");
   });
 

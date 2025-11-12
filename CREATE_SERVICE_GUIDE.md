@@ -74,8 +74,7 @@ const MyComponent = () => {
       try {
         const result = await YourService.getData("123");
         setData(result);
-      } catch (error) {
-        console.error("Failed to fetch data:", error);
+      } catch  {
       }
     };
 
@@ -216,8 +215,7 @@ const ProfilePage = () => {
       try {
         const userData = await UserService.getCurrentUser();
         setUser(userData);
-      } catch (error) {
-        console.error("Failed to load user:", error);
+      } catch  {
       }
     };
 

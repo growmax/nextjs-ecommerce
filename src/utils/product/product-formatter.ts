@@ -17,10 +17,8 @@ export function formatProductForDisplay(
 ): ProductDisplayData {
   const brandName = product.brand_name || product.brands_name || "Unknown Brand";
   const images = product.product_assetss || [];
-  const primaryImage = images.find(img => img.isDefault)?.source || images[0]?.source || "";
-
+ 
   return {
-    id: product.product_index_name,
     productId: product.product_id,
     title: product.title || product.product_short_description || "Untitled Product",
     shortDescription: product.product_short_description || product.product_description || "",
@@ -29,7 +27,6 @@ export function formatProductForDisplay(
     price: product.unit_list_price || 0,
     mrp: product.unit_mrp || 0,
     images,
-    primaryImage,
     isAvailable: Boolean(product.is_published),
     isNew: Boolean(product.is_new),
     inStock: true, // Default to true, can be enhanced with inventory data

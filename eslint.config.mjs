@@ -10,43 +10,50 @@ const compat = new FlatCompat({
 });
 
 const eslintConfig = [
+  // Base Next.js + TypeScript recommended rules
   ...compat.extends("next/core-web-vitals", "next/typescript"),
   {
+    // Global rule overrides for this project.
+    // Goal: keep linting useful (catch real issues) without blocking on legacy style noise.
     rules: {
-      // Temporarily disable console restrictions for build
+      // --- Allow debug noise for now (no-console completely disabled) ---
       "no-console": "off",
+      "no-debugger": "off", // Enable as "error" once codebase is cleaner
 
-      // Disable debugger restriction
-      "no-debugger": "off",
+      // --- TypeScript: be permissive while refactoring ---
+      "@typescript-eslint/no-explicit-any": "off", // Allow "any" for now; tighten gradually
+      "@typescript-eslint/no-var-requires": "off", // Allow require() in legacy code
 
-      // Disable unused variables restriction
-      "no-unused-vars": "off",
-      "@typescript-eslint/no-unused-vars": "off",
-
-      // Allow explicit any types temporarily
-      "@typescript-eslint/no-explicit-any": "off",
-      "@typescript-eslint/no-var-requires": "off",
-
-      // Relax variable declaration rules
+      // --- General style preferences (safe to ignore short-term) ---
       "prefer-const": "off",
       "no-var": "off",
       "object-shorthand": "off",
       "prefer-template": "off",
 
-      // React rules - make offings instead of errors
-      "react/jsx-key": "off",
+      // --- Correctness / quality signals (keep as warnings for now) ---
+      "no-unused-vars": "off", // Use TS version instead
+      "@typescript-eslint/no-unused-vars": [
+        "warn",
+        { argsIgnorePattern: "^_", varsIgnorePattern: "^_" },
+      ],
+
+      "react/jsx-key": "warn",
+      "react-hooks/exhaustive-deps": "warn",
+
+      // --- React / JSX rules relaxed (can improve later) ---
       "react/no-array-index-key": "off",
-      "react-hooks/exhaustive-deps": "off",
       "react/no-unescaped-entities": "off",
 
-      // Accessibility - keep as error but be more permissive
+      // --- Accessibility rules (currently off to avoid noise) ---
       "jsx-a11y/alt-text": "off",
       "jsx-a11y/anchor-is-valid": "off",
 
-      // Next.js rules
-      "@next/next/no-html-link-for-pages": "off",
+      // --- Next.js specific rules ---
+      "@next/next/no-html-link-for-pages": "warn",
       "@next/next/no-img-element": "off",
     },
+
+    // Paths ESLint should ignore entirely
     ignores: [
       "node_modules/**",
       ".next/**",

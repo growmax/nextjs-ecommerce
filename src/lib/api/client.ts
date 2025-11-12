@@ -179,19 +179,6 @@ function createApiClient(config: ApiClientConfig = {}): AxiosInstance {
         }
       }
 
-      // Log errors in development (only for actual errors)
-      if (process.env.NODE_ENV === "development") {
-        // eslint-disable-next-line no-console
-        console.error(
-          `❌ ${error.config?.method?.toUpperCase()} ${error.config?.url}`,
-          {
-            status: error.response?.status,
-            message: error.message,
-            data: error.response?.data,
-          }
-        );
-      }
-      // Handle 401 errors with modern token refresh service
       // Also handle network errors that might be 401s (CORS/auth failures)
       if (
         (error.response?.status === 401 ||

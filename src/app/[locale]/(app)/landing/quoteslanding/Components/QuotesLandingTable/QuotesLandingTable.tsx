@@ -1,7 +1,7 @@
 "use client";
 
-import SideDrawer from "@/components/custom/sidedrawer";
 import DashboardTable from "@/components/custom/DashBoardTable";
+import SideDrawer from "@/components/custom/sidedrawer";
 import { statusColor } from "@/components/custom/statuscolors";
 import FilterDrawer from "@/components/sales/FilterDrawer";
 import { QuoteFilterFormData } from "@/components/sales/QuoteFilterForm";
@@ -12,6 +12,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { Skeleton } from "@/components/ui/skeleton";
 import { useCurrentUser } from "@/hooks/useCurrentUser";
 import PreferenceService, {
   FilterPreferenceResponse,
@@ -24,7 +25,6 @@ import { useLocale } from "next-intl";
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
-import { Skeleton } from "@/components/ui/skeleton";
 
 interface QuotesLandingTableProps {
   refreshTrigger?: number;
@@ -107,7 +107,6 @@ function QuotesLandingTable({
   // Define table columns
   const columns = useMemo<ColumnDef<QuoteItem>[]>(
     () => [
-   
       {
         accessorKey: "quoteName",
         header: "Quote Name",
@@ -601,7 +600,7 @@ function QuotesLandingTable({
 
       setQuotes(response.data.quotesResponse || []);
       setTotalCount(response.data.totalQuoteCount || 0);
-    } catch (_error) {
+    } catch {
       toast.error("Failed to fetch quotes");
       setQuotes([]);
     } finally {
@@ -680,7 +679,7 @@ function QuotesLandingTable({
       XLSX.writeFile(wb, filename);
 
       toast.success("Export completed successfully!");
-    } catch (_error) {
+    } catch {
       toast.error("Failed to export quotes");
     }
   }, [quotes]);

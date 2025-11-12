@@ -141,7 +141,7 @@ export default function ProfilePageClient() {
       } else {
         toast.error("Some changes failed to save. Please try again.");
       }
-    } catch (_error) {
+    } catch {
       toast.error("Failed to save changes. Please try again.");
     }
 

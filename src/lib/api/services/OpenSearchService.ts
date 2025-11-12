@@ -98,7 +98,7 @@ export class OpenSearchService extends BaseService<OpenSearchService> {
           context
         )
       );
-    } catch (error) {
+    } catch {
       return this.getProductServerSide(
         identifier,
         elasticIndex,

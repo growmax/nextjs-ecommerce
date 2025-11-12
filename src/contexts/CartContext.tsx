@@ -166,8 +166,7 @@ export function CartProvider({ children, userId }: CartProviderProps) {
       prevUserIdRef.current = userId;
       hasFetchedCartRef.current = false;
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [userId]);
+  }, [userId, getCart]);
 
   const contextValue = useMemo(
     () => ({

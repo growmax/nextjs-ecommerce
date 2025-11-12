@@ -1,16 +1,15 @@
 "use client";
 
-import * as React from "react";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
+import { Checkbox } from "@/components/ui/checkbox";
 import {
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { Card, CardContent } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import {
   Select,
@@ -19,16 +18,17 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Checkbox } from "@/components/ui/checkbox";
 import { Separator } from "@/components/ui/separator";
-import { Search, Loader2 } from "lucide-react";
-import { toast } from "sonner";
-import { z } from "zod";
-import { useForm, Controller } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
+import { Textarea } from "@/components/ui/textarea";
 import { AuthStorage } from "@/lib/auth";
 import { JWTService } from "@/lib/services/JWTService";
-import { Country, State, District } from "@/types/address";
+import { Country, District, State } from "@/types/address";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { Loader2, Search } from "lucide-react";
+import * as React from "react";
+import { Controller, useForm } from "react-hook-form";
+import { toast } from "sonner";
+import { z } from "zod";
 
 // Enhanced validation with security, business logic, and format validation
 const addressFormSchema = z
@@ -278,7 +278,6 @@ export function AddAddressDialog({
     formState: { errors },
     reset,
   } = useForm<AddressFormData>({
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     resolver: zodResolver(addressFormSchema) as any,
     mode: "onChange", // Enable real-time validation
     defaultValues: {
@@ -753,7 +752,7 @@ export function AddAddressDialog({
         onOpenChange(false);
         reset();
       }
-    } catch (_error) {
+    } catch {
       // Error submitting address
       toast.error(`Failed to ${mode} address. Please try again.`);
     } finally {
@@ -802,7 +801,6 @@ export function AddAddressDialog({
 
               <form
                 id="address-form"
-                // eslint-disable-next-line @typescript-eslint/no-explicit-any
                 onSubmit={handleSubmit(onSubmit as any)}
                 className="space-y-1"
               >
@@ -1345,7 +1343,7 @@ export function AddAddressDialog({
                       </Label>
                       <div className="relative">
                         <div className="absolute left-2 top-1/2 -translate-y-1/2 flex items-center gap-1 pointer-events-none z-10">
-                          {/* eslint-disable-next-line @next/next/no-img-element */}
+                          {}
                           <img
                             src={selectedCountryInfo.flag}
                             alt={selectedCountryInfo.iso2}

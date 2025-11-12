@@ -44,32 +44,42 @@ export const processDiscountDetails = (
   return cartData.map(item => {
     let updatedItem = { ...item };
 
-    updatedItem.packagingQuantity = updatedItem.packagingQty
-      ? updatedItem.packagingQty
-      : updatedItem.packagingQuantity;
-    updatedItem.minOrderQuantity = updatedItem.minOrderQuantity
-      ? updatedItem.minOrderQuantity
-      : updatedItem.packagingQuantity;
-    updatedItem.checkMOQ = updatedItem.minOrderQuantity
-      ? updatedItem.minOrderQuantity > updatedItem.askedQuantity!
-        ? true
-        : false
-      : false;
+    if (updatedItem.packagingQty !== undefined) {
+      updatedItem.packagingQuantity = updatedItem.packagingQty;
+    }
+
+    if (
+      updatedItem.minOrderQuantity === undefined &&
+      updatedItem.packagingQuantity !== undefined
+    ) {
+      updatedItem.minOrderQuantity = updatedItem.packagingQuantity;
+    }
+
+    const askedQuantityForMOQ =
+      updatedItem.askedQuantity ?? updatedItem.quantity;
+    updatedItem.checkMOQ =
+      updatedItem.minOrderQuantity !== undefined
+        ? updatedItem.minOrderQuantity > askedQuantityForMOQ
+        : false;
 
     updatedItem.bcProductCost = updatedItem.bcProductCost || 0;
     updatedItem.productCostLoad = updatedItem.productCost || 0;
 
     updatedItem.discountPercentage = updatedItem.discount || 0;
 
-    if (!updatedItem.initial_unitListPrice_fe) {
+    const unitListPrice = updatedItem.unitListPrice ?? 0;
+
+    if (
+      updatedItem.initial_unitListPrice_fe === undefined &&
+      updatedItem.unitListPrice !== undefined
+    ) {
       updatedItem.initial_unitListPrice_fe = updatedItem.unitListPrice;
     }
 
     updatedItem.discountedPrice =
-      updatedItem.unitListPrice! -
-      (updatedItem.unitListPrice! * updatedItem.discountPercentage) / 100;
+      unitListPrice - (unitListPrice * updatedItem.discountPercentage) / 100;
 
-    if (!updatedItem.initial_discounted_price_fe) {
+    if (updatedItem.initial_discounted_price_fe === undefined) {
       updatedItem.initial_discounted_price_fe = updatedItem.discountedPrice;
     }
 
@@ -86,17 +96,17 @@ export const processDiscountDetails = (
     }
 
     if (updatedItem.taxInclusive) {
-      updatedItem.unitPrice =
-        updatedItem.unitPrice / (1 + updatedItem.tax / 100);
+      const taxRate = updatedItem.tax ?? 0;
+      updatedItem.unitPrice = updatedItem.unitPrice / (1 + taxRate / 100);
     }
 
     if (taxExemption) {
       updatedItem.tax = 0;
     }
 
-    updatedItem.unitLP = updatedItem.unitListPrice;
-    updatedItem.unitLPRp = updatedItem.unitListPrice;
-    updatedItem.actualdisc = updatedItem.discount;
+    updatedItem.unitLP = updatedItem.unitListPrice ?? 0;
+    updatedItem.unitLPRp = updatedItem.unitListPrice ?? 0;
+    updatedItem.actualdisc = updatedItem.discount ?? 0;
     updatedItem.acturalUP = updatedItem.unitPrice;
 
     if (updatedItem.showPrice || updatedItem.priceNotAvailable) {
@@ -138,13 +148,11 @@ export const processDiscountDetails = (
       updatedItem.hsnDetails?.interTax?.taxReqLs || [],
       ["compound", true]
     );
-    if (
-      !isEmpty(updatedItem.compoundInter) &&
-      updatedItem.hsnDetails?.interTax?.taxReqLs
-    ) {
-      updatedItem.hsnDetails.interTax.taxReqLs.push(
-        updatedItem.compoundInter[0]
-      );
+    if (!isEmpty(updatedItem.compoundInter)) {
+      const [firstCompoundInter] = updatedItem.compoundInter ?? [];
+      if (firstCompoundInter && updatedItem.hsnDetails?.interTax?.taxReqLs) {
+        updatedItem.hsnDetails.interTax.taxReqLs.push(firstCompoundInter);
+      }
     }
 
     each(updatedItem.hsnDetails?.interTax?.taxReqLs || [], (taxes: any) => {
@@ -161,13 +169,11 @@ export const processDiscountDetails = (
       updatedItem.hsnDetails?.intraTax?.taxReqLs || [],
       ["compound", true]
     );
-    if (
-      !isEmpty(updatedItem.compoundIntra) &&
-      updatedItem.hsnDetails?.intraTax?.taxReqLs
-    ) {
-      updatedItem.hsnDetails.intraTax.taxReqLs.push(
-        updatedItem.compoundIntra[0]
-      );
+    if (!isEmpty(updatedItem.compoundIntra)) {
+      const [firstCompoundIntra] = updatedItem.compoundIntra ?? [];
+      if (firstCompoundIntra && updatedItem.hsnDetails?.intraTax?.taxReqLs) {
+        updatedItem.hsnDetails.intraTax.taxReqLs.push(firstCompoundIntra);
+      }
     }
 
     each(updatedItem.hsnDetails?.intraTax?.taxReqLs || [], (taxes: any) => {
@@ -179,7 +185,9 @@ export const processDiscountDetails = (
       updatedItem.intraTaxBreakup!.push(tax);
     });
 
-    updatedItem.hsnCode = updatedItem.hsnDetails?.hsnCode;
+    if (updatedItem.hsnDetails?.hsnCode !== undefined) {
+      updatedItem.hsnCode = updatedItem.hsnDetails.hsnCode;
+    }
 
     if (!updatedItem.showPrice || updatedItem.priceNotAvailable) {
       updatedItem.discountedPrice = 0;
@@ -204,7 +212,7 @@ export const processDiscountDetails = (
 export const addMoreProductUtils = (
   isInter: boolean,
   item: CartItem = {} as CartItem,
-  isSeller: boolean,
+  _isSeller: boolean,
   taxExemption: boolean,
   precision = 2
 ): CartItem => {
@@ -215,9 +223,10 @@ export const addMoreProductUtils = (
   updatedItem.productCostLoad = updatedItem.productCost || 0;
 
   updatedItem.discountPercentage = updatedItem.discount || 0;
+  const unitListPrice = updatedItem.unitListPrice ?? 0;
+
   updatedItem.discountedPrice =
-    updatedItem.unitListPrice! -
-    (updatedItem.unitListPrice! * updatedItem.discountPercentage) / 100;
+    unitListPrice - (unitListPrice * updatedItem.discountPercentage) / 100;
 
   if (!updatedItem.volumeDiscountApplied) {
     updatedItem.discount = updatedItem.discountPercentage;
@@ -232,7 +241,7 @@ export const addMoreProductUtils = (
     updatedItem.buyerRequestedPrice = updatedItem.unitPrice;
   }
 
-  updatedItem.actualdisc = updatedItem.discount;
+  updatedItem.actualdisc = updatedItem.discount ?? 0;
   updatedItem.acturalUP = updatedItem.unitPrice;
 
   // DMC calculation
@@ -251,8 +260,9 @@ export const addMoreProductUtils = (
   }
 
   updatedItem.productShortDescription = updatedItem.shortDescription;
-  updatedItem.packagingQuantity =
-    updatedItem.packagingQty || updatedItem.packagingQuantity;
+  if (updatedItem.packagingQty !== undefined) {
+    updatedItem.packagingQuantity = updatedItem.packagingQty;
+  }
   updatedItem.askedQuantity = updatedItem.quantity;
   updatedItem.totalPrice = updatedItem.unitPrice * updatedItem.askedQuantity!;
 
@@ -275,7 +285,8 @@ export const addMoreProductUtils = (
     : updatedItem.totalIntraTax;
 
   if (updatedItem.taxInclusive) {
-    updatedItem.unitPrice = updatedItem.unitPrice / (1 + updatedItem.tax / 100);
+    const taxRate = updatedItem.tax ?? 0;
+    updatedItem.unitPrice = updatedItem.unitPrice / (1 + taxRate / 100);
   }
 
   if (!taxExemption) {
@@ -301,11 +312,11 @@ export const addMoreProductUtils = (
     updatedItem.hsnDetails?.interTax?.taxReqLs || [],
     ["compound", true]
   );
-  if (
-    !isEmpty(updatedItem.compoundInter) &&
-    updatedItem.hsnDetails?.interTax?.taxReqLs
-  ) {
-    updatedItem.hsnDetails.interTax.taxReqLs.push(updatedItem.compoundInter[0]);
+  if (!isEmpty(updatedItem.compoundInter)) {
+    const [firstCompoundInter] = updatedItem.compoundInter ?? [];
+    if (firstCompoundInter && updatedItem.hsnDetails?.interTax?.taxReqLs) {
+      updatedItem.hsnDetails.interTax.taxReqLs.push(firstCompoundInter);
+    }
   }
 
   each(updatedItem.hsnDetails?.interTax?.taxReqLs || [], (taxes: any) => {
@@ -322,11 +333,11 @@ export const addMoreProductUtils = (
     updatedItem.hsnDetails?.intraTax?.taxReqLs || [],
     ["compound", true]
   );
-  if (
-    !isEmpty(updatedItem.compoundIntra) &&
-    updatedItem.hsnDetails?.intraTax?.taxReqLs
-  ) {
-    updatedItem.hsnDetails.intraTax.taxReqLs.push(updatedItem.compoundIntra[0]);
+  if (!isEmpty(updatedItem.compoundIntra)) {
+    const [firstCompoundIntra] = updatedItem.compoundIntra ?? [];
+    if (firstCompoundIntra && updatedItem.hsnDetails?.intraTax?.taxReqLs) {
+      updatedItem.hsnDetails.intraTax.taxReqLs.push(firstCompoundIntra);
+    }
   }
 
   each(updatedItem.hsnDetails?.intraTax?.taxReqLs || [], (taxes: any) => {
@@ -338,9 +349,11 @@ export const addMoreProductUtils = (
     updatedItem.intraTaxBreakup!.push(tax);
   });
 
-  updatedItem.unitLP = updatedItem.unitListPrice;
-  updatedItem.hsnCode = updatedItem.hsnDetails?.hsnCode;
-  updatedItem.unitLPRp = updatedItem.unitListPrice;
+  updatedItem.unitLP = updatedItem.unitListPrice ?? 0;
+  if (updatedItem.hsnDetails?.hsnCode !== undefined) {
+    updatedItem.hsnCode = updatedItem.hsnDetails.hsnCode;
+  }
+  updatedItem.unitLPRp = updatedItem.unitListPrice ?? 0;
   updatedItem.shippingCharges = 0;
 
   return updatedItem;

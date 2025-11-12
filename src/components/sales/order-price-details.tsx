@@ -18,11 +18,11 @@ interface TaxDetail {
 }
 
 interface OrderPriceDetailsProps {
-  products?: any[]; // eslint-disable-line @typescript-eslint/no-explicit-any
+  products?: any[];  
   isInter?: boolean;
   insuranceCharges?: number;
   precision?: number;
-  Settings?: any; // eslint-disable-line @typescript-eslint/no-explicit-any
+  Settings?: any;  
   isSeller?: boolean;
   taxExemption?: boolean;
   currency?: string;

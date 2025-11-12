@@ -1,7 +1,7 @@
-import { NextRequest, NextResponse } from "next/server";
-import { cookies } from "next/headers";
 import { DiscountService, RequestContext } from "@/lib/api";
 import { JWTService } from "@/lib/services/JWTService";
+import { cookies } from "next/headers";
+import { NextRequest, NextResponse } from "next/server";
 
 /**
  * POST /api/sales/checkIsVDEnabledByCompanyId
@@ -116,12 +116,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({
       data: response?.data,
     });
-  } catch (error) {
-    // Log error for debugging (in production, use proper logging service)
-    // eslint-disable-next-line no-console
-    console.error("Error checking VD enabled status:", error);
-
-    // Return error response
+  } catch (error: unknown) {
     return NextResponse.json(
       {
         error:

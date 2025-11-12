@@ -186,19 +186,6 @@ export function AppHeader() {
       return false;
     });
 
-    // Debug logging
-    console.log("Search Results Debug:", {
-      searchTerm,
-      totalFormattedProducts: formattedProducts.length,
-      productNames: formattedProducts
-        .slice(0, 3)
-        .map((p: SearchResultItem) => p.name),
-      matchedProducts: products.length,
-      sampleProduct: formattedProducts[0],
-      isProductLoading,
-      productError: productError?.message,
-    });
-
     return [...ordersAndQuotes, ...products];
   };
 

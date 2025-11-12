@@ -1,7 +1,7 @@
+import { AuthStorage } from "@/lib/auth";
+import { JWTService } from "@/lib/services/JWTService";
 import { preferenceClient } from "../client";
 import { BaseService } from "./BaseService";
-import { JWTService } from "@/lib/services/JWTService";
-import { AuthStorage } from "@/lib/auth";
 
 // Define preference data types
 export interface UserPreference {
@@ -117,9 +117,7 @@ export class PreferenceService extends BaseService<PreferenceService> {
 
     // Type-safe way to access elasticCode if it exists
     const elasticCode =
-      "elasticCode" in payload
-        ? ((payload as Record<string, unknown>).elasticCode as string)
-        : "";
+      typeof payload.elasticCode === "string" ? payload.elasticCode : "";
 
     return {
       userId: payload.userId.toString(),
@@ -169,7 +167,7 @@ export class PreferenceService extends BaseService<PreferenceService> {
    * @returns User preferences
    */
   async findPreferences(module: string): Promise<UserPreference> {
-    const { userId, companyId, tenantCode } = this.getUserDataFromToken();
+    const { userId, tenantCode } = this.getUserDataFromToken();
     return (await this.call(
       `/preferences/find?userId=${userId}&module=${module}&tenantCode=${tenantCode}&isMobile=false`,
       {},
@@ -299,7 +297,7 @@ export class PreferenceService extends BaseService<PreferenceService> {
   async findFilterPreferences(
     module: string
   ): Promise<FilterPreferenceResponse> {
-    const { userId, companyId, tenantCode } = this.getUserDataFromToken();
+    const { userId, tenantCode } = this.getUserDataFromToken();
     return (await this.call(
       `/preferences/find?userId=${userId}&module=${module}&tenantCode=${tenantCode}&isMobile=false`,
       {},

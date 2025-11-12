@@ -1,7 +1,7 @@
-import { NextRequest, NextResponse } from "next/server";
-import { cookies } from "next/headers";
 import { DiscountRequest } from "@/lib/api/services/DiscountService";
 import { JWTService } from "@/lib/services/JWTService";
+import { cookies } from "next/headers";
+import { NextRequest, NextResponse } from "next/server";
 
 /**
  * POST /api/discounts/product-discounts
@@ -151,14 +151,7 @@ export async function POST(request: NextRequest) {
         currencyId: CurrencyId,
       },
     });
-  } catch (error) {
-    // Log error for debugging
-    // Log error for debugging (in production, use proper logging service)
-    if (process.env.NODE_ENV === "development") {
-      // eslint-disable-next-line no-console
-      console.error("Product discount API error:", error);
-    }
-
+  } catch (error: unknown) {
     // Handle different types of errors
     if (error instanceof Error) {
       // Check if it's a service-related error
@@ -298,13 +291,7 @@ export async function GET(request: NextRequest) {
     });
 
     return POST(newRequest);
-  } catch (error) {
-    // Log error for debugging (in production, use proper logging service)
-    if (process.env.NODE_ENV === "development") {
-      // eslint-disable-next-line no-console
-      console.error("Product discount GET API error:", error);
-    }
-
+  } catch (error: unknown) {
     return NextResponse.json(
       {
         error: "Failed to parse request parameters",

@@ -28,7 +28,7 @@ export function calculateItemTaxes(
 
   // Build tax breakups from HSN details
   if (updatedItem.hsnDetails?.interTax?.taxReqLs) {
-    each(updatedItem.hsnDetails.interTax.taxReqLs, (taxes) => {
+    each(updatedItem.hsnDetails.interTax.taxReqLs, taxes => {
       const tax: TaxBreakup = {
         taxName: taxes.taxName,
         taxPercentage: taxes.rate,
@@ -39,7 +39,7 @@ export function calculateItemTaxes(
   }
 
   if (updatedItem.hsnDetails?.intraTax?.taxReqLs) {
-    each(updatedItem.hsnDetails.intraTax.taxReqLs, (taxes) => {
+    each(updatedItem.hsnDetails.intraTax.taxReqLs, taxes => {
       const tax: TaxBreakup = {
         taxName: taxes.taxName,
         taxPercentage: taxes.rate,
@@ -49,7 +49,6 @@ export function calculateItemTaxes(
     });
   }
 
-  let totalTax = 0;
   const cartValueUpdates: Partial<CartValue> = {};
 
   if (isInter) {
@@ -58,24 +57,30 @@ export function calculateItemTaxes(
     let intraTotalTax = 0;
 
     if (updatedItem.interTaxBreakup?.length) {
-      each(updatedItem.interTaxBreakup, (inter) => {
+      each(updatedItem.interTaxBreakup, inter => {
         updatedItem[inter.taxName as keyof CartItem] = inter.taxPercentage;
 
         if (!inter.compound) {
           const taxValue = round(
-            ((updatedItem.totalPrice! + (updatedItem.pfRate || 0)) * inter.taxPercentage) / 100,
+            ((updatedItem.totalPrice! + (updatedItem.pfRate || 0)) *
+              inter.taxPercentage) /
+              100,
             precision
           );
           updatedItem[`${inter.taxName}Value` as keyof CartItem] = taxValue;
           intraTotalTax += taxValue as number;
         } else {
-          const taxValue = round((intraTotalTax * inter.taxPercentage) / 100, precision);
+          const taxValue = round(
+            (intraTotalTax * inter.taxPercentage) / 100,
+            precision
+          );
           updatedItem[`${inter.taxName}Value` as keyof CartItem] = taxValue;
           intraTotalTax += taxValue as number;
         }
 
         const taxTotalKey = `${inter.taxName}Total` as keyof CartValue;
-        cartValueUpdates[taxTotalKey] = ((cartValueUpdates[taxTotalKey] as number) || 0) +
+        cartValueUpdates[taxTotalKey] =
+          ((cartValueUpdates[taxTotalKey] as number) || 0) +
           (updatedItem[`${inter.taxName}Value` as keyof CartItem] as number);
       });
 
@@ -89,24 +94,30 @@ export function calculateItemTaxes(
     let interTotalTax = 0;
 
     if (updatedItem.intraTaxBreakup?.length) {
-      each(updatedItem.intraTaxBreakup, (intra) => {
+      each(updatedItem.intraTaxBreakup, intra => {
         updatedItem[intra.taxName as keyof CartItem] = intra.taxPercentage;
 
         if (!intra.compound) {
           const taxValue = round(
-            ((updatedItem.totalPrice! + (updatedItem.pfRate || 0)) * intra.taxPercentage) / 100,
+            ((updatedItem.totalPrice! + (updatedItem.pfRate || 0)) *
+              intra.taxPercentage) /
+              100,
             precision
           );
           updatedItem[`${intra.taxName}Value` as keyof CartItem] = taxValue;
           interTotalTax += taxValue as number;
         } else {
-          const taxValue = round((interTotalTax * intra.taxPercentage) / 100, precision);
+          const taxValue = round(
+            (interTotalTax * intra.taxPercentage) / 100,
+            precision
+          );
           updatedItem[`${intra.taxName}Value` as keyof CartItem] = taxValue;
           interTotalTax += taxValue as number;
         }
 
         const taxTotalKey = `${intra.taxName}Total` as keyof CartValue;
-        cartValueUpdates[taxTotalKey] = ((cartValueUpdates[taxTotalKey] as number) || 0) +
+        cartValueUpdates[taxTotalKey] =
+          ((cartValueUpdates[taxTotalKey] as number) || 0) +
           (updatedItem[`${intra.taxName}Value` as keyof CartItem] as number);
       });
 
@@ -118,7 +129,9 @@ export function calculateItemTaxes(
 
   // Calculate product tax
   updatedItem.prodTax = round(
-    ((updatedItem.totalPrice! + (updatedItem.pfRate || 0)) * (updatedItem.tax || 0)) / 100,
+    ((updatedItem.totalPrice! + (updatedItem.pfRate || 0)) *
+      (updatedItem.tax || 0)) /
+      100,
     precision
   );
 

@@ -1,6 +1,6 @@
-import { NextRequest, NextResponse } from "next/server";
 import DashboardOrdersTableService from "@/lib/api/services/Dasboard/DashboardOrdersTable";
 import OrdersFilterService from "@/lib/api/services/OrdersFilterService";
+import { NextRequest, NextResponse } from "next/server";
 
 export async function GET(request: NextRequest) {
   try {
@@ -225,7 +225,7 @@ export async function POST(request: NextRequest) {
     }
 
     return NextResponse.json(data);
-  } catch (error) {
+  } catch (error: unknown) {
     return NextResponse.json(
       {
         error: `Failed to fetch orders: ${

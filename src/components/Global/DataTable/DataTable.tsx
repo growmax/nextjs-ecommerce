@@ -222,7 +222,7 @@ export function DataTable<TData>({
   );
 
   // Table instance
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+   
   const tableOptions: any = {
     data,
     columns,

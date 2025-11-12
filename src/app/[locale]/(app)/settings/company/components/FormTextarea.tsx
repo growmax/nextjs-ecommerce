@@ -9,7 +9,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Control } from "react-hook-form";
 
 interface FormTextareaProps {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+   
   control: Control<any>;
   name: string;
   label: string;

@@ -1,13 +1,13 @@
 "use client";
 
-import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { Minus, Plus, ShoppingCart } from "lucide-react";
-import { toast } from "sonner";
-import { CartService } from "@/lib/api/CartServices";
 import { useCurrentUser } from "@/hooks/useCurrentUser";
 import { useTenantData } from "@/hooks/useTenantData";
 import { useRouter } from "@/i18n/navigation";
+import { CartService } from "@/lib/api/CartServices";
+import { Minus, Plus, ShoppingCart } from "lucide-react";
+import { useState } from "react";
+import { toast } from "sonner";
 
 interface AddToCartSectionProps {
   productId: number;
@@ -28,7 +28,7 @@ export default function AddToCartSection({
   const router = useRouter();
 
   const handleQuantityChange = (action: "increment" | "decrement") => {
-    setQuantity((prev) => {
+    setQuantity(prev => {
       if (action === "increment") {
         return prev + 1;
       }
@@ -69,8 +69,7 @@ export default function AddToCartSection({
         `${quantity} ${quantity > 1 ? "items" : "item"} added to cart`
       );
       setQuantity(1); // Reset quantity after adding
-    } catch (error) {
-      console.error("Failed to add to cart:", error);
+    } catch {
       toast.error("Failed to add product to cart. Please try again.");
     } finally {
       setIsAddingToCart(false);
@@ -117,4 +116,3 @@ export default function AddToCartSection({
     </div>
   );
 }
-

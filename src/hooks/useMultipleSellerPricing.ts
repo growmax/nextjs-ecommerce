@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import CartService from "@/lib/api/CartServices";
 import { useTenantStore } from "@/store/useTenantStore";
 // Use individual lodash imports for better tree-shaking
@@ -177,8 +176,8 @@ export default function useMultipleSellerPricing(
 
   const shouldFetch =
     !loading &&
-    (auth ? currency?.id : sellerCurrency?.id) &&
-    productIds?.length > 0;
+    Boolean(auth ? currency?.id : sellerCurrency?.id) &&
+    (productIds?.length ?? 0) > 0;
 
   const {
     data,
@@ -195,7 +194,7 @@ export default function useMultipleSellerPricing(
       sellerCurrency?.id,
     ],
     queryFn: fetch,
-    enabled: shouldFetch,
+    enabled: shouldFetch ? true : false,
     retry: false, // was shouldRetryOnError: false
     refetchOnWindowFocus: false, // was revalidateOnFocus: false
     staleTime: 2000, // was dedupingInterval: 2000
@@ -222,12 +221,6 @@ export default function useMultipleSellerPricing(
           priceData as Record<string, unknown>[],
           (item: Record<string, unknown>) => {
             const id = item.sellerId || item.vendorId;
-            if (!id) {
-              console.warn(
-                "[useMultipleSellerPricing] Item has no numeric sellerId or vendorId:",
-                item
-              );
-            }
             return String(id || "no-seller-id");
           }
         );

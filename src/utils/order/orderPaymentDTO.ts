@@ -498,71 +498,82 @@ export const orderPaymentDTO = (
   // Map product details - preserve all fields from product, only modify specific ones
   // This matches the pattern from the original implementation
   const dbProductDetails = map(values?.dbProductDetails || [], prod => {
+    const anyProd = prod as any;
+
+    const accountOwnerId =
+      anyProd?.accountOwner && typeof anyProd.accountOwner === "object"
+        ? Number(anyProd.accountOwner.id) || null
+        : null;
+
+    const businessUnitId =
+      anyProd?.businessUnit && typeof anyProd.businessUnit === "object"
+        ? Number(anyProd.businessUnit.id) || ""
+        : "";
+
+    const divisionId =
+      anyProd?.division && typeof anyProd.division === "object"
+        ? Number(anyProd.division.id) || null
+        : null;
+
+    const orderWareHouseId =
+      anyProd?.wareHouse && typeof anyProd.wareHouse === "object"
+        ? Number(anyProd.wareHouse.id) || null
+        : null;
+
+    const orderWareHouseName =
+      anyProd?.wareHouse && typeof anyProd.wareHouse === "object"
+        ? (anyProd.wareHouse.wareHouseName as string) || null
+        : null;
+
     return {
-      ...prod, // Preserve all original product fields
-      // Only modify specific fields that need transformation
-      accountOwnerId: prod?.accountOwner
-        ? parseInt((prod.accountOwner as { id: number }).id.toString())
-        : null,
-      businessUnitId: (prod.businessUnit as { id: number })?.id || "",
-      divisionId: prod?.division
-        ? parseInt((prod.division as { id: number }).id.toString())
-        : null,
+      ...prod,
+
+      accountOwnerId,
+      businessUnitId,
+      divisionId,
 
       // Line numbers (can be null for new products)
-      lineNo: (prod as { new?: boolean; lineNo?: number }).new
-        ? null
-        : ((prod as { lineNo?: number }).lineNo ?? null),
-      itemNo: (prod as { new?: boolean; itemNo?: number }).new
-        ? null
-        : ((prod as { itemNo?: number }).itemNo ?? null),
+      lineNo: anyProd.new ? null : anyProd.lineNo ?? null,
+      itemNo: anyProd.new ? null : anyProd.itemNo ?? null,
 
       // PF
-      pfValue: null, // hardcoded to null, due to pf issue
+      pfValue: null,
       pfPercentage:
         values?.orderTerms?.pfPercentage || values?.pfRate
           ? values?.pfRate
           : null,
 
       // Delivery dates
-      tentativeDeliveryDate:
-        (prod as { tentativeDeliveryDate?: string }).tentativeDeliveryDate ||
-        null,
+      tentativeDeliveryDate: anyProd.tentativeDeliveryDate || null,
 
       // Warehouse (flattened from nested object)
-      orderWareHouseId: (prod?.wareHouse as { id: number })?.id || null,
-      orderWareHouseName:
-        (prod?.wareHouse as { wareHouseName?: string })?.wareHouseName || null,
-      // Tax - use correct breakup based on isInter flag (matches original pattern)
+      orderWareHouseId,
+      orderWareHouseName,
+
+      // Tax - use correct breakup based on isInter flag
       productTaxes: orderBody.isInter
-        ? (prod as { interTaxBreakup?: unknown[] }).interTaxBreakup || []
-        : (prod as { intraTaxBreakup?: unknown[] }).intraTaxBreakup || [],
+        ? (anyProd.interTaxBreakup as unknown[]) || []
+        : (anyProd.intraTaxBreakup as unknown[]) || [],
 
       // Discounts
-      productDiscounts: (
-        prod as { discountDetails?: { discountId?: string; Value?: number } }
-      )?.discountDetails?.discountId
+      productDiscounts: anyProd.discountDetails?.discountId
         ? [
             {
               id: null,
-              discounId: (prod as { discountDetails?: { discountId?: string } })
-                .discountDetails?.discountId,
+              discounId: anyProd.discountDetails.discountId,
               discounCode: null,
               orderProduct: null,
-              discountPercentage: (
-                prod as { discountDetails?: { Value?: number } }
-              ).discountDetails?.Value,
+              discountPercentage: anyProd.discountDetails.Value,
             },
           ]
         : [],
 
       // Bundle products
       bundleProducts: (() => {
-        const bundleProds = (prod as { bundleProducts?: unknown[] })
-          .bundleProducts;
+        const bundleProds = anyProd.bundleProducts;
         if (Array.isArray(bundleProds) && bundleProds.length > 0) {
           return formBundleProductsPayload(
-            bundleProds as unknown as BundleProductPayload[]
+            bundleProds as BundleProductPayload[]
           );
         }
         return [];

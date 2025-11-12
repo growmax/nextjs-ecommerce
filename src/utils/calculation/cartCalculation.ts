@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import {
   cloneDeep,
   each,
@@ -1304,7 +1303,7 @@ export const calculate_volume_discount = (
           vdDetails.grandTotal - vdDetails.calculatedTotal;
       }
     });
-  } catch (_error) {
+  } catch {
     // Error handled silently
   }
   return {

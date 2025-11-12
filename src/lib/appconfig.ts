@@ -25,11 +25,9 @@ export async function getAnonymousToken(
 
 // 2. Tenant Code & Configuration API
 export async function getTenantConfig(
-  domainUrl: string,
-  accessToken?: string
+  domainUrl: string
 ): Promise<TenantConfigResponse> {
-  const context = accessToken ? { accessToken } : undefined;
-  return API.Tenant.getTenantConfig(domainUrl, context);
+  return API.Tenant.getTenantConfig(domainUrl);
 }
 
 // 3. StoreFront Configuration API (GraphQL)
@@ -110,7 +108,7 @@ export async function getDomainConfiguration(
     const accessToken = tokenResponse.accessToken;
 
     // Step 2: Get tenant configuration
-    const tenantConfig = await getTenantConfig(domain, accessToken);
+    const tenantConfig = await getTenantConfig(domain);
     const tenantCode = tenantConfig.data.tenant.tenantCode;
 
     // Step 3: Get all other data in parallel

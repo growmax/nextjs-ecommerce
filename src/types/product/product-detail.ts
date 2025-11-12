@@ -202,13 +202,27 @@ export interface OpenSearchProductResponse {
  * Extracted subset of ProductDetail for display purposes
  */
 export interface ProductDisplayData {
-  product_id: number;
+  // Legacy/raw fields (for backward compatibility)
+  product_id?: number;
+  brand_name?: string;
+  product_short_description?: string;
+  unit_list_price?: number;
+  unit_mrp?: number;
+  product_assetss?: ProductAsset[];
+  product_specifications?: ProductSpecification[];
+
+  // Normalized fields for UI usage
+  productId: number;
   title: string;
-  brand_name: string;
-  product_short_description: string;
-  unit_list_price: number;
-  unit_mrp: number;
-  product_assetss: ProductAsset[];
-  product_specifications: ProductSpecification[];
+  shortDescription: string;
+  brandName: string;
+  brandProductId: string;
+  price: number;
+  mrp: number;
+  images: ProductAsset[];
+  isAvailable: boolean;
+  isNew: boolean;
+  inStock: boolean;
+  slug: string;
 }
 

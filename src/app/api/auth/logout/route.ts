@@ -103,7 +103,7 @@ export async function POST(request: NextRequest) {
     });
 
     return nextResponse;
-  } catch (_error) {
+  } catch {
     // Logout API error occurred
     return NextResponse.json({ error: "Failed to logout" }, { status: 500 });
   }

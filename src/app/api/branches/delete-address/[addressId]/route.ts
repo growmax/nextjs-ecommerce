@@ -1,5 +1,5 @@
-import { NextRequest, NextResponse } from "next/server";
 import { cookies } from "next/headers";
+import { NextRequest, NextResponse } from "next/server";
 
 export async function DELETE(
   request: NextRequest,
@@ -50,7 +50,7 @@ export async function DELETE(
 
     const data = await response.json();
     return NextResponse.json(data);
-  } catch (_error) {
+  } catch {
     // Error in delete branch address API route
     return NextResponse.json(
       { error: "Internal server error" },

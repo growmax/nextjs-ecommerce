@@ -34,6 +34,7 @@ export const calculateVolumeDiscount = (
     taxableAmount: 0,
     grandTotal: 0,
     pfRate: 0,
+    totalTax: 0,
   };
 
   let addProd = 0;
@@ -65,7 +66,7 @@ export const calculateVolumeDiscount = (
         );
         product.taxVolumeDiscountPercentage = parseFloat(
           (
-            ((product.totalPrice + product.pfRate) *
+            ((product.totalPrice + (product.pfRate || 0)) *
               parseFloat(String(product.tax))) /
             100
           ).toFixed(precision)
@@ -97,7 +98,7 @@ export const calculateVolumeDiscount = (
               if (!inter.compound) {
                 product[`${inter.taxName}Value` as keyof CartItem] = parseFloat(
                   (
-                    ((product.totalPrice + product.pfRate) *
+                    ((product.totalPrice + (product.pfRate || 0)) *
                       inter.taxPercentage) /
                     100
                   ).toFixed(precision)
@@ -155,14 +156,14 @@ export const calculateVolumeDiscount = (
                     ((product[
                       `${inter.taxName}Value` as keyof CartItem
                     ] as number) +
-                      (product.shippingTax || 0));
+                      (Number(product.shippingTax) || 0));
                   shippingTax +=
                     (product[
                       `${inter.taxName}Value` as keyof CartItem
-                    ] as number) + (product.shippingTax || 0);
+                    ] as number) + (Number(product.shippingTax) || 0);
                   vdDetails.totalTax = shippingTax;
                   product.taxVolumeDiscountPercentage = shippingTax;
-                  shippingCompound += product.shippingTax || 0;
+                  shippingCompound += Number(product.shippingTax) || 0;
                 } else {
                   product.shippingTax = beforeTax
                     ? parseFloat(
@@ -180,11 +181,11 @@ export const calculateVolumeDiscount = (
                     ((product[
                       `${inter.taxName}Value` as keyof CartItem
                     ] as number) +
-                      (product.shippingTax || 0));
+                      (Number(product.shippingTax) || 0));
                   shippingTax +=
                     (product[
                       `${inter.taxName}Value` as keyof CartItem
-                    ] as number) + (product.shippingTax || 0);
+                    ] as number) + (Number(product.shippingTax) || 0);
                   vdDetails.totalTax = shippingTax;
                   product.taxVolumeDiscountPercentage = shippingTax;
                 }
@@ -217,7 +218,7 @@ export const calculateVolumeDiscount = (
               if (!intra.compound) {
                 product[`${intra.taxName}Value` as keyof CartItem] = parseFloat(
                   (
-                    ((product.totalPrice + product.pfRate) *
+                    ((product.totalPrice + (product.pfRate || 0)) *
                       intra.taxPercentage) /
                     100
                   ).toFixed(precision)
@@ -275,14 +276,14 @@ export const calculateVolumeDiscount = (
                     ((product[
                       `${intra.taxName}Value` as keyof CartItem
                     ] as number) +
-                      (product.shippingTax || 0));
+                      (Number(product.shippingTax) || 0));
                   shippingTax +=
                     (product[
                       `${intra.taxName}Value` as keyof CartItem
-                    ] as number) + (product.shippingTax || 0);
+                    ] as number) + (Number(product.shippingTax) || 0);
                   vdDetails.totalTax = shippingTax;
                   product.taxVolumeDiscountPercentage = shippingTax;
-                  shippingCompound += product.shippingTax || 0;
+                  shippingCompound += Number(product.shippingTax) || 0;
                 } else {
                   product.shippingTax = beforeTax
                     ? parseFloat(
@@ -300,11 +301,11 @@ export const calculateVolumeDiscount = (
                     ((product[
                       `${intra.taxName}Value` as keyof CartItem
                     ] as number) +
-                      (product.shippingTax || 0));
+                      (Number(product.shippingTax) || 0));
                   shippingTax +=
                     (product[
                       `${intra.taxName}Value` as keyof CartItem
-                    ] as number) + (product.shippingTax || 0);
+                    ] as number) + (Number(product.shippingTax) || 0);
                   vdDetails.totalTax = shippingTax;
                   product.taxVolumeDiscountPercentage = shippingTax;
                 }
@@ -429,6 +430,7 @@ export const calculateVolumeDiscountV2 = (
     taxableAmount: 0,
     grandTotal: 0,
     pfRate: 0,
+    totalTax: 0,
     insuranceCharges,
     calculatedTotal: 0,
     roundingAdjustment: 0,
@@ -486,7 +488,7 @@ export const calculateVolumeDiscountV2 = (
       );
 
       product.taxVolumeDiscountPercentage = parseFloat(
-        (((product.totalPrice + product.pfRate) * product.tax) / 100).toFixed(
+        (((product.totalPrice + (product.pfRate || 0)) * product.tax) / 100).toFixed(
           precision
         )
       );
@@ -520,7 +522,7 @@ export const calculateVolumeDiscountV2 = (
               product[`${inter.taxName}Value` as keyof VolumeDiscountItem] =
                 parseFloat(
                   (
-                    ((product.totalPrice + product.pfRate) *
+                    (((product.totalPrice ?? 0) + (product.pfRate || 0)) *
                       inter.taxPercentage) /
                     100
                   ).toFixed(precision)
@@ -579,11 +581,11 @@ export const calculateVolumeDiscountV2 = (
                   ((product[
                     `${inter.taxName}Value` as keyof VolumeDiscountItem
                   ] as number) +
-                    (product.shippingTax || 0));
+                    (Number(product.shippingTax) || 0));
                 shippingTax +=
                   (product[
                     `${inter.taxName}Value` as keyof VolumeDiscountItem
-                  ] as number) + (product.shippingTax || 0);
+                  ] as number) + (Number(product.shippingTax) || 0);
                 vdDetails.totalTax = shippingTax;
                 product.taxVolumeDiscountPercentage = shippingTax;
                 shippingCompound = product.shippingTax || 0;
@@ -602,11 +604,11 @@ export const calculateVolumeDiscountV2 = (
                   ((product[
                     `${inter.taxName}Value` as keyof VolumeDiscountItem
                   ] as number) +
-                    (product.shippingTax || 0));
+                    (Number(product.shippingTax) || 0));
                 shippingTax +=
                   (product[
                     `${inter.taxName}Value` as keyof VolumeDiscountItem
-                  ] as number) + (product.shippingTax || 0);
+                  ] as number) + (Number(product.shippingTax) || 0);
                 vdDetails.totalTax = shippingTax;
                 product.taxVolumeDiscountPercentage = shippingTax;
               }
@@ -645,7 +647,7 @@ export const calculateVolumeDiscountV2 = (
               product[`${intra.taxName}Value` as keyof VolumeDiscountItem] =
                 parseFloat(
                   (
-                    ((product.totalPrice + product.pfRate) *
+                    (((product.totalPrice ?? 0) + (product.pfRate || 0)) *
                       intra.taxPercentage) /
                     100
                   ).toFixed(precision)
@@ -704,11 +706,11 @@ export const calculateVolumeDiscountV2 = (
                   ((product[
                     `${intra.taxName}Value` as keyof VolumeDiscountItem
                   ] as number) +
-                    (product.shippingTax || 0));
+                    (Number(product.shippingTax) || 0));
                 shippingTax +=
                   (product[
                     `${intra.taxName}Value` as keyof VolumeDiscountItem
-                  ] as number) + (product.shippingTax || 0);
+                  ] as number) + (Number(product.shippingTax) || 0);
                 vdDetails.totalTax = shippingTax;
                 product.taxVolumeDiscountPercentage = shippingTax;
                 shippingCompound += product.shippingTax || 0;
@@ -727,11 +729,11 @@ export const calculateVolumeDiscountV2 = (
                   ((product[
                     `${intra.taxName}Value` as keyof VolumeDiscountItem
                   ] as number) +
-                    (product.shippingTax || 0));
+                    (Number(product.shippingTax) || 0));
                 shippingTax +=
                   (product[
                     `${intra.taxName}Value` as keyof VolumeDiscountItem
-                  ] as number) + (product.shippingTax || 0);
+                  ] as number) + (Number(product.shippingTax) || 0);
                 vdDetails.totalTax = shippingTax;
                 product.taxVolumeDiscountPercentage = shippingTax;
               }
@@ -809,9 +811,7 @@ export const calculateVolumeDiscountV2 = (
           vdDetails.grandTotal - vdDetails.calculatedTotal;
       }
     });
-  } catch (error) {
-    console.error("Error in volume discount calculation:", error);
-  }
+  } catch {}
 
   return {
     products: volumeDiscountData,

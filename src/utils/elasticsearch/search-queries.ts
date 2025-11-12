@@ -52,7 +52,7 @@ const sanitizeSearchValue = (value: string): string => {
   return value.replace(/[+\-=&|><!(){}[\]^"~*?:\\/]/g, "\\$&");
 };
 
-interface ElasticsearchQuery {
+export interface ElasticSearchQuery {
   size: number;
   _source: readonly string[];
   query: {
@@ -96,7 +96,7 @@ interface ElasticsearchQuery {
   };
 }
 
-export const buildProductSearchQuery = (searchText: string): ElasticsearchQuery => {
+export const buildProductSearchQuery = (searchText: string): ElasticSearchQuery => {
   const validatedText = searchTextSchema.parse(searchText);
   const sanitizedQuery = sanitizeSearchValue(validatedText);
 

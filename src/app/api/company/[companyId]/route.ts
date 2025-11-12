@@ -1,7 +1,7 @@
-import { NextRequest, NextResponse } from "next/server";
-import { cookies } from "next/headers";
-import { UserApiService } from "@/lib/services/UserApiService";
 import { JWTService } from "@/lib/services/JWTService";
+import { UserApiService } from "@/lib/services/UserApiService";
+import { cookies } from "next/headers";
+import { NextRequest, NextResponse } from "next/server";
 
 export async function GET(
   request: NextRequest,
@@ -66,12 +66,7 @@ export async function GET(
         Expires: "0",
       },
     });
-  } catch (error) {
-    // Log the error for debugging (only in development)
-    if (process.env.NODE_ENV === "development") {
-      // Error details available for troubleshooting
-    }
-
+  } catch (error: unknown) {
     return NextResponse.json(
       {
         error: "Failed to fetch company data",

@@ -98,9 +98,8 @@ export class SellerWarehouseService extends BaseService<SellerWarehouseService> 
       }
 
       return null;
-    } catch (error) {
-      // Re-throw the error so we can see it in the network tab
-      throw error;
+    } catch {
+      return null;
     }
   }
 

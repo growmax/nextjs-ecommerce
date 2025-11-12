@@ -137,9 +137,7 @@ const CompanyDialogBox = ({
         ? resp.data.map(toOption).filter(o => o.value)
         : [];
       setCountries(list);
-      console.debug("CompanyDialogBox: loaded countries count", list.length);
-    } catch (err) {
-      console.error("CompanyDialogBox: failed to load countries", err);
+    } catch {
       setCountries([]);
     } finally {
       setCountriesLoading(false);
@@ -170,11 +168,7 @@ const CompanyDialogBox = ({
           : raw;
         const list = filtered.map(toOption).filter(o => o.value);
         setStates(list);
-        console.debug("CompanyDialogBox: loaded states count", list.length, {
-          countryValue,
-        });
-      } catch (err) {
-        console.error("CompanyDialogBox: failed to load states", err);
+      } catch {
         setStates([]);
       } finally {
         setStatesLoading(false);
@@ -207,11 +201,7 @@ const CompanyDialogBox = ({
           : raw;
         const list = filtered.map(toOption).filter(o => o.value);
         setDistricts(list);
-        console.debug("CompanyDialogBox: loaded districts count", list.length, {
-          stateValue,
-        });
-      } catch (err) {
-        console.error("CompanyDialogBox: failed to load districts", err);
+      } catch {
         setDistricts([]);
       } finally {
         setDistrictsLoading(false);
@@ -280,18 +270,8 @@ const CompanyDialogBox = ({
       let resolvedCompanyId: number | undefined;
       try {
         const token = await AuthStorage.getValidAccessToken();
-        // debug log token presence
-        console.debug(
-          "CompanyDialogBox.onSubmit: access token present:",
-          !!token
-        );
         if (token) {
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
           const payload: any = JWTService.getInstance().decodeToken(token);
-          console.debug(
-            "CompanyDialogBox.onSubmit: decoded token payload:",
-            payload
-          );
           resolvedUserId = payload?.userId ?? payload?.id ?? payload?.sub;
           resolvedCompanyId =
             payload?.companyId ?? payload?.company?.id ?? payload?.companyId;
@@ -299,12 +279,8 @@ const CompanyDialogBox = ({
             resolvedUserId = Number(resolvedUserId);
           if (resolvedCompanyId !== undefined)
             resolvedCompanyId = Number(resolvedCompanyId);
-          console.debug("CompanyDialogBox.onSubmit: resolved ids", {
-            resolvedUserId,
-            resolvedCompanyId,
-          });
         }
-      } catch (_e) {
+      } catch {
         // ignore - we'll rely on server-side resolution if available
       }
 
@@ -325,10 +301,6 @@ const CompanyDialogBox = ({
 
         // If we couldn't resolve user/company ids locally, stop early to avoid sending a bad request
         if (resolvedUserId === undefined || resolvedCompanyId === undefined) {
-          console.error(
-            "CompanyDialogBox.onSubmit: missing userId or companyId, aborting create",
-            { resolvedUserId, resolvedCompanyId }
-          );
           throw new Error(
             "Missing authentication (userId/companyId) - cannot create branch"
           );
@@ -338,8 +310,6 @@ const CompanyDialogBox = ({
         payload.companyId = resolvedCompanyId as number;
         payload.userId = resolvedUserId as number;
 
-        // debug: inspect payload being sent
-        console.debug("CompanyDialogBox.onSubmit: create payload:", payload);
         await CompanyService.createBranchAddress(payload);
       } else {
         // update
@@ -355,19 +325,11 @@ const CompanyDialogBox = ({
         }
 
         if (!addrWithId.id && branchId) {
-          console.debug(
-            "CompanyDialogBox.onSubmit: using branchId as fallback for address id:",
-            branchId
-          );
           addrWithId.id = Number(branchId);
         }
 
         if (!addrWithId.id) {
           setIsSubmitting(false);
-          console.error(
-            "CompanyDialogBox.onSubmit: missing address id for update, aborting",
-            { initialData, branchId, addrWithId }
-          );
           throw new Error(
             "Missing address id for update. Please re-open the branch or refresh the list and try again."
           );
@@ -399,10 +361,6 @@ const CompanyDialogBox = ({
         };
 
         if (resolvedUserId === undefined || resolvedCompanyId === undefined) {
-          console.error(
-            "CompanyDialogBox.onSubmit: missing userId or companyId, aborting update",
-            { resolvedUserId, resolvedCompanyId }
-          );
           throw new Error(
             "Missing authentication (userId/companyId) - cannot update branch"
           );
@@ -411,21 +369,13 @@ const CompanyDialogBox = ({
         // attach resolved ids to the payload explicitly
         payload.companyId = resolvedCompanyId as number;
         payload.userId = resolvedUserId as number;
-
-        console.debug("CompanyDialogBox.onSubmit: update payload:", payload);
-        console.debug(
-          "CompanyDialogBox.onSubmit: resolved address id:",
-          addrWithId.id
-        );
         await CompanyService.updateBranchAddress(payload);
       }
 
       // Call onSuccess callback to refresh parent data
       onSuccess?.();
       onOpenChange(false);
-    } catch (error) {
-      console.error("Failed to save branch address:", error);
-      // TODO: show toast/notification
+    } catch {
     } finally {
       setIsSubmitting(false);
     }

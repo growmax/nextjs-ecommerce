@@ -73,7 +73,7 @@ function AddMoreProducts({
         });
 
         setProducts(result.data as Product[]);
-      } catch (_error) {
+      } catch {
         setProducts([]);
       } finally {
         setIsLoading(false);

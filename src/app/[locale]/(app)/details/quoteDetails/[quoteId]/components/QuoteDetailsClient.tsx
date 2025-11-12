@@ -207,7 +207,6 @@ export default function QuoteDetailsClient({
 
   // Extract data for header - quoteName is inside quotationDetails[0]
   const quoteName =
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     (displayQuoteDetails?.quotationDetails as any)?.[0]?.quoteName ||
     quoteDetails?.data?.quotationDetails?.[0]?.quoteName ||
     quoteDetails?.data?.quoteName ||
@@ -220,7 +219,6 @@ export default function QuoteDetailsClient({
   const displayQuoteId =
     displayQuoteDetails?.quotationIdentifier ||
     quoteDetails?.data?.quotationIdentifier ||
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     (displayQuoteDetails?.quotationDetails as any)?.[0]?.quotationIdentifier ||
     quoteDetails?.data?.quotationDetails?.[0]?.quotationIdentifier ||
     quoteIdentifier ||
@@ -317,7 +315,7 @@ export default function QuoteDetailsClient({
         };
         setQuoteDetails(updatedQuoteDetails);
       }
-    } catch (error) {
+    } catch {
       throw error; // Re-throw to let the dialog handle the error
     }
   };
@@ -397,12 +395,11 @@ export default function QuoteDetailsClient({
   // Extract products for display
   const products = useMemo(() => {
     const rawProducts =
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       (displayQuoteDetails?.quotationDetails as any)?.[0]?.dbProductDetails ||
       quoteDetails?.data?.quotationDetails?.[0]?.dbProductDetails ||
       [];
     // Transform to match ProductItem interface while preserving all fields including productTaxes
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
     return rawProducts.map((product: any) => {
       // Prioritize askedQuantity for quantity display
       const quantity =

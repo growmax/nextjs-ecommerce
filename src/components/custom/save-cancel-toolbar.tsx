@@ -23,6 +23,7 @@ const SaveCancelToolbar = React.forwardRef<
       cancelText = "Cancel",
       className,
       style,
+      anchorSelector,
       ...props
     },
     ref
@@ -31,6 +32,7 @@ const SaveCancelToolbar = React.forwardRef<
     const [mounted, setMounted] = React.useState(false);
     const [isScrolled, setIsScrolled] = React.useState(false);
     const [isSidebarOpen, setIsSidebarOpen] = React.useState(false);
+    const [anchorOffset, setAnchorOffset] = React.useState<number | null>(null);
 
     React.useEffect(() => {
       setMounted(true);
@@ -118,7 +120,42 @@ const SaveCancelToolbar = React.forwardRef<
       };
     }, []);
 
+    React.useEffect(() => {
+      if (!anchorSelector) {
+        setAnchorOffset(null);
+        return;
+      }
+
+      const updateOffset = () => {
+        const element = document.querySelector(anchorSelector);
+        if (element instanceof HTMLElement) {
+          const rect = element.getBoundingClientRect();
+          setAnchorOffset(rect.bottom);
+        }
+      };
+
+      updateOffset();
+
+      window.addEventListener("resize", updateOffset);
+      window.addEventListener("scroll", updateOffset, true);
+
+      let observer: ResizeObserver | null = null;
+      const anchorElement = document.querySelector(anchorSelector);
+      if (anchorElement instanceof HTMLElement && "ResizeObserver" in window) {
+        observer = new ResizeObserver(updateOffset);
+        observer.observe(anchorElement);
+      }
+
+      return () => {
+        window.removeEventListener("resize", updateOffset);
+        window.removeEventListener("scroll", updateOffset, true);
+        observer?.disconnect();
+      };
+    }, [anchorSelector]);
+
     if (!show || !mounted || isScrolled) return null;
+
+    const computedTop = anchorOffset ?? (isMobile ? 68 : 64);
 
     const toolbarContent = (
       <div
@@ -132,7 +169,7 @@ const SaveCancelToolbar = React.forwardRef<
         )}
         style={{
           position: "fixed !important" as React.CSSProperties["position"],
-          top: "64px !important",
+          top: `${computedTop}px !important`,
           left: isMobile
             ? "0 !important"
             : isSidebarOpen

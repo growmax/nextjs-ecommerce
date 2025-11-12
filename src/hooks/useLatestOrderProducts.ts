@@ -5,22 +5,22 @@ import { useQuery, type UseQueryOptions } from "@tanstack/react-query";
 import { useMemo } from "react";
 
 interface UseLatestOrderProductsParams {
-  products?: any[]; // eslint-disable-line @typescript-eslint/no-explicit-any
-  currency?: any; // eslint-disable-line @typescript-eslint/no-explicit-any
-  sellerCurrency?: any; // eslint-disable-line @typescript-eslint/no-explicit-any
+  products?: any[];  
+  currency?: any;  
+  sellerCurrency?: any;  
   isInter?: boolean;
   taxExemption?: boolean;
   isCloneReOrder?: boolean;
   isPlaceOrder?: boolean;
   isSprRequested?: boolean;
-  quoteSettings?: any; // eslint-disable-line @typescript-eslint/no-explicit-any
+  quoteSettings?: any;  
   roundOff?: number;
   elasticIndex?: string;
   enabled?: boolean;
 }
 
 type UseLatestOrderProductsOptions = Omit<
-  UseQueryOptions<any[], Error>, // eslint-disable-line @typescript-eslint/no-explicit-any
+  UseQueryOptions<any[], Error>,  
   "queryKey" | "queryFn" | "enabled"
 >;
 

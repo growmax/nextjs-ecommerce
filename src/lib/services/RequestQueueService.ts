@@ -188,14 +188,6 @@ export class RequestQueueService {
         this.queue.push(request);
         this.sortQueue();
       } else {
-        if (process.env.NODE_ENV === "development") {
-          // eslint-disable-next-line no-console
-          console.error(
-            `❌ Request ${request.id} failed after ${request.maxRetries} attempts:`,
-            error
-          );
-        }
-
         request.reject(error);
       }
     }

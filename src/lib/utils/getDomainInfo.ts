@@ -6,7 +6,10 @@
 
 import { headers } from "next/headers";
 
-export function getDomainInfo() {
+export async function getDomainInfo(): Promise<{
+  domainUrl: string;
+  origin: string;
+}> {
   const isServer = typeof window === "undefined";
   const env = process.env.NODE_ENV;
 
@@ -20,14 +23,14 @@ export function getDomainInfo() {
         : `http://${defaultDomain}`);
 
     try {
-      const headersList = headers();
+      const headersList = await headers();
       const headerDomain =
-        headersList.get("x-tenant-domain") ||
-        headersList.get("host") ||
+        headersList.get("x-tenant-domain") ??
+        headersList.get("host") ??
         defaultDomain;
       const headerOrigin =
-        headersList.get("x-tenant-origin") ||
-        headersList.get("origin") ||
+        headersList.get("x-tenant-origin") ??
+        headersList.get("origin") ??
         (env === "production"
           ? `https://${headerDomain}`
           : `http://${headerDomain}`);
@@ -42,13 +45,4 @@ export function getDomainInfo() {
     const origin = window.location.origin;
     return { domainUrl, origin };
   }
-  // Fallback (should not reach here)
-  return {
-    domainUrl: process.env.DEFAULT_DOMAIN || "shwingstetter.myapptino.com",
-    origin:
-      process.env.DEFAULT_ORIGIN ||
-      (env === "production"
-        ? `https://${process.env.DEFAULT_DOMAIN || "shwingstetter.myapptino.com"}`
-        : `http://${process.env.DEFAULT_DOMAIN || "shwingstetter.myapptino.com"}`),
-  };
 }

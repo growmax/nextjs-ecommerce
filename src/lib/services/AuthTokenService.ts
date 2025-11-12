@@ -1,6 +1,6 @@
 // Auth Token Service class for managing authentication tokens
-import { JWTService } from "./JWTService";
 import { JWTPayload } from "@/lib/interfaces/JWTInterfaces";
+import { JWTService } from "./JWTService";
 import TokenRefreshService from "./TokenRefreshService";
 
 export class AuthTokenService {
@@ -79,7 +79,7 @@ export class AuthTokenService {
 
       // Return true if token expires within 2 minutes
       return timeUntilExpiry < 120;
-    } catch (_error) {
+    } catch {
       return true; // Treat parsing errors as expired
     }
   }

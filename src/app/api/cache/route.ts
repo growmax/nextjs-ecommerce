@@ -54,10 +54,7 @@ export async function DELETE(request: NextRequest) {
       });
     }
 
-    return NextResponse.json(
-      { error: "Invalid request" },
-      { status: 400 }
-    );
+    return NextResponse.json({ error: "Invalid request" }, { status: 400 });
   } catch (error) {
     return NextResponse.json(
       {
@@ -81,4 +78,3 @@ export async function GET() {
     },
   });
 }
-

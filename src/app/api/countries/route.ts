@@ -1,5 +1,5 @@
-import { NextRequest, NextResponse } from "next/server";
 import { cookies } from "next/headers";
+import { NextRequest, NextResponse } from "next/server";
 
 export async function GET(request: NextRequest) {
   try {
@@ -42,7 +42,7 @@ export async function GET(request: NextRequest) {
     // Countries API Response processed successfully
 
     return NextResponse.json(data);
-  } catch (_error) {
+  } catch {
     // Error in countries API route
     return NextResponse.json(
       { error: "Internal server error" },

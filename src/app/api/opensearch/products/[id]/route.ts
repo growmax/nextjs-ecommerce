@@ -21,7 +21,10 @@ const OPENSEARCH_URL =
   process.env.NEXT_PUBLIC_OPENSEARCH_URL ||
   "https://api.myapptino.com/opensearch/invocations";
 
-export async function GET(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+export async function GET(
+  request: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+) {
   const { id } = await params;
 
   try {
@@ -135,12 +138,6 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
       }
     );
   } catch (error) {
-    // Log error in development mode only
-    if (process.env.NODE_ENV === "development") {
-      // eslint-disable-next-line no-console
-      console.error("OpenSearch API Error:", error);
-    }
-
     // Handle axios errors
     if (axios.isAxiosError(error)) {
       const status = error.response?.status || 500;

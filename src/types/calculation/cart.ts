@@ -4,8 +4,12 @@ import type {
   DiscountRange,
   PriceListDiscountData,
   VolumeDiscountDetails,
+  VolumeDiscountData,
 } from "./discount";
 import type { HsnDetails, TaxBreakup, TaxReq } from "./tax";
+
+// Re-export types that are commonly used with cart
+export type { VolumeDiscountDetails, VolumeDiscountData };
 
 // Core cart item structure used throughout calculations
 export interface CartItem {
@@ -14,7 +18,7 @@ export interface CartItem {
   quantity: number;
   askedQuantity?: number;
   unitPrice: number;
-  totalPrice: number;
+  totalPrice: number; // ensure totalPrice is always defined once item is in cart
   totalLP?: number;
   discount?: number;
   discountedPrice?: number;
@@ -95,7 +99,7 @@ export interface CartItem {
   disc_prd_related_obj?: PriceListDiscountData;
   isApprovalRequired?: boolean;
   // Dynamic tax properties (added at runtime)
-  [taxName: string]: unknown;
+  [taxName: string]: any;
 }
 
 // Bundle product structure
@@ -137,7 +141,7 @@ export interface CartValue {
   insuranceCharges?: number;
   taxableAmount?: number;
   // Dynamic tax totals (added at runtime)
-  [taxName: string]: unknown;
+  [taxName: string]: number | string | boolean | undefined;
 }
 
 // Seller cart structure

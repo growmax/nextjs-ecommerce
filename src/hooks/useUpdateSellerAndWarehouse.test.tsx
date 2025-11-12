@@ -1,6 +1,5 @@
 import { render, waitFor } from "@testing-library/react";
 import React from "react";
-import type { UseFormSetValue, UseFormWatch } from "react-hook-form";
 
 // Mocks
 jest.mock("@/lib/api", () => ({
@@ -17,14 +16,15 @@ import { SellerWarehouseService } from "@/lib/api";
 import { useUpdateSellerAndWarehouse } from "./useUpdateSellerAndWarehouse";
 
 describe("useUpdateSellerAndWarehouse", () => {
-  // Minimal typings for the test harness
-  type OrderDetailsFormValues = Record<string, unknown>;
+  type HookParams = Parameters<typeof useUpdateSellerAndWarehouse>;
+  type SetValueFn = HookParams[0];
+  type WatchFn = HookParams[1];
   type ApiType = ReturnType<typeof useUpdateSellerAndWarehouse>;
 
   // setValue/watch mocks typed to match react-hook-form generics
-  const setValueMock =
-    jest.fn() as unknown as UseFormSetValue<OrderDetailsFormValues>;
-  const watchMock = jest.fn((path: string) => {
+  const rawSetValueMock = jest.fn();
+  const setValueMock = rawSetValueMock as unknown as SetValueFn;
+  const rawWatchMock = jest.fn((path: string) => {
     if (path === "orderDetails.0.dbProductDetails") {
       return [
         {
@@ -34,17 +34,15 @@ describe("useUpdateSellerAndWarehouse", () => {
       ];
     }
     return undefined;
-  }) as unknown as UseFormWatch<OrderDetailsFormValues>;
+  });
+  const watchMock = rawWatchMock as unknown as WatchFn;
 
   beforeEach(() => {
     jest.clearAllMocks();
   });
 
   function TestHarness({ onReady }: { onReady: (api: ApiType) => void }) {
-    const api = useUpdateSellerAndWarehouse(
-      setValueMock as unknown as UseFormSetValue<unknown>,
-      watchMock
-    );
+    const api = useUpdateSellerAndWarehouse(setValueMock, watchMock);
     React.useEffect(() => {
       // Call onReady but ensure we don't return its value (hooks expect a cleanup function or nothing)
       void onReady(api);

@@ -481,8 +481,7 @@ export async function getLatestTaxData({
     }
 
     return resultSet || products;
-  } catch (error) {
-    console.error("Error in getLatestTaxData:", error);
+  } catch {
     return products; // Return original products on error
   }
 }

@@ -10,6 +10,7 @@ interface SectionCardProps {
   headerClassName?: string;
   contentClassName?: string;
   headerActions?: React.ReactNode;
+  showSeparator?: boolean;
 }
 
 export default function SectionCard({
@@ -19,6 +20,7 @@ export default function SectionCard({
   headerClassName,
   contentClassName,
   headerActions,
+  showSeparator = true,
 }: SectionCardProps) {
   return (
     <Card className={className}>
@@ -29,7 +31,7 @@ export default function SectionCard({
             <div className="flex items-center gap-2">{headerActions}</div>
           )}
         </div>
-        <Separator className="mt-2" />
+        {showSeparator && <Separator className="mt-2" />}
       </CardHeader>
 
       <CardContent className={contentClassName}>{children}</CardContent>

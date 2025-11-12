@@ -7,8 +7,8 @@ import type { CartItem } from "@/types/calculation/cart";
 interface UseCashDiscountHandlersParams {
   products: CartItem[];
   setProducts: (products: CartItem[]) => void;
-  cartValue?: any; // eslint-disable-line @typescript-eslint/no-explicit-any
-  setCartValue?: (cartValue: any) => void; // eslint-disable-line @typescript-eslint/no-explicit-any
+  cartValue?: any;  
+  setCartValue?: (cartValue: any) => void;  
   isOrder?: boolean;
 }
 

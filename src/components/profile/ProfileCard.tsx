@@ -1,5 +1,6 @@
 "use client";
 
+import { ReactNode } from "react";
 import { User } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -25,6 +26,7 @@ interface ProfileCardProps {
   phoneVerified?: boolean;
   isLoading?: boolean;
   dataLoading?: boolean;
+  headerActions?: ReactNode;
 }
 
 export function ProfileCard({
@@ -35,6 +37,7 @@ export function ProfileCard({
   phoneVerified = false,
   isLoading = false,
   dataLoading = false,
+  headerActions,
 }: ProfileCardProps) {
   if (dataLoading || !profile) {
     return (
@@ -80,11 +83,14 @@ export function ProfileCard({
 
   return (
     <Card className="w-full">
-      <CardHeader>
+      <CardHeader className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
         <CardTitle className="flex items-center gap-2">
           <User className="h-5 w-5" />
           Personal Information
         </CardTitle>
+        {headerActions ? (
+          <div className="flex items-center gap-2">{headerActions}</div>
+        ) : null}
       </CardHeader>
       <CardContent className="space-y-6">
         {/* Profile Image */}

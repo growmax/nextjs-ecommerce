@@ -1,20 +1,14 @@
 "use client";
 
-import React, {
-  useRef,
-  useState,
-  useCallback,
-  useEffect,
-  useMemo,
-} from "react";
 import SideDrawer from "@/components/custom/sidedrawer";
+import QuoteStatusService from "@/lib/api/services/StatusService";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
+  FormMethods,
   QuoteFilterForm,
   QuoteFilterFormData,
   StatusOption,
-  FormMethods,
 } from "./QuoteFilterForm";
-import QuoteStatusService from "@/lib/api/services/StatusService";
 
 interface QuoteFilterDrawerProps {
   open: boolean;
@@ -103,7 +97,7 @@ export function FilterDrawer({
       );
 
       setStatusOptions(uniqueOptions);
-    } catch (_error) {
+    } catch {
       setStatusOptions([]); // Empty, no fallback
     }
   }, [userId, companyId, statusModule]);
