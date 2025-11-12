@@ -1,0 +1,41 @@
+name: 🏷️ Auto Assign Issue ID (#)
+on:
+  issues:
+    types: [opened]
+
+jobs:
+  assign-id:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Determine issue type prefix
+        id: prefix
+        run: |
+          LABELS=$(echo "${{ toJson(github.event.issue.labels) }}" | tr '[:upper:]' '[:lower:]')
+          PREFIX="GEN"
+          if [[ "$LABELS" == *"bug"* ]]; then PREFIX="BUG"
+          elif [[ "$LABELS" == *"feature"* ]]; then PREFIX="FEAT"
+          elif [[ "$LABELS" == *"refactor"* ]]; then PREFIX="REFACTOR"
+          elif [[ "$LABELS" == *"hotfix"* ]]; then PREFIX="HOTFIX"
+          fi
+          echo "prefix=$PREFIX" >> $GITHUB_OUTPUT
+
+      - name: Add ID to title and comment
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const prefix = "${{ steps.prefix.outputs.prefix }}"
+            const issueNumber = context.issue.number
+            const customId = `${prefix}-${issueNumber.toString().padStart(3, '0')}`
+
+            // Update issue title
+            await github.rest.issues.update({
+              ...context.issue,
+              title: `[${customId}] ${context.payload.issue.title}`
+            })
+
+            // Add comment for visibility
+            await github.rest.issues.createComment({
+              ...context.issue,
+              body: `🆔 Assigned ID: **${customId}**`
+            })
