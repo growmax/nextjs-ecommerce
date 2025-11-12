@@ -36,6 +36,9 @@ jobs:
       - name: Install dependencies
         run: yarn install --immutable
 
+      - name: Generate Next.js types
+        run: yarn next typegen
+
       - name: Lint
         run: yarn lint
 
