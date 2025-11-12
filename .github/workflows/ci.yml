@@ -21,11 +21,11 @@ jobs:
           node-version: 20
           cache: "yarn"
 
-      - name: Enable Corepack (Yarn 4)
+      - name: Enable Corepack
         run: corepack enable
 
       - name: Install dependencies
-        run: yarn install
+        run: yarn install --immutable
 
       - name: Lint
         run: yarn lint
