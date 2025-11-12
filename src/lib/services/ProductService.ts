@@ -52,7 +52,7 @@ export class ProductService {
         "get" // queryType
       );
       return product;
-    } catch (_error) {
+    } catch {
       return null;
     }
   }

@@ -51,7 +51,7 @@ export function PasswordChangeDialog({
     try {
       await onPasswordChange({ otp, newPassword });
       handleClose();
-    } catch (_error) {
+    } catch {
       // Error handling should be done by parent component
     } finally {
       setIsLoading(false);
@@ -62,7 +62,7 @@ export function PasswordChangeDialog({
     if (onSendOtp) {
       try {
         await onSendOtp();
-      } catch (_error) {
+      } catch {
         // Error handling should be done by parent component
       }
     }

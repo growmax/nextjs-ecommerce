@@ -1,14 +1,14 @@
 "use client";
 
-import * as React from "react";
+import { Button } from "@/components/ui/button";
 import {
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { Button } from "@/components/ui/button";
 import { Pencil } from "lucide-react";
+import * as React from "react";
 
 export interface RequestEditDialogProps {
   open: boolean;
@@ -30,9 +30,7 @@ export function RequestEditDialog({
       setIsSubmitting(true);
       await onConfirm();
       onOpenChange(false);
-    } catch (error) {
-      // Error handling is done in the parent component
-      throw error;
+    } catch {
     } finally {
       setIsSubmitting(false);
     }

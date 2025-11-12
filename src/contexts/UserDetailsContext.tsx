@@ -1,8 +1,8 @@
 "use client";
 
-import React, { createContext, useContext, useState, useCallback } from "react";
-import { UserDetails } from "@/lib/interfaces/UserInterfaces";
 import { AuthStorage } from "@/lib/auth";
+import { UserDetails } from "@/lib/interfaces/UserInterfaces";
+import React, { createContext, useCallback, useContext, useState } from "react";
 
 /**
  * Consolidated User Details Context
@@ -27,7 +27,9 @@ interface UserDetailsContextData {
   checkAuth: () => boolean;
 }
 
-const UserDetailsContext = createContext<UserDetailsContextData | undefined>(undefined);
+const UserDetailsContext = createContext<UserDetailsContextData | undefined>(
+  undefined
+);
 
 export const useUserDetails = () => {
   const context = useContext(UserDetailsContext);
@@ -61,8 +63,6 @@ export const useIsAuthenticated = () => {
 // Backward compatibility - these will work but are deprecated
 export const useUserSession = () => {
   const { user, isLoading, error } = useUserDetails();
-  // eslint-disable-next-line no-console
-  console.warn('useUserSession is deprecated. Use useUserDetails() instead.');
   return { user, isLoading, error };
 };
 
@@ -89,14 +89,21 @@ export function UserDetailsProvider({
   });
   const [isLoading] = useState(false);
 
-  const login = useCallback((
-    tokens: { accessToken: string; refreshToken?: string; expiresIn?: number },
-    userData: UserDetails
-  ) => {
-    AuthStorage.setTokens(tokens);
-    setUser(userData);
-    setIsAuthenticated(true);
-  }, []);
+  const login = useCallback(
+    (
+      tokens: {
+        accessToken: string;
+        refreshToken?: string;
+        expiresIn?: number;
+      },
+      userData: UserDetails
+    ) => {
+      AuthStorage.setTokens(tokens);
+      setUser(userData);
+      setIsAuthenticated(true);
+    },
+    []
+  );
 
   const logout = useCallback(async () => {
     await AuthStorage.logout();
@@ -120,7 +127,7 @@ export function UserDetailsProvider({
     isAuthenticated,
     isLoading,
     user,
-    error: user ? null : (isAuthenticated ? "No user session" : null),
+    error: user ? null : isAuthenticated ? "No user session" : null,
     login,
     logout,
     checkAuth,

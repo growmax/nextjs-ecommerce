@@ -1,3 +1,5 @@
+import { CartItem, PricingSource } from "./cart";
+
 // Discount range structure
 export interface DiscountRange {
   min_qty: number;

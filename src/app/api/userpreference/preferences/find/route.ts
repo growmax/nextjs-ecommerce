@@ -1,5 +1,5 @@
-import { NextRequest, NextResponse } from "next/server";
 import PreferenceService from "@/lib/api/services/PreferenceService";
+import { NextRequest, NextResponse } from "next/server";
 
 function getDataFromToken(
   token: string

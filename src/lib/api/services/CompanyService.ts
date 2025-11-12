@@ -442,14 +442,11 @@ export class CompanyService extends BaseService<CompanyService> {
       const accessToken = await AuthStorage.getValidAccessToken();
       if (accessToken) {
         try {
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
           const payload: any =
             JWTService.getInstance().decodeToken(accessToken);
           userId = userId ?? payload?.userId ?? payload?.id ?? payload?.sub;
           companyId = companyId ?? payload?.companyId;
-        } catch (_e) {
-          // ignore decode error; handled below
-        }
+        } catch {}
       }
     }
 
@@ -509,12 +506,10 @@ export class CompanyService extends BaseService<CompanyService> {
 
       const jwtService = JWTService.getInstance();
       try {
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const payload: any = jwtService.decodeToken(accessToken);
         companyId = payload?.companyId;
         if (!companyId) return null;
-      } catch (_e) {
-        // invalid token
+      } catch {
         return null;
       }
     }
@@ -523,6 +518,17 @@ export class CompanyService extends BaseService<CompanyService> {
       `/companys/${companyId}`,
       undefined,
       "GET"
+    )) as CompanyApiResponse;
+  }
+
+  async updateCompanyProfile(
+    companyId: number,
+    payload: Partial<CompanyApiResponse["data"]>
+  ): Promise<CompanyApiResponse> {
+    return (await this.call(
+      `/companys/${companyId}`,
+      payload,
+      "PUT"
     )) as CompanyApiResponse;
   }
 

@@ -137,8 +137,8 @@ export default function EditOrderPage({ params }: EditOrderPageProps) {
     null
   );
   const [cashDiscountApplied, setCashDiscountApplied] = useState(false);
-  const [cashDiscountTerms, setCashDiscountTerms] = useState<any>(null); // eslint-disable-line @typescript-eslint/no-explicit-any
-  const [prevPaymentTerms, setPrevPaymentTerms] = useState<any>(null); // eslint-disable-line @typescript-eslint/no-explicit-any
+  const [cashDiscountTerms, setCashDiscountTerms] = useState<any>(null);
+  const [prevPaymentTerms, setPrevPaymentTerms] = useState<any>(null);
   const [confirmDialogOpen, setConfirmDialogOpen] = useState(false);
 
   const { user } = useCurrentUser();
@@ -585,8 +585,7 @@ export default function EditOrderPage({ params }: EditOrderPageProps) {
         });
       }
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [updatedProducts, updatingProducts]);
+  }, [updatedProducts, updatingProducts, orderDetails]);
 
   // Load params asynchronously
   useEffect(() => {
@@ -645,8 +644,7 @@ export default function EditOrderPage({ params }: EditOrderPageProps) {
       // Use the hook's mutate function to refresh data
       await fetchOrderResponseMutate();
       toast.success("Order details refreshed successfully");
-    } catch (error) {
-      console.error("Error refreshing order details:", error);
+    } catch {
       toast.error("Failed to refresh order details");
     } finally {
       setLoading(false);
@@ -1017,7 +1015,6 @@ export default function EditOrderPage({ params }: EditOrderPageProps) {
       // Step 6: Navigate back to order details page
       router.push(`/${locale}/details/orderDetails/${orderId}`);
     } catch (error) {
-      console.error("Error placing order:", error);
       toast.error(
         error instanceof Error
           ? error.message

@@ -1,6 +1,7 @@
 import {
   SellerWarehouseService,
   type FindSellerBranchRequest,
+  type SellerBranch,
   type SellerWarehouse,
 } from "@/lib/api";
 import getProductIds from "@/utils/getProductIds";
@@ -55,12 +56,10 @@ export function useUpdateSellerAndWarehouse(
    */
   async function updateSellerAndWarehouse(
     billingAddressValue: BillingAddressValue
-  ) {
-    if (!userId || !companyId) {
-      console.error("User ID or Company ID not available");
-      return;
-    }
-
+  ): Promise<{
+    sellerBranch: SellerBranch | null;
+    warehouse: SellerWarehouse | null;
+  }> {
     try {
       // Get current product IDs
       const dbProductDetails = watch("orderDetails.0.dbProductDetails");
@@ -112,8 +111,8 @@ export function useUpdateSellerAndWarehouse(
 
       return { sellerBranch, warehouse };
     } catch (error) {
-      console.error("Error updating seller and warehouse:", error);
-      throw error;
+      console.error("Failed to update seller/warehouse details", error);
+      return { sellerBranch: null, warehouse: null };
     }
   }
 

@@ -29,41 +29,16 @@ export function getRedisClient(): Redis | null {
       lazyConnect: true,
     });
 
-    redisClient.on("error", (error: Error) => {
-      if (process.env.NODE_ENV === "development") {
-        /* eslint-disable no-console */
-        console.error("[Redis] Connection error:", error.message);
-        /* eslint-enable no-console */
-      }
-    });
+    redisClient.on("error", () => {});
 
-    redisClient.on("connect", () => {
-      if (process.env.NODE_ENV === "development") {
-        /* eslint-disable no-console */
-        console.log("[Redis] Connected successfully");
-        /* eslint-enable no-console */
-      }
-    });
+    redisClient.on("connect", () => {});
 
-    redisClient.connect().catch((error: Error) => {
-      if (process.env.NODE_ENV === "development") {
-        /* eslint-disable no-console */
-        console.error("[Redis] Failed to connect:", error.message);
-        /* eslint-enable no-console */
-      }
+    redisClient.connect().catch(() => {
       redisClient = null;
     });
 
     return redisClient;
-  } catch (error) {
-    if (process.env.NODE_ENV === "development") {
-      /* eslint-disable no-console */
-      console.error(
-        "[Redis] Initialization error:",
-        error instanceof Error ? error.message : String(error)
-      );
-      /* eslint-enable no-console */
-    }
+  } catch {
     return null;
   }
 }
@@ -78,4 +53,3 @@ export async function disconnectRedis(): Promise<void> {
     redisClient = null;
   }
 }
-

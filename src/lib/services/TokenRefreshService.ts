@@ -142,16 +142,6 @@ export class TokenRefreshService {
         };
       } else {
         const errorData = await refreshResponse.json().catch(() => ({}));
-
-        if (process.env.NODE_ENV === "development") {
-          // eslint-disable-next-line no-console
-          console.error(
-            "❌ Token refresh failed:",
-            refreshResponse.status,
-            errorData
-          );
-        }
-
         // Process all queued requests with failure
         await this.processQueuedRequests(false);
 
@@ -161,11 +151,6 @@ export class TokenRefreshService {
         };
       }
     } catch (error) {
-      if (process.env.NODE_ENV === "development") {
-        // eslint-disable-next-line no-console
-        console.error("❌ Token refresh error:", error);
-      }
-
       // Process all queued requests with failure
       await this.processQueuedRequests(false);
 
@@ -265,11 +250,7 @@ export class TokenRefreshService {
       }
 
       return true;
-    } catch (error) {
-      if (process.env.NODE_ENV === "development") {
-        // eslint-disable-next-line no-console
-        console.error("Error checking token validity:", error);
-      }
+    } catch {
       return false;
     }
   }

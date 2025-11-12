@@ -1,5 +1,5 @@
-import { NextRequest, NextResponse } from "next/server";
 import { cookies } from "next/headers";
+import { NextRequest, NextResponse } from "next/server";
 
 // TypeScript interfaces for API responses
 interface ExternalApiResponse {
@@ -138,7 +138,7 @@ export async function PUT(
           "X-Mobile-Optimized": "true",
         },
       });
-    } catch (_parseError) {
+    } catch {
       // Response parsing error occurred
 
       const errorResponse: ApiErrorResponse = {
@@ -149,7 +149,7 @@ export async function PUT(
 
       return NextResponse.json(errorResponse, { status: 502 });
     }
-  } catch (_error) {
+  } catch {
     // Error in update address API route
 
     const errorResponse: ApiErrorResponse = {

@@ -1,9 +1,7 @@
 import each from "lodash/each";
 
-import type {
-  CartItem,
-  MarginCalculationResult,
-} from "@/types/calculation/cart";
+import type { CartItem } from "@/types/calculation/cart";
+import type { MarginCalculationResult } from "@/types/calculation/discount";
 
 export const calculateProductWiseMargin = (
   precision = 2,
@@ -21,6 +19,9 @@ export const calculateProductWiseMargin = (
   let totalProductCostBC = 0;
   let hoProfit = 0;
   let costProfit = 0;
+
+  const toPrecision = (value: number | undefined): number =>
+    Number((value ?? 0).toFixed(precision));
 
   each(data, (item, index) => {
     item.goingForApproval = false;
@@ -46,21 +47,11 @@ export const calculateProductWiseMargin = (
               if (item.itemNo === prev.itemNo) {
                 if (discountBased) {
                   const checkDiscount = isRejected
-                    ? parseFloat(
-                        String(prev.discount || 0).toFixed(precision)
-                      ) <
-                      parseFloat(String(item.discount || 0).toFixed(precision))
-                    : parseFloat(
-                        String(prev.discount || 0).toFixed(precision)
-                      ) <
-                      parseFloat(String(item.discount || 0).toFixed(precision));
+                    ? toPrecision(prev.discount) < toPrecision(item.discount)
+                    : toPrecision(prev.discount) < toPrecision(item.discount);
 
                   if (checkDiscount) {
-                    if (
-                      parseFloat(
-                        String(item.discount || 0).toFixed(precision)
-                      ) >= maxRange
-                    ) {
+                    if (toPrecision(item.discount) >= maxRange) {
                       item.goingForApproval = true;
                     }
                   } else {
@@ -68,25 +59,13 @@ export const calculateProductWiseMargin = (
                   }
                 } else {
                   const checkMargin = isRejected
-                    ? parseFloat(
-                        String(item.marginPercentage || 0).toFixed(precision)
-                      ) <
-                      parseFloat(
-                        String(prev.marginPercentage || 0).toFixed(precision)
-                      )
-                    : parseFloat(
-                        String(item.marginPercentage || 0).toFixed(precision)
-                      ) <
-                      parseFloat(
-                        String(prev.marginPercentage || 0).toFixed(precision)
-                      );
+                    ? toPrecision(item.marginPercentage) <
+                      toPrecision(prev.marginPercentage)
+                    : toPrecision(item.marginPercentage) <
+                      toPrecision(prev.marginPercentage);
 
                   if (checkMargin) {
-                    if (
-                      parseFloat(
-                        String(item.marginPercentage || 0).toFixed(precision)
-                      ) <= maxRange
-                    ) {
+                    if (toPrecision(item.marginPercentage) <= maxRange) {
                       item.goingForApproval = true;
                     }
                   } else {
@@ -96,18 +75,11 @@ export const calculateProductWiseMargin = (
               }
             } else {
               if (discountBased) {
-                if (
-                  parseFloat(String(item.discount || 0).toFixed(precision)) >=
-                  maxRange
-                ) {
+                if (toPrecision(item.discount) >= maxRange) {
                   item.goingForApproval = true;
                 }
               } else {
-                if (
-                  parseFloat(
-                    String(item.marginPercentage || 0).toFixed(precision)
-                  ) <= maxRange
-                ) {
+                if (toPrecision(item.marginPercentage) <= maxRange) {
                   item.goingForApproval = true;
                 }
               }
@@ -115,18 +87,11 @@ export const calculateProductWiseMargin = (
           } else {
             if (typeof maxRange === "number") {
               if (discountBased) {
-                if (
-                  parseFloat(String(item.discount || 0).toFixed(precision)) >=
-                  maxRange
-                ) {
+                if (toPrecision(item.discount) >= maxRange) {
                   item.goingForApproval = true;
                 }
               } else {
-                if (
-                  parseFloat(
-                    String(item.marginPercentage || 0).toFixed(precision)
-                  ) <= maxRange
-                ) {
+                if (toPrecision(item.marginPercentage) <= maxRange) {
                   item.goingForApproval = true;
                 }
               }
@@ -135,18 +100,11 @@ export const calculateProductWiseMargin = (
         } else {
           if (typeof maxRange === "number") {
             if (discountBased) {
-              if (
-                parseFloat(String(item.discount || 0).toFixed(precision)) >=
-                maxRange
-              ) {
+              if (toPrecision(item.discount) >= maxRange) {
                 item.goingForApproval = true;
               }
             } else {
-              if (
-                parseFloat(
-                  String(item.marginPercentage || 0).toFixed(precision)
-                ) <= maxRange
-              ) {
+              if (toPrecision(item.marginPercentage) <= maxRange) {
                 item.goingForApproval = true;
               }
             }
@@ -156,17 +114,11 @@ export const calculateProductWiseMargin = (
     } else {
       if (typeof maxRange === "number") {
         if (discountBased) {
-          if (
-            parseFloat(String(item.discount || 0).toFixed(precision)) >=
-            maxRange
-          ) {
+          if (toPrecision(item.discount) >= maxRange) {
             item.goingForApproval = true;
           }
         } else {
-          if (
-            parseFloat(String(item.marginPercentage || 0).toFixed(precision)) <=
-            maxRange
-          ) {
+          if (toPrecision(item.marginPercentage) <= maxRange) {
             item.goingForApproval = true;
           }
         }

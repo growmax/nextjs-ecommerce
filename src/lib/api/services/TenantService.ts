@@ -1,6 +1,6 @@
 import { TenantConfigResponse } from "@/types/appconfig";
 import { TenantApiResponse } from "@/types/tenant";
-import { homePageClient } from "../client";
+import { homePageClient, type RequestContext } from "../client";
 import { BaseService } from "./BaseService";
 
 export interface TenantInfo {
@@ -65,14 +65,19 @@ export class TenantService extends BaseService<TenantService> {
     domainUrl: string,
     origin?: string
   ): Promise<TenantApiResponse> {
+    const options: {
+      method: "GET";
+      client: typeof homePageClient;
+    } & Partial<{ context: RequestContext }> = {
+      method: "GET",
+      client: homePageClient,
+      ...(origin ? { context: { origin } } : {}),
+    };
+
     return this.callWith(
       `/getTenantCodeCurrencyCompany?domainUrl=${domainUrl}`,
       {},
-      {
-        method: "GET",
-        client: homePageClient,
-        context: origin ? { origin } : undefined,
-      }
+      options
     ) as Promise<TenantApiResponse>;
   }
 
@@ -84,14 +89,19 @@ export class TenantService extends BaseService<TenantService> {
     domainUrl: string,
     origin?: string
   ): Promise<TenantApiResponse | null> {
+    const options: {
+      method: "GET";
+      client: typeof homePageClient;
+    } & Partial<{ context: RequestContext }> = {
+      method: "GET",
+      client: homePageClient,
+      ...(origin ? { context: { origin } } : {}),
+    };
+
     return this.callWithSafe(
       `/getTenantCodeCurrencyCompany?domainUrl=${domainUrl}`,
       {},
-      {
-        method: "GET",
-        client: homePageClient,
-        context: origin ? { origin } : undefined,
-      }
+      options
     ) as Promise<TenantApiResponse | null>;
   }
 
@@ -108,7 +118,7 @@ export class TenantService extends BaseService<TenantService> {
       return withRedisCache(`tenant:${domainUrl}`, () =>
         this.getTenantDataServerSide(domainUrl, origin)
       );
-    } catch (error) {
+    } catch {
       return this.getTenantDataServerSide(domainUrl, origin);
     }
   }

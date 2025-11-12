@@ -124,14 +124,7 @@ export function useCurrentUser() {
             localStorage.setItem("currentUser", JSON.stringify(userData));
             setUser(userData);
           }
-        } catch (apiErr) {
-          // API endpoint doesn't exist (404) or other error - use JWT data as fallback
-
-          console.warn(
-            "Failed to fetch user from API, using JWT data:",
-            apiErr
-          );
-
+        } catch {
           // Try JWT extraction as last resort
           const fallbackUserData = extractUserFromJWT();
           if (fallbackUserData) {

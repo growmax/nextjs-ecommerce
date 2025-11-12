@@ -1,7 +1,7 @@
 "use client";
 
-import { useEffect, useState } from "react";
 import { useUserDetails } from "@/contexts/UserDetailsContext";
+import { useEffect, useState } from "react";
 import useShipping from "./useShipping";
 
 interface ShippingAddress {
@@ -59,7 +59,7 @@ export default function useCurrentShippingAddress(
         if (!parsedData?.id) {
           parsedData = null;
         }
-      } catch (_error) {
+      } catch {
         parsedData = null;
       }
     }

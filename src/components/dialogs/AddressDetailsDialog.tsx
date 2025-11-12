@@ -100,7 +100,7 @@ export function AddressDetailsDialog({
         setLoading(false);
       }
     }
-  }, [open, user?.userId, user?.companyId]);
+  }, [open, user?.userId, user?.companyId, fetchAddresses]);
 
   const handleAddressSelect = (address: BillingAddress) => {
     setSelectedAddressId(address.id);

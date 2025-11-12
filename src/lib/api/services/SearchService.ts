@@ -13,7 +13,7 @@ export interface ElasticSearchQuery {
   size?: number;
   from?: number;
   sort?: Array<Record<string, unknown>>;
-  _source?: string[] | boolean;
+  _source?: string[] | readonly string[] | boolean;
 }
 
 export interface ElasticSearchRequest {
@@ -237,7 +237,7 @@ export class SearchService {
         data: formattedData,
         total,
       };
-    } catch (_error) {
+    } catch {
       // Return empty results on error rather than throwing
       return {
         success: false,

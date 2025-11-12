@@ -1,4 +1,4 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
+ 
 import {
   calculateAllSellerCartPricing,
   findBestPricingMatch,
@@ -137,8 +137,8 @@ const useMultipleSellerCart = (cartItems: any, calculationParams: any = {}) => {
         }
       }
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [processedSellerCarts]);
+     
+  }, [processedSellerCarts, selectedSellerId]);
 
   // Handle seller selection
 

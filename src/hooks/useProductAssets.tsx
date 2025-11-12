@@ -58,9 +58,7 @@ export default function useProductAssets(products: Product[] = []) {
         }
 
         return data;
-      } catch (error) {
-        // eslint-disable-next-line no-console
-        console.error("Failed to fetch product assets:", error);
+      } catch {
         return null;
       }
     },

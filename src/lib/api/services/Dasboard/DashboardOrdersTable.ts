@@ -1,9 +1,9 @@
+import { Order } from "@/types/dashboard/DasbordOrderstable/DashboardOrdersTable";
 import {
   coreCommerceClient,
   createClientWithContext,
   RequestContext,
 } from "../../client";
-import { Order } from "@/types/dashboard/DasbordOrderstable/DashboardOrdersTable";
 
 export interface OrdersResponse {
   ordersResponse: Order[];
@@ -80,9 +80,7 @@ export class DashboardOrdersTableService {
   ): Promise<OrdersApiResponse | null> {
     try {
       return await this.getOrders(params, context);
-    } catch (error) {
-      // eslint-disable-next-line no-console
-      console.error("Failed to fetch orders:", error);
+    } catch {
       return null;
     }
   }

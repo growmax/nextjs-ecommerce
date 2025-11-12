@@ -291,7 +291,11 @@ export const setTaxDetails = (
       "productId",
       item.productId,
     ]) as ProductDetail | undefined;
-    item.hsnDetails = tempDetails?.hsnDetails;
+    
+    // Only assign if hsnDetails exists
+    if (tempDetails?.hsnDetails) {
+      item.hsnDetails = tempDetails.hsnDetails;
+    }
 
     // Set main tax
     item.tax = taxExemption
@@ -312,7 +316,7 @@ export const setTaxDetails = (
       "compound",
       true,
     ]);
-    if (!isEmpty(item.compoundInter) && item.hsnDetails?.interTax?.taxReqLs) {
+    if (!isEmpty(item.compoundInter) && item.compoundInter[0] && item.hsnDetails?.interTax?.taxReqLs) {
       item.hsnDetails.interTax.taxReqLs.push(item.compoundInter[0]);
     }
     each(item.hsnDetails?.interTax?.taxReqLs ?? [], (taxes: TaxReq) => {
@@ -330,7 +334,7 @@ export const setTaxDetails = (
       "compound",
       true,
     ]);
-    if (!isEmpty(item.compoundIntra) && item.hsnDetails?.intraTax?.taxReqLs) {
+    if (!isEmpty(item.compoundIntra) && item.compoundIntra[0] && item.hsnDetails?.intraTax?.taxReqLs) {
       item.hsnDetails.intraTax.taxReqLs.push(item.compoundIntra[0]);
     }
     each(item.hsnDetails?.intraTax?.taxReqLs ?? [], (taxes: TaxReq) => {

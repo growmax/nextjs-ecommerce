@@ -182,7 +182,7 @@ Think of completion like a senior engineer would: it's not done until it actuall
 - Is anything exposed that shouldn't be? (Secrets, validation gaps, auth holes)
 - Will this perform okay? (No N+1 queries, no memory leaks)
 - Did I update the docs to match what I changed?
-- Did I clean up after myself? (No temp files, debug code, console.logs)
+- Did I clean up after myself? (No temp files, debug code, logs)
 
 **Complete entire scope:**
 

@@ -1,5 +1,5 @@
 // Temporarily disabled - uncomment when needed
-export { }; // Make this a module
+export {}; // Make this a module
 
 // import { NextRequest, NextResponse } from "next/server";
 // import { cookies } from "next/headers";
@@ -59,7 +59,7 @@ export { }; // Make this a module
 
 //     // Return the data to client
 //     return NextResponse.json(data);
-//   } catch (error) {
+//   } catch  {
 //     return NextResponse.json(
 //       {
 //         error: "Internal server error",

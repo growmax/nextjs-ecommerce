@@ -189,8 +189,7 @@ export default function OrderDetailsClient({ params }: OrderDetailsPageProps) {
           await PaymentService.fetchOverallPaymentsByOrder(orderId);
         const items = Array.isArray(response?.data) ? response.data : [];
         setPaymentHistory(items);
-      } catch (err) {
-        console.error("Failed to fetch payments:", err);
+      } catch {
         setPaymentHistory([]);
       }
     };
@@ -227,8 +226,7 @@ export default function OrderDetailsClient({ params }: OrderDetailsPageProps) {
           }
         }
         setPaymentDueData(data);
-      } catch (err) {
-        console.error("Failed to fetch payment due details:", err);
+      } catch {
         setPaymentDueData([]);
       }
     };
@@ -299,8 +297,7 @@ export default function OrderDetailsClient({ params }: OrderDetailsPageProps) {
         orderId,
       });
       setOrderDetails(response);
-    } catch (error) {
-      console.error("Error refreshing order details:", error);
+    } catch {
     } finally {
       setLoading(false);
     }
@@ -345,7 +342,7 @@ export default function OrderDetailsClient({ params }: OrderDetailsPageProps) {
         };
         setOrderDetails(updatedOrderDetails);
       }
-    } catch (error) {
+    } catch {
       throw error; // Re-throw to let the dialog handle the error
     }
   };
@@ -392,10 +389,7 @@ export default function OrderDetailsClient({ params }: OrderDetailsPageProps) {
       | undefined;
 
     const resolvedPfRate = Number(
-      detail?.pfRate ??
-        detailOrderTerms?.pfValue ??
-        primaryHeader?.pfRate ??
-        0
+      detail?.pfRate ?? detailOrderTerms?.pfValue ?? primaryHeader?.pfRate ?? 0
     );
 
     return {
@@ -404,9 +398,7 @@ export default function OrderDetailsClient({ params }: OrderDetailsPageProps) {
       insuranceCharges: Number.isFinite(resolvedInsurance)
         ? resolvedInsurance
         : 0,
-      overallShipping: Number.isFinite(resolvedShipping)
-        ? resolvedShipping
-        : 0,
+      overallShipping: Number.isFinite(resolvedShipping) ? resolvedShipping : 0,
       pfRate: Number.isFinite(resolvedPfRate) ? resolvedPfRate : 0,
     };
   }, [displayOrderDetails, orderDetails?.data, user]);
@@ -422,7 +414,7 @@ export default function OrderDetailsClient({ params }: OrderDetailsPageProps) {
       orderDetails?.data?.orderDetails?.[0]?.dbProductDetails ||
       [];
     return products.some(
-      (product: any) => product?.isSprRequested || product?.sprRequested // eslint-disable-line @typescript-eslint/no-explicit-any
+      (product: any) => product?.isSprRequested || product?.sprRequested
     );
   }, [displayOrderDetails, orderDetails]);
 

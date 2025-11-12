@@ -84,16 +84,7 @@ export abstract class BaseService<
         client
       );
       return result;
-    } catch (error) {
-      /* eslint-disable no-console */
-      console.error(
-        "❌ BaseService.callApiSafe - Error:",
-        error instanceof Error ? error.message : String(error)
-      );
-      if (error instanceof Error && error.stack) {
-        console.error("Stack:", error.stack);
-      }
-      /* eslint-enable no-console */
+    } catch {
       return null;
     }
   }

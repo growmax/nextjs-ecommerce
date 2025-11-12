@@ -1,8 +1,13 @@
 "use client";
 
-import { useEffect } from "react";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { AlertCircle, Home, RefreshCw } from "lucide-react";
 import Link from "next/link";
 
@@ -17,13 +22,6 @@ export default function ProductError({
   error: Error & { digest?: string };
   reset: () => void;
 }) {
-  useEffect(() => {
-    // Error reporting (development only)
-    if (process.env.NODE_ENV === 'development') {
-      console.error("Product page error:", error);
-    }
-  }, [error]);
-
   return (
     <div className="min-h-screen bg-background flex items-center justify-center p-4">
       <Card className="max-w-md w-full">
@@ -33,12 +31,13 @@ export default function ProductError({
           </div>
           <CardTitle className="text-2xl">Oops! Something went wrong</CardTitle>
         </CardHeader>
-        
+
         <CardContent className="space-y-4">
           <p className="text-center text-muted-foreground">
-            We encountered an error while loading this product page. This could be due to:
+            We encountered an error while loading this product page. This could
+            be due to:
           </p>
-          
+
           <ul className="list-disc list-inside space-y-2 text-sm text-muted-foreground">
             <li>The product may no longer be available</li>
             <li>There might be a temporary connection issue</li>
@@ -55,15 +54,11 @@ export default function ProductError({
         </CardContent>
 
         <CardFooter className="flex flex-col sm:flex-row gap-3">
-          <Button
-            onClick={reset}
-            variant="default"
-            className="flex-1"
-          >
+          <Button onClick={reset} variant="default" className="flex-1">
             <RefreshCw className="mr-2 h-4 w-4" />
             Try Again
           </Button>
-          
+
           <Link href="/" className="flex-1">
             <Button variant="outline" className="w-full">
               <Home className="mr-2 h-4 w-4" />
@@ -75,4 +70,3 @@ export default function ProductError({
     </div>
   );
 }
-

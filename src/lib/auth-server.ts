@@ -55,14 +55,16 @@ export class ServerAuth {
       }
 
       // Import SessionValidator dynamically to avoid circular imports
-      const { SessionValidator } = await import("@/lib/services/SessionValidator");
+      const { SessionValidator } = await import(
+        "@/lib/services/SessionValidator"
+      );
 
       // Validate token (including expiration check)
       const sessionValidator = SessionValidator.getInstance();
       const validation = sessionValidator.validateToken(accessToken);
 
       return validation.isValid;
-    } catch (_error) {
+    } catch {
       return false;
     }
   }
@@ -82,7 +84,7 @@ export class ServerAuth {
       // Implementation would depend on your user service API
       // getUserData: User data should be fetched from API, not cookies
       return null;
-    } catch (_error) {
+    } catch {
       return null;
     }
   }
@@ -96,7 +98,7 @@ export class ServerAuth {
     try {
       const cookieStore = await cookies();
       return cookieStore.get(ServerAuth.ACCESS_TOKEN_COOKIE)?.value || null;
-    } catch (_error) {
+    } catch {
       return null;
     }
   }
@@ -176,7 +178,6 @@ export class ServerAuth {
     const isAuth = await this.isAuthenticated();
     return !isAuth;
   }
-
 
   /**
    * Utility to create secure cookie string for setting cookies

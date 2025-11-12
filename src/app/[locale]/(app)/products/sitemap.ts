@@ -85,10 +85,9 @@ async function getAllPublishedProducts(): Promise<ProductDetail[]> {
     }
 
     return allProducts;
-  } catch (error) {
+  } catch {
     // Sitemap error logging (development only)
-    if (process.env.NODE_ENV === 'development') {
-      console.error("Error fetching products for sitemap:", error);
+    if (process.env.NODE_ENV === "development") {
     }
     return [];
   }
@@ -133,24 +132,11 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
             },
           });
         }
-      } catch (error) {
-        // Product sitemap entry error (development only)
-        if (process.env.NODE_ENV === 'development') {
-          console.error(
-            `Error generating sitemap entry for product ${product.product_id}:`,
-            error
-          );
-        }
-        // Continue with next product
-      }
+      } catch {}
     }
 
     return sitemapEntries;
-  } catch (error) {
-    // Sitemap generation error (development only)
-    if (process.env.NODE_ENV === 'development') {
-      console.error("Error generating product sitemap:", error);
-    }
+  } catch {
     return [];
   }
 }

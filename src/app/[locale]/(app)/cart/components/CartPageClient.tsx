@@ -1,22 +1,17 @@
 "use client";
 
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Separator } from "@/components/ui/separator";
 import { useCart } from "@/contexts/CartContext";
 import { useCurrentUser } from "@/hooks/useCurrentUser";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Separator } from "@/components/ui/separator";
-import { ShoppingCart, Trash2, Plus, Minus } from "lucide-react";
+import { Minus, Plus, ShoppingCart, Trash2 } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
 
 export default function CartPageClient() {
   const { user } = useCurrentUser();
-  const { 
-    cart, 
-    cartCount, 
-    refreshCart, 
-    isLoading: isCartLoading 
-  } = useCart();
+  const { cart, cartCount, refreshCart, isLoading: isCartLoading } = useCart();
 
   const [updatingItems, setUpdatingItems] = useState<Set<number>>(new Set());
 
@@ -27,8 +22,12 @@ export default function CartPageClient() {
         <Card>
           <CardContent className="p-8 text-center">
             <ShoppingCart className="h-12 w-12 mx-auto text-gray-400 mb-4" />
-            <h2 className="text-xl font-semibold mb-2">Please log in to view your cart</h2>
-            <p className="text-gray-600">You need to be signed in to see your shopping cart items.</p>
+            <h2 className="text-xl font-semibold mb-2">
+              Please log in to view your cart
+            </h2>
+            <p className="text-gray-600">
+              You need to be signed in to see your shopping cart items.
+            </p>
           </CardContent>
         </Card>
       </div>
@@ -61,8 +60,10 @@ export default function CartPageClient() {
           <CardContent className="p-8 text-center">
             <ShoppingCart className="h-12 w-12 mx-auto text-gray-400 mb-4" />
             <h2 className="text-xl font-semibold mb-2">Your cart is empty</h2>
-            <p className="text-gray-600 mb-4">Start adding some products to your cart.</p>
-            <Button onClick={() => window.location.href = "/products"}>
+            <p className="text-gray-600 mb-4">
+              Start adding some products to your cart.
+            </p>
+            <Button onClick={() => (window.location.href = "/products")}>
               Continue Shopping
             </Button>
           </CardContent>
@@ -74,15 +75,15 @@ export default function CartPageClient() {
   // Update quantity handler
   const updateQuantity = async (productId: number, newQuantity: number) => {
     if (newQuantity < 1) return;
-    
+
     setUpdatingItems(prev => new Set(prev).add(productId));
-    
+
     try {
       // Here you would implement the actual cart update logic
       // await CartService.updateQuantity(productId, newQuantity);
       toast.success("Cart updated successfully");
       await refreshCart();
-    } catch (error) {
+    } catch {
       toast.error("Failed to update cart");
     } finally {
       setUpdatingItems(prev => {
@@ -96,13 +97,13 @@ export default function CartPageClient() {
   // Remove item handler
   const removeItem = async (productId: number) => {
     setUpdatingItems(prev => new Set(prev).add(productId));
-    
+
     try {
       // Here you would implement the actual cart removal logic
       // await CartService.removeFromCart(productId);
       toast.success("Item removed from cart");
       await refreshCart();
-    } catch (error) {
+    } catch {
       toast.error("Failed to remove item");
     } finally {
       setUpdatingItems(prev => {
@@ -145,27 +146,31 @@ export default function CartPageClient() {
                       </span>
                     </div>
                   </div>
-                  
+
                   <div className="flex items-center space-x-2">
                     {/* Quantity Controls */}
                     <div className="flex items-center space-x-1">
                       <Button
                         size="sm"
                         variant="outline"
-                        onClick={() => updateQuantity(item.productId, item.quantity - 1)}
+                        onClick={() =>
+                          updateQuantity(item.productId, item.quantity - 1)
+                        }
                         disabled={updatingItems.has(item.productId)}
                       >
                         <Minus className="h-4 w-4" />
                       </Button>
-                      
+
                       <span className="w-12 text-center font-medium">
                         {item.quantity}
                       </span>
-                      
+
                       <Button
                         size="sm"
                         variant="outline"
-                        onClick={() => updateQuantity(item.productId, item.quantity + 1)}
+                        onClick={() =>
+                          updateQuantity(item.productId, item.quantity + 1)
+                        }
                         disabled={updatingItems.has(item.productId)}
                       >
                         <Plus className="h-4 w-4" />
@@ -199,27 +204,27 @@ export default function CartPageClient() {
                 <span>Subtotal ({cartCount} items)</span>
                 <span>$0.00</span>
               </div>
-              
+
               <div className="flex justify-between">
                 <span>Shipping</span>
                 <span>Calculated at checkout</span>
               </div>
-              
+
               <Separator />
-              
+
               <div className="flex justify-between font-semibold text-lg">
                 <span>Total</span>
                 <span>$0.00</span>
               </div>
-              
+
               <Button className="w-full" size="lg">
                 Proceed to Checkout
               </Button>
-              
-              <Button 
-                variant="outline" 
+
+              <Button
+                variant="outline"
                 className="w-full"
-                onClick={() => window.location.href = "/products"}
+                onClick={() => (window.location.href = "/products")}
               >
                 Continue Shopping
               </Button>

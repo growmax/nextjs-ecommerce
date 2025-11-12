@@ -121,8 +121,8 @@ export default function EditQuotePage({ params }: EditQuotePageProps) {
     null
   );
   const [cashDiscountApplied, setCashDiscountApplied] = useState(false);
-  const [cashDiscountTerms, setCashDiscountTerms] = useState<any>(null); // eslint-disable-line @typescript-eslint/no-explicit-any
-  const [prevPaymentTerms, setPrevPaymentTerms] = useState<any>(null); // eslint-disable-line @typescript-eslint/no-explicit-any
+  const [cashDiscountTerms, setCashDiscountTerms] = useState<any>(null);
+  const [prevPaymentTerms, setPrevPaymentTerms] = useState<any>(null);
   const [confirmDialogOpen, setConfirmDialogOpen] = useState(false);
 
   // SPR Form states
@@ -187,13 +187,11 @@ export default function EditQuotePage({ params }: EditQuotePageProps) {
         // Initialize SPR form fields from sprDetails if available
         const sprDetails = response?.data?.quotationDetails?.[0]?.sprDetails;
         if (sprDetails && typeof sprDetails === "object") {
-          setSprCustomerName((sprDetails as any).companyName || ""); // eslint-disable-line @typescript-eslint/no-explicit-any
-          setSprProjectName((sprDetails as any).projectName || ""); // eslint-disable-line @typescript-eslint/no-explicit-any
-          setSprCompetitors(
-            (sprDetails as any).competitorNames || [] // eslint-disable-line @typescript-eslint/no-explicit-any
-          );
+          setSprCustomerName((sprDetails as any).companyName || "");
+          setSprProjectName((sprDetails as any).projectName || "");
+          setSprCompetitors((sprDetails as any).competitorNames || []);
           setSprPriceJustification(
-            (sprDetails as any).priceJustification || "" // eslint-disable-line @typescript-eslint/no-explicit-any
+            (sprDetails as any).priceJustification || ""
           );
         }
       } catch (err) {
@@ -566,8 +564,7 @@ export default function EditQuotePage({ params }: EditQuotePageProps) {
         });
       }
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [updatedProducts, updatingProducts]);
+  }, [updatedProducts, updatingProducts, quoteDetails]);
 
   // Handler functions
   const handleRefresh = async () => {
@@ -582,8 +579,7 @@ export default function EditQuotePage({ params }: EditQuotePageProps) {
       });
       setQuoteDetails(response);
       toast.success("Quote details refreshed successfully");
-    } catch (error) {
-      console.error("Error refreshing quote details:", error);
+    } catch {
       toast.error("Failed to refresh quote details");
     } finally {
       setLoading(false);
@@ -792,7 +788,6 @@ export default function EditQuotePage({ params }: EditQuotePageProps) {
         router.push(`/${locale}/details/quoteDetails/${quoteIdentifier}`);
       }
     } catch (error) {
-      console.error("Error saving quote:", error);
       toast.error(
         error instanceof Error
           ? error.message

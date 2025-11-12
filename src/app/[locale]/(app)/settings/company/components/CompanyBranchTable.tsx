@@ -80,7 +80,6 @@ const CompanyBranchTable = () => {
           limit: pagination.pageSize,
           searchString: searchQuery,
         });
-        console.log("Fetched branches:", response);
         if (!mounted) return;
 
         // Extract branches from response based on the actual API structure
@@ -101,7 +100,7 @@ const CompanyBranchTable = () => {
         const branchesArray = Array.isArray(branchData) ? branchData : [];
         setBranches(branchesArray);
         setTotalCount(total);
-      } catch (_error) {
+      } catch {
         if (!mounted) return;
         setIsError(true);
       } finally {
@@ -147,13 +146,12 @@ const CompanyBranchTable = () => {
   };
 
   const handleEdit = (branch: Branch) => {
-    console.log("Edit branch:", branch);
     setDialogMode("edit");
     setSelectedBranch(branch);
     setIsDialogOpen(true);
   };
 
-  const handleDelete = async (id: string | number, name?: string) => {
+  const handleDelete = async (id: string | number) => {
     setDeletingAddressId(id);
 
     try {
@@ -161,14 +159,10 @@ const CompanyBranchTable = () => {
         addressId: Number(id),
       });
 
-      console.log("Successfully deleted branch:", id, name);
-
       // Refresh the branch list after successful deletion
       // Trigger a re-fetch by updating pagination state
       setPagination(prev => ({ ...prev }));
-    } catch (error) {
-      console.error("Failed to delete branch:", error);
-      // TODO: Show error toast notification
+    } catch {
     } finally {
       setDeletingAddressId(null);
     }
@@ -331,12 +325,7 @@ const CompanyBranchTable = () => {
               (row.original.addressId?.id || row.original.id)
             }
             onClick={() =>
-              handleDelete(
-                row.original.addressId?.id || row.original.id,
-                row.original.name ||
-                  row.original.addressId?.branchName ||
-                  "Unknown"
-              )
+              handleDelete(row.original.addressId?.id || row.original.id)
             }
           >
             {deletingAddressId ===
@@ -351,7 +340,6 @@ const CompanyBranchTable = () => {
         enableSorting
         enableColumnVisibility={false}
         showPagination
-        showPaginationBorder={false}
         pageSizeOptions={[5, 10, 20, 30]}
         // Server-side pagination props
         manualPagination={true}

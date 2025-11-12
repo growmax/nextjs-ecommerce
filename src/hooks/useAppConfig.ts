@@ -2,21 +2,21 @@
  * Simple App Configuration Hooks
  */
 
-import { useQuery, UseQueryResult } from "@tanstack/react-query";
 import {
-  getTenantConfig,
-  getCategories,
-  getStoreFrontConfig,
   getCatalogSettings,
+  getCategories,
   getDomainConfiguration,
+  getStoreFrontConfig,
+  getTenantConfig,
 } from "@/lib/appconfig";
 import type {
-  TenantConfigResponse,
-  CategoriesResponse,
-  StoreFrontResponse,
   CatalogSettingsResponse,
+  CategoriesResponse,
   DomainConfiguration,
+  StoreFrontResponse,
+  TenantConfigResponse,
 } from "@/types/appconfig";
+import { useQuery, UseQueryResult } from "@tanstack/react-query";
 
 // Helper function to get token for requests
 async function getTokenForRequest(): Promise<string | null> {
@@ -41,14 +41,12 @@ async function getTokenForRequest(): Promise<string | null> {
 
 // Enhanced hooks with automatic token fetching
 export function useTenantConfig(
-  domain: string,
-  token?: string
+  domain: string
 ): UseQueryResult<TenantConfigResponse> {
   return useQuery({
     queryKey: ["tenantConfig", domain],
     queryFn: async () => {
-      const finalToken = token || (await getTokenForRequest());
-      return getTenantConfig(domain, finalToken || undefined);
+      return getTenantConfig(domain);
     },
     enabled: !!domain,
     staleTime: 60 * 60 * 1000, // 1 hour

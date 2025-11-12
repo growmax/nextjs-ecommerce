@@ -175,7 +175,7 @@ export default function SalesHeader({
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="w-48">
-              {/* eslint-disable react/no-array-index-key */}
+              { }
               {menuOptions.map((option, index) => (
                 <DropdownMenuItem
                   key={`menu-option-${index}`}
@@ -186,7 +186,7 @@ export default function SalesHeader({
                   {option.label}
                 </DropdownMenuItem>
               ))}
-              {/* eslint-enable react/no-array-index-key */}
+              { }
               {onMenuClick && menuOptions.length === 0 && (
                 <DropdownMenuItem onClick={onMenuClick}>
                   Menu Options

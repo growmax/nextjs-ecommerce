@@ -1,14 +1,14 @@
 /**
  * USAGE EXAMPLES for useOrderCalculation Hook
- * 
+ *
  * This file shows different ways to use the order calculation hook
  * in various scenarios like editing orders, reorders, etc.
  */
 
+import type { CalculationSettings, CartItem } from "@/types/calculation/cart";
 import { useEffect } from "react";
 import { useFormContext } from "react-hook-form";
 import useOrderCalculation from "./useOrderCalculation";
-import type { CartItem, CalculationSettings } from "@/types/calculation/cart";
 
 // ============================================================================
 // EXAMPLE 1: Basic Edit Order Usage
@@ -16,18 +16,18 @@ import type { CartItem, CalculationSettings } from "@/types/calculation/cart";
 
 export function EditOrderExample() {
   const { watch, setValue } = useFormContext();
-  
+
   // Watch form fields
   const products = watch("orderDetails[0].dbProductDetails");
   const isInter = watch("orderDetails[0].isInter");
   const taxExemption = watch("taxExemption");
-  
+
   // Settings (can come from module settings or API)
   const settings: CalculationSettings = {
     roundingAdjustment: true,
     itemWiseShippingTax: false,
   };
-  
+
   // Calculate using the hook
   const { calculatedData, isCalculating } = useOrderCalculation({
     products: products || [],
@@ -40,21 +40,16 @@ export function EditOrderExample() {
       checkMOQ: true,
     },
   });
-  
+
   // Update form with calculated values
   useEffect(() => {
     if (calculatedData && !isCalculating) {
       setValue("orderDetails[0].dbProductDetails", calculatedData.products);
       setValue("orderDetails[0].cartValue", calculatedData.cartValue);
       setValue("orderDetails[0].breakup", calculatedData.breakup);
-      
-      // Show warnings if any
-      if (calculatedData.warnings.length > 0) {
-        console.warn("Calculation warnings:", calculatedData.warnings);
-      }
     }
   }, [calculatedData, isCalculating, setValue]);
-  
+
   return (
     <div>
       {isCalculating && <p>Calculating...</p>}
@@ -74,15 +69,15 @@ export function EditOrderExample() {
 
 export function ReorderExample() {
   const { watch, setValue } = useFormContext();
-  
+
   const products = watch("orderDetails[0].dbProductDetails");
   const isReorder = watch("isReorder");
-  
+
   const settings: CalculationSettings = {
     roundingAdjustment: true,
     itemWiseShippingTax: false,
   };
-  
+
   // For reorder, reset shipping and discounts
   const { calculatedData } = useOrderCalculation({
     products: products || [],
@@ -93,12 +88,12 @@ export function ReorderExample() {
       applyVolumeDiscount: true,
     },
   });
-  
+
   useEffect(() => {
     if (calculatedData) {
       setValue("orderDetails[0].dbProductDetails", calculatedData.products);
       setValue("orderDetails[0].cartValue", calculatedData.cartValue);
-      
+
       // Reset additional fields for reorder
       if (isReorder) {
         setValue("orderDetails[0].customerRequiredDate", null);
@@ -106,7 +101,7 @@ export function ReorderExample() {
       }
     }
   }, [calculatedData, isReorder, setValue]);
-  
+
   return <div>Reorder Total: ${calculatedData.cartValue.grandTotal}</div>;
 }
 
@@ -116,46 +111,42 @@ export function ReorderExample() {
 
 export function ManualRecalculationExample() {
   const { watch, setValue } = useFormContext();
-  
+
   const products = watch("orderDetails[0].dbProductDetails");
-  const selectedVersion = watch("selectedVersion");
-  
   const settings: CalculationSettings = {
     roundingAdjustment: true,
     itemWiseShippingTax: false,
   };
-  
-  const { calculatedData, recalculate } = useOrderCalculation({
+
+  const { calculatedData } = useOrderCalculation({
     products: products || [],
     settings,
   });
-  
+
   // Fetch latest data and recalculate
   const handleFetchLatestData = async () => {
     try {
       // Fetch from API
       const response = await fetch("/api/order/latest-data");
       const latestData = await response.json();
-      
+
       // Update products with latest data
       const updatedProducts = products.map((product: CartItem) => {
-        const latest = latestData.find((d: any) => d.productId === product.productId);
+        const latest = latestData.find(
+          (d: any) => d.productId === product.productId
+        );
         return latest ? { ...product, ...latest } : product;
       });
-      
+
       setValue("orderDetails[0].dbProductDetails", updatedProducts);
-      
+
       // Recalculate will happen automatically via useMemo dependency
-    } catch (error) {
-      console.error("Failed to fetch latest data:", error);
-    }
+    } catch {}
   };
-  
+
   return (
     <div>
-      <button onClick={handleFetchLatestData}>
-        Refresh Latest Prices
-      </button>
+      <button onClick={handleFetchLatestData}>Refresh Latest Prices</button>
       <p>Total: ${calculatedData.cartValue.grandTotal}</p>
     </div>
   );
@@ -167,15 +158,17 @@ export function ManualRecalculationExample() {
 
 export function VolumeDiscountExample() {
   const { watch, setValue } = useFormContext();
-  
+
   const products = watch("orderDetails[0].dbProductDetails");
-  const VolumeDiscountAvailable = watch("orderDetails[0].VolumeDiscountAvailable");
+  const VolumeDiscountAvailable = watch(
+    "orderDetails[0].VolumeDiscountAvailable"
+  );
   const VDapplied = watch("orderDetails[0].VDapplied");
-  
+
   const settings: CalculationSettings = {
     roundingAdjustment: true,
   };
-  
+
   // Only apply VD if available and user opted in
   const { calculatedData } = useOrderCalculation({
     products: products || [],
@@ -184,20 +177,20 @@ export function VolumeDiscountExample() {
       applyVolumeDiscount: VolumeDiscountAvailable && VDapplied,
     },
   });
-  
+
   useEffect(() => {
     if (calculatedData) {
       setValue("orderDetails[0].dbProductDetails", calculatedData.products);
       setValue("orderDetails[0].cartValue", calculatedData.cartValue);
     }
   }, [calculatedData, setValue]);
-  
+
   return (
     <div>
       {calculatedData.metadata.hasVolumeDiscount && (
         <div className="success">
-          Volume discount applied! 
-          Saved: ${calculatedData.cartValue.totalBasicDiscount}
+          Volume discount applied! Saved: $
+          {calculatedData.cartValue.totalBasicDiscount}
         </div>
       )}
     </div>
@@ -210,17 +203,17 @@ export function VolumeDiscountExample() {
 
 export function AdditionalChargesExample() {
   const { watch, setValue } = useFormContext();
-  
+
   const products = watch("orderDetails[0].dbProductDetails");
   const overallShipping = watch("orderDetails[0].overallShipping");
   const insuranceCharges = watch("orderDetails[0].orderTerms.insuranceValue");
   const pfRate = watch("orderDetails[0].orderTerms.pfRate");
-  
+
   const settings: CalculationSettings = {
     roundingAdjustment: true,
     itemWiseShippingTax: true,
   };
-  
+
   const { calculatedData } = useOrderCalculation({
     products: products || [],
     shippingCharges: overallShipping || 0,
@@ -228,14 +221,14 @@ export function AdditionalChargesExample() {
     pfRate: pfRate || 0,
     settings,
   });
-  
+
   useEffect(() => {
     if (calculatedData) {
       setValue("orderDetails[0].dbProductDetails", calculatedData.products);
       setValue("orderDetails[0].cartValue", calculatedData.cartValue);
     }
   }, [calculatedData, setValue]);
-  
+
   return (
     <div>
       <p>Subtotal: ${calculatedData.cartValue.totalValue}</p>
@@ -244,7 +237,9 @@ export function AdditionalChargesExample() {
       <p>PF Rate: ${calculatedData.cartValue.pfRate}</p>
       <p>Tax: ${calculatedData.cartValue.totalTax}</p>
       <hr />
-      <p><strong>Grand Total: ${calculatedData.cartValue.grandTotal}</strong></p>
+      <p>
+        <strong>Grand Total: ${calculatedData.cartValue.grandTotal}</strong>
+      </p>
     </div>
   );
 }
@@ -254,31 +249,33 @@ export function AdditionalChargesExample() {
 // ============================================================================
 
 export function CurrencyConversionExample() {
-  const { watch, setValue } = useFormContext();
-  
+  const { watch } = useFormContext();
+
   const products = watch("orderDetails[0].dbProductDetails");
   const currencyFactor = watch("orderDetails[0].currencyFactor");
   const buyerCurrencySymbol = watch("buyerCurrencySymbol");
-  
+
   const settings: CalculationSettings = {
     roundingAdjustment: true,
   };
-  
+
   const { calculatedData } = useOrderCalculation({
     products: products || [],
     currencyFactor: currencyFactor || 1,
     settings,
   });
-  
+
   // Convert totals to buyer currency
-  const grandTotalInBuyerCurrency = 
+  const grandTotalInBuyerCurrency =
     calculatedData.cartValue.grandTotal * (currencyFactor || 1);
-  
+
   return (
     <div>
       <p>Total (Base Currency): ${calculatedData.cartValue.grandTotal}</p>
-      <p>Total ({buyerCurrencySymbol?.currencyCode}): 
-        {buyerCurrencySymbol?.currencySymbol}{grandTotalInBuyerCurrency.toFixed(2)}
+      <p>
+        Total ({buyerCurrencySymbol?.currencyCode}):
+        {buyerCurrencySymbol?.currencySymbol}
+        {grandTotalInBuyerCurrency.toFixed(2)}
       </p>
     </div>
   );
@@ -290,13 +287,13 @@ export function CurrencyConversionExample() {
 
 export function WarningsExample() {
   const { watch } = useFormContext();
-  
+
   const products = watch("orderDetails[0].dbProductDetails");
-  
+
   const settings: CalculationSettings = {
     roundingAdjustment: true,
   };
-  
+
   const { calculatedData } = useOrderCalculation({
     products: products || [],
     settings,
@@ -304,7 +301,7 @@ export function WarningsExample() {
       checkMOQ: true,
     },
   });
-  
+
   const getWarningColor = (type: string) => {
     switch (type) {
       case "moq":
@@ -317,7 +314,7 @@ export function WarningsExample() {
         return "gray";
     }
   };
-  
+
   return (
     <div>
       {calculatedData.warnings.length > 0 && (
@@ -340,7 +337,7 @@ export function WarningsExample() {
           ))}
         </div>
       )}
-      
+
       {calculatedData.metadata.hasNegativePrices && (
         <div style={{ color: "red", fontWeight: "bold" }}>
           ⚠️ Some products have negative prices after discounts!
@@ -356,23 +353,27 @@ export function WarningsExample() {
 
 export function CompleteEditOrderFlow() {
   const { watch, setValue } = useFormContext();
-  
+
   // Watch all necessary fields
   const selectedVersion = watch("selectedVersion");
   const products = watch(`orderDetails[${selectedVersion}].dbProductDetails`);
   const isInter = watch(`orderDetails[${selectedVersion}].isInter`);
   const taxExemption = watch("taxExemption");
   const isReorder = watch("isReorder");
-  const VolumeDiscountAvailable = watch(`orderDetails[${selectedVersion}].VolumeDiscountAvailable`);
+  const VolumeDiscountAvailable = watch(
+    `orderDetails[${selectedVersion}].VolumeDiscountAvailable`
+  );
   const VDapplied = watch(`orderDetails[${selectedVersion}].VDapplied`);
-  const overallShipping = watch(`orderDetails[${selectedVersion}].overallShipping`);
+  const overallShipping = watch(
+    `orderDetails[${selectedVersion}].overallShipping`
+  );
   const orderTerms = watch("orderDetails[0].orderTerms");
-  
+
   const settings: CalculationSettings = {
     roundingAdjustment: true,
     itemWiseShippingTax: false,
   };
-  
+
   // Full calculation with all options
   const { calculatedData, isCalculating } = useOrderCalculation({
     products: products || [],
@@ -394,46 +395,52 @@ export function CompleteEditOrderFlow() {
       resetDiscounts: isReorder,
     },
   });
-  
+
   // Update form when calculation completes
   useEffect(() => {
     if (calculatedData && !isCalculating) {
       // Update products
       setValue(`orderDetails[0].dbProductDetails`, calculatedData.products);
-      
+
       // Update cart value
       setValue(`orderDetails[0].cartValue`, calculatedData.cartValue);
-      
+
       // Update breakup
       setValue(`orderDetails[0].breakup`, calculatedData.breakup);
-      
+
       // Reset additional fields for reorder
       if (isReorder) {
         setValue("orderDetails[0].customerRequiredDate", null);
         setValue("comment", null);
       }
-      
+
       // Set loading to false
       setValue("isLoading", false);
     }
   }, [calculatedData, isCalculating, isReorder, setValue]);
-  
+
   return (
     <div>
       {isCalculating && <div>Calculating order...</div>}
-      
+
       {/* Summary */}
       <div className="order-summary">
         <h3>Order Summary</h3>
         <p>Products: {calculatedData.metadata.totalProducts}</p>
         <p>Subtotal: ${calculatedData.cartValue.totalValue.toFixed(2)}</p>
-        <p>Discounts: -${calculatedData.cartValue.totalBasicDiscount.toFixed(2)}</p>
+        <p>
+          Discounts: -${calculatedData.cartValue.totalBasicDiscount.toFixed(2)}
+        </p>
         <p>Shipping: ${calculatedData.cartValue.totalShipping.toFixed(2)}</p>
         <p>Tax: ${calculatedData.cartValue.totalTax.toFixed(2)}</p>
         <hr />
-        <p><strong>Grand Total: ${calculatedData.cartValue.grandTotal.toFixed(2)}</strong></p>
+        <p>
+          <strong>
+            Grand Total: ${calculatedData.cartValue.grandTotal.toFixed(2)}
+          </strong>
+        </p>
       </div>
-      
+
       {/* Warnings */}
       {calculatedData.warnings.length > 0 && (
         <div className="warnings">
@@ -442,13 +449,17 @@ export function CompleteEditOrderFlow() {
           ))}
         </div>
       )}
-      
+
       {/* Metadata */}
       <div className="metadata">
         <small>
-          Calculated at: {new Date(calculatedData.metadata.calculationTimestamp).toLocaleString()}
+          Calculated at:{" "}
+          {new Date(
+            calculatedData.metadata.calculationTimestamp
+          ).toLocaleString()}
           <br />
-          Volume Discount: {calculatedData.metadata.hasVolumeDiscount ? "✅" : "❌"}
+          Volume Discount:{" "}
+          {calculatedData.metadata.hasVolumeDiscount ? "✅" : "❌"}
           <br />
           Cash Discount: {calculatedData.metadata.hasCashDiscount ? "✅" : "❌"}
         </small>
@@ -456,4 +467,3 @@ export function CompleteEditOrderFlow() {
     </div>
   );
 }
-

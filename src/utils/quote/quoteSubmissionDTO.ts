@@ -10,13 +10,13 @@ import { filter, forEach, map, some, trim } from "lodash";
  * @returns Formatted quote submission payload
  */
 export const prepareQuoteSubmissionDTO = (
-  values: Record<string, any>, // eslint-disable-line @typescript-eslint/no-explicit-any
-  overViewValues: Record<string, any>, // eslint-disable-line @typescript-eslint/no-explicit-any
+  values: Record<string, any>,  
+  overViewValues: Record<string, any>,  
   displayName?: string,
   _companyName?: string
 ): QuoteSubmissionPayload => {
   // Start with the values object to preserve all existing fields
-  const body: any = { ...values }; // eslint-disable-line @typescript-eslint/no-explicit-any
+  const body: any = { ...values };  
 
   // Override/Update specific fields
   body.quoteName = values?.quoteName || overViewValues?.quoteName;
@@ -32,7 +32,7 @@ export const prepareQuoteSubmissionDTO = (
   // Users - extract IDs from user objects
   const quoteUserIds = map(
     overViewValues.quoteUsers || [],
-    (user: any) => user?.id || user?.userId || user // eslint-disable-line @typescript-eslint/no-explicit-any
+    (user: any) => user?.id || user?.userId || user  
   );
   body.quoteUsers = quoteUserIds;
   body.deletableQuoteUsers = [];
@@ -51,7 +51,7 @@ export const prepareQuoteSubmissionDTO = (
   }
 
   // Tags - extract IDs from tag objects
-  const tagsId = map(overViewValues.tagsList || [], (tag: any) => tag?.id || tag); // eslint-disable-line @typescript-eslint/no-explicit-any
+  const tagsId = map(overViewValues.tagsList || [], (tag: any) => tag?.id || tag);  
   body.tagsList = tagsId;
   body.deletableTagsList = [];
 
@@ -118,8 +118,8 @@ export const prepareQuoteSubmissionDTO = (
   if (body.dbProductDetails && Array.isArray(body.dbProductDetails)) {
     body.dbProductDetails = map(
       body.dbProductDetails,
-      (prod: any) => { // eslint-disable-line @typescript-eslint/no-explicit-any
-        const formattedProd: any = { ...prod }; // eslint-disable-line @typescript-eslint/no-explicit-any
+      (prod: any) => {  
+        const formattedProd: any = { ...prod };  
         
         // Account Owner
         formattedProd.accountOwnerId = prod.accountOwner
@@ -191,7 +191,7 @@ export const prepareQuoteSubmissionDTO = (
     ];
 
     // Final cleanup for all products
-    body.dbProductDetails.forEach((item: any) => { // eslint-disable-line @typescript-eslint/no-explicit-any
+    body.dbProductDetails.forEach((item: any) => {  
       item.productDiscounts =
         (item?.productDiscounts || []).length > 0 ? item.productDiscounts : [];
       item.bundleProducts =
@@ -211,7 +211,7 @@ export const prepareQuoteSubmissionDTO = (
  * @returns Formatted bundle products array
  */
 export const formBundleProductsPayload = (
-  bundleArray: any[] // eslint-disable-line @typescript-eslint/no-explicit-any
+  bundleArray: any[]  
 ) => {
   forEach(bundleArray, (bp) => {
     bp.bundleSelected = bp.bundleSelected ? 1 : 0;
@@ -227,7 +227,7 @@ export const formBundleProductsPayload = (
  * @returns True if any bundle product is selected
  */
 export function checkIsBundleProduct(
-  bundleProducts?: any[] // eslint-disable-line @typescript-eslint/no-explicit-any
+  bundleProducts?: any[]  
 ): boolean {
   if (
     bundleProducts?.length &&

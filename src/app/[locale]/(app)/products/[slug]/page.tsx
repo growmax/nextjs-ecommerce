@@ -21,7 +21,7 @@ export const dynamicParams = true;
 
 // Data Methods...
 async function getContext() {
-  const { domainUrl, origin } = getDomainInfo();
+  const { domainUrl, origin } = await getDomainInfo();
   const tenantData = await TenantService.getTenantDataCached(domainUrl, origin);
   return { tenantData, origin };
 }
@@ -47,9 +47,6 @@ async function fetchProduct(
 
 export async function generateStaticParams() {
   try {
-    console.log(
-      `[Static Generation] Fetching product starging for build-time generation`
-    );
     const { tenantData, origin } = await getContext();
 
     if (!tenantData?.data?.tenant?.elasticCode) {
@@ -72,10 +69,6 @@ export async function generateStaticParams() {
     // Fetch product data and generate proper slugs
     for (const productId of staticProducts) {
       try {
-        // Fetch product data
-        console.log(
-          `[Static Generation] Fetching product ${productId} for build-time generation`
-        );
         const product = await fetchProduct(
           productId,
           tenantData.data.tenant.elasticCode,
@@ -84,9 +77,6 @@ export async function generateStaticParams() {
         );
 
         if (product) {
-          console.log(
-            `[Static Generation] fetchProduct succeeded for ${productId}`
-          );
           // Generate proper slug using the existing slug generator
           const { generateProductSlug } = await import(
             "@/utils/product/slug-generator"
@@ -97,34 +87,13 @@ export async function generateStaticParams() {
           for (const locale of locales) {
             productPaths.push({ locale, slug });
           }
-
-          // Static generation logging (build-time only)
-          if (process.env.NODE_ENV === "development") {
-            console.log(
-              `[Static Generation] Pre-generating: ${productId} -> ${slug} for locales: ${locales.join(", ")}`
-            );
-          }
         } else {
-          // Static generation warning (build-time only)
-          if (process.env.NODE_ENV === "development") {
-            console.warn(
-              `[Static Generation] Product ${productId} not found, skipping...`
-            );
-          }
         }
-      } catch (error) {
-        // Static generation error (build-time only)
-        if (process.env.NODE_ENV === "development") {
-          console.warn(
-            `[Static Generation] Failed to fetch product ${productId}:`,
-            error
-          );
-        }
-      }
+      } catch {}
     }
 
     return productPaths;
-  } catch (_error) {
+  } catch {
     return [];
   }
 }
@@ -232,7 +201,7 @@ export async function generateMetadata({
         },
       },
     };
-  } catch (_error) {
+  } catch {
     return {
       title: "Error Loading Product",
       description: "An error occurred while loading the product.",
@@ -272,25 +241,12 @@ export default async function ProductPage({ params }: ProductPageProps) {
       );
     }
 
-    const startTime = Date.now();
-
     const productData = await fetchProduct(
       productId,
       elasticCode,
       tenantCode,
       origin
     );
-    const endTime = Date.now();
-    const duration = endTime - startTime;
-
-    // Performance timing (development only)
-    if (process.env.NODE_ENV === "development") {
-      console.log(`[Product Fetch] Duration: ${duration}ms`, {
-        timestamp: new Date().toISOString(),
-        productId: parseProductSlug(slug),
-      });
-    }
-
     if (!productData) {
       const { notFound } = await import("next/navigation");
       return notFound();
@@ -333,7 +289,7 @@ export default async function ProductPage({ params }: ProductPageProps) {
         </PageContent>
       </>
     );
-  } catch (_error) {
+  } catch {
     return (
       <div className="container mx-auto px-4 py-16 text-center">
         <h1 className="text-3xl font-bold text-destructive mb-4">

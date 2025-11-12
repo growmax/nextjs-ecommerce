@@ -1,5 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
-/* eslint-disable react-hooks/exhaustive-deps */
 import { SaveCancelToolbar } from "@/components/custom/save-cancel-toolbar";
 import SectionCard from "@/components/custom/SectionCard";
 import { Button } from "@/components/ui/button";
@@ -21,30 +19,85 @@ import {
   FormLabel,
 } from "@/components/ui/form";
 import { CompanyService, SubIndustryService } from "@/lib/api";
+import type { CompanyApiResponse } from "@/lib/api/services/CompanyService";
 import Image from "next/image";
 import React, { useEffect, useRef, useState } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import CompanyFormInput from "./FormInput";
 
-const CompanyDetail = () => {
-  const form = useForm({
-    defaultValues: {
-      data: {
-        subIndustryId: {
-          name: "",
-          id: "",
-          description: "",
-        },
-      },
-      subIndustry: "", // This will store the ID
-      subIndustryOptions: [],
+type SubIndustryOption = {
+  id: string | number;
+  name?: string;
+  description?: string;
+  industryId?: { name?: string };
+  [key: string]: unknown;
+};
+
+type SubIndustryFormValue = {
+  name: string;
+  id: string | number;
+  description: string;
+  [key: string]: unknown;
+};
+
+interface CompanyFormValues {
+  data: {
+    subIndustryId: SubIndustryFormValue;
+    [key: string]: unknown;
+  };
+  subIndustry: string;
+  subIndustryOptions: SubIndustryOption[];
+}
+
+const normalizeCompanyData = (
+  response?: CompanyApiResponse["data"]
+): CompanyFormValues => {
+  const subIndustry = response?.subIndustryId;
+
+  const data: CompanyFormValues["data"] = {
+    ...(response ? { ...response, subIndustryId: undefined } : {}),
+    subIndustryId: {
+      ...(subIndustry ?? {}),
+      name: subIndustry?.name ?? "",
+      id:
+        subIndustry?.id !== undefined && subIndustry?.id !== null
+          ? subIndustry.id
+          : "",
+      description: subIndustry?.description ?? "",
     },
+  };
+
+  return {
+    data,
+    subIndustry:
+      subIndustry?.id !== undefined && subIndustry?.id !== null
+        ? String(subIndustry.id)
+        : "",
+    subIndustryOptions: [],
+  };
+};
+
+const CompanyDetail = () => {
+  const defaultFormValues: CompanyFormValues = {
+    data: {
+      subIndustryId: {
+        name: "",
+        id: "",
+        description: "",
+      },
+    },
+    subIndustry: "",
+    subIndustryOptions: [],
+  };
+
+  const form = useForm<CompanyFormValues>({
+    defaultValues: defaultFormValues,
   });
   // watch options from react-hook-form (keeps data in RHF only)
   const subIndustryOptions = form.watch("subIndustryOptions");
   const [loading, setLoading] = useState(true);
-  const [profileImage, setProfileImage] = useState(null);
+  const [profileImage, setProfileImage] = useState<string | null>(null);
   // new: track dropdown open + sub-fetch state to lazy-load options on click
   const [subLoading, setSubLoading] = useState(false);
   const isFetchingSubRef = useRef(false);
@@ -53,7 +106,7 @@ const CompanyDetail = () => {
   const [isFormReady, setIsFormReady] = useState(false);
 
   // Store initial values in a ref to preserve them
-  const defaultValuesRef = useRef<any>(null);
+  const defaultValuesRef = useRef<CompanyFormValues | null>(null);
 
   // Update the fetchBranch function to store initial values
   useEffect(() => {
@@ -61,28 +114,16 @@ const CompanyDetail = () => {
       try {
         const response = await CompanyService.getBranch();
 
-        const initialData = {
-          data: {
-            ...response?.data,
-            subIndustryId: {
-              name: response?.data?.subIndustryId?.name || "",
-              id: response?.data?.subIndustryId?.id || "",
-              description: response?.data?.subIndustryId?.description || "",
-            },
-          },
-          // Set subIndustry to the ID for proper form handling
-          subIndustry: response?.data?.subIndustryId?.id || "",
-          subIndustryOptions: [],
-        };
+        const normalizedData = normalizeCompanyData(response?.data);
 
         // Store initial values for reset
-        defaultValuesRef.current = initialData;
+        defaultValuesRef.current = normalizedData;
 
         // Set form values
-        form.reset(initialData);
+        form.reset(normalizedData);
         // Set form ready after initial data is loaded
         setIsFormReady(true);
-      } catch (_error) {
+      } catch {
         // Error handled silently
       } finally {
         setLoading(false);
@@ -90,23 +131,25 @@ const CompanyDetail = () => {
     };
 
     fetchBranch();
-  }, []); // run once on mount
+  }, [form]); // run once on mount, depends on form
 
   // lazy fetch sub-industry options when dropdown is opened (only once)
   const handleSubOpenChange = async (open: boolean) => {
     // prevent opening / fetching while initial page load is still in progress
     if (loading) return;
     if (!open) return;
-    const currentOptions = form.getValues("subIndustryOptions") as any[];
+    const currentOptions = form.getValues("subIndustryOptions");
     if ((currentOptions?.length ?? 0) > 0) return; // already loaded
     if (isFetchingSubRef.current) return; // already fetching
     isFetchingSubRef.current = true;
     setSubLoading(true);
     try {
       const subIndustryResp = await SubIndustryService.getData();
-      // @ts-expect-error - subIndustryResp type is complex
-      form.setValue("subIndustryOptions", subIndustryResp);
-    } catch (_err) {
+      form.setValue(
+        "subIndustryOptions",
+        subIndustryResp as SubIndustryOption[]
+      );
+    } catch {
       // Error handled silently
     } finally {
       setSubLoading(false);
@@ -114,12 +157,11 @@ const CompanyDetail = () => {
     }
   };
 
-  const handleImageUpload = (event: any) => {
-    const file = event.target.files[0];
+  const handleImageUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
     if (file) {
       const reader = new FileReader();
-      // @ts-expect-error - FileReader result type
-      reader.onload = () => setProfileImage(reader.result);
+      reader.onload = () => setProfileImage(reader.result as string);
       reader.readAsDataURL(file);
     }
   };
@@ -142,12 +184,16 @@ const CompanyDetail = () => {
         subscription.unsubscribe();
       }
     };
-  }, []);
+  }, [form]);
 
   // Unified cancel handler
   const handleCancel = () => {
     // Reset to initial values
-    form.reset(defaultValuesRef.current);
+    if (defaultValuesRef.current) {
+      form.reset(defaultValuesRef.current);
+    } else {
+      form.reset(defaultFormValues);
+    }
     // Reset image if needed
     setProfileImage(null);
     toast.info("All changes cancelled");
@@ -188,16 +234,47 @@ const CompanyDetail = () => {
       }
 
       // API call with full formData (backend might need all fields)
-      await CompanyService.updateBranch(formData);
+      const companyId = (formData.data?.id ?? formData.data?.companyId) as
+        | number
+        | undefined;
+
+      if (!companyId) {
+        throw new Error("Missing company identifier");
+      }
+
+      const subIndustryIdValue =
+        formData.subIndustry || formData.data.subIndustryId.id;
+      const parsedSubIndustryId =
+        subIndustryIdValue !== "" && subIndustryIdValue !== undefined
+          ? Number(subIndustryIdValue)
+          : undefined;
+
+      const updatePayload = {
+        ...(formData.data as Record<string, unknown>),
+        subIndustryId: {
+          ...(formData.data.subIndustryId as Record<string, unknown>),
+          id:
+            parsedSubIndustryId !== undefined
+              ? parsedSubIndustryId
+              : formData.data.subIndustryId.id,
+        },
+      } as Partial<CompanyApiResponse["data"]>;
+
+      const response = await CompanyService.updateCompanyProfile(
+        Number(companyId),
+        updatePayload
+      );
+
+      const normalizedData = normalizeCompanyData(response?.data);
 
       // Update original values after successful save
-      defaultValuesRef.current = formData;
+      defaultValuesRef.current = normalizedData;
 
       // Reset form state after successful save
-      reset(formData);
+      reset(normalizedData);
 
       toast.success("Changes saved successfully!");
-    } catch (_error) {
+    } catch {
       toast.error("Failed to save changes. Please try again.");
     } finally {
       setIsSaving(false);

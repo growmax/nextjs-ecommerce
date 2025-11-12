@@ -9,7 +9,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Control } from "react-hook-form";
 
 interface FormInputProps {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+   
   control: Control<any>;
   name: string;
   label: string;

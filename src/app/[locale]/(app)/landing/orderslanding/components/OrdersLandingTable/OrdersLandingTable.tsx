@@ -101,7 +101,7 @@ function OrdersLandingTable({
 
   // State
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
-  const [drawerMode, setDrawerMode] = useState<"filter" | "create">("filter");
+  const [drawerMode, _setDrawerMode] = useState<"filter" | "create">("filter");
   const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);
   const [totalCount, setTotalCount] = useState(0);
@@ -252,8 +252,6 @@ function OrdersLandingTable({
     ],
     []
   );
-  console.log(page);
-  console.log(rowPerPage);
   // Create filter from form data
   const createFilterFromData = useCallback(
     (
@@ -334,7 +332,7 @@ function OrdersLandingTable({
       userDisplayName: "",
       userStatus: [],
     }),
-    [rowPerPage]
+    [rowPerPage, page]
   );
 
   // Load filter preferences
@@ -442,8 +440,7 @@ function OrdersLandingTable({
 
       setOrders(ordersData);
       setTotalCount(totalCountData);
-    } catch (error) {
-      console.error("Failed to fetch orders:", error);
+    } catch {
       toast.error("Failed to fetch orders");
       setOrders([]);
       setTotalCount(0);
@@ -553,31 +550,7 @@ function OrdersLandingTable({
     [user?.userId, user?.companyId, createFilterFromData] // Removed loadFilterPreferences from dependencies
   );
 
-  // Define tabs
-  const tabs = useMemo(() => {
-    if (
-      !filterPreferences?.preference?.filters ||
-      filterPreferences.preference.filters.length === 0
-    ) {
-      return [
-        {
-          id: "all",
-          label: "All",
-          hasFilter: true,
-          isFilterActive: !!filterData,
-          filterIndex: undefined,
-        },
-      ];
-    }
-    return filterPreferences.preference.filters.map((filter, index) => ({
-      id: `filter-${index}`,
-      label: filter.filter_name,
-      hasFilter: true,
-      isFilterActive:
-        filterPreferences.preference.selected === index || !!filterData,
-      filterIndex: index,
-    }));
-  }, [filterPreferences, filterData]);
+  // (tabs computation removed; tabs was unused)
 
   // Memoize fetch function
   // Effects

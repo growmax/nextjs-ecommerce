@@ -1,7 +1,7 @@
-import { NextRequest, NextResponse } from "next/server";
-import { cookies } from "next/headers";
 import { PaymentService, RequestContext } from "@/lib/api";
 import { JWTService } from "@/lib/services/JWTService";
+import { cookies } from "next/headers";
+import { NextRequest, NextResponse } from "next/server";
 
 /**
  * POST /api/sales/payments/getAllPaymentTerms
@@ -120,12 +120,7 @@ export async function POST(request: NextRequest) {
       data: response?.data,
       isLoggedIn: Boolean(accessToken),
     });
-  } catch (error) {
-    // Log error for debugging (in production, use proper logging service)
-    // eslint-disable-next-line no-console
-    console.error("Error fetching payment terms:", error);
-
-    // Return error response
+  } catch (error: unknown) {
     return NextResponse.json(
       {
         error:

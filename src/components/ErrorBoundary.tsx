@@ -47,15 +47,6 @@ export class ErrorBoundary extends Component<
   }
 
   componentDidCatch(error: Error, errorInfo: React.ErrorInfo) {
-    // Log error to error reporting service in production
-    if (process.env.NODE_ENV === "production") {
-      // TODO: Send to error reporting service (e.g., Sentry, LogRocket)
-      // console.error("Error caught by boundary:", error, errorInfo);
-    } else {
-      // eslint-disable-next-line no-console
-      console.error("Error caught by boundary:", error, errorInfo);
-    }
-
     // Call custom error handler if provided
     this.props.onError?.(error, errorInfo);
   }

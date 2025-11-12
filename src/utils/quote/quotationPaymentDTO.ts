@@ -436,22 +436,41 @@ export const quotationPaymentDTO = (
 
   // Map product details
   const dbProductDetails = map(values?.dbProductDetails || [], prod => {
+    const anyProd = prod as any;
+
+    const accountOwnerId =
+      anyProd?.accountOwner && typeof anyProd.accountOwner === "object"
+        ? Number(anyProd.accountOwner.id) || null
+        : null;
+
+    const businessUnitId =
+      anyProd?.businessUnit && typeof anyProd.businessUnit === "object"
+        ? Number(anyProd.businessUnit.id) || ""
+        : "";
+
+    const divisionId =
+      anyProd?.division && typeof anyProd.division === "object"
+        ? Number(anyProd.division.id) || null
+        : null;
+
+    const orderWareHouseId =
+      anyProd?.wareHouse && typeof anyProd.wareHouse === "object"
+        ? Number(anyProd.wareHouse.id) || null
+        : null;
+
+    const orderWareHouseName =
+      anyProd?.wareHouse && typeof anyProd.wareHouse === "object"
+        ? (anyProd.wareHouse.wareHouseName as string) || null
+        : null;
+
     return {
       ...prod,
-      accountOwnerId: prod?.accountOwner
-        ? parseInt((prod.accountOwner as { id: number }).id.toString())
-        : null,
-      businessUnitId: (prod.businessUnit as { id: number })?.id || "",
-      divisionId: prod?.division
-        ? parseInt((prod.division as { id: number }).id.toString())
-        : null,
+      accountOwnerId,
+      businessUnitId,
+      divisionId,
 
-      lineNo: (prod as { new?: boolean; lineNo?: number }).new
-        ? null
-        : ((prod as { lineNo?: number }).lineNo ?? null),
-      itemNo: (prod as { new?: boolean; itemNo?: number }).new
-        ? null
-        : ((prod as { itemNo?: number }).itemNo ?? null),
+      lineNo: anyProd.new ? null : anyProd.lineNo ?? null,
+      itemNo: anyProd.new ? null : anyProd.itemNo ?? null,
 
       pfValue: null,
       pfPercentage:
@@ -459,41 +478,32 @@ export const quotationPaymentDTO = (
           ? values?.pfRate
           : null,
 
-      tentativeDeliveryDate:
-        (prod as { tentativeDeliveryDate?: string }).tentativeDeliveryDate ||
-        null,
+      tentativeDeliveryDate: anyProd.tentativeDeliveryDate || null,
 
-      orderWareHouseId: (prod?.wareHouse as { id: number })?.id || null,
-      orderWareHouseName:
-        (prod?.wareHouse as { wareHouseName?: string })?.wareHouseName || null,
+      orderWareHouseId,
+      orderWareHouseName,
 
       productTaxes: quoteBody.isInter
-        ? (prod as { interTaxBreakup?: unknown[] }).interTaxBreakup || []
-        : (prod as { intraTaxBreakup?: unknown[] }).intraTaxBreakup || [],
+        ? (anyProd.interTaxBreakup as unknown[]) || []
+        : (anyProd.intraTaxBreakup as unknown[]) || [],
 
-      productDiscounts: (
-        prod as { discountDetails?: { discountId?: string; Value?: number } }
-      )?.discountDetails?.discountId
+      productDiscounts: anyProd.discountDetails?.discountId
         ? [
             {
               id: null,
-              discounId: (prod as { discountDetails?: { discountId?: string } })
-                .discountDetails?.discountId,
+              discounId: anyProd.discountDetails.discountId,
               discounCode: null,
               orderProduct: null,
-              discountPercentage: (
-                prod as { discountDetails?: { Value?: number } }
-              ).discountDetails?.Value,
+              discountPercentage: anyProd.discountDetails.Value,
             },
           ]
         : [],
 
       bundleProducts: (() => {
-        const bundleProds = (prod as { bundleProducts?: unknown[] })
-          .bundleProducts;
+        const bundleProds = anyProd.bundleProducts;
         if (Array.isArray(bundleProds) && bundleProds.length > 0) {
           return formBundleProductsPayload(
-            bundleProds as unknown as BundleProductPayload[]
+            bundleProds as BundleProductPayload[]
           );
         }
         return [];
