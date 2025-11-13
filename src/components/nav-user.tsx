@@ -1,28 +1,9 @@
 "use client";
 
-import {
-  Building2,
-  ChevronsUpDown,
-  IdCard,
-  Loader2,
-  LogOut,
-} from "lucide-react";
-import Link from "next/link";
+import { ChevronsUpDown } from "lucide-react";
 
-import {
-  Avatar,
-  AvatarFallback,
-  AvatarImage,
-} from "@/components/ui/avatar";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuGroup,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { AvatarCard } from "@/components/AvatarCard/AvatarCard";
 import {
   SidebarMenu,
   SidebarMenuButton,
@@ -31,6 +12,7 @@ import {
 } from "@/components/ui/sidebar";
 import useLogout from "@/hooks/Auth/useLogout";
 import useUserProfile from "@/hooks/Profile/useUserProfile";
+import { ReactNode } from "react";
 
 export function NavUser() {
   const { isMobile } = useSidebar();
@@ -41,98 +23,52 @@ export function NavUser() {
     return null;
   }
 
-  const initials = userProfile.displayName
-    ?.split(" ")
-    .map(n => n[0])
-    .join("")
-    .toUpperCase()
-    .slice(0, 2) || "U";
+  const initials =
+    userProfile.displayName
+      ?.split(" ")
+      .map(n => n[0])
+      .join("")
+      .toUpperCase()
+      .slice(0, 2) || "U";
+
+  // Custom trigger component that matches the current sidebar button design
+  const CustomTrigger: ReactNode = (
+    <SidebarMenuButton
+      size="lg"
+      className="data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground justify-start gap-2 group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:gap-0"
+    >
+      <Avatar className="h-8 w-8 rounded-lg">
+        <AvatarImage
+          src={userProfile.picture || ""}
+          alt={userProfile.displayName || "User"}
+        />
+        <AvatarFallback className="rounded-lg">{initials}</AvatarFallback>
+      </Avatar>
+      <div className="grid flex-1 text-left text-sm leading-tight group-data-[collapsible=icon]:hidden">
+        <span className="truncate font-medium">{userProfile.displayName}</span>
+        <span className="truncate text-xs">{userProfile.email}</span>
+      </div>
+      <ChevronsUpDown className="ml-auto size-4 group-data-[collapsible=icon]:hidden" />
+    </SidebarMenuButton>
+  );
 
   return (
     <SidebarMenu>
       <SidebarMenuItem>
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <SidebarMenuButton
-              size="lg"
-              className="data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground justify-start gap-2 group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:gap-0"
-            >
-              <Avatar className="h-8 w-8 rounded-lg">
-                <AvatarImage
-                  src={userProfile.picture || ""}
-                  alt={userProfile.displayName || "User"}
-                />
-                <AvatarFallback className="rounded-lg">{initials}</AvatarFallback>
-              </Avatar>
-              <div className="grid flex-1 text-left text-sm leading-tight group-data-[collapsible=icon]:hidden">
-                <span className="truncate font-medium">
-                  {userProfile.displayName}
-                </span>
-                <span className="truncate text-xs">{userProfile.email}</span>
-              </div>
-              <ChevronsUpDown className="ml-auto size-4 group-data-[collapsible=icon]:hidden" />
-            </SidebarMenuButton>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent
-            className="w-(--radix-dropdown-menu-trigger-width) min-w-56 rounded-lg"
-            side={isMobile ? "bottom" : "right"}
-            align="end"
-            sideOffset={4}
-          >
-            <DropdownMenuLabel className="p-0 font-normal">
-              <div className="flex items-center gap-2 px-1 py-1.5 text-left text-sm">
-                <Avatar className="h-8 w-8 rounded-lg">
-                  <AvatarImage
-                    src={userProfile.picture || ""}
-                    alt={userProfile.displayName || "User"}
-                  />
-                  <AvatarFallback className="rounded-lg">
-                    {initials}
-                  </AvatarFallback>
-                </Avatar>
-                <div className="grid flex-1 text-left text-sm leading-tight">
-                  <span className="truncate font-medium">
-                    {userProfile.displayName}
-                  </span>
-                  <span className="truncate text-xs">{userProfile.email}</span>
-                  {userProfile.companyName && (
-                    <span className="truncate text-xs text-muted-foreground">
-                      {userProfile.companyName}
-                    </span>
-                  )}
-                </div>
-              </div>
-            </DropdownMenuLabel>
-            <DropdownMenuSeparator />
-            <DropdownMenuGroup>
-              <DropdownMenuItem asChild>
-                <Link href="/settings/profile">
-                  <IdCard />
-                  Profile
-                </Link>
-              </DropdownMenuItem>
-              <DropdownMenuItem asChild>
-                <Link href="/settings/company">
-                  <Building2 />
-                  Company Settings
-                </Link>
-              </DropdownMenuItem>
-            </DropdownMenuGroup>
-            <DropdownMenuSeparator />
-            <DropdownMenuItem
-              onClick={handleLogout}
-              disabled={isLoggingOut}
-              className="text-red-600 focus:text-red-600"
-            >
-              {isLoggingOut ? (
-                <Loader2 className="animate-spin" />
-              ) : (
-                <LogOut />
-              )}
-              {isLoggingOut ? "Logging out..." : "Log out"}
-            </DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
+        <AvatarCard
+          user={{
+            displayName: userProfile.displayName || null,
+            email: userProfile.email || null,
+            companyName: userProfile.companyName || null,
+            picture: userProfile.picture || null,
+          }}
+          onLogout={handleLogout}
+          isLoggingOut={isLoggingOut}
+          trigger={CustomTrigger}
+          side={isMobile ? "bottom" : "right"}
+          align="end"
+          menuClassName="min-w-56 rounded-lg"
+        />
       </SidebarMenuItem>
     </SidebarMenu>
   );
