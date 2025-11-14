@@ -22,6 +22,7 @@ import { SidebarTrigger } from "@/components/ui/sidebar";
 import { useCart } from "@/contexts/CartContext";
 import useLogout from "@/hooks/Auth/useLogout";
 import useUserProfile from "@/hooks/Profile/useUserProfile";
+import { getUserInitials } from "@/utils/General/general";
 import {
   Bell,
   Command as CommandIcon,
@@ -212,17 +213,6 @@ export function AppHeader() {
   const { cartCount } = useCart();
   const notificationsCount = 5;
 
-  // Generate user initials from real data
-  const getUserInitials = () => {
-    if (!userProfile?.displayName) return "U";
-    return userProfile.displayName
-      .split(" ")
-      .map(n => n[0])
-      .join("")
-      .toUpperCase()
-      .slice(0, 2);
-  };
-
   // Keyboard shortcut to open search (Cmd/Ctrl + K)
   useEffect(() => {
     const down = (e: KeyboardEvent) => {
@@ -325,7 +315,9 @@ export function AppHeader() {
                         src={userProfile?.picture || ""}
                         alt={userProfile?.displayName || "User"}
                       />
-                      <AvatarFallback>{getUserInitials()}</AvatarFallback>
+                      <AvatarFallback>
+                        {getUserInitials(userProfile?.displayName || "")}
+                      </AvatarFallback>
                     </Avatar>
                   </Button>
                 }
@@ -360,7 +352,9 @@ export function AppHeader() {
                         src={userProfile?.picture || ""}
                         alt={userProfile?.displayName || "User"}
                       />
-                      <AvatarFallback>{getUserInitials()}</AvatarFallback>
+                      <AvatarFallback>
+                        {getUserInitials(userProfile?.displayName || "")}
+                      </AvatarFallback>
                     </Avatar>
                   </Button>
                 }

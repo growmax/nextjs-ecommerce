@@ -10,6 +10,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { cn } from "@/lib/utils";
+import { getUserInitials } from "@/utils/General/general";
 import {
   AlertCircle,
   Building2,
@@ -21,31 +22,7 @@ import {
   User,
 } from "lucide-react";
 import Link from "next/link";
-import { ReactNode } from "react";
-
-type UserLike = {
-  displayName?: string | null;
-  email?: string | null;
-  companyName?: string | null;
-  picture?: string | null;
-  role?: string | null;
-  accountRole?: string | null;
-  lastLogin?: string | null;
-};
-
-export type AvatarCardProps = {
-  user: UserLike | null;
-  onLogout: () => void;
-  isLoggingOut?: boolean;
-  isError?: boolean;
-  onRetry?: () => void;
-  trigger: ReactNode;
-  align?: "start" | "center" | "end";
-  side?: "top" | "right" | "bottom" | "left";
-  menuClassName?: string;
-  showOrders?: boolean;
-  showQuotes?: boolean;
-};
+import { AvatarCardProps } from "./Avatarcard.types";
 
 export function AvatarCard({
   user,
@@ -143,15 +120,6 @@ export function AvatarCard({
     );
   }
 
-  // Remove optional chaining since user is not null
-  const initials =
-    user.displayName
-      ?.split(" ")
-      .map(n => n[0])
-      .join("")
-      .toUpperCase()
-      .slice(0, 2) || "U";
-
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>{trigger}</DropdownMenuTrigger>
@@ -170,7 +138,9 @@ export function AvatarCard({
                 alt={user.displayName || "User"}
                 className="aspect-square object-cover"
               />
-              <AvatarFallback>{initials}</AvatarFallback>
+              <AvatarFallback>
+                {getUserInitials(user.displayName || "")}
+              </AvatarFallback>
             </Avatar>
             <div className="grid flex-1 text-left leading-tight">
               <p className="truncate text-sm font-semibold">
