@@ -32,17 +32,18 @@ jest.mock("@/components/ui/avatar", () => ({
   ),
 }));
 
-jest.mock("@/components/ui/dropdown-menu", () => {
-  // eslint-disable-next-line @typescript-eslint/no-require-imports
-  const React = require("react");
-  const { useState, useMemo, useContext, createContext } = React;
+type DropdownContextType = {
+  open: boolean;
+  setOpen: React.Dispatch<React.SetStateAction<boolean>>;
+};
 
-  const DropdownContext = createContext<{
-    open: boolean;
-    setOpen: React.Dispatch<React.SetStateAction<boolean>>;
-  }>({
+jest.mock("@/components/ui/dropdown-menu", () => {
+  const { useState, useMemo, useContext } = React;
+  const createContextTyped = React.createContext as typeof React.createContext;
+
+  const DropdownContext = createContextTyped<DropdownContextType>({
     open: false,
-    setOpen: () => {},
+    setOpen: (_value: React.SetStateAction<boolean>) => {},
   });
 
   const DropdownMenu = ({ children }: { children: React.ReactNode }) => {
@@ -65,7 +66,7 @@ jest.mock("@/components/ui/dropdown-menu", () => {
 
     return React.cloneElement(children, {
       onClick: (e: any) => {
-        setOpen(o => !o);
+        setOpen((o: boolean) => !o);
         if (originalOnClick) {
           originalOnClick(e);
         }
