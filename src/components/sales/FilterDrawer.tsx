@@ -1,7 +1,7 @@
 "use client";
 
 import SideDrawer from "@/components/custom/sidedrawer";
-import QuoteStatusService from "@/lib/api/services/StatusService";
+import QuoteStatusService from "@/lib/api/services/StatusService/StatusService";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   FormMethods,

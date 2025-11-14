@@ -1,5 +1,5 @@
 import DashboardOrdersTableService from "@/lib/api/services/Dasboard/DashboardOrdersTable";
-import OrdersFilterService from "@/lib/api/services/OrdersFilterService";
+import OrdersFilterService from "@/lib/api/services/OrdersFilterService/OrdersFilterService";
 import { NextRequest, NextResponse } from "next/server";
 
 export async function GET(request: NextRequest) {

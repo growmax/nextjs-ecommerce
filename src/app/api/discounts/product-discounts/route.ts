@@ -1,4 +1,4 @@
-import { DiscountRequest } from "@/lib/api/services/DiscountService";
+import { DiscountRequest } from "@/lib/api/services/DiscountService/DiscountService";
 import { JWTService } from "@/lib/services/JWTService";
 import { cookies } from "next/headers";
 import { NextRequest, NextResponse } from "next/server";

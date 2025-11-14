@@ -1,4 +1,4 @@
-import SearchService from "@/lib/api/services/SearchService";
+import SearchService from "@/lib/api/services/SearchService/SearchService";
 import { ProductDetail } from "@/types/product/product-detail";
 import { generateProductSlug } from "@/utils/product/slug-generator";
 import { MetadataRoute } from "next";

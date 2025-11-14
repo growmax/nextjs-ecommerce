@@ -6,7 +6,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { zoneDateTimeCalculator } from "@/utils/date-format";
+import { zoneDateTimeCalculator } from "@/utils/date-format/date-format";
 import { ExternalLink, X } from "lucide-react";
 
 export interface Version {

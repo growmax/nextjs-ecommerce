@@ -1,6 +1,6 @@
 "use client";
 
-import SearchService from "@/lib/api/services/SearchService";
+import SearchService from "@/lib/api/services/SearchService/SearchService";
 import { buildProductSearchQuery } from "@/utils/elasticsearch/search-queries";
 import { useQuery } from "@tanstack/react-query";
 import { useMemo } from "react";
@@ -60,11 +60,7 @@ export default function useSearch(
 
   // Search query
   const { data, isLoading, error } = useQuery({
-    queryKey: [
-      "product-search",
-      searchText,
-      finalElasticIndex,
-    ],
+    queryKey: ["product-search", searchText, finalElasticIndex],
     queryFn: async () => {
       if (!query || !searchText.trim()) {
         return { success: true, data: [], total: 0 };

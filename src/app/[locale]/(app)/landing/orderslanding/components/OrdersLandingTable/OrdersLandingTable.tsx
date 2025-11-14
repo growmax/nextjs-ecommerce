@@ -23,7 +23,7 @@ import { statusColor } from "@/components/custom/statuscolors";
 import { useCurrentUser } from "@/hooks/useCurrentUser";
 import ordersFilterService, {
   OrderFilter,
-} from "@/lib/api/services/OrdersFilterService";
+} from "@/lib/api/services/OrdersFilterService/OrdersFilterService";
 import { type Order } from "@/types/dashboard/DasbordOrderstable/DashboardOrdersTable";
 import { OrdersLandingTableProps } from "../../types/ordertypes";
 
@@ -101,7 +101,7 @@ function OrdersLandingTable({
 
   // State
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
-  const [drawerMode, _setDrawerMode] = useState<"filter" | "create">("filter");
+  const [_drawerMode, _setDrawerMode] = useState<"filter" | "create">("filter");
   const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);
   const [totalCount, setTotalCount] = useState(0);
@@ -335,18 +335,6 @@ function OrdersLandingTable({
     [rowPerPage, page]
   );
 
-  // Load filter preferences
-  // const loadFilterPreferences = useCallback(async () => {
-  //   try {
-  //     const preferences =
-  //       await PreferenceService.findFilterPreferences("order");
-  //     setFilterPreferences(preferences);
-  //     return preferences;
-  //   } catch {
-  //     return null;
-  //   }
-  // }, []);
-
   // Fetch orders
   const fetchOrders = useCallback(async () => {
     if (!user?.userId || !user?.companyId) {
@@ -550,8 +538,6 @@ function OrdersLandingTable({
     [user?.userId, user?.companyId, createFilterFromData] // Removed loadFilterPreferences from dependencies
   );
 
-  // (tabs computation removed; tabs was unused)
-
   // Memoize fetch function
   // Effects
   useEffect(() => {
@@ -601,16 +587,14 @@ function OrdersLandingTable({
           toast.success("Filters reset successfully!");
         }}
         onSave={handleSaveFilter}
-        title={
-          drawerMode === "create" ? "Create Custom Filter" : "Order Filters"
-        }
+        title={"Order Filters"}
         filterType="Order"
         activeTab={activeTab}
         userId={user?.userId}
         companyId={user?.companyId}
         module="order"
         initialFilterData={initialFilterData}
-        mode={drawerMode}
+        mode={"filter"}
       />
 
       <SideDrawer

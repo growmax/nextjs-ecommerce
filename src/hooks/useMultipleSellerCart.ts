@@ -1,10 +1,9 @@
- 
 import {
   calculateAllSellerCartPricing,
   findBestPricingMatch,
   getOverallCartSummary,
   groupCartItemsBySeller,
-} from "@/utils/calculation/sellerCartUtils";
+} from "@/utils/calculation/sellerCartUtils/sellerCartUtils";
 // Use individual lodash imports for better tree-shaking
 import { assign_pricelist_discounts_data_to_products } from "@/utils/functionalUtils";
 import isEmpty from "lodash/isEmpty";
@@ -137,7 +136,6 @@ const useMultipleSellerCart = (cartItems: any, calculationParams: any = {}) => {
         }
       }
     }
-     
   }, [processedSellerCarts, selectedSellerId]);
 
   // Handle seller selection

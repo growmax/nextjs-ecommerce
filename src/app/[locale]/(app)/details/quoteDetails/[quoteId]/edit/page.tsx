@@ -24,27 +24,32 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import useCashDiscountHandlers from "@/hooks/useCashDiscountHandlers";
-import useCheckVolumeDiscountEnabled from "@/hooks/useCheckVolumeDiscountEnabled";
+import useCashDiscountHandlers from "@/hooks/useCashDiscountHandlers/useCashDiscountHandlers";
+import useCheckVolumeDiscountEnabled from "@/hooks/useCheckVolumeDiscountEnabled/useCheckVolumeDiscountEnabled";
 import { useCurrentUser } from "@/hooks/useCurrentUser";
-import useGetLatestPaymentTerms from "@/hooks/useGetLatestPaymentTerms";
-import { useLatestOrderProducts } from "@/hooks/useLatestOrderProducts";
+import useGetLatestPaymentTerms from "@/hooks/useGetLatestPaymentTerms/useGetLatestPaymentTerms";
+import { useLatestOrderProducts } from "@/hooks/useLatestOrderProducts/useLatestOrderProducts";
 import useModuleSettings from "@/hooks/useModuleSettings";
-import { useOrderCalculation } from "@/hooks/useOrderCalculation";
-import { useQuoteSubmission } from "@/hooks/useQuoteSubmission";
+import { useOrderCalculation } from "@/hooks/useOrderCalculation/useOrderCalculation";
+import { useQuoteSubmission } from "@/hooks/useQuoteSubmission/useQuoteSubmission";
 import { useTenantData } from "@/hooks/useTenantData";
 import type { QuotationDetailsResponse } from "@/lib/api";
-import { QuotationDetailsService } from "@/lib/api";
+import {
+  OrdersService,
+  QuotationDetailsService,
+  quoteSubmitDTO,
+} from "@/lib/api";
 import {
   type SellerBranch,
   type Warehouse,
-} from "@/lib/api/services/SellerWarehouseService";
+} from "@/lib/api/services/SellerWarehouseService/SellerWarehouseService";
 import type { CartItem } from "@/types/calculation/cart";
 import { getStatusStyle } from "@/utils/details/orderdetails";
 import { decodeUnicode } from "@/utils/general";
-import { prepareQuoteSubmissionDTO } from "@/utils/quote/quoteSubmissionDTO";
+import { prepareQuoteSubmissionDTO } from "@/utils/quote/quoteSubmissionDTO/quoteSubmissionDTO";
 import { isEmpty } from "lodash";
 import some from "lodash/some";
+import { useSearchParams } from "next/navigation";
 
 // Import types for proper typing
 interface AddressDetails {
@@ -93,6 +98,8 @@ interface EditQuotePageProps {
 export default function EditQuotePage({ params }: EditQuotePageProps) {
   const router = useRouter();
   const locale = useLocale();
+  const searchParams = useSearchParams();
+  const isPlaceOrderMode = searchParams.get("placeOrder") === "true";
 
   const [quoteIdentifier, setQuoteIdentifier] = useState<string>("");
   const [paramsLoaded, setParamsLoaded] = useState(false);
@@ -506,6 +513,24 @@ export default function EditQuotePage({ params }: EditQuotePageProps) {
     },
   });
 
+  const effectiveProducts = useMemo(() => {
+    if (calculatedData?.products && calculatedData.products.length > 0) {
+      return calculatedData.products as CartItem[];
+    }
+    if (productsWithCashDiscount.length > 0) {
+      return productsWithCashDiscount as CartItem[];
+    }
+    if (productsWithEditedQuantities.length > 0) {
+      return productsWithEditedQuantities as CartItem[];
+    }
+    return (updatedProducts as CartItem[]) || [];
+  }, [
+    calculatedData?.products,
+    productsWithCashDiscount,
+    productsWithEditedQuantities,
+    updatedProducts,
+  ]);
+
   // Track previous updatedProducts to prevent infinite loops
   const prevUpdatedProductsRef = useRef<unknown[]>([]);
 
@@ -702,6 +727,116 @@ export default function EditQuotePage({ params }: EditQuotePageProps) {
     setConfirmDialogOpen(true);
   };
 
+  const handlePlaceOrder = () => {
+    if (!quoteDetails?.data?.quotationDetails?.[0] || !user) {
+      toast.error("Quote details or user information is missing");
+      return;
+    }
+    setConfirmDialogOpen(true);
+  };
+
+  const confirmPlaceOrder = async () => {
+    if (!quoteDetails?.data?.quotationDetails?.[0] || !user) {
+      toast.error("Quote details or user information is missing");
+      return;
+    }
+
+    setConfirmDialogOpen(false);
+    setSaving(true);
+
+    try {
+      const firstQuoteDetail = quoteDetails.data.quotationDetails[0];
+
+      // Prepare the order data using the quoteSubmitDTO utility
+      const orderPayload = quoteSubmitDTO(
+        {
+          dbProductDetails: effectiveProducts as CartItem[],
+          removedDbProductDetails: [],
+          VDapplied: calculatedData?.metadata.hasVolumeDiscount || false,
+          VDDetails: calculatedData?.breakup || {},
+          cartValue: calculatedData?.cartValue || firstQuoteDetail.cartValue,
+          buyerCurrencyId: quoteDetails.data.buyerCurrencyId as { id: number },
+          registerAddressDetails: firstQuoteDetail.registerAddressDetails,
+          billingAddressDetails:
+            editedBillingAddress || firstQuoteDetail.billingAddressDetails,
+          shippingAddressDetails:
+            editedShippingAddress || firstQuoteDetail.shippingAddressDetails,
+          sellerAddressDetail: firstQuoteDetail.sellerAddressDetail,
+          buyerBranchId: firstQuoteDetail.buyerBranchId as number,
+          buyerBranchName: firstQuoteDetail.buyerBranchName as string,
+          buyerCompanyId: firstQuoteDetail.buyerCompanyId as number,
+          buyerCompanyName: firstQuoteDetail.buyerCompanyName as string,
+          sellerBranchId: firstQuoteDetail.sellerBranchId as number,
+          sellerBranchName: firstQuoteDetail.sellerBranchName as string,
+          sellerCompanyId: firstQuoteDetail.sellerCompanyId as number,
+          sellerCompanyName: firstQuoteDetail.sellerCompanyName as string,
+          customerRequiredDate:
+            editedRequiredDate ||
+            (firstQuoteDetail.customerRequiredDate as string),
+          branchBusinessUnit: firstQuoteDetail.branchBusinessUnit as {
+            id: number;
+          },
+          quoteTerms: firstQuoteDetail.quoteTerms,
+          pfRate: firstQuoteDetail.pfRate as number,
+          isInter: firstQuoteDetail.isInter as boolean,
+          quoteName: firstQuoteDetail.quoteName as string,
+          approvalGroupId: firstQuoteDetail.approvalGroupId,
+        },
+        {
+          buyerReferenceNumber:
+            editedReferenceNumber ||
+            (firstQuoteDetail.buyerReferenceNumber as string),
+          comment: "",
+          uploadedDocumentDetails:
+            firstQuoteDetail.uploadedDocumentDetails as unknown[],
+          quoteUsers: firstQuoteDetail.quoteUsers as Array<{
+            id?: number;
+            userId?: number;
+          }>,
+          quoteDivisionId: firstQuoteDetail.quoteDivisionId,
+          orderType: firstQuoteDetail.orderType,
+          tagsList: firstQuoteDetail.tagsList as Array<{ id: number }>,
+          approvalInitiated: firstQuoteDetail.approvalInitiated,
+          validityFrom: quoteDetails.data.validityFrom,
+          validityTill: quoteDetails.data.validityTill,
+          quotationDetails: [firstQuoteDetail],
+        },
+        user.displayName || "",
+        firstQuoteDetail.buyerCompanyName ||
+          firstQuoteDetail.sellerCompanyName ||
+          "",
+        true // isPlaceOrder flag
+      );
+
+      // Place the order using the OrdersService
+      const response = await OrdersService.placeOrderFromQuote(
+        {
+          userId: user.userId,
+          companyId: user.companyId,
+        },
+        orderPayload
+      );
+
+      if (response?.orderIdentifier) {
+        toast.success("Order placed successfully!");
+        // Navigate to the order details page
+        router.push(
+          `/${locale}/details/orderDetails/${response.orderIdentifier}`
+        );
+      } else {
+        toast.error("Failed to place order. Please try again.");
+      }
+    } catch (error) {
+      toast.error(
+        error instanceof Error
+          ? error.message
+          : "Failed to place order. Please try again."
+      );
+    } finally {
+      setSaving(false);
+    }
+  };
+
   const confirmSaveQuote = async () => {
     if (!quoteDetails?.data?.quotationDetails?.[0] || !user) {
       toast.error("Quote details or user information is missing");
@@ -717,13 +852,7 @@ export default function EditQuotePage({ params }: EditQuotePageProps) {
       // Prepare the quote submission payload using the utility function
       const submissionPayload = prepareQuoteSubmissionDTO(
         {
-          dbProductDetails:
-            productsWithEditedQuantities.length > 0
-              ? productsWithEditedQuantities
-              : updatedProducts.length > 0
-                ? updatedProducts
-                : quoteDetails.data?.quotationDetails?.[0]?.dbProductDetails ||
-                  [],
+          dbProductDetails: effectiveProducts as CartItem[],
           removedDbProductDetails: [],
           VDapplied: calculatedData?.metadata.hasVolumeDiscount || false,
           VDDetails: calculatedData?.breakup || {},
@@ -822,9 +951,9 @@ export default function EditQuotePage({ params }: EditQuotePageProps) {
           menuOptions={[]}
           buttons={[
             {
-              label: "Submit",
+              label: isPlaceOrderMode ? "Place Order" : "Submit",
               variant: "default",
-              onClick: handleSaveQuote,
+              onClick: isPlaceOrderMode ? handlePlaceOrder : handleSaveQuote,
               disabled: saving || isSubmitting,
             },
           ]}
@@ -840,14 +969,7 @@ export default function EditQuotePage({ params }: EditQuotePageProps) {
             <div className="w-full lg:w-[70%] space-y-2 sm:space-y-3 mt-[60px]">
               {!loading && !error && quoteDetails && (
                 <OrderProductsTable
-                  products={
-                    productsWithEditedQuantities.length > 0
-                      ? productsWithEditedQuantities
-                      : updatedProducts.length > 0
-                        ? updatedProducts
-                        : quoteDetails.data?.quotationDetails?.[0]
-                            ?.dbProductDetails || []
-                  }
+                  products={effectiveProducts as any}
                   {...(quoteDetails.data?.quotationDetails?.[0]
                     ?.dbProductDetails?.length && {
                     totalCount:
@@ -988,21 +1110,7 @@ export default function EditQuotePage({ params }: EditQuotePageProps) {
             {!loading && !error && quoteDetails && (
               <div className="w-full lg:w-[30%] mt-[60px] space-y-3">
                 <OrderPriceDetails
-                  products={
-                    calculatedData?.products &&
-                    calculatedData.products.length > 0
-                      ? (calculatedData.products as unknown as Array<
-                          Record<string, unknown>
-                        >)
-                      : productsWithCashDiscount.length > 0
-                        ? productsWithCashDiscount
-                        : productsWithEditedQuantities.length > 0
-                          ? productsWithEditedQuantities
-                          : updatedProducts.length > 0
-                            ? updatedProducts
-                            : quoteDetails.data?.quotationDetails?.[0]
-                                ?.dbProductDetails || []
-                  }
+                  products={effectiveProducts}
                   isInter={(() => {
                     // Determine if inter-state based on product taxes (IGST = inter-state, SGST/CGST = intra-state)
                     const firstProduct =
@@ -1119,9 +1227,12 @@ export default function EditQuotePage({ params }: EditQuotePageProps) {
                     Object.keys(editedQuantities).length > 0 ||
                     cashDiscountApplied
                       ? (() => {
-                          // If calculatedData has grandTotal, use it
-                          if (calculatedData?.cartValue?.grandTotal) {
-                            return calculatedData.cartValue.grandTotal;
+                          // If calculatedData has calculatedTotal (exact value before rounding), use it
+                          if (
+                            calculatedData?.cartValue?.calculatedTotal !==
+                            undefined
+                          ) {
+                            return calculatedData.cartValue.calculatedTotal;
                           }
                           // Otherwise, calculate manually: subtotal + tax
                           const products =
@@ -1180,18 +1291,17 @@ export default function EditQuotePage({ params }: EditQuotePageProps) {
                             calculatedTotal ||
                             Number(
                               quoteDetails.data?.quotationDetails?.[0]
-                                ?.grandTotal ||
+                                ?.calculatedTotal ||
                                 quoteDetails.data?.quotationDetails?.[0]
-                                  ?.calculatedTotal
+                                  ?.grandTotal
                             ) ||
                             0
                           );
                         })()
                       : Number(
                           quoteDetails.data?.quotationDetails?.[0]
-                            ?.grandTotal ||
-                            quoteDetails.data?.quotationDetails?.[0]
-                              ?.calculatedTotal
+                            ?.calculatedTotal ||
+                            quoteDetails.data?.quotationDetails?.[0]?.grandTotal
                         ) || 0
                   }
                   subTotal={
@@ -1391,10 +1501,12 @@ export default function EditQuotePage({ params }: EditQuotePageProps) {
                 <path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z" />
                 <polyline points="14 2 14 8 20 8" />
               </svg>
-              Submit
+              {isPlaceOrderMode ? "Place Order" : "Submit"}
             </DialogTitle>
             <DialogDescription className="pt-2">
-              Note: New version will be created for this quotation
+              {isPlaceOrderMode
+                ? "Are you sure you want to convert this quote to an order?"
+                : "Note: New version will be created for this quotation"}
             </DialogDescription>
           </DialogHeader>
           <DialogFooter className="sm:justify-end gap-2">
@@ -1407,10 +1519,14 @@ export default function EditQuotePage({ params }: EditQuotePageProps) {
             </Button>
             <Button
               variant="default"
-              onClick={confirmSaveQuote}
+              onClick={isPlaceOrderMode ? confirmPlaceOrder : confirmSaveQuote}
               disabled={saving || isSubmitting}
             >
-              {saving || isSubmitting ? "SUBMITTING..." : "YES"}
+              {saving || isSubmitting
+                ? isPlaceOrderMode
+                  ? "PLACING ORDER..."
+                  : "SUBMITTING..."
+                : "YES"}
             </Button>
           </DialogFooter>
         </DialogContent>

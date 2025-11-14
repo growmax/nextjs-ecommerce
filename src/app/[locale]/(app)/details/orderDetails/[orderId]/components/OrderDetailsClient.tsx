@@ -22,7 +22,7 @@ import {
 } from "@/components/sales";
 import { useOrderDetails } from "@/hooks/details/orderdetails/useOrderDetails";
 import { useCurrentUser } from "@/hooks/useCurrentUser";
-import { useGetVersionDetails } from "@/hooks/useGetVersionDetails";
+import { useGetVersionDetails } from "@/hooks/useGetVersionDetails/useGetVersionDetails";
 import useModuleSettings from "@/hooks/useModuleSettings";
 import { useTenantData } from "@/hooks/useTenantData";
 import type {
@@ -44,7 +44,7 @@ import type {
   OrderTerms,
   SelectedVersion,
 } from "@/types/details/orderdetails/index.types";
-import { zoneDateTimeCalculator } from "@/utils/date-format";
+import { zoneDateTimeCalculator } from "@/utils/date-format/date-format";
 import {
   getLastDateToPay,
   getStatusStyle,

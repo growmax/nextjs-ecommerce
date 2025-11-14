@@ -22,7 +22,7 @@ import CompanyService, {
   CreateBranchRequest,
   UpdateBranchRequest,
 } from "@/lib/api/services/CompanyService";
-import LocationService from "@/lib/api/services/LocationService";
+import LocationService from "@/lib/api/services/LocationService/LocationService";
 import { AuthStorage } from "@/lib/auth";
 import { JWTService } from "@/lib/services/JWTService";
 import { zodResolver } from "@hookform/resolvers/zod";

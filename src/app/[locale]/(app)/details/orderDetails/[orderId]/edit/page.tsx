@@ -23,23 +23,23 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import useCashDiscountHandlers from "@/hooks/useCashDiscountHandlers";
-import useCheckVolumeDiscountEnabled from "@/hooks/useCheckVolumeDiscountEnabled";
+import useCashDiscountHandlers from "@/hooks/useCashDiscountHandlers/useCashDiscountHandlers";
+import useCheckVolumeDiscountEnabled from "@/hooks/useCheckVolumeDiscountEnabled/useCheckVolumeDiscountEnabled";
 import { useCurrentUser } from "@/hooks/useCurrentUser";
-import useFetchOrderDetails from "@/hooks/useFetchOrderDetails";
-import useGetLatestPaymentTerms from "@/hooks/useGetLatestPaymentTerms";
-import { useLatestOrderProducts } from "@/hooks/useLatestOrderProducts";
+import useFetchOrderDetails from "@/hooks/useFetchOrderDetails/useFetchOrderDetails";
+import useGetLatestPaymentTerms from "@/hooks/useGetLatestPaymentTerms/useGetLatestPaymentTerms";
+import { useLatestOrderProducts } from "@/hooks/useLatestOrderProducts/useLatestOrderProducts";
 import useModuleSettings from "@/hooks/useModuleSettings";
-import { useOrderCalculation } from "@/hooks/useOrderCalculation";
+import { useOrderCalculation } from "@/hooks/useOrderCalculation/useOrderCalculation";
 import { useTenantData } from "@/hooks/useTenantData";
 import type { OrderDetailItem, OrderDetailsResponse } from "@/lib/api";
 import { OrderVersionService } from "@/lib/api";
 import {
   type SellerBranch,
   type Warehouse,
-} from "@/lib/api/services/SellerWarehouseService";
+} from "@/lib/api/services/SellerWarehouseService/SellerWarehouseService";
 import type { CartItem } from "@/types/calculation/cart";
-import { orderPaymentDTO } from "@/utils/order/orderPaymentDTO";
+import { orderPaymentDTO } from "@/utils/order/orderPaymentDTO/orderPaymentDTO";
 import { isEmpty } from "lodash";
 import some from "lodash/some";
 
@@ -289,11 +289,21 @@ export default function EditOrderPage({ params }: EditOrderPageProps) {
         "";
 
       // Get current quantity or use edited quantity
-      let quantity =
-        (product.quantity as number) ||
-        (product.unitQuantity as number) ||
-        (product.askedQuantity as number) ||
-        1;
+      // Check for valid quantity values (> 0), prioritizing quantity -> unitQuantity -> askedQuantity
+      let quantity = 1; // default
+      if (typeof product.quantity === "number" && product.quantity > 0) {
+        quantity = product.quantity;
+      } else if (
+        typeof product.unitQuantity === "number" &&
+        product.unitQuantity > 0
+      ) {
+        quantity = product.unitQuantity;
+      } else if (
+        typeof product.askedQuantity === "number" &&
+        product.askedQuantity > 0
+      ) {
+        quantity = product.askedQuantity;
+      }
 
       // Only check editedQuantities if productId is a valid string/number
       // Check multiple possible productId formats
@@ -308,6 +318,10 @@ export default function EditOrderPage({ params }: EditOrderPageProps) {
       // Check if any of the possible IDs match editedQuantities
       for (const id of possibleIds) {
         if (id && editedQuantities[id] !== undefined) {
+          console.log(
+            `[Edit Order] Found edited quantity for ${id}:`,
+            editedQuantities[id]
+          );
           quantity = editedQuantities[id];
           break;
         }
@@ -516,6 +530,16 @@ export default function EditOrderPage({ params }: EditOrderPageProps) {
       applyRounding: true,
     },
   });
+
+  // Log calculated data when it changes
+  useEffect(() => {
+    console.log("[Edit Order] calculatedData updated:", {
+      totalValue: calculatedData?.cartValue?.totalValue,
+      totalTax: calculatedData?.cartValue?.totalTax,
+      grandTotal: calculatedData?.cartValue?.grandTotal,
+      productCount: calculatedData?.products?.length,
+    });
+  }, [calculatedData]);
 
   const effectiveProducts = useMemo(() => {
     if (calculatedData?.products && calculatedData.products.length > 0) {
@@ -1088,10 +1112,12 @@ export default function EditOrderPage({ params }: EditOrderPageProps) {
               {!loading && !error && orderDetails && (
                 <OrderProductsTable
                   products={
-                    updatedProducts.length > 0
-                      ? updatedProducts
-                      : orderDetails.data?.orderDetails?.[0]
-                          ?.dbProductDetails || []
+                    effectiveProducts.length > 0
+                      ? effectiveProducts
+                      : updatedProducts.length > 0
+                        ? updatedProducts
+                        : orderDetails.data?.orderDetails?.[0]
+                            ?.dbProductDetails || []
                   }
                   {...(orderDetails.data?.orderDetails?.[0]?.dbProductDetails
                     ?.length && {
@@ -1263,14 +1289,16 @@ export default function EditOrderPage({ params }: EditOrderPageProps) {
                         ) || 0
                   }
                   insuranceCharges={orderPricingContext.insuranceCharges}
-                  {...(calculatedData?.cartValue?.grandTotal !== undefined &&
-                  calculatedData?.cartValue?.grandTotal !== null &&
+                  {...(calculatedData?.cartValue?.calculatedTotal !==
+                    undefined &&
+                  calculatedData?.cartValue?.calculatedTotal !== null &&
                   calculatedData?.cartValue?.totalValue !== undefined &&
                   calculatedData?.cartValue?.totalValue !== null &&
                   calculatedData?.cartValue?.taxableAmount !== undefined &&
                   calculatedData?.cartValue?.taxableAmount !== null
                     ? {
-                        calculatedTotal: calculatedData.cartValue.grandTotal,
+                        calculatedTotal:
+                          calculatedData.cartValue.calculatedTotal,
                         subTotal: calculatedData.cartValue.totalValue,
                         taxableAmount: calculatedData.cartValue.taxableAmount,
                       }

@@ -8,11 +8,20 @@ module.exports = {
   moduleFileExtensions: ["ts", "tsx", "js", "jsx", "json", "node"],
   // configure ts-jest under `transform` to avoid the deprecated globals usage
   transform: {
-    "^.+\\.(ts|tsx)$": ["ts-jest", { tsconfig: "tsconfig.json" }],
+    "^.+\\.(ts|tsx)$": [
+      "ts-jest",
+      {
+        tsconfig: {
+          jsx: "react-jsx",
+        },
+        isolatedModules: true,
+      },
+    ],
   },
   // Map TS path aliases used in the repo (e.g. `@/...` -> `<rootDir>/src/...`)
   moduleNameMapper: {
     "^@\\/(.*)$": "<rootDir>/src/$1",
   },
+  setupFilesAfterEnv: ["<rootDir>/src/setupTests.ts"],
   verbose: true,
 };
