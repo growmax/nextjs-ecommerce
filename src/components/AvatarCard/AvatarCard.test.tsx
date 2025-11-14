@@ -38,8 +38,11 @@ type DropdownContextType = {
 };
 
 jest.mock("@/components/ui/dropdown-menu", () => {
-  const { useState, useMemo, useContext } = React;
-  const createContextTyped = React.createContext as typeof React.createContext;
+  const ActualReact = jest.requireActual("react");
+
+  const { useState, useMemo, useContext } = ActualReact;
+  const createContextTyped =
+    ActualReact.createContext as typeof React.createContext;
 
   const DropdownContext = createContextTyped<DropdownContextType>({
     open: false,
@@ -64,7 +67,7 @@ jest.mock("@/components/ui/dropdown-menu", () => {
     const { setOpen } = useContext(DropdownContext);
     const originalOnClick = children.props.onClick;
 
-    return React.cloneElement(children, {
+    return ActualReact.cloneElement(children, {
       onClick: (e: any) => {
         setOpen((o: boolean) => !o);
         if (originalOnClick) {
