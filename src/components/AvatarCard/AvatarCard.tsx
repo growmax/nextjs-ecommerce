@@ -37,6 +37,30 @@ export function AvatarCard({
   showOrders = true,
   showQuotes = true,
 }: AvatarCardProps) {
+  // Handle logout state
+  if (isLoggingOut) {
+    return (
+      <DropdownMenu>
+        <DropdownMenuTrigger asChild>{trigger}</DropdownMenuTrigger>
+        <DropdownMenuContent
+          className={cn("w-56", menuClassName)}
+          align={align}
+          {...(side ? { side } : {})}
+          forceMount
+          aria-label="User account menu - Logging out"
+        >
+          <DropdownMenuItem disabled className="flex items-center gap-2">
+            <Loader2 className="h-4 w-4 animate-spin" />
+            <div className="flex flex-col">
+              <span className="text-sm">Logging out...</span>
+              <span className="text-xs text-muted-foreground">Please wait</span>
+            </div>
+          </DropdownMenuItem>
+        </DropdownMenuContent>
+      </DropdownMenu>
+    );
+  }
+
   // Handle error state
   if (isError) {
     return (
@@ -72,31 +96,7 @@ export function AvatarCard({
     );
   }
 
-  // Handle logout state even when user is null
-  if (isLoggingOut) {
-    return (
-      <DropdownMenu>
-        <DropdownMenuTrigger asChild>{trigger}</DropdownMenuTrigger>
-        <DropdownMenuContent
-          className={cn("w-56", menuClassName)}
-          align={align}
-          {...(side ? { side } : {})}
-          forceMount
-          aria-label="User account menu - Logging out"
-        >
-          <DropdownMenuItem disabled className="flex items-center gap-2">
-            <Loader2 className="h-4 w-4 animate-spin" />
-            <div className="flex flex-col">
-              <span className="text-sm">Logging out...</span>
-              <span className="text-xs text-muted-foreground">Please wait</span>
-            </div>
-          </DropdownMenuItem>
-        </DropdownMenuContent>
-      </DropdownMenu>
-    );
-  }
-
-  // Handle loading state - but not during logout
+  // Handle loading state - only for normal loading, not during logout
   if (!user) {
     return (
       <DropdownMenu>

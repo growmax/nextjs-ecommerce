@@ -2,8 +2,8 @@
 
 import { ChevronsUpDown } from "lucide-react";
 
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { AvatarCard } from "@/components/AvatarCard/AvatarCard";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
   SidebarMenu,
   SidebarMenuButton,
@@ -12,6 +12,7 @@ import {
 } from "@/components/ui/sidebar";
 import useLogout from "@/hooks/Auth/useLogout";
 import useUserProfile from "@/hooks/Profile/useUserProfile";
+import { getUserInitials } from "@/utils/General/general";
 import { ReactNode } from "react";
 
 export function NavUser() {
@@ -22,14 +23,6 @@ export function NavUser() {
   if (!userProfile) {
     return null;
   }
-
-  const initials =
-    userProfile.displayName
-      ?.split(" ")
-      .map(n => n[0])
-      .join("")
-      .toUpperCase()
-      .slice(0, 2) || "U";
 
   // Custom trigger component that matches the current sidebar button design
   const CustomTrigger: ReactNode = (
@@ -42,7 +35,9 @@ export function NavUser() {
           src={userProfile.picture || ""}
           alt={userProfile.displayName || "User"}
         />
-        <AvatarFallback className="rounded-lg">{initials}</AvatarFallback>
+        <AvatarFallback className="rounded-lg">
+          {getUserInitials(userProfile.displayName || "")}
+        </AvatarFallback>
       </Avatar>
       <div className="grid flex-1 text-left text-sm leading-tight group-data-[collapsible=icon]:hidden">
         <span className="truncate font-medium">{userProfile.displayName}</span>
