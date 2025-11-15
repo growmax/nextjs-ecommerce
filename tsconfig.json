@@ -19,6 +19,15 @@
     "noUnusedLocals": true,
     "noUnusedParameters": true,
     "exactOptionalPropertyTypes": true,
+    "types": [
+      "jest",
+      "@testing-library/jest-dom",
+      "node",
+      "react",
+      "react-dom",
+      "@playwright/test",
+      "lodash"
+    ],
     "plugins": [
       {
         "name": "next"

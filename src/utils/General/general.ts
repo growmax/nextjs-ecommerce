@@ -11,3 +11,13 @@ export const decodeUnicode = (input: string): string => {
     return input;
   }
 };
+
+export const getUserInitials = (str: string) => {
+  if (!str) return "U";
+  return str
+    .split(" ")
+    .map(n => n[0])
+    .join("")
+    .toUpperCase()
+    .slice(0, 2);
+};

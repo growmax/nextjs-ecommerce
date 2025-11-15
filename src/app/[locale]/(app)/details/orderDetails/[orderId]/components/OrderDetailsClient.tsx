@@ -52,7 +52,7 @@ import {
   isEditInProgress,
   isOrderCancelled,
 } from "@/utils/details/orderdetails";
-import { decodeUnicode } from "@/utils/general";
+import { decodeUnicode } from "@/utils/General/general";
 
 // Dynamic imports for heavy components
 // Import from index.ts which re-exports as named exports

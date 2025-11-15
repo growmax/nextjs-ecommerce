@@ -1,6 +1,8 @@
 "use client";
 
 import ProductSearchResults from "@/components/search/ProductSearchResults";
+import useSearch from "@/hooks/useSearch";
+
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import {
@@ -12,32 +14,21 @@ import {
   CommandList,
   CommandShortcut,
 } from "@/components/ui/command";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
+
+import { AvatarCard } from "@/components/AvatarCard/AvatarCard";
 import { Input } from "@/components/ui/input";
 import { Separator } from "@/components/ui/separator";
 import { SidebarTrigger } from "@/components/ui/sidebar";
 import { useCart } from "@/contexts/CartContext";
 import useLogout from "@/hooks/Auth/useLogout";
 import useUserProfile from "@/hooks/Profile/useUserProfile";
-import useSearch from "@/hooks/useSearch";
+import { getUserInitials } from "@/utils/General/general";
 import {
   Bell,
-  Building2,
   Command as CommandIcon,
-  IdCard,
-  LogOut,
   Search,
   ShoppingCart,
-  User,
 } from "lucide-react";
-import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 
@@ -222,17 +213,6 @@ export function AppHeader() {
   const { cartCount } = useCart();
   const notificationsCount = 5;
 
-  // Generate user initials from real data
-  const getUserInitials = () => {
-    if (!userProfile?.displayName) return "U";
-    return userProfile.displayName
-      .split(" ")
-      .map(n => n[0])
-      .join("")
-      .toUpperCase()
-      .slice(0, 2);
-  };
-
   // Keyboard shortcut to open search (Cmd/Ctrl + K)
   useEffect(() => {
     const down = (e: KeyboardEvent) => {
@@ -320,8 +300,12 @@ export function AppHeader() {
               <Separator orientation="vertical" className="h-6 mx-1" />
 
               {/* Profile Dropdown with Real Data */}
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
+              <AvatarCard
+                user={userProfile}
+                onLogout={handleLogout}
+                isLoggingOut={isLoggingOut}
+                align="end"
+                trigger={
                   <Button
                     variant="ghost"
                     className="relative h-8 w-8 rounded-full"
@@ -331,62 +315,13 @@ export function AppHeader() {
                         src={userProfile?.picture || ""}
                         alt={userProfile?.displayName || "User"}
                       />
-                      <AvatarFallback>{getUserInitials()}</AvatarFallback>
+                      <AvatarFallback>
+                        {getUserInitials(userProfile?.displayName || "")}
+                      </AvatarFallback>
                     </Avatar>
                   </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent className="w-56" align="end" forceMount>
-                  <DropdownMenuLabel className="font-normal">
-                    <div className="flex flex-col space-y-1">
-                      <p className="text-sm font-medium leading-none">
-                        {userProfile?.displayName}
-                      </p>
-                      <p className="text-xs leading-none text-muted-foreground">
-                        {userProfile?.email}
-                      </p>
-                      {userProfile?.companyName && (
-                        <p className="text-xs leading-none text-muted-foreground">
-                          {userProfile?.companyName}
-                        </p>
-                      )}
-                    </div>
-                  </DropdownMenuLabel>
-                  <DropdownMenuSeparator />
-                  <DropdownMenuItem asChild>
-                    <Link href="/settings/profile">
-                      <IdCard className="mr-2 h-4 w-4" />
-                      <span>Profile</span>
-                    </Link>
-                  </DropdownMenuItem>
-                  <DropdownMenuItem asChild>
-                    <Link href="/settings/company">
-                      <Building2 className="mr-2 h-4 w-4" />
-                      <span>Company Settings</span>
-                    </Link>
-                  </DropdownMenuItem>
-                  <DropdownMenuItem asChild>
-                    <Link href="/orders">
-                      <ShoppingCart className="mr-2 h-4 w-4" />
-                      <span>Orders</span>
-                    </Link>
-                  </DropdownMenuItem>
-                  <DropdownMenuItem asChild>
-                    <Link href="/quotesummary">
-                      <User className="mr-2 h-4 w-4" />
-                      <span>Quotes</span>
-                    </Link>
-                  </DropdownMenuItem>
-                  <DropdownMenuSeparator />
-                  <DropdownMenuItem
-                    onClick={handleLogout}
-                    disabled={isLoggingOut}
-                    className="text-red-600 focus:text-red-600"
-                  >
-                    <LogOut className="mr-2 h-4 w-4" />
-                    <span>{isLoggingOut ? "Logging out..." : "Log out"}</span>
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
+                }
+              />
             </div>
 
             {/* Mobile Right Side Icons (Condensed) */}
@@ -402,8 +337,12 @@ export function AppHeader() {
               </Button>
 
               {/* Profile Dropdown with Real Data */}
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
+              <AvatarCard
+                user={userProfile}
+                onLogout={handleLogout}
+                isLoggingOut={isLoggingOut}
+                align="end"
+                trigger={
                   <Button
                     variant="ghost"
                     className="relative h-8 w-8 rounded-full"
@@ -413,62 +352,13 @@ export function AppHeader() {
                         src={userProfile?.picture || ""}
                         alt={userProfile?.displayName || "User"}
                       />
-                      <AvatarFallback>{getUserInitials()}</AvatarFallback>
+                      <AvatarFallback>
+                        {getUserInitials(userProfile?.displayName || "")}
+                      </AvatarFallback>
                     </Avatar>
                   </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent className="w-56" align="end" forceMount>
-                  <DropdownMenuLabel className="font-normal">
-                    <div className="flex flex-col space-y-1">
-                      <p className="text-sm font-medium leading-none">
-                        {userProfile?.displayName}
-                      </p>
-                      <p className="text-xs leading-none text-muted-foreground">
-                        {userProfile?.email}
-                      </p>
-                      {userProfile?.companyName && (
-                        <p className="text-xs leading-none text-muted-foreground">
-                          {userProfile?.companyName}
-                        </p>
-                      )}
-                    </div>
-                  </DropdownMenuLabel>
-                  <DropdownMenuSeparator />
-                  <DropdownMenuItem asChild>
-                    <Link href="/settings/profile">
-                      <IdCard className="mr-2 h-4 w-4" />
-                      <span>Profile</span>
-                    </Link>
-                  </DropdownMenuItem>
-                  <DropdownMenuItem asChild>
-                    <Link href="/settings/company">
-                      <Building2 className="mr-2 h-4 w-4" />
-                      <span>Company Settings</span>
-                    </Link>
-                  </DropdownMenuItem>
-                  <DropdownMenuItem asChild>
-                    <Link href="/orders">
-                      <ShoppingCart className="mr-2 h-4 w-4" />
-                      <span>Orders</span>
-                    </Link>
-                  </DropdownMenuItem>
-                  <DropdownMenuItem asChild>
-                    <Link href="/quotesummary">
-                      <User className="mr-2 h-4 w-4" />
-                      <span>Quotes</span>
-                    </Link>
-                  </DropdownMenuItem>
-                  <DropdownMenuSeparator />
-                  <DropdownMenuItem
-                    onClick={handleLogout}
-                    disabled={isLoggingOut}
-                    className="text-red-600 focus:text-red-600"
-                  >
-                    <LogOut className="mr-2 h-4 w-4" />
-                    <span>{isLoggingOut ? "Logging out..." : "Log out"}</span>
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
+                }
+              />
             </div>
           </div>
         </div>
