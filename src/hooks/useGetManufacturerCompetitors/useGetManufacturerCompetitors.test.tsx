@@ -10,10 +10,9 @@ import {
 } from "./useGetManufacturerCompetitors.mocks";
 
 // Mock SWR
-const mockUseSWR = jest.fn();
 jest.mock("swr", () => ({
   __esModule: true,
-  default: mockUseSWR,
+  default: jest.fn(),
 }));
 
 // Mock ManufacturerCompetitorService
@@ -22,6 +21,9 @@ jest.mock("@/lib/api", () => ({
 }));
 
 import useGetManufacturerCompetitors from "./useGetManufacturerCompetitors";
+import useSWR from "swr";
+
+const mockUseSWR = useSWR as jest.MockedFunction<typeof useSWR>;
 
 describe("useGetManufacturerCompetitors", () => {
   beforeEach(() => {
@@ -215,7 +217,13 @@ describe("useGetManufacturerCompetitors", () => {
 
     // Get the fetcher function that was passed to useSWR
     const swrCall = mockUseSWR.mock.calls[0];
+    if (!swrCall) {
+      throw new Error("useSWR was not called");
+    }
     const passedFetcher = swrCall[1];
+    if (!passedFetcher) {
+      throw new Error("Fetcher function was not provided");
+    }
 
     // Call the fetcher to verify it uses the service correctly
     await passedFetcher();
@@ -238,7 +246,13 @@ describe("useGetManufacturerCompetitors", () => {
 
     // Get the fetcher function that was passed to useSWR
     const swrCall = mockUseSWR.mock.calls[0];
+    if (!swrCall) {
+      throw new Error("useSWR was not called");
+    }
     const passedFetcher = swrCall[1];
+    if (!passedFetcher) {
+      throw new Error("Fetcher function was not provided");
+    }
 
     // Call the fetcher
     const result = await passedFetcher();

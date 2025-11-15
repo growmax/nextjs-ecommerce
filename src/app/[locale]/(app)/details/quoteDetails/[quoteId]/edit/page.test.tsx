@@ -32,6 +32,7 @@ const mockTenantData = {
 };
 
 const mockQuoteDetailsResponse = {
+  success: true,
   data: {
     quotationDetails: [
       {
@@ -227,19 +228,12 @@ jest.mock("@/hooks/useCashDiscountHandlers/useCashDiscountHandlers", () => ({
 }));
 
 // Mock services
-const mockFetchQuoteDetails = jest
-  .fn()
-  .mockResolvedValue(mockQuoteDetailsResponse);
-const mockPlaceOrderFromQuote = jest
-  .fn()
-  .mockResolvedValue({ orderIdentifier: "ORD-123" });
-
 jest.mock("@/lib/api", () => ({
   QuotationDetailsService: {
-    fetchQuotationDetails: mockFetchQuoteDetails,
+    fetchQuotationDetails: jest.fn(),
   },
   OrdersService: {
-    placeOrderFromQuote: mockPlaceOrderFromQuote,
+    placeOrderFromQuote: jest.fn(),
   },
   quoteSubmitDTO: jest.fn((data1, data2) => ({
     ...data1,
@@ -259,7 +253,7 @@ jest.mock("@/utils/details/orderdetails", () => ({
   getStatusStyle: jest.fn(() => ""),
 }));
 
-jest.mock("@/utils/general", () => ({
+jest.mock("@/utils/General/general", () => ({
   decodeUnicode: jest.fn(str => str),
 }));
 
@@ -271,14 +265,11 @@ jest.mock("lodash", () => ({
 jest.mock("lodash/some", () => jest.fn(() => false));
 
 // Mock toast
-const mockToastSuccess = jest.fn();
-const mockToastError = jest.fn();
-const mockToastInfo = jest.fn();
 jest.mock("sonner", () => ({
   toast: {
-    success: mockToastSuccess,
-    error: mockToastError,
-    info: mockToastInfo,
+    success: jest.fn(),
+    error: jest.fn(),
+    info: jest.fn(),
   },
 }));
 
@@ -425,11 +416,24 @@ jest.mock("@/components/sales/CashDiscountCard", () => {
 import { render, screen, waitFor } from "@testing-library/react";
 import React from "react";
 import EditQuotePage from "./page";
+import { QuotationDetailsService, OrdersService } from "@/lib/api";
+import { toast } from "sonner";
+
+const mockFetchQuoteDetails =
+  QuotationDetailsService.fetchQuotationDetails as jest.MockedFunction<
+    typeof QuotationDetailsService.fetchQuotationDetails
+  >;
+// @ts-expect-error - Mock variable for potential future use
+const _mockPlaceOrderFromQuote =
+  OrdersService.placeOrderFromQuote as jest.MockedFunction<
+    typeof OrdersService.placeOrderFromQuote
+  >;
+const mockToastError = toast.error as jest.MockedFunction<typeof toast.error>;
 
 describe("EditQuotePage", () => {
   beforeEach(() => {
     jest.clearAllMocks();
-    mockFetchQuoteDetails.mockResolvedValue(mockQuoteDetailsResponse);
+    mockFetchQuoteDetails.mockResolvedValue(mockQuoteDetailsResponse as any);
 
     // Suppress console errors for infinite loop warnings in tests
     const originalError = console.error;

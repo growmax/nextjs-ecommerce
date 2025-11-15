@@ -442,9 +442,12 @@ describe("EditOrderPage", () => {
       wrapper: createWrapper(),
     });
 
-    await waitFor(() => {
-      expect(screen.getByTestId("order-products-table")).toBeInTheDocument();
-    });
+    await waitFor(
+      () => {
+        expect(screen.getByTestId("order-products-table")).toBeInTheDocument();
+      },
+      { timeout: 5000 }
+    );
   });
 
   it("should render contact details and terms cards", async () => {

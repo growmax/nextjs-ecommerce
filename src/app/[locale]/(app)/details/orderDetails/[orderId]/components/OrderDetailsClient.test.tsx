@@ -29,6 +29,8 @@ const mockTenantData = {
 };
 
 const mockOrderDetailsResponse = {
+  message: null,
+  status: "success",
   data: {
     orderDetails: [
       {
@@ -144,39 +146,28 @@ jest.mock("@/hooks/useGetVersionDetails/useGetVersionDetails", () => ({
 }));
 
 // Mock services
-const mockFetchOrderDetails = jest
-  .fn()
-  .mockResolvedValue(mockOrderDetailsResponse);
-const mockFetchOverallPayments = jest.fn().mockResolvedValue({ data: [] });
-const mockFetchPaymentDue = jest.fn().mockResolvedValue({ data: { data: [] } });
-const mockUpdateOrderName = jest.fn().mockResolvedValue({ success: true });
-const mockRequestEdit = jest.fn().mockResolvedValue({ success: true });
-
 jest.mock("@/lib/api", () => ({
   OrderDetailsService: {
-    fetchOrderDetails: mockFetchOrderDetails,
+    fetchOrderDetails: jest.fn(),
   },
   PaymentService: {
-    fetchOverallPaymentsByOrder: mockFetchOverallPayments,
-    fetchPaymentDueByOrder: mockFetchPaymentDue,
+    fetchOverallPaymentsByOrder: jest.fn(),
+    fetchPaymentDueByOrder: jest.fn(),
   },
   OrderNameService: {
-    updateOrderName: mockUpdateOrderName,
+    updateOrderName: jest.fn(),
   },
   RequestEditService: {
-    requestEdit: mockRequestEdit,
+    requestEdit: jest.fn(),
   },
 }));
 
 // Mock toast
-const mockToastSuccess = jest.fn();
-const mockToastError = jest.fn();
-const mockToastInfo = jest.fn();
 jest.mock("sonner", () => ({
   toast: {
-    success: mockToastSuccess,
-    error: mockToastError,
-    info: mockToastInfo,
+    success: jest.fn(),
+    error: jest.fn(),
+    info: jest.fn(),
   },
 }));
 
@@ -392,6 +383,36 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { render, screen, waitFor } from "@testing-library/react";
 import React, { ReactNode } from "react";
 import OrderDetailsClient from "./OrderDetailsClient";
+import {
+  OrderDetailsService,
+  PaymentService,
+  OrderNameService,
+  RequestEditService,
+} from "@/lib/api";
+import { toast } from "sonner";
+
+const mockFetchOrderDetails =
+  OrderDetailsService.fetchOrderDetails as jest.MockedFunction<
+    typeof OrderDetailsService.fetchOrderDetails
+  >;
+const mockFetchOverallPayments =
+  PaymentService.fetchOverallPaymentsByOrder as jest.MockedFunction<
+    typeof PaymentService.fetchOverallPaymentsByOrder
+  >;
+const mockFetchPaymentDue =
+  PaymentService.fetchPaymentDueByOrder as jest.MockedFunction<
+    typeof PaymentService.fetchPaymentDueByOrder
+  >;
+// @ts-expect-error - Mock variable for potential future use
+const _mockUpdateOrderName =
+  OrderNameService.updateOrderName as jest.MockedFunction<
+    typeof OrderNameService.updateOrderName
+  >;
+// @ts-expect-error - Mock variable for potential future use
+const _mockRequestEdit = RequestEditService.requestEdit as jest.MockedFunction<
+  typeof RequestEditService.requestEdit
+>;
+const mockToastError = toast.error as jest.MockedFunction<typeof toast.error>;
 
 // Helper to create a wrapper with QueryClient
 function createWrapper() {
@@ -415,7 +436,7 @@ describe("OrderDetailsClient", () => {
     jest.clearAllMocks();
     mockFetchOrderDetails.mockResolvedValue(mockOrderDetailsResponse);
     mockFetchOverallPayments.mockResolvedValue({ data: [] });
-    mockFetchPaymentDue.mockResolvedValue({ data: { data: [] } });
+    mockFetchPaymentDue.mockResolvedValue({ data: [] });
   });
 
   it("should render loading state initially", async () => {

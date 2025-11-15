@@ -30,19 +30,26 @@ Object.defineProperty(window, "localStorage", {
 });
 
 // Mock useShipping
-const mockUseShippingHook = jest.fn();
 jest.mock("../useShipping", () => ({
   __esModule: true,
-  default: mockUseShippingHook,
+  default: jest.fn(),
 }));
 
 // Mock useUserDetails
-const mockUseUserDetailsHook = jest.fn();
 jest.mock("@/contexts/UserDetailsContext", () => ({
-  useUserDetails: mockUseUserDetailsHook,
+  useUserDetails: jest.fn(),
 }));
 
 import useCurrentShippingAddress from "./useCurrentShippingAddress";
+import useShipping from "../useShipping";
+import { useUserDetails } from "@/contexts/UserDetailsContext";
+
+const mockUseShippingHook = useShipping as jest.MockedFunction<
+  typeof useShipping
+>;
+const mockUseUserDetailsHook = useUserDetails as jest.MockedFunction<
+  typeof useUserDetails
+>;
 
 describe("useCurrentShippingAddress", () => {
   beforeEach(() => {
@@ -94,7 +101,15 @@ describe("useCurrentShippingAddress", () => {
       JSON.stringify(mockStoredAddress)
     );
 
-    mockUseUserDetailsHook.mockReturnValue({ isAuthenticated: false });
+    mockUseUserDetailsHook.mockReturnValue({
+      isAuthenticated: false,
+      isLoading: false,
+      user: null,
+      error: null,
+      login: jest.fn(),
+      logout: jest.fn(),
+      checkAuth: jest.fn(() => false),
+    });
 
     const { result } = renderHook(() =>
       useCurrentShippingAddress(mockUserData)
@@ -331,7 +346,15 @@ describe("useCurrentShippingAddress", () => {
     });
 
     // Become unauthenticated
-    mockUseUserDetailsHook.mockReturnValue({ isAuthenticated: false });
+    mockUseUserDetailsHook.mockReturnValue({
+      isAuthenticated: false,
+      isLoading: false,
+      user: null,
+      error: null,
+      login: jest.fn(),
+      logout: jest.fn(),
+      checkAuth: jest.fn(() => false),
+    });
     rerender();
 
     await waitFor(() => {
@@ -339,7 +362,15 @@ describe("useCurrentShippingAddress", () => {
     });
 
     // Become authenticated again
-    mockUseUserDetailsHook.mockReturnValue({ isAuthenticated: true });
+    mockUseUserDetailsHook.mockReturnValue({
+      isAuthenticated: true,
+      isLoading: false,
+      user: null,
+      error: null,
+      login: jest.fn(),
+      logout: jest.fn(),
+      checkAuth: jest.fn(() => true),
+    });
     rerender();
 
     await waitFor(() => {

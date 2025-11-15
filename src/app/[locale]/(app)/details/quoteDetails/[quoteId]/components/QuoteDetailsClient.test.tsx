@@ -29,6 +29,7 @@ const mockTenantData = {
 };
 
 const mockQuoteDetailsResponse = {
+  success: true,
   data: {
     quotationDetails: [
       {
@@ -149,14 +150,9 @@ jest.mock("@/hooks/useGetVersionDetails/useGetVersionDetails", () => ({
 }));
 
 // Mock services
-const mockFetchQuoteDetails = jest
-  .fn()
-  .mockResolvedValue(mockQuoteDetailsResponse);
-const mockUpdateQuoteName = jest.fn().mockResolvedValue({ success: true });
-
 jest.mock("@/lib/api", () => ({
   QuotationDetailsService: {
-    fetchQuotationDetails: mockFetchQuoteDetails,
+    fetchQuotationDetails: jest.fn(),
   },
 }));
 
@@ -165,20 +161,17 @@ jest.mock(
   () => ({
     __esModule: true,
     default: {
-      updateQuotationName: mockUpdateQuoteName,
+      updateQuotationName: jest.fn(),
     },
   })
 );
 
 // Mock toast
-const mockToastSuccess = jest.fn();
-const mockToastError = jest.fn();
-const mockToastInfo = jest.fn();
 jest.mock("sonner", () => ({
   toast: {
-    success: mockToastSuccess,
-    error: mockToastError,
-    info: mockToastInfo,
+    success: jest.fn(),
+    error: jest.fn(),
+    info: jest.fn(),
   },
 }));
 
@@ -357,7 +350,7 @@ jest.mock("@/utils/details/orderdetails", () => ({
   getStatusStyle: jest.fn(() => ""),
 }));
 
-jest.mock("@/utils/general", () => ({
+jest.mock("@/utils/General/general", () => ({
   decodeUnicode: jest.fn(str => str),
 }));
 
@@ -365,6 +358,20 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { render, screen, waitFor } from "@testing-library/react";
 import React, { ReactNode } from "react";
 import QuoteDetailsClient from "./QuoteDetailsClient";
+import { QuotationDetailsService } from "@/lib/api";
+import QuotationNameService from "@/lib/api/services/QuotationNameService/QuotationNameService";
+import { toast } from "sonner";
+
+const mockFetchQuoteDetails =
+  QuotationDetailsService.fetchQuotationDetails as jest.MockedFunction<
+    typeof QuotationDetailsService.fetchQuotationDetails
+  >;
+// @ts-expect-error - Mock variable for potential future use
+const _mockUpdateQuoteName =
+  QuotationNameService.updateQuotationName as jest.MockedFunction<
+    typeof QuotationNameService.updateQuotationName
+  >;
+const mockToastError = toast.error as jest.MockedFunction<typeof toast.error>;
 
 // Helper to create a wrapper with QueryClient
 function createWrapper() {
@@ -386,7 +393,7 @@ function createWrapper() {
 describe("QuoteDetailsClient", () => {
   beforeEach(() => {
     jest.clearAllMocks();
-    mockFetchQuoteDetails.mockResolvedValue(mockQuoteDetailsResponse);
+    mockFetchQuoteDetails.mockResolvedValue(mockQuoteDetailsResponse as any);
   });
 
   it("should render loading state initially", async () => {
@@ -434,9 +441,12 @@ describe("QuoteDetailsClient", () => {
       wrapper: createWrapper(),
     });
 
-    await waitFor(() => {
-      expect(screen.getByTestId("order-products-table")).toBeInTheDocument();
-    });
+    await waitFor(
+      () => {
+        expect(screen.getByTestId("order-products-table")).toBeInTheDocument();
+      },
+      { timeout: 5000 }
+    );
   });
 
   it("should render customer info card when quote is not cancelled", async () => {

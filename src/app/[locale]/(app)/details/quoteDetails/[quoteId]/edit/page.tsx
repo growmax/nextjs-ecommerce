@@ -45,7 +45,7 @@ import {
 } from "@/lib/api/services/SellerWarehouseService/SellerWarehouseService";
 import type { CartItem } from "@/types/calculation/cart";
 import { getStatusStyle } from "@/utils/details/orderdetails";
-import { decodeUnicode } from "@/utils/general";
+import { decodeUnicode } from "@/utils/General/general";
 import { prepareQuoteSubmissionDTO } from "@/utils/quote/quoteSubmissionDTO/quoteSubmissionDTO";
 import { isEmpty } from "lodash";
 import some from "lodash/some";

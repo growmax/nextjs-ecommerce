@@ -1,29 +1,44 @@
-import * as api from "@/lib/api";
+// Mock the @/lib/api module
+jest.mock("@/lib/api", () => ({
+  QuoteSubmissionService: {
+    submitQuoteAsNewVersion: jest.fn(),
+  },
+}));
+
+// Mock sonner toast
+jest.mock("sonner", () => ({
+  toast: {
+    success: jest.fn(),
+    error: jest.fn(),
+  },
+}));
+
 import { act, renderHook } from "@testing-library/react";
-import { toast } from "sonner";
 import { useQuoteSubmission } from "./useQuoteSubmission";
 import {
   mockFailureResponse,
   mockQuoteSubmissionRequest,
-  mockQuoteSubmissionService,
   mockSuccessResponse,
-  mockToast,
 } from "./useQuoteSubmission.mocks";
+import { QuoteSubmissionService } from "@/lib/api";
+import { toast } from "sonner";
+
+const mockSubmitQuoteAsNewVersion =
+  QuoteSubmissionService.submitQuoteAsNewVersion as jest.MockedFunction<
+    typeof QuoteSubmissionService.submitQuoteAsNewVersion
+  >;
+const mockToastSuccess = toast.success as jest.MockedFunction<
+  typeof toast.success
+>;
+const mockToastError = toast.error as jest.MockedFunction<typeof toast.error>;
 
 describe("useQuoteSubmission", () => {
   beforeEach(() => {
     jest.clearAllMocks();
-    // Mock the QuoteSubmissionService
-    (api.QuoteSubmissionService as any) = mockQuoteSubmissionService;
-    // Mock toast
-    (toast.success as any) = mockToast.success;
-    (toast.error as any) = mockToast.error;
   });
 
   it("should submit quote successfully", async () => {
-    mockQuoteSubmissionService.submitQuoteAsNewVersion.mockResolvedValueOnce(
-      mockSuccessResponse
-    );
+    mockSubmitQuoteAsNewVersion.mockResolvedValueOnce(mockSuccessResponse);
     const { result } = renderHook(() => useQuoteSubmission());
     let submitResult: boolean | undefined;
     await act(async () => {
@@ -32,7 +47,7 @@ describe("useQuoteSubmission", () => {
       );
     });
     expect(submitResult).toBe(true);
-    expect(mockToast.success).toHaveBeenCalledWith(
+    expect(mockToastSuccess).toHaveBeenCalledWith(
       "Quote submitted successfully!"
     );
     expect(result.current.error).toBeNull();
@@ -40,9 +55,7 @@ describe("useQuoteSubmission", () => {
   });
 
   it("should handle failed quote submission", async () => {
-    mockQuoteSubmissionService.submitQuoteAsNewVersion.mockResolvedValueOnce(
-      mockFailureResponse
-    );
+    mockSubmitQuoteAsNewVersion.mockResolvedValueOnce(mockFailureResponse);
     const { result } = renderHook(() => useQuoteSubmission());
     let submitResult: boolean | undefined;
     await act(async () => {
@@ -51,7 +64,7 @@ describe("useQuoteSubmission", () => {
       );
     });
     expect(submitResult).toBe(false);
-    expect(mockToast.error).toHaveBeenCalledWith(
+    expect(mockToastError).toHaveBeenCalledWith(
       "Failed to submit quote. Please try again."
     );
     expect(result.current.error).toBe(
@@ -61,7 +74,7 @@ describe("useQuoteSubmission", () => {
   });
 
   it("should handle error thrown during submission", async () => {
-    mockQuoteSubmissionService.submitQuoteAsNewVersion.mockRejectedValueOnce(
+    mockSubmitQuoteAsNewVersion.mockRejectedValueOnce(
       new Error("Network error")
     );
     const { result } = renderHook(() => useQuoteSubmission());
@@ -72,7 +85,7 @@ describe("useQuoteSubmission", () => {
       );
     });
     expect(submitResult).toBe(false);
-    expect(mockToast.error).toHaveBeenCalledWith(
+    expect(mockToastError).toHaveBeenCalledWith(
       "Failed to submit quote: Network error"
     );
     expect(result.current.error).toBe("Network error");

@@ -15,10 +15,9 @@ jest.mock("axios", () => ({
 }));
 
 // Mock SWR
-const mockUseSWR = jest.fn();
 jest.mock("swr/immutable", () => ({
   __esModule: true,
-  default: mockUseSWR,
+  default: jest.fn(),
 }));
 
 // Mock useCurrentUser
@@ -27,6 +26,11 @@ jest.mock("@/hooks/useCurrentUser", () => ({
 }));
 
 import useGetLatestPaymentTerms from "./useGetLatestPaymentTerms";
+import useSWRImmutable from "swr/immutable";
+
+const mockUseSWR = useSWRImmutable as jest.MockedFunction<
+  typeof useSWRImmutable
+>;
 
 describe("useGetLatestPaymentTerms", () => {
   beforeEach(() => {
@@ -197,7 +201,13 @@ describe("useGetLatestPaymentTerms", () => {
 
     // Get the fetcher function that was passed to useSWR
     const swrCall = mockUseSWR.mock.calls[0];
+    if (!swrCall) {
+      throw new Error("useSWR was not called");
+    }
     const passedFetcher = swrCall[1];
+    if (!passedFetcher) {
+      throw new Error("Fetcher function was not provided");
+    }
 
     // Call the fetcher to verify it uses axios correctly
     const result = await passedFetcher();
@@ -244,14 +254,20 @@ describe("useGetLatestPaymentTerms", () => {
 
     // Get the fetcher function
     const swrCall = mockUseSWR.mock.calls[0];
+    if (!swrCall) {
+      throw new Error("useSWR was not called");
+    }
     const passedFetcher = swrCall[1];
+    if (!passedFetcher) {
+      throw new Error("Fetcher function was not provided");
+    }
 
     // Call the fetcher
     const result = await passedFetcher();
 
     // Should return only the term with cashdiscount === true
     expect(result).toEqual(mockCashDiscountTerm);
-    expect(result?.cashdiscount).toBe(true);
+    expect((result as typeof mockCashDiscountTerm)?.cashdiscount).toBe(true);
   });
 
   it("should return undefined when no cash discount terms exist", async () => {
@@ -268,7 +284,13 @@ describe("useGetLatestPaymentTerms", () => {
 
     // Get the fetcher function
     const swrCall = mockUseSWR.mock.calls[0];
+    if (!swrCall) {
+      throw new Error("useSWR was not called");
+    }
     const passedFetcher = swrCall[1];
+    if (!passedFetcher) {
+      throw new Error("Fetcher function was not provided");
+    }
 
     // Call the fetcher
     const result = await passedFetcher();

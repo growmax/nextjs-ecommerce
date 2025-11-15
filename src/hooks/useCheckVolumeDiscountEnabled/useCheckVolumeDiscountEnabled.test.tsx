@@ -15,13 +15,17 @@ jest.mock("axios", () => ({
 }));
 
 // Mock SWR
-const mockUseSWR = jest.fn();
 jest.mock("swr/immutable", () => ({
   __esModule: true,
-  default: mockUseSWR,
+  default: jest.fn(),
 }));
 
 import useCheckVolumeDiscountEnabled from "./useCheckVolumeDiscountEnabled";
+import useSWRImmutable from "swr/immutable";
+
+const mockUseSWR = useSWRImmutable as jest.MockedFunction<
+  typeof useSWRImmutable
+>;
 
 describe("useCheckVolumeDiscountEnabled", () => {
   beforeEach(() => {
@@ -237,7 +241,13 @@ describe("useCheckVolumeDiscountEnabled", () => {
 
     // Get the fetcher function that was passed to useSWR
     const swrCall = mockUseSWR.mock.calls[0];
+    if (!swrCall) {
+      throw new Error("useSWR was not called");
+    }
     const passedFetcher = swrCall[1];
+    if (!passedFetcher) {
+      throw new Error("Fetcher function was not provided");
+    }
 
     // Call the fetcher to verify it uses axios correctly
     await passedFetcher();

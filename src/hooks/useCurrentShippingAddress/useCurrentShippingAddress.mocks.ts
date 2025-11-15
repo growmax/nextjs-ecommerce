@@ -44,4 +44,10 @@ export const mockUseShipping = {
 
 export const mockUseUserDetails = {
   isAuthenticated: true,
+  isLoading: false,
+  user: null,
+  error: null,
+  login: jest.fn(),
+  logout: jest.fn(),
+  checkAuth: jest.fn(() => true),
 };

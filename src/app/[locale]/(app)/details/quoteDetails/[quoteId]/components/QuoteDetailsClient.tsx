@@ -32,7 +32,7 @@ import type { ProductCsvRow } from "@/lib/export-csv";
 import { exportProductsToCsv } from "@/lib/export-csv";
 import type { SelectedVersion } from "@/types/details/orderdetails/version.types";
 import { getStatusStyle } from "@/utils/details/orderdetails";
-import { decodeUnicode } from "@/utils/general";
+import { decodeUnicode } from "@/utils/General/general";
 
 // Dynamic imports for heavy components
 const OrderProductsTable = dynamic(

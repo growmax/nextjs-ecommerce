@@ -10,8 +10,8 @@ export const mockQuoteSubmissionRequest = {
   companyId: "test-company-id",
 };
 
-export const mockSuccessResponse = { success: true };
-export const mockFailureResponse = { success: false };
+export const mockSuccessResponse = { success: true, data: {} };
+export const mockFailureResponse = { success: false, data: {} };
 
 export const mockQuoteSubmissionService = {
   submitQuoteAsNewVersion: jest.fn(),
