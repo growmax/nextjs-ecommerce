@@ -8,7 +8,7 @@ import type {
   CartValue,
 } from "@/types/calculation/cart";
 import { processDiscountDetails } from "./product-utils";
-import { calculateItemTaxes } from "./tax-calculation";
+import { calculateItemTaxes } from "./tax-calculation/tax-calculation";
 
 interface CartCalculationResult {
   cartValue: CartValue;

@@ -1,4 +1,4 @@
-import { PaymentService, RequestContext } from "@/lib/api";
+import { PaymentService } from "@/lib/api";
 import { JWTService } from "@/lib/services/JWTService";
 import { cookies } from "next/headers";
 import { NextRequest, NextResponse } from "next/server";
@@ -94,15 +94,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Use PaymentService to fetch payment terms with context for server-side
-    const context: RequestContext = {
-      accessToken,
-      tenantCode,
-    };
-
-    const response = await PaymentService.fetchPaymentTermsWithContext(
-      userId,
-      context
-    );
+    const response = await PaymentService.fetchPaymentTermsServerSide(userId);
 
     // Return response in the same format as the old API route
     if (!response) {

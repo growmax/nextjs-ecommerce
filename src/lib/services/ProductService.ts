@@ -1,4 +1,4 @@
-import OpenSearchService from "@/lib/api/services/OpenSearchService";
+import OpenSearchService from "@/lib/api/services/OpenSearchService/OpenSearchService";
 import { JWTService } from "@/lib/services/JWTService";
 import { ProductDetail } from "@/types/product/product-detail";
 import { parseProductSlug } from "@/utils/product/slug-generator";

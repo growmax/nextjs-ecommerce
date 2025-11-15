@@ -1,4 +1,4 @@
-import PreferenceService from "@/lib/api/services/PreferenceService";
+import PreferenceService from "@/lib/api/services/PreferenceService/PreferenceService";
 import { NextRequest, NextResponse } from "next/server";
 
 function getDataFromToken(

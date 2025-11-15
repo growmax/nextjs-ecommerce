@@ -22,12 +22,12 @@ import {
 } from "@/components/sales";
 import { useQuoteDetails } from "@/hooks/details/quotedetails/useQuoteDetails";
 import { useCurrentUser } from "@/hooks/useCurrentUser";
-import { useGetVersionDetails } from "@/hooks/useGetVersionDetails";
+import { useGetVersionDetails } from "@/hooks/useGetVersionDetails/useGetVersionDetails";
 import useModuleSettings from "@/hooks/useModuleSettings";
 import { useTenantData } from "@/hooks/useTenantData";
 import type { QuotationDetailsResponse } from "@/lib/api";
 import { QuotationDetailsService } from "@/lib/api";
-import QuotationNameService from "@/lib/api/services/QuotationNameService";
+import QuotationNameService from "@/lib/api/services/QuotationNameService/QuotationNameService";
 import type { ProductCsvRow } from "@/lib/export-csv";
 import { exportProductsToCsv } from "@/lib/export-csv";
 import type { SelectedVersion } from "@/types/details/orderdetails/version.types";
@@ -356,7 +356,71 @@ export default function QuoteDetailsClient({
   };
 
   const handleConvertToOrder = () => {
-    toast.info("Convert to order functionality will be implemented soon");
+    // Get current status and other relevant data
+    const updatedBuyerStatus =
+      displayQuoteDetails?.updatedBuyerStatus ||
+      quoteDetails?.data?.updatedBuyerStatus;
+    const reorder = displayQuoteDetails?.reorder || quoteDetails?.data?.reorder;
+    const validityTill = (displayQuoteDetails?.validityTill ||
+      quoteDetails?.data?.validityTill) as string | undefined;
+
+    // Check if cancelled
+    if (updatedBuyerStatus === "CANCELLED") {
+      toast.info("Quote was cancelled already", {
+        position: "bottom-left",
+      });
+      return;
+    }
+
+    // Check validity expiration
+    if (validityTill) {
+      const validityDate = new Date(validityTill);
+      const endOfValidityDay = new Date(validityDate);
+      endOfValidityDay.setHours(23, 59, 59, 999);
+
+      if (new Date() > endOfValidityDay) {
+        toast.info("Contract validity expired", {
+          position: "bottom-left",
+        });
+        return;
+      }
+    }
+
+    // Check if quote is in OPEN status
+    if (updatedBuyerStatus === "OPEN") {
+      toast.info(
+        "Quote owner is working on this quote, wait for quote owner to respond",
+        {
+          position: "bottom-left",
+        }
+      );
+      return;
+    }
+
+    // Check if already converted to order
+    if (updatedBuyerStatus === "ORDER PLACED") {
+      toast.info("Quote was converted to order already", {
+        position: "bottom-left",
+      });
+      return;
+    }
+
+    // Valid scenarios: reorder within validity or QUOTE RECEIVED status
+    if (
+      (reorder && validityTill && new Date() < new Date(validityTill)) ||
+      updatedBuyerStatus === "QUOTE RECEIVED"
+    ) {
+      // Navigate to edit page with place order flag
+      router.push(
+        `/${locale}/details/quoteDetails/${quoteIdentifier}/edit?placeOrder=true`
+      );
+      return;
+    }
+
+    // Default message for other statuses
+    toast.info("Quote owner is working on this quote", {
+      position: "bottom-left",
+    });
   };
 
   // Handle version selection

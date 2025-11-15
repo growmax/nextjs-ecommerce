@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { getSuitableDiscountByQuantity } from "./calculation/discountCalculation";
+import { getSuitableDiscountByQuantity } from "./calculation/discountCalculation/discountCalculation";
 
 import type { CartItem } from "@/types/calculation/cart";
 import type {
@@ -42,7 +42,7 @@ const discountDataSchema = z
   })
   .passthrough();
 
-export function assign_pricelist_discounts_data_to_products (
+export function assign_pricelist_discounts_data_to_products(
   inputProduct: Record<string, unknown>,
   discountData: Record<string, unknown> = {},
   shouldUpdateDiscounts: boolean = true
@@ -146,7 +146,10 @@ export function assign_pricelist_discounts_data_to_products (
   let suitableDiscount: DiscountRange | undefined;
   let nextSuitableDiscount: DiscountRange | undefined;
 
-  if (Array.isArray(product.discountsList) && product.discountsList.length > 0) {
+  if (
+    Array.isArray(product.discountsList) &&
+    product.discountsList.length > 0
+  ) {
     const discountResult = getSuitableDiscountByQuantity(
       product?.quantity,
       product.discountsList,
@@ -159,7 +162,8 @@ export function assign_pricelist_discounts_data_to_products (
     nextSuitableDiscount = discountResult.nextSuitableDiscount || undefined;
   }
 
-  product.CantCombineWithOtherDisCounts = suitableDiscount?.CantCombineWithOtherDisCounts ?? false;
+  product.CantCombineWithOtherDisCounts =
+    suitableDiscount?.CantCombineWithOtherDisCounts ?? false;
   if (nextSuitableDiscount !== undefined) {
     product.nextSuitableDiscount = nextSuitableDiscount;
   } else if ("nextSuitableDiscount" in product) {
@@ -204,7 +208,8 @@ export function assign_pricelist_discounts_data_to_products (
         discountValue || PRODUCT_DEFAULTS.DISCOUNT_PERCENTAGE;
       product.discount = overriddenDiscount;
       const basePrice = product.BasePrice || 0;
-      product.discountedPrice = basePrice - (basePrice * product.discount) / 100;
+      product.discountedPrice =
+        basePrice - (basePrice * product.discount) / 100;
     }
 
     product.pricingConditionCode =

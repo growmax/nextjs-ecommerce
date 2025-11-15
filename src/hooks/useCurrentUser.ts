@@ -1,7 +1,7 @@
 "use client";
 
 import { useUserDetails } from "@/contexts/UserDetailsContext";
-import UserServices from "@/lib/api/services/UserServices";
+import UserServices from "@/lib/api/services/UserServices/UserServices";
 import { AuthStorage } from "@/lib/auth";
 import { JWTService } from "@/lib/services/JWTService";
 import { useEffect, useState } from "react";

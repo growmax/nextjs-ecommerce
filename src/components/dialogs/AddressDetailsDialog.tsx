@@ -8,7 +8,7 @@ import {
 } from "@/components/ui/dialog";
 import { useCurrentUser } from "@/hooks/useCurrentUser";
 import { BillingBranchService, type BillingAddress } from "@/lib/api";
-import ShippingBranchService from "@/lib/api/services/ShippingBranchService";
+import ShippingBranchService from "@/lib/api/services/ShippingBranchService/ShippingBranchService";
 import { Loader2 } from "lucide-react";
 import * as React from "react";
 import { toast } from "sonner";

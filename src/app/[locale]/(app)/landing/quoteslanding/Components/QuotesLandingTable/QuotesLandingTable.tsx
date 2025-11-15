@@ -16,10 +16,10 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { useCurrentUser } from "@/hooks/useCurrentUser";
 import PreferenceService, {
   FilterPreferenceResponse,
-} from "@/lib/api/services/PreferenceService";
+} from "@/lib/api/services/PreferenceService/PreferenceService";
 import QuotesService, {
   type QuoteItem,
-} from "@/lib/api/services/QuotesService";
+} from "@/lib/api/services/QuotesService/QuotesService";
 import { ColumnDef } from "@tanstack/react-table";
 import { useLocale } from "next-intl";
 import { useRouter } from "next/navigation";

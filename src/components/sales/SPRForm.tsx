@@ -11,8 +11,9 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
-import type { CompetitorDetail } from "@/hooks/useGetManufacturerCompetitors";
-import useGetManufacturerCompetitors from "@/hooks/useGetManufacturerCompetitors";
+import useGetManufacturerCompetitors, {
+  type CompetitorDetail,
+} from "@/hooks/useGetManufacturerCompetitors/useGetManufacturerCompetitors";
 
 interface SPRFormProps {
   sellerCompanyId?: number;

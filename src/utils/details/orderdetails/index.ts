@@ -1,4 +1,4 @@
 // Re-export all utilities
 export * from "./preferences";
-export * from "./status";
-export * from "./payment";
+export * from "./status/status";
+export * from "./payment/payment";

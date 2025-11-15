@@ -44,6 +44,11 @@ export interface ProductItem {
   tax?: number;
   igst?: number;
   igstPercentage?: number;
+  productTaxes?: Array<{
+    compound?: boolean;
+    taxName?: string;
+    taxPercentage?: number;
+  }>;
   [key: string]: unknown;
 }
 
@@ -228,8 +233,24 @@ export default function OrderProductsTable({
                       product.itemTaxableAmount ??
                       product.unitPrice ??
                       product.basePrice;
-                    const originalQuantity =
-                      product.unitQuantity ?? product.quantity ?? 0;
+                    // Check for valid quantity values, including askedQuantity
+                    let originalQuantity = 0;
+                    if (
+                      typeof product.unitQuantity === "number" &&
+                      product.unitQuantity > 0
+                    ) {
+                      originalQuantity = product.unitQuantity;
+                    } else if (
+                      typeof product.quantity === "number" &&
+                      product.quantity > 0
+                    ) {
+                      originalQuantity = product.quantity;
+                    } else if (
+                      typeof product.askedQuantity === "number" &&
+                      product.askedQuantity > 0
+                    ) {
+                      originalQuantity = product.askedQuantity;
+                    }
                     const productId =
                       product.brandProductId ||
                       product.itemCode ||
@@ -241,12 +262,35 @@ export default function OrderProductsTable({
                         : originalQuantity;
                     const invoicedQty =
                       product.invoiceQuantity ?? product.invoicedQty ?? 0;
-                    const amount = product.totalPrice ?? product.amount;
-                    const igst =
-                      product.tax ??
-                      product.igst ??
-                      product.igstPercentage ??
-                      0;
+
+                    // Calculate amount: use totalPrice if available, otherwise calculate from unitPrice * quantity
+                    const unitPriceForCalc = Number(
+                      product.unitPrice ?? product.discountedPrice ?? 0
+                    );
+                    const quantityNum = Number(quantity) || 0;
+                    const amount =
+                      product.totalPrice ??
+                      product.amount ??
+                      unitPriceForCalc * quantityNum;
+
+                    // Extract tax percentage from productTaxes array (from API) or fallback to existing fields
+                    let igst = 0;
+                    if (
+                      product.productTaxes &&
+                      Array.isArray(product.productTaxes) &&
+                      product.productTaxes.length > 0
+                    ) {
+                      // Get the first tax percentage from productTaxes array
+                      const firstTax = product.productTaxes[0];
+                      igst = firstTax?.taxPercentage || 0;
+                    } else {
+                      // Fallback to existing fields
+                      igst =
+                        product.tax ??
+                        product.igst ??
+                        product.igstPercentage ??
+                        0;
+                    }
 
                     // Get product image
                     const productImage = getProductImage(product);

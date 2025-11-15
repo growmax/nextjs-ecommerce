@@ -1,5 +1,5 @@
-import DashboardService from "@/lib/api/services/DashboardService";
-import OrderService from "@/lib/api/services/OrdersService";
+import DashboardService from "@/lib/api/services/DashboardService/DashboardService";
+import OrderService from "@/lib/api/services/OrdersService/OrdersService";
 import { AuthStorage } from "@/lib/auth";
 import { JWTService } from "@/lib/services/JWTService";
 import type {

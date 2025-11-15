@@ -24,6 +24,11 @@ export interface ProductCsvRow {
   amount?: number;
   totalPrice?: number;
   itemTaxableAmount?: number;
+  productTaxes?: Array<{
+    compound?: boolean;
+    taxName?: string;
+    taxPercentage?: number;
+  }>;
 }
 
 export function toCsv<T>(rows: T[], columns: CsvColumn<T>[]): string {
@@ -94,7 +99,21 @@ export function exportProductsToCsv(
     { header: "Unit Price", value: r => firstDefined(r.unitPrice) },
     { header: "Discount %", value: r => firstDefined(r.discountPercentage) },
     { header: "Discount", value: r => firstDefined(r.discount) },
-    { header: "Tax %", value: r => firstDefined(r.igstPercentage) },
+    {
+      header: "Tax %",
+      value: r => {
+        // Extract tax percentage from productTaxes array (from API) or fallback to existing fields
+        if (
+          r.productTaxes &&
+          Array.isArray(r.productTaxes) &&
+          r.productTaxes.length > 0
+        ) {
+          const firstTax = r.productTaxes[0];
+          return firstTax?.taxPercentage || 0;
+        }
+        return firstDefined(r.igstPercentage);
+      },
+    },
     { header: "Tax", value: r => firstDefined(r.tax, r.igst) },
     {
       header: "Amount",
