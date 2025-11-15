@@ -50,11 +50,11 @@ const data = {
       items: [
         {
           title: "Company",
-          url: "/settings/profile",
+          url: "/settings/company",
         },
         {
           title: "Profile",
-          url: "/settings/company",
+          url: "/settings/profile",
         },
       ],
     },

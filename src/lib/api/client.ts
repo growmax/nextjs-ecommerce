@@ -24,6 +24,8 @@ const API_CONFIG = {
   OPENSEARCH_URL:
     process.env.OPENSEARCH_URL ||
     "https://api.myapptino.com/opensearch/invocations",
+  BASE_API_URL:
+    process.env.BASE_API_URL || "https://schwingstetter.myapptino.com/api/",
 } as const;
 
 // Types
@@ -286,6 +288,10 @@ export const apiClient = createApiClient({
 
 export const preferenceClient = createApiClient({
   baseURL: API_CONFIG.PREFERENCE_URL,
+});
+
+export const userPreferenceApiClient = createApiClient({
+  baseURL: API_CONFIG.BASE_API_URL,
 });
 
 // Local Next.js API client (for /api routes)

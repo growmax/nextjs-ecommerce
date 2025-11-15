@@ -69,9 +69,12 @@ export default async function AppLayout({
             <TenantDataProvider>
               <SidebarProvider>
                 <AppSidebar />
-                <SidebarInset className="flex flex-col h-screen overflow-hidden">
+                {/* Use a scrollable inset container and allow main to scroll vertically. */}
+                <SidebarInset className="flex flex-col h-screen">
                   <AppHeader />
-                  <main className="flex-1 overflow-hidden">{children}</main>
+                  <main className="flex-1 overflow-y-auto overflow-x-hidden">
+                    {children}
+                  </main>
                 </SidebarInset>
               </SidebarProvider>
             </TenantDataProvider>

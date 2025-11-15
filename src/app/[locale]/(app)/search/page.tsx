@@ -15,13 +15,15 @@ export const metadata: Metadata = {
 export const revalidate = 1800; // 30 minutes
 
 interface SearchPageProps {
-  searchParams: {
+  // Next's app-router may type searchParams as a Promise; declare it as such
+  searchParams: Promise<{
     query?: string;
-  };
+  }>;
 }
 
-export default function SearchPage({ searchParams }: SearchPageProps) {
-  const query = searchParams.query || "";
+export default async function SearchPage({ searchParams }: SearchPageProps) {
+  const resolved = await searchParams;
+  const query = resolved?.query || "";
 
   return (
     <div className="container mx-auto px-4 py-8">

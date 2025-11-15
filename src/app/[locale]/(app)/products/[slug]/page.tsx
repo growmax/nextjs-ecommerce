@@ -101,6 +101,7 @@ export async function generateStaticParams() {
 export async function generateMetadata({
   params,
 }: ProductPageProps): Promise<Metadata> {
+  // `params` can be a Promise in App Router contexts; await to resolve it.
   const { slug, locale } = await params;
   const { tenantData, origin } = await getContext();
 
@@ -210,7 +211,7 @@ export async function generateMetadata({
 }
 
 export default async function ProductPage({ params }: ProductPageProps) {
-  const { slug, locale } = params;
+  const { slug, locale } = await params;
   const { tenantData, origin } = await getContext();
   if (!tenantData?.data?.tenant?.elasticCode) {
     return (

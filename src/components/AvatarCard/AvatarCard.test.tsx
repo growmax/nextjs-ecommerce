@@ -1,8 +1,9 @@
+import "@testing-library/jest-dom";
 import { cleanup, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
+import React from "react";
 import { AvatarCard } from "./AvatarCard";
 import { AvatarCardProps } from "./Avatarcard.types";
-import React from "react";
 
 // Mock Next.js Link component
 jest.mock("next/link", () => {

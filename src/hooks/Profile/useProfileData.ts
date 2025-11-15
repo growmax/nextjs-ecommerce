@@ -1,6 +1,9 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useTenantCompany, useTenantId } from "@/contexts/TenantContext";
+import { useCurrentUser } from "@/hooks/useCurrentUser";
+import UserPreferenceApiService from "@/lib/api/services/Settings/Profile/userPreference/userPreferenceApiService";
+import { useEffect, useState } from "react";
 import { toast } from "sonner";
 
 interface Profile {
@@ -44,6 +47,10 @@ export function useProfileData() {
     }
   );
   const [isLoading, setIsLoading] = useState(true);
+  // Current user and tenant context
+  const { user } = useCurrentUser();
+  const tenantId = useTenantId();
+  const company = useTenantCompany();
 
   // Load profile data
   const loadProfile = async () => {
@@ -110,9 +117,9 @@ export function useProfileData() {
 
         const timeFormatOptions =
           apiData.timeFormatOptions?.map(
-            (tf: { value: string; timeFormatName: string }) => ({
+            (tf: { value: string; display: string }) => ({
               value: tf.value,
-              label: tf.timeFormatName,
+              label: tf.display,
             })
           ) || [];
 
@@ -179,24 +186,56 @@ export function useProfileData() {
   // Save preferences
   const savePreferences = async (preferencesData: UserPreferencesData) => {
     try {
-      const response = await fetch("/api/userpreferences", {
-        method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(preferencesData),
-      });
-
-      if (!response.ok) {
-        throw new Error("Failed to save preferences");
+      // Validate required fields before API call
+      if (
+        !preferencesData.timeZone ||
+        !preferencesData.dateFormat ||
+        !preferencesData.timeFormat
+      ) {
+        toast.error("Please fill all required preference fields");
+        return false;
       }
 
-      localStorage.setItem("userPreferences", JSON.stringify(preferencesData));
-      setPreferences(preferencesData);
+      // Build payload expected by backend
+      const payload: any = {
+        dateFormat: preferencesData.dateFormat,
+        timeFormat: preferencesData.timeFormat,
+        timeZone: preferencesData.timeZone,
+      };
+
+      // Include optional ids if available in stored preferences
+      if ((preferencesData as any)?.id)
+        payload.id = (preferencesData as any).id;
+      if (tenantId) payload.tenantId = tenantId;
+      if (user && user.userId) payload.userId = { id: user.userId };
+      payload.vendorId = company?.vendorId ?? null;
+
+      const result = await UserPreferenceApiService.savePreference(payload);
+
+      // Validate response
+      if (
+        !result ||
+        !result.timeZone ||
+        !result.dateFormat ||
+        !result.timeFormat
+      ) {
+        throw new Error("Invalid response from server");
+      }
+
+      const saved = {
+        timeZone: result.timeZone,
+        dateFormat: result.dateFormat,
+        timeFormat: result.timeFormat,
+      };
+
+      // Only update state and localStorage after successful API call
+      localStorage.setItem("userPreferences", JSON.stringify(saved));
+      setPreferences(saved);
       toast.success("Preferences saved successfully!");
 
       return true;
-    } catch {
+    } catch (error) {
+      console.error("Failed to save preferences:", error);
       toast.error("Failed to save preferences. Please try again.");
       return false;
     }
