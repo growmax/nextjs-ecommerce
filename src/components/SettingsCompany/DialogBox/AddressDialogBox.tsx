@@ -1,5 +1,6 @@
 "use client";
 
+import FormTextarea from "@/components/forms/FormTextarea/FormTextarea";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import {
@@ -26,12 +27,11 @@ import LocationService from "@/lib/api/services/LocationService/LocationService"
 import { AuthStorage } from "@/lib/auth";
 import { JWTService } from "@/lib/services/JWTService";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { FormDropdown } from "../../forms/FormDropdown/FormDropdown";
 import FormInput from "../../forms/FormInput/FormInput";
-import FormTextarea from "@/components/forms/FormTextarea/FormTextarea";
 
 interface CompanyDialogBoxProps {
   open: boolean;
@@ -132,113 +132,157 @@ const CompanyDialogBox = ({
   >([]);
   const [districtsLoading, setDistrictsLoading] = useState(false);
 
-  // small helper to normalize unknown service payloads into dropdown options
-  const toOption = useCallback((c: unknown) => {
-    if (c && typeof c === "object") {
-      const rec = c as Record<string, unknown>;
-      const value = String(rec.code ?? rec.iso ?? rec.id ?? rec.name ?? "");
-      const label = String(rec.name ?? rec.label ?? rec.iso ?? rec.code ?? "");
-      return { value, label };
+  // Track if initial data has been loaded to prevent duplicate API calls
+  const hasLoadedInitialData = useRef(false);
+  const isLoadingRef = useRef({
+    countries: false,
+    states: false,
+    districts: false,
+  });
+
+  // Helper to normalize API response data to dropdown options
+  const toDropdownOption = useCallback((item: any) => {
+    if (item && typeof item === "object") {
+      return {
+        value: String(item.id ?? ""),
+        label: String(item.name ?? ""),
+      };
     }
     return { value: "", label: "" };
   }, []);
 
   const loadCountries = useCallback(async () => {
+    if (isLoadingRef.current.countries) return; // Prevent duplicate calls
+
     try {
+      isLoadingRef.current.countries = true;
       setCountriesLoading(true);
       const resp = await LocationService.getAllCountries();
       const list = Array.isArray(resp?.data)
-        ? resp.data.map(toOption).filter(o => o.value)
+        ? resp.data.map(toDropdownOption).filter(o => o.value)
         : [];
       setCountries(list);
     } catch {
       setCountries([]);
     } finally {
       setCountriesLoading(false);
+      isLoadingRef.current.countries = false;
     }
-  }, [toOption]);
+  }, [toDropdownOption]);
 
   const loadStates = useCallback(
     async (countryValue?: string) => {
+      if (isLoadingRef.current.states) return; // Prevent duplicate calls
+
       try {
+        isLoadingRef.current.states = true;
         setStatesLoading(true);
-        let resp;
-        // If countryValue looks like an id (numeric), prefer server-side filter
-        if (countryValue && /^\d+$/.test(String(countryValue))) {
-          resp = await LocationService.getStatesByCountry(Number(countryValue));
-        } else {
-          resp = await LocationService.getAllStates();
+
+        // Get country ID (handles both numeric IDs and names)
+        let countryId: number | undefined;
+        if (countryValue) {
+          if (/^\d+$/.test(countryValue)) {
+            countryId = Number(countryValue);
+          } else {
+            // Use functional update to access current countries without dependency
+            await new Promise<void>(resolve => {
+              setCountries(current => {
+                const found = current.find(c => c.label === countryValue);
+                if (found) countryId = Number(found.value);
+                resolve();
+                return current;
+              });
+            });
+          }
         }
+
+        // Load states
+        const resp = countryId
+          ? await LocationService.getStatesByCountry(countryId)
+          : await LocationService.getAllStates();
+
         const raw = Array.isArray(resp?.data) ? resp.data : [];
-        const filtered = countryValue
-          ? raw.filter((r: unknown) => {
-              if (!r || typeof r !== "object") return false;
-              const rec = r as Record<string, unknown>;
-              const countryFields = [
-                rec.country,
-                rec.countryId,
-                rec.countryCode,
-                rec.countryIso,
-                rec.country_name,
-              ];
-              return countryFields.some(
-                f => f !== undefined && String(f) === String(countryValue)
-              );
-            })
+        const filtered = countryId
+          ? raw.filter((state: any) => state.countryId === countryId)
           : raw;
-        const list = filtered.map(toOption).filter(o => o.value);
+        const list = filtered.map(toDropdownOption).filter(o => o.value);
         setStates(list);
       } catch {
         setStates([]);
       } finally {
         setStatesLoading(false);
+        isLoadingRef.current.states = false;
       }
     },
-    [toOption]
+    [toDropdownOption]
   );
 
   const loadDistricts = useCallback(
     async (stateValue?: string) => {
+      if (isLoadingRef.current.districts) return; // Prevent duplicate calls
+
       try {
+        isLoadingRef.current.districts = true;
         setDistrictsLoading(true);
-        let resp;
-        // If stateValue looks like an id (numeric), prefer server-side filter
-        if (stateValue && /^\d+$/.test(String(stateValue))) {
-          resp = await LocationService.getDistrictsByState(Number(stateValue));
-        } else {
-          resp = await LocationService.getAllDistricts();
+
+        // Get state ID (handles both numeric IDs and names)
+        let stateId: number | undefined;
+        if (stateValue) {
+          if (/^\d+$/.test(stateValue)) {
+            stateId = Number(stateValue);
+          } else {
+            // Use functional update to access current states without dependency
+            await new Promise<void>(resolve => {
+              setStates(current => {
+                const found = current.find(s => s.label === stateValue);
+                if (found) stateId = Number(found.value);
+                resolve();
+                return current;
+              });
+            });
+          }
         }
+
+        // Load districts
+        const resp = stateId
+          ? await LocationService.getDistrictsByState(stateId)
+          : await LocationService.getAllDistricts();
+
         const raw = Array.isArray(resp?.data) ? resp.data : [];
-        const filtered = stateValue
-          ? raw.filter((r: unknown) => {
-              if (!r || typeof r !== "object") return false;
-              const rec = r as Record<string, unknown>;
-              const stateFields = [
-                rec.state,
-                rec.stateId,
-                rec.stateCode,
-                rec.stateIso,
-                rec.state_name,
-              ];
-              return stateFields.some(
-                f => f !== undefined && String(f) === String(stateValue)
-              );
-            })
+        const filtered = stateId
+          ? raw.filter((district: any) => district.stateId === stateId)
           : raw;
-        const list = filtered.map(toOption).filter(o => o.value);
+        const list = filtered.map(toDropdownOption).filter(o => o.value);
         setDistricts(list);
       } catch {
         setDistricts([]);
       } finally {
         setDistrictsLoading(false);
+        isLoadingRef.current.districts = false;
       }
     },
-    [toOption]
+    [toDropdownOption]
+  );
+
+  // Helper to get label from value (ID to name conversion)
+  const getLabelFromValue = useCallback(
+    (
+      value: string,
+      options: Array<{ value: string; label: string }>
+    ): string => {
+      return options.find(opt => opt.value === value)?.label || value;
+    },
+    []
   );
 
   const onSubmit = async (data: AddressFormData) => {
     setIsSubmitting(true);
     try {
+      // Convert IDs to names for API
+      const countryName = getLabelFromValue(data.country, countries);
+      const stateName = getLabelFromValue(data.state, states);
+      const districtName = getLabelFromValue(data.district || "", districts);
+
       // map form data to AddressData shape expected by API
       const mapToAddressData = (d: AddressFormData): AddressData => {
         // preserve id when present (edit mode)
@@ -259,13 +303,13 @@ const CompanyDialogBox = ({
           addressLine: d.addressLine || "",
           locality: d.locality || "",
           city: d.city || "",
-          district: d.district || "",
+          district: districtName || "",
           latitude: lattitude ?? 0,
           longitude: longitude ?? 0,
           lattitude: String(lattitude ?? 0),
           pinCodeId: d.pinCode || "",
-          state: d.state || "",
-          country: d.country || "",
+          state: stateName || "",
+          country: countryName || "",
           countryCode: "",
           isShipping: Boolean(d.isShipping),
           isBilling: Boolean(d.isBilling),
@@ -409,68 +453,109 @@ const CompanyDialogBox = ({
     }
   };
   useEffect(() => {
-    if (open) {
-      // only load countries on open; load states/districts on-demand when parent value exists
-      void loadCountries();
+    if (!open) {
+      // Reset the flag when dialog closes
+      hasLoadedInitialData.current = false;
+      return;
     }
 
-    if (mode === "edit") {
-      if (initialData) {
-        form.reset(initialData);
-        // ensure dependent lists are loaded for editing existing values
+    if (open && !hasLoadedInitialData.current) {
+      // Load countries only once when dialog opens
+      void loadCountries();
+
+      if (mode === "edit" && initialData) {
+        // Load states and districts if we have country/state in initial data
         if (initialData.country) {
           void loadStates(initialData.country as string);
         }
         if (initialData.state) {
           void loadDistricts(initialData.state as string);
         }
+      } else if (mode === "create") {
+        // create mode - reset to defaults
+        form.reset(emptyDefaults);
       }
-    } else {
-      // create mode
-      form.reset(emptyDefaults);
+
+      // Mark as loaded to prevent duplicate calls
+      hasLoadedInitialData.current = true;
     }
-    // include `open` so that opening the dialog will reset correctly
-  }, [
-    initialData,
-    mode,
-    open,
-    form,
-    emptyDefaults,
-    loadCountries,
-    loadStates,
-    loadDistricts,
-  ]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [mode, open]);
+
+  // Helper to set form value from name to ID when options load
+  const setFormValueFromName = useCallback(
+    (
+      fieldName: "country" | "state" | "district",
+      namingValue: string | undefined,
+      options: Array<{ value: string; label: string }>
+    ) => {
+      if (!namingValue || options.length === 0) return;
+
+      const id = options.find(opt => opt.label === namingValue)?.value;
+      if (id && id !== form.getValues(fieldName)) {
+        form.setValue(fieldName, id);
+      }
+    },
+    [form]
+  );
+
+  // Single effect to match names to IDs when dropdown options load (edit mode only)
+  useEffect(() => {
+    if (mode !== "edit" || !initialData || !open) return;
+
+    if (countries.length > 0) {
+      setFormValueFromName("country", initialData.country, countries);
+    }
+    if (states.length > 0) {
+      setFormValueFromName("state", initialData.state, states);
+    }
+    if (districts.length > 0) {
+      setFormValueFromName("district", initialData.district, districts);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [mode, countries.length, states.length, districts.length, open]);
 
   // targeted watchers: watch country and state separately to load children and reset dependents
   const watchedCountry = form.watch("country");
   useEffect(() => {
-    // when country changes, reset state/district and load filtered states (or clear lists)
-    if (watchedCountry) {
-      form.setValue("state", "");
-      form.setValue("district", "");
-      // load only states relevant to the selected country
-      void loadStates(watchedCountry);
-      setDistricts([]);
-    } else {
+    if (!watchedCountry) {
       // no country selected -> clear child lists/values
       setStates([]);
       setDistricts([]);
       form.setValue("state", "");
       form.setValue("district", "");
+      return;
     }
-  }, [watchedCountry, loadStates, form]);
+
+    // Debounce to prevent rapid successive calls
+    const timeoutId = setTimeout(() => {
+      form.setValue("state", "");
+      form.setValue("district", "");
+      void loadStates(watchedCountry);
+      setDistricts([]);
+    }, 100);
+
+    return () => clearTimeout(timeoutId);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [watchedCountry]);
 
   const watchedState = form.watch("state");
   useEffect(() => {
-    // when state changes, reset district and load filtered districts (or clear list)
-    if (watchedState) {
-      form.setValue("district", "");
-      void loadDistricts(watchedState);
-    } else {
+    if (!watchedState) {
       setDistricts([]);
       form.setValue("district", "");
+      return;
     }
-  }, [watchedState, loadDistricts, form]);
+
+    // Debounce to prevent rapid successive calls
+    const timeoutId = setTimeout(() => {
+      form.setValue("district", "");
+      void loadDistricts(watchedState);
+    }, 100);
+
+    return () => clearTimeout(timeoutId);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [watchedState]);
 
   const handleCancel = () => {
     form.reset();
@@ -479,21 +564,11 @@ const CompanyDialogBox = ({
 
   const handleOpenChange = (isOpen: boolean) => {
     if (!isOpen) {
-      // Dialog is closing - reset to defaults for create or to initialData for edit
-      if (mode === "create") {
-        form.reset(emptyDefaults);
-      } else {
-        form.reset(initialData || emptyDefaults);
-      }
-    } else {
-      // Dialog is opening - ensure form matches mode
-      if (mode === "create") {
-        form.reset(emptyDefaults);
-      } else {
-        form.reset(initialData || emptyDefaults);
-      }
+      // Reset form when closing
+      form.reset(
+        mode === "create" ? emptyDefaults : initialData || emptyDefaults
+      );
     }
-
     onOpenChange(isOpen);
   };
 

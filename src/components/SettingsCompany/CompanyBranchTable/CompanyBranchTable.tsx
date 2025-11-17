@@ -162,11 +162,18 @@ const CompanyBranchTable = () => {
         addressId: Number(id),
       });
 
+      // Show success toast
+      toast.success("Branch deleted successfully", {
+        action: { label: "OK", onClick: () => toast.dismiss() },
+      });
+
       // Refresh the branch list after successful deletion
-      // Trigger a re-fetch by updating pagination state
-      setPagination(prev => ({ ...prev }));
-    } catch {
-      // swallow errors here; UI can show a toast if desired
+      reloadTable();
+    } catch (error) {
+      // Show error toast
+      toast.error("Failed to delete branch. Please try again.", {
+        action: { label: "OK", onClick: () => toast.dismiss() },
+      });
     } finally {
       setDeletingAddressId(null);
     }
@@ -333,9 +340,10 @@ const CompanyBranchTable = () => {
                 deletingAddressId ===
                 (row.original.addressId?.id || row.original.id)
               }
-              onClick={() =>
-                handleDelete(row.original.addressId?.id || row.original.id)
-              }
+              onClick={e => {
+                e.stopPropagation(); // Prevent row click when clicking delete
+                handleDelete(row.original.addressId?.id || row.original.id);
+              }}
             >
               {deletingAddressId ===
               (row.original.addressId?.id || row.original.id) ? (
