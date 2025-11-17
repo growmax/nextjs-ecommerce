@@ -1,5 +1,6 @@
 "use client";
 
+import { useUserDetails } from "@/contexts/UserDetailsContext";
 import { Map, PieChart, Settings2, SquareTerminal } from "lucide-react";
 import * as React from "react";
 
@@ -63,6 +64,7 @@ const data = {
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const { isMobile, setOpenMobile } = useSidebar();
+  const { isAuthenticated } = useUserDetails();
 
   const handleNavigation = (_url: string) => {
     // Auto-close sidebar on mobile after navigation
@@ -71,17 +73,21 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
     }
   };
 
+  const navItems = isAuthenticated
+    ? data.navMain
+    : data.navMain.filter(
+        item => !["Dashboard", "Sales", "Settings"].includes(item.title)
+      );
+
   return (
     <Sidebar collapsible="icon" {...props}>
       <SidebarHeader>
         <TeamSwitcher />
       </SidebarHeader>
       <SidebarContent>
-        <NavMain items={data.navMain} onNavigate={handleNavigation} />
+        <NavMain items={navItems} onNavigate={handleNavigation} />
       </SidebarContent>
-      <SidebarFooter>
-        <NavUser />
-      </SidebarFooter>
+      <SidebarFooter>{isAuthenticated && <NavUser />}</SidebarFooter>
       <SidebarRail />
     </Sidebar>
   );

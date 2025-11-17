@@ -1,6 +1,7 @@
 "use client";
 
 import { useUserDetails } from "@/contexts/UserDetailsContext";
+import { redirectTo } from "@/lib/utils/navigation"; // Added import
 import { useState } from "react";
 
 export default function useLogout() {
@@ -13,13 +14,15 @@ export default function useLogout() {
     setIsLoggingOut(true);
 
     try {
-      // Use the AuthContext logout method which handles everything
       await logout();
-      // Note: logout() redirects to login page, so this code may not execute
-    } catch {
-      // Even on error, logout context handles redirect
+      // On successful logout, redirect to the homepage.
+      // Using redirectTo to ensure a full page refresh and state clearing.
+      redirectTo("/"); // Replaced window.location.assign
+    } catch (error) {
+      console.error("Logout failed:", error);
+      // Optionally handle logout errors, e.g., show a notification
     } finally {
-      // This may not execute due to redirect, but keep for safety
+      // This may not execute if redirect happens quickly, but good practice.
       setIsLoggingOut(false);
     }
   };

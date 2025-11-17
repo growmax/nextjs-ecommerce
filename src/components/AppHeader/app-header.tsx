@@ -1,6 +1,7 @@
 "use client";
 
 import ProductSearchResults from "@/components/search/ProductSearchResults";
+import { useUserDetails } from "@/contexts/UserDetailsContext";
 import useSearch from "@/hooks/useSearch";
 
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -38,6 +39,7 @@ export function AppHeader() {
   const { userProfile } = useUserProfile();
   const { isLoggingOut, handleLogout } = useLogout();
   const router = useRouter();
+  const { isAuthenticated } = useUserDetails();
   // Type definitions for search items
   interface RawOpenSearchProduct {
     productId: number;
@@ -295,33 +297,44 @@ export function AppHeader() {
                   </span>
                 )}
               </Button>
-
               {/* Vertical Separator before Avatar */}
               <Separator orientation="vertical" className="h-6 mx-1" />
 
               {/* Profile Dropdown with Real Data */}
-              <AvatarCard
-                user={userProfile}
-                onLogout={handleLogout}
-                isLoggingOut={isLoggingOut}
-                align="end"
-                trigger={
-                  <Button
-                    variant="ghost"
-                    className="relative h-8 w-8 rounded-full"
-                  >
-                    <Avatar className="h-8 w-8">
-                      <AvatarImage
-                        src={userProfile?.picture || ""}
-                        alt={userProfile?.displayName || "User"}
-                      />
-                      <AvatarFallback>
-                        {getUserInitials(userProfile?.displayName || "")}
-                      </AvatarFallback>
-                    </Avatar>
-                  </Button>
-                }
-              />
+              {isAuthenticated ? (
+                <AvatarCard
+                  user={userProfile}
+                  onLogout={handleLogout}
+                  isLoggingOut={isLoggingOut}
+                  align="end"
+                  trigger={
+                    <Button
+                      variant="ghost"
+                      className="relative h-8 w-8 rounded-full"
+                    >
+                      <Avatar className="h-8 w-8">
+                        <AvatarImage
+                          src={userProfile?.picture || ""}
+                          alt={userProfile?.displayName || "User"}
+                        />
+                        <AvatarFallback>
+                          {getUserInitials(userProfile?.displayName || "")}
+                        </AvatarFallback>
+                      </Avatar>
+                    </Button>
+                  }
+                />
+              ) : (
+                <Button
+                  variant="ghost"
+                  onClick={() => router.push("/login")}
+                  className="h-8 p-0"
+                >
+                  <div className="bg-sidebar-primary text-sidebar-primary-foreground flex items-center justify-center rounded-lg px-3 h-8">
+                    <span className="text-sm font-medium">Login</span>
+                  </div>
+                </Button>
+              )}
             </div>
 
             {/* Mobile Right Side Icons (Condensed) */}
@@ -337,28 +350,40 @@ export function AppHeader() {
               </Button>
 
               {/* Profile Dropdown with Real Data */}
-              <AvatarCard
-                user={userProfile}
-                onLogout={handleLogout}
-                isLoggingOut={isLoggingOut}
-                align="end"
-                trigger={
-                  <Button
-                    variant="ghost"
-                    className="relative h-8 w-8 rounded-full"
-                  >
-                    <Avatar className="h-8 w-8">
-                      <AvatarImage
-                        src={userProfile?.picture || ""}
-                        alt={userProfile?.displayName || "User"}
-                      />
-                      <AvatarFallback>
-                        {getUserInitials(userProfile?.displayName || "")}
-                      </AvatarFallback>
-                    </Avatar>
-                  </Button>
-                }
-              />
+              {isAuthenticated ? (
+                <AvatarCard
+                  user={userProfile}
+                  onLogout={handleLogout}
+                  isLoggingOut={isLoggingOut}
+                  align="end"
+                  trigger={
+                    <Button
+                      variant="ghost"
+                      className="relative h-8 w-8 rounded-full"
+                    >
+                      <Avatar className="h-8 w-8">
+                        <AvatarImage
+                          src={userProfile?.picture || ""}
+                          alt={userProfile?.displayName || "User"}
+                        />
+                        <AvatarFallback>
+                          {getUserInitials(userProfile?.displayName || "")}
+                        </AvatarFallback>
+                      </Avatar>
+                    </Button>
+                  }
+                />
+              ) : (
+                <Button
+                  variant="ghost"
+                  onClick={() => router.push("/login")}
+                  className="h-8 p-0"
+                >
+                  <div className="bg-sidebar-primary text-sidebar-primary-foreground flex items-center justify-center rounded-lg px-3 h-8">
+                    <span className="text-sm font-medium">Login</span>
+                  </div>
+                </Button>
+              )}
             </div>
           </div>
         </div>
