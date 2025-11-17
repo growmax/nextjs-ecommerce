@@ -27,6 +27,7 @@
     "emailInvalid": "Please enter a valid email or phone number",
     "passwordRequired": "Password is required",
     "loginSuccess": "Welcome back! You have been logged in successfully.",
+    "logoutSuccess": "You have been logged out successfully.",
     "loginFailed": "Login Failed",
     "invalidCredentials": "Invalid email or password. Please try again.",
     "invalidPassword": "Invalid password",

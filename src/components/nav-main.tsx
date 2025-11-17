@@ -10,6 +10,13 @@ import {
   CollapsibleTrigger,
 } from "@/components/ui/collapsible";
 import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
+import {
+  SidebarGroup,
+  SidebarGroupLabel,
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
@@ -17,14 +24,7 @@ import {
   SidebarMenuSubButton,
   SidebarMenuSubItem,
   useSidebar,
-  SidebarGroup,
-  SidebarGroupLabel,
 } from "@/components/ui/sidebar";
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover";
 import { cn } from "@/lib/utils";
 
 export function NavMain({
@@ -47,18 +47,26 @@ export function NavMain({
   const { state } = useSidebar();
   const isCollapsed = state === "collapsed";
 
+  // Remove locale prefix (e.g., /en, /es, /fr) from pathname for comparison
+  const getPathWithoutLocale = (path: string): string => {
+    return path.replace(/^\/([a-z]{2}(-[A-Z]{2})?)(?=\/|$)/, "") || "/";
+  };
+
+  const pathWithoutLocale = getPathWithoutLocale(pathname);
+
   const isActive = (url: string) => {
-    if (url === "/") return pathname === "/";
-    return pathname.startsWith(url);
+    if (url === "/") return pathWithoutLocale === "/";
+    return pathWithoutLocale.startsWith(url);
   };
 
   return (
     <SidebarGroup>
       <SidebarGroupLabel>Main Menu</SidebarGroupLabel>
       <SidebarMenu>
-        {items.map((item) => {
+        {items.map(item => {
           const hasSubItems = item.items && item.items.length > 0;
-          const hasActiveSub = item.items?.some(subItem => isActive(subItem.url)) ?? false;
+          const hasActiveSub =
+            item.items?.some(subItem => isActive(subItem.url)) ?? false;
           const Icon = item.icon;
 
           if (!hasSubItems) {
@@ -80,7 +88,9 @@ export function NavMain({
                     onClick={() => onNavigate?.(item.url)}
                   >
                     {item.icon && <item.icon className="size-5" />}
-                    {!isCollapsed && <span className="text-sm font-medium">{item.title}</span>}
+                    {!isCollapsed && (
+                      <span className="text-sm font-medium">{item.title}</span>
+                    )}
                   </Link>
                 </SidebarMenuButton>
               </SidebarMenuItem>
@@ -111,7 +121,12 @@ export function NavMain({
                         <Link
                           key={subItem.title}
                           href={subItem.url}
-                          className="text-sm font-medium text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground rounded-md px-3 py-1.5"
+                          className={cn(
+                            "text-sm font-medium text-sidebar-foreground rounded-md px-3 py-1.5 transition-colors",
+                            isActive(subItem.url)
+                              ? "bg-sidebar-accent text-sidebar-accent-foreground"
+                              : "hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
+                          )}
                           onClick={() => onNavigate?.(subItem.url)}
                         >
                           {subItem.title}

@@ -27,6 +27,7 @@
     "emailInvalid": "Por favor ingrese un correo o teléfono válido",
     "passwordRequired": "La contraseña es requerida",
     "loginSuccess": "¡Bienvenido de vuelta! Ha iniciado sesión exitosamente.",
+    "logoutSuccess": "Has cerrado sesión exitosamente.",
     "loginFailed": "Error de Inicio de Sesión",
     "invalidCredentials": "Correo o contraseña inválidos. Por favor intente de nuevo.",
     "invalidPassword": "Contraseña inválida",

@@ -274,14 +274,20 @@ export function AppHeader() {
             {/* Desktop Right Side Icons */}
             <div className="hidden md:flex items-center gap-1">
               {/* Notifications */}
-              <Button variant="ghost" size="icon" className="h-8 w-8 relative">
-                <Bell className="h-4 w-4" />
-                {notificationsCount > 0 && (
-                  <span className="absolute -top-1 -right-1 h-4 w-4 rounded-full bg-red-500 text-xs text-white flex items-center justify-center">
-                    {notificationsCount > 9 ? "9+" : notificationsCount}
-                  </span>
-                )}
-              </Button>
+              {isAuthenticated && (
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-8 w-8 relative"
+                >
+                  <Bell className="h-4 w-4" />
+                  {notificationsCount > 0 && (
+                    <span className="absolute -top-1 -right-1 h-4 w-4 rounded-full bg-red-500 text-xs text-white flex items-center justify-center">
+                      {notificationsCount > 9 ? "9+" : notificationsCount}
+                    </span>
+                  )}
+                </Button>
+              )}
 
               {/* Cart */}
               <Button
