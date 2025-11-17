@@ -9,7 +9,7 @@ import { OpenSearchService, TenantService } from "@/lib/api";
 import { RequestContext } from "@/lib/api/client";
 import { getDomainInfo } from "@/lib/utils/getDomainInfo";
 import { ProductDetail } from "@/types/product/product-detail";
-import { ProductPageProps } from "@/types/product/product-page";
+// ProductPageProps import removed — using generic `any` for page props to match Next-generated types
 import { getPrimaryImageUrl } from "@/utils/product/product-formatter";
 import { parseProductSlug } from "@/utils/product/slug-generator";
 import { Metadata } from "next";
@@ -100,8 +100,10 @@ export async function generateStaticParams() {
 
 export async function generateMetadata({
   params,
-}: ProductPageProps): Promise<Metadata> {
-  const { slug, locale } = await params;
+}: {
+  params: any;
+}): Promise<Metadata> {
+  const { slug, locale } = params;
   const { tenantData, origin } = await getContext();
 
   try {
@@ -209,7 +211,7 @@ export async function generateMetadata({
   }
 }
 
-export default async function ProductPage({ params }: ProductPageProps) {
+export default async function ProductPage({ params }: { params: any }) {
   const { slug, locale } = params;
   const { tenantData, origin } = await getContext();
   if (!tenantData?.data?.tenant?.elasticCode) {
