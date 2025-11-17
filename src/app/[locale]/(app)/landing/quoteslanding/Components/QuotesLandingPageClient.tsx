@@ -1,14 +1,19 @@
 "use client";
 
-import { SectionToolbar } from "@/components/Global/SectionToolbar/SectionToolbar";
+import { DashboardToolbar } from "@/components/custom/dashboard-toolbar";
+import { useSidebar } from "@/components/ui/sidebar";
 import { Toaster } from "@/components/ui/sonner";
+import { cn } from "@/lib/utils";
 import { Download } from "lucide-react";
 import { useCallback, useState } from "react";
 import { toast } from "sonner";
 import QuotesLandingTable from "../Components/QuotesLandingTable/QuotesLandingTable";
 
 export default function QuotesLandingPageClient() {
-  const [refreshTrigger, setRefreshTrigger] = useState(0);
+  const [refreshTrigger] = useState(0);
+  const { state: sidebarState } = useSidebar();
+  const isSidebarCollapsed = sidebarState === "collapsed";
+
   const [exportCallback, setExportCallback] = useState<(() => void) | null>(
     null
   );
@@ -21,27 +26,26 @@ export default function QuotesLandingPageClient() {
     }
   }, [exportCallback]);
 
-  const handleRefresh = useCallback(() => {
-    setRefreshTrigger(prev => prev + 1);
-    toast.success("Data has been refreshed successfully!");
-  }, []);
-
   return (
-    <div className="h-full flex flex-col">
-      <SectionToolbar
-        title="Quotes"
-        secondary={{
-          condition: true,
-          value: "Export",
-          handleClick: handleExport,
-          startIcon: <Download className="h-4 w-4" />,
-        }}
-        refresh={{
-          condition: true,
-          handleRefresh,
-        }}
-      />
-      <div className="flex-1 overflow-hidden">
+    <div className="w-full overflow-x-hidden">
+      <div
+        className={cn(
+          "mt-[10px] mb-[15px]",
+          isSidebarCollapsed ? "px-[45px]" : "px-[0px]"
+        )}
+      >
+        <DashboardToolbar
+          title="Quotes"
+          primary={{
+            condition: true,
+            value: "Export",
+            handleClick: handleExport,
+            startIcon: <Download />,
+          }}
+        />
+      </div>
+
+      <div className="pb-[20px]">
         <QuotesLandingTable
           refreshTrigger={refreshTrigger}
           setExportCallback={setExportCallback}

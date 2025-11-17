@@ -31,6 +31,7 @@ import useGetLatestPaymentTerms from "@/hooks/useGetLatestPaymentTerms/useGetLat
 import { useLatestOrderProducts } from "@/hooks/useLatestOrderProducts/useLatestOrderProducts";
 import useModuleSettings from "@/hooks/useModuleSettings";
 import { useOrderCalculation } from "@/hooks/useOrderCalculation/useOrderCalculation";
+import { usePageScroll } from "@/hooks/usePageScroll";
 import { useTenantData } from "@/hooks/useTenantData";
 import type { OrderDetailItem, OrderDetailsResponse } from "@/lib/api";
 import { OrderVersionService } from "@/lib/api";
@@ -102,6 +103,8 @@ const decodeUnicode = (str: string): string => {
 export default function EditOrderPage({ params }: EditOrderPageProps) {
   const router = useRouter();
   const locale = useLocale();
+
+  usePageScroll();
 
   const [orderId, setOrderId] = useState<string>("");
 
@@ -1073,9 +1076,9 @@ export default function EditOrderPage({ params }: EditOrderPageProps) {
   const status = orderDetails?.data?.updatedBuyerStatus;
 
   return (
-    <div className="flex flex-col h-full overflow-hidden bg-gray-50">
+    <div className="flex flex-col min-h-screen bg-gray-50">
       {/* Sales Header - Fixed at top */}
-      <div className="flex-shrink-0">
+      <div className="flex-shrink-0 sticky top-0 z-50 bg-gray-50">
         <SalesHeader
           title={orderName ? decodeUnicode(orderName) : "Edit Order"}
           identifier={orderId || "..."}
@@ -1103,7 +1106,7 @@ export default function EditOrderPage({ params }: EditOrderPageProps) {
       </div>
 
       {/* Order Details Content - Scrollable area */}
-      <div className="flex-1 overflow-y-auto overflow-x-hidden">
+      <div className="flex-1 w-full">
         <div className="container mx-auto px-2 sm:px-3 md:px-4 py-2 sm:py-3">
           <div className="flex flex-col lg:flex-row gap-2 sm:gap-3 md:gap-4">
             {/* Left Side - Products Table and Contact/Terms Cards - 70% */}

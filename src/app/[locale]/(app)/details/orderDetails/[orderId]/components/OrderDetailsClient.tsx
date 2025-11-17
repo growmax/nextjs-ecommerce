@@ -606,9 +606,9 @@ export default function OrderDetailsClient({ params }: OrderDetailsPageProps) {
   const lastDateToPay = getLastDateToPay(paymentDueData, preferences);
 
   return (
-    <div className="flex flex-col h-full overflow-hidden bg-gray-50">
+    <div className="flex flex-col min-h-screen bg-gray-50">
       {/* Sales Header - Fixed at top */}
-      <div className="flex-shrink-0">
+      <div className="flex-shrink-0 sticky top-0 z-50 bg-gray-50">
         <SalesHeader
           title={orderName ? decodeUnicode(orderName) : "Order Details"}
           identifier={orderId || "..."}
@@ -638,7 +638,7 @@ export default function OrderDetailsClient({ params }: OrderDetailsPageProps) {
       </div>
 
       {/* Order Details Content - Scrollable area */}
-      <div className="flex-1 overflow-y-auto overflow-x-hidden">
+      <div className="flex-1 w-full">
         <div className="container mx-auto px-2 sm:px-3 md:px-4 py-2 sm:py-3">
           <div className="flex flex-col lg:flex-row gap-2 sm:gap-3 md:gap-4">
             {/* Left Side - Status Tracker and Products Table - 60% */}

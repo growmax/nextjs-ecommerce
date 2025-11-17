@@ -396,7 +396,7 @@ const DashboardToolbar = forwardRef<DashboardToolbarRef, DashboardToolbarProps>(
       return (
         <div
           className={cn(
-            "bg-background/95 backdrop-blur-sm border-b",
+            "bg-background/95 backdrop-blur-sm",
             "transition-all duration-200",
             className
           )}
@@ -424,7 +424,7 @@ const DashboardToolbar = forwardRef<DashboardToolbarRef, DashboardToolbarProps>(
           className={cn(
             position === "fixed" ? "fixed" : "sticky",
             "top-0 left-0 right-0",
-            "bg-background/95 backdrop-blur-sm border-b",
+            "bg-background/95 backdrop-blur-sm",
             "transition-all duration-200",
             className
           )}
