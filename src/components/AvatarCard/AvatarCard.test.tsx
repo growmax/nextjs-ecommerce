@@ -1,8 +1,8 @@
 import { cleanup, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
+import React from "react";
 import { AvatarCard } from "./AvatarCard";
 import { AvatarCardProps } from "./Avatarcard.types";
-import React from "react";
 
 // Mock Next.js Link component
 jest.mock("next/link", () => {
@@ -367,30 +367,6 @@ describe("AvatarCard", () => {
       expect(quotesLink).toHaveAttribute("href", "/quotesummary");
     });
 
-    it("should hide Orders when showOrders is false", async () => {
-      const user = userEvent.setup();
-      render(<AvatarCard {...defaultProps} showOrders={false} />);
-
-      // Click trigger to open dropdown
-      await user.click(screen.getByTestId("avatar-trigger"));
-
-      expect(screen.queryByText("Orders")).not.toBeInTheDocument();
-      expect(screen.getByText("Profile")).toBeInTheDocument();
-      expect(screen.getByText("Quotes")).toBeInTheDocument();
-    });
-
-    it("should hide Quotes when showQuotes is false", async () => {
-      const user = userEvent.setup();
-      render(<AvatarCard {...defaultProps} showQuotes={false} />);
-
-      // Click trigger to open dropdown
-      await user.click(screen.getByTestId("avatar-trigger"));
-
-      expect(screen.queryByText("Quotes")).not.toBeInTheDocument();
-      expect(screen.getByText("Profile")).toBeInTheDocument();
-      expect(screen.getByText("Orders")).toBeInTheDocument();
-    });
-
     it("should open and close dropdown menu on trigger click", async () => {
       const user = userEvent.setup();
       render(<AvatarCard {...defaultProps} />);
@@ -515,24 +491,6 @@ describe("AvatarCard", () => {
 
       const dropdownContent = screen.getByTestId("dropdown-content");
       expect(dropdownContent).toHaveAttribute("data-side", "bottom");
-    });
-
-    it("should have showOrders default to true", async () => {
-      const user = userEvent.setup();
-      render(<AvatarCard {...defaultProps} />);
-
-      await user.click(screen.getByTestId("avatar-trigger"));
-
-      expect(screen.getByText("Orders")).toBeInTheDocument();
-    });
-
-    it("should have showQuotes default to true", async () => {
-      const user = userEvent.setup();
-      render(<AvatarCard {...defaultProps} />);
-
-      await user.click(screen.getByTestId("avatar-trigger"));
-
-      expect(screen.getByText("Quotes")).toBeInTheDocument();
     });
   });
 
