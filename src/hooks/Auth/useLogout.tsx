@@ -9,7 +9,7 @@ import { toast } from "sonner";
 export default function useLogout() {
   const { logout } = useUserDetails();
   const [isLoggingOut, setIsLoggingOut] = useState(false);
-  const t = useTranslations();
+  const translate = useTranslations();
 
   const handleLogout = async () => {
     if (isLoggingOut) return; // Prevent double-clicking
@@ -19,8 +19,8 @@ export default function useLogout() {
     try {
       await logout();
       // Show success toast (matching login toast style)
-      toast.success(t("messages.success"), {
-        description: t("auth.logoutSuccess"),
+      toast.success(translate("messages.success"), {
+        description: translate("auth.logoutSuccess"),
         duration: 4000,
       });
       // On successful logout, redirect to the homepage.
@@ -29,8 +29,8 @@ export default function useLogout() {
     } catch (error) {
       console.error("Logout failed:", error);
       // Show error toast
-      toast.error(t("messages.error"), {
-        description: t("auth.logoutError") || "Failed to logout",
+      toast.error(translate("messages.error"), {
+        description: translate("auth.logoutError") || "Failed to logout",
         duration: 4000,
       });
     } finally {
