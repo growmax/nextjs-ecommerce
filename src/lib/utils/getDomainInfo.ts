@@ -4,8 +4,6 @@
  * In production, uses actual origin/domain.
  */
 
-import { headers } from "next/headers";
-
 export async function getDomainInfo(): Promise<{
   domainUrl: string;
   origin: string;
@@ -23,6 +21,8 @@ export async function getDomainInfo(): Promise<{
         : `http://${defaultDomain}`);
 
     try {
+      // Dynamic import to avoid build-time issues with next/headers
+      const { headers } = await import("next/headers");
       const headersList = await headers();
       const headerDomain =
         headersList.get("x-tenant-domain") ??
