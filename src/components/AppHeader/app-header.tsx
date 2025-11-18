@@ -17,10 +17,11 @@ import { AvatarCard } from "@/components/AvatarCard/AvatarCard";
 import { Input } from "@/components/ui/input";
 import { Separator } from "@/components/ui/separator";
 import { SidebarTrigger, useSidebar } from "@/components/ui/sidebar";
-import { cn } from "@/lib/utils";
 import { useCart } from "@/contexts/CartContext";
+import { useUserDetails } from "@/contexts/UserDetailsContext";
 import useLogout from "@/hooks/Auth/useLogout";
 import useUserProfile from "@/hooks/Profile/useUserProfile";
+import { cn } from "@/lib/utils";
 import { getUserInitials } from "@/utils/General/general";
 import {
   Bell,
@@ -36,6 +37,7 @@ export function AppHeader() {
   const [searchValue, setSearchValue] = useState("");
   const { userProfile } = useUserProfile();
   const { isLoggingOut, handleLogout } = useLogout();
+  const { isAuthenticated } = useUserDetails();
   const router = useRouter();
   // Search wiring removed — Command demo uses static items for now.
 
@@ -142,6 +144,7 @@ export function AppHeader() {
                   </span>
                 )}
               </Button>
+
               {/* Vertical Separator before Avatar */}
               <Separator orientation="vertical" className="h-6 mx-1" />
 
@@ -185,7 +188,12 @@ export function AppHeader() {
             {/* Mobile Right Side Icons (Condensed) */}
             <div className="md:hidden flex items-center gap-1">
               {/* Cart Icon */}
-              <Button variant="ghost" size="icon" className="h-8 w-8 relative">
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-8 w-8 relative"
+                onClick={() => router.push("/cart")}
+              >
                 <ShoppingCart className="h-4 w-4" />
                 {cartCount > 0 && (
                   <span className="absolute -top-1 -right-1 h-3 w-3 rounded-full bg-blue-500 text-[10px] text-white flex items-center justify-center">
@@ -241,8 +249,6 @@ export function AppHeader() {
       <CommandDialog
         open={open}
         onOpenChange={setOpen}
-        // title="Search & Navigate"
-        // description="Search for products, orders, quotes, or navigate to pages"
         className="p-0 overflow-hidden"
       >
         <CommandInput placeholder="Type a command or search..." />
