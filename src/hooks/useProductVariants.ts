@@ -1,15 +1,16 @@
 "use client";
 
 import { useState, useEffect, useCallback, useMemo } from "react";
-import { VariantData, VariantSelection } from "@/lib/api/services/VariantService";
+import { VariantData, VariantSelection, VariantGroupData } from "@/lib/api/services/VariantService";
 import variantService from "@/lib/api/services/VariantService";
 import type { ProductDetail } from "@/types/product/product-detail";
+import type { ElasticVariantAttributes } from "@/types/product/product-group";
 import { useSearchParams, useRouter, usePathname } from "next/navigation";
 
 interface UseProductVariantsOptions {
   productGroupId: number;
   elasticIndex: string;
-  baseProduct: ProductDetail;
+  baseProduct: ProductDetail; // Contains pg_index_name field
   context?: {
     origin: string;
     tenantCode: string;
@@ -19,7 +20,8 @@ interface UseProductVariantsOptions {
 interface UseProductVariantsReturn {
   // State
   variants: VariantData[];
-  variantGroups: Record<string, Array<{ value: string; count: number; hexCode?: string }>>;
+  variantGroups: Record<string, Array<{ value: string; count: number; hexCode?: string; available?: boolean }>>;
+  variantAttributes: ElasticVariantAttributes[];
   selectedVariant: VariantData | null;
   selection: VariantSelection;
   isLoading: boolean;
@@ -39,7 +41,7 @@ interface UseProductVariantsReturn {
 export function useProductVariants({
   productGroupId,
   elasticIndex,
-  baseProduct: _baseProduct, // Unused parameter
+  baseProduct,
   context,
 }: UseProductVariantsOptions): UseProductVariantsReturn {
   const searchParams = useSearchParams();
@@ -48,6 +50,7 @@ export function useProductVariants({
   
   // State
   const [variants, setVariants] = useState<VariantData[]>([]);
+  const [variantAttributes, setVariantAttributes] = useState<ElasticVariantAttributes[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [selection, setSelectionState] = useState<VariantSelection>({});
@@ -73,21 +76,27 @@ export function useProductVariants({
           throw new Error("Missing elasticIndex");
         }
         
-        const variantData = await variantService.getVariantsByGroup(
+        // Fetch Product Group and variants together
+        // Use pg_index_name from product if available (most reliable format)
+        const pgIndexName = baseProduct.pg_index_name;
+        const variantGroupData: VariantGroupData = await variantService.getVariantsWithGroup(
           productGroupId,
           elasticIndex,
+          pgIndexName,
           context
         );
         
-        console.log("Loaded variant data:", variantData.length, "variants");
-        setVariants(variantData);
+        console.log("Loaded variant data:", variantGroupData.variants.length, "variants");
+        console.log("Loaded variant attributes:", variantGroupData.variantAttributes.length, "attributes");
+        setVariants(variantGroupData.variants);
+        setVariantAttributes(variantGroupData.variantAttributes);
         
         // Initialize selection from URL params if available
         const urlSelection = getSelectionFromUrl(searchParams);
         console.log("URL selection:", urlSelection);
         
-        if (urlSelection && variantData.length > 0) {
-          const matchingVariant = variantService.findVariantByAttributes(variantData, urlSelection);
+        if (urlSelection && variantGroupData.variants.length > 0) {
+          const matchingVariant = variantService.findVariantByAttributes(variantGroupData.variants, urlSelection);
           console.log("Matching variant from URL:", matchingVariant);
           if (matchingVariant) {
             setSelectionState(urlSelection);
@@ -111,10 +120,18 @@ export function useProductVariants({
   }, [productGroupId, elasticIndex, context, searchParams]);
 
   // Group variants by attributes
+  // Use Product Group structure if available, otherwise fallback to inferring from products
   const variantGroups = useMemo(() => {
     if (!variants.length) return {};
+    
+    // If we have Product Group variantAttributes, use that structure
+    if (variantAttributes.length > 0) {
+      return variantService.groupVariantsByProductGroupAttributes(variantAttributes, variants);
+    }
+    
+    // Fallback to inferring from products (backward compatibility)
     return variantService.groupVariantsByAttributes(variants);
-  }, [variants]);
+  }, [variants, variantAttributes]);
 
   // Find currently selected variant
   const selectedVariant = useMemo(() => {
@@ -157,7 +174,19 @@ export function useProductVariants({
   }, [variants]);
 
   // Computed values
-  const hasVariants = variants.length > 1; // More than just the base product
+  // Check if variants exist: must have variant groups with options OR variant attributes defined
+  const hasVariants = useMemo(() => {
+    // If Product Group has variantAttributeses defined, show variants
+    if (variantAttributes.length > 0) {
+      return true;
+    }
+    // Check if variantGroups has any options (this is the key check)
+    const hasVariantGroups = Object.keys(variantGroups).length > 0 && 
+      Object.values(variantGroups).some(group => group && group.length > 0);
+    // Only show variants if we have actual variant groups with options
+    // Don't show just because there are multiple products - they need to have attributes
+    return hasVariantGroups;
+  }, [variantAttributes.length, variantGroups]);
   const selectedAttributes = useMemo(() => {
     const attrs: Record<string, string> = {};
     Object.entries(selection).forEach(([key, value]) => {
@@ -176,6 +205,7 @@ export function useProductVariants({
     // State
     variants,
     variantGroups,
+    variantAttributes,
     selectedVariant,
     selection,
     isLoading,

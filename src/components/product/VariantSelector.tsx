@@ -1,16 +1,18 @@
 "use client";
 
-import { memo, useCallback } from "react";
+import { memo, useCallback, useMemo } from "react";
 import { cn } from "@/lib/utils";
 import { Separator } from "@/components/ui/separator";
 import ColorVariantSelector from "./ColorVariantSelector";
 import SizeVariantSelector from "./SizeVariantSelector";
 import { Badge } from "@/components/ui/badge";
+import type { ElasticVariantAttributes } from "@/types/product/product-group";
 
 interface AttributeOption {
   value: string;
   count: number;
   hexCode?: string;
+  available?: boolean;
 }
 
 interface VariantGroups {
@@ -29,6 +31,7 @@ interface VariantSelectorProps {
   variantGroups: VariantGroups;
   selection: VariantSelection;
   onSelectionChange: (selection: VariantSelection) => void;
+  variantAttributes?: ElasticVariantAttributes[]; // Optional: from Product Group
   className?: string;
   showLabels?: boolean;
 }
@@ -38,11 +41,13 @@ function OtherAttributeSelector({
   options,
   selectedValue,
   onChange,
+  displayType,
 }: {
   attributeName: string;
   options: AttributeOption[];
   selectedValue?: string;
   onChange: (value: string) => void;
+  displayType?: string;
 }) {
   if (!options.length) return null;
 
@@ -62,7 +67,7 @@ function OtherAttributeSelector({
       <div className="flex flex-wrap gap-2">
         {options.map((option) => {
           const isSelected = selectedValue === option.value;
-          const isDisabled = option.count === 0;
+          const isDisabled = option.count === 0 || option.available === false;
           
           return (
             <button
@@ -92,9 +97,26 @@ function VariantSelector({
   variantGroups,
   selection,
   onSelectionChange,
+  variantAttributes,
   className,
   showLabels = true,
 }: VariantSelectorProps) {
+  // Determine attribute order and display types from Product Group if available
+  const attributeOrder = useMemo(() => {
+    if (variantAttributes && variantAttributes.length > 0) {
+      return variantAttributes.map(attr => ({
+        key: attr.name.toLowerCase().replace(/\s+/g, "_"),
+        name: attr.name,
+        displayType: attr.displayType,
+      }));
+    }
+    // Fallback: infer from variantGroups (backward compatibility)
+    return Object.keys(variantGroups).map(key => ({
+      key,
+      name: key.charAt(0).toUpperCase() + key.slice(1),
+      displayType: key === "color" ? "color" : "text",
+    }));
+  }, [variantAttributes, variantGroups]);
   const handleColorChange = useCallback(
     (color: string) => {
       const newSelection = { 
@@ -170,18 +192,22 @@ function VariantSelector({
         </>
       )}
 
-      {/* Other Attributes */}
-      {Object.entries(variantGroups)
-        .filter(([key]) => key !== "color" && key !== "size")
-        .map(([attributeName, options]) => {
+      {/* Other Attributes - Use Product Group order if available */}
+      {attributeOrder
+        .filter(({ key }) => key !== "color" && key !== "size")
+        .map(({ key, name, displayType }) => {
+          const options = variantGroups[key];
+          if (!options || options.length === 0) return null;
+          
           return (
-            <div key={attributeName}>
+            <div key={key}>
               {(variantGroups.color || variantGroups.size) && <Separator />}
               <OtherAttributeSelector
-                attributeName={attributeName}
-                options={options || []}
-                selectedValue={selection[attributeName] || ""}
-                onChange={(value) => handleOtherAttributeChange(attributeName, value)}
+                attributeName={name}
+                options={options}
+                selectedValue={selection[key] || ""}
+                onChange={(value) => handleOtherAttributeChange(key, value)}
+                displayType={displayType}
               />
             </div>
           );
