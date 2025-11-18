@@ -5,8 +5,8 @@
  */
 
 export interface ProductPageProps {
-  params: {
+  params: Promise<{
     slug: string;
     locale: string;
-  };
+  }>;
 }

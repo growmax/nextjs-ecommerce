@@ -1,37 +1,33 @@
-import { ProductDetail } from "@/types/product/product-detail";
-import { ProductStructuredData } from "@/components/seo/ProductStructuredData";
-import ProductInfo from "@/components/product/ProductInfo";
+import AddToCartSection from "@/components/product/AddToCartSection";
+import MobileCartAction from "@/components/product/MobileCartAction";
 import ProductBreadcrumb from "@/components/product/ProductBreadcrumb";
 import ProductImageGallery from "@/components/product/ProductImageGallery";
+import ProductInfo from "@/components/product/ProductInfo";
 import ProductVariants from "@/components/product/ProductVariants";
-import MobileCartAction from "@/components/product/MobileCartAction";
-import AddToCartSection from "@/components/product/AddToCartSection";
+import ProductReviews from "@/components/product/ProductReviews";
+import RelatedProducts from "@/components/product/ProductRelated";
+import { ProductStructuredData } from "@/components/seo/ProductStructuredData";
+import { ProductDetail } from "@/types/product/product-detail";
 
 interface ProductLayoutProps {
   product: ProductDetail;
-  locale: string;
   canonicalUrl: string;
 }
 
 export default function ProductLayout({
   product,
-  locale,
   canonicalUrl,
 }: ProductLayoutProps) {
   return (
     <div className="min-h-screen bg-background">
       {/* Structured Data for SEO */}
-      <ProductStructuredData
-        product={product}
-        url={canonicalUrl}
-        locale={locale}
-      />
+      <ProductStructuredData product={product} url={canonicalUrl} />
 
       {/* Main Content */}
       <div className="container mx-auto px-4 py-8">
         {/* Product Breadcrumb */}
         <div className="py-3">
-          <ProductBreadcrumb product={product} locale={locale} />
+          <ProductBreadcrumb product={product} />
         </div>
 
         {/* Two-Column Layout: Image Gallery (Left) + Product Details (Right) */}
@@ -46,14 +42,23 @@ export default function ProductLayout({
 
           {/* Right Column: Product Information */}
           <div className="space-y-6">
-            <ProductInfo product={product} locale={locale} />
+            <ProductInfo product={product} />
             <ProductVariants attributes={product.set_product_atributes} />
-            <AddToCartSection 
-              productId={product.product_id} 
-              productTitle={product.title} 
-              isAvailable={true} 
+            <AddToCartSection
+              productId={product.product_id}
+              productTitle={product.title}
+              isAvailable={true}
             />
           </div>
+        </div>
+        {/* Product Reviews */}
+        <div className="mt-12">
+          <ProductReviews />
+        </div>
+
+        {/* Related Products */}
+        <div className="mt-12">
+          <RelatedProducts />
         </div>
 
         {/* Mobile Only: Fixed Bottom Cart Action */}

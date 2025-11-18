@@ -90,60 +90,92 @@ export default function MobileCartAction({ product }: MobileCartActionProps) {
     <div
       className={cn(
         "fixed bottom-0 left-0 right-0 z-50 lg:hidden",
-        "bg-background border-t shadow-lg",
+        "bg-background/95 backdrop-blur-sm border-t shadow-lg",
         "transition-transform duration-300 ease-in-out",
         isVisible ? "translate-y-0" : "translate-y-full"
       )}
     >
-      <div className="container mx-auto px-4 py-3">
+      <div className="container mx-auto px-4 py-4">
         <div className="flex items-center justify-between gap-4">
           {/* Price Display */}
-          <div className="flex flex-col">
-            <span className="text-xs text-muted-foreground">Price</span>
-            <span className="text-lg font-bold">
-              {formatPrice(product.unit_list_price)}
+          <div className="flex flex-col min-w-0">
+            <div className="flex items-center gap-2">
+              <span className="text-xs text-muted-foreground">Price</span>
+              {availability.available && (
+                <div className="flex items-center gap-1">
+                  <div className="w-2 h-2 bg-green-500 rounded-full" />
+                  <span className="text-xs text-green-600 font-medium">In Stock</span>
+                </div>
+              )}
+            </div>
+            <span className="text-lg font-bold text-foreground">
+              {product.show_price !== false ? (
+                formatPrice(product.unit_list_price)
+              ) : (
+                <span className="text-sm text-muted-foreground">Contact for price</span>
+              )}
             </span>
+            {product.show_price === false && (
+              <span className="text-xs text-muted-foreground">
+                Contact seller for pricing
+              </span>
+            )}
           </div>
 
-          {/* Quantity Selector */}
-          <div className="flex items-center border rounded-lg">
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={() => handleQuantityChange("decrement")}
-              disabled={quantity <= 1}
-              className="h-9 w-9 rounded-r-none"
-            >
-              <Minus className="h-4 w-4" />
-            </Button>
-            <div className="w-12 text-center font-medium border-x py-2 text-sm">
-              {quantity}
+          {/* Quantity Selector - Hide if price is not shown */}
+          {product.show_price !== false && (
+            <div className="flex items-center border rounded-lg bg-muted/30">
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={() => handleQuantityChange("decrement")}
+                disabled={quantity <= 1}
+                className="h-9 w-9 rounded-r-none hover:bg-muted/50"
+                aria-label="Decrease quantity"
+              >
+                <Minus className="h-4 w-4" />
+              </Button>
+              <div className="w-12 text-center font-medium border-x py-2 text-sm bg-background">
+                {quantity}
+              </div>
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={() => handleQuantityChange("increment")}
+                className="h-9 w-9 rounded-l-none hover:bg-muted/50"
+                aria-label="Increase quantity"
+              >
+                <Plus className="h-4 w-4" />
+              </Button>
             </div>
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={() => handleQuantityChange("increment")}
-              className="h-9 w-9 rounded-l-none"
-            >
-              <Plus className="h-4 w-4" />
-            </Button>
-          </div>
+          )}
 
           {/* Add to Cart Button */}
           <Button
             size="lg"
-            className="flex-1"
+            className={cn(
+              "flex-1 min-w-0",
+              product.show_price === false ? "ml-auto" : ""
+            )}
             onClick={handleAddToCart}
             disabled={!availability.available || isAddingToCart}
+            aria-label={`${isAddingToCart ? "Adding" : "Add"} ${quantity} ${product.product_short_description || "item"}${quantity > 1 ? "s" : ""} to cart`}
           >
-            <ShoppingCart className="mr-2 h-5 w-5" />
-            {isAddingToCart ? "Adding..." : "Add to Cart"}
+            <ShoppingCart className="mr-2 h-5 w-5 flex-shrink-0" />
+            <span className="truncate">
+              {isAddingToCart 
+                ? "Adding..." 
+                : product.show_price === false 
+                  ? "Request Quote" 
+                  : `Add ${quantity > 1 ? quantity : ""}`
+              }
+            </span>
           </Button>
         </div>
       </div>
 
       {/* Safe area for devices with notches/home indicators */}
-      <div className="h-safe-area-inset-bottom" />
+      <div className="h-safe-area-inset-bottom bg-background" />
     </div>
   );
 }

@@ -1,9 +1,12 @@
 import { ProductDetail } from "@/types/product/product-detail";
-import { getPrimaryImageUrl, getProductAvailability } from "@/utils/product/product-formatter";
+import {
+  getPrimaryImageUrl,
+  getProductAvailability,
+} from "@/utils/product/product-formatter";
 
 /**
  * ProductStructuredData Component
- * 
+ *
  * Generates JSON-LD structured data for product pages
  * following schema.org/Product specification for better SEO
  * and rich results in Google Search.
@@ -12,23 +15,25 @@ import { getPrimaryImageUrl, getProductAvailability } from "@/utils/product/prod
 interface ProductStructuredDataProps {
   product: ProductDetail;
   url: string;
-  locale?: string;
 }
 
-export function ProductStructuredData({ 
-  product, 
-  url
+export function ProductStructuredData({
+  product,
+  url,
 }: ProductStructuredDataProps) {
   const brandName = product.brand_name || product.brands_name || "Generic";
   const availability = getProductAvailability(product);
   const primaryImage = getPrimaryImageUrl(product);
-  
+
+  // Extract origin from URL for constructing absolute paths
+  const origin = url ? new URL(url).origin : "";
+
   // Get all images
   const images = product.product_assetss
     ?.filter(img => img.source)
     ?.map(img => img.source) || [primaryImage];
 
-  // Product schema
+  // Enhanced product schema with comprehensive properties
   const productSchema = {
     "@context": "https://schema.org",
     "@type": "Product",
@@ -37,20 +42,55 @@ export function ProductStructuredData({
     image: images,
     sku: product.brand_product_id,
     mpn: product.product_index_name,
+    gtin13: product.hsn_code, // If applicable
+    
+    // Enhanced brand information
     brand: {
       "@type": "Brand",
       name: brandName,
+      ...(origin && { logo: `${origin}/logo.png` }), // Only add logo if origin is available
     },
+    
+    // Enhanced offers with more details
     offers: {
       "@type": "Offer",
       url: url,
       priceCurrency: "INR", // TODO: Make dynamic based on tenant
       price: product.unit_list_price,
-      priceValidUntil: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toISOString().split('T')[0], // 1 year from now
+      priceValidUntil: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000)
+        .toISOString()
+        .split('T')[0], // 1 year from now
       availability: availability.available 
         ? "https://schema.org/InStock" 
         : "https://schema.org/OutOfStock",
       itemCondition: "https://schema.org/NewCondition",
+      seller: {
+        "@type": "Organization",
+        name: "E-Commerce Store", // Default seller name
+      },
+      shippingDetails: {
+        "@type": "OfferShippingDetails",
+        shippingRate: {
+          "@type": "MonetaryAmount",
+          currency: "INR",
+          value: "0", // Free shipping or calculate based on rules
+        },
+        deliveryTime: {
+          "@type": "ShippingDeliveryTime",
+          handlingTime: {
+            "@type": "QuantitativeValue",
+            minValue: 1,
+            maxValue: 3,
+            unitCode: "DAY",
+          },
+          transitTime: {
+            "@type": "QuantitativeValue", 
+            minValue: product.standard_lead_time ? parseInt(product.standard_lead_time) || 1 : 1,
+            maxValue: product.standard_lead_time ? (parseInt(product.standard_lead_time) || 1) + 2 : 3,
+            unitCode: "DAY",
+          },
+        },
+      },
       ...(product.unit_mrp && product.unit_mrp > product.unit_list_price && {
         priceSpecification: {
           "@type": "PriceSpecification",
@@ -59,26 +99,44 @@ export function ProductStructuredData({
         },
       }),
     },
-    ...(product.hsn_code && {
-      additionalProperty: [
-        {
-          "@type": "PropertyValue",
-          name: "HSN Code",
-          value: product.hsn_code,
-        },
-      ],
-    }),
-    ...(product.product_specifications && product.product_specifications.length > 0 && {
-      additionalProperty: product.product_specifications.slice(0, 10).map(spec => ({
+    
+    // Enhanced additional properties
+    additionalProperty: [
+      ...(product.hsn_code ? [{
+        "@type": "PropertyValue",
+        name: "HSN Code",
+        value: product.hsn_code,
+      }] : []),
+      ...(product.min_order_quantity ? [{
+        "@type": "PropertyValue", 
+        name: "Minimum Order Quantity",
+        value: product.min_order_quantity,
+      }] : []),
+      ...(product.unit_of_measure ? [{
+        "@type": "PropertyValue",
+        name: "Unit of Measure", 
+        value: product.unit_of_measure,
+      }] : []),
+      ...(product.net_weight ? [{
+        "@type": "PropertyValue",
+        name: "Weight",
+        value: product.net_weight,
+      }] : []),
+      ...(product.packaging_dimension ? [{
+        "@type": "PropertyValue",
+        name: "Dimensions",
+        value: product.packaging_dimension,
+      }] : []),
+      ...(product.product_specifications?.slice(0, 10).map(spec => ({
         "@type": "PropertyValue",
         name: spec.name,
         value: spec.value,
         ...(spec.unit && { unitText: spec.unit }),
-      })),
-    }),
+      })) || []),
+    ],
   };
 
-  // Breadcrumb schema
+  // Enhanced breadcrumb schema
   const breadcrumbSchema = {
     "@context": "https://schema.org",
     "@type": "BreadcrumbList",
@@ -95,9 +153,15 @@ export function ProductStructuredData({
         name: "Products",
         item: `${url.split("/products/")[0]}/products`,
       },
+      ...(product.product_categories?.slice(0, 3).map((category, index) => ({
+        "@type": "ListItem",
+        position: index + 3,
+        name: category.categoryName,
+        item: `${url.split("/products/")[0]}/products?category=${category.categorySlug || category.categoryName.toLowerCase().replace(/\s+/g, "-")}`,
+      })) || []),
       {
         "@type": "ListItem",
-        position: 3,
+        position: 4,
         name: product.title,
         item: url,
       },
@@ -188,4 +252,3 @@ export function WebSiteStructuredData({
     />
   );
 }
-
