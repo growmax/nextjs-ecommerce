@@ -15,13 +15,14 @@ export const metadata: Metadata = {
 export const revalidate = 1800; // 30 minutes
 
 interface SearchPageProps {
-  searchParams: {
+  searchParams: Promise<{
     query?: string;
-  };
+  }>;
 }
 
-export default function SearchPage({ searchParams }: SearchPageProps) {
-  const query = searchParams.query || "";
+export default async function SearchPage({ searchParams }: SearchPageProps) {
+  const resolvedSearchParams = await searchParams;
+  const query = resolvedSearchParams.query || "";
 
   return (
     <div className="container mx-auto px-4 py-8">

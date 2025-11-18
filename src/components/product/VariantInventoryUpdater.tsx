@@ -1,21 +1,17 @@
 "use client";
 
-import { useMemo } from "react";
-import { useProductVariantContext } from "@/contexts/ProductVariantContext";
-import { getProductAvailability } from "@/utils/product/product-formatter";
 import { Badge } from "@/components/ui/badge";
+import { useProductVariantContext } from "@/contexts/ProductVariantContext";
 import { cn } from "@/lib/utils";
-import type { ProductDetail } from "@/types/product/product-detail";
 import type { InventoryInfo } from "@/types/product/product-detail";
+import { useMemo } from "react";
 
 interface VariantInventoryUpdaterProps {
   baseInventory: InventoryInfo[];
-  baseProduct: ProductDetail;
 }
 
 export default function VariantInventoryUpdater({
   baseInventory,
-  baseProduct,
 }: VariantInventoryUpdaterProps) {
   const { selectedVariant } = useProductVariantContext();
 
@@ -27,21 +23,6 @@ export default function VariantInventoryUpdater({
     return baseInventory;
   }, [selectedVariant, baseInventory]);
 
-  // Create a product-like object for availability calculation
-  const displayProduct = useMemo(() => {
-    if (selectedVariant) {
-      return {
-        ...baseProduct,
-        inventory: selectedVariant.inventory,
-      };
-    }
-    return baseProduct;
-  }, [selectedVariant, baseProduct]);
-
-  const availability = useMemo(() => {
-    return getProductAvailability(displayProduct);
-  }, [displayProduct]);
-
   // Check inventory status
   const hasInventory = displayInventory && displayInventory.length > 0;
   const totalAvailableQty = hasInventory
@@ -50,8 +31,7 @@ export default function VariantInventoryUpdater({
         0
       )
     : 0;
-  const isInStock =
-    hasInventory && displayInventory.some(inv => inv.inStock);
+  const isInStock = hasInventory && displayInventory.some(inv => inv.inStock);
 
   return (
     <div role="status" aria-live="polite">
@@ -75,4 +55,3 @@ export default function VariantInventoryUpdater({
     </div>
   );
 }
-

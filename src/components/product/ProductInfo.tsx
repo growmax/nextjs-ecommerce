@@ -77,7 +77,6 @@ export default function ProductInfo({ product }: ProductInfoProps) {
       {/* Stock Status Badge - Client Component for Variant Updates */}
       <VariantInventoryUpdater
         baseInventory={product.inventory || []}
-        baseProduct={product}
       />
 
       {/* Price Section - Client Component for Variant Updates */}
