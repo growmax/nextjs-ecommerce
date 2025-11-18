@@ -9,7 +9,6 @@ This document outlines the tests covering the `AppSidebar` component.
 
 - **Unauthenticated User Components**:
   - The NavUser component is not rendered when the user is not authenticated.
-  - The TeamSwitcher component is still displayed even when the user is not authenticated.
   - The sidebar is accessible to unauthenticated users with limited navigation options.
 
 - **Authenticated User Navigation**:
@@ -26,7 +25,6 @@ This document outlines the tests covering the `AppSidebar` component.
 
 - **Authenticated User Components**:
   - The NavUser component is rendered when the user is authenticated.
-  - The TeamSwitcher component is displayed when the user is authenticated.
   - All sidebar components are visible to authenticated users.
 
 - **Mobile Navigation Behavior**:

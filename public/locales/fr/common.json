@@ -27,6 +27,8 @@
     "emailInvalid": "Veuillez entrer un email ou téléphone valide",
     "passwordRequired": "Le mot de passe est requis",
     "loginSuccess": "Bon retour ! Vous êtes connecté avec succès.",
+    "logoutSuccess": "Vous avez été déconnecté avec succès.",
+    "logoutError": "Échec de la déconnexion",
     "loginFailed": "Échec de Connexion",
     "invalidCredentials": "Email ou mot de passe invalide. Veuillez réessayer.",
     "invalidPassword": "Mot de passe invalide",
