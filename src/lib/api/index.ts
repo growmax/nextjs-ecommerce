@@ -54,6 +54,7 @@ import OrdersFilterService from "./services/OrdersFilterService/OrdersFilterServ
 import OrderVersionService from "./services/OrderVersionService/OrderVersionService";
 import PaymentService from "./services/PaymentService/PaymentService";
 import ProductAssetsService from "./services/ProductAssetsService/ProductAssetsService";
+import { ProductPageService } from "./services/ProductPageService";
 import QuotationDetailsService from "./services/QuotationDetailsService/QuotationDetailsService";
 import QuotationNameService from "./services/QuotationNameService/QuotationNameService";
 import QuotationVersionService from "./services/QuotationVersionService/QuotationVersionService";
@@ -84,6 +85,7 @@ export {
   PaymentService,
   PreferenceService,
   ProductAssetsService,
+  ProductPageService,
   QuotationDetailsService,
   QuotationNameService,
   QuotationVersionService,

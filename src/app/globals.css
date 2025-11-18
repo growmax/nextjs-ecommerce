@@ -144,12 +144,22 @@
 
   body {
     @apply bg-background text-foreground font-sans antialiased;
-    overflow: hidden; /* Prevent body scroll - let child containers handle scrolling */
-    height: 100vh;
+    overflow: auto; /* Allow body scrolling for content that needs it */
+    min-height: 100vh;
   }
 
   html {
-    overflow: hidden;
-    height: 100vh;
+    overflow: auto;
+    min-height: 100vh;
+  }
+
+  /* Custom scrollbar-hide class */
+  .scrollbar-hide {
+    -ms-overflow-style: none;  /* IE and Edge */
+    scrollbar-width: none;  /* Firefox */
+  }
+
+  .scrollbar-hide::-webkit-scrollbar {
+    display: none;  /* Chrome, Safari, Opera */
   }
 }
