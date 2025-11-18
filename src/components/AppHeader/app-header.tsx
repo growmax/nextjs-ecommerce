@@ -1,6 +1,7 @@
 "use client";
 
-// search integration removed for now
+import { useRouter } from "next/navigation";
+import { useCallback, useEffect, useMemo, useState } from "react";
 
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
@@ -12,57 +13,87 @@ import {
   CommandItem,
   CommandList,
 } from "@/components/ui/command";
-
-import { AvatarCard } from "@/components/AvatarCard/AvatarCard";
 import { Input } from "@/components/ui/input";
 import { Separator } from "@/components/ui/separator";
 import { SidebarTrigger, useSidebar } from "@/components/ui/sidebar";
+
+import { AvatarCard } from "@/components/AvatarCard/AvatarCard";
 import { useCart } from "@/contexts/CartContext";
 import { useUserDetails } from "@/contexts/UserDetailsContext";
 import useLogout from "@/hooks/Auth/useLogout";
 import useUserProfile from "@/hooks/Profile/useUserProfile";
+
 import { cn } from "@/lib/utils";
 import { getUserInitials } from "@/utils/General/general";
+
 import {
   Bell,
   Command as CommandIcon,
   Search,
   ShoppingCart,
 } from "lucide-react";
-import { useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
 
 export function AppHeader() {
+  const router = useRouter();
+
   const [open, setOpen] = useState(false);
   const [searchValue, setSearchValue] = useState("");
+
   const { userProfile } = useUserProfile();
   const { isLoggingOut, handleLogout } = useLogout();
   const { isAuthenticated } = useUserDetails();
-  const router = useRouter();
-  // Search wiring removed — Command demo uses static items for now.
-
-  // Sample cart and notification counts
   const { cartCount } = useCart();
+
   const notificationsCount = 5;
 
-  // Keyboard shortcut to open search (Cmd/Ctrl + K)
-  useEffect(() => {
-    const down = (e: KeyboardEvent) => {
-      if (e.key === "k" && (e.metaKey || e.ctrlKey)) {
-        e.preventDefault();
-        setOpen(true);
-      }
-    };
-
-    document.addEventListener("keydown", down);
-    return () => document.removeEventListener("keydown", down);
+  // ---- Keyboard Shortcut Cmd/Ctrl + K ----
+  const handleShortcut = useCallback((e: KeyboardEvent) => {
+    if (e.key === "k" && (e.metaKey || e.ctrlKey)) {
+      e.preventDefault();
+      setOpen(true);
+    }
   }, []);
 
+  useEffect(() => {
+    document.addEventListener("keydown", handleShortcut);
+    return () => document.removeEventListener("keydown", handleShortcut);
+  }, [handleShortcut]);
+
+  // ---- Sidebar Layout ----
   const { state: sidebarState } = useSidebar();
   const isSidebarCollapsed = sidebarState === "collapsed";
 
+  // ---- Command Suggestions ----
+  const suggestionItems = useMemo(
+    () => [
+      {
+        key: "orders",
+        label: "Orders",
+        icon: <ShoppingCart />,
+        href: "/landing/orderslanding",
+      },
+      {
+        key: "dashboard",
+        label: "Dashboard",
+        icon: <CommandIcon />,
+        href: "/dashboard",
+      },
+    ],
+    []
+  );
+
+  const handleSelect = useCallback(
+    (href: string) => {
+      router.push(href);
+      setOpen(false);
+      setSearchValue("");
+    },
+    [router]
+  );
+
   return (
     <>
+      {/* HEADER */}
       <header
         className={cn(
           "fixed top-0 z-[100] border-b bg-background/80 backdrop-blur-md supports-[backdrop-filter]:bg-background/80 transition-all duration-200",
@@ -72,8 +103,8 @@ export function AppHeader() {
         )}
         style={{ right: 0 }}
       >
-        <div className="flex h-16 items-center gap-2 px-4 transition-[width,height] ease-linear group-has-data-[collapsible=icon]/sidebar-wrapper:h-12">
-          {/* Mobile: Search icon moved to left (after sidebar trigger) */}
+        <div className="flex h-16 items-center gap-2 px-4">
+          {/* Mobile Search Icon */}
           <div className="md:hidden">
             <Button
               variant="ghost"
@@ -86,24 +117,23 @@ export function AppHeader() {
           </div>
 
           <SidebarTrigger className="-ml-1" />
-          <Separator
-            orientation="vertical"
-            className="mr-2 data-[orientation=vertical]:h-4"
-          />
+          <Separator orientation="vertical" className="mr-2 h-4" />
 
-          {/* Desktop Search Bar with Keyboard Shortcut */}
+          {/* Desktop Search Bar */}
           <div className="hidden md:flex flex-1 max-w-sm">
             <div className="relative w-full">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground h-4 w-4" />
+
               <Input
                 placeholder="Search products..."
                 value={searchValue}
                 onChange={e => setSearchValue(e.target.value)}
                 className="pl-10 pr-16"
-                onClick={() => setOpen(true)}
                 readOnly
+                onClick={() => setOpen(true)}
               />
-              <div className="absolute right-3 top-1/2 transform -translate-y-1/2 flex items-center gap-1">
+
+              <div className="absolute right-3 top-1/2 -translate-y-1/2 flex items-center gap-1">
                 <CommandIcon className="h-3 w-3 text-muted-foreground" />
                 <span className="text-xs text-muted-foreground">K</span>
               </div>
@@ -112,7 +142,7 @@ export function AppHeader() {
 
           {/* Right Side Icons */}
           <div className="flex items-center gap-1 ml-auto">
-            {/* Desktop Right Side Icons */}
+            {/* Desktop Icons */}
             <div className="hidden md:flex items-center gap-1">
               {/* Notifications */}
               {isAuthenticated && (
@@ -145,10 +175,10 @@ export function AppHeader() {
                 )}
               </Button>
 
-              {/* Vertical Separator before Avatar */}
+              {/* Separator */}
               <Separator orientation="vertical" className="h-6 mx-1" />
 
-              {/* Profile Dropdown with Real Data */}
+              {/* User Avatar */}
               {isAuthenticated ? (
                 <AvatarCard
                   user={userProfile}
@@ -185,9 +215,8 @@ export function AppHeader() {
               )}
             </div>
 
-            {/* Mobile Right Side Icons (Condensed) */}
+            {/* Mobile Icons */}
             <div className="md:hidden flex items-center gap-1">
-              {/* Cart Icon */}
               <Button
                 variant="ghost"
                 size="icon"
@@ -202,7 +231,6 @@ export function AppHeader() {
                 )}
               </Button>
 
-              {/* Profile Dropdown with Real Data */}
               {isAuthenticated ? (
                 <AvatarCard
                   user={userProfile}
@@ -241,11 +269,10 @@ export function AppHeader() {
           </div>
         </div>
 
-        {/* Bottom Separator */}
-        <div className="h-px bg-border"></div>
+        <div className="h-px bg-border" />
       </header>
 
-      {/* Enhanced Command Dialog for Search */}
+      {/* ----- COMMAND DIALOG ----- */}
       <CommandDialog
         open={open}
         onOpenChange={setOpen}
@@ -255,26 +282,15 @@ export function AppHeader() {
         <CommandList>
           <CommandEmpty>No results found.</CommandEmpty>
           <CommandGroup heading="Suggestions">
-            <CommandItem
-              onSelect={() => {
-                router.push("/landing/orderslanding");
-                setOpen(false);
-                setSearchValue("");
-              }}
-            >
-              <ShoppingCart />
-              <span>Orders</span>
-            </CommandItem>
-            <CommandItem
-              onSelect={() => {
-                router.push("/dashboard");
-                setOpen(false);
-                setSearchValue("");
-              }}
-            >
-              <CommandIcon />
-              <span>Dashboard</span>
-            </CommandItem>
+            {suggestionItems.map(item => (
+              <CommandItem
+                key={item.key}
+                onSelect={() => handleSelect(item.href)}
+              >
+                {item.icon}
+                <span>{item.label}</span>
+              </CommandItem>
+            ))}
           </CommandGroup>
         </CommandList>
       </CommandDialog>

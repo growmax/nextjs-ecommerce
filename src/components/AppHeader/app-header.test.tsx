@@ -147,4 +147,57 @@ describe("AppHeader", () => {
       expect(loginButton).not.toBeInTheDocument();
     });
   });
+
+  describe("Command dialog (search)", () => {
+    it("should open the command dialog with shortcut and show items", async () => {
+      render(
+        <SidebarProvider>
+          <AppHeader />
+        </SidebarProvider>
+      );
+
+      // Open with Cmd/Ctrl+K shortcut
+      fireEvent.keyDown(document, { key: "k", metaKey: true });
+
+      // The command input placeholder should be visible
+      const input = await screen.findByPlaceholderText(
+        /type a command or search/i
+      );
+      expect(input).toBeInTheDocument();
+
+      // Suggestions we added should be visible
+      expect(screen.getByText(/orders/i)).toBeInTheDocument();
+      expect(screen.getByText(/dashboard/i)).toBeInTheDocument();
+    });
+
+    it("selecting Orders navigates to orders page", async () => {
+      render(
+        <SidebarProvider>
+          <AppHeader />
+        </SidebarProvider>
+      );
+
+      fireEvent.keyDown(document, { key: "k", ctrlKey: true });
+
+      const orders = await screen.findByText(/orders/i);
+      fireEvent.click(orders);
+
+      expect(mockPush).toHaveBeenCalledWith("/landing/orderslanding");
+    });
+
+    it("selecting Dashboard navigates to dashboard page", async () => {
+      render(
+        <SidebarProvider>
+          <AppHeader />
+        </SidebarProvider>
+      );
+
+      fireEvent.keyDown(document, { key: "k", ctrlKey: true });
+
+      const dash = await screen.findByText(/dashboard/i);
+      fireEvent.click(dash);
+
+      expect(mockPush).toHaveBeenCalledWith("/dashboard");
+    });
+  });
 });
