@@ -17,7 +17,6 @@ This document outlines the tests covering the `AvatarCard` component.
 - **Menu and Navigation**:
   - A dropdown menu appears when the avatar is clicked.
   - The menu includes navigation links for "Profile," "Company Settings," "Orders," and "Quotes."
-  - The "Orders" and "Quotes" menu items can be hidden if needed.
   - All links correctly point to their respective pages.
 
 - **Actions**:

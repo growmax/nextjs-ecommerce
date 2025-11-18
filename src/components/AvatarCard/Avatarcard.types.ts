@@ -20,6 +20,4 @@ export type AvatarCardProps = {
   align?: "start" | "center" | "end";
   side?: "top" | "right" | "bottom" | "left";
   menuClassName?: string;
-  showOrders?: boolean;
-  showQuotes?: boolean;
 };

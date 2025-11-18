@@ -2,6 +2,7 @@ import { AppSidebar } from "@/components/AppSideBar/app-sidebar";
 import { CartProviderWrapper } from "@/components/providers/CartProviderWrapper";
 import { TenantDataProvider } from "@/components/TenantDataProvider";
 import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
+import { Toaster } from "@/components/ui/sonner";
 import { TenantProvider } from "@/contexts/TenantContext";
 import { UserDetailsProvider } from "@/contexts/UserDetailsContext";
 import TenantService from "@/lib/api/services/TenantService";
@@ -69,13 +70,17 @@ export default async function AppLayout({
             <TenantDataProvider>
               <SidebarProvider>
                 <AppSidebar />
-                <SidebarInset className="flex flex-col h-screen overflow-hidden">
+                <SidebarInset className="flex flex-col w-full overflow-x-hidden">
                   <AppHeader />
-                  <main className="flex-1 overflow-hidden">{children}</main>
+                  <main className="w-full overflow-x-hidden pt-16">
+                    {children}
+                  </main>
                 </SidebarInset>
               </SidebarProvider>
             </TenantDataProvider>
           </CartProviderWrapper>
+          {/* Toaster for logout notifications - positioned top-right like login */}
+          <Toaster richColors position="top-right" theme="light" />
         </UserDetailsProvider>
       </TenantProvider>
     </NextIntlClientProvider>

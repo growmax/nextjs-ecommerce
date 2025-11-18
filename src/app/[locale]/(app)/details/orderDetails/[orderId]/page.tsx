@@ -1,6 +1,7 @@
 "use client";
 
 import { PageLoader } from "@/components/Loaders/PageLoader/page-loader";
+import { usePageScroll } from "@/hooks/usePageScroll";
 import type { OrderDetailsPageProps } from "@/types/details/orderdetails/index.types";
 import dynamic from "next/dynamic";
 import { Suspense } from "react";
@@ -15,6 +16,8 @@ const OrderDetailsClient = dynamic(
 );
 
 export default function OrderDetailsPage({ params }: OrderDetailsPageProps) {
+  usePageScroll();
+
   return (
     <Suspense fallback={<PageLoader message="Loading Order Details..." />}>
       <OrderDetailsClient params={params} />

@@ -34,9 +34,29 @@ export function AvatarCard({
   align = "end",
   side,
   menuClassName,
-  showOrders = true,
-  showQuotes = true,
 }: AvatarCardProps) {
+  const menuItems = [
+    {
+      href: "/settings/profile",
+      icon: IdCard,
+      label: "Profile",
+    },
+    {
+      href: "/settings/company",
+      icon: Building2,
+      label: "Company Settings",
+    },
+    {
+      href: "/orders",
+      icon: ShoppingCart,
+      label: "Orders",
+    },
+    {
+      href: "/quotesummary",
+      icon: User,
+      label: "Quotes",
+    },
+  ];
   // Handle logout state
   if (isLoggingOut) {
     return (
@@ -160,34 +180,17 @@ export function AvatarCard({
           </div>
         </DropdownMenuLabel>
         <DropdownMenuSeparator />
-        <DropdownMenuItem asChild>
-          <Link href="/settings/profile">
-            <IdCard className="h-4 w-4" />
-            <span>Profile</span>
-          </Link>
-        </DropdownMenuItem>
-        <DropdownMenuItem asChild>
-          <Link href="/settings/company">
-            <Building2 className="h-4 w-4" />
-            <span>Company Settings</span>
-          </Link>
-        </DropdownMenuItem>
-        {showOrders && (
-          <DropdownMenuItem asChild>
-            <Link href="/orders">
-              <ShoppingCart className="h-4 w-4" />
-              <span>Orders</span>
-            </Link>
-          </DropdownMenuItem>
-        )}
-        {showQuotes && (
-          <DropdownMenuItem asChild>
-            <Link href="/quotesummary">
-              <User className="h-4 w-4" />
-              <span>Quotes</span>
-            </Link>
-          </DropdownMenuItem>
-        )}
+        {menuItems.map(item => {
+          const Icon = item.icon;
+          return (
+            <DropdownMenuItem key={item.href} asChild>
+              <Link href={item.href}>
+                <Icon className="h-4 w-4" />
+                <span>{item.label}</span>
+              </Link>
+            </DropdownMenuItem>
+          );
+        })}
         <DropdownMenuSeparator />
         <DropdownMenuItem
           onClick={onLogout}
