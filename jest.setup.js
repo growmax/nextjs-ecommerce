@@ -1,6 +1,18 @@
 // Learn more: https://github.com/testing-library/jest-dom
 import "@testing-library/jest-dom";
 
+// Mock next-intl
+jest.mock("next-intl", () => ({
+  useTranslations: () => key => key,
+  useLocale: () => "en",
+  useFormatter: () => ({
+    dateTime: date => date.toISOString(),
+    number: value => value.toString(),
+    relativeTime: date => date.toISOString(),
+  }),
+  NextIntlClientProvider: ({ children }) => children,
+}));
+
 // Mock Next.js router
 jest.mock("next/router", () => ({
   useRouter() {

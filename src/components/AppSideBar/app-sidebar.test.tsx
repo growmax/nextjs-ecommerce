@@ -15,9 +15,6 @@ jest.mock("@/components/nav-main", () => ({
 jest.mock("@/components/nav-user", () => ({
   NavUser: jest.fn(() => <div data-testid="nav-user" />),
 }));
-jest.mock("@/components/TeamSwitcher/team-switcher", () => ({
-  TeamSwitcher: jest.fn(() => <div data-testid="team-switcher" />),
-}));
 jest.mock("@/contexts/UserDetailsContext", () => ({
   useUserDetails: jest.fn(),
 }));
@@ -82,15 +79,6 @@ describe("AppSidebar", () => {
       );
       expect(screen.queryByTestId("nav-user")).not.toBeInTheDocument();
     });
-
-    it("should still render TeamSwitcher when user is not authenticated", () => {
-      render(
-        <SidebarProvider>
-          <AppSidebar />
-        </SidebarProvider>
-      );
-      expect(screen.getByTestId("team-switcher")).toBeInTheDocument();
-    });
   });
 
   describe("when user is authenticated", () => {
@@ -149,15 +137,6 @@ describe("AppSidebar", () => {
         </SidebarProvider>
       );
       expect(screen.getByTestId("nav-user")).toBeInTheDocument();
-    });
-
-    it("should render TeamSwitcher when user is authenticated", () => {
-      render(
-        <SidebarProvider>
-          <AppSidebar />
-        </SidebarProvider>
-      );
-      expect(screen.getByTestId("team-switcher")).toBeInTheDocument();
     });
   });
 
