@@ -17,9 +17,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { useSidebar } from "@/components/ui/sidebar";
 import { Skeleton } from "@/components/ui/skeleton";
-import { cn } from "@/lib/utils";
 
 import { statusColor } from "@/components/custom/statuscolors";
 import { useCurrentUser } from "@/hooks/useCurrentUser";
@@ -67,11 +65,7 @@ const TableSkeleton = ({ rows = 10 }: { rows?: number }) => (
     </div>
     <div className="flex-1 overflow-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
       {Array.from({ length: rows }).map((_, rowIndex) => (
-        <div
-          key={`row-${rowIndex}`}
-          className="border-b border-gray-100 flex animate-pulse"
-          style={{ animationDelay: `${rowIndex * 50}ms` }}
-        >
+        <div key={`row-${rowIndex}`} className="border-b border-gray-100 flex ">
           {Array.from({ length: 11 }).map((_, colIndex) => (
             <div
               key={`cell-${rowIndex}-${colIndex}`}
@@ -100,14 +94,13 @@ function OrdersLandingTable({
   const router = useRouter();
   const locale = useLocale();
   const { user } = useCurrentUser();
-  const { state: sidebarState } = useSidebar();
-  const isSidebarCollapsed = sidebarState === "collapsed";
 
   // State
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const [_drawerMode, _setDrawerMode] = useState<"filter" | "create">("filter");
   const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);
+  const [initialLoad, setInitialLoad] = useState(true);
   const [totalCount, setTotalCount] = useState(0);
   const [page, setPage] = useState(0);
   const [rowPerPage, setRowPerPage] = useState(20);
@@ -149,11 +142,11 @@ function OrdersLandingTable({
       },
       {
         accessorKey: "orderName",
-        header: "Order Name",
+        header: () => <span className="pl-2">Order Name</span>,
         size: 200,
         cell: ({ row }) => (
           <div
-            className="max-w-[200px] truncate"
+            className="max-w-[200px] truncate pl-2"
             title={row.original.orderName || "-"}
           >
             {row.original.orderName || "-"}
@@ -190,6 +183,9 @@ function OrdersLandingTable({
         accessorKey: "totalItems",
         header: "Total Items",
         size: 150,
+        meta: {
+          alignCenter: true,
+        },
         cell: ({ row }) => {
           const items = row.original.itemcount || 0;
           return (
@@ -210,6 +206,9 @@ function OrdersLandingTable({
         accessorKey: "subTotal",
         header: "Sub total",
         size: 150,
+        meta: {
+          alignRight: true,
+        },
         cell: ({ row }) =>
           formatCurrency(
             row.original.subTotal,
@@ -220,6 +219,9 @@ function OrdersLandingTable({
         accessorKey: "taxableAmount",
         header: "TaxableAmount",
         size: 150,
+        meta: {
+          alignRight: true,
+        },
         cell: ({ row }) =>
           formatCurrency(
             row.original.taxableAmount,
@@ -230,6 +232,9 @@ function OrdersLandingTable({
         accessorKey: "grandTotal",
         header: "Total",
         size: 150,
+        meta: {
+          alignRight: true,
+        },
         cell: ({ row }) => (
           <span className="font-semibold">
             {formatCurrency(
@@ -241,19 +246,28 @@ function OrdersLandingTable({
       },
       {
         accessorKey: "status",
-        header: "Status",
+        header: () => <span className="pl-[30px]">Status</span>,
         size: 200,
         cell: ({ row }) => {
           const status = row.original.updatedBuyerStatus;
-          if (!status) return <span className="text-gray-400">-</span>;
+          if (!status)
+            return <span className="text-gray-400 pl-[30px]">-</span>;
           const color = statusColor(status.toUpperCase());
+          const titleCaseStatus = status
+            .split(" ")
+            .map(
+              word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()
+            )
+            .join(" ");
           return (
-            <span
-              className="px-3 py-1 rounded-full text-sm font-medium text-white whitespace-nowrap"
-              style={{ backgroundColor: color }}
-            >
-              {status}
-            </span>
+            <div className="pl-[30px]">
+              <span
+                className="px-2 py-0.5 rounded-full text-xs font-medium text-white whitespace-nowrap"
+                style={{ backgroundColor: color }}
+              >
+                {titleCaseStatus}
+              </span>
+            </div>
           );
         },
       },
@@ -448,6 +462,9 @@ function OrdersLandingTable({
       setTotalCount(0);
     } finally {
       setLoading(false);
+      if (initialLoad) {
+        setInitialLoad(false);
+      }
     }
   }, [
     user?.userId,
@@ -456,6 +473,7 @@ function OrdersLandingTable({
     rowPerPage,
     filterData,
     createFilterFromData,
+    initialLoad,
   ]);
 
   // Export functionality
@@ -661,16 +679,11 @@ function OrdersLandingTable({
           />
         </div> */}
 
-        <div
-          className={cn(
-            "w-full overflow-x-hidden",
-            isSidebarCollapsed ? "px-[60px]" : "px-[15px]"
-          )}
-        >
+        <div className="w-full overflow-x-hidden">
           <div className="w-full overflow-x-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
-            {loading ? (
+            {initialLoad && loading ? (
               <TableSkeleton rows={rowPerPage} />
-            ) : orders.length === 0 ? (
+            ) : !initialLoad && orders.length === 0 ? (
               <div className="flex items-center justify-center text-gray-500 py-8">
                 No orders found
               </div>
@@ -678,7 +691,7 @@ function OrdersLandingTable({
               <DashboardTable
                 data={orders}
                 columns={columns}
-                loading={loading}
+                loading={false}
                 totalDataCount={totalCount}
                 pagination={pagination}
                 setPagination={handlePaginationChange}

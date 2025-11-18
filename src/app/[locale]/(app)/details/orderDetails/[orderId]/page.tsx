@@ -1,6 +1,6 @@
 "use client";
 
-import { PageLoader } from "@/components/Loaders/PageLoader/page-loader";
+import OrderDetailsSkeleton from "./components/OrderDetailsSkeleton";
 import { usePageScroll } from "@/hooks/usePageScroll";
 import type { OrderDetailsPageProps } from "@/types/details/orderdetails/index.types";
 import dynamic from "next/dynamic";
@@ -11,7 +11,7 @@ const OrderDetailsClient = dynamic(
   () => import("./components/OrderDetailsClient"),
   {
     ssr: false,
-    loading: () => <PageLoader message="Loading Order Details..." />,
+    loading: () => <OrderDetailsSkeleton />,
   }
 );
 
@@ -19,7 +19,7 @@ export default function OrderDetailsPage({ params }: OrderDetailsPageProps) {
   usePageScroll();
 
   return (
-    <Suspense fallback={<PageLoader message="Loading Order Details..." />}>
+    <Suspense fallback={<OrderDetailsSkeleton />}>
       <OrderDetailsClient params={params} />
     </Suspense>
   );

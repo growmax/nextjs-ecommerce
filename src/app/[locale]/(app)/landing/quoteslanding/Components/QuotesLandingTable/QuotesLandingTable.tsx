@@ -12,7 +12,6 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { useSidebar } from "@/components/ui/sidebar";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useCurrentUser } from "@/hooks/useCurrentUser";
 import PreferenceService, {
@@ -21,7 +20,6 @@ import PreferenceService, {
 import QuotesService, {
   type QuoteItem,
 } from "@/lib/api/services/QuotesService/QuotesService";
-import { cn } from "@/lib/utils";
 import { ColumnDef } from "@tanstack/react-table";
 import { useLocale } from "next-intl";
 import { useRouter } from "next/navigation";
@@ -40,12 +38,11 @@ function QuotesLandingTable({
   const router = useRouter();
   const locale = useLocale();
   const { user } = useCurrentUser();
-  const { state: sidebarState } = useSidebar();
-  const isSidebarCollapsed = sidebarState === "collapsed";
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const [_drawerMode] = useState<"filter" | "create">("filter");
   const [quotes, setQuotes] = useState<QuoteItem[]>([]);
   const [loading, setLoading] = useState(true);
+  const [initialLoad, setInitialLoad] = useState(true);
   const [totalCount, setTotalCount] = useState(0);
   const [page, setPage] = useState(0);
   const [rowPerPage, setRowPerPage] = useState(20); // Default to first valid option
@@ -85,7 +82,6 @@ function QuotesLandingTable({
           <div
             key={`row-${rowIndex}`}
             className="border-b border-gray-100 flex animate-pulse"
-            style={{ animationDelay: `${rowIndex * 50}ms` }}
           >
             {Array.from({ length: 11 }).map((_, colIndex) => (
               <div
@@ -133,11 +129,11 @@ function QuotesLandingTable({
       },
       {
         accessorKey: "quoteName",
-        header: "Quote Name",
+        header: () => <span className="pl-2">Quote Name</span>,
         size: 200,
         cell: ({ row }) => (
           <div
-            className="max-w-[200px] truncate"
+            className="max-w-[200px] truncate pl-2"
             title={row.original.quoteName || "-"}
           >
             {row.original.quoteName || "-"}
@@ -179,6 +175,9 @@ function QuotesLandingTable({
         accessorKey: "itemCount",
         header: "Total Items",
         size: 150,
+        meta: {
+          alignCenter: true,
+        },
         cell: ({ row }) => {
           const items = row.original.itemCount || 0;
           return (
@@ -199,6 +198,9 @@ function QuotesLandingTable({
         accessorKey: "subTotal",
         header: "Sub total",
         size: 150,
+        meta: {
+          alignRight: true,
+        },
         cell: ({ row }) => {
           const currencySymbol = row.original.curencySymbol?.symbol || "USD";
           const amount = row.original.subTotal || row.original.grandTotal || 0;
@@ -209,6 +211,9 @@ function QuotesLandingTable({
         accessorKey: "taxableAmount",
         header: "Taxable Amount",
         size: 150,
+        meta: {
+          alignRight: true,
+        },
         cell: ({ row }) => {
           const currencySymbol = row.original.curencySymbol?.symbol || "USD";
           const amount = row.original.taxableAmount || 0;
@@ -219,6 +224,9 @@ function QuotesLandingTable({
         accessorKey: "grandTotal",
         header: "Total",
         size: 150,
+        meta: {
+          alignRight: true,
+        },
         cell: ({ row }) => {
           const currencySymbol = row.original.curencySymbol?.symbol || "USD";
           const amount = row.original.grandTotal || 0;
@@ -231,19 +239,28 @@ function QuotesLandingTable({
       },
       {
         accessorKey: "updatedBuyerStatus",
-        header: "Status",
+        header: () => <span className="pl-[30px]">Status</span>,
         size: 200,
         cell: ({ row }) => {
           const status = row.original.updatedBuyerStatus;
-          if (!status) return <span className="text-gray-400">-</span>;
+          if (!status)
+            return <span className="text-gray-400 pl-[30px]">-</span>;
           const color = statusColor(status.toUpperCase());
+          const titleCaseStatus = status
+            .split(" ")
+            .map(
+              word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()
+            )
+            .join(" ");
           return (
-            <span
-              className="px-3 py-1 rounded-full text-sm font-medium text-white whitespace-nowrap"
-              style={{ backgroundColor: color }}
-            >
-              {status}
-            </span>
+            <div className="pl-[30px]">
+              <span
+                className="px-2 py-0.5 rounded-full text-xs font-medium text-white whitespace-nowrap"
+                style={{ backgroundColor: color }}
+              >
+                {titleCaseStatus}
+              </span>
+            </div>
           );
         },
       },
@@ -619,8 +636,11 @@ function QuotesLandingTable({
       setQuotes([]);
     } finally {
       setLoading(false);
+      if (initialLoad) {
+        setInitialLoad(false);
+      }
     }
-  }, [page, rowPerPage, user, filterPreferences, filterData]);
+  }, [page, rowPerPage, user, filterPreferences, filterData, initialLoad]);
 
   useEffect(() => {
     fetchQuotes();
@@ -783,16 +803,11 @@ function QuotesLandingTable({
       </SideDrawer>
 
       <div className="flex flex-col">
-        <div
-          className={cn(
-            "w-full overflow-x-hidden",
-            isSidebarCollapsed ? "px-[60px]" : "px-[15px]"
-          )}
-        >
+        <div className="w-full overflow-x-hidden">
           <div className="w-full overflow-x-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
-            {loading ? (
+            {initialLoad && loading ? (
               <TableSkeleton rows={rowPerPage} />
-            ) : quotes.length === 0 ? (
+            ) : !initialLoad && quotes.length === 0 ? (
               <div className="flex items-center justify-center text-gray-500 py-8">
                 No quotes found
               </div>
@@ -800,7 +815,7 @@ function QuotesLandingTable({
               <DashboardTable
                 data={quotes}
                 columns={columns}
-                loading={loading}
+                loading={false}
                 totalDataCount={totalCount}
                 pagination={pagination}
                 setPagination={handlePaginationChange}

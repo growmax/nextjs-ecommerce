@@ -14,8 +14,10 @@ import {
   VersionsDialog,
   type Version,
 } from "@/components/dialogs/VersionsDialog";
+import { ApplicationLayout, PageLayout } from "@/components/layout";
 import {
   CustomerInfoCard,
+  DetailsSkeleton,
   OrderContactDetails,
   OrderTermsCard,
   SalesHeader,
@@ -513,9 +515,9 @@ export default function QuoteDetailsClient({
   ];
 
   return (
-    <div className="flex flex-col h-full overflow-hidden bg-gray-50">
+    <ApplicationLayout>
       {/* Sales Header - Fixed at top */}
-      <div className="flex-shrink-0">
+      <div className="flex-shrink-0 sticky top-0 z-50 bg-gray-50">
         <SalesHeader
           title={quoteName ? decodeUnicode(quoteName) : "Quote Details"}
           identifier={displayQuoteId}
@@ -545,277 +547,272 @@ export default function QuoteDetailsClient({
       </div>
 
       {/* Quote Details Content - Scrollable area */}
-      <div className="flex-1 overflow-y-auto overflow-x-hidden">
-        <div className="container mx-auto px-2 sm:px-3 md:px-4 py-2 sm:py-3">
-          <div className="flex flex-col lg:flex-row gap-2 sm:gap-3 md:gap-4">
-            {/* Left Side - Products Table, Contact & Terms - 65% */}
-            <div className="w-full lg:w-[65%] space-y-2 sm:space-y-3 mt-[60px]">
-              {/* Products Table */}
-              {!loading && !error && quoteDetails && (
-                <Suspense fallback={<Skeleton className="h-64 w-full" />}>
-                  <OrderProductsTable
-                    products={products}
-                    {...(products.length && {
-                      totalCount: products.length,
-                    })}
-                    showInvoicedQty={false}
-                    onExport={() => {
-                      const filename = `Quote_${quoteIdentifier}_Products.csv`;
-                      exportProductsToCsv(
-                        products as ProductCsvRow[],
-                        filename
-                      );
-                    }}
-                  />
-                </Suspense>
-              )}
+      <div className="flex-1 w-full">
+        <PageLayout variant="content">
+          {loading ? (
+            <DetailsSkeleton
+              showStatusTracker={false}
+              leftWidth="lg:w-[60%]"
+              rightWidth="lg:w-[40%]"
+            />
+          ) : (
+            <div className="flex flex-col lg:flex-row gap-2 sm:gap-3 md:gap-4 w-full">
+              {/* Left Side - Products Table, Contact & Terms - 65% */}
+              <div className="w-full lg:w-[65%] space-y-2 sm:space-y-3 mt-[80px]">
+                {/* Products Table */}
+                {!loading && !error && quoteDetails && (
+                  <Suspense fallback={<Skeleton className="h-64 w-full" />}>
+                    <OrderProductsTable
+                      products={products}
+                      {...(products.length && {
+                        totalCount: products.length,
+                      })}
+                      showInvoicedQty={false}
+                      onExport={() => {
+                        const filename = `Quote_${quoteIdentifier}_Products.csv`;
+                        exportProductsToCsv(
+                          products as ProductCsvRow[],
+                          filename
+                        );
+                      }}
+                    />
+                  </Suspense>
+                )}
 
-              {/* Contact Details and Terms Cards - Side by Side */}
-              {!loading && !error && quoteDetails && (
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-2 sm:gap-3 md:gap-4">
-                  {/* Contact Details Card */}
-                  <OrderContactDetails
-                    billingAddress={
-                      quoteDetailData?.billingAddressDetails as unknown as Record<
-                        string,
-                        unknown
-                      >
-                    }
-                    shippingAddress={
-                      quoteDetailData?.shippingAddressDetails as unknown as Record<
-                        string,
-                        unknown
-                      >
-                    }
-                    registerAddress={
-                      quoteDetailData?.registerAddressDetails as unknown as Record<
-                        string,
-                        unknown
-                      >
-                    }
-                    sellerAddress={
-                      quoteDetailData?.sellerAddressDetail as unknown as Record<
-                        string,
-                        unknown
-                      >
-                    }
-                    buyerCompanyName={
-                      (quoteDetailData?.buyerCompanyName as string) || ""
-                    }
-                    buyerBranchName={
-                      (quoteDetailData?.buyerBranchName as string) || ""
-                    }
-                    warehouseName={
-                      (
-                        (
-                          quoteDetailData?.dbProductDetails as Array<
-                            Record<string, unknown>
-                          >
-                        )?.[0] as Record<string, Record<string, string>>
-                      )?.wareHouse?.wareHouseName ||
-                      (
-                        (
-                          quoteDetailData?.dbProductDetails as Array<
-                            Record<string, unknown>
-                          >
-                        )?.[0] as Record<string, string>
-                      )?.orderWareHouseName
-                    }
-                    warehouseAddress={
-                      (
-                        (
-                          quoteDetailData?.dbProductDetails as Array<
-                            Record<string, unknown>
-                          >
-                        )?.[0] as Record<
-                          string,
-                          Record<string, Record<string, string>>
-                        >
-                      )?.wareHouse?.addressId as unknown as {
-                        addressLine?: string;
-                        district?: string;
-                        city?: string;
-                        state?: string;
-                        pinCodeId?: string;
-                        country?: string;
-                      }
-                    }
-                    salesBranch={
-                      (quoteDetailData?.sellerBranchName as string) || undefined
-                    }
-                    requiredDate={
-                      (quoteDetailData?.customerRequiredDate ||
-                        quoteDetails?.data?.validityTill) as string | undefined
-                    }
-                    referenceNumber={
-                      (quoteDetails?.data?.buyerReferenceNumber as string) ||
-                      "-"
-                    }
-                  />
-
-                  {/* Terms Card */}
-                  <OrderTermsCard
-                    orderTerms={
-                      {
-                        ...(quoteDetailData?.quoteTerms as unknown as Record<
+                {/* Contact Details and Terms Cards - Side by Side */}
+                {!loading && !error && quoteDetails && (
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-2 sm:gap-3 md:gap-4">
+                    {/* Contact Details Card */}
+                    <OrderContactDetails
+                      billingAddress={
+                        quoteDetailData?.billingAddressDetails as unknown as Record<
                           string,
                           unknown
-                        >),
-                        // Add additionalTerms from quotationDetails level
-                        additionalTerms:
-                          quoteDetailData?.additionalTerms as string,
-                      } as unknown as Record<string, unknown>
-                    }
-                  />
-                </div>
-              )}
+                        >
+                      }
+                      shippingAddress={
+                        quoteDetailData?.shippingAddressDetails as unknown as Record<
+                          string,
+                          unknown
+                        >
+                      }
+                      registerAddress={
+                        quoteDetailData?.registerAddressDetails as unknown as Record<
+                          string,
+                          unknown
+                        >
+                      }
+                      sellerAddress={
+                        quoteDetailData?.sellerAddressDetail as unknown as Record<
+                          string,
+                          unknown
+                        >
+                      }
+                      buyerCompanyName={
+                        (quoteDetailData?.buyerCompanyName as string) || ""
+                      }
+                      buyerBranchName={
+                        (quoteDetailData?.buyerBranchName as string) || ""
+                      }
+                      warehouseName={
+                        (
+                          (
+                            quoteDetailData?.dbProductDetails as Array<
+                              Record<string, unknown>
+                            >
+                          )?.[0] as Record<string, Record<string, string>>
+                        )?.wareHouse?.wareHouseName ||
+                        (
+                          (
+                            quoteDetailData?.dbProductDetails as Array<
+                              Record<string, unknown>
+                            >
+                          )?.[0] as Record<string, string>
+                        )?.orderWareHouseName
+                      }
+                      warehouseAddress={
+                        (
+                          (
+                            quoteDetailData?.dbProductDetails as Array<
+                              Record<string, unknown>
+                            >
+                          )?.[0] as Record<
+                            string,
+                            Record<string, Record<string, string>>
+                          >
+                        )?.wareHouse?.addressId as unknown as {
+                          addressLine?: string;
+                          district?: string;
+                          city?: string;
+                          state?: string;
+                          pinCodeId?: string;
+                          country?: string;
+                        }
+                      }
+                      salesBranch={
+                        (quoteDetailData?.sellerBranchName as string) ||
+                        undefined
+                      }
+                      requiredDate={
+                        (quoteDetailData?.customerRequiredDate ||
+                          quoteDetails?.data?.validityTill) as
+                          | string
+                          | undefined
+                      }
+                      referenceNumber={
+                        (quoteDetails?.data?.buyerReferenceNumber as string) ||
+                        "-"
+                      }
+                    />
 
-              {/* Loading State */}
-              {loading && (
-                <div className="space-y-4">
-                  <Skeleton className="h-64 w-full" />
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3 sm:gap-4 md:gap-6">
-                    <Skeleton className="h-48 w-full" />
-                    <Skeleton className="h-48 w-full" />
+                    {/* Terms Card */}
+                    <OrderTermsCard
+                      orderTerms={
+                        {
+                          ...(quoteDetailData?.quoteTerms as unknown as Record<
+                            string,
+                            unknown
+                          >),
+                          // Add additionalTerms from quotationDetails level
+                          additionalTerms:
+                            quoteDetailData?.additionalTerms as string,
+                        } as unknown as Record<string, unknown>
+                      }
+                    />
+                  </div>
+                )}
+
+                {/* Error State */}
+                {error && !loading && (
+                  <div className="bg-red-50 border border-red-200 rounded-lg p-6 text-center">
+                    <p className="text-red-600 font-medium">{error}</p>
+                    <button
+                      onClick={handleRefresh}
+                      className="mt-4 px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 transition-colors"
+                    >
+                      Retry
+                    </button>
+                  </div>
+                )}
+              </div>
+
+              {/* Right Side - Price Details - 40% */}
+              {!loading && !error && quoteDetails && (
+                <div className="w-full lg:w-[40%] space-y-2 sm:space-y-3 mt-[80px]">
+                  <Suspense fallback={<Skeleton className="h-96 w-full" />}>
+                    <OrderPriceDetails
+                      products={products}
+                      isInter={(() => {
+                        // Determine if inter-state based on product taxes (IGST = inter-state, SGST/CGST = intra-state)
+                        if (products.length > 0 && products[0]) {
+                          const firstProduct = products[0] as Record<
+                            string,
+                            unknown
+                          >;
+                          if (
+                            firstProduct.productTaxes &&
+                            Array.isArray(firstProduct.productTaxes)
+                          ) {
+                            const hasIGST = firstProduct.productTaxes.some(
+                              (t: Record<string, unknown>) =>
+                                t.taxName === "IGST"
+                            );
+                            return hasIGST;
+                          }
+                        }
+                        return false;
+                      })()}
+                      insuranceCharges={
+                        Number(quoteDetailData?.insuranceCharges) || 0
+                      }
+                      precision={2}
+                      Settings={{
+                        roundingAdjustment:
+                          quoteDetailData?.roundingAdjustmentEnabled || false,
+                      }}
+                      isSeller={
+                        (user as { isSeller?: boolean })?.isSeller || false
+                      }
+                      taxExemption={
+                        (user as { taxExemption?: boolean })?.taxExemption ||
+                        false
+                      }
+                      currency={buyerCurrencySymbol?.symbol || "INR ₹"}
+                      overallShipping={Number(
+                        quoteDetailData?.overallShipping || 0
+                      )}
+                      overallTax={Number(quoteDetailData?.overallTax || 0)}
+                      calculatedTotal={Number(
+                        quoteDetailData?.calculatedTotal ||
+                          quoteDetailData?.grandTotal ||
+                          0
+                      )}
+                      subTotal={Number(quoteDetailData?.subTotal || 0)}
+                      taxableAmount={Number(
+                        quoteDetailData?.taxableAmount || 0
+                      )}
+                    />
+                  </Suspense>
+
+                  {/* Customer Information Card */}
+                  <div className="mt-4">
+                    <Suspense fallback={<Skeleton className="h-64 w-full" />}>
+                      <CustomerInfoCard
+                        quoteValidity={{
+                          from:
+                            ((displayQuoteDetails?.validityFrom ||
+                              quoteDetails?.data?.validityFrom) as string) ||
+                            undefined,
+                          till:
+                            ((displayQuoteDetails?.validityTill ||
+                              quoteDetails?.data?.validityTill) as string) ||
+                            undefined,
+                        }}
+                        contractEnabled={
+                          ((displayQuoteDetails?.purchaseOrder ||
+                            quoteDetails?.data?.purchaseOrder) as boolean) ||
+                          false
+                        }
+                        endCustomerName={
+                          (
+                            quoteDetailData?.sprDetails as
+                              | { companyName?: string }
+                              | undefined
+                          )?.companyName || undefined
+                        }
+                        projectName={
+                          (
+                            quoteDetailData?.sprDetails as
+                              | { projectName?: string }
+                              | undefined
+                          )?.projectName || undefined
+                        }
+                        competitorNames={
+                          (
+                            quoteDetailData?.sprDetails as
+                              | { competitorNames?: string[] }
+                              | undefined
+                          )?.competitorNames || []
+                        }
+                        priceJustification={
+                          (
+                            quoteDetailData?.sprDetails as
+                              | { priceJustification?: string }
+                              | undefined
+                          )?.priceJustification || undefined
+                        }
+                      />
+                    </Suspense>
                   </div>
                 </div>
               )}
-
-              {/* Error State */}
-              {error && !loading && (
-                <div className="bg-red-50 border border-red-200 rounded-lg p-6 text-center">
-                  <p className="text-red-600 font-medium">{error}</p>
-                  <button
-                    onClick={handleRefresh}
-                    className="mt-4 px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 transition-colors"
-                  >
-                    Retry
-                  </button>
-                </div>
-              )}
             </div>
-
-            {/* Right Side - Price Details - 40% */}
-            {!loading && !error && quoteDetails && (
-              <div className="w-full lg:w-[40%] space-y-2 sm:space-y-3 mt-[60px]">
-                <Suspense fallback={<Skeleton className="h-96 w-full" />}>
-                  <OrderPriceDetails
-                    products={products}
-                    isInter={(() => {
-                      // Determine if inter-state based on product taxes (IGST = inter-state, SGST/CGST = intra-state)
-                      if (products.length > 0 && products[0]) {
-                        const firstProduct = products[0] as Record<
-                          string,
-                          unknown
-                        >;
-                        if (
-                          firstProduct.productTaxes &&
-                          Array.isArray(firstProduct.productTaxes)
-                        ) {
-                          const hasIGST = firstProduct.productTaxes.some(
-                            (t: Record<string, unknown>) => t.taxName === "IGST"
-                          );
-                          return hasIGST;
-                        }
-                      }
-                      return false;
-                    })()}
-                    insuranceCharges={
-                      Number(quoteDetailData?.insuranceCharges) || 0
-                    }
-                    precision={2}
-                    Settings={{
-                      roundingAdjustment:
-                        quoteDetailData?.roundingAdjustmentEnabled || false,
-                    }}
-                    isSeller={
-                      (user as { isSeller?: boolean })?.isSeller || false
-                    }
-                    taxExemption={
-                      (user as { taxExemption?: boolean })?.taxExemption ||
-                      false
-                    }
-                    currency={buyerCurrencySymbol?.symbol || "INR ₹"}
-                    overallShipping={Number(
-                      quoteDetailData?.overallShipping || 0
-                    )}
-                    overallTax={Number(quoteDetailData?.overallTax || 0)}
-                    calculatedTotal={Number(
-                      quoteDetailData?.calculatedTotal ||
-                        quoteDetailData?.grandTotal ||
-                        0
-                    )}
-                    subTotal={Number(quoteDetailData?.subTotal || 0)}
-                    taxableAmount={Number(quoteDetailData?.taxableAmount || 0)}
-                  />
-                </Suspense>
-
-                {/* Customer Information Card */}
-                <div className="mt-4">
-                  <Suspense fallback={<Skeleton className="h-64 w-full" />}>
-                    <CustomerInfoCard
-                      quoteValidity={{
-                        from:
-                          ((displayQuoteDetails?.validityFrom ||
-                            quoteDetails?.data?.validityFrom) as string) ||
-                          undefined,
-                        till:
-                          ((displayQuoteDetails?.validityTill ||
-                            quoteDetails?.data?.validityTill) as string) ||
-                          undefined,
-                      }}
-                      contractEnabled={
-                        ((displayQuoteDetails?.purchaseOrder ||
-                          quoteDetails?.data?.purchaseOrder) as boolean) ||
-                        false
-                      }
-                      endCustomerName={
-                        (
-                          quoteDetailData?.sprDetails as
-                            | { companyName?: string }
-                            | undefined
-                        )?.companyName || undefined
-                      }
-                      projectName={
-                        (
-                          quoteDetailData?.sprDetails as
-                            | { projectName?: string }
-                            | undefined
-                        )?.projectName || undefined
-                      }
-                      competitorNames={
-                        (
-                          quoteDetailData?.sprDetails as
-                            | { competitorNames?: string[] }
-                            | undefined
-                        )?.competitorNames || []
-                      }
-                      priceJustification={
-                        (
-                          quoteDetailData?.sprDetails as
-                            | { priceJustification?: string }
-                            | undefined
-                        )?.priceJustification || undefined
-                      }
-                    />
-                  </Suspense>
-                </div>
-              </div>
-            )}
-
-            {/* Loading State for Right Side */}
-            {loading && (
-              <div className="w-full lg:w-[40%] space-y-2 sm:space-y-3 mt-[60px]">
-                <Skeleton className="h-96 w-full" />
-                <Skeleton className="h-64 w-full" />
-              </div>
-            )}
-          </div>
-        </div>
+          )}
+        </PageLayout>
       </div>
 
       {/* Right Sidebar Icons - Positioned just below the SalesHeader component, flush to right edge */}
-      <div className="fixed right-0 top-[116px] z-50 bg-white border-l border-t border-b border-gray-200 shadow-lg rounded-l-lg p-1">
+      <div className="fixed right-0 top-[127px] z-50 bg-white border-l border-t border-b border-gray-200 shadow-lg rounded-l-lg p-1">
         <button
           className={`p-1.5 hover:bg-gray-100 rounded transition-colors ${
             versionsDialogOpen ? "bg-primary/10" : ""
@@ -863,6 +860,6 @@ export default function QuoteDetailsClient({
         currentVersionNumber={selectedVersion?.versionNumber || 1}
         onVersionSelect={handleVersionSelect}
       />
-    </div>
+    </ApplicationLayout>
   );
 }

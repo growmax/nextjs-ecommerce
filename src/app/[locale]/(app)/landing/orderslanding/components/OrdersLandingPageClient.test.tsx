@@ -1,4 +1,5 @@
 import React from "react";
+import "@testing-library/jest-dom";
 
 // Mock next-intl BEFORE any other imports
 jest.mock("next-intl", () => ({
@@ -52,39 +53,28 @@ jest.mock("./OrdersLandingTable/OrdersLandingTable", () => {
 });
 
 import { render } from "@testing-library/react";
-import { describe, expect, it } from "@jest/globals";
+import { describe, it } from "@jest/globals";
 import OrdersLandingPageClient from "./OrdersLandingPageClient";
 
 describe("OrdersLandingPageClient", () => {
-  it("should render with correct padding when sidebar is expanded", () => {
-    const { container } = render(<OrdersLandingPageClient />);
+  it("should render DashboardToolbar with correct title", () => {
+    const { getByTestId } = render(<OrdersLandingPageClient />);
 
-    // Find the toolbar container
-    const toolbarContainer = container.querySelector('[class*="mt-[10px]"]');
-
-    expect(toolbarContainer).toBeTruthy();
-    if (toolbarContainer) {
-      const classes = toolbarContainer.className;
-      // When sidebar is expanded, should have px-[0px] (from user's changes)
-      expect(classes).toContain("px-[0px]");
-    }
-  });
-
-  it("should render with correct padding when sidebar is collapsed", () => {
-    // This test verifies the component structure
-    // The actual sidebar state is mocked at the top level as "expanded"
-    // To test collapsed state, we'd need to restructure the test with separate describe blocks
-    // For now, we verify the component renders correctly
-    const { container } = render(<OrdersLandingPageClient />);
-    const toolbarContainer = container.querySelector('[class*="mt-[10px]"]');
-    expect(toolbarContainer).toBeTruthy();
-    // Note: Sidebar state is mocked as "expanded" at module level
-    // To test collapsed state, create a separate test file or use a different approach
+    const toolbar = getByTestId("dashboard-toolbar");
+    expect(toolbar).toBeInTheDocument();
+    expect(toolbar.textContent).toContain("Orders");
   });
 
   it("should render OrdersLandingTable component", () => {
     const { getByTestId } = render(<OrdersLandingPageClient />);
 
-    expect(getByTestId("orders-table")).toBeTruthy();
+    expect(getByTestId("orders-table")).toBeInTheDocument();
+  });
+
+  it("should render Export button in toolbar", () => {
+    const { getByTestId } = render(<OrdersLandingPageClient />);
+
+    const toolbar = getByTestId("dashboard-toolbar");
+    expect(toolbar.textContent).toContain("Export");
   });
 });

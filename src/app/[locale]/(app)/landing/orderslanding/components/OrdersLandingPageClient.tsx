@@ -1,9 +1,8 @@
 "use client";
 
 import { DashboardToolbar } from "@/components/custom/dashboard-toolbar";
-import { useSidebar } from "@/components/ui/sidebar";
+import { LandingLayout, PageLayout } from "@/components/layout";
 import { Toaster } from "@/components/ui/sonner";
-import { cn } from "@/lib/utils";
 import { Download } from "lucide-react";
 import { useCallback, useState } from "react";
 import { toast } from "sonner";
@@ -11,8 +10,6 @@ import OrdersLandingTable from "./OrdersLandingTable/OrdersLandingTable";
 
 export default function OrdersLandingPageClient() {
   const [refreshTrigger] = useState(0);
-  const { state: sidebarState } = useSidebar();
-  const isSidebarCollapsed = sidebarState === "collapsed";
 
   const [exportCallback, setExportCallback] = useState<(() => void) | null>(
     null
@@ -27,13 +24,8 @@ export default function OrdersLandingPageClient() {
   }, [exportCallback]);
 
   return (
-    <div className="w-full overflow-x-hidden">
-      <div
-        className={cn(
-          "mt-[10px] mb-[15px]",
-          isSidebarCollapsed ? "px-[45px]" : "px-[0px]"
-        )}
-      >
+    <LandingLayout>
+      <PageLayout>
         <DashboardToolbar
           title="Orders"
           primary={{
@@ -43,16 +35,16 @@ export default function OrdersLandingPageClient() {
             startIcon: <Download />,
           }}
         />
-      </div>
+      </PageLayout>
 
-      <div className="pb-[20px]">
+      <PageLayout variant="content">
         <OrdersLandingTable
           refreshTrigger={refreshTrigger}
           setExportCallback={setExportCallback}
         />
-      </div>
+      </PageLayout>
 
       <Toaster richColors />
-    </div>
+    </LandingLayout>
   );
 }

@@ -439,14 +439,14 @@ export default function OrderPriceDetails({
   const showPfRate = cartValue.pfRate > 0;
 
   return (
-    <Card className="shadow-sm bg-white p-0 m-0 overflow-hidden">
+    <Card className="shadow-sm bg-white p-0 m-0 overflow-hidden gap-4">
       <CardHeader className="px-4 py-2 bg-green-100 rounded-t-lg m-0 p-0 space-y-0">
         <CardTitle className="text-lg font-semibold text-gray-800 py-2 px-4">
           Price Details
         </CardTitle>
       </CardHeader>
 
-      <CardContent className="px-4 py-2 space-y-3 pt-0 pb-4">
+      <CardContent className="px-4 space-y-3 pt-0 pb-4">
         {/* Total Items */}
         {cartValue.totalItems > 0 && (
           <div className="grid grid-cols-2 gap-2">
