@@ -19,7 +19,8 @@ import {
 import { AvatarCard } from "@/components/AvatarCard/AvatarCard";
 import { Input } from "@/components/ui/input";
 import { Separator } from "@/components/ui/separator";
-import { SidebarTrigger } from "@/components/ui/sidebar";
+import { SidebarTrigger, useSidebar } from "@/components/ui/sidebar";
+import { cn } from "@/lib/utils";
 import { useCart } from "@/contexts/CartContext";
 import useLogout from "@/hooks/Auth/useLogout";
 import useUserProfile from "@/hooks/Profile/useUserProfile";
@@ -228,9 +229,20 @@ export function AppHeader() {
     return () => document.removeEventListener("keydown", down);
   }, []);
 
+  const { state: sidebarState } = useSidebar();
+  const isSidebarCollapsed = sidebarState === "collapsed";
+
   return (
     <>
-      <header className="sticky top-0 z-50 w-full border-b bg-background/80 backdrop-blur-md supports-[backdrop-filter]:bg-background/80">
+      <header
+        className={cn(
+          "fixed top-0 z-[100] border-b bg-background/80 backdrop-blur-md supports-[backdrop-filter]:bg-background/80 transition-all duration-200",
+          isSidebarCollapsed
+            ? "left-[var(--sidebar-width-icon)]"
+            : "left-[var(--sidebar-width)]"
+        )}
+        style={{ right: 0 }}
+      >
         <div className="flex h-16 items-center gap-2 px-4 transition-[width,height] ease-linear group-has-data-[collapsible=icon]/sidebar-wrapper:h-12">
           {/* Mobile: Search icon moved to left (after sidebar trigger) */}
           <div className="md:hidden">

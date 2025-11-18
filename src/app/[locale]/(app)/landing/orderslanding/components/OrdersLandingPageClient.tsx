@@ -1,14 +1,18 @@
 "use client";
 
 import { DashboardToolbar } from "@/components/custom/dashboard-toolbar";
+import { useSidebar } from "@/components/ui/sidebar";
 import { Toaster } from "@/components/ui/sonner";
+import { cn } from "@/lib/utils";
 import { Download } from "lucide-react";
 import { useCallback, useState } from "react";
 import { toast } from "sonner";
 import OrdersLandingTable from "./OrdersLandingTable/OrdersLandingTable";
 
 export default function OrdersLandingPageClient() {
-  const [refreshTrigger, setRefreshTrigger] = useState(0);
+  const [refreshTrigger] = useState(0);
+  const { state: sidebarState } = useSidebar();
+  const isSidebarCollapsed = sidebarState === "collapsed";
 
   const [exportCallback, setExportCallback] = useState<(() => void) | null>(
     null
@@ -22,32 +26,33 @@ export default function OrdersLandingPageClient() {
     }
   }, [exportCallback]);
 
-  const handleRefresh = useCallback(() => {
-    setRefreshTrigger(prev => prev + 1);
-    toast.success("Data has been refreshed successfully!");
-  }, []);
-
   return (
-    <>
-      <DashboardToolbar
-        title="Orders"
-        secondary={{
-          condition: true,
-          value: "Export",
-          handleClick: handleExport,
-          startIcon: <Download />,
-        }}
-        refresh={{
-          condition: true,
-          handleRefresh,
-        }}
-      />
-      <OrdersLandingTable
-        refreshTrigger={refreshTrigger}
-        setExportCallback={setExportCallback}
-      />
+    <div className="w-full overflow-x-hidden">
+      <div
+        className={cn(
+          "mt-[10px] mb-[15px]",
+          isSidebarCollapsed ? "px-[45px]" : "px-[0px]"
+        )}
+      >
+        <DashboardToolbar
+          title="Orders"
+          primary={{
+            condition: true,
+            value: "Export",
+            handleClick: handleExport,
+            startIcon: <Download />,
+          }}
+        />
+      </div>
+
+      <div className="pb-[20px]">
+        <OrdersLandingTable
+          refreshTrigger={refreshTrigger}
+          setExportCallback={setExportCallback}
+        />
+      </div>
 
       <Toaster richColors />
-    </>
+    </div>
   );
 }
