@@ -14,15 +14,8 @@ export const metadata: Metadata = {
 // Search results can be cached but refreshed more frequently than homepage
 export const revalidate = 1800; // 30 minutes
 
-interface SearchPageProps {
-  searchParams: Promise<{
-    query?: string;
-  }>;
-}
-
-export default async function SearchPage({ searchParams }: SearchPageProps) {
-  const resolvedSearchParams = await searchParams;
-  const query = resolvedSearchParams.query || "";
+export default function SearchPage({ searchParams }: { searchParams: any }) {
+  const query = (searchParams && searchParams.query) || "";
 
   return (
     <div className="container mx-auto px-4 py-8">

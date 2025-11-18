@@ -7,14 +7,18 @@ import ProductInfo from "@/components/product/ProductInfo";
 import ProductPageClient from "@/components/product/ProductPageClient";
 import ProductPageClientContainer from "@/components/product/ProductPageClientContainer";
 import { ProductStructuredData } from "@/components/seo/ProductStructuredData";
-import { Button } from "@/components/ui/button";
-import { ProductPageService } from "@/lib/api";
-import { ProductAsset, ProductDetail } from "@/types/product/product-detail";
-import { ProductPageProps } from "@/types/product/product-page";
+import { ProductPageService } from "@/lib/api/services/ProductPageService";
+import { ProductDetail, ProductAsset } from "@/types/product/product-detail";
 import { parseProductSlug } from "@/utils/product/slug-generator";
 import { Metadata } from "next";
 import { Suspense } from "react";
 import { ProductVariantProvider } from "@/contexts/ProductVariantContext";
+import { Button } from "@/components/ui/button";
+
+// Helper to get context (tenant data and origin)
+async function getContext() {
+  return await ProductPageService.getProductPageContext();
+}
 
 // Configs...
 export const revalidate = 3600;
@@ -74,10 +78,11 @@ export async function generateStaticParams() {
 
 export async function generateMetadata({
   params,
-}: ProductPageProps): Promise<Metadata> {
-  const { slug } = await params;
-  const { tenantData, origin } =
-    await ProductPageService.getProductPageContext();
+}: {
+  params: any;
+}): Promise<Metadata> {
+  const { slug, locale: _locale } = params;
+  const { tenantData, origin } = await getContext();
 
   try {
     if (!tenantData?.data?.tenant?.elasticCode) {
@@ -233,10 +238,9 @@ export async function generateMetadata({
   }
 }
 
-export default async function ProductPage({ params }: ProductPageProps) {
-  const { slug } = await params;
-  const { tenantData, origin } =
-    await ProductPageService.getProductPageContext();
+export default async function ProductPage({ params }: { params: any }) {
+  const { slug, locale: _locale } = params;
+  const { tenantData, origin } = await getContext();
   if (!tenantData?.data?.tenant?.elasticCode) {
     return (
       <PageContent>
