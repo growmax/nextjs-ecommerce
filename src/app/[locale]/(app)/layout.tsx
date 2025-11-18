@@ -72,9 +72,7 @@ export default async function AppLayout({
                 <AppSidebar />
                 <SidebarInset className="flex flex-col w-full overflow-x-hidden">
                   <AppHeader />
-                  <main className="w-full overflow-x-hidden pt-16">
-                    {children}
-                  </main>
+                  <main className="w-full overflow-x-hidden">{children}</main>
                 </SidebarInset>
               </SidebarProvider>
             </TenantDataProvider>

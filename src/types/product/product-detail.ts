@@ -61,6 +61,7 @@ export interface ProductCategory {
   subCategoryId?: number;
   subCategoryName?: string;
   subCategoryImage?: string;
+  fullPathNames?: string;
 }
 
 export interface ProductSpecification {
