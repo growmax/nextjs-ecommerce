@@ -28,12 +28,18 @@ export async function getDomainInfo(): Promise<{
         headersList.get("x-tenant-domain") ??
         headersList.get("host") ??
         defaultDomain;
-      const headerOrigin =
+      let headerOrigin =
         headersList.get("x-tenant-origin") ??
         headersList.get("origin") ??
         (env === "production"
           ? `https://${headerDomain}`
           : `http://${headerDomain}`);
+
+      // Ensure origin has protocol
+      if (headerOrigin && !headerOrigin.startsWith("http")) {
+        const protocol = env === "production" ? "https" : "http";
+        headerOrigin = `${protocol}://${headerOrigin}`;
+      }
 
       return { domainUrl: headerDomain, origin: headerOrigin };
     } catch {
