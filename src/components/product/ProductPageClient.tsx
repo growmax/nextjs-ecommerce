@@ -51,6 +51,7 @@ export default function ProductPageClient({
   const { setSelectedVariant } = useProductVariantContext();
   const {
     variantGroups,
+    variantAttributes,
     selectedVariant,
     selection,
     isLoading,
@@ -139,6 +140,7 @@ export default function ProductPageClient({
         variantGroups={variantGroups}
         selection={selection}
         onSelectionChange={handleSelectionChange}
+        variantAttributes={variantAttributes}
       />
     </div>
   );

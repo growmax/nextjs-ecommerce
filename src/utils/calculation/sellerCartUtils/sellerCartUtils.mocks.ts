@@ -184,7 +184,7 @@ export const mockSellerCartsWithPricingSource = {
       },
       {
         productId: "prod-2",
-        pricingSource: "getAllSellerPrices-exact",
+        pricingSource: "no-seller-id",
       },
     ],
   },
@@ -192,7 +192,7 @@ export const mockSellerCartsWithPricingSource = {
     items: [
       {
         productId: "prod-3",
-        pricingSource: "getAllSellerPrices-cross-seller",
+        pricingSource: "seller-specific",
       },
       {
         productId: "prod-4",

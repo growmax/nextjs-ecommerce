@@ -1,5 +1,6 @@
 "use client";
 
+import PricingFormat from "@/components/PricingFormat";
 import { useDashboardChartData } from "@/hooks/useDashboardData";
 import { TrendingDown, TrendingUp } from "lucide-react";
 import { Area, AreaChart, CartesianGrid, XAxis, YAxis } from "recharts";
@@ -72,14 +73,6 @@ export function DashboardChart() {
   }
 
   const isTrendingUp = trendPercentage > 0;
-  const formatCurrency = (value: number) => {
-    return new Intl.NumberFormat("en-IN", {
-      style: "currency",
-      currency: "INR",
-      minimumFractionDigits: 0,
-      maximumFractionDigits: 0,
-    }).format(value);
-  };
 
   // Custom tooltip to show all details
   const CustomTooltipContent = ({
@@ -107,7 +100,7 @@ export function DashboardChart() {
             <div className="flex justify-between items-center">
               <span className="text-muted-foreground">Total Revenue:</span>
               <span className="font-medium">
-                {formatCurrency(Number(dataPoint.total) || 0)}
+                <PricingFormat value={Number(dataPoint.total) || 0} />
               </span>
             </div>
 
@@ -121,7 +114,7 @@ export function DashboardChart() {
                   Orders:
                 </span>
                 <span className="font-medium">
-                  {formatCurrency(Number(dataPoint.orders) || 0)}
+                  <PricingFormat value={Number(dataPoint.orders) || 0} />
                 </span>
               </div>
               <div className="flex justify-between items-center text-muted-foreground ml-3">
@@ -140,7 +133,7 @@ export function DashboardChart() {
                   Quotes:
                 </span>
                 <span className="font-medium">
-                  {formatCurrency(Number(dataPoint.quotes) || 0)}
+                  <PricingFormat value={Number(dataPoint.quotes) || 0} />
                 </span>
               </div>
               <div className="flex justify-between items-center text-muted-foreground ml-3">
@@ -165,7 +158,7 @@ export function DashboardChart() {
                   <div className="flex justify-between items-center ml-3">
                     <span>Invoiced:</span>
                     <span>
-                      {formatCurrency(Number(dataPoint.invoiced) || 0)}
+                      <PricingFormat value={Number(dataPoint.invoiced) || 0} />
                     </span>
                   </div>
                 )}
@@ -173,21 +166,21 @@ export function DashboardChart() {
                   <div className="flex justify-between items-center ml-3">
                     <span>Acknowledged:</span>
                     <span>
-                      {formatCurrency(Number(dataPoint.acknowledged) || 0)}
+                      <PricingFormat value={Number(dataPoint.acknowledged) || 0} />
                     </span>
                   </div>
                 )}
                 {(Number(dataPoint.booked) || 0) > 0 && (
                   <div className="flex justify-between items-center ml-3">
                     <span>Booked:</span>
-                    <span>{formatCurrency(Number(dataPoint.booked) || 0)}</span>
+                    <span><PricingFormat value={Number(dataPoint.booked) || 0} /></span>
                   </div>
                 )}
                 {(Number(dataPoint.received) || 0) > 0 && (
                   <div className="flex justify-between items-center ml-3">
                     <span>Received:</span>
                     <span>
-                      {formatCurrency(Number(dataPoint.received) || 0)}
+                      <PricingFormat value={Number(dataPoint.received) || 0} />
                     </span>
                   </div>
                 )}
@@ -195,7 +188,7 @@ export function DashboardChart() {
                   <div className="flex justify-between items-center ml-3">
                     <span>Edit Enabled:</span>
                     <span>
-                      {formatCurrency(Number(dataPoint.editEnabled) || 0)}
+                      <PricingFormat value={Number(dataPoint.editEnabled) || 0} />
                     </span>
                   </div>
                 )}
@@ -203,7 +196,7 @@ export function DashboardChart() {
                   <div className="flex justify-between items-center ml-3">
                     <span>Requested Edit:</span>
                     <span>
-                      {formatCurrency(Number(dataPoint.requestedEdit) || 0)}
+                      <PricingFormat value={Number(dataPoint.requestedEdit) || 0} />
                     </span>
                   </div>
                 )}
@@ -211,7 +204,7 @@ export function DashboardChart() {
                   <div className="flex justify-between items-center ml-3">
                     <span>Partially Shipped:</span>
                     <span>
-                      {formatCurrency(Number(dataPoint.partiallyShipped) || 0)}
+                      <PricingFormat value={Number(dataPoint.partiallyShipped) || 0} />
                     </span>
                   </div>
                 )}
@@ -231,21 +224,21 @@ export function DashboardChart() {
                   <div className="flex justify-between items-center ml-3">
                     <span>In Progress:</span>
                     <span>
-                      {formatCurrency(Number(dataPoint.inProgress) || 0)}
+                      <PricingFormat value={Number(dataPoint.inProgress) || 0} />
                     </span>
                   </div>
                 )}
                 {(Number(dataPoint.open) || 0) > 0 && (
                   <div className="flex justify-between items-center ml-3">
                     <span>Open:</span>
-                    <span>{formatCurrency(Number(dataPoint.open) || 0)}</span>
+                    <span><PricingFormat value={Number(dataPoint.open) || 0} /></span>
                   </div>
                 )}
                 {(Number(dataPoint.orderPlaced) || 0) > 0 && (
                   <div className="flex justify-between items-center ml-3">
                     <span>Order Placed:</span>
                     <span>
-                      {formatCurrency(Number(dataPoint.orderPlaced) || 0)}
+                      <PricingFormat value={Number(dataPoint.orderPlaced) || 0} />
                     </span>
                   </div>
                 )}
@@ -253,7 +246,7 @@ export function DashboardChart() {
                   <div className="flex justify-between items-center ml-3">
                     <span>Quote Sent:</span>
                     <span>
-                      {formatCurrency(Number(dataPoint.quoteSent) || 0)}
+                      <PricingFormat value={Number(dataPoint.quoteSent) || 0} />
                     </span>
                   </div>
                 )}
@@ -353,7 +346,7 @@ export function DashboardChart() {
             </div>
             <div className="text-muted-foreground flex items-center gap-2 leading-none">
               {dateRange} • Total Revenue:{" "}
-              {formatCurrency(Number(stats?.totalRevenue) || 0)} •{" "}
+              <PricingFormat value={Number(stats?.totalRevenue) || 0} /> •{" "}
               {Number(stats?.totalTransactions) || 0} transactions
             </div>
           </div>

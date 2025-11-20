@@ -1,5 +1,6 @@
 import type { ProductDetail } from "@/types/product/product-detail";
-import { extractOpenSearchHits } from "@/utils/opensearch/response-parser";
+import type { ProductGroup, ElasticVariantAttributes } from "@/types/product/product-group";
+import { extractOpenSearchHits, extractOpenSearchData } from "@/utils/opensearch/response-parser";
 import { openSearchClient, RequestContext } from "../client";
 import { BaseService } from "./BaseService";
 
@@ -42,11 +43,90 @@ export interface VariantSelection {
   [key: string]: string | undefined;
 }
 
+/**
+ * VariantGroupData - Complete variant data including Product Group structure
+ */
+export interface VariantGroupData {
+  variantAttributes: ElasticVariantAttributes[];
+  variants: VariantData[];
+  productGroup: ProductGroup | null;
+}
+
 export class VariantService extends BaseService<VariantService> {
   protected defaultClient = openSearchClient;
 
   /**
+   * Fetch Product Group document by ID
+   * Product Group contains variantAttributeses which define the variant structure
+   * 
+   * @param productGroupId - Product Group ID number
+   * @param elasticIndex - OpenSearch index name
+   * @param pgIndexName - Optional: Product Group index name from product data (most reliable)
+   * @param context - Optional request context
+   */
+  async getProductGroup(
+    productGroupId: number,
+    elasticIndex: string,
+    pgIndexName?: string,
+    context?: RequestContext
+  ): Promise<ProductGroup | null> {
+    try {
+      // Use provided pgIndexName if available, otherwise construct it
+      // Backend format: PrdGrp{ProductGroupId} with 9 digits (e.g., PrdGrp000054518)
+      // Matches backend code: PadLeft(strconv.Itoa(int(elasticPG.ProductGroupId)), 9)
+      const indexName = pgIndexName || `PrdGrp${String(productGroupId).padStart(9, "0")}`;
+      
+      console.log("Fetching Product Group:", indexName, "from index:", elasticIndex);
+
+      const body = {
+        Elasticindex: elasticIndex,
+        ElasticBody: indexName,
+        ElasticType: "pgproduct",
+        queryType: "get",
+      };
+
+      const options: { method: "POST"; context?: RequestContext } = {
+        method: "POST",
+      };
+      if (context) options.context = context;
+
+      const response = await this.callWith("", body, options);
+      console.log("Product Group response:", response);
+
+      const productGroup = extractOpenSearchData<ProductGroup>(response);
+      console.log("Extracted Product Group:", productGroup);
+
+      return productGroup;
+    } catch (error) {
+      // Check if it's a 404 (document not found) - this is expected for some product groups
+      // The error might be wrapped in ApiClientError or contain OpenSearch response structure
+      const errorObj = error as {
+        status?: number;
+        response?: { status?: number; data?: { error?: { meta?: { body?: { found?: boolean; statusCode?: number } } } } };
+        data?: { error?: { meta?: { body?: { found?: boolean; statusCode?: number } } } };
+      };
+      
+      const isNotFound = 
+        errorObj.status === 404 ||
+        errorObj.response?.status === 404 ||
+        errorObj.response?.data?.error?.meta?.body?.found === false ||
+        (errorObj.response?.data?.error?.meta?.body?.statusCode !== undefined && errorObj.response.data.error.meta.body.statusCode === 404) ||
+        errorObj.data?.error?.meta?.body?.found === false ||
+        (errorObj.data?.error?.meta?.body?.statusCode !== undefined && errorObj.data.error.meta.body.statusCode === 404);
+      
+      if (isNotFound) {
+        console.log("Product Group not found (404) - will use fallback variant grouping from products");
+      } else {
+        console.warn("Error fetching Product Group (may not exist):", error);
+      }
+      // Return null if Product Group not found - this is acceptable for fallback
+      return null;
+    }
+  }
+
+  /**
    * Fetch all variants for a product group
+   * Returns both Product Group structure and variant products
    */
   async getVariantsByGroup(
     productGroupId: number,
@@ -177,14 +257,22 @@ export class VariantService extends BaseService<VariantService> {
 
   /**
    * Group variants by attribute type
+   * Fallback method when Product Group data is not available
    */
   groupVariantsByAttributes(variants: VariantData[]) {
     const groups: Record<
       string,
-      Array<{ value: string; count: number; hexCode?: string }>
+      Array<{ value: string; count: number; hexCode?: string; available: boolean }>
     > = {};
 
+    console.log("Grouping variants by attributes. Total variants:", variants.length);
+    
     variants.forEach(variant => {
+      const attributeCount = Object.keys(variant.attributes).length;
+      if (attributeCount === 0) {
+        console.log(`Variant ${variant.product_id} has no attributes`);
+      }
+      
       Object.entries(variant.attributes).forEach(([key, value]) => {
         if (!value) return;
 
@@ -197,15 +285,25 @@ export class VariantService extends BaseService<VariantService> {
         );
         if (existing) {
           existing.count++;
+          // Update availability if this variant is available
+          if (variant.availability) {
+            existing.available = true;
+          }
         } else {
           const hexCode = this.getColorHexCode(value);
           groups[key].push({
             value,
             count: 1,
             ...(hexCode ? { hexCode } : {}),
+            available: variant.availability,
           });
         }
       });
+    });
+
+    console.log("Variant groups created:", Object.keys(groups).length, "attribute types");
+    Object.entries(groups).forEach(([key, values]) => {
+      console.log(`  ${key}: ${values.length} options`);
     });
 
     return groups;
@@ -236,6 +334,99 @@ export class VariantService extends BaseService<VariantService> {
     };
 
     return colorMap[colorName.toLowerCase()];
+  }
+
+  /**
+   * Fetch Product Group and all variants together
+   * Returns complete variant data including Product Group structure
+   * 
+   * @param productGroupId - Product Group ID number
+   * @param elasticIndex - OpenSearch index name
+   * @param pgIndexName - Optional: Product Group index name from product data
+   * @param context - Optional request context
+   */
+  async getVariantsWithGroup(
+    productGroupId: number,
+    elasticIndex: string,
+    pgIndexName?: string,
+    context?: RequestContext
+  ): Promise<VariantGroupData> {
+    try {
+      // First fetch Product Group to get variantAttributeses
+      const productGroup = await this.getProductGroup(
+        productGroupId,
+        elasticIndex,
+        pgIndexName,
+        context
+      );
+
+      // Then fetch all products in the group
+      const variants = await this.getVariantsByGroup(
+        productGroupId,
+        elasticIndex,
+        context
+      );
+
+      return {
+        variantAttributes: productGroup?.variantAttributeses || [],
+        variants,
+        productGroup,
+      };
+    } catch (error) {
+      console.error("Error in getVariantsWithGroup:", error);
+      // Return empty structure on error
+      return {
+        variantAttributes: [],
+        variants: [],
+        productGroup: null,
+      };
+    }
+  }
+
+  /**
+   * Group variants by Product Group attributes structure
+   * Uses variantAttributeses from Product Group to structure the UI
+   */
+  groupVariantsByProductGroupAttributes(
+    variantAttributes: ElasticVariantAttributes[],
+    variants: VariantData[]
+  ): Record<string, Array<{ value: string; count: number; hexCode?: string; available: boolean }>> {
+    const groups: Record<
+      string,
+      Array<{ value: string; count: number; hexCode?: string; available: boolean }>
+    > = {};
+
+    // Use Product Group structure as the base
+    variantAttributes.forEach(attr => {
+      const attrKey = attr.name.toLowerCase().replace(/\s+/g, "_");
+      groups[attrKey] = [];
+
+      // For each option defined in Product Group
+      attr.options.forEach(option => {
+        // Check if any variant has this attribute value
+        const matchingVariants = variants.filter(variant => {
+          const variantAttrValue = variant.attributes[attrKey];
+          return variantAttrValue && 
+                 variantAttrValue.toLowerCase() === option.toLowerCase();
+        });
+
+        const available = matchingVariants.length > 0 && 
+                         matchingVariants.some(v => v.availability);
+
+        const hexCode = attr.displayType === "color" ? this.getColorHexCode(option) : undefined;
+        const groupArray = groups[attrKey];
+        if (groupArray) {
+          groupArray.push({
+            value: option,
+            count: matchingVariants.length,
+            ...(hexCode ? { hexCode } : {}),
+            available,
+          });
+        }
+      });
+    });
+
+    return groups;
   }
 
   /**

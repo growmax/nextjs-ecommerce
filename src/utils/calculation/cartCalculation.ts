@@ -49,6 +49,10 @@ export const cartCalculation = (
     if (!data.itemNo) {
       data.itemNo = new Date().getTime() + index;
     }
+    // Set askedQuantity if not already set (used in tax calculations)
+    if (!data.askedQuantity) {
+      data.askedQuantity = data.quantity;
+    }
     data.pfItemValue = data.pfItemValue ? data.pfItemValue : 0;
     data.pfRate = round(data.totalPrice * (data.pfItemValue / 100), precision);
     data.itemTaxableAmount = data.unitPrice + data.pfRate / data.askedQuantity;
@@ -83,6 +87,7 @@ export const cartCalculation = (
           } else {
             data[`${inter.taxName}Value`] =
               (intraTotalTax * inter.taxPercentage) / 100;
+            intraTotalTax += data[`${inter.taxName}Value`];
           }
           cartValue[`${inter.taxName}Total`] = cartValue[
             `${inter.taxName}Total`
@@ -90,9 +95,9 @@ export const cartCalculation = (
             ? cartValue[`${inter.taxName}Total`]
             : 0;
           cartValue[`${inter.taxName}Total`] += data[`${inter.taxName}Value`];
-          data.totalTax =
-            ((data.totalPrice + data.pfRate) * data.totalInterTax) / 100;
         });
+        // Calculate totalTax as sum of all tax values for inter tax
+        data.totalTax = round(intraTotalTax, precision);
       } else {
         data.totalTax = 0;
       }
@@ -109,6 +114,7 @@ export const cartCalculation = (
           } else {
             data[`${intra.taxName}Value`] =
               (interTotalTax * intra.taxPercentage) / 100;
+            interTotalTax += data[`${intra.taxName}Value`];
           }
           cartValue[`${intra.taxName}Total`] = cartValue[
             `${intra.taxName}Total`
@@ -116,8 +122,9 @@ export const cartCalculation = (
             ? cartValue[`${intra.taxName}Total`]
             : 0;
           cartValue[`${intra.taxName}Total`] += data[`${intra.taxName}Value`];
-          data.totalTax = interTotalTax;
         });
+        // Calculate totalTax as sum of all tax values for intra tax
+        data.totalTax = round(interTotalTax, precision);
       } else {
         data.totalTax = 0;
       }
@@ -158,22 +165,27 @@ export const cartCalculation = (
     cartValue.totalTax += data.totalTax;
     cartValue.totalValue += data.totalPrice;
     cartValue.pfRate += data.pfRate;
-    cartValue.taxableAmount = cartValue.totalValue + cartValue.pfRate;
-    cartValue.insuranceCharges = round(insuranceCharges, precision);
-    //REVIEW - Grand Total Calculation based on rounding adjustment
-    // Note: Cash discount is already applied to unit prices, so totalValue already reflects the discount
-    cartValue.calculatedTotal =
-      cartValue.totalTax +
-      cartValue.totalValue +
-      cartValue.pfRate +
-      cartValue.insuranceCharges;
-    cartValue.grandTotal = Settings?.roundingAdjustment
-      ? round(cartValue.calculatedTotal)
-      : cartValue.calculatedTotal;
-    cartValue.roundingAdjustment =
-      cartValue.grandTotal - cartValue.calculatedTotal;
+
     return data;
   });
+
+  // Calculate final totals after all items processed
+  cartValue.taxableAmount = cartValue.totalValue + cartValue.pfRate;
+  cartValue.insuranceCharges = round(insuranceCharges, precision);
+  //REVIEW - Grand Total Calculation based on rounding adjustment
+  // Note: Cash discount is already applied to unit prices, so totalValue already reflects the discount
+  // Note: Shipping charges are NOT included in calculatedTotal/grandTotal for cart page
+  // Shipping is calculated separately at checkout
+  cartValue.calculatedTotal =
+    cartValue.totalTax +
+    cartValue.totalValue +
+    cartValue.pfRate +
+    cartValue.insuranceCharges;
+  cartValue.grandTotal = Settings?.roundingAdjustment
+    ? round(cartValue.calculatedTotal)
+    : cartValue.calculatedTotal;
+  cartValue.roundingAdjustment =
+    cartValue.grandTotal - cartValue.calculatedTotal;
   if (some(cartArray, item => item.totalPrice < 0)) {
     cartValue.hasProductsWithNegativeTotalPrice = true;
   } else {
