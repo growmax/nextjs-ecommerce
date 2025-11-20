@@ -8,13 +8,13 @@ import ProductPageClient from "@/components/product/ProductPageClient";
 import ProductPageClientContainer from "@/components/product/ProductPageClientContainer";
 import { ProductStructuredData } from "@/components/seo/ProductStructuredData";
 import { Button } from "@/components/ui/button";
+import { ProductVariantProvider } from "@/contexts/ProductVariantContext";
 import { ProductPageService } from "@/lib/api";
 import { ProductAsset, ProductDetail } from "@/types/product/product-detail";
 import { ProductPageProps } from "@/types/product/product-page";
 import { parseProductSlug } from "@/utils/product/slug-generator";
-import { Metadata } from "next";
+import { Metadata, Viewport } from "next";
 import { Suspense } from "react";
-import { ProductVariantProvider } from "@/contexts/ProductVariantContext";
 
 // Configs...
 export const revalidate = 3600;
@@ -70,6 +70,18 @@ export async function generateStaticParams() {
   } catch {
     return [];
   }
+}
+
+/**
+ * Generate viewport settings for product pages
+ * Separated from metadata as per Next.js 15+ requirements
+ */
+export async function generateViewport(): Promise<Viewport> {
+  return {
+    width: "device-width",
+    initialScale: 1,
+    themeColor: "#ffffff",
+  };
 }
 
 export async function generateMetadata({
@@ -208,10 +220,6 @@ export async function generateMetadata({
       authors: [{ name: brandName }],
       creator: brandName,
       publisher: brandName,
-
-      // Enhanced viewport and theme color
-      viewport: "width=device-width, initial-scale=1",
-      themeColor: "#ffffff",
 
       // Manifest for PWA
       manifest: "/manifest.json",

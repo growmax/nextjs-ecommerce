@@ -5,7 +5,7 @@ import { useCurrentUser } from "@/hooks/useCurrentUser";
 import { useTenantData } from "@/hooks/useTenantData";
 import { useRouter } from "@/i18n/navigation";
 import { CartService } from "@/lib/api/CartServices";
-import { Minus, Plus, ShoppingCart } from "lucide-react";
+import { Minus, Plus, ShoppingCart, Trash2 } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
 
@@ -23,34 +23,24 @@ export default function AddToCartSection({
 }: AddToCartSectionProps) {
   const [quantity, setQuantity] = useState(1);
   const [isAddingToCart, setIsAddingToCart] = useState(false);
+  const [showQuantity, setShowQuantity] = useState(false);
   const { user } = useCurrentUser();
   const { tenantData } = useTenantData();
   const router = useRouter();
 
-  const handleQuantityChange = (action: "increment" | "decrement") => {
-    setQuantity(prev => {
-      if (action === "increment") {
-        return prev + 1;
-      }
-      return prev > 1 ? prev - 1 : 1;
-    });
+  // Validation helper
+  const validateBeforeAdd = (): "ok" | "login" | "unavailable" => {
+    if (!user?.userId) return "login";
+    if (!isAvailable) return "unavailable";
+    return "ok";
   };
 
-  const handleAddToCart = async () => {
-    if (!user?.userId) {
-      toast.info("Please login to add products to cart");
-      router.push("/auth/login");
-      return;
-    }
-
-    if (!isAvailable) {
-      toast.error("This product is currently unavailable");
-      return;
-    }
+  // Reusable API function
+  const updateCart = async (newQuantity: number): Promise<boolean> => {
+    if (!user?.userId) return false;
 
     try {
       setIsAddingToCart(true);
-
       await CartServices.postCart({
         userId: Number(user.userId),
         tenantId: tenantData?.tenant?.tenantCode || "",
@@ -58,61 +48,128 @@ export default function AddToCartSection({
         body: {
           productsId: productId,
           productId: productId,
-          quantity,
+          quantity: newQuantity,
           itemNo: 0,
           pos: 0,
           addBundle: true,
         },
       });
-
       toast.success(
-        `${quantity} ${quantity > 1 ? "items" : "item"} added to cart`
+        `Cart updated: ${newQuantity} ${newQuantity > 1 ? "items" : "item"}`
       );
-      setQuantity(1); // Reset quantity after adding
+      return true;
     } catch {
-      toast.error("Failed to add product to cart. Please try again.");
+      toast.error("Failed to update cart. Please try again.");
+      return false;
     } finally {
       setIsAddingToCart(false);
     }
   };
 
+  // Remove from cart
+  const handleRemoveFromCart = () => {
+    setQuantity(1);
+    setShowQuantity(false);
+    setIsAddingToCart(false);
+    toast.info("Removed from cart");
+  };
+
+  // Unified quantity change handler
+  const handleQuantityChange = async (
+    action: "initial" | "increment" | "decrement"
+  ) => {
+    // Handle initial add to cart
+    if (action === "initial") {
+      const validation = validateBeforeAdd();
+      if (validation === "login") {
+        toast.info("Please login to add products to cart");
+        router.push("/auth/login");
+        return;
+      }
+      if (validation === "unavailable") {
+        toast.error("This product is currently unavailable");
+        return;
+      }
+      setQuantity(1);
+      setShowQuantity(true);
+      const success = await updateCart(1);
+      if (!success) {
+        toast.info("Please login to add products to cart");
+        router.push("/auth/login");
+      }
+      return;
+    }
+
+    // Handle increment
+    if (action === "increment") {
+      const newQuantity = quantity + 1;
+      setQuantity(newQuantity);
+      const success = await updateCart(newQuantity);
+      if (!success) {
+        toast.info("Please login to update cart");
+        router.push("/auth/login");
+      }
+      return;
+    }
+
+    // Handle decrement
+    if (action === "decrement") {
+      const newQuantity = Math.max(1, quantity - 1);
+      if (newQuantity === 1 && quantity === 1) {
+        handleRemoveFromCart();
+        return;
+      }
+      setQuantity(newQuantity);
+      const success = await updateCart(newQuantity);
+      if (!success) {
+        toast.info("Please login to update cart");
+        router.push("/auth/login");
+      }
+    }
+  };
   return (
     <div className="hidden lg:block space-y-4">
-      <div className="flex items-center gap-4">
-        <span className="text-sm font-medium">Quantity:</span>
-        <div className="flex items-center border rounded-lg">
+      {!showQuantity ? (
+        <Button
+          size="lg"
+          className="w-full h-11 text-sm font-semibold"
+          onClick={() => handleQuantityChange("initial")}
+          disabled={!isAvailable || isAddingToCart}
+        >
+          <ShoppingCart className="mr-2 h-4 w-4" />
+          {isAddingToCart ? "ADDING..." : "ADD TO CART"}
+        </Button>
+      ) : (
+        <div className="flex items-center border rounded-lg h-11 w-full">
           <Button
             variant="ghost"
             size="icon"
-            onClick={() => handleQuantityChange("decrement")}
-            disabled={quantity <= 1}
-            className="rounded-r-none"
+            onClick={
+              quantity === 1
+                ? handleRemoveFromCart
+                : () => handleQuantityChange("decrement")
+            }
+            className="rounded-r-none h-full w-14 flex items-center justify-center"
           >
-            <Minus className="h-4 w-4" />
+            {quantity === 1 ? (
+              <Trash2 className="h-4 w-4 text-red-500" />
+            ) : (
+              <Minus className="h-4 w-4" />
+            )}
           </Button>
-          <div className="w-16 text-center font-medium border-x py-2">
+          <div className="flex-1 text-center font-semibold text-base border-x py-2 h-full flex items-center justify-center">
             {quantity}
           </div>
           <Button
             variant="ghost"
             size="icon"
             onClick={() => handleQuantityChange("increment")}
-            className="rounded-l-none"
+            className="rounded-l-none h-full w-14 flex items-center justify-center"
           >
             <Plus className="h-4 w-4" />
           </Button>
         </div>
-      </div>
-
-      <Button
-        size="lg"
-        className="w-full"
-        onClick={handleAddToCart}
-        disabled={!isAvailable || isAddingToCart}
-      >
-        <ShoppingCart className="mr-2 h-5 w-5" />
-        {isAddingToCart ? "Adding..." : "Add to Cart"}
-      </Button>
+      )}
     </div>
   );
 }
