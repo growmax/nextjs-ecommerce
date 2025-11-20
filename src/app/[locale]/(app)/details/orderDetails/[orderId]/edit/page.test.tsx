@@ -11,6 +11,10 @@ jest.mock("next-intl", () => ({
   useLocale: () => "en",
 }));
 
+jest.mock("@/hooks/usePageScroll", () => ({
+  usePageScroll: jest.fn(),
+}));
+
 // Mock hooks
 const mockUser = {
   userId: "user-1",
@@ -147,6 +151,21 @@ jest.mock("@/hooks/useGetLatestPaymentTerms/useGetLatestPaymentTerms", () => ({
   }),
 }));
 
+jest.mock("@/hooks/details/orderdetails/useOrderDetails", () => ({
+  useOrderDetails: () => ({
+    versions: [{ versionNumber: 1, versionName: "Version 1", orderVersion: 1 }],
+    orderIdentifier: "ORD-123",
+    orderVersion: 1,
+  }),
+}));
+
+jest.mock("@/hooks/useGetVersionDetails/useGetVersionDetails", () => ({
+  useGetVersionDetails: () => ({
+    data: null,
+    isLoading: false,
+  }),
+}));
+
 jest.mock(
   "@/hooks/useCheckVolumeDiscountEnabled/useCheckVolumeDiscountEnabled",
   () => ({
@@ -225,6 +244,43 @@ jest.mock("@/hooks/useCashDiscountHandlers/useCashDiscountHandlers", () => ({
     handleRemoveCD: jest.fn(),
   }),
 }));
+
+jest.mock("@/components/ui/sidebar", () => {
+  const React = jest.requireActual<typeof import("react")>("react");
+  return {
+    useSidebar: () => ({
+      state: "expanded",
+      open: true,
+      setOpen: jest.fn(),
+      isMobile: false,
+      openMobile: false,
+      setOpenMobile: jest.fn(),
+      toggleSidebar: jest.fn(),
+    }),
+    SidebarProvider: ({ children }: { children: React.ReactNode }) =>
+      React.createElement(React.Fragment, null, children),
+  };
+});
+
+jest.mock("@/components/layout", () => {
+  const React = jest.requireActual<typeof import("react")>("react");
+  const MockApplicationLayout = ({ children }: { children: React.ReactNode }) =>
+    React.createElement(
+      "div",
+      { "data-testid": "application-layout" },
+      children
+    );
+  MockApplicationLayout.displayName = "MockApplicationLayout";
+
+  const MockPageLayout = ({ children }: { children: React.ReactNode }) =>
+    React.createElement("div", { "data-testid": "page-layout" }, children);
+  MockPageLayout.displayName = "MockPageLayout";
+
+  return {
+    ApplicationLayout: MockApplicationLayout,
+    PageLayout: MockPageLayout,
+  };
+});
 
 // Mock services
 jest.mock("@/lib/api", () => ({
@@ -306,12 +362,21 @@ jest.mock("@/components/sales", () => {
     );
   MockOrderPriceDetails.displayName = "MockOrderPriceDetails";
 
+  const MockDetailsSkeleton = () =>
+    React.createElement(
+      "div",
+      { "data-testid": "details-skeleton" },
+      "Details Skeleton"
+    );
+  MockDetailsSkeleton.displayName = "MockDetailsSkeleton";
+
   return {
     SalesHeader: MockSalesHeader,
     OrderProductsTable: MockOrderProductsTable,
     OrderContactDetails: MockOrderContactDetails,
     OrderTermsCard: MockOrderTermsCard,
     OrderPriceDetails: MockOrderPriceDetails,
+    DetailsSkeleton: MockDetailsSkeleton,
   };
 });
 
@@ -379,6 +444,33 @@ jest.mock("@/components/ui/dialog", () => {
     DialogTitle: MockDialogTitle,
     DialogDescription: MockDialogDescription,
     DialogFooter: MockDialogFooter,
+  };
+});
+
+jest.mock("@/components/dialogs/VersionsDialog", () => {
+  const React = jest.requireActual<typeof import("react")>("react");
+  const MockVersionsDialog = ({ open }: any) =>
+    open
+      ? React.createElement(
+          "div",
+          { "data-testid": "versions-dialog" },
+          "Versions Dialog"
+        )
+      : null;
+  MockVersionsDialog.displayName = "MockVersionsDialog";
+  return {
+    VersionsDialog: MockVersionsDialog,
+    Version: {} as any,
+  };
+});
+
+jest.mock("lucide-react", () => {
+  const React = jest.requireActual<typeof import("react")>("react");
+  const MockLayers = () =>
+    React.createElement("div", { "data-testid": "layers-icon" }, "Layers");
+  MockLayers.displayName = "MockLayers";
+  return {
+    Layers: MockLayers,
   };
 });
 

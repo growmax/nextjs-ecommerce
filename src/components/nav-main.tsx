@@ -3,6 +3,7 @@
 import { ChevronRight, type LucideIcon } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { useRoutePrefetch } from "@/hooks/useRoutePrefetch";
 
 import {
   Collapsible,
@@ -46,6 +47,7 @@ export function NavMain({
   const pathname = usePathname();
   const { state } = useSidebar();
   const isCollapsed = state === "collapsed";
+  const { prefetch } = useRoutePrefetch();
 
   // Remove locale prefix (e.g., /en, /es, /fr) from pathname for comparison
   const getPathWithoutLocale = (path: string): string => {
@@ -86,6 +88,7 @@ export function NavMain({
                       isCollapsed && "justify-center gap-0"
                     )}
                     onClick={() => onNavigate?.(item.url)}
+                    onMouseEnter={() => prefetch(item.url)}
                   >
                     {item.icon && <item.icon className="size-5" />}
                     {!isCollapsed && (
@@ -128,6 +131,7 @@ export function NavMain({
                               : "hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
                           )}
                           onClick={() => onNavigate?.(subItem.url)}
+                          onMouseEnter={() => prefetch(subItem.url)}
                         >
                           {subItem.title}
                         </Link>
@@ -169,6 +173,7 @@ export function NavMain({
                           asChild
                           isActive={isActive(subItem.url)}
                           onClick={() => onNavigate?.(subItem.url)}
+                          onMouseEnter={() => prefetch(subItem.url)}
                         >
                           <Link href={subItem.url}>
                             <span>{subItem.title}</span>

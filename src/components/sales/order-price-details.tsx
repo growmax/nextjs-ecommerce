@@ -439,21 +439,21 @@ export default function OrderPriceDetails({
   const showPfRate = cartValue.pfRate > 0;
 
   return (
-    <Card className="shadow-sm bg-white p-0 m-0 overflow-hidden">
+    <Card className="shadow-sm bg-white p-0 m-0 overflow-hidden gap-4 w-full">
       <CardHeader className="px-4 py-2 bg-green-100 rounded-t-lg m-0 p-0 space-y-0">
         <CardTitle className="text-lg font-semibold text-gray-800 py-2 px-4">
           Price Details
         </CardTitle>
       </CardHeader>
 
-      <CardContent className="px-4 py-2 space-y-3 pt-0 pb-4">
+      <CardContent className="px-4 space-y-3 pt-0 pb-4 overflow-x-auto">
         {/* Total Items */}
         {cartValue.totalItems > 0 && (
-          <div className="grid grid-cols-2 gap-2">
-            <div>
+          <div className="flex justify-between items-center gap-4 min-w-0">
+            <div className="flex-shrink-0">
               <TypographyMuted>Total Items</TypographyMuted>
             </div>
-            <div className="text-right">
+            <div className="text-right flex-shrink-0">
               <TypographyMuted>{cartValue.totalItems}</TypographyMuted>
             </div>
           </div>
@@ -461,11 +461,11 @@ export default function OrderPriceDetails({
 
         {/* Total LP - only show if list price should be shown */}
         {showListPrice && (
-          <div className="grid grid-cols-2 gap-2">
-            <div>
+          <div className="flex justify-between items-center gap-4 min-w-0">
+            <div className="flex-shrink-0">
               <TypographyMuted>Total LP</TypographyMuted>
             </div>
-            <div className="text-right">
+            <div className="text-right flex-shrink-0 break-words">
               <TypographyMuted>
                 <PricingFormat value={cartValue.totalLP || 0} />
               </TypographyMuted>
@@ -475,11 +475,11 @@ export default function OrderPriceDetails({
 
         {/* Discount - only show if there's a discount */}
         {showDiscount && (
-          <div className="grid grid-cols-2 gap-2">
-            <div>
+          <div className="flex justify-between items-center gap-4 min-w-0">
+            <div className="flex-shrink-0">
               <h5 className="text-sm font-normal text-green-600">Discount</h5>
             </div>
-            <div className="text-right">
+            <div className="text-right flex-shrink-0 break-words">
               <h5 className="text-sm font-normal text-green-600">
                 -<PricingFormat value={discount} />
               </h5>
@@ -488,11 +488,11 @@ export default function OrderPriceDetails({
         )}
 
         {/* Subtotal */}
-        <div className="grid grid-cols-2 gap-2">
-          <div>
+        <div className="flex justify-between items-center gap-4 min-w-0">
+          <div className="flex-shrink-0">
             <h6 className="text-sm font-semibold text-gray-800">Subtotal</h6>
           </div>
-          <div className="text-right">
+          <div className="text-right flex-shrink-0 break-words">
             <h6 className="text-sm font-semibold text-gray-800">
               <PricingFormat value={finalSubtotal} />
             </h6>
@@ -501,11 +501,11 @@ export default function OrderPriceDetails({
 
         {/* P&F Rate - show if exists */}
         {showPfRate && (
-          <div className="grid grid-cols-2 gap-2">
-            <div>
+          <div className="flex justify-between items-center gap-4 min-w-0">
+            <div className="flex-shrink-0">
               <TypographyMuted>P&F Rate</TypographyMuted>
             </div>
-            <div className="text-right">
+            <div className="text-right flex-shrink-0 break-words">
               <TypographyMuted>
                 <PricingFormat value={cartValue.pfRate || 0} />
               </TypographyMuted>
@@ -516,13 +516,13 @@ export default function OrderPriceDetails({
         <Separator />
 
         {/* Taxable Amount - always show if exists */}
-        <div className="grid grid-cols-2 gap-2">
-          <div>
+        <div className="flex justify-between items-center gap-4 min-w-0">
+          <div className="flex-shrink-0">
             <h6 className="text-sm font-semibold text-gray-800">
               Taxable Amount
             </h6>
           </div>
-          <div className="text-right">
+          <div className="text-right flex-shrink-0 break-words">
             <h6 className="text-sm font-semibold text-gray-800">
               <PricingFormat value={finalTaxableAmount} />
             </h6>
@@ -531,14 +531,14 @@ export default function OrderPriceDetails({
 
         {/* Tax + expand button */}
         {finalTax !== undefined && finalTax !== null && (
-          <div className="grid grid-cols-2 gap-2 items-center">
-            <div className="flex items-center gap-1">
+          <div className="flex justify-between items-center gap-4 min-w-0">
+            <div className="flex items-center gap-1 flex-shrink-0">
               <TypographyMuted>Tax</TypographyMuted>
               {taxBreakup.length > 0 && (
                 <Button
                   variant="ghost"
                   size="sm"
-                  className="h-4 w-4 p-0"
+                  className="h-4 w-4 p-0 flex-shrink-0"
                   onClick={() => setTaxExpanded(!taxExpanded)}
                   aria-expanded={taxExpanded}
                   aria-label="show more"
@@ -551,7 +551,7 @@ export default function OrderPriceDetails({
                 </Button>
               )}
             </div>
-            <div className="text-right">
+            <div className="text-right flex-shrink-0 break-words">
               <TypographyMuted>
                 <PricingFormat value={finalTax} />
               </TypographyMuted>
@@ -563,9 +563,14 @@ export default function OrderPriceDetails({
         {taxExpanded && taxBreakup.length > 0 && (
           <div className="ml-4 mt-2 space-y-1">
             {taxBreakup.map(taxDetail => (
-              <div key={taxDetail.name} className="grid grid-cols-2 gap-2">
-                <TypographyMuted>{taxDetail.name}</TypographyMuted>
-                <div className="text-right">
+              <div
+                key={taxDetail.name}
+                className="flex justify-between items-center gap-4 min-w-0"
+              >
+                <TypographyMuted className="flex-shrink-0">
+                  {taxDetail.name}
+                </TypographyMuted>
+                <div className="text-right flex-shrink-0 break-words">
                   <TypographyMuted>
                     <PricingFormat value={taxDetail.value} />
                   </TypographyMuted>
@@ -577,11 +582,11 @@ export default function OrderPriceDetails({
 
         {/* Shipping Charges */}
         {showShippingCharges && (
-          <div className="grid grid-cols-2 gap-2">
-            <div>
+          <div className="flex justify-between items-center gap-4 min-w-0">
+            <div className="flex-shrink-0">
               <TypographyMuted>Shipping Charges</TypographyMuted>
             </div>
-            <div className="text-right">
+            <div className="text-right flex-shrink-0 break-words">
               <TypographyMuted>
                 <PricingFormat value={finalShipping} />
               </TypographyMuted>
@@ -591,11 +596,11 @@ export default function OrderPriceDetails({
 
         {/* Insurance Charges */}
         {insuranceCharges > 0 && (
-          <div className="grid grid-cols-2 gap-2">
-            <div>
+          <div className="flex justify-between items-center gap-4 min-w-0">
+            <div className="flex-shrink-0">
               <TypographyMuted>Insurance Charges</TypographyMuted>
             </div>
-            <div className="text-right">
+            <div className="text-right flex-shrink-0 break-words">
               <TypographyMuted>
                 <PricingFormat value={insuranceCharges} />
               </TypographyMuted>
@@ -606,11 +611,11 @@ export default function OrderPriceDetails({
         <Separator />
 
         {/* Total */}
-        <div className="grid grid-cols-2 gap-2">
-          <div>
+        <div className="flex justify-between items-center gap-4 min-w-0">
+          <div className="flex-shrink-0">
             <h4 className="text-lg font-bold text-gray-800">Total</h4>
           </div>
-          <div className="text-right">
+          <div className="text-right flex-shrink-0 break-words">
             <h4 className="text-lg font-bold text-gray-800">
               <PricingFormat value={finalTotal} />
             </h4>

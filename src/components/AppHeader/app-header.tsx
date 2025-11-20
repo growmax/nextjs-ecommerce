@@ -23,6 +23,7 @@ import { SidebarTrigger, useSidebar } from "@/components/ui/sidebar";
 import { useCart } from "@/contexts/CartContext";
 import useLogout from "@/hooks/Auth/useLogout";
 import useUserProfile from "@/hooks/Profile/useUserProfile";
+import { useRoutePrefetch } from "@/hooks/useRoutePrefetch";
 import { cn } from "@/lib/utils";
 import { getUserInitials } from "@/utils/General/general";
 import {
@@ -41,6 +42,7 @@ export function AppHeader() {
   const { isLoggingOut, handleLogout } = useLogout();
   const router = useRouter();
   const { isAuthenticated } = useUserDetails();
+  const { prefetch, prefetchAndNavigate } = useRoutePrefetch();
   // Type definitions for search items
   interface RawOpenSearchProduct {
     productId: number;
@@ -183,28 +185,40 @@ export function AppHeader() {
     return [...ordersAndQuotes, ...products];
   };
 
+  // Handle search item hover to prefetch route
+  const handleSearchItemHover = (item: SearchResultItem) => {
+    if (item.type === "order") {
+      prefetch(`/details/orderDetails/${item.id}`);
+    } else if (item.type === "quote") {
+      prefetch(`/details/quoteDetails/${item.id}`);
+    } else if (item.type === "product") {
+      const productId = item.productData?.productId || item.id;
+      prefetch(`/products/${productId}`);
+    }
+  };
+
   // Handle search selection with smart routing
   const handleSearchSelect = (item: SearchResultItem) => {
     if (item.type === "order") {
-      router.push(`/details/orderDetails/${item.id}`);
+      prefetchAndNavigate(`/details/orderDetails/${item.id}`);
     } else if (item.type === "quote") {
-      router.push(`/details/quoteDetails/${item.id}`);
+      prefetchAndNavigate(`/details/quoteDetails/${item.id}`);
     } else if (item.type === "product") {
       // Route to product details using productIndexName if available
       const productId = item.productData?.productId || item.id;
-      router.push(`/products/${productId}`);
+      prefetchAndNavigate(`/products/${productId}`);
     } else {
       // Handle navigation shortcuts
       if (item.name.toLowerCase().includes("order")) {
-        router.push("/landing/orderslanding");
+        prefetchAndNavigate("/landing/orderslanding");
       } else if (item.name.toLowerCase().includes("quote")) {
-        router.push("/quotesummary");
+        prefetchAndNavigate("/quotesummary");
       } else if (item.name.toLowerCase().includes("product")) {
-        router.push("/products");
+        prefetchAndNavigate("/products");
       } else if (item.name.toLowerCase().includes("cart")) {
-        router.push("/cart");
+        prefetchAndNavigate("/cart");
       } else if (item.name.toLowerCase().includes("dashboard")) {
-        router.push("/dashboard");
+        prefetchAndNavigate("/dashboard");
       }
     }
 
@@ -306,7 +320,7 @@ export function AppHeader() {
                 variant="ghost"
                 size="icon"
                 className="h-8 w-8 relative"
-                onClick={() => router.push("/cart")}
+                onClick={() => prefetchAndNavigate("/cart")}
               >
                 <ShoppingCart className="h-4 w-4" />
                 {cartCount > 0 && (
@@ -345,7 +359,7 @@ export function AppHeader() {
               ) : (
                 <Button
                   variant="ghost"
-                  onClick={() => router.push("/login")}
+                  onClick={() => prefetchAndNavigate("/login")}
                   className="h-8 p-0"
                 >
                   <div className="bg-sidebar-primary text-sidebar-primary-foreground flex items-center justify-center rounded-lg px-3 h-8">
@@ -394,7 +408,7 @@ export function AppHeader() {
               ) : (
                 <Button
                   variant="ghost"
-                  onClick={() => router.push("/login")}
+                  onClick={() => prefetchAndNavigate("/login")}
                   className="h-8 p-0"
                 >
                   <div className="bg-sidebar-primary text-sidebar-primary-foreground flex items-center justify-center rounded-lg px-3 h-8">
@@ -498,6 +512,7 @@ export function AppHeader() {
                         <CommandItem
                           key={item.id}
                           onSelect={() => handleSearchSelect(item)}
+                          onMouseEnter={() => handleSearchItemHover(item)}
                           className="px-3 py-2.5 rounded-lg cursor-pointer hover:bg-accent hover:text-accent-foreground data-[selected=true]:bg-accent data-[selected=true]:text-accent-foreground"
                         >
                           <div className="flex items-center gap-3 w-full">
@@ -542,6 +557,7 @@ export function AppHeader() {
                         <CommandItem
                           key={item.id}
                           onSelect={() => handleSearchSelect(item)}
+                          onMouseEnter={() => handleSearchItemHover(item)}
                           className="px-3 py-2.5 rounded-lg cursor-pointer hover:bg-accent hover:text-accent-foreground data-[selected=true]:bg-accent data-[selected=true]:text-accent-foreground"
                         >
                           <div className="flex items-center gap-3 w-full">
@@ -630,10 +646,11 @@ export function AppHeader() {
                     {searchValue.toLowerCase().includes("order") && (
                       <CommandItem
                         onSelect={() => {
-                          router.push("/landing/orderslanding");
+                          prefetchAndNavigate("/landing/orderslanding");
                           setOpen(false);
                           setSearchValue("");
                         }}
+                        onMouseEnter={() => prefetch("/landing/orderslanding")}
                         className="px-3 py-2.5 rounded-lg cursor-pointer hover:bg-accent hover:text-accent-foreground data-[selected=true]:bg-accent data-[selected=true]:text-accent-foreground"
                       >
                         <div className="flex items-center gap-3 w-full">
@@ -651,10 +668,11 @@ export function AppHeader() {
                     {searchValue.toLowerCase().includes("quote") && (
                       <CommandItem
                         onSelect={() => {
-                          router.push("/quotesummary");
+                          prefetchAndNavigate("/quotesummary");
                           setOpen(false);
                           setSearchValue("");
                         }}
+                        onMouseEnter={() => prefetch("/quotesummary")}
                         className="px-3 py-2.5 rounded-lg cursor-pointer hover:bg-accent hover:text-accent-foreground data-[selected=true]:bg-accent data-[selected=true]:text-accent-foreground"
                       >
                         <div className="flex items-center gap-3 w-full">
@@ -672,10 +690,11 @@ export function AppHeader() {
                     {searchValue.toLowerCase().includes("dashboard") && (
                       <CommandItem
                         onSelect={() => {
-                          router.push("/dashboard");
+                          prefetchAndNavigate("/dashboard");
                           setOpen(false);
                           setSearchValue("");
                         }}
+                        onMouseEnter={() => prefetch("/dashboard")}
                         className="px-3 py-2.5 rounded-lg cursor-pointer hover:bg-accent hover:text-accent-foreground data-[selected=true]:bg-accent data-[selected=true]:text-accent-foreground"
                       >
                         <div className="flex items-center gap-3 w-full">
@@ -693,10 +712,11 @@ export function AppHeader() {
                     {searchValue.toLowerCase().includes("cart") && (
                       <CommandItem
                         onSelect={() => {
-                          router.push("/cart");
+                          prefetchAndNavigate("/cart");
                           setOpen(false);
                           setSearchValue("");
                         }}
+                        onMouseEnter={() => prefetch("/cart")}
                         className="px-3 py-2.5 rounded-lg cursor-pointer hover:bg-accent hover:text-accent-foreground data-[selected=true]:bg-accent data-[selected=true]:text-accent-foreground"
                       >
                         <div className="flex items-center gap-3 w-full">
@@ -729,10 +749,11 @@ export function AppHeader() {
             >
               <CommandItem
                 onSelect={() => {
-                  router.push("/landing/orderslanding");
+                  prefetchAndNavigate("/landing/orderslanding");
                   setOpen(false);
                   setSearchValue("");
                 }}
+                onMouseEnter={() => prefetch("/landing/orderslanding")}
                 className="px-3 py-2.5 rounded-lg cursor-pointer hover:bg-accent hover:text-accent-foreground data-[selected=true]:bg-accent data-[selected=true]:text-accent-foreground"
               >
                 <div className="flex items-center gap-3 w-full">
@@ -748,10 +769,12 @@ export function AppHeader() {
 
               <CommandItem
                 onSelect={() => {
+                  prefetch("/dashboard");
                   router.push("/dashboard");
                   setOpen(false);
                   setSearchValue("");
                 }}
+                onMouseEnter={() => prefetch("/dashboard")}
                 className="px-3 py-2.5 rounded-lg cursor-pointer hover:bg-accent hover:text-accent-foreground data-[selected=true]:bg-accent data-[selected=true]:text-accent-foreground"
               >
                 <div className="flex items-center gap-3 w-full">

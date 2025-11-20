@@ -16,6 +16,9 @@ jest.mock("@/contexts/UserDetailsContext");
 jest.mock("next/navigation", () => ({
   useRouter: jest.fn(),
 }));
+jest.mock("next-intl", () => ({
+  useLocale: () => "en",
+}));
 jest.mock("@/hooks/useSearch");
 jest.mock("@/components/AvatarCard/AvatarCard", () => ({
   AvatarCard: jest.fn(() => <div data-testid="avatar-card" />),
@@ -40,7 +43,10 @@ describe("AppHeader", () => {
       handleLogout: jest.fn(),
     });
     useCartMock.mockReturnValue({ cartCount: 0 });
-    useRouterMock.mockReturnValue({ push: mockPush });
+    useRouterMock.mockReturnValue({
+      push: mockPush,
+      prefetch: jest.fn(),
+    });
     useSearchMock.mockReturnValue({
       data: [],
       loading: false,
@@ -89,7 +95,7 @@ describe("AppHeader", () => {
       const loginButtons = screen.getAllByRole("button", { name: /login/i });
       fireEvent.click(loginButtons[0]!);
 
-      expect(mockPush).toHaveBeenCalledWith("/login");
+      expect(mockPush).toHaveBeenCalledWith("/en/login");
     });
   });
 

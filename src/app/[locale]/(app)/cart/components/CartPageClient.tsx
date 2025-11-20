@@ -5,15 +5,24 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { useCart } from "@/contexts/CartContext";
 import { useCurrentUser } from "@/hooks/useCurrentUser";
+import { useRoutePrefetch } from "@/hooks/useRoutePrefetch";
 import { Minus, Plus, ShoppingCart, Trash2 } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { toast } from "sonner";
 
 export default function CartPageClient() {
   const { user } = useCurrentUser();
   const { cart, cartCount, refreshCart, isLoading: isCartLoading } = useCart();
+  const { prefetch, prefetchAndNavigate } = useRoutePrefetch();
 
   const [updatingItems, setUpdatingItems] = useState<Set<number>>(new Set());
+
+  useEffect(() => {
+    prefetch("/products");
+    prefetch("/checkout");
+    prefetch("/landing/orderslanding");
+    prefetch("/landing/quoteslanding");
+  }, [prefetch]);
 
   // If user is not logged in, show a message
   if (!user) {
@@ -224,7 +233,10 @@ export default function CartPageClient() {
               <Button
                 variant="outline"
                 className="w-full"
-                onClick={() => (window.location.href = "/products")}
+                onClick={() => {
+                  prefetchAndNavigate("/products");
+                }}
+                onMouseEnter={() => prefetch("/products")}
               >
                 Continue Shopping
               </Button>

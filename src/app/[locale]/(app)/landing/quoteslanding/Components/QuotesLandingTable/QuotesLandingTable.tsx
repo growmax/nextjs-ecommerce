@@ -12,19 +12,16 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { useSidebar } from "@/components/ui/sidebar";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useCurrentUser } from "@/hooks/useCurrentUser";
+import { useRoutePrefetch } from "@/hooks/useRoutePrefetch";
 import PreferenceService, {
   FilterPreferenceResponse,
 } from "@/lib/api/services/PreferenceService/PreferenceService";
 import QuotesService, {
   type QuoteItem,
 } from "@/lib/api/services/QuotesService/QuotesService";
-import { cn } from "@/lib/utils";
 import { ColumnDef } from "@tanstack/react-table";
-import { useLocale } from "next-intl";
-import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 
@@ -37,24 +34,19 @@ function QuotesLandingTable({
   refreshTrigger,
   setExportCallback,
 }: QuotesLandingTableProps) {
-  const router = useRouter();
-  const locale = useLocale();
   const { user } = useCurrentUser();
-  const { state: sidebarState } = useSidebar();
-  const isSidebarCollapsed = sidebarState === "collapsed";
+  const { prefetch, prefetchMultiple, prefetchAndNavigate } =
+    useRoutePrefetch();
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
-  const [_drawerMode] = useState<"filter" | "create">("filter");
   const [quotes, setQuotes] = useState<QuoteItem[]>([]);
   const [loading, setLoading] = useState(true);
+  const [initialLoad, setInitialLoad] = useState(true);
   const [totalCount, setTotalCount] = useState(0);
   const [page, setPage] = useState(0);
-  const [rowPerPage, setRowPerPage] = useState(20); // Default to first valid option
+  const [rowPerPage, setRowPerPage] = useState(20);
   const [pagination, setPagination] = useState({ pageIndex: 0, pageSize: 20 });
   const [filterData, setFilterData] = useState<QuoteFilterFormData | null>(
     null
-  );
-  const [initialFilterData] = useState<QuoteFilterFormData | undefined>(
-    undefined
   );
   const [filterPreferences, setFilterPreferences] =
     useState<FilterPreferenceResponse | null>(null);
@@ -85,7 +77,6 @@ function QuotesLandingTable({
           <div
             key={`row-${rowIndex}`}
             className="border-b border-gray-100 flex animate-pulse"
-            style={{ animationDelay: `${rowIndex * 50}ms` }}
           >
             {Array.from({ length: 11 }).map((_, colIndex) => (
               <div
@@ -133,11 +124,11 @@ function QuotesLandingTable({
       },
       {
         accessorKey: "quoteName",
-        header: "Quote Name",
+        header: () => <span className="pl-2">Quote Name</span>,
         size: 200,
         cell: ({ row }) => (
           <div
-            className="max-w-[200px] truncate"
+            className="max-w-[200px] truncate pl-2"
             title={row.original.quoteName || "-"}
           >
             {row.original.quoteName || "-"}
@@ -179,6 +170,9 @@ function QuotesLandingTable({
         accessorKey: "itemCount",
         header: "Total Items",
         size: 150,
+        meta: {
+          alignCenter: true,
+        },
         cell: ({ row }) => {
           const items = row.original.itemCount || 0;
           return (
@@ -199,6 +193,9 @@ function QuotesLandingTable({
         accessorKey: "subTotal",
         header: "Sub total",
         size: 150,
+        meta: {
+          alignRight: true,
+        },
         cell: ({ row }) => {
           const currencySymbol = row.original.curencySymbol?.symbol || "USD";
           const amount = row.original.subTotal || row.original.grandTotal || 0;
@@ -209,6 +206,9 @@ function QuotesLandingTable({
         accessorKey: "taxableAmount",
         header: "Taxable Amount",
         size: 150,
+        meta: {
+          alignRight: true,
+        },
         cell: ({ row }) => {
           const currencySymbol = row.original.curencySymbol?.symbol || "USD";
           const amount = row.original.taxableAmount || 0;
@@ -219,6 +219,9 @@ function QuotesLandingTable({
         accessorKey: "grandTotal",
         header: "Total",
         size: 150,
+        meta: {
+          alignRight: true,
+        },
         cell: ({ row }) => {
           const currencySymbol = row.original.curencySymbol?.symbol || "USD";
           const amount = row.original.grandTotal || 0;
@@ -231,19 +234,28 @@ function QuotesLandingTable({
       },
       {
         accessorKey: "updatedBuyerStatus",
-        header: "Status",
+        header: () => <span className="pl-[30px]">Status</span>,
         size: 200,
         cell: ({ row }) => {
           const status = row.original.updatedBuyerStatus;
-          if (!status) return <span className="text-gray-400">-</span>;
+          if (!status)
+            return <span className="text-gray-400 pl-[30px]">-</span>;
           const color = statusColor(status.toUpperCase());
+          const titleCaseStatus = status
+            .split(" ")
+            .map(
+              word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()
+            )
+            .join(" ");
           return (
-            <span
-              className="px-3 py-1 rounded-full text-sm font-medium text-white whitespace-nowrap"
-              style={{ backgroundColor: color }}
-            >
-              {status}
-            </span>
+            <div className="pl-[30px]">
+              <span
+                className="px-2 py-0.5 rounded-full text-xs font-medium text-white whitespace-nowrap"
+                style={{ backgroundColor: color }}
+              >
+                {titleCaseStatus}
+              </span>
+            </div>
           );
         },
       },
@@ -619,8 +631,11 @@ function QuotesLandingTable({
       setQuotes([]);
     } finally {
       setLoading(false);
+      if (initialLoad) {
+        setInitialLoad(false);
+      }
     }
-  }, [page, rowPerPage, user, filterPreferences, filterData]);
+  }, [page, rowPerPage, user, filterPreferences, filterData, initialLoad]);
 
   useEffect(() => {
     fetchQuotes();
@@ -751,6 +766,32 @@ function QuotesLandingTable({
     setPage(prev => prev + 1);
   };
 
+  // Prefetch routes for visible quotes (only first page for performance)
+  // More aggressive prefetching happens on hover
+  useEffect(() => {
+    if (quotes.length > 0 && !loading && page === 0) {
+      // Only prefetch first 10 quotes on initial load to avoid overwhelming
+      const routes = quotes
+        .slice(0, 10)
+        .map(quote => quote.quotationIdentifier)
+        .filter((id): id is string => Boolean(id))
+        .map(id => `/details/quoteDetails/${id}`);
+      if (routes.length > 0) {
+        prefetchMultiple(routes, 5);
+      }
+    }
+  }, [quotes, loading, page, prefetchMultiple]);
+
+  // Handle row hover to prefetch route
+  const handleRowHover = useCallback(
+    (row: QuoteItem) => {
+      if (row.quotationIdentifier) {
+        prefetch(`/details/quoteDetails/${row.quotationIdentifier}`);
+      }
+    },
+    [prefetch]
+  );
+
   return (
     <>
       <FilterDrawer
@@ -759,15 +800,13 @@ function QuotesLandingTable({
         onSubmit={handleQuoteFilterSubmit}
         onReset={handleQuoteFilterReset}
         onSave={handleQuoteFilterSave}
-        title={
-          _drawerMode === "create" ? "Create Custom Filter" : "Quote Filters"
-        }
+        title="Quote Filters"
         filterType="Quote"
         userId={user?.userId}
         companyId={user?.companyId}
         module="quote"
-        initialFilterData={initialFilterData}
-        mode={_drawerMode}
+        initialFilterData={undefined}
+        mode="filter"
       />
 
       <SideDrawer
@@ -783,16 +822,11 @@ function QuotesLandingTable({
       </SideDrawer>
 
       <div className="flex flex-col">
-        <div
-          className={cn(
-            "w-full overflow-x-hidden",
-            isSidebarCollapsed ? "px-[60px]" : "px-[15px]"
-          )}
-        >
-          <div className="w-full overflow-x-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
-            {loading ? (
+        <div className="w-full overflow-x-hidden">
+          <div className="w-full overflow-x-auto scrollbar-thin-horizontal">
+            {initialLoad && loading ? (
               <TableSkeleton rows={rowPerPage} />
-            ) : quotes.length === 0 ? (
+            ) : !initialLoad && quotes.length === 0 ? (
               <div className="flex items-center justify-center text-gray-500 py-8">
                 No quotes found
               </div>
@@ -800,7 +834,7 @@ function QuotesLandingTable({
               <DashboardTable
                 data={quotes}
                 columns={columns}
-                loading={loading}
+                loading={false}
                 totalDataCount={totalCount}
                 pagination={pagination}
                 setPagination={handlePaginationChange}
@@ -818,9 +852,11 @@ function QuotesLandingTable({
                 }}
                 onRowClick={row => {
                   const quoteId = row.quotationIdentifier;
-                  if (quoteId)
-                    router.push(`/${locale}/details/quoteDetails/${quoteId}`);
+                  if (quoteId) {
+                    prefetchAndNavigate(`/details/quoteDetails/${quoteId}`);
+                  }
                 }}
+                onRowHover={handleRowHover}
                 tableHeight=""
               />
             )}

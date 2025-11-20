@@ -1,8 +1,18 @@
+"use client";
+
 import HeaderBar from "@/components/Global/HeaderBar/HeaderBar";
+import { useRoutePrefetch } from "@/hooks/useRoutePrefetch";
+import { useEffect } from "react";
 import CompanyBranchTable from "./CompanyBranchTable";
 import CompanyDetail from "./CompanyDetail";
 
 const ComanyPageClient = () => {
+  const { prefetch } = useRoutePrefetch();
+
+  useEffect(() => {
+    prefetch("/settings/profile");
+  }, [prefetch]);
+
   return (
     <>
       <div id="profile-header" className="h-[24px] md:h-[32px]">
