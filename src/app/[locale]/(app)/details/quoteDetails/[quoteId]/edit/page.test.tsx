@@ -14,6 +14,10 @@ jest.mock("next-intl", () => ({
   useLocale: () => "en",
 }));
 
+jest.mock("@/hooks/usePageScroll", () => ({
+  usePageScroll: jest.fn(),
+}));
+
 // Mock data
 const mockUser = {
   userId: "user-1",
@@ -153,6 +157,21 @@ jest.mock("@/hooks/useGetLatestPaymentTerms/useGetLatestPaymentTerms", () => ({
   }),
 }));
 
+jest.mock("@/hooks/details/quotedetails/useQuoteDetails", () => ({
+  useQuoteDetails: () => ({
+    versions: [{ versionNumber: 1, versionName: "Version 1", orderVersion: 1 }],
+    quotationIdentifier: "QUO-123",
+    quotationVersion: 1,
+  }),
+}));
+
+jest.mock("@/hooks/useGetVersionDetails/useGetVersionDetails", () => ({
+  useGetVersionDetails: () => ({
+    data: null,
+    isLoading: false,
+  }),
+}));
+
 // Create stable mock data outside the mock to prevent infinite loops
 const mockUpdatedProducts = [
   {
@@ -226,6 +245,43 @@ jest.mock("@/hooks/useCashDiscountHandlers/useCashDiscountHandlers", () => ({
     handleRemoveCD: jest.fn(),
   }),
 }));
+
+jest.mock("@/components/ui/sidebar", () => {
+  const React = jest.requireActual<typeof import("react")>("react");
+  return {
+    useSidebar: () => ({
+      state: "expanded",
+      open: true,
+      setOpen: jest.fn(),
+      isMobile: false,
+      openMobile: false,
+      setOpenMobile: jest.fn(),
+      toggleSidebar: jest.fn(),
+    }),
+    SidebarProvider: ({ children }: { children: React.ReactNode }) =>
+      React.createElement(React.Fragment, null, children),
+  };
+});
+
+jest.mock("@/components/layout", () => {
+  const React = jest.requireActual<typeof import("react")>("react");
+  const MockApplicationLayout = ({ children }: { children: React.ReactNode }) =>
+    React.createElement(
+      "div",
+      { "data-testid": "application-layout" },
+      children
+    );
+  MockApplicationLayout.displayName = "MockApplicationLayout";
+
+  const MockPageLayout = ({ children }: { children: React.ReactNode }) =>
+    React.createElement("div", { "data-testid": "page-layout" }, children);
+  MockPageLayout.displayName = "MockPageLayout";
+
+  return {
+    ApplicationLayout: MockApplicationLayout,
+    PageLayout: MockPageLayout,
+  };
+});
 
 // Mock services
 jest.mock("@/lib/api", () => ({
@@ -335,6 +391,33 @@ jest.mock("@/components/ui/dialog", () => {
   };
 });
 
+jest.mock("@/components/dialogs/VersionsDialog", () => {
+  const React = jest.requireActual<typeof import("react")>("react");
+  const MockVersionsDialog = ({ open }: any) =>
+    open
+      ? React.createElement(
+          "div",
+          { "data-testid": "versions-dialog" },
+          "Versions Dialog"
+        )
+      : null;
+  MockVersionsDialog.displayName = "MockVersionsDialog";
+  return {
+    VersionsDialog: MockVersionsDialog,
+    Version: {} as any,
+  };
+});
+
+jest.mock("lucide-react", () => {
+  const React = jest.requireActual<typeof import("react")>("react");
+  const MockLayers = () =>
+    React.createElement("div", { "data-testid": "layers-icon" }, "Layers");
+  MockLayers.displayName = "MockLayers";
+  return {
+    Layers: MockLayers,
+  };
+});
+
 jest.mock("@/components/sales", () => {
   const React = jest.requireActual<typeof import("react")>("react");
   const MockSalesHeader = ({
@@ -384,6 +467,14 @@ jest.mock("@/components/sales", () => {
     );
   MockOrderPriceDetails.displayName = "MockOrderPriceDetails";
 
+  const MockDetailsSkeleton = () =>
+    React.createElement(
+      "div",
+      { "data-testid": "details-skeleton" },
+      "Details Skeleton"
+    );
+  MockDetailsSkeleton.displayName = "MockDetailsSkeleton";
+
   const MockSPRForm = () =>
     React.createElement("div", { "data-testid": "spr-form" }, "SPR Form");
   MockSPRForm.displayName = "MockSPRForm";
@@ -394,6 +485,7 @@ jest.mock("@/components/sales", () => {
     OrderContactDetails: MockOrderContactDetails,
     OrderTermsCard: MockOrderTermsCard,
     OrderPriceDetails: MockOrderPriceDetails,
+    DetailsSkeleton: MockDetailsSkeleton,
     SPRForm: MockSPRForm,
   };
 });
@@ -413,8 +505,9 @@ jest.mock("@/components/sales/CashDiscountCard", () => {
   };
 });
 
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { render, screen, waitFor } from "@testing-library/react";
-import React from "react";
+import React, { ReactNode } from "react";
 import EditQuotePage from "./page";
 import { QuotationDetailsService, OrdersService } from "@/lib/api";
 import { toast } from "sonner";
@@ -429,6 +522,23 @@ const _mockPlaceOrderFromQuote =
     typeof OrdersService.placeOrderFromQuote
   >;
 const mockToastError = toast.error as jest.MockedFunction<typeof toast.error>;
+
+// Helper to create a wrapper with QueryClient
+function createWrapper() {
+  const queryClient = new QueryClient({
+    defaultOptions: {
+      queries: {
+        retry: false,
+        gcTime: 0,
+      },
+    },
+  });
+
+  const Wrapper = ({ children }: { children: ReactNode }) =>
+    React.createElement(QueryClientProvider, { client: queryClient }, children);
+  Wrapper.displayName = "QueryClientWrapper";
+  return Wrapper;
+}
 
 describe("EditQuotePage", () => {
   beforeEach(() => {
@@ -456,7 +566,9 @@ describe("EditQuotePage", () => {
   it("should render sales header with edit quote title", async () => {
     const params = Promise.resolve({ quoteId: "quote-123", locale: "en" });
 
-    render(<EditQuotePage params={params} />);
+    render(<EditQuotePage params={params} />, {
+      wrapper: createWrapper(),
+    });
 
     await waitFor(
       () => {
@@ -471,7 +583,9 @@ describe("EditQuotePage", () => {
   it("should fetch quote details on mount", async () => {
     const params = Promise.resolve({ quoteId: "quote-123", locale: "en" });
 
-    render(<EditQuotePage params={params} />);
+    render(<EditQuotePage params={params} />, {
+      wrapper: createWrapper(),
+    });
 
     await waitFor(
       () => {
@@ -488,7 +602,9 @@ describe("EditQuotePage", () => {
   it("should render products table when quote details are loaded", async () => {
     const params = Promise.resolve({ quoteId: "quote-123", locale: "en" });
 
-    render(<EditQuotePage params={params} />);
+    render(<EditQuotePage params={params} />, {
+      wrapper: createWrapper(),
+    });
 
     await waitFor(
       () => {
@@ -501,7 +617,9 @@ describe("EditQuotePage", () => {
   it("should render contact details section", async () => {
     const params = Promise.resolve({ quoteId: "quote-123", locale: "en" });
 
-    render(<EditQuotePage params={params} />);
+    render(<EditQuotePage params={params} />, {
+      wrapper: createWrapper(),
+    });
 
     await waitFor(
       () => {
@@ -514,7 +632,9 @@ describe("EditQuotePage", () => {
   it("should render terms card section", async () => {
     const params = Promise.resolve({ quoteId: "quote-123", locale: "en" });
 
-    render(<EditQuotePage params={params} />);
+    render(<EditQuotePage params={params} />, {
+      wrapper: createWrapper(),
+    });
 
     await waitFor(
       () => {
@@ -527,7 +647,9 @@ describe("EditQuotePage", () => {
   it("should render price details section", async () => {
     const params = Promise.resolve({ quoteId: "quote-123", locale: "en" });
 
-    render(<EditQuotePage params={params} />);
+    render(<EditQuotePage params={params} />, {
+      wrapper: createWrapper(),
+    });
 
     await waitFor(
       () => {
@@ -540,7 +662,9 @@ describe("EditQuotePage", () => {
   it("should render cash discount card", async () => {
     const params = Promise.resolve({ quoteId: "quote-123", locale: "en" });
 
-    render(<EditQuotePage params={params} />);
+    render(<EditQuotePage params={params} />, {
+      wrapper: createWrapper(),
+    });
 
     await waitFor(
       () => {
@@ -553,7 +677,9 @@ describe("EditQuotePage", () => {
   it("should render SPR form", async () => {
     const params = Promise.resolve({ quoteId: "quote-123", locale: "en" });
 
-    render(<EditQuotePage params={params} />);
+    render(<EditQuotePage params={params} />, {
+      wrapper: createWrapper(),
+    });
 
     await waitFor(
       () => {
@@ -566,7 +692,9 @@ describe("EditQuotePage", () => {
   it("should render submit button in header", async () => {
     const params = Promise.resolve({ quoteId: "quote-123", locale: "en" });
 
-    render(<EditQuotePage params={params} />);
+    render(<EditQuotePage params={params} />, {
+      wrapper: createWrapper(),
+    });
 
     await waitFor(
       () => {
@@ -582,7 +710,9 @@ describe("EditQuotePage", () => {
 
     const params = Promise.resolve({ quoteId: "quote-123", locale: "en" });
 
-    render(<EditQuotePage params={params} />);
+    render(<EditQuotePage params={params} />, {
+      wrapper: createWrapper(),
+    });
 
     await waitFor(
       () => {
@@ -595,7 +725,9 @@ describe("EditQuotePage", () => {
   it("should display quote name in header when available", async () => {
     const params = Promise.resolve({ quoteId: "quote-123", locale: "en" });
 
-    render(<EditQuotePage params={params} />);
+    render(<EditQuotePage params={params} />, {
+      wrapper: createWrapper(),
+    });
 
     await waitFor(
       () => {
@@ -608,7 +740,9 @@ describe("EditQuotePage", () => {
   it("should initialize editable fields from quote details", async () => {
     const params = Promise.resolve({ quoteId: "quote-123", locale: "en" });
 
-    render(<EditQuotePage params={params} />);
+    render(<EditQuotePage params={params} />, {
+      wrapper: createWrapper(),
+    });
 
     await waitFor(
       () => {

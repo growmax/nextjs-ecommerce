@@ -1,11 +1,18 @@
 "use client";
 
+import { Layers } from "lucide-react";
 import { useLocale } from "next-intl";
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
 
 import {
+  VersionsDialog,
+  type Version,
+} from "@/components/dialogs/VersionsDialog";
+import { ApplicationLayout, PageLayout } from "@/components/layout";
+import {
+  DetailsSkeleton,
   OrderContactDetails,
   OrderPriceDetails,
   OrderProductsTable,
@@ -23,11 +30,13 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { useOrderDetails } from "@/hooks/details/orderdetails/useOrderDetails";
 import useCashDiscountHandlers from "@/hooks/useCashDiscountHandlers/useCashDiscountHandlers";
 import useCheckVolumeDiscountEnabled from "@/hooks/useCheckVolumeDiscountEnabled/useCheckVolumeDiscountEnabled";
 import { useCurrentUser } from "@/hooks/useCurrentUser";
 import useFetchOrderDetails from "@/hooks/useFetchOrderDetails/useFetchOrderDetails";
 import useGetLatestPaymentTerms from "@/hooks/useGetLatestPaymentTerms/useGetLatestPaymentTerms";
+import { useGetVersionDetails } from "@/hooks/useGetVersionDetails/useGetVersionDetails";
 import { useLatestOrderProducts } from "@/hooks/useLatestOrderProducts/useLatestOrderProducts";
 import useModuleSettings from "@/hooks/useModuleSettings";
 import { useOrderCalculation } from "@/hooks/useOrderCalculation/useOrderCalculation";
@@ -40,6 +49,7 @@ import {
   type Warehouse,
 } from "@/lib/api/services/SellerWarehouseService/SellerWarehouseService";
 import type { CartItem } from "@/types/calculation/cart";
+import type { SelectedVersion } from "@/types/details/orderdetails/version.types";
 import { orderPaymentDTO } from "@/utils/order/orderPaymentDTO/orderPaymentDTO";
 import { isEmpty } from "lodash";
 import some from "lodash/some";
@@ -143,6 +153,10 @@ export default function EditOrderPage({ params }: EditOrderPageProps) {
   const [cashDiscountTerms, setCashDiscountTerms] = useState<any>(null);
   const [prevPaymentTerms, setPrevPaymentTerms] = useState<any>(null);
   const [confirmDialogOpen, setConfirmDialogOpen] = useState(false);
+  const [versionsDialogOpen, setVersionsDialogOpen] = useState(false);
+  const [selectedVersion, setSelectedVersion] =
+    useState<SelectedVersion | null>(null);
+  const [triggerVersionCall, setTriggerVersionCall] = useState(false);
 
   const { user } = useCurrentUser();
   const { tenantData } = useTenantData();
@@ -151,14 +165,80 @@ export default function EditOrderPage({ params }: EditOrderPageProps) {
   // Get latest payment terms with cash discount
   const { latestPaymentTerms } = useGetLatestPaymentTerms(true);
 
+  // Use custom hook for order details logic
+  const {
+    versions: orderVersions,
+    orderIdentifier,
+    orderVersion,
+  } = useOrderDetails({
+    orderDetails,
+    orderId,
+    selectedVersion,
+  });
+
+  const { data: versionData, isLoading: versionLoading } = useGetVersionDetails(
+    {
+      orderIdentifier,
+      orderVersion,
+      triggerVersionCall,
+    }
+  );
+
+  // Track processed versions to prevent duplicate processing
+  const processedVersionRef = useRef<string | null>(null);
+
+  // Update order details when version data is loaded
+  useEffect(() => {
+    if (versionData && selectedVersion) {
+      // Create a unique key for this version to prevent duplicate processing
+      const versionKey = `${selectedVersion.versionNumber}-${selectedVersion.orderVersion}`;
+
+      // Skip if we've already processed this version
+      if (processedVersionRef.current === versionKey) {
+        return;
+      }
+
+      // Mark this version as processed
+      processedVersionRef.current = versionKey;
+
+      // Reset trigger after successful fetch
+      setTriggerVersionCall(false);
+
+      // Update order details with version data
+      if (versionData.data) {
+        setOrderDetails({
+          data: versionData.data,
+        } as OrderDetailsResponse);
+
+        // Show success toast only if data is freshly loaded (not from cache)
+        if (!versionLoading) {
+          const versionName =
+            orderVersions.find(
+              (v: Version) => v.versionNumber === selectedVersion.versionNumber
+            )?.versionName || `Version ${selectedVersion.versionNumber}`;
+          toast.success(`Loaded ${versionName} details`);
+        }
+      }
+    }
+  }, [versionData, versionLoading, selectedVersion, orderVersions]);
+
+  // Extract data for display - use version data if available, otherwise use order details
+  const displayOrderDetails = useMemo(() => {
+    if (versionData && selectedVersion && versionData.data) {
+      return versionData.data;
+    }
+    return orderDetails?.data;
+  }, [versionData, selectedVersion, orderDetails?.data]);
+
   // Extract products and currency info for latest data hook
-  const orderDetailsData = orderDetails?.data?.orderDetails;
+  const orderDetailsData =
+    displayOrderDetails?.orderDetails || orderDetails?.data?.orderDetails;
   const firstOrderDetail = orderDetailsData?.[0];
 
   // Derive pricing context (tax flags, charges) from order details
   const orderPricingContext = useMemo(() => {
     const detail = firstOrderDetail;
-    const header = orderDetails?.data;
+    const header = displayOrderDetails || orderDetails?.data;
 
     const resolvedIsInter =
       typeof detail?.isInter === "boolean"
@@ -203,7 +283,7 @@ export default function EditOrderPage({ params }: EditOrderPageProps) {
       overallShipping: Number.isFinite(resolvedShipping) ? resolvedShipping : 0,
       pfRate: Number.isFinite(resolvedPfRate) ? resolvedPfRate : 0,
     };
-  }, [firstOrderDetail, orderDetails?.data, user]);
+  }, [firstOrderDetail, displayOrderDetails, orderDetails?.data, user]);
   const products = useMemo(
     () => firstOrderDetail?.dbProductDetails || [],
     [firstOrderDetail?.dbProductDetails]
@@ -243,13 +323,20 @@ export default function EditOrderPage({ params }: EditOrderPageProps) {
   );
 
   const currency = useMemo(
-    () => orderDetails?.data?.buyerCurrencyId,
-    [orderDetails?.data?.buyerCurrencyId]
+    () =>
+      displayOrderDetails?.buyerCurrencyId ||
+      orderDetails?.data?.buyerCurrencyId,
+    [displayOrderDetails?.buyerCurrencyId, orderDetails?.data?.buyerCurrencyId]
   );
 
   const sellerCurrency = useMemo(
-    () => orderDetails?.data?.sellerCurrencyId,
-    [orderDetails?.data?.sellerCurrencyId]
+    () =>
+      displayOrderDetails?.sellerCurrencyId ||
+      orderDetails?.data?.sellerCurrencyId,
+    [
+      displayOrderDetails?.sellerCurrencyId,
+      orderDetails?.data?.sellerCurrencyId,
+    ]
   );
 
   // Use hook to get latest product pricing, discounts, and tax data
@@ -1071,12 +1158,49 @@ export default function EditOrderPage({ params }: EditOrderPageProps) {
     }
   };
 
+  // Handle version selection
+  const handleVersionSelect = (version: Version) => {
+    // Close dialog immediately
+    setVersionsDialogOpen(false);
+
+    // If version 1 is selected, reset to original order details
+    if (version.versionNumber === 1) {
+      // Reset to original order details
+      if (orderDetails) {
+        // Reset processed version ref
+        processedVersionRef.current = null;
+        // Re-fetch original order details
+        setSelectedVersion(null);
+        setTriggerVersionCall(false);
+        fetchOrderResponseMutate();
+      }
+      return;
+    }
+
+    // Reset processed version ref for new version selection
+    processedVersionRef.current = null;
+
+    // Set selected version and trigger fetch
+    setSelectedVersion({
+      versionNumber: version.versionNumber,
+      orderVersion: version.orderVersion || version.versionNumber,
+      ...(version.orderIdentifier && {
+        orderIdentifier: version.orderIdentifier,
+      }),
+    });
+    setTriggerVersionCall(true);
+  };
+
   // Extract data for header
-  const orderName = orderDetails?.data?.orderDetails?.[0]?.orderName;
-  const status = orderDetails?.data?.updatedBuyerStatus;
+  const orderName =
+    displayOrderDetails?.orderDetails?.[0]?.orderName ||
+    orderDetails?.data?.orderDetails?.[0]?.orderName;
+  const status =
+    displayOrderDetails?.updatedBuyerStatus ||
+    orderDetails?.data?.updatedBuyerStatus;
 
   return (
-    <div className="flex flex-col min-h-screen bg-gray-50">
+    <ApplicationLayout>
       {/* Sales Header - Fixed at top */}
       <div className="flex-shrink-0 sticky top-0 z-50 bg-gray-50">
         <SalesHeader
@@ -1107,292 +1231,332 @@ export default function EditOrderPage({ params }: EditOrderPageProps) {
 
       {/* Order Details Content - Scrollable area */}
       <div className="flex-1 w-full">
-        <div className="container mx-auto px-2 sm:px-3 md:px-4 py-2 sm:py-3">
-          <div className="flex flex-col lg:flex-row gap-2 sm:gap-3 md:gap-4">
-            {/* Left Side - Products Table and Contact/Terms Cards - 70% */}
-            <div className="w-full lg:w-[70%] space-y-2 sm:space-y-3 mt-[60px]">
-              {/* Products Table */}
-              {!loading && !error && orderDetails && (
-                <OrderProductsTable
-                  products={
-                    effectiveProducts.length > 0
-                      ? effectiveProducts
-                      : updatedProducts.length > 0
-                        ? updatedProducts
-                        : orderDetails.data?.orderDetails?.[0]
-                            ?.dbProductDetails || []
-                  }
-                  {...(orderDetails.data?.orderDetails?.[0]?.dbProductDetails
-                    ?.length && {
-                    totalCount:
-                      orderDetails.data.orderDetails[0].dbProductDetails.length,
-                  })}
-                  isEditable={true}
-                  onQuantityChange={handleQuantityChange}
-                  editedQuantities={editedQuantities}
-                  onProductAdd={handleProductAdd}
-                  elasticIndex={elasticIndex}
-                />
-              )}
+        <PageLayout variant="content">
+          {loading ? (
+            <DetailsSkeleton
+              showStatusTracker={false}
+              leftWidth="lg:w-[70%]"
+              rightWidth="lg:w-[30%]"
+            />
+          ) : (
+            <div className="flex flex-col lg:flex-row gap-2 sm:gap-3 md:gap-4 w-full">
+              {/* Left Side - Products Table and Contact/Terms Cards - 70% */}
+              <div className="w-full lg:w-[70%] space-y-2 sm:space-y-3 mt-[80px]">
+                {/* Products Table */}
+                {!loading && !error && orderDetails && (
+                  <OrderProductsTable
+                    products={
+                      effectiveProducts.length > 0
+                        ? effectiveProducts
+                        : updatedProducts.length > 0
+                          ? updatedProducts
+                          : orderDetails.data?.orderDetails?.[0]
+                              ?.dbProductDetails || []
+                    }
+                    {...(orderDetails.data?.orderDetails?.[0]?.dbProductDetails
+                      ?.length && {
+                      totalCount:
+                        orderDetails.data.orderDetails[0].dbProductDetails
+                          .length,
+                    })}
+                    isEditable={true}
+                    onQuantityChange={handleQuantityChange}
+                    editedQuantities={editedQuantities}
+                    onProductAdd={handleProductAdd}
+                    elasticIndex={elasticIndex}
+                  />
+                )}
 
-              {/* Contact Details and Terms Cards - Side by Side */}
-              {!loading && !error && orderDetails && (
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-2 sm:gap-3 md:gap-4">
-                  {/* Contact Details Card */}
-                  <OrderContactDetails
-                    billingAddress={
-                      editedBillingAddress ||
-                      (orderDetails.data?.orderDetails?.[0]
-                        ?.billingAddressDetails as unknown as AddressDetails)
-                    }
-                    shippingAddress={
-                      editedShippingAddress ||
-                      (orderDetails.data?.orderDetails?.[0]
-                        ?.shippingAddressDetails as unknown as AddressDetails)
-                    }
-                    registerAddress={
-                      orderDetails.data?.orderDetails?.[0]
-                        ?.registerAddressDetails as unknown as AddressDetails
-                    }
-                    sellerAddress={
-                      orderDetails.data?.orderDetails?.[0]
-                        ?.sellerAddressDetail as unknown as AddressDetails
-                    }
-                    buyerCompanyName={
-                      orderDetails.data?.orderDetails?.[0]
-                        ?.buyerCompanyName as unknown as string
-                    }
-                    buyerBranchName={
-                      orderDetails.data?.orderDetails?.[0]
-                        ?.buyerBranchName as unknown as string
-                    }
-                    warehouseName={
-                      editedWarehouse?.name ||
-                      (((
+                {/* Contact Details and Terms Cards - Side by Side */}
+                {!loading && !error && orderDetails && (
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-2 sm:gap-3 md:gap-4">
+                    {/* Contact Details Card */}
+                    <OrderContactDetails
+                      billingAddress={
+                        editedBillingAddress ||
+                        (orderDetails.data?.orderDetails?.[0]
+                          ?.billingAddressDetails as unknown as AddressDetails)
+                      }
+                      shippingAddress={
+                        editedShippingAddress ||
+                        (orderDetails.data?.orderDetails?.[0]
+                          ?.shippingAddressDetails as unknown as AddressDetails)
+                      }
+                      registerAddress={
                         orderDetails.data?.orderDetails?.[0]
-                          ?.dbProductDetails?.[0] as unknown as Record<
-                          string,
-                          Record<string, string>
-                        >
-                      )?.wareHouse?.wareHouseName ||
+                          ?.registerAddressDetails as unknown as AddressDetails
+                      }
+                      sellerAddress={
+                        orderDetails.data?.orderDetails?.[0]
+                          ?.sellerAddressDetail as unknown as AddressDetails
+                      }
+                      buyerCompanyName={
+                        orderDetails.data?.orderDetails?.[0]
+                          ?.buyerCompanyName as unknown as string
+                      }
+                      buyerBranchName={
+                        orderDetails.data?.orderDetails?.[0]
+                          ?.buyerBranchName as unknown as string
+                      }
+                      warehouseName={
+                        editedWarehouse?.name ||
+                        (((
+                          orderDetails.data?.orderDetails?.[0]
+                            ?.dbProductDetails?.[0] as unknown as Record<
+                            string,
+                            Record<string, string>
+                          >
+                        )?.wareHouse?.wareHouseName ||
+                          (
+                            orderDetails.data?.orderDetails?.[0]
+                              ?.dbProductDetails?.[0] as unknown as Record<
+                              string,
+                              string
+                            >
+                          )?.orderWareHouseName) as string | undefined)
+                      }
+                      warehouseAddress={
                         (
                           orderDetails.data?.orderDetails?.[0]
                             ?.dbProductDetails?.[0] as unknown as Record<
                             string,
-                            string
+                            Record<string, Record<string, string>>
                           >
-                        )?.orderWareHouseName) as string | undefined)
-                    }
-                    warehouseAddress={
-                      (
-                        orderDetails.data?.orderDetails?.[0]
-                          ?.dbProductDetails?.[0] as unknown as Record<
-                          string,
-                          Record<string, Record<string, string>>
-                        >
-                      )?.wareHouse?.addressId as unknown as {
-                        addressLine?: string;
-                        district?: string;
-                        city?: string;
-                        state?: string;
-                        pinCodeId?: string;
-                        country?: string;
+                        )?.wareHouse?.addressId as unknown as {
+                          addressLine?: string;
+                          district?: string;
+                          city?: string;
+                          state?: string;
+                          pinCodeId?: string;
+                          country?: string;
+                        }
                       }
+                      salesBranch={
+                        editedSellerBranch?.name ||
+                        (orderDetails.data?.orderDetails?.[0]
+                          ?.sellerBranchName as unknown as string | undefined)
+                      }
+                      requiredDate={editedRequiredDate}
+                      referenceNumber={editedReferenceNumber}
+                      isEditable={true}
+                      onRequiredDateChange={handleRequiredDateChange}
+                      onReferenceNumberChange={handleReferenceNumberChange}
+                      onBillingAddressChange={
+                        handleBillingAddressChange as unknown as (
+                          address: Parameters<
+                            typeof OrderContactDetails
+                          >[0]["billingAddress"]
+                        ) => void
+                      }
+                      onShippingAddressChange={
+                        handleShippingAddressChange as unknown as (
+                          address: Parameters<
+                            typeof OrderContactDetails
+                          >[0]["shippingAddress"]
+                        ) => void
+                      }
+                      onSellerBranchChange={handleSellerBranchChange}
+                      onWarehouseChange={handleWarehouseChange}
+                      userId={user?.userId?.toString()}
+                      buyerBranchId={
+                        orderDetails.data?.orderDetails?.[0]
+                          ?.buyerBranchId as number
+                      }
+                      buyerCompanyId={user?.companyId}
+                      productIds={
+                        orderDetails.data?.orderDetails?.[0]?.dbProductDetails?.map(
+                          p => p.productId
+                        ) as number[]
+                      }
+                      sellerCompanyId={
+                        orderDetails.data?.orderDetails?.[0]
+                          ?.sellerCompanyId as number
+                      }
+                    />
+
+                    {/* Terms Card */}
+                    <OrderTermsCard
+                      orderTerms={
+                        {
+                          ...(orderDetails.data?.orderDetails?.[0]
+                            ?.orderTerms || {}),
+                          additionalTerms: orderDetails.data?.orderDetails?.[0]
+                            ?.additionalTerms as string | undefined,
+                        } as OrderTerms
+                      }
+                    />
+                  </div>
+                )}
+              </div>
+
+              {/* Right Side - Price Details - 30% */}
+              {!loading && !error && orderDetails && (
+                <div className="w-full lg:w-[30%] mt-[80px] space-y-3">
+                  <OrderPriceDetails
+                    products={effectiveProducts}
+                    isInter={orderPricingContext.isInter}
+                    taxExemption={orderPricingContext.taxExemption}
+                    precision={2}
+                    Settings={{
+                      roundingAdjustment:
+                        quoteSettings?.roundingAdjustment || false,
+                    }}
+                    currency={
+                      (
+                        orderDetails.data?.buyerCurrencySymbol as {
+                          symbol?: string;
+                        }
+                      )?.symbol || "INR ₹"
                     }
-                    salesBranch={
-                      editedSellerBranch?.name ||
-                      (orderDetails.data?.orderDetails?.[0]
-                        ?.sellerBranchName as unknown as string | undefined)
+                    // Use calculated values when available, fallback to API values
+                    overallShipping={
+                      calculatedData?.cartValue?.totalShipping !== undefined
+                        ? calculatedData.cartValue.totalShipping
+                        : Number(
+                            orderDetails.data?.orderDetails?.[0]
+                              ?.overallShipping
+                          ) || 0
                     }
-                    requiredDate={editedRequiredDate}
-                    referenceNumber={editedReferenceNumber}
-                    isEditable={true}
-                    onRequiredDateChange={handleRequiredDateChange}
-                    onReferenceNumberChange={handleReferenceNumberChange}
-                    onBillingAddressChange={
-                      handleBillingAddressChange as unknown as (
-                        address: Parameters<
-                          typeof OrderContactDetails
-                        >[0]["billingAddress"]
-                      ) => void
+                    overallTax={
+                      calculatedData?.cartValue?.totalTax !== undefined
+                        ? calculatedData.cartValue.totalTax
+                        : Number(
+                            orderDetails.data?.orderDetails?.[0]?.overallTax
+                          ) || 0
                     }
-                    onShippingAddressChange={
-                      handleShippingAddressChange as unknown as (
-                        address: Parameters<
-                          typeof OrderContactDetails
-                        >[0]["shippingAddress"]
-                      ) => void
-                    }
-                    onSellerBranchChange={handleSellerBranchChange}
-                    onWarehouseChange={handleWarehouseChange}
-                    userId={user?.userId?.toString()}
-                    buyerBranchId={
-                      orderDetails.data?.orderDetails?.[0]
-                        ?.buyerBranchId as number
-                    }
-                    buyerCompanyId={user?.companyId}
-                    productIds={
-                      orderDetails.data?.orderDetails?.[0]?.dbProductDetails?.map(
-                        p => p.productId
-                      ) as number[]
-                    }
-                    sellerCompanyId={
-                      orderDetails.data?.orderDetails?.[0]
-                        ?.sellerCompanyId as number
-                    }
+                    insuranceCharges={orderPricingContext.insuranceCharges}
+                    {...(calculatedData?.cartValue?.calculatedTotal !==
+                      undefined &&
+                    calculatedData?.cartValue?.calculatedTotal !== null &&
+                    calculatedData?.cartValue?.totalValue !== undefined &&
+                    calculatedData?.cartValue?.totalValue !== null &&
+                    calculatedData?.cartValue?.taxableAmount !== undefined &&
+                    calculatedData?.cartValue?.taxableAmount !== null
+                      ? {
+                          calculatedTotal:
+                            calculatedData.cartValue.calculatedTotal,
+                          subTotal: calculatedData.cartValue.totalValue,
+                          taxableAmount: calculatedData.cartValue.taxableAmount,
+                        }
+                      : {})}
                   />
 
-                  {/* Terms Card */}
-                  <OrderTermsCard
-                    orderTerms={
-                      {
-                        ...(orderDetails.data?.orderDetails?.[0]?.orderTerms ||
-                          {}),
-                        additionalTerms: orderDetails.data?.orderDetails?.[0]
-                          ?.additionalTerms as string | undefined,
-                      } as OrderTerms
+                  {/* Cash Discount Card */}
+                  <CashDiscountCard
+                    handleCDApply={(
+                      cashDiscountValue,
+                      islatestTermAvailable,
+                      paymentTerms
+                    ) => {
+                      handleCDApply(
+                        cashDiscountValue,
+                        islatestTermAvailable,
+                        paymentTerms
+                      );
+                      // Update payment terms if available
+                      if (islatestTermAvailable && paymentTerms) {
+                        setOrderDetails(prev => {
+                          if (!prev || !prev.data?.orderDetails) return prev;
+                          return {
+                            ...prev,
+                            data: {
+                              ...prev.data,
+                              orderDetails: prev.data.orderDetails.map(
+                                (order, idx) =>
+                                  idx === 0
+                                    ? {
+                                        ...order,
+                                        orderTerms: {
+                                          ...(order.orderTerms &&
+                                          typeof order.orderTerms === "object"
+                                            ? order.orderTerms
+                                            : {}),
+                                          paymentTermsId:
+                                            paymentTerms.paymentTermsId ||
+                                            paymentTerms.id,
+                                          paymentTerms:
+                                            paymentTerms.paymentTerms ||
+                                            paymentTerms.description,
+                                          paymentTermsCode:
+                                            paymentTerms.paymentTermsCode,
+                                          cashdiscount:
+                                            paymentTerms.cashdiscount,
+                                          cashdiscountValue:
+                                            paymentTerms.cashdiscountValue,
+                                        },
+                                      }
+                                    : order
+                              ),
+                            },
+                          };
+                        });
+                      }
+                    }}
+                    handleRemoveCD={handleRemoveCashDiscount}
+                    latestpaymentTerms={cashDiscountTerms}
+                    isCashDiscountApplied={cashDiscountApplied}
+                    isSummaryPage={false}
+                    isEdit={true}
+                    cashDiscountValue={
+                      calculatedData?.cartValue?.cashDiscountValue ||
+                      orderDetails?.data?.orderDetails?.[0]
+                        ?.cashdiscountValue ||
+                      cashDiscountTerms?.cashdiscountValue ||
+                      (orderDetails?.data?.orderDetails?.[0]?.orderTerms &&
+                      typeof orderDetails.data.orderDetails[0].orderTerms ===
+                        "object" &&
+                      "cashdiscountValue" in
+                        orderDetails.data.orderDetails[0].orderTerms
+                        ? (
+                            orderDetails.data.orderDetails[0].orderTerms as {
+                              cashdiscountValue?: number;
+                            }
+                          ).cashdiscountValue
+                        : undefined) ||
+                      0
                     }
+                    islatestTermAvailable={
+                      !isEmpty(cashDiscountTerms) && !cashDiscountApplied
+                    }
+                    prevPaymentTerms={prevPaymentTerms}
+                    isOrder={true}
+                    isQuoteToOrder={false}
+                    cashdiscount={cashDiscountApplied}
                   />
                 </div>
               )}
             </div>
-
-            {/* Right Side - Price Details - 30% */}
-            {!loading && !error && orderDetails && (
-              <div className="w-full lg:w-[30%] mt-[60px] space-y-3">
-                <OrderPriceDetails
-                  products={effectiveProducts}
-                  isInter={orderPricingContext.isInter}
-                  taxExemption={orderPricingContext.taxExemption}
-                  precision={2}
-                  Settings={{
-                    roundingAdjustment:
-                      quoteSettings?.roundingAdjustment || false,
-                  }}
-                  currency={
-                    (
-                      orderDetails.data?.buyerCurrencySymbol as {
-                        symbol?: string;
-                      }
-                    )?.symbol || "INR ₹"
-                  }
-                  // Use calculated values when available, fallback to API values
-                  overallShipping={
-                    calculatedData?.cartValue?.totalShipping !== undefined
-                      ? calculatedData.cartValue.totalShipping
-                      : Number(
-                          orderDetails.data?.orderDetails?.[0]?.overallShipping
-                        ) || 0
-                  }
-                  overallTax={
-                    calculatedData?.cartValue?.totalTax !== undefined
-                      ? calculatedData.cartValue.totalTax
-                      : Number(
-                          orderDetails.data?.orderDetails?.[0]?.overallTax
-                        ) || 0
-                  }
-                  insuranceCharges={orderPricingContext.insuranceCharges}
-                  {...(calculatedData?.cartValue?.calculatedTotal !==
-                    undefined &&
-                  calculatedData?.cartValue?.calculatedTotal !== null &&
-                  calculatedData?.cartValue?.totalValue !== undefined &&
-                  calculatedData?.cartValue?.totalValue !== null &&
-                  calculatedData?.cartValue?.taxableAmount !== undefined &&
-                  calculatedData?.cartValue?.taxableAmount !== null
-                    ? {
-                        calculatedTotal:
-                          calculatedData.cartValue.calculatedTotal,
-                        subTotal: calculatedData.cartValue.totalValue,
-                        taxableAmount: calculatedData.cartValue.taxableAmount,
-                      }
-                    : {})}
-                />
-
-                {/* Cash Discount Card */}
-                <CashDiscountCard
-                  handleCDApply={(
-                    cashDiscountValue,
-                    islatestTermAvailable,
-                    paymentTerms
-                  ) => {
-                    handleCDApply(
-                      cashDiscountValue,
-                      islatestTermAvailable,
-                      paymentTerms
-                    );
-                    // Update payment terms if available
-                    if (islatestTermAvailable && paymentTerms) {
-                      setOrderDetails(prev => {
-                        if (!prev || !prev.data?.orderDetails) return prev;
-                        return {
-                          ...prev,
-                          data: {
-                            ...prev.data,
-                            orderDetails: prev.data.orderDetails.map(
-                              (order, idx) =>
-                                idx === 0
-                                  ? {
-                                      ...order,
-                                      orderTerms: {
-                                        ...(order.orderTerms &&
-                                        typeof order.orderTerms === "object"
-                                          ? order.orderTerms
-                                          : {}),
-                                        paymentTermsId:
-                                          paymentTerms.paymentTermsId ||
-                                          paymentTerms.id,
-                                        paymentTerms:
-                                          paymentTerms.paymentTerms ||
-                                          paymentTerms.description,
-                                        paymentTermsCode:
-                                          paymentTerms.paymentTermsCode,
-                                        cashdiscount: paymentTerms.cashdiscount,
-                                        cashdiscountValue:
-                                          paymentTerms.cashdiscountValue,
-                                      },
-                                    }
-                                  : order
-                            ),
-                          },
-                        };
-                      });
-                    }
-                  }}
-                  handleRemoveCD={handleRemoveCashDiscount}
-                  latestpaymentTerms={cashDiscountTerms}
-                  isCashDiscountApplied={cashDiscountApplied}
-                  isSummaryPage={false}
-                  isEdit={true}
-                  cashDiscountValue={
-                    calculatedData?.cartValue?.cashDiscountValue ||
-                    orderDetails?.data?.orderDetails?.[0]?.cashdiscountValue ||
-                    cashDiscountTerms?.cashdiscountValue ||
-                    (orderDetails?.data?.orderDetails?.[0]?.orderTerms &&
-                    typeof orderDetails.data.orderDetails[0].orderTerms ===
-                      "object" &&
-                    "cashdiscountValue" in
-                      orderDetails.data.orderDetails[0].orderTerms
-                      ? (
-                          orderDetails.data.orderDetails[0].orderTerms as {
-                            cashdiscountValue?: number;
-                          }
-                        ).cashdiscountValue
-                      : undefined) ||
-                    0
-                  }
-                  islatestTermAvailable={
-                    !isEmpty(cashDiscountTerms) && !cashDiscountApplied
-                  }
-                  prevPaymentTerms={prevPaymentTerms}
-                  isOrder={true}
-                  isQuoteToOrder={false}
-                  cashdiscount={cashDiscountApplied}
-                />
-              </div>
-            )}
-          </div>
-        </div>
+          )}
+        </PageLayout>
       </div>
+
+      {/* Right Sidebar Icons - Positioned just below the SalesHeader component, flush to right edge */}
+      <div className="fixed right-0 top-[127px] z-50 bg-white border-l border-t border-b border-gray-200 shadow-lg rounded-l-lg p-1">
+        <button
+          className={`p-1.5 hover:bg-gray-100 rounded transition-colors ${
+            versionsDialogOpen ? "bg-primary/10" : ""
+          }`}
+          aria-label="Layers"
+          onClick={() => setVersionsDialogOpen(true)}
+        >
+          <Layers
+            className={`w-5 h-5 transition-colors ${
+              versionsDialogOpen ? "text-primary" : "text-gray-700"
+            }`}
+          />
+        </button>
+      </div>
+
+      {/* Versions Dialog */}
+      <VersionsDialog
+        open={versionsDialogOpen}
+        onOpenChange={setVersionsDialogOpen}
+        versions={orderVersions}
+        orderId={orderId}
+        loading={loading}
+        currentVersionNumber={selectedVersion?.versionNumber || 1}
+        onVersionSelect={handleVersionSelect}
+      />
 
       {/* Place Order Confirmation Dialog */}
       <Dialog open={confirmDialogOpen} onOpenChange={setConfirmDialogOpen}>
@@ -1437,6 +1601,6 @@ export default function EditOrderPage({ params }: EditOrderPageProps) {
           </DialogFooter>
         </DialogContent>
       </Dialog>
-    </div>
+    </ApplicationLayout>
   );
 }

@@ -1,298 +1,296 @@
 ---
-alwaysApply: true
+alwaysApply: false
 description: >
   CI/CD Pipeline Rule - Automated Quality Checks.
   When the user requests to "run CI/CD", "run checks", "check and fix", or similar commands,
   execute the following pipeline in strict sequential order with automatic issue fixing.
 rules:
+  - id: cicd-pipeline-execution
+    description: >
+      Execute CI/CD pipeline checks sequentially: install → type-check → lint → test → build.
+      Fix all issues automatically and report progress after each step.
+    details: |
+      • **Trigger Commands**: 
+        - "run CI/CD"
+        - "run checks"
+        - "check and fix"
+        - "run pipeline"
+        - "check everything"
+        - Any similar request for quality checks
 
-- id: cicd-pipeline-execution
-  description: >
-    Execute CI/CD pipeline checks sequentially: install → type-check → lint → test → build.
-    Fix all issues automatically and report progress after each step.
-  details: |
-    • **Trigger Commands**: 
-      - "run CI/CD"
-      - "run checks"
-      - "check and fix"
-      - "run pipeline"
-      - "check everything"
-      - Any similar request for quality checks
-    
-    • **Pipeline Steps** (MUST execute in order):
-      1. Dependency Installation (`yarn install`)
-      2. Type Checking (`yarn type-check`)
-      3. Linting (`yarn lint` → `yarn lint:fix`)
-      4. Testing (`yarn test`)
-      5. Build Check (`yarn build`)
-    
-    • **Execution Rules**:
-      - Each step MUST complete successfully before moving to next step
-      - Fix issues automatically without asking user (unless user input required)
-      - Re-run step after fixes to verify resolution
-      - Report status after each step with issue counts
+      • **Pipeline Steps** (MUST execute in order):
+        1. Dependency Installation (`yarn install`)
+        2. Type Checking (`yarn type-check`)
+        3. Linting (`yarn lint` → `yarn lint:fix`)
+        4. Testing (`yarn test`)
+        5. Build Check (`yarn build`)
 
-- id: step-1-dependency-installation
-  description: >
-    Step 1: Check and ensure all dependencies are installed correctly.
-  details: |
-    • **Command**: `yarn install`
-    
-    • **Actions**:
-      1. Run `yarn install` to ensure all dependencies are installed
-      2. Check for installation errors or warnings
-      3. If errors occur:
-         - Analyze error messages (version conflicts, missing packages, network issues)
-         - Fix package.json conflicts, version mismatches, or missing dependencies
-         - Update yarn.lock if needed
-         - Re-run `yarn install` until successful
-      4. Report: "✓ Dependencies installed successfully" or list fixed issues
-    
-    • **Common Issues to Fix**:
-      - Version conflicts in package.json
-      - Missing peer dependencies
-      - Corrupted node_modules (delete and reinstall)
-      - Yarn cache issues (clear cache if needed)
-      - Lock file conflicts
+      • **Execution Rules**:
+        - Each step MUST complete successfully before moving to next step
+        - Fix issues automatically without asking user (unless user input required)
+        - Re-run step after fixes to verify resolution
+        - Report status after each step with issue counts
 
-- id: step-2-type-checking
-  description: >
-    Step 2: Run TypeScript type checking and fix all type errors automatically.
-  details: |
-    • **Command**: `yarn type-check` (or `tsc --noEmit`)
-    
-    • **Actions**:
-      1. Run `yarn type-check` to check for TypeScript errors
-      2. Analyze all TypeScript errors:
-         - Type mismatches
-         - Missing type definitions
-         - Unused variables/parameters (if strict mode enabled)
-         - Import/export issues
-         - Missing return types
-         - Incorrect type annotations
-      3. Fix ALL type errors automatically:
-         - Add proper type annotations
-         - Fix import/export statements
-         - Resolve type mismatches
-         - Add missing type definitions
-         - Fix generic type parameters
-         - Add missing return types
-      4. Re-run type-check after fixes until it passes
-      5. Report: "✓ Type checking passed" or list fixed issues
-    
-    • **Common Fixes**:
-      - Add `: Type` annotations where missing
-      - Fix `any` types with proper types
-      - Add missing type imports
-      - Fix interface/type mismatches
-      - Resolve union type issues
-      - Fix optional vs required property issues
+  - id: step-1-dependency-installation
+    description: >
+      Step 1: Check and ensure all dependencies are installed correctly.
+    details: |
+      • **Command**: `yarn install`
 
-- id: step-3-linting
-  description: >
-    Step 3: Run ESLint and fix all linting errors automatically.
-  details: |
-    • **Commands**: 
-      - `yarn lint` (check)
-      - `yarn lint:fix` (auto-fix)
-    
-    • **Actions**:
-      1. Run `yarn lint` to check for linting errors
-      2. Analyze all ESLint errors and warnings:
-         - Code style issues
-         - Unused imports/variables
-         - React hooks dependencies
-         - Accessibility issues
-         - Next.js specific issues
-         - Import order issues
-         - Prettier formatting issues
-      3. Fix ALL linting errors automatically:
-         - Run `yarn lint:fix` for auto-fixable issues
-         - Manually fix remaining issues:
-           - Remove unused imports/variables
-           - Fix React hooks dependencies (add to dependency arrays)
-           - Correct code style violations
-           - Fix accessibility issues (add aria labels, alt text)
-           - Fix import order
-           - Fix Prettier formatting
-      4. Re-run lint after fixes until it passes (or only warnings remain)
-      5. Report: "✓ Linting passed" or list fixed issues
-    
-    • **Common Fixes**:
-      - Remove unused imports: `import { unused } from 'module'`
-      - Fix React hooks: Add missing dependencies to `useEffect`, `useMemo`, `useCallback`
-      - Fix import order: Group imports (external, internal, relative)
-      - Add missing accessibility attributes
-      - Fix code style (spacing, quotes, semicolons)
+      • **Actions**:
+        1. Run `yarn install` to ensure all dependencies are installed
+        2. Check for installation errors or warnings
+        3. If errors occur:
+           - Analyze error messages (version conflicts, missing packages, network issues)
+           - Fix package.json conflicts, version mismatches, or missing dependencies
+           - Update yarn.lock if needed
+           - Re-run `yarn install` until successful
+        4. Report: "✓ Dependencies installed successfully" or list fixed issues
 
-- id: step-4-testing
-  description: >
-    Step 4: Run all tests and fix any test failures automatically.
-  details: |
-    • **Command**: `yarn test`
-    
-    • **Actions**:
-      1. Run `yarn test` to execute all tests
-      2. Analyze test failures:
-         - Failed assertions
-         - Missing mocks
-         - Incorrect test setup
-         - Type errors in tests
-         - Snapshot mismatches
-         - Timeout issues
-         - Async/await issues
-      3. Fix ALL test failures automatically:
-         - Fix broken assertions (update expected values)
-         - Add missing mocks/stubs
-         - Update test setup files
-         - Fix test type errors
-         - Update snapshots if needed (`yarn test -u`)
-         - Fix async/await patterns
-         - Add missing test data
-      4. Re-run tests after fixes until all pass
-      5. Report: "✓ All tests passed" or list fixed issues
-    
-    • **Common Fixes**:
-      - Add missing mocks: `jest.mock('module')`
-      - Fix async tests: Use `waitFor`, `async/await` properly
-      - Update snapshots: `yarn test -u` or manually update
-      - Fix test data: Update mock data to match current structure
-      - Fix assertions: Update expected values to match actual behavior
-      - Add missing test setup: `beforeEach`, `afterEach` hooks
+      • **Common Issues to Fix**:
+        - Version conflicts in package.json
+        - Missing peer dependencies
+        - Corrupted node_modules (delete and reinstall)
+        - Yarn cache issues (clear cache if needed)
+        - Lock file conflicts
 
-- id: step-5-build-check
-  description: >
-    Step 5: Verify the project builds successfully and fix any build errors.
-  details: |
-    • **Command**: `yarn build`
-    
-    • **Actions**:
-      1. Run `yarn build` to verify the project builds successfully
-      2. Analyze build errors:
-         - Compilation errors
-         - Missing dependencies
-         - Configuration issues
-         - Type errors not caught in type-check
-         - Import/export issues
-         - Next.js specific errors
-         - Environment variable issues
-      3. Fix ALL build errors automatically:
-         - Resolve compilation errors
-         - Fix missing imports/exports
-         - Update configuration files (next.config.mjs, tsconfig.json)
-         - Fix type errors
-         - Fix environment variable issues
-         - Fix Next.js specific issues (metadata, routing, etc.)
-      4. Re-run build after fixes until successful
-      5. Report: "✓ Build completed successfully" or list fixed issues
-    
-    • **Common Fixes**:
-      - Fix missing exports: Add `export` keyword
-      - Fix import paths: Correct relative/absolute paths
-      - Fix Next.js issues: Metadata, routing, server/client components
-      - Fix environment variables: Add to `.env` files
-      - Fix configuration: Update next.config.mjs, tsconfig.json
-      - Fix build-time errors: Resolve static generation issues
+  - id: step-2-type-checking
+    description: >
+      Step 2: Run TypeScript type checking and fix all type errors automatically.
+    details: |
+      • **Command**: `yarn type-check` (or `tsc --noEmit`)
 
-- id: error-handling-and-retry
-  description: >
-    Handle errors gracefully with retry logic and user communication.
-  details: |
-    • **Retry Logic**:
-      - After fixing issues in any step, re-run that step to verify fix
-      - Maximum 3 retry attempts per step
-      - If step fails after 3 retries, report issue and ask for clarification
-    
-    • **User Communication**:
-      - If fix requires breaking changes, pause and explain before proceeding
-      - If fix requires user decision, ask for clarification
-      - Always preserve existing functionality while fixing issues
-      - Document any significant changes made during fixes
-    
-    • **Error Reporting**:
-      - Report specific error messages
-      - Explain what was fixed
-      - List any remaining warnings (non-blocking)
-      - Provide summary of changes made
+      • **Actions**:
+        1. Run `yarn type-check` to check for TypeScript errors
+        2. Analyze all TypeScript errors:
+           - Type mismatches
+           - Missing type definitions
+           - Unused variables/parameters (if strict mode enabled)
+           - Import/export issues
+           - Missing return types
+           - Incorrect type annotations
+        3. Fix ALL type errors automatically:
+           - Add proper type annotations
+           - Fix import/export statements
+           - Resolve type mismatches
+           - Add missing type definitions
+           - Fix generic type parameters
+           - Add missing return types
+        4. Re-run type-check after fixes until it passes
+        5. Report: "✓ Type checking passed" or list fixed issues
 
-- id: reporting-format
-  description: >
-    Provide comprehensive reporting after each step and final summary.
-  details: |
-    • **Step-by-Step Reporting**:
-      After each step, report:
-      - Success status (✓ Passed / ✗ Failed)
-      - Number of issues found (if any)
-      - Number of issues fixed (if any)
-      - Any remaining warnings (non-blocking)
-      - Brief summary of fixes applied
-    
-    • **Final Report Format**:
-      ```
-      ╔════════════════════════════════════════════════════╗
-      ║          CI/CD Pipeline - Execution Report         ║
-      ╠════════════════════════════════════════════════════╣
-      ║ Step 1: Dependencies    ✓ Passed                  ║
-      ║ Step 2: Type Check      ✓ Passed                  ║
-      ║ Step 3: Linting         ✓ Passed                  ║
-      ║ Step 4: Tests           ✓ Passed                  ║
-      ║ Step 5: Build           ✓ Passed                  ║
-      ╠════════════════════════════════════════════════════╣
-      ║ Status: ALL CHECKS PASSED ✓                        ║
-      ║ Issues Fixed: X                                      ║
-      ╚════════════════════════════════════════════════════╝
-      ```
-    
-    • **Failure Report Format**:
-      ```
-      ╔════════════════════════════════════════════════════╗
-      ║          CI/CD Pipeline - Execution Report         ║
-      ╠════════════════════════════════════════════════════╣
-      ║ Step 1: Dependencies    ✓ Passed                  ║
-      ║ Step 2: Type Check      ✗ Failed (X errors)       ║
-      ║   → Fixed: Y errors                                 ║
-      ║   → Remaining: Z errors                            ║
-      ║ Step 3: Linting         ⏸ Skipped                 ║
-      ║ Step 4: Tests           ⏸ Skipped                 ║
-      ║ Step 5: Build           ⏸ Skipped                 ║
-      ╠════════════════════════════════════════════════════╣
-      ║ Status: PIPELINE STOPPED AT STEP 2                 ║
-      ║ Issues Fixed: Y                                     ║
-      ║ Issues Remaining: Z                                 ║
-      ╚════════════════════════════════════════════════════╝
-      ```
+      • **Common Fixes**:
+        - Add `: Type` annotations where missing
+        - Fix `any` types with proper types
+        - Add missing type imports
+        - Fix interface/type mismatches
+        - Resolve union type issues
+        - Fix optional vs required property issues
 
-- id: commands-reference
-  description: >
-    Reference for all commands used in the CI/CD pipeline.
-  details: |
-    • **Available Commands**:
-      ```bash
-      # Step 1: Dependencies
-      yarn install
-      
-      # Step 2: Type Checking
-      yarn type-check
-      # Alternative: tsc --noEmit
-      
-      # Step 3: Linting
-      yarn lint              # Check for linting errors
-      yarn lint:fix          # Auto-fix linting errors
-      
-      # Step 4: Testing
-      yarn test              # Run all tests
-      yarn test -u          # Update snapshots
-      yarn test:coverage    # Run with coverage
-      
-      # Step 5: Build
-      yarn build            # Build Next.js application
-      ```
-    
-    • **Command Execution**:
-      - Run commands in project root directory
-      - Capture output for error analysis
-      - Parse error messages for specific issues
-      - Use exit codes to determine success/failure
-```
-alwaysApply: true
+  - id: step-3-linting
+    description: >
+      Step 3: Run ESLint and fix all linting errors automatically.
+    details: |
+      • **Commands**: 
+        - `yarn lint` (check)
+        - `yarn lint:fix` (auto-fix)
+
+      • **Actions**:
+        1. Run `yarn lint` to check for linting errors
+        2. Analyze all ESLint errors and warnings:
+           - Code style issues
+           - Unused imports/variables
+           - React hooks dependencies
+           - Accessibility issues
+           - Next.js specific issues
+           - Import order issues
+           - Prettier formatting issues
+        3. Fix ALL linting errors automatically:
+           - Run `yarn lint:fix` for auto-fixable issues
+           - Manually fix remaining issues:
+             - Remove unused imports/variables
+             - Fix React hooks dependencies (add to dependency arrays)
+             - Correct code style violations
+             - Fix accessibility issues (add aria labels, alt text)
+             - Fix import order
+             - Fix Prettier formatting
+        4. Re-run lint after fixes until it passes (or only warnings remain)
+        5. Report: "✓ Linting passed" or list fixed issues
+
+      • **Common Fixes**:
+        - Remove unused imports: `import { unused } from 'module'`
+        - Fix React hooks: Add missing dependencies to `useEffect`, `useMemo`, `useCallback`
+        - Fix import order: Group imports (external, internal, relative)
+        - Add missing accessibility attributes
+        - Fix code style (spacing, quotes, semicolons)
+
+  - id: step-4-testing
+    description: >
+      Step 4: Run all tests and fix any test failures automatically.
+    details: |
+      • **Command**: `yarn test`
+
+      • **Actions**:
+        1. Run `yarn test` to execute all tests
+        2. Analyze test failures:
+           - Failed assertions
+           - Missing mocks
+           - Incorrect test setup
+           - Type errors in tests
+           - Snapshot mismatches
+           - Timeout issues
+           - Async/await issues
+        3. Fix ALL test failures automatically:
+           - Fix broken assertions (update expected values)
+           - Add missing mocks/stubs
+           - Update test setup files
+           - Fix test type errors
+           - Update snapshots if needed (`yarn test -u`)
+           - Fix async/await patterns
+           - Add missing test data
+        4. Re-run tests after fixes until all pass
+        5. Report: "✓ All tests passed" or list fixed issues
+
+      • **Common Fixes**:
+        - Add missing mocks: `jest.mock('module')`
+        - Fix async tests: Use `waitFor`, `async/await` properly
+        - Update snapshots: `yarn test -u` or manually update
+        - Fix test data: Update mock data to match current structure
+        - Fix assertions: Update expected values to match actual behavior
+        - Add missing test setup: `beforeEach`, `afterEach` hooks
+
+  - id: step-5-build-check
+    description: >
+      Step 5: Verify the project builds successfully and fix any build errors.
+    details: |
+      • **Command**: `yarn build`
+
+      • **Actions**:
+        1. Run `yarn build` to verify the project builds successfully
+        2. Analyze build errors:
+           - Compilation errors
+           - Missing dependencies
+           - Configuration issues
+           - Type errors not caught in type-check
+           - Import/export issues
+           - Next.js specific errors
+           - Environment variable issues
+        3. Fix ALL build errors automatically:
+           - Resolve compilation errors
+           - Fix missing imports/exports
+           - Update configuration files (next.config.mjs, tsconfig.json)
+           - Fix type errors
+           - Fix environment variable issues
+           - Fix Next.js specific issues (metadata, routing, etc.)
+        4. Re-run build after fixes until successful
+        5. Report: "✓ Build completed successfully" or list fixed issues
+
+      • **Common Fixes**:
+        - Fix missing exports: Add `export` keyword
+        - Fix import paths: Correct relative/absolute paths
+        - Fix Next.js issues: Metadata, routing, server/client components
+        - Fix environment variables: Add to `.env` files
+        - Fix configuration: Update next.config.mjs, tsconfig.json
+        - Fix build-time errors: Resolve static generation issues
+
+  - id: error-handling-and-retry
+    description: >
+      Handle errors gracefully with retry logic and user communication.
+    details: |
+      • **Retry Logic**:
+        - After fixing issues in any step, re-run that step to verify fix
+        - Maximum 3 retry attempts per step
+        - If step fails after 3 retries, report issue and ask for clarification
+
+      • **User Communication**:
+        - If fix requires breaking changes, pause and explain before proceeding
+        - If fix requires user decision, ask for clarification
+        - Always preserve existing functionality while fixing issues
+        - Document any significant changes made during fixes
+
+      • **Error Reporting**:
+        - Report specific error messages
+        - Explain what was fixed
+        - List any remaining warnings (non-blocking)
+        - Provide summary of changes made
+
+  - id: reporting-format
+    description: >
+      Provide comprehensive reporting after each step and final summary.
+    details: |
+      • **Step-by-Step Reporting**:
+        After each step, report:
+        - Success status (✓ Passed / ✗ Failed)
+        - Number of issues found (if any)
+        - Number of issues fixed (if any)
+        - Any remaining warnings (non-blocking)
+        - Brief summary of fixes applied
+
+      • **Final Report Format**:
+        ```
+        ╔════════════════════════════════════════════════════╗
+        ║          CI/CD Pipeline - Execution Report         ║
+        ╠════════════════════════════════════════════════════╣
+        ║ Step 1: Dependencies    ✓ Passed                  ║
+        ║ Step 2: Type Check      ✓ Passed                  ║
+        ║ Step 3: Linting         ✓ Passed                  ║
+        ║ Step 4: Tests           ✓ Passed                  ║
+        ║ Step 5: Build           ✓ Passed                  ║
+        ╠════════════════════════════════════════════════════╣
+        ║ Status: ALL CHECKS PASSED ✓                        ║
+        ║ Issues Fixed: X                                      ║
+        ╚════════════════════════════════════════════════════╝
+        ```
+
+      • **Failure Report Format**:
+        ```
+        ╔════════════════════════════════════════════════════╗
+        ║          CI/CD Pipeline - Execution Report         ║
+        ╠════════════════════════════════════════════════════╣
+        ║ Step 1: Dependencies    ✓ Passed                  ║
+        ║ Step 2: Type Check      ✗ Failed (X errors)       ║
+        ║   → Fixed: Y errors                                 ║
+        ║   → Remaining: Z errors                            ║
+        ║ Step 3: Linting         ⏸ Skipped                 ║
+        ║ Step 4: Tests           ⏸ Skipped                 ║
+        ║ Step 5: Build           ⏸ Skipped                 ║
+        ╠════════════════════════════════════════════════════╣
+        ║ Status: PIPELINE STOPPED AT STEP 2                 ║
+        ║ Issues Fixed: Y                                     ║
+        ║ Issues Remaining: Z                                 ║
+        ╚════════════════════════════════════════════════════╝
+        ```
+
+  - id: commands-reference
+    description: >
+      Reference for all commands used in the CI/CD pipeline.
+    details: |
+      • **Available Commands**:
+        ```bash
+        # Step 1: Dependencies
+        yarn install
+        
+        # Step 2: Type Checking
+        yarn type-check
+        # Alternative: tsc --noEmit
+        
+        # Step 3: Linting
+        yarn lint              # Check for linting errors
+        yarn lint:fix          # Auto-fix linting errors
+        
+        # Step 4: Testing
+        yarn test              # Run all tests
+        yarn test -u          # Update snapshots
+        yarn test:coverage    # Run with coverage
+        
+        # Step 5: Build
+        yarn build            # Build Next.js application
+        ```
+
+      • **Command Execution**:
+        - Run commands in project root directory
+        - Capture output for error analysis
+        - Parse error messages for specific issues
+        - Use exit codes to determine success/failure
+        ```
 ---

@@ -10,6 +10,7 @@ import {
   DropdownMenuSubTrigger,
 } from "@/components/ui/dropdown-menu";
 import useLogout from "@/hooks/Auth/useLogout";
+import { useRoutePrefetch } from "@/hooks/useRoutePrefetch";
 import {
   Building2,
   FileText,
@@ -29,6 +30,7 @@ export default function ProfileMenu() {
   const router = useRouter();
   const { userProfile } = useUserProfile();
   const { isLoggingOut, handleLogout } = useLogout();
+  const { prefetch } = useRoutePrefetch();
 
   return (
     <>
@@ -59,13 +61,25 @@ export default function ProfileMenu() {
       <DropdownMenuSeparator />
 
       {/* Home */}
-      <DropdownMenuItem onClick={() => router.push("/")}>
+      <DropdownMenuItem
+        onClick={() => {
+          prefetch("/");
+          router.push("/");
+        }}
+        onMouseEnter={() => prefetch("/")}
+      >
         <Home className="mr-2 h-4 w-4" />
         Home
       </DropdownMenuItem>
 
       {/* Dashboard */}
-      <DropdownMenuItem onClick={() => router.push("/dashboard")}>
+      <DropdownMenuItem
+        onClick={() => {
+          prefetch("/dashboard");
+          router.push("/dashboard");
+        }}
+        onMouseEnter={() => prefetch("/dashboard")}
+      >
         <LayoutDashboard className="mr-2 h-4 w-4" />
         Dashboard
       </DropdownMenuItem>
@@ -79,14 +93,22 @@ export default function ProfileMenu() {
 
         <DropdownMenuSubContent className="w-48">
           <DropdownMenuItem
-            onClick={() => router.push("/landing/orderslanding")}
+            onClick={() => {
+              prefetch("/landing/orderslanding");
+              router.push("/landing/orderslanding");
+            }}
+            onMouseEnter={() => prefetch("/landing/orderslanding")}
           >
             <ShoppingCart className="mr-2 h-4 w-4" />
             Orders
           </DropdownMenuItem>
 
           <DropdownMenuItem
-            onClick={() => router.push("/landing/quoteslanding")}
+            onClick={() => {
+              prefetch("/landing/quoteslanding");
+              router.push("/landing/quoteslanding");
+            }}
+            onMouseEnter={() => prefetch("/landing/quoteslanding")}
           >
             <FileText className="mr-2 h-4 w-4" />
             Quotes
@@ -102,12 +124,24 @@ export default function ProfileMenu() {
         </DropdownMenuSubTrigger>
 
         <DropdownMenuSubContent className="w-48">
-          <DropdownMenuItem onClick={() => router.push("/settings/profile")}>
+          <DropdownMenuItem
+            onClick={() => {
+              prefetch("/settings/profile");
+              router.push("/settings/profile");
+            }}
+            onMouseEnter={() => prefetch("/settings/profile")}
+          >
             <IdCard className="mr-2 h-4 w-4" />
             Profile
           </DropdownMenuItem>
 
-          <DropdownMenuItem onClick={() => router.push("/settings/company")}>
+          <DropdownMenuItem
+            onClick={() => {
+              prefetch("/settings/company");
+              router.push("/settings/company");
+            }}
+            onMouseEnter={() => prefetch("/settings/company")}
+          >
             <Building2 className="mr-2 h-4 w-4" />
             Company
           </DropdownMenuItem>

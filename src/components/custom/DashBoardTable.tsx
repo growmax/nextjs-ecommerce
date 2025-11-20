@@ -43,6 +43,7 @@ type TableProps<T> = {
   rowPerPage: number;
   setRowPerPage: (rowPerPage: number | string) => void;
   onRowClick?: (row: T) => void;
+  onRowHover?: (row: T) => void;
   tableHeight?: string;
   enableColumnResizing?: boolean;
   columnResizeMode?: ColumnResizeMode;
@@ -58,6 +59,7 @@ const DashboardTable = <T,>({
   page,
   rowPerPage,
   onRowClick,
+  onRowHover,
   tableHeight = "h-[calc(100vh-250px)]",
   enableColumnResizing = false,
   columnResizeMode = "onChange",
@@ -89,7 +91,7 @@ const DashboardTable = <T,>({
       {/* Scrollable Table Container - Header and Body together */}
       <div
         className={cn(
-          "overflow-x-auto overflow-y-visible relative [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]",
+          "overflow-x-auto overflow-y-visible relative scrollbar-thin-horizontal",
           tableHeight ? "flex-1" : ""
         )}
       >
@@ -114,11 +116,22 @@ const DashboardTable = <T,>({
                   const isSticky =
                     (header.column.columnDef.meta as { sticky?: boolean })
                       ?.sticky === true;
+                  const alignCenter =
+                    (header.column.columnDef.meta as { alignCenter?: boolean })
+                      ?.alignCenter === true;
+                  const alignRight =
+                    (header.column.columnDef.meta as { alignRight?: boolean })
+                      ?.alignRight === true;
                   return (
                     <TableHead
                       key={header.id}
                       className={cn(
-                        "text-left px-1 py-0.5 bg-gray-100 border-b relative align-middle",
+                        "px-1 py-0.5 bg-gray-100 border-b relative align-middle",
+                        alignCenter
+                          ? "text-center"
+                          : alignRight
+                            ? "text-right"
+                            : "text-left",
                         isSticky &&
                           "sticky left-0 z-[31] bg-gray-100 border-r border-gray-300"
                       )}
@@ -154,24 +167,35 @@ const DashboardTable = <T,>({
           </TableHeader>
           <TableBody>
             {table.getRowModel().rows.length > 0 ? (
-              table.getRowModel().rows.map((row: Row<T>, index: number) => (
+              table.getRowModel().rows.map((row: Row<T>, _index: number) => (
                 <TableRow
                   key={row.id}
-                  className="group hover:bg-gray-100 cursor-pointer animate-in fade-in slide-in-from-bottom-1"
-                  style={{ animationDelay: `${index * 50}ms` }}
+                  className="group hover:bg-gray-100 cursor-pointer"
                   onClick={() => onRowClick?.(row.original)}
+                  onMouseEnter={() => onRowHover?.(row.original)}
                 >
                   {row.getVisibleCells().map((cell: Cell<T, unknown>) => {
                     const isSticky =
                       (cell.column.columnDef.meta as { sticky?: boolean })
                         ?.sticky === true;
+                    const alignCenter =
+                      (cell.column.columnDef.meta as { alignCenter?: boolean })
+                        ?.alignCenter === true;
+                    const alignRight =
+                      (cell.column.columnDef.meta as { alignRight?: boolean })
+                        ?.alignRight === true;
                     return (
                       <TableCell
                         key={cell.id}
                         className={cn(
                           "px-1 py-0.25 text-xs sm:text-sm align-middle",
+                          alignCenter
+                            ? "text-center"
+                            : alignRight
+                              ? "text-right"
+                              : "text-left",
                           isSticky &&
-                            "sticky left-0 z-20 bg-white border-r border-gray-200 group-hover:bg-gray-100"
+                            "sticky left-0 z-20 bg-white border-r border-gray-300 group-hover:bg-gray-100"
                         )}
                         style={{
                           width: cell.column.getSize(),

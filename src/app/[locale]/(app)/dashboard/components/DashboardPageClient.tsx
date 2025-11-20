@@ -1,8 +1,9 @@
 "use client";
 
 import { Skeleton } from "@/components/ui/skeleton";
+import { useRoutePrefetch } from "@/hooks/useRoutePrefetch";
 import dynamic from "next/dynamic";
-import { Suspense } from "react";
+import { Suspense, useEffect } from "react";
 
 // Lazy load heavy components to reduce initial bundle size
 const DashboardChart = dynamic(
@@ -33,6 +34,16 @@ const DashboardOrdersTable = dynamic(
 );
 
 export default function DashboardPageClient() {
+  const { prefetch } = useRoutePrefetch();
+
+  useEffect(() => {
+    prefetch("/landing/orderslanding");
+    prefetch("/landing/quoteslanding");
+    prefetch("/settings/profile");
+    prefetch("/settings/company");
+    prefetch("/cart");
+  }, [prefetch]);
+
   return (
     <div className="min-h-screen bg-background">
       <main className="container mx-auto px-4 py-6 sm:py-8">

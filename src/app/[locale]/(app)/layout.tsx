@@ -14,6 +14,7 @@ import { headers } from "next/headers";
 
 // Import the AppHeader component
 import { AppHeader } from "@/components/AppHeader/app-header";
+import { RoutePrefetcher } from "@/components/RoutePrefetcher";
 
 export default async function AppLayout({
   children,
@@ -69,6 +70,7 @@ export default async function AppLayout({
           <CartProviderWrapper>
             <TenantDataProvider>
               <SidebarProvider>
+                <RoutePrefetcher />
                 <AppSidebar />
                 <SidebarInset className="flex flex-col w-full overflow-x-hidden">
                   <AppHeader />

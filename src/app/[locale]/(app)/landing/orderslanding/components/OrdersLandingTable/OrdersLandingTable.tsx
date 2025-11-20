@@ -1,8 +1,6 @@
 "use client";
 
 import { ColumnDef } from "@tanstack/react-table";
-import { useLocale } from "next-intl";
-import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 
@@ -18,17 +16,16 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { useSidebar } from "@/components/ui/sidebar";
 import { Skeleton } from "@/components/ui/skeleton";
-import { cn } from "@/lib/utils";
 
 import { statusColor } from "@/components/custom/statuscolors";
 import { useCurrentUser } from "@/hooks/useCurrentUser";
+import { useRoutePrefetch } from "@/hooks/useRoutePrefetch";
 import ordersFilterService, {
   OrderFilter,
 } from "@/lib/api/services/OrdersFilterService/OrdersFilterService";
-import { getAccounting } from "@/utils/calculation/salesCalculation/salesCalculation";
 import { type Order } from "@/types/dashboard/DasbordOrderstable/DashboardOrdersTable";
+import { getAccounting } from "@/utils/calculation/salesCalculation/salesCalculation";
 import { OrdersLandingTableProps } from "../../types/ordertypes";
 
 // Helper functions
@@ -64,11 +61,7 @@ const TableSkeleton = ({ rows = 10 }: { rows?: number }) => (
     </div>
     <div className="flex-1 overflow-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
       {Array.from({ length: rows }).map((_, rowIndex) => (
-        <div
-          key={`row-${rowIndex}`}
-          className="border-b border-gray-100 flex animate-pulse"
-          style={{ animationDelay: `${rowIndex * 50}ms` }}
-        >
+        <div key={`row-${rowIndex}`} className="border-b border-gray-100 flex ">
           {Array.from({ length: 11 }).map((_, colIndex) => (
             <div
               key={`cell-${rowIndex}-${colIndex}`}
@@ -94,17 +87,15 @@ function OrdersLandingTable({
   refreshTrigger,
   setExportCallback,
 }: OrdersLandingTableProps) {
-  const router = useRouter();
-  const locale = useLocale();
   const { user } = useCurrentUser();
-  const { state: sidebarState } = useSidebar();
-  const isSidebarCollapsed = sidebarState === "collapsed";
+  const { prefetch, prefetchMultiple, prefetchAndNavigate } =
+    useRoutePrefetch();
 
   // State
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
-  const [_drawerMode, _setDrawerMode] = useState<"filter" | "create">("filter");
   const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);
+  const [initialLoad, setInitialLoad] = useState(true);
   const [totalCount, setTotalCount] = useState(0);
   const [page, setPage] = useState(0);
   const [rowPerPage, setRowPerPage] = useState(20);
@@ -112,10 +103,6 @@ function OrdersLandingTable({
   const [filterData, setFilterData] = useState<QuoteFilterFormData | null>(
     null
   );
-  const [initialFilterData] = useState<QuoteFilterFormData | undefined>(
-    undefined
-  );
-  const [activeTab] = useState("all");
   const [isAddDrawerOpen, setIsAddDrawerOpen] = useState(false);
   const [isItemsDialogOpen, setIsItemsDialogOpen] = useState(false);
   const [selectedOrderItems, setSelectedOrderItems] = useState<Order | null>(
@@ -146,11 +133,11 @@ function OrdersLandingTable({
       },
       {
         accessorKey: "orderName",
-        header: "Order Name",
+        header: () => <span className="pl-2">Order Name</span>,
         size: 200,
         cell: ({ row }) => (
           <div
-            className="max-w-[200px] truncate"
+            className="max-w-[200px] truncate pl-2"
             title={row.original.orderName || "-"}
           >
             {row.original.orderName || "-"}
@@ -187,6 +174,9 @@ function OrdersLandingTable({
         accessorKey: "totalItems",
         header: "Total Items",
         size: 150,
+        meta: {
+          alignCenter: true,
+        },
         cell: ({ row }) => {
           const items = row.original.itemcount || 0;
           return (
@@ -207,6 +197,9 @@ function OrdersLandingTable({
         accessorKey: "subTotal",
         header: "Sub total",
         size: 150,
+        meta: {
+          alignRight: true,
+        },
         cell: ({ row }) => (
           <PricingFormat
             {...(row.original.currencySymbol && {
@@ -220,6 +213,9 @@ function OrdersLandingTable({
         accessorKey: "taxableAmount",
         header: "TaxableAmount",
         size: 150,
+        meta: {
+          alignRight: true,
+        },
         cell: ({ row }) => (
           <PricingFormat
             {...(row.original.currencySymbol && {
@@ -233,6 +229,9 @@ function OrdersLandingTable({
         accessorKey: "grandTotal",
         header: "Total",
         size: 150,
+        meta: {
+          alignRight: true,
+        },
         cell: ({ row }) => (
           <span className="font-semibold">
             <PricingFormat
@@ -246,19 +245,28 @@ function OrdersLandingTable({
       },
       {
         accessorKey: "status",
-        header: "Status",
+        header: () => <span className="pl-[30px]">Status</span>,
         size: 200,
         cell: ({ row }) => {
           const status = row.original.updatedBuyerStatus;
-          if (!status) return <span className="text-gray-400">-</span>;
+          if (!status)
+            return <span className="text-gray-400 pl-[30px]">-</span>;
           const color = statusColor(status.toUpperCase());
+          const titleCaseStatus = status
+            .split(" ")
+            .map(
+              word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()
+            )
+            .join(" ");
           return (
-            <span
-              className="px-3 py-1 rounded-full text-sm font-medium text-white whitespace-nowrap"
-              style={{ backgroundColor: color }}
-            >
-              {status}
-            </span>
+            <div className="pl-[30px]">
+              <span
+                className="px-2 py-0.5 rounded-full text-xs font-medium text-white whitespace-nowrap"
+                style={{ backgroundColor: color }}
+              >
+                {titleCaseStatus}
+              </span>
+            </div>
           );
         },
       },
@@ -453,6 +461,9 @@ function OrdersLandingTable({
       setTotalCount(0);
     } finally {
       setLoading(false);
+      if (initialLoad) {
+        setInitialLoad(false);
+      }
     }
   }, [
     user?.userId,
@@ -461,6 +472,7 @@ function OrdersLandingTable({
     rowPerPage,
     filterData,
     createFilterFromData,
+    initialLoad,
   ]);
 
   // Export functionality
@@ -557,20 +569,14 @@ function OrdersLandingTable({
         toast.error("Failed to save filter");
       }
     },
-    [user?.userId, user?.companyId, createFilterFromData] // Removed loadFilterPreferences from dependencies
+    [user?.userId, user?.companyId, createFilterFromData]
   );
 
-  // Memoize fetch function
   // Effects
   useEffect(() => {
     setPagination({ pageIndex: page, pageSize: rowPerPage });
   }, [page, rowPerPage]);
 
-  // useEffect(() => {
-  //   loadFilterPreferences();
-  // }, [loadFilterPreferences]);
-
-  // In render, use isLoading instead of loading
   useEffect(() => {
     setExportCallback?.(() => handleExport);
   }, [handleExport, setExportCallback]);
@@ -593,6 +599,32 @@ function OrdersLandingTable({
     setPage(prev => prev + 1);
   };
 
+  // Prefetch routes for visible orders (only first page for performance)
+  // More aggressive prefetching happens on hover
+  useEffect(() => {
+    if (orders.length > 0 && !loading && page === 0) {
+      // Only prefetch first 10 orders on initial load to avoid overwhelming
+      const routes = orders
+        .slice(0, 10)
+        .map(order => order.orderIdentifier)
+        .filter((id): id is string => Boolean(id))
+        .map(id => `/details/orderDetails/${id}`);
+      if (routes.length > 0) {
+        prefetchMultiple(routes, 5);
+      }
+    }
+  }, [orders, loading, page, prefetchMultiple]);
+
+  // Handle row hover to prefetch route
+  const handleRowHover = useCallback(
+    (row: Order) => {
+      if (row.orderIdentifier) {
+        prefetch(`/details/orderDetails/${row.orderIdentifier}`);
+      }
+    },
+    [prefetch]
+  );
+
   return (
     <>
       <FilterDrawer
@@ -609,14 +641,14 @@ function OrdersLandingTable({
           toast.success("Filters reset successfully!");
         }}
         onSave={handleSaveFilter}
-        title={"Order Filters"}
+        title="Order Filters"
         filterType="Order"
-        activeTab={activeTab}
+        activeTab="all"
         userId={user?.userId}
         companyId={user?.companyId}
         module="order"
-        initialFilterData={initialFilterData}
-        mode={"filter"}
+        initialFilterData={undefined}
+        mode="filter"
       />
 
       <SideDrawer
@@ -632,53 +664,11 @@ function OrdersLandingTable({
       </SideDrawer>
 
       <div className="flex flex-col">
-        {/* <div className="flex-shrink-0 mb-1">
-          <FilterTabs
-            tabs={tabs}
-            defaultValue={
-              filterPreferences?.preference?.filters &&
-              filterPreferences.preference.filters.length > 0
-                ? `filter-${filterPreferences.preference.selected}`
-                : "all"
-            }
-            onTabChange={handleTabChange}
-            onAddTab={() => {
-              setInitialFilterData(undefined);
-              setDrawerMode("create");
-              setIsDrawerOpen(true);
-            }}
-            onFilterClick={() => {
-              let initialData: QuoteFilterFormData | undefined;
-              if (
-                activeTab !== "all" &&
-                filterPreferences?.preference?.filters
-              ) {
-                const tabIndex = parseInt(activeTab.replace("filter-", ""));
-                const filter = filterPreferences.preference.filters.find(
-                  f => f.filter_index === tabIndex
-                );
-                if (filter) initialData = convertToFormData(filter);
-              }
-              setInitialFilterData(initialData);
-              setDrawerMode("filter");
-              setIsDrawerOpen(true);
-            }}
-            onSettingsClick={() =>
-              toast.info("Settings functionality coming soon!")
-            }
-          />
-        </div> */}
-
-        <div
-          className={cn(
-            "w-full overflow-x-hidden",
-            isSidebarCollapsed ? "px-[60px]" : "px-[15px]"
-          )}
-        >
-          <div className="w-full overflow-x-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
-            {loading ? (
+        <div className="w-full overflow-x-hidden">
+          <div className="w-full overflow-x-auto scrollbar-thin-horizontal">
+            {initialLoad && loading ? (
               <TableSkeleton rows={rowPerPage} />
-            ) : orders.length === 0 ? (
+            ) : !initialLoad && orders.length === 0 ? (
               <div className="flex items-center justify-center text-gray-500 py-8">
                 No orders found
               </div>
@@ -686,7 +676,7 @@ function OrdersLandingTable({
               <DashboardTable
                 data={orders}
                 columns={columns}
-                loading={loading}
+                loading={false}
                 totalDataCount={totalCount}
                 pagination={pagination}
                 setPagination={handlePaginationChange}
@@ -704,9 +694,11 @@ function OrdersLandingTable({
                 }}
                 onRowClick={row => {
                   const orderId = row.orderIdentifier;
-                  if (orderId)
-                    router.push(`/${locale}/details/orderDetails/${orderId}`);
+                  if (orderId) {
+                    prefetchAndNavigate(`/details/orderDetails/${orderId}`);
+                  }
                 }}
+                onRowHover={handleRowHover}
                 tableHeight=""
               />
             )}

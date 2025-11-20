@@ -28,6 +28,7 @@ import { useSidebar } from "@/components/ui/sidebar";
 import { useUserDetails } from "@/contexts/UserDetailsContext";
 import { useCart } from "@/contexts/CartContext";
 import useLogout from "@/hooks/Auth/useLogout";
+import { useRoutePrefetch } from "@/hooks/useRoutePrefetch";
 import useUserProfile from "@/hooks/Profile/useUserProfile";
 
 export function SiteHeader() {
@@ -35,8 +36,7 @@ export function SiteHeader() {
   const { isAuthenticated } = useUserDetails();
   const { userProfile } = useUserProfile();
   const { isLoggingOut, handleLogout } = useLogout();
-
-  // Get cart count from cart context
+  const { prefetch } = useRoutePrefetch();
   const { cartCount } = useCart();
   const notificationCount = 3;
 
@@ -60,7 +60,11 @@ export function SiteHeader() {
           <SidebarIcon />
         </Button>
         <Separator orientation="vertical" className="mr-2 h-4" />
-        <Link href="/" className="flex items-center">
+        <Link
+          href="/"
+          className="flex items-center"
+          onMouseEnter={() => prefetch("/")}
+        >
           <span className="font-bold text-lg text-foreground hover:opacity-80">
             Siemens
           </span>
@@ -78,7 +82,10 @@ export function SiteHeader() {
             className="relative h-9 w-9"
             asChild
           >
-            <Link href="/notification">
+            <Link
+              href="/notification"
+              onMouseEnter={() => prefetch("/notification")}
+            >
               <Bell className="h-5 w-5" />
               {notificationCount > 0 && (
                 <Badge className="absolute -right-1 -top-1 h-5 w-5 flex items-center justify-center p-0 text-xs">
@@ -95,7 +102,7 @@ export function SiteHeader() {
             className="relative h-9 w-9"
             asChild
           >
-            <Link href="/cart">
+            <Link href="/cart" onMouseEnter={() => prefetch("/cart")}>
               <ShoppingCart className="h-5 w-5" />
               {cartCount > 0 && (
                 <Badge className="absolute -right-1 -top-1 h-5 w-5 flex items-center justify-center p-0 text-xs">
@@ -151,13 +158,19 @@ export function SiteHeader() {
                 <DropdownMenuSeparator />
                 <DropdownMenuGroup>
                   <DropdownMenuItem asChild>
-                    <Link href="/settings/profile">
+                    <Link
+                      href="/settings/profile"
+                      onMouseEnter={() => prefetch("/settings/profile")}
+                    >
                       <IdCard className="h-4 w-4" />
                       Profile
                     </Link>
                   </DropdownMenuItem>
                   <DropdownMenuItem asChild>
-                    <Link href="/settings/company">
+                    <Link
+                      href="/settings/company"
+                      onMouseEnter={() => prefetch("/settings/company")}
+                    >
                       <Building2 className="h-4 w-4" />
                       Company Settings
                     </Link>
@@ -180,7 +193,9 @@ export function SiteHeader() {
             </DropdownMenu>
           ) : (
             <Button asChild variant="default" size="sm">
-              <Link href="/login">Login</Link>
+              <Link href="/login" onMouseEnter={() => prefetch("/login")}>
+                Login
+              </Link>
             </Button>
           )}
         </div>

@@ -1,6 +1,7 @@
 "use client";
 
-import { useState } from "react";
+import ImageWithFallback from "@/components/ImageWithFallback";
+import PricingFormat from "@/components/PricingFormat";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { CustomPagination } from "@/components/ui/custom-pagination";
@@ -13,11 +14,10 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { Download } from "lucide-react";
-import { cn } from "@/lib/utils";
-import ImageWithFallback from "@/components/ImageWithFallback";
-import PricingFormat from "@/components/PricingFormat";
 import useProductAssets from "@/hooks/useProductAssets";
+import { cn } from "@/lib/utils";
+import { Download } from "lucide-react";
+import { useState } from "react";
 import type { ProductSearchResult } from "./ProductSearchInput";
 import ProductSearchInput from "./ProductSearchInput";
 
@@ -132,11 +132,11 @@ export default function OrderProductsTable({
   };
 
   return (
-    <Card className={cn("", className)}>
+    <Card className={cn("gap-0 py-0", className)}>
       {/* Header */}
-      <CardHeader className="py-0 px-4 -my-1 flex flex-row items-center justify-between gap-4">
+      <CardHeader className="pt-2 pb-2 px-4 gap-0 flex flex-row items-center justify-between">
         <div className="flex-1 flex items-center justify-between">
-          <CardTitle className="text-base font-semibold py-0 my-0 leading-none -mt-1 -mb-1">
+          <CardTitle className="text-base font-semibold py-0 my-0 leading-tight -mt-0.5">
             Products ({displayCount})
           </CardTitle>
           {/* Show search input in edit mode, export button in view mode */}
@@ -321,37 +321,37 @@ export default function OrderProductsTable({
                               </div>
                             ) : (
                               <div className="shrink-0 w-10 h-10 rounded-lg bg-gray-300 flex items-center justify-center">
-                                <span className="text-white font-semibold text-sm">
+                                <span className="text-white font-medium text-sm">
                                   {firstLetter}
                                 </span>
                               </div>
                             )}
                             {/* Product Name and Code */}
                             <div className="flex flex-col gap-0.5 min-w-0 flex-1">
-                              <span className="font-medium text-sm truncate">
+                              <span className="font-normal text-sm text-gray-900 truncate">
                                 {itemName}
                               </span>
                               {itemCode && (
-                                <span className="text-xs text-muted-foreground truncate">
+                                <span className="text-xs text-gray-500 truncate">
                                   {itemCode}
                                 </span>
                               )}
                             </div>
                           </div>
                         </TableCell>
-                        <TableCell className="text-right min-w-[140px] py-3">
+                        <TableCell className="text-right min-w-[140px] py-3 font-normal text-sm text-gray-700">
                           <PricingFormat value={basePrice ?? 0} />
                         </TableCell>
-                        <TableCell className="text-right min-w-[120px] py-3">
+                        <TableCell className="text-right min-w-[120px] py-3 font-normal text-sm text-gray-700">
                           {`${discountValue}%`}
                         </TableCell>
-                        <TableCell className="text-right min-w-[140px] py-3">
+                        <TableCell className="text-right min-w-[140px] py-3 font-normal text-sm text-gray-700">
                           <PricingFormat value={product.unitPrice ?? 0} />
                         </TableCell>
-                        <TableCell className="text-right min-w-[120px] py-3">
+                        <TableCell className="text-right min-w-[120px] py-3 font-normal text-sm text-gray-700">
                           <PricingFormat value={product.usc ?? 0} />
                         </TableCell>
-                        <TableCell className="text-center min-w-[100px] py-3">
+                        <TableCell className="text-center min-w-[100px] py-3 font-normal text-sm text-gray-700">
                           {isEditable ? (
                             <Input
                               type="number"
@@ -411,14 +411,14 @@ export default function OrderProductsTable({
                           )}
                         </TableCell>
                         {showInvoicedQty && (
-                          <TableCell className="text-center min-w-[140px] py-3">
+                          <TableCell className="text-center min-w-[140px] py-3 font-normal text-sm text-gray-700">
                             {invoicedQty}
                           </TableCell>
                         )}
-                        <TableCell className="text-right min-w-[150px] py-3">
+                        <TableCell className="text-right min-w-[150px] py-3 font-normal text-sm text-gray-700">
                           <PricingFormat value={amount ?? 0} />
                         </TableCell>
-                        <TableCell className="text-right min-w-[100px] py-3 pr-5">
+                        <TableCell className="text-right min-w-[100px] py-3 pr-5 font-normal text-sm text-gray-700">
                           {igst}%
                         </TableCell>
                       </TableRow>

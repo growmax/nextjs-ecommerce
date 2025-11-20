@@ -1,7 +1,10 @@
 import React from "react";
+import { LandingLayout } from "@/components/layout";
 
-const LandingLayout = ({ children }: { children: React.ReactNode }) => {
-  return <div className="landing-page flex flex-col">{children}</div>;
-};
-
-export default LandingLayout;
+export default function LandingLayoutWrapper({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
+  return <LandingLayout>{children}</LandingLayout>;
+}

@@ -2,6 +2,7 @@
 
 import HeaderBar from "@/components/Global/HeaderBar/HeaderBar";
 import { SaveCancelToolbar } from "@/components/custom/save-cancel-toolbar";
+import { useRoutePrefetch } from "@/hooks/useRoutePrefetch";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 
@@ -15,6 +16,7 @@ import { useProfileData } from "@/hooks/Profile/useProfileData";
 import { Shield } from "lucide-react";
 
 export default function ProfilePageClient() {
+  const { prefetch } = useRoutePrefetch();
   const {
     profile,
     preferences,
@@ -42,7 +44,10 @@ export default function ProfilePageClient() {
   const [originalProfile, setOriginalProfile] = useState(profile);
   const [originalPreferences, setOriginalPreferences] = useState(preferences);
 
-  // Update originals when data loads - using useEffect to avoid render issues
+  useEffect(() => {
+    prefetch("/settings/company");
+  }, [prefetch]);
+
   useEffect(() => {
     if (profile && !originalProfile) {
       setOriginalProfile(profile);

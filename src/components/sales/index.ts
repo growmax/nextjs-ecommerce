@@ -32,3 +32,4 @@ export type {
 } from "./sales-header";
 export { default as SPRForm } from "./SPRForm";
 export { default as OrderTermsCard } from "./terms-card";
+export { default as DetailsSkeleton } from "./DetailsSkeleton";
