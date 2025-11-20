@@ -43,6 +43,7 @@ type TableProps<T> = {
   rowPerPage: number;
   setRowPerPage: (rowPerPage: number | string) => void;
   onRowClick?: (row: T) => void;
+  onRowHover?: (row: T) => void;
   tableHeight?: string;
   enableColumnResizing?: boolean;
   columnResizeMode?: ColumnResizeMode;
@@ -58,6 +59,7 @@ const DashboardTable = <T,>({
   page,
   rowPerPage,
   onRowClick,
+  onRowHover,
   tableHeight = "h-[calc(100vh-250px)]",
   enableColumnResizing = false,
   columnResizeMode = "onChange",
@@ -89,7 +91,7 @@ const DashboardTable = <T,>({
       {/* Scrollable Table Container - Header and Body together */}
       <div
         className={cn(
-          "overflow-x-auto overflow-y-visible relative [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]",
+          "overflow-x-auto overflow-y-visible relative scrollbar-thin-horizontal",
           tableHeight ? "flex-1" : ""
         )}
       >
@@ -170,6 +172,7 @@ const DashboardTable = <T,>({
                   key={row.id}
                   className="group hover:bg-gray-100 cursor-pointer"
                   onClick={() => onRowClick?.(row.original)}
+                  onMouseEnter={() => onRowHover?.(row.original)}
                 >
                   {row.getVisibleCells().map((cell: Cell<T, unknown>) => {
                     const isSticky =

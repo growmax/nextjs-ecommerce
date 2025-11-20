@@ -9,6 +9,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { useRoutePrefetch } from "@/hooks/useRoutePrefetch";
 import { cn } from "@/lib/utils";
 import { getUserInitials } from "@/utils/General/general";
 import {
@@ -35,6 +36,7 @@ export function AvatarCard({
   side,
   menuClassName,
 }: AvatarCardProps) {
+  const { prefetch } = useRoutePrefetch();
   const menuItems = [
     {
       href: "/settings/profile",
@@ -184,7 +186,7 @@ export function AvatarCard({
           const Icon = item.icon;
           return (
             <DropdownMenuItem key={item.href} asChild>
-              <Link href={item.href}>
+              <Link href={item.href} onMouseEnter={() => prefetch(item.href)}>
                 <Icon className="h-4 w-4" />
                 <span>{item.label}</span>
               </Link>

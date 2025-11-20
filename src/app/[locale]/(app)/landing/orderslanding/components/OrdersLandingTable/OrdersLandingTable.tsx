@@ -1,8 +1,6 @@
 "use client";
 
 import { ColumnDef } from "@tanstack/react-table";
-import { useLocale } from "next-intl";
-import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 
@@ -21,6 +19,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 
 import { statusColor } from "@/components/custom/statuscolors";
 import { useCurrentUser } from "@/hooks/useCurrentUser";
+import { useRoutePrefetch } from "@/hooks/useRoutePrefetch";
 import ordersFilterService, {
   OrderFilter,
 } from "@/lib/api/services/OrdersFilterService/OrdersFilterService";
@@ -91,13 +90,12 @@ function OrdersLandingTable({
   refreshTrigger,
   setExportCallback,
 }: OrdersLandingTableProps) {
-  const router = useRouter();
-  const locale = useLocale();
   const { user } = useCurrentUser();
+  const { prefetch, prefetchMultiple, prefetchAndNavigate } =
+    useRoutePrefetch();
 
   // State
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
-  const [_drawerMode, _setDrawerMode] = useState<"filter" | "create">("filter");
   const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);
   const [initialLoad, setInitialLoad] = useState(true);
@@ -108,10 +106,6 @@ function OrdersLandingTable({
   const [filterData, setFilterData] = useState<QuoteFilterFormData | null>(
     null
   );
-  const [initialFilterData] = useState<QuoteFilterFormData | undefined>(
-    undefined
-  );
-  const [activeTab] = useState("all");
   const [isAddDrawerOpen, setIsAddDrawerOpen] = useState(false);
   const [isItemsDialogOpen, setIsItemsDialogOpen] = useState(false);
   const [selectedOrderItems, setSelectedOrderItems] = useState<Order | null>(
@@ -567,20 +561,14 @@ function OrdersLandingTable({
         toast.error("Failed to save filter");
       }
     },
-    [user?.userId, user?.companyId, createFilterFromData] // Removed loadFilterPreferences from dependencies
+    [user?.userId, user?.companyId, createFilterFromData]
   );
 
-  // Memoize fetch function
   // Effects
   useEffect(() => {
     setPagination({ pageIndex: page, pageSize: rowPerPage });
   }, [page, rowPerPage]);
 
-  // useEffect(() => {
-  //   loadFilterPreferences();
-  // }, [loadFilterPreferences]);
-
-  // In render, use isLoading instead of loading
   useEffect(() => {
     setExportCallback?.(() => handleExport);
   }, [handleExport, setExportCallback]);
@@ -603,6 +591,32 @@ function OrdersLandingTable({
     setPage(prev => prev + 1);
   };
 
+  // Prefetch routes for visible orders (only first page for performance)
+  // More aggressive prefetching happens on hover
+  useEffect(() => {
+    if (orders.length > 0 && !loading && page === 0) {
+      // Only prefetch first 10 orders on initial load to avoid overwhelming
+      const routes = orders
+        .slice(0, 10)
+        .map(order => order.orderIdentifier)
+        .filter((id): id is string => Boolean(id))
+        .map(id => `/details/orderDetails/${id}`);
+      if (routes.length > 0) {
+        prefetchMultiple(routes, 5);
+      }
+    }
+  }, [orders, loading, page, prefetchMultiple]);
+
+  // Handle row hover to prefetch route
+  const handleRowHover = useCallback(
+    (row: Order) => {
+      if (row.orderIdentifier) {
+        prefetch(`/details/orderDetails/${row.orderIdentifier}`);
+      }
+    },
+    [prefetch]
+  );
+
   return (
     <>
       <FilterDrawer
@@ -619,14 +633,14 @@ function OrdersLandingTable({
           toast.success("Filters reset successfully!");
         }}
         onSave={handleSaveFilter}
-        title={"Order Filters"}
+        title="Order Filters"
         filterType="Order"
-        activeTab={activeTab}
+        activeTab="all"
         userId={user?.userId}
         companyId={user?.companyId}
         module="order"
-        initialFilterData={initialFilterData}
-        mode={"filter"}
+        initialFilterData={undefined}
+        mode="filter"
       />
 
       <SideDrawer
@@ -642,45 +656,8 @@ function OrdersLandingTable({
       </SideDrawer>
 
       <div className="flex flex-col">
-        {/* <div className="flex-shrink-0 mb-1">
-          <FilterTabs
-            tabs={tabs}
-            defaultValue={
-              filterPreferences?.preference?.filters &&
-              filterPreferences.preference.filters.length > 0
-                ? `filter-${filterPreferences.preference.selected}`
-                : "all"
-            }
-            onTabChange={handleTabChange}
-            onAddTab={() => {
-              setInitialFilterData(undefined);
-              setDrawerMode("create");
-              setIsDrawerOpen(true);
-            }}
-            onFilterClick={() => {
-              let initialData: QuoteFilterFormData | undefined;
-              if (
-                activeTab !== "all" &&
-                filterPreferences?.preference?.filters
-              ) {
-                const tabIndex = parseInt(activeTab.replace("filter-", ""));
-                const filter = filterPreferences.preference.filters.find(
-                  f => f.filter_index === tabIndex
-                );
-                if (filter) initialData = convertToFormData(filter);
-              }
-              setInitialFilterData(initialData);
-              setDrawerMode("filter");
-              setIsDrawerOpen(true);
-            }}
-            onSettingsClick={() =>
-              toast.info("Settings functionality coming soon!")
-            }
-          />
-        </div> */}
-
         <div className="w-full overflow-x-hidden">
-          <div className="w-full overflow-x-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
+          <div className="w-full overflow-x-auto scrollbar-thin-horizontal">
             {initialLoad && loading ? (
               <TableSkeleton rows={rowPerPage} />
             ) : !initialLoad && orders.length === 0 ? (
@@ -709,9 +686,11 @@ function OrdersLandingTable({
                 }}
                 onRowClick={row => {
                   const orderId = row.orderIdentifier;
-                  if (orderId)
-                    router.push(`/${locale}/details/orderDetails/${orderId}`);
+                  if (orderId) {
+                    prefetchAndNavigate(`/details/orderDetails/${orderId}`);
+                  }
                 }}
+                onRowHover={handleRowHover}
                 tableHeight=""
               />
             )}

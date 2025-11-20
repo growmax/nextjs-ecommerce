@@ -1,8 +1,6 @@
 "use client";
 
 import { Layers } from "lucide-react";
-import { useLocale } from "next-intl";
-import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
 
@@ -42,6 +40,7 @@ import useModuleSettings from "@/hooks/useModuleSettings";
 import { useOrderCalculation } from "@/hooks/useOrderCalculation/useOrderCalculation";
 import { usePageScroll } from "@/hooks/usePageScroll";
 import { useQuoteSubmission } from "@/hooks/useQuoteSubmission/useQuoteSubmission";
+import { useRoutePrefetch } from "@/hooks/useRoutePrefetch";
 import { useTenantData } from "@/hooks/useTenantData";
 import type { QuotationDetailsResponse } from "@/lib/api";
 import {
@@ -109,10 +108,9 @@ interface EditQuotePageProps {
 export default function EditQuotePage({ params }: EditQuotePageProps) {
   usePageScroll();
 
-  const router = useRouter();
-  const locale = useLocale();
   const searchParams = useSearchParams();
   const isPlaceOrderMode = searchParams.get("placeOrder") === "true";
+  const { prefetchAndNavigate } = useRoutePrefetch();
 
   const [quoteIdentifier, setQuoteIdentifier] = useState<string>("");
   const [paramsLoaded, setParamsLoaded] = useState(false);
@@ -706,7 +704,7 @@ export default function EditQuotePage({ params }: EditQuotePageProps) {
   };
 
   const handleCancel = () => {
-    router.push(`/${locale}/details/quoteDetails/${quoteIdentifier}`);
+    prefetchAndNavigate(`/details/quoteDetails/${quoteIdentifier}`);
   };
 
   const handleQuantityChange = (productId: string, quantity: number) => {
@@ -914,8 +912,8 @@ export default function EditQuotePage({ params }: EditQuotePageProps) {
       if (response?.orderIdentifier) {
         toast.success("Order placed successfully!");
         // Navigate to the order details page
-        router.push(
-          `/${locale}/details/orderDetails/${response.orderIdentifier}`
+        prefetchAndNavigate(
+          `/details/orderDetails/${response.orderIdentifier}`
         );
       } else {
         toast.error("Failed to place order. Please try again.");
@@ -1008,7 +1006,7 @@ export default function EditQuotePage({ params }: EditQuotePageProps) {
 
       if (success) {
         // Navigate to quote details page after successful submission
-        router.push(`/${locale}/details/quoteDetails/${quoteIdentifier}`);
+        prefetchAndNavigate(`/details/quoteDetails/${quoteIdentifier}`);
       }
     } catch (error) {
       toast.error(
@@ -1145,7 +1143,7 @@ export default function EditQuotePage({ params }: EditQuotePageProps) {
                 )}
 
                 {!loading && !error && quoteDetails && (
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-2 sm:gap-3 md:gap-4">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-2 sm:gap-3 md:gap-4 mt-4">
                     <OrderContactDetails
                       billingAddress={
                         editedBillingAddress ||

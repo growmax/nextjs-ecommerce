@@ -1,18 +1,15 @@
 "use client";
 
-import { DetailsSkeleton } from "@/components/sales";
 import { usePageScroll } from "@/hooks/usePageScroll";
 import dynamic from "next/dynamic";
 import { Suspense } from "react";
 
-// Dynamic import of client component with loading state
+// Dynamic import of client component - no loading state to avoid double loader
+// The component itself handles loading state for API calls
 const QuoteDetailsClient = dynamic(
   () => import("./components/QuoteDetailsClient"),
   {
     ssr: false,
-    loading: () => (
-      <DetailsSkeleton showStatusTracker={false} showHeader={true} />
-    ),
   }
 );
 
@@ -24,9 +21,7 @@ export default function QuoteDetailsPage({
   usePageScroll();
 
   return (
-    <Suspense
-      fallback={<DetailsSkeleton showStatusTracker={false} showHeader={true} />}
-    >
+    <Suspense fallback={null}>
       <QuoteDetailsClient params={params} />
     </Suspense>
   );

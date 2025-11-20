@@ -1,11 +1,8 @@
 "use client";
 
-import { Skeleton } from "@/components/ui/skeleton";
 import { Toaster } from "@/components/ui/sonner";
 import { Layers } from "lucide-react";
-import { useLocale } from "next-intl";
 import dynamic from "next/dynamic";
-import { useRouter } from "next/navigation";
 import { Suspense, useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
 
@@ -25,7 +22,7 @@ import {
 import { useQuoteDetails } from "@/hooks/details/quotedetails/useQuoteDetails";
 import { useCurrentUser } from "@/hooks/useCurrentUser";
 import { useGetVersionDetails } from "@/hooks/useGetVersionDetails/useGetVersionDetails";
-import useModuleSettings from "@/hooks/useModuleSettings";
+import { useRoutePrefetch } from "@/hooks/useRoutePrefetch";
 import { useTenantData } from "@/hooks/useTenantData";
 import type { QuotationDetailsResponse } from "@/lib/api";
 import { QuotationDetailsService } from "@/lib/api";
@@ -37,10 +34,10 @@ import { getStatusStyle } from "@/utils/details/orderdetails";
 import { decodeUnicode } from "@/utils/General/general";
 
 // Dynamic imports for heavy components
+// No loading prop to avoid double loaders - main DetailsSkeleton handles all loading states
 const OrderProductsTable = dynamic(
   () => import("@/components/sales").then(mod => mod.OrderProductsTable),
   {
-    loading: () => <Skeleton className="h-64 w-full" />,
     ssr: false,
   }
 );
@@ -48,7 +45,6 @@ const OrderProductsTable = dynamic(
 const OrderPriceDetails = dynamic(
   () => import("@/components/sales").then(mod => mod.OrderPriceDetails),
   {
-    loading: () => <Skeleton className="h-96 w-full" />,
     ssr: false,
   }
 );
@@ -60,9 +56,6 @@ interface QuoteDetailsClientProps {
 export default function QuoteDetailsClient({
   params,
 }: QuoteDetailsClientProps) {
-  const router = useRouter();
-  const locale = useLocale();
-
   const [quoteIdentifier, setQuoteIdentifier] = useState<string>("");
   const [paramsLoaded, setParamsLoaded] = useState(false);
 
@@ -78,23 +71,17 @@ export default function QuoteDetailsClient({
 
   const { user } = useCurrentUser();
   const { tenantData } = useTenantData();
+  const { prefetch, prefetchAndNavigate } = useRoutePrefetch();
 
-  // Prevent duplicate fetches for the same identifiers
   const lastFetchKeyRef = useRef<string | null>(null);
-
-  // Track processed versions to prevent duplicate processing
   const processedVersionRef = useRef<string | null>(null);
-
-  // Derive only primitive dependencies
   const userId = user?.userId;
   const companyId = user?.companyId;
   const tenantCode = tenantData?.tenant?.tenantCode;
 
-  // Load params asynchronously
   useEffect(() => {
     const loadParams = async () => {
       const resolvedParams = await params;
-      // Extract quote identifier from the dynamic segment
       const identifier = resolvedParams.quoteId || "";
       setQuoteIdentifier(identifier);
       setParamsLoaded(true);
@@ -115,12 +102,10 @@ export default function QuoteDetailsClient({
         return;
       }
 
-      // Build a stable key from primitives only
       const fetchKey = [quoteIdentifier, userId, companyId, tenantCode].join(
         "|"
       );
 
-      // Skip if we've already fetched for this exact key
       if (lastFetchKeyRef.current === fetchKey) {
         return;
       }
@@ -152,7 +137,6 @@ export default function QuoteDetailsClient({
     fetchQuoteDetails();
   }, [paramsLoaded, quoteIdentifier, userId, companyId, tenantCode]);
 
-  // Use custom hook for quote details logic
   const {
     versions: quoteVersions,
     quotationIdentifier,
@@ -171,24 +155,17 @@ export default function QuoteDetailsClient({
     }
   );
 
-  // Update quote details when version data is loaded
   useEffect(() => {
     if (versionData && selectedVersion) {
-      // Create a unique key for this version to prevent duplicate processing
       const versionKey = `${selectedVersion.versionNumber}-${selectedVersion.orderVersion}`;
 
-      // Skip if we've already processed this version
       if (processedVersionRef.current === versionKey) {
         return;
       }
 
-      // Mark this version as processed
       processedVersionRef.current = versionKey;
-
-      // Reset trigger after successful fetch
       setTriggerVersionCall(false);
 
-      // Show success toast only if data is freshly loaded (not from cache)
       if (!versionLoading) {
         const versionName =
           quoteVersions.find(
@@ -199,7 +176,6 @@ export default function QuoteDetailsClient({
     }
   }, [versionData, versionLoading, selectedVersion, quoteVersions]);
 
-  // Extract data for header - use version data if available, otherwise use quote details
   const displayQuoteDetails = useMemo(() => {
     if (versionData && selectedVersion && versionData.data) {
       return versionData.data;
@@ -207,7 +183,6 @@ export default function QuoteDetailsClient({
     return quoteDetails?.data;
   }, [versionData, selectedVersion, quoteDetails?.data]);
 
-  // Extract data for header - quoteName is inside quotationDetails[0]
   const quoteName =
     (displayQuoteDetails?.quotationDetails as any)?.[0]?.quoteName ||
     quoteDetails?.data?.quotationDetails?.[0]?.quoteName ||
@@ -217,7 +192,6 @@ export default function QuoteDetailsClient({
     displayQuoteDetails?.updatedBuyerStatus ||
     quoteDetails?.data?.updatedBuyerStatus;
 
-  // Get the actual quotationIdentifier from API response or fall back to URL param
   const displayQuoteId =
     displayQuoteDetails?.quotationIdentifier ||
     quoteDetails?.data?.quotationIdentifier ||
@@ -225,13 +199,20 @@ export default function QuoteDetailsClient({
     quoteDetails?.data?.quotationDetails?.[0]?.quotationIdentifier ||
     quoteIdentifier ||
     "...";
+  useEffect(() => {
+    if (quoteIdentifier && quoteDetails && !loading) {
+      prefetch(`/details/quoteDetails/${quoteIdentifier}/edit`);
+    }
+  }, [quoteIdentifier, quoteDetails, loading, prefetch]);
 
-  // Get module settings
-  const { quoteSettings: _quoteSettings } = useModuleSettings(user);
+  useEffect(() => {
+    prefetch("/landing/orderslanding");
+    prefetch("/landing/quoteslanding");
+    prefetch("/settings/profile");
+    prefetch("/settings/company");
+  }, [prefetch]);
 
-  // Handler functions
   const handleEditQuote = () => {
-    // Get current status and other relevant data
     const updatedBuyerStatus =
       displayQuoteDetails?.updatedBuyerStatus ||
       quoteDetails?.data?.updatedBuyerStatus;
@@ -239,7 +220,6 @@ export default function QuoteDetailsClient({
     const validityTill = (displayQuoteDetails?.validityTill ||
       quoteDetails?.data?.validityTill) as string | undefined;
 
-    // Check if cancelled
     if (updatedBuyerStatus === "CANCELLED") {
       toast.info("Quote was cancelled already", {
         position: "bottom-left",
@@ -247,17 +227,14 @@ export default function QuoteDetailsClient({
       return;
     }
 
-    // Check if allowed status (can edit)
     if (
       updatedBuyerStatus === "QUOTE RECEIVED" ||
       updatedBuyerStatus === "OPEN"
     ) {
-      // Navigate to edit page
-      router.push(`/${locale}/details/quoteDetails/${quoteIdentifier}/edit`);
+      prefetchAndNavigate(`/details/quoteDetails/${quoteIdentifier}/edit`);
       return;
     }
 
-    // Check reorder validity
     if (reorder && validityTill) {
       const validityDate = new Date(validityTill);
       const endOfValidityDay = new Date(validityDate);
@@ -295,7 +272,6 @@ export default function QuoteDetailsClient({
     }
 
     try {
-      // Call the API to update the quote name
       await QuotationNameService.updateQuotationName({
         userId: user.userId,
         companyId: user.companyId,
@@ -303,7 +279,6 @@ export default function QuoteDetailsClient({
         quotationName: newQuoteName,
       });
 
-      // Update the local state to reflect the change
       if (quoteDetails && quoteDetails.data?.quotationDetails) {
         const updatedQuoteDetails = {
           ...quoteDetails,
@@ -317,8 +292,8 @@ export default function QuoteDetailsClient({
         };
         setQuoteDetails(updatedQuoteDetails);
       }
-    } catch {
-      throw error; // Re-throw to let the dialog handle the error
+    } catch (err) {
+      throw err;
     }
   };
 
@@ -346,7 +321,7 @@ export default function QuoteDetailsClient({
   };
 
   const handleClose = () => {
-    router.push(`/${locale}/landing/quoteslanding`);
+    prefetchAndNavigate("/landing/quoteslanding");
   };
 
   const handleClone = () => {
@@ -358,7 +333,6 @@ export default function QuoteDetailsClient({
   };
 
   const handleConvertToOrder = () => {
-    // Get current status and other relevant data
     const updatedBuyerStatus =
       displayQuoteDetails?.updatedBuyerStatus ||
       quoteDetails?.data?.updatedBuyerStatus;
@@ -366,7 +340,6 @@ export default function QuoteDetailsClient({
     const validityTill = (displayQuoteDetails?.validityTill ||
       quoteDetails?.data?.validityTill) as string | undefined;
 
-    // Check if cancelled
     if (updatedBuyerStatus === "CANCELLED") {
       toast.info("Quote was cancelled already", {
         position: "bottom-left",
@@ -374,7 +347,6 @@ export default function QuoteDetailsClient({
       return;
     }
 
-    // Check validity expiration
     if (validityTill) {
       const validityDate = new Date(validityTill);
       const endOfValidityDay = new Date(validityDate);
@@ -399,7 +371,6 @@ export default function QuoteDetailsClient({
       return;
     }
 
-    // Check if already converted to order
     if (updatedBuyerStatus === "ORDER PLACED") {
       toast.info("Quote was converted to order already", {
         position: "bottom-left",
@@ -407,14 +378,12 @@ export default function QuoteDetailsClient({
       return;
     }
 
-    // Valid scenarios: reorder within validity or QUOTE RECEIVED status
     if (
       (reorder && validityTill && new Date() < new Date(validityTill)) ||
       updatedBuyerStatus === "QUOTE RECEIVED"
     ) {
-      // Navigate to edit page with place order flag
-      router.push(
-        `/${locale}/details/quoteDetails/${quoteIdentifier}/edit?placeOrder=true`
+      prefetchAndNavigate(
+        `/details/quoteDetails/${quoteIdentifier}/edit?placeOrder=true`
       );
       return;
     }
@@ -425,18 +394,12 @@ export default function QuoteDetailsClient({
     });
   };
 
-  // Handle version selection
   const handleVersionSelect = (version: Version) => {
-    // Close dialog immediately
     setVersionsDialogOpen(false);
 
-    // If version 1 is selected, reset to original quote details
     if (version.versionNumber === 1) {
-      // Reset to original quote details
       if (quoteDetails) {
-        // Reset processed version ref
         processedVersionRef.current = null;
-        // Re-fetch original quote details
         setSelectedVersion(null);
         setTriggerVersionCall(false);
         handleRefresh();
@@ -444,10 +407,7 @@ export default function QuoteDetailsClient({
       return;
     }
 
-    // Reset processed version ref for new version selection
     processedVersionRef.current = null;
-
-    // Set selected version and trigger fetch
     setSelectedVersion({
       versionNumber: version.versionNumber,
       orderVersion: version.orderVersion || version.versionNumber,
@@ -458,16 +418,13 @@ export default function QuoteDetailsClient({
     setTriggerVersionCall(true);
   };
 
-  // Extract products for display
   const products = useMemo(() => {
     const rawProducts =
       (displayQuoteDetails?.quotationDetails as any)?.[0]?.dbProductDetails ||
       quoteDetails?.data?.quotationDetails?.[0]?.dbProductDetails ||
       [];
-    // Transform to match ProductItem interface while preserving all fields including productTaxes
 
     return rawProducts.map((product: any) => {
-      // Prioritize askedQuantity for quantity display
       const quantity =
         product.askedQuantity || product.quantity || product.unitQuantity || 0;
 
@@ -477,12 +434,10 @@ export default function QuoteDetailsClient({
           typeof product.itemNo === "string"
             ? parseInt(product.itemNo, 10)
             : (product.itemNo as number),
-        // Set all quantity fields to use askedQuantity as the source
         quantity,
         unitQuantity: quantity,
       };
 
-      // Preserve productTaxes if it exists
       if (product.productTaxes) {
         transformed.productTaxes = product.productTaxes;
       }
@@ -491,7 +446,6 @@ export default function QuoteDetailsClient({
     });
   }, [displayQuoteDetails?.quotationDetails, quoteDetails?.data]);
 
-  // Extract quote details from the nested structure
   const quoteDetailData =
     (
       displayQuoteDetails?.quotationDetails as Array<Record<string, unknown>>
@@ -500,12 +454,13 @@ export default function QuoteDetailsClient({
     displayQuoteDetails?.buyerCurrencySymbol ||
     quoteDetails?.data?.buyerCurrencySymbol;
 
-  // Header buttons - Using primary color for main actions
   const headerButtons = [
     {
       label: "EDIT QUOTE",
       variant: "outline" as const,
       onClick: handleEditQuote,
+      onMouseEnter: () =>
+        prefetch(`/details/quoteDetails/${quoteIdentifier}/edit`),
     },
     {
       label: "PLACE ORDER",
@@ -561,7 +516,7 @@ export default function QuoteDetailsClient({
               <div className="w-full lg:w-[65%] space-y-2 sm:space-y-3 mt-[80px]">
                 {/* Products Table */}
                 {!loading && !error && quoteDetails && (
-                  <Suspense fallback={<Skeleton className="h-64 w-full" />}>
+                  <Suspense fallback={null}>
                     <OrderProductsTable
                       products={products}
                       {...(products.length && {
@@ -581,7 +536,7 @@ export default function QuoteDetailsClient({
 
                 {/* Contact Details and Terms Cards - Side by Side */}
                 {!loading && !error && quoteDetails && (
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-2 sm:gap-3 md:gap-4">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-2 sm:gap-3 md:gap-4 mt-4">
                     {/* Contact Details Card */}
                     <OrderContactDetails
                       billingAddress={
@@ -699,7 +654,7 @@ export default function QuoteDetailsClient({
               {/* Right Side - Price Details - 40% */}
               {!loading && !error && quoteDetails && (
                 <div className="w-full lg:w-[40%] space-y-2 sm:space-y-3 mt-[80px]">
-                  <Suspense fallback={<Skeleton className="h-96 w-full" />}>
+                  <Suspense fallback={null}>
                     <OrderPriceDetails
                       products={products}
                       isInter={(() => {
@@ -756,7 +711,7 @@ export default function QuoteDetailsClient({
 
                   {/* Customer Information Card */}
                   <div className="mt-4">
-                    <Suspense fallback={<Skeleton className="h-64 w-full" />}>
+                    <Suspense fallback={null}>
                       <CustomerInfoCard
                         quoteValidity={{
                           from:

@@ -23,6 +23,7 @@ export interface SalesHeaderButton {
     | "destructive"
     | "link";
   onClick: () => void;
+  onMouseEnter?: () => void;
   disabled?: boolean;
   icon?: React.ReactNode;
 }
@@ -150,6 +151,7 @@ export default function SalesHeader({
               key={button.label}
               variant={button.variant || "outline"}
               onClick={button.onClick}
+              onMouseEnter={button.onMouseEnter}
               disabled={button.disabled}
               className="uppercase text-[10px] md:text-xs font-semibold px-3 md:px-4 py-2 h-9 md:h-10 whitespace-nowrap"
             >

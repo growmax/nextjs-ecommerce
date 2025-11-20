@@ -14,6 +14,7 @@ import {
 } from "@/components/ui/dialog";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useCurrentUser } from "@/hooks/useCurrentUser";
+import { useRoutePrefetch } from "@/hooks/useRoutePrefetch";
 import PreferenceService, {
   FilterPreferenceResponse,
 } from "@/lib/api/services/PreferenceService/PreferenceService";
@@ -21,8 +22,6 @@ import QuotesService, {
   type QuoteItem,
 } from "@/lib/api/services/QuotesService/QuotesService";
 import { ColumnDef } from "@tanstack/react-table";
-import { useLocale } from "next-intl";
-import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 
@@ -35,23 +34,19 @@ function QuotesLandingTable({
   refreshTrigger,
   setExportCallback,
 }: QuotesLandingTableProps) {
-  const router = useRouter();
-  const locale = useLocale();
   const { user } = useCurrentUser();
+  const { prefetch, prefetchMultiple, prefetchAndNavigate } =
+    useRoutePrefetch();
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
-  const [_drawerMode] = useState<"filter" | "create">("filter");
   const [quotes, setQuotes] = useState<QuoteItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [initialLoad, setInitialLoad] = useState(true);
   const [totalCount, setTotalCount] = useState(0);
   const [page, setPage] = useState(0);
-  const [rowPerPage, setRowPerPage] = useState(20); // Default to first valid option
+  const [rowPerPage, setRowPerPage] = useState(20);
   const [pagination, setPagination] = useState({ pageIndex: 0, pageSize: 20 });
   const [filterData, setFilterData] = useState<QuoteFilterFormData | null>(
     null
-  );
-  const [initialFilterData] = useState<QuoteFilterFormData | undefined>(
-    undefined
   );
   const [filterPreferences, setFilterPreferences] =
     useState<FilterPreferenceResponse | null>(null);
@@ -771,6 +766,32 @@ function QuotesLandingTable({
     setPage(prev => prev + 1);
   };
 
+  // Prefetch routes for visible quotes (only first page for performance)
+  // More aggressive prefetching happens on hover
+  useEffect(() => {
+    if (quotes.length > 0 && !loading && page === 0) {
+      // Only prefetch first 10 quotes on initial load to avoid overwhelming
+      const routes = quotes
+        .slice(0, 10)
+        .map(quote => quote.quotationIdentifier)
+        .filter((id): id is string => Boolean(id))
+        .map(id => `/details/quoteDetails/${id}`);
+      if (routes.length > 0) {
+        prefetchMultiple(routes, 5);
+      }
+    }
+  }, [quotes, loading, page, prefetchMultiple]);
+
+  // Handle row hover to prefetch route
+  const handleRowHover = useCallback(
+    (row: QuoteItem) => {
+      if (row.quotationIdentifier) {
+        prefetch(`/details/quoteDetails/${row.quotationIdentifier}`);
+      }
+    },
+    [prefetch]
+  );
+
   return (
     <>
       <FilterDrawer
@@ -779,15 +800,13 @@ function QuotesLandingTable({
         onSubmit={handleQuoteFilterSubmit}
         onReset={handleQuoteFilterReset}
         onSave={handleQuoteFilterSave}
-        title={
-          _drawerMode === "create" ? "Create Custom Filter" : "Quote Filters"
-        }
+        title="Quote Filters"
         filterType="Quote"
         userId={user?.userId}
         companyId={user?.companyId}
         module="quote"
-        initialFilterData={initialFilterData}
-        mode={_drawerMode}
+        initialFilterData={undefined}
+        mode="filter"
       />
 
       <SideDrawer
@@ -804,7 +823,7 @@ function QuotesLandingTable({
 
       <div className="flex flex-col">
         <div className="w-full overflow-x-hidden">
-          <div className="w-full overflow-x-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
+          <div className="w-full overflow-x-auto scrollbar-thin-horizontal">
             {initialLoad && loading ? (
               <TableSkeleton rows={rowPerPage} />
             ) : !initialLoad && quotes.length === 0 ? (
@@ -833,9 +852,11 @@ function QuotesLandingTable({
                 }}
                 onRowClick={row => {
                   const quoteId = row.quotationIdentifier;
-                  if (quoteId)
-                    router.push(`/${locale}/details/quoteDetails/${quoteId}`);
+                  if (quoteId) {
+                    prefetchAndNavigate(`/details/quoteDetails/${quoteId}`);
+                  }
                 }}
+                onRowHover={handleRowHover}
                 tableHeight=""
               />
             )}

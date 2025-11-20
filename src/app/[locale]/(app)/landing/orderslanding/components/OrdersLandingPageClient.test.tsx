@@ -28,6 +28,7 @@ jest.mock("@/components/custom/dashboard-toolbar", () => {
 jest.mock("next/navigation", () => ({
   useRouter: () => ({
     push: jest.fn(),
+    prefetch: jest.fn(),
   }),
 }));
 

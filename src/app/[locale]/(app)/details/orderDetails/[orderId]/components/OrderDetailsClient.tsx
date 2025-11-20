@@ -1,11 +1,8 @@
 "use client";
 
-import { Skeleton } from "@/components/ui/skeleton";
 import { Toaster } from "@/components/ui/sonner";
 import { Layers } from "lucide-react";
-import { useLocale } from "next-intl";
 import dynamic from "next/dynamic";
-import { useRouter } from "next/navigation";
 import { Suspense, useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
 
@@ -17,6 +14,7 @@ import {
 } from "@/components/dialogs/VersionsDialog";
 import { ApplicationLayout, PageLayout } from "@/components/layout";
 import {
+  DetailsSkeleton,
   OrderContactDetails,
   OrderTermsCard,
   SalesHeader,
@@ -25,6 +23,7 @@ import { useOrderDetails } from "@/hooks/details/orderdetails/useOrderDetails";
 import { useCurrentUser } from "@/hooks/useCurrentUser";
 import { useGetVersionDetails } from "@/hooks/useGetVersionDetails/useGetVersionDetails";
 import useModuleSettings from "@/hooks/useModuleSettings";
+import { useRoutePrefetch } from "@/hooks/useRoutePrefetch";
 import { useTenantData } from "@/hooks/useTenantData";
 import type {
   OrderDetailsResponse,
@@ -57,10 +56,10 @@ import { decodeUnicode } from "@/utils/General/general";
 
 // Dynamic imports for heavy components
 // Import from index.ts which re-exports as named exports
+// No loading prop to avoid double loaders - main DetailsSkeleton handles all loading states
 const OrderProductsTable = dynamic(
   () => import("@/components/sales").then(mod => mod.OrderProductsTable),
   {
-    loading: () => <Skeleton className="h-64 w-full" />,
     ssr: false,
   }
 );
@@ -68,7 +67,6 @@ const OrderProductsTable = dynamic(
 const OrderPriceDetails = dynamic(
   () => import("@/components/sales").then(mod => mod.OrderPriceDetails),
   {
-    loading: () => <Skeleton className="h-96 w-full" />,
     ssr: false,
   }
 );
@@ -76,17 +74,14 @@ const OrderPriceDetails = dynamic(
 const OrderStatusTracker = dynamic(
   () => import("@/components/sales").then(mod => mod.OrderStatusTracker),
   {
-    loading: () => <Skeleton className="h-48 w-full" />,
     ssr: false,
   }
 );
 
 export default function OrderDetailsClient({ params }: OrderDetailsPageProps) {
-  const router = useRouter();
-  const locale = useLocale();
-
   const [orderId, setOrderId] = useState<string>("");
   const [paramsLoaded, setParamsLoaded] = useState(false);
+  const { prefetch, prefetchAndNavigate } = useRoutePrefetch();
 
   const [orderDetails, setOrderDetails] = useState<OrderDetailsResponse | null>(
     null
@@ -109,24 +104,16 @@ export default function OrderDetailsClient({ params }: OrderDetailsPageProps) {
   const { user } = useCurrentUser();
   const { tenantData } = useTenantData();
 
-  // Get user preferences using utility
   const preferences = getUserPreferences();
-
-  // Calculate total paid from payment history
   const totalPaid = paymentHistory.reduce(
     (sum, item) => sum + (item.amountReceived || 0),
     0
   );
-
-  // Prevent duplicate fetches for the same identifiers (helps with StrictMode double effects)
   const lastFetchKeyRef = useRef<string | null>(null);
-
-  // Derive only primitive dependencies to satisfy exhaustive-deps
   const userId = user?.userId;
   const companyId = user?.companyId;
   const tenantCode = tenantData?.tenant?.tenantCode;
 
-  // Load params asynchronously
   useEffect(() => {
     const loadParams = async () => {
       const resolvedParams = await params;
@@ -177,7 +164,6 @@ export default function OrderDetailsClient({ params }: OrderDetailsPageProps) {
     fetchOrderDetails();
   }, [paramsLoaded, orderId, userId, companyId, tenantCode]);
 
-  // Fetch overall payments when order details are loaded
   useEffect(() => {
     const fetchPayments = async () => {
       if (!orderId || !orderDetails) {
@@ -198,7 +184,6 @@ export default function OrderDetailsClient({ params }: OrderDetailsPageProps) {
     fetchPayments();
   }, [orderId, orderDetails]);
 
-  // Fetch payment due details when order details are loaded
   useEffect(() => {
     const fetchPaymentDue = async () => {
       if (!orderId || !orderDetails) {
@@ -235,7 +220,6 @@ export default function OrderDetailsClient({ params }: OrderDetailsPageProps) {
     fetchPaymentDue();
   }, [orderId, orderDetails]);
 
-  // Use custom hook for order details logic
   const {
     versions: orderVersions,
     orderIdentifier,
@@ -254,27 +238,19 @@ export default function OrderDetailsClient({ params }: OrderDetailsPageProps) {
     }
   );
 
-  // Track processed versions to prevent duplicate processing
   const processedVersionRef = useRef<string | null>(null);
 
-  // Update order details when version data is loaded
   useEffect(() => {
     if (versionData && selectedVersion) {
-      // Create a unique key for this version to prevent duplicate processing
       const versionKey = `${selectedVersion.versionNumber}-${selectedVersion.orderVersion}`;
 
-      // Skip if we've already processed this version
       if (processedVersionRef.current === versionKey) {
         return;
       }
 
-      // Mark this version as processed
       processedVersionRef.current = versionKey;
-
-      // Reset trigger after successful fetch
       setTriggerVersionCall(false);
 
-      // Show success toast only if data is freshly loaded (not from cache)
       if (!versionLoading) {
         const versionName =
           orderVersions.find(
@@ -285,7 +261,6 @@ export default function OrderDetailsClient({ params }: OrderDetailsPageProps) {
     }
   }, [versionData, versionLoading, selectedVersion, orderVersions]);
 
-  // Handler functions
   const handleRefresh = async () => {
     if (!orderId || !user || !tenantData?.tenant) return;
 
@@ -305,11 +280,24 @@ export default function OrderDetailsClient({ params }: OrderDetailsPageProps) {
   };
 
   const handleClose = () => {
-    router.push(`/${locale}/landing/orderslanding`);
+    prefetchAndNavigate("/landing/orderslanding");
   };
 
+  useEffect(() => {
+    if (orderId && orderDetails && !loading) {
+      prefetch(`/details/orderDetails/${orderId}/edit`);
+    }
+  }, [orderId, orderDetails, loading, prefetch]);
+
+  useEffect(() => {
+    prefetch("/landing/orderslanding");
+    prefetch("/landing/quoteslanding");
+    prefetch("/settings/profile");
+    prefetch("/settings/company");
+  }, [prefetch]);
+
   const handleEditQuote = () => {
-    router.push(`/${locale}/details/orderDetails/${orderId}/edit`);
+    prefetchAndNavigate(`/details/orderDetails/${orderId}/edit`);
   };
 
   const handleEditOrder = () => {
@@ -322,7 +310,6 @@ export default function OrderDetailsClient({ params }: OrderDetailsPageProps) {
     }
 
     try {
-      // Call the API to update the order name
       await OrderNameService.updateOrderName({
         userId: user.userId,
         companyId: user.companyId,
@@ -330,7 +317,6 @@ export default function OrderDetailsClient({ params }: OrderDetailsPageProps) {
         orderName: newOrderName,
       });
 
-      // Update the local state to reflect the change
       if (orderDetails && orderDetails.data?.orderDetails) {
         const updatedOrderDetails = {
           ...orderDetails,
@@ -343,12 +329,11 @@ export default function OrderDetailsClient({ params }: OrderDetailsPageProps) {
         };
         setOrderDetails(updatedOrderDetails);
       }
-    } catch {
-      throw error; // Re-throw to let the dialog handle the error
+    } catch (err) {
+      throw err;
     }
   };
 
-  // Extract data for header - use version data if available, otherwise use order details
   const displayOrderDetails = useMemo(() => {
     if (versionData && selectedVersion && versionData.data) {
       return versionData.data;
@@ -404,12 +389,9 @@ export default function OrderDetailsClient({ params }: OrderDetailsPageProps) {
     };
   }, [displayOrderDetails, orderDetails?.data, user]);
 
-  // Get module settings for order settings and SPR check
   const { orderSettings } = useModuleSettings(user);
 
-  // Check if order is SPR requested
   const isSPRRequested = useMemo(() => {
-    // Check if any product in the order has SPR requested
     const products =
       displayOrderDetails?.orderDetails?.[0]?.dbProductDetails ||
       orderDetails?.data?.orderDetails?.[0]?.dbProductDetails ||
@@ -419,12 +401,10 @@ export default function OrderDetailsClient({ params }: OrderDetailsPageProps) {
     );
   }, [displayOrderDetails, orderDetails]);
 
-  // Request edit check function - matches JS logic exactly
   const requestEditCheck = () => {
     const sellerStatus = (displayOrderDetails?.updatedSellerStatus ||
       orderDetails?.data?.updatedSellerStatus) as string | undefined;
 
-    // First check: Seller status conditions (if)
     if (
       sellerStatus === "INVOICED" ||
       sellerStatus === "INVOICED PARTIALLY" ||
@@ -448,9 +428,7 @@ export default function OrderDetailsClient({ params }: OrderDetailsPageProps) {
           className: "text-sm px-3 py-2",
         }
       );
-    }
-    // Second check: Status is REQUESTED EDIT (else if)
-    else if (status?.toUpperCase() === "REQUESTED EDIT") {
+    } else if (status?.toUpperCase() === "REQUESTED EDIT") {
       toast.info("Requested for edit already, wait for seller to respond", {
         style: {
           backgroundColor: "#ABE7B2", // green-500
@@ -460,9 +438,7 @@ export default function OrderDetailsClient({ params }: OrderDetailsPageProps) {
         },
         className: "text-sm px-3 py-2",
       });
-    }
-    // Third check: SPR requested (else)
-    else {
+    } else {
       if (isSPRRequested) {
         toast.info(
           "Edit access is not possible for SPR orders, contact seller for any queries",
@@ -499,11 +475,9 @@ export default function OrderDetailsClient({ params }: OrderDetailsPageProps) {
       return;
     }
 
-    // Run request edit checks
     requestEditCheck();
   };
 
-  // Handle confirm request edit
   const handleConfirmRequestEdit = async () => {
     if (!user || !orderId) {
       toast.error("Missing required information");
@@ -519,8 +493,6 @@ export default function OrderDetailsClient({ params }: OrderDetailsPageProps) {
       });
 
       toast.success("Edit request submitted successfully");
-
-      // Refresh order details to get updated status
       await handleRefresh();
     } catch (error) {
       const errorMessage =
@@ -528,7 +500,7 @@ export default function OrderDetailsClient({ params }: OrderDetailsPageProps) {
           ? error.message
           : "Failed to submit edit request";
       toast.error(errorMessage);
-      throw error; // Re-throw to let dialog handle it
+      throw error;
     }
   };
 
@@ -540,18 +512,12 @@ export default function OrderDetailsClient({ params }: OrderDetailsPageProps) {
     toast.info("Download PDF functionality coming soon");
   };
 
-  // Handle version selection
   const handleVersionSelect = (version: Version) => {
-    // Close dialog immediately
     setVersionsDialogOpen(false);
 
-    // If version 1 is selected, reset to original order details
     if (version.versionNumber === 1) {
-      // Reset to original order details
       if (orderDetails) {
-        // Reset processed version ref
         processedVersionRef.current = null;
-        // Re-fetch original order details
         setSelectedVersion(null);
         setTriggerVersionCall(false);
         handleRefresh();
@@ -559,10 +525,7 @@ export default function OrderDetailsClient({ params }: OrderDetailsPageProps) {
       return;
     }
 
-    // Reset processed version ref for new version selection
     processedVersionRef.current = null;
-
-    // Set selected version and trigger fetch
     setSelectedVersion({
       versionNumber: version.versionNumber,
       orderVersion: version.orderVersion || version.versionNumber,
@@ -586,13 +549,13 @@ export default function OrderDetailsClient({ params }: OrderDetailsPageProps) {
   const createdDate = (displayOrderDetails?.createdDate ||
     orderDetails?.data?.createdDate) as string | undefined;
 
-  // Determine which buttons to show based on order status
   const headerButtons = editInProgress
     ? [
         {
           label: "EDIT ORDER",
           variant: "outline" as const,
           onClick: handleEditQuote,
+          onMouseEnter: () => prefetch(`/details/orderDetails/${orderId}/edit`),
         },
       ]
     : [
@@ -603,7 +566,6 @@ export default function OrderDetailsClient({ params }: OrderDetailsPageProps) {
         },
       ];
 
-  // Get last date to pay using utility
   const lastDateToPay = getLastDateToPay(paymentDueData, preferences);
 
   return (
@@ -642,109 +604,11 @@ export default function OrderDetailsClient({ params }: OrderDetailsPageProps) {
       <div className="flex-1 w-full">
         <PageLayout variant="content">
           {loading ? (
-            <div className="flex flex-col lg:flex-row gap-2 sm:gap-3 md:gap-4 w-full">
-              {/* Left Side Skeleton - 65% */}
-              <div className="w-full lg:w-[65%] space-y-2 sm:space-y-3">
-                {/* Summary Section Skeleton */}
-                <div className="mt-[80px] space-y-4">
-                  <div className="flex gap-4 items-center">
-                    <Skeleton className="h-12 w-32" />
-                    <Skeleton className="h-12 w-32" />
-                    <Skeleton className="h-12 w-32" />
-                  </div>
-                  <div className="flex gap-2">
-                    <Skeleton className="h-8 w-24 rounded-full" />
-                    <Skeleton className="h-8 w-24 rounded-full" />
-                  </div>
-                </div>
-
-                {/* Status Tracker Skeleton */}
-                <div className="mt-4">
-                  <Skeleton className="h-48 w-full" />
-                </div>
-
-                {/* Products Table Skeleton */}
-                <div className="space-y-2">
-                  <Skeleton className="h-10 w-full" />
-                  <div className="space-y-2">
-                    {Array.from({ length: 5 }).map((_, i) => (
-                      <Skeleton key={i} className="h-16 w-full" />
-                    ))}
-                  </div>
-                </div>
-
-                {/* Contact Details and Terms Cards Skeleton */}
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-2 sm:gap-3">
-                  {/* Contact Details Card Skeleton */}
-                  <div className="border rounded-lg p-4 space-y-4">
-                    <Skeleton className="h-6 w-40" />
-                    {/* Seller Information Section */}
-                    <div className="space-y-3">
-                      <div className="space-y-2">
-                        <Skeleton className="h-4 w-full" />
-                        <Skeleton className="h-4 w-full" />
-                        <Skeleton className="h-4 w-3/4" />
-                        <Skeleton className="h-4 w-2/3" />
-                      </div>
-                      <div className="pt-2 border-t">
-                        {/* Bill To Section */}
-                        <Skeleton className="h-5 w-20 mb-2" />
-                        <div className="space-y-2">
-                          <Skeleton className="h-4 w-full" />
-                          <Skeleton className="h-4 w-full" />
-                          <Skeleton className="h-4 w-3/4" />
-                          <Skeleton className="h-4 w-2/3" />
-                        </div>
-                      </div>
-                      <div className="pt-2 border-t">
-                        {/* Ship To Section */}
-                        <Skeleton className="h-5 w-20 mb-2" />
-                        <div className="space-y-2">
-                          <Skeleton className="h-4 w-full" />
-                          <Skeleton className="h-4 w-full" />
-                          <Skeleton className="h-4 w-3/4" />
-                          <Skeleton className="h-4 w-2/3" />
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Terms Card Skeleton */}
-                  <div className="border rounded-lg p-4 space-y-4">
-                    <Skeleton className="h-6 w-32" />
-                    <div className="space-y-3">
-                      {Array.from({ length: 6 }).map((_, i) => (
-                        <div key={i} className="flex justify-between">
-                          <Skeleton className="h-4 w-24" />
-                          <Skeleton className="h-4 w-20" />
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              {/* Right Side Skeleton - 33% */}
-              <div className="w-full lg:w-[33%] mt-[80px]">
-                <div className="border rounded-lg p-4 space-y-4">
-                  <Skeleton className="h-6 w-32" />
-                  <div className="space-y-3">
-                    {Array.from({ length: 8 }).map((_, i) => (
-                      <div key={i} className="flex justify-between">
-                        <Skeleton className="h-4 w-32" />
-                        <Skeleton className="h-4 w-24" />
-                      </div>
-                    ))}
-                  </div>
-                  <div className="pt-4">
-                    <div className="flex justify-between">
-                      <Skeleton className="h-6 w-24" />
-                      <Skeleton className="h-6 w-32" />
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
+            <DetailsSkeleton
+              showStatusTracker={true}
+              leftWidth="lg:w-[65%]"
+              rightWidth="lg:w-[33%]"
+            />
           ) : (
             <div className="flex flex-col lg:flex-row gap-2 sm:gap-3 md:gap-4 w-full">
               {/* Left Side - Status Tracker and Products Table - 60% */}
@@ -754,7 +618,7 @@ export default function OrderDetailsClient({ params }: OrderDetailsPageProps) {
                   cancelMsg &&
                   !loading &&
                   (orderDetails || displayOrderDetails) && (
-                    <div className="bg-gray-50 rounded-lg p-3 sm:p-4 border border-gray-200 shadow-sm">
+                    <div className="mt-[80px] bg-gray-50 rounded-lg p-3 sm:p-4 border border-gray-200 shadow-sm">
                       <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
                         {/* Left Section - Order Identifier and Date */}
                         <div className="flex flex-col gap-1">
@@ -786,13 +650,20 @@ export default function OrderDetailsClient({ params }: OrderDetailsPageProps) {
                       </div>
                     </div>
                   )}
-                {/* Status Tracker */}
+                {/* Status Tracker - Reserve space to prevent layout shift */}
                 {!loading &&
                   !error &&
                   (orderDetails || displayOrderDetails) &&
                   !cancelled && (
                     <div className="mt-[80px]">
-                      <Suspense fallback={<Skeleton className="h-48 w-full" />}>
+                      <Suspense
+                        fallback={
+                          <div
+                            className="h-48 w-full"
+                            aria-label="Loading status tracker"
+                          />
+                        }
+                      >
                         <OrderStatusTracker
                           {...(orderId && { orderId })}
                           {...(displayOrderDetails?.createdDate && {
@@ -834,7 +705,7 @@ export default function OrderDetailsClient({ params }: OrderDetailsPageProps) {
                 {!loading &&
                   !error &&
                   (orderDetails || displayOrderDetails) && (
-                    <Suspense fallback={<Skeleton className="h-64 w-full" />}>
+                    <Suspense fallback={null}>
                       <OrderProductsTable
                         products={
                           displayOrderDetails?.orderDetails?.[0]
@@ -875,7 +746,7 @@ export default function OrderDetailsClient({ params }: OrderDetailsPageProps) {
                 {!loading &&
                   !error &&
                   (orderDetails || displayOrderDetails) && (
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-2 sm:gap-3">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-2 sm:gap-3 mt-4">
                       {/* Contact Details Card */}
                       <OrderContactDetails
                         billingAddress={
@@ -1001,7 +872,7 @@ export default function OrderDetailsClient({ params }: OrderDetailsPageProps) {
               {/* Right Side - Price Details - 40% */}
               {!loading && !error && (orderDetails || displayOrderDetails) && (
                 <div className="w-full lg:w-[33%] mt-[80px]">
-                  <Suspense fallback={<Skeleton className="h-96 w-full" />}>
+                  <Suspense fallback={null}>
                     <OrderPriceDetails
                       products={
                         displayOrderDetails?.orderDetails?.[0]
