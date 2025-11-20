@@ -24,14 +24,14 @@ export default function SectionCard({
 }: SectionCardProps) {
   return (
     <Card className={className}>
-      <CardHeader className={headerClassName}>
-        <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3">
-          <CardTitle className="text-base sm:text-lg">{title}</CardTitle>
+      <CardHeader  className={`px-0 ${headerClassName}`}  >
+        <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-1 px-2">
+          <CardTitle className="text-base sm:text-lg ml-4">{title}</CardTitle>
           {headerActions && (
             <div className="flex items-center gap-2">{headerActions}</div>
           )}
         </div>
-        {showSeparator && <Separator className="mt-2" />}
+        {showSeparator && <Separator className="mt-2 w-full" />}
       </CardHeader>
 
       <CardContent className={contentClassName}>{children}</CardContent>

@@ -6,6 +6,7 @@ import {
 } from "@/components/ui/form";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Textarea } from "@/components/ui/textarea";
+import clsx from "clsx";
 import { Control } from "react-hook-form";
 
 interface FormTextareaProps {
@@ -31,11 +32,11 @@ const FormTextarea = ({
     <FormField
       control={control}
       name={name}
-      render={({ field }) => (
+      render={({ field,fieldState }) => (
         <FormItem>
           <FormLabel>
             {label}
-            {required && <span className="text-destructive ml-1">*</span>}
+           
           </FormLabel>
           <FormControl>
             {loading ? (
@@ -45,7 +46,12 @@ const FormTextarea = ({
                 placeholder={placeholder}
                 {...field}
                 disabled={disabled}
-                className="min-h-20"
+                className={clsx(
+                  "min-h-20", // always applied
+                  fieldState.error && "border-red-500 focus-visible:ring-red-500"
+                )}
+                
+                
               />
             )}
           </FormControl>

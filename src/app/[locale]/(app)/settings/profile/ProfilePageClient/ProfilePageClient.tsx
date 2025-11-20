@@ -4,34 +4,58 @@ import HeaderBar from "@/components/Global/HeaderBar/HeaderBar";
 import { SaveCancelToolbar } from "@/components/custom/save-cancel-toolbar";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
-
 // Import our new modular components
-import { Button } from "@/components/ui/button";
-import { useProfileData } from "@/hooks/Profile/useProfileData";
-import { Shield } from "lucide-react";
-import { ProfileCard } from "@/components/SettingsProfile/ProfileCard/ProfileCard";
-import { UserPreferencesCard } from "@/components/SettingsProfile/UserPreferencesCard/UserPreferencesCard";
 import { OTPDialog } from "@/components/SettingsProfile/OTPDialog/OTPDialog";
 import { PasswordChangeDialog } from "@/components/SettingsProfile/PasswordChangeDialog/PasswordChangeDialog";
-
+import { ProfileCard } from "@/components/SettingsProfile/ProfileCard/ProfileCard";
+import { UserPreferencesCard } from "@/components/SettingsProfile/UserPreferencesCard/UserPreferencesCard";
+import { Button } from "@/components/ui/button";
+import { useTenantInfo } from "@/contexts/TenantContext";
+import { useUserDetails } from "@/contexts/UserDetailsContext";
+import { useProfileData } from "@/hooks/Profile/useProfileData";
+import { useCurrentUser } from "@/hooks/useCurrentUser";
+import { AuthService, CompanyService } from "@/lib/api";
+import { AuthStorage } from "@/lib/auth";
+import { JWTService } from "@/lib/services/JWTService";
+import parsePhoneNumberFromString from "libphonenumber-js";
+import { Shield } from "lucide-react";
 export default function ProfilePageClient() {
   const {
     profile,
     preferences,
     preferenceOptions,
+    profileDatas,
     isLoading: dataLoading,
     setProfile,
     setPreferences,
-    saveProfile,
     savePreferences,
   } = useProfileData();
-
-  // Unified UI States
+   const {user}=useCurrentUser();
+   const defaultCountryCallingCode = user?.defaultCountryCallingCode || "";
+   const userId = user?.userId;
   const [isSaving, setIsSaving] = useState(false);
   const [showPasswordDialog, setShowPasswordDialog] = useState(false);
   const [showOTPDialog, setShowOTPDialog] = useState(false);
   const [phoneVerified, setPhoneVerified] = useState(false);
-
+  const [phoneNumber,setPhoneNumber] = useState<string | number>();
+  const [otp, setOtp] = useState("");
+  const defaultCountryCodeIso = user?.defaultCountryCodeIso || "";
+  const tenantInfo = useTenantInfo();
+  const tenantId = tenantInfo?.tenantCode;
+  const { isAuthenticated } = useUserDetails();
+  const [sub, setSub] = useState<string | null>(null);
+  useEffect(() => {
+    if (isAuthenticated) {
+      const token = AuthStorage.getAccessToken();
+      if (token) {
+        const jwtService = JWTService.getInstance();
+        const payload = jwtService.decodeToken(token);
+        setSub(payload?.sub || null);
+      }
+    } else {
+      setSub(null);
+    }
+  }, [isAuthenticated]);
   // Unified change tracking
   const [hasChanges, setHasChanges] = useState(false);
   const [changedSections, setChangedSections] = useState<
@@ -70,12 +94,14 @@ export default function ProfilePageClient() {
 
   const handleProfileChange = (field: string, value: string) => {
     if (!profile) return;
-
+    if(field === "phone"){
+      setPhoneNumber(`+${defaultCountryCallingCode}${value}`)
+    }
     const updatedProfile = { ...profile, [field]: value };
     setProfile(updatedProfile);
     updateChangedSections("profile");
   };
-
+ 
   const handleImageChange = (image: string) => {
     if (!profile) return;
 
@@ -90,7 +116,7 @@ export default function ProfilePageClient() {
   ) => {
     const updatedPreferences = { ...preferences, [field]: value };
     setPreferences(updatedPreferences);
-    updateChangedSections("preferences");
+    // updateChangedSections("preferences");
   };
 
   // Reset all changes helper - restore original values
@@ -105,28 +131,89 @@ export default function ProfilePageClient() {
     setChangedSections(new Set());
     setHasChanges(false);
   };
-
+ 
   // Unified save handler
   const handleSave = async () => {
     if (!hasChanges) return;
+    if (!profile) return;
+    if (!sub && !userId) {
+      toast.error("User ID is required");
+      return;
+    }
+    if (!tenantId) {
+      toast.error("Tenant ID is required");
+      return;
+    }
 
     setIsSaving(true);
-    const promises: Promise<boolean>[] = [];
-
-    // Build array of save operations based on what changed
-    if (changedSections.has("profile") && profile) {
-      promises.push(saveProfile(profile));
-    }
-    if (changedSections.has("preferences") && preferences) {
-      promises.push(savePreferences(preferences));
-    }
+    const phoneWithCountryCode = profile?.phone 
+      ? `+${defaultCountryCallingCode}${profile.phone}` 
+      : (profileDatas as any)?.phoneNumber || "";
 
     try {
+      // Build body in the exact order expected by the API
+      const profileData = (profileDatas as any) || {};
+      const countryCode = (defaultCountryCodeIso || "IN") as any;
+      const parsedMobileNumber = parsePhoneNumberFromString(profile?.phone || "", countryCode);
+      
+      const body = {
+        id: String(profileData?.id || ""),
+        tenantId: String(tenantId),
+        displayName: String(profile?.name || ""),
+        email: String(profile?.email || profileData?.email || ""),
+        secondaryEmail: String(profile?.altEmail || profileData?.secondaryEmail || ""),
+        emailVerified: Boolean(profileData?.emailVerified ?? true),
+        hasPassword: Boolean(profileData?.hasPassword ?? true),
+        status: String(profileData?.status || "CONFIRMED"),
+        isSeller: Boolean(profileData?.isSeller ?? false),
+        callingCodes: String(parsedMobileNumber?.countryCallingCode || defaultCountryCallingCode || ""),
+        callingCodesSecondary: String(defaultCountryCallingCode || ""),
+        countryCallingCode: String(parsedMobileNumber?.countryCallingCode || defaultCountryCallingCode || ""),
+        countryCallingCodeSecondary: String(defaultCountryCallingCode || ""),
+        iso2: String(parsedMobileNumber?.country || defaultCountryCodeIso || ""),
+        iso2Secondary: String(defaultCountryCodeIso || ""),
+        phoneNumber: String(phoneWithCountryCode || ""),
+        phoneNumberVerified: Boolean(profileData?.phoneNumberVerified ?? false),
+        nationalMobileNum: String(parsedMobileNumber?.nationalNumber || profile?.phone || ""),
+        nationalMobileNumSecondary: String(profile?.altPhone || ""),
+        secondaryPhoneNumber: String(profile?.altPhone || ""),
+      };
+
+      const promises: Promise<boolean>[] = [];
+      
+      // Save profile if changed
+      if (changedSections.has("profile")) {
+        const userIdToUse = sub;
+        if (!userIdToUse) {
+          toast.error("User ID is required");
+          setIsSaving(false);
+          return;
+        }
+        promises.push(
+          CompanyService.updateProfile(userIdToUse, body).then(() => true).catch((error) => {
+            console.error("Failed to update profile:", error);
+            return false;
+          })
+        );
+      }
+
+      // Save preferences if changed
+      if (changedSections.has("preferences") && preferences) {
+        promises.push(savePreferences(preferences));
+      }
+
+      // If no promises to execute, return early
+      if (promises.length === 0) {
+        toast.info("No changes to save");
+        setIsSaving(false);
+        return;
+      }
+
       const results = await Promise.all(promises);
       const allSuccessful = results.every(Boolean);
 
       if (allSuccessful) {
-        // Update original values for successful saves
+        // Update original values after successful save
         if (changedSections.has("profile")) {
           setOriginalProfile(profile);
         }
@@ -134,18 +221,19 @@ export default function ProfilePageClient() {
           setOriginalPreferences(preferences);
         }
 
-        // Clear change tracking only (don't reset values after successful save)
+        // Clear change tracking
         setChangedSections(new Set());
         setHasChanges(false);
-        toast.success("Changes saved successfully!");
+        toast.success("Profile Updated Successfully");
       } else {
         toast.error("Some changes failed to save. Please try again.");
       }
-    } catch {
+    } catch (error) {
+      console.error("Failed to save profile:", error);
       toast.error("Failed to save changes. Please try again.");
+    } finally {
+      setIsSaving(false);
     }
-
-    setIsSaving(false);
   };
 
   // Unified cancel handler
@@ -154,24 +242,89 @@ export default function ProfilePageClient() {
     toast.info("All changes cancelled");
   };
 
-  const handleVerifyPhone = (_phone: string) => {
-    setShowOTPDialog(true);
+  const handleVerifyPhone = async(phone: string) => {
+    if (!phone) {
+      toast.error("Please enter a phone number");
+      return;
+    }
+
+    // Construct phone number with country code and store it
+    const phoneWithCountryCode = `+${defaultCountryCallingCode}${phone}`;
+    setPhoneNumber(phoneWithCountryCode);
+    
+    const body = {
+      phoneNumber: phoneWithCountryCode,
+    };
+    
+    try {
+      const res = await CompanyService.verfiy({ body });
+      if(res){
+        setShowOTPDialog(true);
+      }
+    } catch (error) {
+      console.error("Failed to send verification:", error);
+      toast.error("Failed to send verification code. Please try again.");
+    }
   };
 
-  const handleOTPVerify = async (_otp: string) => {
-    // Simulate OTP verification
-    await new Promise(resolve => setTimeout(resolve, 2000));
-    setPhoneVerified(true);
-    toast.success("Phone number verified successfully!");
+  const handleOTPVerify = async (otpValue: string) => {
+    if (!otpValue || otpValue.length !== 6) {
+      toast.error("Please enter a valid 6-digit OTP");
+      return;
+    }
+
+    if (!phoneNumber) {
+      toast.error("Phone number is required");
+      return;
+    }
+
+    if (!userId) {
+      toast.error("User ID is required");
+      return;
+    }
+
+    const body = {
+      Otp: otpValue,
+      UserName: phoneNumber,
+      isEmail: false,
+      userId: userId,
+    };
+
+    try {
+      const res = await CompanyService.verfiyOTp({ body });
+      if (res) {
+        setPhoneVerified(true);
+        setShowOTPDialog(false);
+        toast.success("Phone number verified successfully!");
+      }
+    } catch (error) {
+      console.error("Failed to verify OTP:", error);
+      toast.error("Failed to verify OTP. Please try again.");
+    }
   };
 
-  const handlePasswordChange = async (_data: {
+  const handlePasswordChange = async (data: {
     otp: string;
     newPassword: string;
   }) => {
-    // Simulate password change
-    await new Promise(resolve => setTimeout(resolve, 2000));
-    toast.success("Password changed successfully!");
+    if (!profile?.email) {
+      toast.error("Email is required for password change");
+      return;
+    }
+
+    try {
+      await AuthService.verifyReset({
+        UserName: profile.email,
+        Otp: data.otp,
+        Password: data.newPassword,
+      });
+      toast.success("Password changed successfully!");
+      setShowPasswordDialog(false);
+    } catch (error) {
+      console.error("Failed to change password:", error);
+      toast.error("Failed to change password. Please try again.");
+      throw error; // Re-throw so dialog can handle it
+    }
   };
 
   const handleSendPasswordOtp = async () => {
@@ -222,6 +375,9 @@ export default function ProfilePageClient() {
               timeFormatOptions={preferenceOptions.timeFormatOptions}
               isLoading={isSaving}
               dataLoading={dataLoading}
+              {...(userId && { userId })}
+              {...(tenantId && { tenantId })}
+              {...((preferences as any)?.id && { preferenceId: parseInt((preferences as any).id) })}
             />
           </div>
         </div>
@@ -241,6 +397,8 @@ export default function ProfilePageClient() {
 
       {/* Phone Verification Dialog */}
       <OTPDialog
+       otp={otp}
+       setOtp={setOtp}
         open={showOTPDialog}
         onOpenChange={setShowOTPDialog}
         onVerify={handleOTPVerify}
@@ -254,6 +412,7 @@ export default function ProfilePageClient() {
         onOpenChange={setShowPasswordDialog}
         onPasswordChange={handlePasswordChange}
         onSendOtp={handleSendPasswordOtp}
+        {...(profile?.email && { userName: profile.email })}
       />
     </>
   );

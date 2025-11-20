@@ -22,6 +22,7 @@ interface PasswordChangeDialogProps {
     newPassword: string;
   }) => Promise<void>;
   onSendOtp?: () => Promise<void>;
+  userName?: string;
 }
 
 export function PasswordChangeDialog({
@@ -29,6 +30,7 @@ export function PasswordChangeDialog({
   onOpenChange,
   onPasswordChange,
   onSendOtp,
+  userName: _userName,
 }: PasswordChangeDialogProps) {
   const [otp, setOtp] = useState("");
   const [newPassword, setNewPassword] = useState("");

@@ -1,5 +1,6 @@
 import { SaveCancelToolbar } from "@/components/custom/save-cancel-toolbar";
 import SectionCard from "@/components/custom/SectionCard";
+import { ImageUpload } from "@/components/forms/ImageUpload/ImageUpload";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -25,7 +26,6 @@ import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import CompanyFormInput from "../../forms/FormInput/FormInput";
 import { LabelWithAsterisk } from "../DialogBox/AddressDialogBox";
-import { ImageUpload } from "@/components/forms/ImageUpload/ImageUpload";
 
 type SubIndustryOption = {
   id: string | number;
@@ -319,7 +319,7 @@ const CompanyDetail = () => {
 
               <CompanyFormInput
                 control={form.control}
-                name="data.addressId.gst"
+                name="data.taxDetailsId.pan"
                 label={<LabelWithAsterisk label="Tax ID / GST#" />}
                 placeholder="Tax ID or GST#"
                 loading={loading}
@@ -458,7 +458,7 @@ const CompanyDetail = () => {
                       ""
                     : ""}
                 </FormLabel>
-                <p className="text-sm text-muted-foreground">
+                <p className="text-xs text-muted-foreground">
                   {form.watch("data.subIndustryId.id")
                     ? (
                         (subIndustryOptions ?? []).find(

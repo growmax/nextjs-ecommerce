@@ -71,14 +71,11 @@ export function PhoneInput({
   };
 
   const canVerify =
-    // only allow verify when the current value is a full-length number
-    // and it's different from the initial value (i.e. a newly-entered number)
-    value.length === maxLength &&
+    // allow verify when there's a valid phone number and it's not already verified
+    value.length >= 10 &&
     !error &&
     !verified &&
-    onVerify &&
-    initialValueRef.current !== null &&
-    value !== initialValueRef.current;
+    onVerify;
 
   return (
     <FormField

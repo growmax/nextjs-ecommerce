@@ -2,9 +2,12 @@
 
 import SectionCard from "@/components/custom/SectionCard";
 import { AutoCompleteField } from "@/components/forms/AutoCompleteField/AutoCompleteField";
+import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
+import { CompanyService } from "@/lib/api";
 import { Calendar, Clock, Globe } from "lucide-react";
 import { useEffect, useState } from "react";
+import { toast } from "sonner";
 
 interface UserPreferencesData {
   timeZone: string;
@@ -25,6 +28,9 @@ interface UserPreferencesCardProps {
   timeFormatOptions: PreferenceOption[];
   isLoading?: boolean;
   dataLoading?: boolean;
+  userId?: number;
+  tenantId?: string | number;
+  preferenceId?: number;
 }
 
 export function UserPreferencesCard({
@@ -35,22 +41,43 @@ export function UserPreferencesCard({
   timeFormatOptions,
   isLoading = false,
   dataLoading = false,
+  userId,
+  tenantId,
+  preferenceId,
 }: UserPreferencesCardProps) {
   // Simple validation state - no react-hook-form needed
   const [errors, setErrors] = useState<
     Partial<Record<keyof UserPreferencesData, string>>
   >({});
+  
+  // Track original preferences and changes
+  const [originalPreferences, setOriginalPreferences] = useState<UserPreferencesData | null>(null);
+  const [hasChanges, setHasChanges] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
 
-  // Clear errors when preferences are loaded successfully
+  // Initialize original preferences when data loads
   useEffect(() => {
     if (
       preferences.timeZone &&
       preferences.dateFormat &&
-      preferences.timeFormat
+      preferences.timeFormat &&
+      !originalPreferences
     ) {
+      setOriginalPreferences({ ...preferences });
       setErrors({});
     }
-  }, [preferences]);
+  }, [preferences, originalPreferences]);
+
+  // Detect changes
+  useEffect(() => {
+    if (originalPreferences) {
+      const changed =
+        preferences.timeZone !== originalPreferences.timeZone ||
+        preferences.dateFormat !== originalPreferences.dateFormat ||
+        preferences.timeFormat !== originalPreferences.timeFormat;
+      setHasChanges(changed);
+    }
+  }, [preferences, originalPreferences]);
 
   // Validate field on change
   const handleFieldChange = (
@@ -85,7 +112,62 @@ export function UserPreferencesCard({
     };
     return labels[field];
   };
-  if (dataLoading) {
+
+  // Handle save
+  const handleSave = async () => {
+    if (!hasChanges) return;
+    if (!userId) {
+      toast.error("User ID is required");
+      return;
+    }
+
+    // Validate required fields
+    if (!preferences.timeZone || !preferences.dateFormat || !preferences.timeFormat) {
+      toast.error("Please fill all required preference fields");
+      return;
+    }
+
+    setIsSaving(true);
+    try {
+      const payload = {
+        dateFormat: preferences.dateFormat,
+        timeFormat: preferences.timeFormat,
+        timeZone: preferences.timeZone,
+        userId: { id: userId },
+        ...(preferenceId && { id: preferenceId }),
+        ...(tenantId && { tenantId: typeof tenantId === "string" ? parseInt(tenantId) || 0 : tenantId }),
+        vendorId: null,
+      };
+
+      await CompanyService.saveUserPreferences(payload);
+      
+      // Update original preferences after successful save
+      setOriginalPreferences({ ...preferences });
+      setHasChanges(false);
+      toast.success("Preferences saved successfully!");
+    } catch (error) {
+      console.error("Failed to save preferences:", error);
+      toast.error("Failed to save preferences. Please try again.");
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  // Handle cancel
+  const handleCancel = () => {
+    if (originalPreferences) {
+      // Reset to original values
+      onChange("timeZone", originalPreferences.timeZone);
+      onChange("dateFormat", originalPreferences.dateFormat);
+      onChange("timeFormat", originalPreferences.timeFormat);
+      setHasChanges(false);
+      setErrors({});
+      toast.info("Changes cancelled");
+    }
+  };
+
+  // Show skeleton when loading or data is not available
+  if (dataLoading || !preferences || !preferences.timeZone || !preferences.dateFormat || !preferences.timeFormat) {
     return (
       <SectionCard title="User Preferences" className="w-full">
         <div className="space-y-4">
@@ -118,7 +200,31 @@ export function UserPreferencesCard({
   }
 
   return (
-    <SectionCard title="User Preferences" className="w-full">
+    <SectionCard 
+      title="User Preferences" 
+      className="w-full"
+      headerActions={
+        hasChanges ? (
+          <div className="flex items-center gap-2">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={handleCancel}
+              disabled={isSaving || isLoading}
+            >
+              Cancel
+            </Button>
+            <Button
+              size="sm"
+              onClick={handleSave}
+              disabled={isSaving || isLoading}
+            >
+              {isSaving ? "Saving..." : "Save"}
+            </Button>
+          </div>
+        ) : undefined
+      }
+    >
       <div className="space-y-4">
         {/* Time Zone */}
         <AutoCompleteField

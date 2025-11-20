@@ -46,13 +46,13 @@ interface CompanyDialogBoxProps {
 const addressFormSchema = z.object({
   id: z.number().optional(),
   companyName: z.string().optional(),
-  branchName: z.string().min(1),
-  addressLine: z.string().min(1),
+  branchName: z.string().min(1, { message: "Branch name is required" }),
+  addressLine: z.string().min(1,{message: "Address is required"}),
   locality: z.string().optional(),
-  country: z.string().refine(val => val.length > 0),
-  state: z.string().refine(val => val.length > 0),
+  country: z.string().min(1, { message: "Country is required" }),
+  state: z.string().min(1, { message: "State is required" }),
   district: z.string().optional(),
-  pinCode: z.string().min(1),
+  pinCode: z.string().min(1,{message:"Postal code is required"}),
   city: z.string().optional(),
   lattitude: z.string().optional(),
   longitude: z.string().optional(),
@@ -598,6 +598,8 @@ const CompanyDialogBox = ({
                 name="branchName"
                 label={<LabelWithAsterisk label="Branch" required />}
                 placeholder="Enter branch name"
+                required
+                
               />
 
               <FormTextarea
@@ -605,6 +607,7 @@ const CompanyDialogBox = ({
                 name="addressLine"
                 label={<LabelWithAsterisk label="Address" required />}
                 placeholder="Enter address"
+                required
               />
 
               <FormInput
@@ -623,7 +626,7 @@ const CompanyDialogBox = ({
                   placeholder={
                     countriesLoading
                       ? "Loading countries..."
-                      : "Search A Country"
+                      : "Select Country"
                   }
                   options={countries.length > 0 ? countries : []}
                 />
@@ -635,7 +638,7 @@ const CompanyDialogBox = ({
                   placeholder={
                     statesLoading
                       ? "Loading states..."
-                      : "Search A State/Province"
+                      : "Select State"
                   }
                   options={states.length > 0 ? states : []}
                 />
@@ -662,6 +665,7 @@ const CompanyDialogBox = ({
                     <LabelWithAsterisk label="PostalCode/PinCode" required />
                   }
                   placeholder="Enter postal code"
+                  required
                 />
               </div>
 

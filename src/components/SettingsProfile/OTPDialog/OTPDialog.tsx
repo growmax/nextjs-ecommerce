@@ -21,9 +21,13 @@ interface OTPDialogProps {
   title: string;
   description?: string;
   isLoading?: boolean;
+  otp:string;
+  setOtp:(otp:string)=>void;
 }
 
 export function OTPDialog({
+  otp,
+  setOtp,
   open,
   onOpenChange,
   onVerify,
@@ -32,7 +36,7 @@ export function OTPDialog({
   description,
   isLoading = false,
 }: OTPDialogProps) {
-  const [otp, setOtp] = useState("");
+ 
   const [isVerifying, setIsVerifying] = useState(false);
 
   const handleVerify = async () => {
