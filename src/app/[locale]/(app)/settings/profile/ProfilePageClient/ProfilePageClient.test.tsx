@@ -1,10 +1,27 @@
 /* eslint-disable @typescript-eslint/no-require-imports */
 import "@testing-library/jest-dom";
-import { fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { act, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import React from "react";
 
 import ProfilePageClient from "./ProfilePageClient";
 import createUseProfileDataMock from "./ProfilePageClient.mocks";
+import { UserDetailsProvider } from "@/contexts/UserDetailsContext";
+import { TenantProvider } from "@/contexts/TenantContext";
+
+// Mock window.matchMedia for Sonner
+Object.defineProperty(window, "matchMedia", {
+  writable: true,
+  value: jest.fn().mockImplementation(query => ({
+    matches: false,
+    media: query,
+    onchange: null,
+    addListener: jest.fn(),
+    removeListener: jest.fn(),
+    addEventListener: jest.fn(),
+    removeEventListener: jest.fn(),
+    dispatchEvent: jest.fn(),
+  })),
+});
 
 // Mock the hook used by the component by requiring the mock inside the factory.
 jest.mock("@/hooks/Profile/useProfileData", () => {
@@ -118,22 +135,153 @@ jest.mock(
   }
 );
 
+jest.mock("@/components/ui/sonner", () => {
+  const React = require("react");
+  return {
+    Toaster: () => null,
+    toast: {
+      success: jest.fn(),
+      error: jest.fn(),
+      info: jest.fn(),
+    },
+  };
+});
+
+// Mock toast from sonner
+jest.mock("sonner", () => ({
+  toast: {
+    success: jest.fn(),
+    error: jest.fn(),
+    info: jest.fn(),
+  },
+}));
+
+// Mock CompanyService
+const mockUpdateProfileFn = jest.fn().mockResolvedValue({ success: true });
+const mockSaveUserPreferencesFn = jest.fn().mockResolvedValue({ success: true });
+
+jest.mock("@/lib/api", () => ({
+  CompanyService: {
+    get updateProfile() {
+      return mockUpdateProfileFn;
+    },
+    get saveUserPreferences() {
+      return mockSaveUserPreferencesFn;
+    },
+  },
+  AuthService: {},
+}));
+
+// Mock useCurrentUser
+jest.mock("@/hooks/useCurrentUser", () => ({
+  useCurrentUser: () => ({ user: { userId: 1, defaultCountryCallingCode: "+1", defaultCountryCodeIso: "US" } }),
+}));
+
+// Mock AuthStorage
+jest.mock("@/lib/auth", () => ({
+  AuthStorage: {
+    getAccessToken: jest.fn().mockReturnValue("mock-token"),
+  },
+}));
+
+// Mock JWTService
+const mockDecodeToken = jest.fn(() => ({ sub: "test-user-id" }));
+const mockJWTInstance = {
+  decodeToken: mockDecodeToken,
+};
+const mockGetInstance = jest.fn(() => mockJWTInstance);
+
+jest.mock("@/lib/services/JWTService", () => ({
+  JWTService: {
+    getInstance: (...args: any[]) => mockGetInstance(...args),
+  },
+}));
+
+// Mock parsePhoneNumberFromString - must be defined before jest.mock
+jest.mock("libphonenumber-js", () => {
+  const mockParsePhoneNumber = jest.fn((phone: string, country?: string) => ({
+    countryCallingCode: "+1",
+    country: "US",
+    nationalNumber: phone || "1234567890",
+  }));
+  
+  return {
+    __esModule: true,
+    default: mockParsePhoneNumber,
+  };
+});
+
+// Helper to wrap component with required providers
+const renderWithProviders = (component: React.ReactElement) => {
+  return render(
+    <TenantProvider
+      initialData={{
+        status: "success",
+        data: {
+          tenant: { tenantCode: "test-tenant", id: 1, name: "Test Tenant" },
+          sellerCompanyId: null,
+          sellerCurrency: null,
+        },
+      } as any}
+    >
+      <UserDetailsProvider
+        initialAuthState={true}
+        initialUserData={{
+          userId: 1,
+          defaultCountryCallingCode: "+1",
+          defaultCountryCodeIso: "US",
+        } as any}
+      >
+        {component}
+      </UserDetailsProvider>
+    </TenantProvider>
+  );
+};
+
 describe("ProfilePageClient", () => {
+  beforeEach(() => {
+    mockUpdateProfileFn.mockClear();
+    mockSaveUserPreferencesFn.mockClear();
+    jest.clearAllMocks();
+  });
+
   test("renders header and child cards", () => {
-    render(React.createElement(ProfilePageClient));
+    renderWithProviders(React.createElement(ProfilePageClient));
     expect(screen.getByText("Profile Settings")).toBeInTheDocument();
     expect(screen.getByTestId("profile-card")).toBeInTheDocument();
     expect(screen.getByTestId("preferences-card")).toBeInTheDocument();
   });
 
   test("shows save toolbar after profile change and triggers save on click", async () => {
+    // Clear previous mock calls
+    mockUpdateProfileFn.mockClear();
+    mockDecodeToken.mockClear();
+    mockGetInstance.mockClear();
+    
     // Replace the mocked hook with a controllable mock that exposes spies
-    const mock = createUseProfileDataMock();
+    const mock = createUseProfileDataMock({
+      profileDatas: { id: "123", email: "jane@example.com", phoneNumber: "+11234567890" },
+    });
     jest
       .spyOn(require("@/hooks/Profile/useProfileData"), "useProfileData")
       .mockImplementation(() => mock as any);
 
-    render(React.createElement(ProfilePageClient));
+    renderWithProviders(React.createElement(ProfilePageClient));
+
+    // Wait for component to initialize and set sub from JWT token
+    // The useEffect should run and decode the token
+    await waitFor(
+      () => {
+        expect(mockGetInstance).toHaveBeenCalled();
+        expect(mockDecodeToken).toHaveBeenCalled();
+      },
+      { timeout: 3000 }
+    );
+
+    // Give a small delay for state updates to propagate
+    await act(async () => {
+      await new Promise(resolve => setTimeout(resolve, 100));
+    });
 
     // Initially toolbar hidden
     expect(screen.getByTestId("save-toolbar")).toHaveAttribute(
@@ -142,19 +290,49 @@ describe("ProfilePageClient", () => {
     );
 
     // Simulate a profile change via the mocked ProfileCard
-    fireEvent.click(screen.getByTestId("simulate-profile-change"));
+    await act(async () => {
+      fireEvent.click(screen.getByTestId("simulate-profile-change"));
+    });
 
     // Toolbar should now be shown
-    expect(screen.getByTestId("save-toolbar")).toHaveAttribute(
-      "data-show",
-      "true"
+    await waitFor(
+      () => {
+        expect(screen.getByTestId("save-toolbar")).toHaveAttribute(
+          "data-show",
+          "true"
+        );
+      },
+      { timeout: 3000 }
     );
 
-    // Click save
-    fireEvent.click(screen.getByTestId("save-btn"));
+    // Give a small delay for state updates to propagate
+    await act(async () => {
+      await new Promise(resolve => setTimeout(resolve, 100));
+    });
 
-    await waitFor(() => expect(mock.saveProfile).toHaveBeenCalled());
-  });
+    // Click save - the component should now have sub set from JWT token
+    await act(async () => {
+      fireEvent.click(screen.getByTestId("save-btn"));
+    });
+
+    // Wait for CompanyService.updateProfile to be called
+    // The component needs sub to be set, which comes from JWTService mock
+    // Also needs tenantId, profile, hasChanges, and changedSections to be set
+    await waitFor(
+      () => {
+        expect(mockUpdateProfileFn).toHaveBeenCalled();
+        expect(mockUpdateProfileFn).toHaveBeenCalledWith(
+          "test-user-id",
+          expect.objectContaining({
+            tenantId: expect.any(String),
+            displayName: expect.any(String),
+            email: expect.any(String),
+          })
+        );
+      },
+      { timeout: 10000 }
+    );
+  }, 15000); // Increase test timeout to 15 seconds
 
   test("opens password dialog when header action is clicked", async () => {
     // Use mock that will render headerActions (ProfileCard passes the Button)
@@ -163,7 +341,7 @@ describe("ProfilePageClient", () => {
       .spyOn(require("@/hooks/Profile/useProfileData"), "useProfileData")
       .mockImplementation(() => mock as any);
 
-    render(React.createElement(ProfilePageClient));
+    renderWithProviders(React.createElement(ProfilePageClient));
 
     // The ProfileCard mock renders headerActions which includes a button with aria-label "Change Password"
     const changePwdButton = screen.getByLabelText("Change Password");

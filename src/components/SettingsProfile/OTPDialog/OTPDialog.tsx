@@ -120,7 +120,7 @@ export function OTPDialog({
             </Button>
             <Button
               onClick={handleVerify}
-              disabled={isLoading || isVerifying || otp.length !== 6}
+              disabled={isLoading || isVerifying || !otp || otp.length !== 6}
             >
               {isVerifying ? "Verifying..." : "Verify OTP"}
             </Button>

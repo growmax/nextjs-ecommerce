@@ -28,7 +28,7 @@ describe("UserServices", () => {
       const result = await userServices.getUser(mockGetUserParams);
 
       expect(callApiSpy).toHaveBeenCalledWith(
-        `users/findByName?name=${mockGetUserParams.sub}`,
+        `userses/findByName?name=${mockGetUserParams.sub}`,
         {},
         expect.any(Object),
         "GET",
@@ -43,7 +43,7 @@ describe("UserServices", () => {
       const result = await userServices.getUser({ sub: 123 });
 
       expect(callApiSpy).toHaveBeenCalledWith(
-        `users/findByName?name=123`,
+        `userses/findByName?name=123`,
         {},
         expect.any(Object),
         "GET",

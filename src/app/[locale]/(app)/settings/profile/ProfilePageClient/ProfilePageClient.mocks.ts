@@ -31,6 +31,7 @@ export function createUseProfileDataMock(overrides: Partial<any> = {}) {
     profile: sampleProfile,
     preferences: samplePreferences,
     preferenceOptions: samplePreferenceOptions,
+    profileDatas: { id: "1", email: "jane@example.com", phoneNumber: "+19876543210" },
     isLoading: false,
     setProfile,
     setPreferences,

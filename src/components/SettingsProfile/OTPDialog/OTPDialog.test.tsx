@@ -68,13 +68,20 @@ const defaultProps = {
   isLoading: false,
 };
 
+// Create a test wrapper that manages OTP state
+const OTPDialogWrapper = (props: Omit<typeof defaultProps, "otp" | "setOtp">) => {
+  const React = require("react");
+  const [otp, setOtp] = React.useState("");
+  return React.createElement(OTPDialog, { ...props, otp, setOtp });
+};
+
 describe("OTPDialog", () => {
   beforeEach(() => {
     jest.clearAllMocks();
   });
 
   it("renders the dialog with title and description", () => {
-    render(React.createElement(OTPDialog, defaultProps));
+    render(React.createElement(OTPDialogWrapper, defaultProps));
 
     // The title and the verify button share the same text; target the heading for the title
     expect(
@@ -95,7 +102,7 @@ describe("OTPDialog", () => {
 
   it("does not render resend button when onResend is not provided", () => {
     const { onResend: _onResend, ...propsWithoutResend } = defaultProps;
-    render(React.createElement(OTPDialog, propsWithoutResend));
+    render(React.createElement(OTPDialogWrapper, propsWithoutResend));
 
     expect(
       screen.queryByRole("button", { name: "Resend OTP" })
@@ -103,7 +110,7 @@ describe("OTPDialog", () => {
   });
 
   it("allows only numeric input and limits to 6 characters", () => {
-    render(React.createElement(OTPDialog, defaultProps));
+    render(React.createElement(OTPDialogWrapper, defaultProps));
 
     const input = screen.getByLabelText("Enter OTP *") as HTMLInputElement;
 
@@ -115,7 +122,7 @@ describe("OTPDialog", () => {
   });
 
   it("disables verify button when OTP is not 6 digits", () => {
-    render(React.createElement(OTPDialog, defaultProps));
+    render(React.createElement(OTPDialogWrapper, defaultProps));
 
     const verifyButton = screen.getByRole("button", { name: "Verify OTP" });
     const input = screen.getByLabelText("Enter OTP *");
@@ -131,7 +138,7 @@ describe("OTPDialog", () => {
 
   it("calls onVerify with correct OTP when verify button is clicked", async () => {
     mockOnVerify.mockResolvedValue(undefined);
-    render(React.createElement(OTPDialog, defaultProps));
+    render(React.createElement(OTPDialogWrapper, defaultProps));
 
     const input = screen.getByLabelText("Enter OTP *");
     const verifyButton = screen.getByRole("button", { name: "Verify OTP" });
@@ -146,7 +153,7 @@ describe("OTPDialog", () => {
 
   it("calls onResend when resend button is clicked", async () => {
     mockOnResend.mockResolvedValue(undefined);
-    render(React.createElement(OTPDialog, defaultProps));
+    render(React.createElement(OTPDialogWrapper, defaultProps));
 
     const resendButton = screen.getByRole("button", { name: "Resend OTP" });
     fireEvent.click(resendButton);
@@ -157,7 +164,7 @@ describe("OTPDialog", () => {
   });
 
   it("closes dialog and resets OTP when cancel is clicked", () => {
-    render(React.createElement(OTPDialog, defaultProps));
+    render(React.createElement(OTPDialogWrapper, defaultProps));
 
     const input = screen.getByLabelText("Enter OTP *");
     const cancelButton = screen.getByRole("button", { name: "Cancel" });
@@ -170,7 +177,7 @@ describe("OTPDialog", () => {
 
   it("closes dialog and resets OTP after successful verification", async () => {
     mockOnVerify.mockResolvedValue(undefined);
-    render(React.createElement(OTPDialog, defaultProps));
+    render(React.createElement(OTPDialogWrapper, defaultProps));
 
     const input = screen.getByLabelText("Enter OTP *");
     const verifyButton = screen.getByRole("button", { name: "Verify OTP" });
@@ -187,7 +194,7 @@ describe("OTPDialog", () => {
     mockOnVerify.mockImplementation(
       () => new Promise(resolve => setTimeout(resolve, 100))
     );
-    render(<OTPDialog {...defaultProps} />);
+    render(React.createElement(OTPDialogWrapper, defaultProps));
 
     const input = screen.getByLabelText("Enter OTP *");
     const verifyButton = screen.getByRole("button", { name: "Verify OTP" });
@@ -207,7 +214,7 @@ describe("OTPDialog", () => {
 
   it("disables all inputs and buttons when isLoading is true", () => {
     const loadingProps = { ...defaultProps, isLoading: true };
-    render(React.createElement(OTPDialog, loadingProps));
+    render(React.createElement(OTPDialogWrapper, loadingProps));
 
     const input = screen.getByLabelText("Enter OTP *");
     const resendButton = screen.getByRole("button", { name: "Resend OTP" });
@@ -222,7 +229,7 @@ describe("OTPDialog", () => {
 
   it("does not close dialog when verification fails", async () => {
     mockOnVerify.mockRejectedValue(new Error("Invalid OTP"));
-    render(React.createElement(OTPDialog, defaultProps));
+    render(React.createElement(OTPDialogWrapper, defaultProps));
 
     const input = screen.getByLabelText("Enter OTP *");
     const verifyButton = screen.getByRole("button", { name: "Verify OTP" });

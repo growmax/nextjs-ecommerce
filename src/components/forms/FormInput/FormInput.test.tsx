@@ -5,14 +5,26 @@ import FormInput from "./FormInput";
 // Mock form primitives used by the component
 jest.mock("@/components/ui/form", () => {
   const React = require("react");
+  const FormFieldComponent = ({ render, control, name }: any) => {
+    if (render && typeof render === "function") {
+      const renderResult = render({ 
+        field: { value: "", onChange: () => {}, name: name || "test", onBlur: () => {}, ref: () => {} },
+        fieldState: {}
+      });
+      return React.isValidElement(renderResult) 
+        ? renderResult 
+        : React.createElement(React.Fragment, {}, renderResult);
+    }
+    return null;
+  };
   return {
     FormControl: ({ children }: any) =>
       React.createElement("div", { "data-testid": "form-control" }, children),
     FormItem: ({ children }: any) => React.createElement("div", {}, children),
     FormLabel: ({ children }: any) =>
       React.createElement("label", {}, children),
-    FormField: ({ render }: any) =>
-      render({ field: { value: "", onChange: () => {}, name: "test" } }),
+    FormMessage: () => null,
+    FormField: FormFieldComponent,
   };
 });
 
@@ -83,7 +95,7 @@ describe("FormInput", () => {
     expect(input.getAttribute("disabled")).not.toBeNull();
   });
 
-  test("shows required indicator in label when required prop is true", () => {
+  test("does not show required indicator in label when required prop is true", () => {
     render(
       <FormInput
         control={{} as any}
@@ -96,7 +108,8 @@ describe("FormInput", () => {
 
     const label = screen.getByText("Name");
     expect(label).toBeTruthy();
-    // label textContent should contain an asterisk when required
-    expect(label.textContent).toContain("*");
+    // label textContent should not contain an asterisk since required indicator was removed
+    expect(label.textContent).not.toContain("*");
+    expect(label.textContent).toBe("Name");
   });
 });

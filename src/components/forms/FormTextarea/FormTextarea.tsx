@@ -32,11 +32,10 @@ const FormTextarea = ({
     <FormField
       control={control}
       name={name}
-      render={({ field,fieldState }) => (
+      render={({ field, fieldState }) => (
         <FormItem>
           <FormLabel>
             {label}
-           
           </FormLabel>
           <FormControl>
             {loading ? (
@@ -48,7 +47,7 @@ const FormTextarea = ({
                 disabled={disabled}
                 className={clsx(
                   "min-h-20", // always applied
-                  fieldState.error && "border-red-500 focus-visible:ring-red-500"
+                  fieldState?.error && "border-red-500 focus-visible:ring-red-500"
                 )}
                 
                 

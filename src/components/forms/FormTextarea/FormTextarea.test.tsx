@@ -10,7 +10,10 @@ jest.mock("@/components/ui/form", () => {
     Form: ({ children }: any) => children,
     FormControl: ({ children }: any) => children,
     FormField: ({ render }: any) =>
-      render({ field: { value: "", onChange: () => {}, name: "test" } }),
+      render({ 
+        field: { value: "", onChange: () => {}, name: "test", onBlur: () => {}, ref: () => {} },
+        fieldState: { error: undefined, isDirty: false, isTouched: false }
+      }),
     FormItem: ({ children }: any) => children,
     FormLabel: ({ children }: any) =>
       React.createElement("label", null, children),
@@ -80,7 +83,7 @@ describe("FormTextarea", () => {
     expect(ta.getAttribute("disabled")).not.toBeNull();
   });
 
-  it("shows required indicator in label when required prop is true", () => {
+  it("does not show required indicator in label when required prop is true", () => {
     render(
       <FormTextarea
         control={{} as any}
@@ -92,6 +95,8 @@ describe("FormTextarea", () => {
     );
     const label = screen.getByText("Label");
     expect(label).toBeTruthy();
-    expect(label.textContent).toContain("*");
+    // label textContent should not contain an asterisk since required indicator was removed
+    expect(label.textContent).not.toContain("*");
+    expect(label.textContent).toBe("Label");
   });
 });

@@ -52,7 +52,7 @@ const FormInput = ({
                 {...field}
                 disabled={disabled}
                 className={clsx(
-                  fieldState.error && "border-red-500 focus-visible:ring-red-500"
+                  fieldState?.error && "border-red-500 focus-visible:ring-red-500"
                 )}
               />
             )}
