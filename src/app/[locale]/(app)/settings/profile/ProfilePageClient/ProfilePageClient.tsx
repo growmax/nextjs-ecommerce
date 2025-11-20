@@ -10,6 +10,7 @@ import { PasswordChangeDialog } from "@/components/SettingsProfile/PasswordChang
 import { ProfileCard } from "@/components/SettingsProfile/ProfileCard/ProfileCard";
 import { UserPreferencesCard } from "@/components/SettingsProfile/UserPreferencesCard/UserPreferencesCard";
 import { Button } from "@/components/ui/button";
+import { Toaster } from "@/components/ui/sonner";
 import { useTenantInfo } from "@/contexts/TenantContext";
 import { useUserDetails } from "@/contexts/UserDetailsContext";
 import { useProfileData } from "@/hooks/Profile/useProfileData";
@@ -29,6 +30,8 @@ export default function ProfilePageClient() {
     setProfile,
     setPreferences,
     savePreferences,
+    loadProfile,
+    loadPreferences,
   } = useProfileData();
    const {user}=useCurrentUser();
    const defaultCountryCallingCode = user?.defaultCountryCallingCode || "";
@@ -213,11 +216,14 @@ export default function ProfilePageClient() {
       const allSuccessful = results.every(Boolean);
 
       if (allSuccessful) {
-        // Update original values after successful save
+        // Reload profile data after successful save
         if (changedSections.has("profile")) {
+          await loadProfile(true); // Force reload
+          // toast.success("Changes saved successfully!");
           setOriginalProfile(profile);
         }
         if (changedSections.has("preferences")) {
+          await loadPreferences(true); // Force reload
           setOriginalPreferences(preferences);
         }
 
@@ -334,13 +340,13 @@ export default function ProfilePageClient() {
   };
 
   return (
-    <>
-      <div id="profile-header" className="h-[48px] md:h-[64px]">
+    <div className="flex flex-col h-full">
+      <div id="profile-header" className="h-[48px] md:h-[64px] flex-shrink-0">
         <HeaderBar title="Profile Settings" />
       </div>
 
       <main
-        className={`flex-1 px-4 pb-4 overflow-x-hidden ${hasChanges ? "pb-32 md:pb-24" : "pb-16"}`}
+        className={`flex-1 px-4 pb-4 overflow-x-hidden overflow-y-auto min-h-0 ${hasChanges ? "pb-32 md:pb-24" : "pb-16"}`}
       >
         <div className="max-w-6xl mx-auto space-y-6 w-full">
           {/* Profile Information */}
@@ -375,6 +381,9 @@ export default function ProfilePageClient() {
               timeFormatOptions={preferenceOptions.timeFormatOptions}
               isLoading={isSaving}
               dataLoading={dataLoading}
+              onSaveSuccess={async () => {
+                await loadPreferences(true);
+              }}
               {...(userId && { userId })}
               {...(tenantId && { tenantId })}
               {...((preferences as any)?.id && { preferenceId: parseInt((preferences as any).id) })}
@@ -414,6 +423,9 @@ export default function ProfilePageClient() {
         onSendOtp={handleSendPasswordOtp}
         {...(profile?.email && { userName: profile.email })}
       />
-    </>
+
+      {/* Toaster for toast notifications */}
+      <Toaster richColors position="bottom-right" />
+    </div>
   );
 }

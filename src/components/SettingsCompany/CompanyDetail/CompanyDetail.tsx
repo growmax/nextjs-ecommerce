@@ -21,6 +21,7 @@ import {
 } from "@/components/ui/form";
 import { CompanyService, SubIndustryService } from "@/lib/api";
 import type { CompanyApiResponse } from "@/lib/api/services/CompanyService";
+import { ChevronDown } from "lucide-react";
 import React, { useEffect, useRef, useState } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
@@ -214,6 +215,7 @@ const CompanyDetail = () => {
       setIsSaving(true);
 
       // Validate selected subIndustry if it was changed
+      let selectedSubIndustry: any = null;
       if (changedFields["subIndustry"]) {
         const options = form.getValues("subIndustryOptions") as Array<any>;
         const found = options.find(
@@ -227,6 +229,16 @@ const CompanyDetail = () => {
           });
           toast.error("Please select a valid sub-industry.");
           return;
+        }
+        selectedSubIndustry = found;
+      } else {
+        // If not changed, find the current selected option
+        const options = form.getValues("subIndustryOptions") as Array<any>;
+        const currentSubIndustryId = formData.subIndustry || formData.data.subIndustryId.id;
+        if (currentSubIndustryId) {
+          selectedSubIndustry = options.find(
+            (o: any) => String(o.id) === String(currentSubIndustryId)
+          );
         }
       }
 
@@ -246,15 +258,42 @@ const CompanyDetail = () => {
           ? Number(subIndustryIdValue)
           : undefined;
 
-      const updatePayload = {
-        ...(formData.data as Record<string, unknown>),
-        subIndustryId: {
+      // Build subIndustryId payload with complete structure from selected option
+      let subIndustryPayload: any = {};
+
+      // If we have a selected subIndustry option, use its complete structure
+      if (selectedSubIndustry) {
+        subIndustryPayload = {
+          description: selectedSubIndustry.description || "",
+          id: selectedSubIndustry.id,
+          industryId: selectedSubIndustry.industryId
+            ? {
+                id: selectedSubIndustry.industryId.id,
+                name: selectedSubIndustry.industryId.name,
+                ...(selectedSubIndustry.industryId.tenantId !== undefined && {
+                  tenantId: selectedSubIndustry.industryId.tenantId,
+                }),
+              }
+            : undefined,
+          name: selectedSubIndustry.name || "",
+          ...(selectedSubIndustry.tenantId !== undefined && {
+            tenantId: selectedSubIndustry.tenantId,
+          }),
+        };
+      } else {
+        // Fallback to existing form data if no option found
+        subIndustryPayload = {
           ...(formData.data.subIndustryId as Record<string, unknown>),
           id:
             parsedSubIndustryId !== undefined
               ? parsedSubIndustryId
               : formData.data.subIndustryId.id,
-        },
+        };
+      }
+
+      const updatePayload = {
+        ...(formData.data as Record<string, unknown>),
+        subIndustryId: subIndustryPayload,
       } as Partial<CompanyApiResponse["data"]>;
 
       const response = await CompanyService.updateCompanyProfile(
@@ -280,7 +319,7 @@ const CompanyDetail = () => {
 
   return (
     <div>
-      <SectionCard title="Company Detail">
+      <SectionCard title="Company Detail" className="py-2.5">
         <Form {...form}>
           <form className="grid grid-cols-1 md:grid-cols-4 gap-4">
             {/* Image Upload Section */}
@@ -354,8 +393,8 @@ const CompanyDetail = () => {
                 control={form.control}
                 name="subIndustry"
                 render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>
+                  <FormItem className="space-y-1.5">
+                    <FormLabel className="text-xs font-medium">
                       <LabelWithAsterisk label="SubIndustry" required />
                     </FormLabel>
                     <FormControl>
@@ -363,31 +402,32 @@ const CompanyDetail = () => {
                         <DropdownMenuTrigger asChild>
                           <Button
                             variant="outline"
-                            className="w-full justify-start"
+                            className="w-full justify-between font-normal h-9"
                             disabled={subLoading || loading}
                           >
-                            {loading
-                              ? "Loading company..."
-                              : subLoading
-                                ? "Loading..."
-                                : field.value
-                                  ? // First try to find from loaded options
-                                    ((subIndustryOptions as any) ?? []).find(
-                                      (o: any) =>
-                                        String(o.id) === String(field.value)
-                                    )?.name ||
-                                    // Fall back to initial value if options not loaded
-                                    form.getValues("data.subIndustryId.name")
-                                  : form.getValues("data.subIndustryId.name") ||
-                                    "Select SubIndustry"}
+                            <span className="truncate">
+                              {loading
+                                ? "Loading company..."
+                                : subLoading
+                                  ? "Loading..."
+                                  : field.value
+                                    ? // First try to find from loaded options
+                                      ((subIndustryOptions as any) ?? []).find(
+                                        (o: any) =>
+                                          String(o.id) === String(field.value)
+                                      )?.name ||
+                                      // Fall back to initial value if options not loaded
+                                      form.getValues("data.subIndustryId.name")
+                                    : form.getValues("data.subIndustryId.name") ||
+                                      "Select SubIndustry"}
+                            </span>
+                            <ChevronDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
                           </Button>
                         </DropdownMenuTrigger>
                         <DropdownMenuPortal>
                           <DropdownMenuContent
-                            className="max-h-80 overflow-y-auto z-50"
-                            style={{
-                              width: "var(--radix-dropdown-menu-trigger-width)",
-                            }}
+                            className="w-[var(--radix-dropdown-menu-trigger-width)] max-h-80 overflow-y-auto z-50"
+                            align="start"
                           >
                             {subLoading ? (
                               <div className="p-3 text-sm">

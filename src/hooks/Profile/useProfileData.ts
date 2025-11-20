@@ -40,6 +40,7 @@ export function useProfileData() {
     timeZone: "",
     dateFormat: "",
     timeFormat: "",
+    id: "",
   });
   const [preferenceOptions, setPreferenceOptions] = useState<PreferenceOptions>(
     {
@@ -61,11 +62,14 @@ export function useProfileData() {
   const profileLoadedRef = useRef(false);
   const preferencesLoadedRef = useRef(false);
 
-  // Load profile data - called only once
-  const loadProfile = useCallback(async () => {
-    if (profileLoadedRef.current) return;
+  // Load profile data - called only once (unless force is true)
+  const loadProfile = useCallback(async (force = false) => {
+    if (profileLoadedRef.current && !force) return;
 
     try {
+      if (force) {
+        profileLoadedRef.current = false;
+      }
       profileLoadedRef.current = true;
 
       const response = await CompanyService.getProfile(
@@ -109,9 +113,9 @@ export function useProfileData() {
     }
   }, [tenantId, domainName]);
 
-  // Load preferences data - called only once when userId is available
-  const loadPreferences = useCallback(async () => {
-    if (preferencesLoadedRef.current || !userId) {
+  // Load preferences data - called only once when userId is available (unless force is true)
+  const loadPreferences = useCallback(async (force = false) => {
+    if ((preferencesLoadedRef.current && !force) || !userId) {
       if (!userId) {
         setIsLoading(false);
       }
@@ -119,6 +123,9 @@ export function useProfileData() {
     }
 
     try {
+      if (force) {
+        preferencesLoadedRef.current = false;
+      }
       preferencesLoadedRef.current = true;
 
       // Get user preferences from service
@@ -241,10 +248,11 @@ export function useProfileData() {
         throw new Error("Invalid response from server");
       }
 
-      const saved = {
+      const saved: UserPreferencesData = {
         timeZone: result.timeZone,
         dateFormat: result.dateFormat,
         timeFormat: result.timeFormat,
+        id: (result as any)?.id || (preferencesData as any)?.id || "",
       };
 
       // Update state after successful API call

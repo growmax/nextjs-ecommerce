@@ -276,7 +276,7 @@ const CompanyBranchTable = () => {
 
       <SectionCard
         title="Branches"
-        className="h-full flex flex-col"
+        className="h-full flex flex-col py-2.5"
         contentClassName="p-0 flex-1 overflow-hidden"
         headerActions={
           <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 w-full px-2">

@@ -31,6 +31,7 @@ interface UserPreferencesCardProps {
   userId?: number;
   tenantId?: string | number;
   preferenceId?: number;
+  onSaveSuccess?: () => void | Promise<void>;
 }
 
 export function UserPreferencesCard({
@@ -44,6 +45,7 @@ export function UserPreferencesCard({
   userId,
   tenantId,
   preferenceId,
+  onSaveSuccess,
 }: UserPreferencesCardProps) {
   // Simple validation state - no react-hook-form needed
   const [errors, setErrors] = useState<
@@ -144,7 +146,20 @@ export function UserPreferencesCard({
       // Update original preferences after successful save
       setOriginalPreferences({ ...preferences });
       setHasChanges(false);
-      toast.success("Preferences saved successfully!");
+      
+      // Reload preferences after successful save
+      if (onSaveSuccess) {
+        try {
+          await onSaveSuccess();
+        } catch (reloadError) {
+          console.error("Error during reload:", reloadError);
+        }
+      }
+      
+      // Show success message - ensure it's called after all operations
+      toast.success("Preferences Updated Successfully", {
+        duration: 3000,
+      });
     } catch (error) {
       console.error("Failed to save preferences:", error);
       toast.error("Failed to save preferences. Please try again.");
@@ -202,7 +217,7 @@ export function UserPreferencesCard({
   return (
     <SectionCard 
       title="User Preferences" 
-      className="w-full"
+      className="w-full py-2.5"
       headerActions={
         hasChanges ? (
           <div className="flex items-center gap-2">

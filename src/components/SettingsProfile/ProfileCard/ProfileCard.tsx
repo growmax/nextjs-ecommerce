@@ -50,35 +50,35 @@ export function ProfileCard({
     return (
       <SectionCard
         title="Personal Information"
-        className="w-full"
+        className="w-full py-2.5"
         headerActions={headerActions}
       >
         <div>
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-4 md:gap-6 lg:gap-6">
-            <div className="flex flex-col items-center md:items-start justify-center p-4 md:p-4 lg:p-6 xl:p-8 mb-4 md:mb-0 w-full md:w-auto md:self-start">
-              <Skeleton className="w-full max-w-[160px] md:max-w-[140px] lg:max-w-[160px] aspect-square rounded-xl mx-auto md:mx-0" />
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-3 md:gap-4 lg:gap-5">
+            <div className="flex flex-col items-center md:items-start justify-center p-2 md:p-3 lg:p-4 mb-3 md:mb-0 w-full md:w-auto md:self-start">
+              <Skeleton className="w-full max-w-[120px] sm:max-w-[100px] md:max-w-[110px] lg:max-w-[120px] aspect-square rounded-xl mx-auto md:mx-0" />
             </div>
 
-            <div className="col-span-1 md:col-span-3 grid grid-cols-1 sm:grid-cols-2 gap-x-4 gap-y-0">
-              <div className="space-y-2">
+            <div className="col-span-1 md:col-span-3 grid grid-cols-1 sm:grid-cols-2 gap-x-3 md:gap-x-4 gap-y-3 md:gap-y-4">
+              <div className="space-y-1.5">
                 <Skeleton className="h-4 w-24" />
-                <Skeleton className="h-10 w-full" />
+                <Skeleton className="h-9 w-full" />
               </div>
-              <div className="space-y-2">
+              <div className="space-y-1.5">
                 <Skeleton className="h-4 w-20" />
-                <Skeleton className="h-10 w-full" />
+                <Skeleton className="h-9 w-full" />
               </div>
-              <div className="space-y-2">
+              <div className="space-y-1.5">
                 <Skeleton className="h-4 w-28" />
-                <Skeleton className="h-10 w-full" />
+                <Skeleton className="h-9 w-full" />
               </div>
-              <div className="space-y-2">
+              <div className="space-y-1.5">
                 <Skeleton className="h-4 w-32" />
-                <Skeleton className="h-10 w-full" />
+                <Skeleton className="h-9 w-full" />
               </div>
-              <div className="space-y-2 sm:col-span-2">
+              <div className="space-y-1.5 sm:col-span-2">
                 <Skeleton className="h-4 w-28" />
-                <Skeleton className="h-10 w-full" />
+                <Skeleton className="h-9 w-full" />
               </div>
             </div>
           </div>
@@ -90,15 +90,15 @@ export function ProfileCard({
   return (
     <SectionCard
       title="Personal Information"
-      className="w-full"
+      className="w-full py-2.5"
       headerActions={headerActions}
     >
       <div>
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4 md:gap-6 lg:gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-3 md:gap-4 lg:gap-5">
 
           {/* Profile Image */}
-          <div className="flex flex-col items-center md:items-start justify-center p-4 md:p-4 lg:p-6 xl:p-8 mb-4 md:mb-0 w-full md:w-auto md:self-start">
-            <div className="w-full max-w-[160px] md:max-w-[140px] lg:max-w-[160px] mx-auto md:mx-0">
+          <div className="flex flex-col items-center md:items-start justify-center p-2 md:p-3 lg:p-4 mb-3 md:mb-0 w-full md:w-auto md:self-start">
+            <div className="w-full max-w-[120px] sm:max-w-[100px] md:max-w-[110px] lg:max-w-[120px] mx-auto md:mx-0">
               <ImageUpload
                 currentImage={profileImage || profile.avatar || null}
                 onImageChange={onImageChange}
@@ -110,8 +110,8 @@ export function ProfileCard({
             </div>
           </div>
 
-          {/* Form Fields - No vertical space */}
-          <div className="col-span-1 md:col-span-3 grid grid-cols-1 sm:grid-cols-2 gap-x-4 gap-y-0">
+          {/* Form Fields */}
+          <div className="col-span-1 md:col-span-3 grid grid-cols-1 sm:grid-cols-2 gap-x-3 md:gap-x-4 gap-y-3 md:gap-y-4">
 
             {/* Name */}
             <div className="min-w-0">
@@ -122,6 +122,7 @@ export function ProfileCard({
                   onChange={(e) => onChange("name", e.target.value)}
                   placeholder="Enter your full name"
                   disabled={isLoading}
+                  className="h-9"
                 />
               </FormField>
             </div>
@@ -133,7 +134,7 @@ export function ProfileCard({
                   type="email"
                   value={profile.email}
                   disabled
-                  className="bg-muted"
+                  className="bg-muted h-9"
                 />
               </FormField>
             </div>
@@ -175,6 +176,7 @@ export function ProfileCard({
                   onChange={(e) => onChange("altEmail", e.target.value)}
                   placeholder="Enter alternate email address"
                   disabled={isLoading}
+                  className="h-9"
                 />
               </FormField>
             </div>

@@ -1,6 +1,7 @@
 import { AppSidebar } from "@/components/AppSideBar/app-sidebar";
 import { CartProviderWrapper } from "@/components/providers/CartProviderWrapper";
 import { TenantDataProvider } from "@/components/TenantDataProvider";
+import { Toaster } from "@/components/ui/sonner";
 import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
 import { TenantProvider } from "@/contexts/TenantContext";
 import { UserDetailsProvider } from "@/contexts/UserDetailsContext";
@@ -75,6 +76,8 @@ export default async function AppLayout({
                   <main className="flex-1 overflow-y-auto overflow-x-hidden">
                     {children}
                   </main>
+                  {/* Toaster for toast notifications */}
+                  <Toaster richColors position="bottom-right" />
                 </SidebarInset>
               </SidebarProvider>
             </TenantDataProvider>
