@@ -117,7 +117,7 @@ export function useProductVariants({
       setError("Missing required parameters for variant loading");
       setIsLoading(false);
     }
-  }, [productGroupId, elasticIndex, context, searchParams]);
+  }, [productGroupId, elasticIndex, context, searchParams, baseProduct.pg_index_name]);
 
   // Group variants by attributes
   // Use Product Group structure if available, otherwise fallback to inferring from products

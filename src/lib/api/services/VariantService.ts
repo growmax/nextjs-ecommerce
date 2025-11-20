@@ -102,7 +102,7 @@ export class VariantService extends BaseService<VariantService> {
       // The error might be wrapped in ApiClientError or contain OpenSearch response structure
       const errorObj = error as {
         status?: number;
-        response?: { status?: number; data?: { error?: { meta?: { body?: { found?: boolean } } } } };
+        response?: { status?: number; data?: { error?: { meta?: { body?: { found?: boolean; statusCode?: number } } } } };
         data?: { error?: { meta?: { body?: { found?: boolean; statusCode?: number } } } };
       };
       
@@ -110,9 +110,9 @@ export class VariantService extends BaseService<VariantService> {
         errorObj.status === 404 ||
         errorObj.response?.status === 404 ||
         errorObj.response?.data?.error?.meta?.body?.found === false ||
-        errorObj.response?.data?.error?.meta?.body?.statusCode === 404 ||
+        (errorObj.response?.data?.error?.meta?.body?.statusCode !== undefined && errorObj.response.data.error.meta.body.statusCode === 404) ||
         errorObj.data?.error?.meta?.body?.found === false ||
-        errorObj.data?.error?.meta?.body?.statusCode === 404;
+        (errorObj.data?.error?.meta?.body?.statusCode !== undefined && errorObj.data.error.meta.body.statusCode === 404);
       
       if (isNotFound) {
         console.log("Product Group not found (404) - will use fallback variant grouping from products");
@@ -413,12 +413,16 @@ export class VariantService extends BaseService<VariantService> {
         const available = matchingVariants.length > 0 && 
                          matchingVariants.some(v => v.availability);
 
-        groups[attrKey].push({
-          value: option,
-          count: matchingVariants.length,
-          ...(attr.displayType === "color" ? { hexCode: this.getColorHexCode(option) } : {}),
-          available,
-        });
+        const hexCode = attr.displayType === "color" ? this.getColorHexCode(option) : undefined;
+        const groupArray = groups[attrKey];
+        if (groupArray) {
+          groupArray.push({
+            value: option,
+            count: matchingVariants.length,
+            ...(hexCode ? { hexCode } : {}),
+            available,
+          });
+        }
       });
     });
 

@@ -1,7 +1,11 @@
+"use client";
+
+import PricingFormat from "@/components/PricingFormat";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Subtitle, TypographyMuted } from "@/components/ui/typography";
+import { useCurrentUser } from "@/hooks/useCurrentUser";
 
 interface SellerPricing {
   totalItems?: number;
@@ -23,13 +27,12 @@ interface PriceDetailsProps {
 
 export default function PriceDetails({
   cartValue,
-  currencyCode = "INR",
-  currencySymbol = "₹",
+  currencyCode: _currencyCode = "INR",
+  currencySymbol: _currencySymbol = "₹",
   isPricingLoading = false,
 }: PriceDetailsProps) {
-  const formatCurrency = (value: number) => {
-    return `${currencySymbol}${value.toFixed(2)}`;
-  };
+  const { user } = useCurrentUser();
+  const currency = user?.currency;
 
   // Calculate discount (following reference logic)
   const DISCOUNT =
@@ -65,7 +68,10 @@ export default function PriceDetails({
               <Skeleton className="h-4 w-20" />
             ) : (
               <span className="text-sm font-medium">
-                {formatCurrency(cartValue?.totalLP || 0)}
+                <PricingFormat
+                  {...(currency && { buyerCurrency: currency })}
+                  value={cartValue?.totalLP || 0}
+                />
               </span>
             )}
           </div>
@@ -79,7 +85,11 @@ export default function PriceDetails({
               <Skeleton className="h-4 w-20" />
             ) : (
               <span className="text-sm font-medium text-green-600">
-                -{formatCurrency(DISCOUNT)}
+                -
+                <PricingFormat
+                  {...(currency && { buyerCurrency: currency })}
+                  value={DISCOUNT}
+                />
               </span>
             )}
           </div>
@@ -92,7 +102,10 @@ export default function PriceDetails({
             <Skeleton className="h-4 w-24" />
           ) : (
             <span className="text-sm font-semibold text-black">
-              {currencyCode} {formatCurrency(cartValue?.totalValue || 0)}
+              <PricingFormat
+                {...(currency && { buyerCurrency: currency })}
+                value={cartValue?.totalValue || 0}
+              />
             </span>
           )}
         </div>
@@ -105,8 +118,10 @@ export default function PriceDetails({
             <Skeleton className="h-4 w-24" />
           ) : (
             <TypographyMuted>
-              {" "}
-              {currencyCode} {formatCurrency(cartValue?.totalTax || 0)}
+              <PricingFormat
+                {...(currency && { buyerCurrency: currency })}
+                value={cartValue?.totalTax || 0}
+              />
             </TypographyMuted>
           )}
         </div>
@@ -120,7 +135,10 @@ export default function PriceDetails({
             <Skeleton className="h-5 w-28" />
           ) : (
             <span className="text-base font-bold text-black">
-              {currencyCode} {formatCurrency(cartValue?.grandTotal || 0)}
+              <PricingFormat
+                {...(currency && { buyerCurrency: currency })}
+                value={cartValue?.grandTotal || 0}
+              />
             </span>
           )}
         </div>

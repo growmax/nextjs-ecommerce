@@ -68,8 +68,7 @@ export interface PricingResolution {
   totalProducts: number;
   pricingBySources: {
     "seller-specific": number;
-    "getAllSellerPrices-exact": number;
-    "getAllSellerPrices-cross-seller": number;
+    "no-seller-id": number;
     "no-pricing": number;
   };
   productsWithoutPricing: Array<{

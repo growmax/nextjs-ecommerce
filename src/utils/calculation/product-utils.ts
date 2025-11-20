@@ -134,7 +134,7 @@ export const processDiscountDetails = (
 
     updatedItem.productShortDescription = updatedItem.productShortDescription
       ? updatedItem.productShortDescription
-      : updatedItem.shortDescription;
+      : (updatedItem.shortDescription || "");
     updatedItem.askedQuantity = updatedItem.quantity;
     updatedItem.totalInterTax = taxExemption
       ? 0
@@ -259,7 +259,7 @@ export const addMoreProductUtils = (
     updatedItem.marginPercentage = 100 - updatedItem.dmc;
   }
 
-  updatedItem.productShortDescription = updatedItem.shortDescription;
+  updatedItem.productShortDescription = updatedItem.shortDescription || "";
   if (updatedItem.packagingQty !== undefined) {
     updatedItem.packagingQuantity = updatedItem.packagingQty;
   }

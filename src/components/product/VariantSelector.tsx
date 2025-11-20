@@ -1,12 +1,12 @@
 "use client";
 
-import { memo, useCallback, useMemo } from "react";
-import { cn } from "@/lib/utils";
+import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
+import { cn } from "@/lib/utils";
+import type { ElasticVariantAttributes } from "@/types/product/product-group";
+import { memo, useCallback, useMemo } from "react";
 import ColorVariantSelector from "./ColorVariantSelector";
 import SizeVariantSelector from "./SizeVariantSelector";
-import { Badge } from "@/components/ui/badge";
-import type { ElasticVariantAttributes } from "@/types/product/product-group";
 
 interface AttributeOption {
   value: string;
@@ -41,7 +41,6 @@ function OtherAttributeSelector({
   options,
   selectedValue,
   onChange,
-  displayType,
 }: {
   attributeName: string;
   options: AttributeOption[];
@@ -51,24 +50,27 @@ function OtherAttributeSelector({
 }) {
   if (!options.length) return null;
 
-  const displayName = attributeName.charAt(0).toUpperCase() + attributeName.slice(1);
+  const displayName =
+    attributeName.charAt(0).toUpperCase() + attributeName.slice(1);
 
   return (
     <div className="space-y-3">
       <div className="flex items-center justify-between">
-        <h3 className="text-lg font-semibold text-foreground">{displayName}:</h3>
+        <h3 className="text-lg font-semibold text-foreground">
+          {displayName}:
+        </h3>
         {selectedValue && (
           <Badge variant="outline" className="text-xs">
             {selectedValue}
           </Badge>
         )}
       </div>
-      
+
       <div className="flex flex-wrap gap-2">
-        {options.map((option) => {
+        {options.map(option => {
           const isSelected = selectedValue === option.value;
           const isDisabled = option.count === 0 || option.available === false;
-          
+
           return (
             <button
               key={`${attributeName}-${option.value}`}
@@ -119,9 +121,9 @@ function VariantSelector({
   }, [variantAttributes, variantGroups]);
   const handleColorChange = useCallback(
     (color: string) => {
-      const newSelection = { 
-        ...selection, 
-        color: selection.color === color ? "" as const : color 
+      const newSelection = {
+        ...selection,
+        color: selection.color === color ? ("" as const) : color,
       };
       onSelectionChange(newSelection);
     },
@@ -130,9 +132,9 @@ function VariantSelector({
 
   const handleSizeChange = useCallback(
     (size: string) => {
-      const newSelection = { 
-        ...selection, 
-        size: selection.size === size ? "" as const : size 
+      const newSelection = {
+        ...selection,
+        size: selection.size === size ? ("" as const) : size,
       };
       onSelectionChange(newSelection);
     },
@@ -143,14 +145,16 @@ function VariantSelector({
     (attributeName: string, value: string) => {
       const newSelection = {
         ...selection,
-        [attributeName]: selection[attributeName] === value ? "" as const : value,
+        [attributeName]:
+          selection[attributeName] === value ? ("" as const) : value,
       };
       onSelectionChange(newSelection);
     },
     [selection, onSelectionChange]
   );
 
-  const selectedAttributesCount = Object.values(selection).filter(Boolean).length;
+  const selectedAttributesCount =
+    Object.values(selection).filter(Boolean).length;
 
   return (
     <div className={cn("space-y-6", className)}>
@@ -198,7 +202,7 @@ function VariantSelector({
         .map(({ key, name, displayType }) => {
           const options = variantGroups[key];
           if (!options || options.length === 0) return null;
-          
+
           return (
             <div key={key}>
               {(variantGroups.color || variantGroups.size) && <Separator />}
@@ -206,7 +210,7 @@ function VariantSelector({
                 attributeName={name}
                 options={options}
                 selectedValue={selection[key] || ""}
-                onChange={(value) => handleOtherAttributeChange(key, value)}
+                onChange={value => handleOtherAttributeChange(key, value)}
                 displayType={displayType}
               />
             </div>

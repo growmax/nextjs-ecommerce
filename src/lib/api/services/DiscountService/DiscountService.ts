@@ -137,6 +137,10 @@ export class DiscountService extends BaseService<DiscountService> {
     )) as DiscountApiResponse;
   }
 
+  /**
+   * @deprecated Use getDiscount() instead. When sellerId is not provided, getDiscount() returns pricing for all available sellers.
+   * This method will be removed in a future version.
+   */
   async getAllSellerPrices(
     request: GetAllSellerPricesRequest
   ): Promise<GetAllSellerPricesResponse> {
@@ -149,6 +153,10 @@ export class DiscountService extends BaseService<DiscountService> {
     )) as GetAllSellerPricesResponse;
   }
 
+  /**
+   * @deprecated Use getDiscount() instead. When sellerId is not provided, getDiscount() returns pricing for all available sellers.
+   * This method will be removed in a future version.
+   */
   async getAllSellerPricesServerSide(
     request: GetAllSellerPricesRequest
   ): Promise<GetAllSellerPricesResponse | null> {

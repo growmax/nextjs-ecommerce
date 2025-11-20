@@ -1,5 +1,6 @@
 "use client";
 
+import PricingFormat from "@/components/PricingFormat";
 import DashboardTable from "@/components/custom/DashBoardTable";
 import SideDrawer from "@/components/custom/sidedrawer";
 import { statusColor } from "@/components/custom/statuscolors";
@@ -21,6 +22,7 @@ import PreferenceService, {
 import QuotesService, {
   type QuoteItem,
 } from "@/lib/api/services/QuotesService/QuotesService";
+import { getAccounting } from "@/utils/calculation/salesCalculation/salesCalculation";
 import { cn } from "@/lib/utils";
 import { ColumnDef } from "@tanstack/react-table";
 import { useLocale } from "next-intl";
@@ -199,35 +201,42 @@ function QuotesLandingTable({
         accessorKey: "subTotal",
         header: "Sub total",
         size: 150,
-        cell: ({ row }) => {
-          const currencySymbol = row.original.curencySymbol?.symbol || "USD";
-          const amount = row.original.subTotal || row.original.grandTotal || 0;
-          return `${currencySymbol} ${Number(amount).toLocaleString()}`;
-        },
+        cell: ({ row }) => (
+          <PricingFormat
+            {...(row.original.curencySymbol && {
+              buyerCurrency: row.original.curencySymbol,
+            })}
+            value={row.original.subTotal || row.original.grandTotal || 0}
+          />
+        ),
       },
       {
         accessorKey: "taxableAmount",
         header: "Taxable Amount",
         size: 150,
-        cell: ({ row }) => {
-          const currencySymbol = row.original.curencySymbol?.symbol || "USD";
-          const amount = row.original.taxableAmount || 0;
-          return `${currencySymbol} ${Number(amount).toLocaleString()}`;
-        },
+        cell: ({ row }) => (
+          <PricingFormat
+            {...(row.original.curencySymbol && {
+              buyerCurrency: row.original.curencySymbol,
+            })}
+            value={row.original.taxableAmount || 0}
+          />
+        ),
       },
       {
         accessorKey: "grandTotal",
         header: "Total",
         size: 150,
-        cell: ({ row }) => {
-          const currencySymbol = row.original.curencySymbol?.symbol || "USD";
-          const amount = row.original.grandTotal || 0;
-          return (
-            <span className="font-semibold">
-              {currencySymbol} {Number(amount).toLocaleString()}
-            </span>
-          );
-        },
+        cell: ({ row }) => (
+          <span className="font-semibold">
+            <PricingFormat
+              {...(row.original.curencySymbol && {
+                buyerCurrency: row.original.curencySymbol,
+              })}
+              value={row.original.grandTotal || 0}
+            />
+          </span>
+        ),
       },
       {
         accessorKey: "updatedBuyerStatus",
@@ -639,8 +648,6 @@ function QuotesLandingTable({
       // Helper functions for export
       const formatDate = (date: string | undefined) =>
         date ? new Date(date).toLocaleDateString() : "";
-      const formatCurrency = (amount: number | undefined, symbol = "$") =>
-        `${symbol} ${Number(amount || 0).toLocaleString()}`;
 
       // Prepare data for export
       const exportData = quotes.map(q => ({
@@ -650,15 +657,21 @@ function QuotesLandingTable({
         Date: formatDate(q.lastUpdatedDate),
         "Account Name": q.buyerCompanyName || "",
         "Total Items": q.itemCount || 0,
-        Subtotal: formatCurrency(
-          q.subTotal || q.grandTotal,
-          q.curencySymbol?.symbol || "$"
+        Subtotal: getAccounting(
+          q.curencySymbol || null,
+          q.subTotal || q.grandTotal || 0,
+          q.curencySymbol || undefined
         ),
-        "Taxable Amount": formatCurrency(
-          q.taxableAmount,
-          q.curencySymbol?.symbol || "$"
+        "Taxable Amount": getAccounting(
+          q.curencySymbol || null,
+          q.taxableAmount || 0,
+          q.curencySymbol || undefined
         ),
-        Total: formatCurrency(q.grandTotal, q.curencySymbol?.symbol || "$"),
+        Total: getAccounting(
+          q.curencySymbol || null,
+          q.grandTotal || 0,
+          q.curencySymbol || undefined
+        ),
         Status: q.updatedBuyerStatus || "",
         "Required Date": formatDate(q.customerRequiredDate || undefined),
       }));

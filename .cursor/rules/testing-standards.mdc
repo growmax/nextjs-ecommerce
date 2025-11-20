@@ -1,0 +1,455 @@
+---
+alwaysApply: true
+description: >
+  Industry-standard testing practices for Next.js e-commerce application.
+  Follow these rules when writing any test cases to ensure consistency, maintainability, and reliability.
+rules:
+
+- id: test-structure-aaa-pattern
+  description: >
+    All tests must follow the AAA (Arrange, Act, Assert) pattern with clear structure.
+  details: |
+    • **Test File Structure**:
+      ```typescript
+      // 1. Imports
+      import { render, screen, fireEvent, waitFor } from "@testing-library/react";
+      import { describe, it, expect, beforeEach, afterEach, jest } from "@jest/globals";
+      
+      // 2. Mock setup (if needed)
+      jest.mock("path/to/dependency");
+      
+      // 3. Test data/mocks
+      const mockData = { ... };
+      
+      // 4. Test suite
+      describe("ComponentName", () => {
+        beforeEach(() => { /* setup */ });
+        afterEach(() => { jest.clearAllMocks(); });
+        
+        describe("Feature/Functionality", () => {
+          it("should do something specific", () => {
+            // Arrange: Set up test data
+            // Act: Execute the code
+            // Assert: Verify the outcome
+          });
+        });
+      });
+      ```
+    
+    • **AAA Pattern Example**:
+      ```typescript
+      it("should render product name when provided", () => {
+        // Arrange
+        const mockProduct = { id: 1, name: "Test Product" };
+        
+        // Act
+        render(<ProductCard product={mockProduct} />);
+        
+        // Assert
+        expect(screen.getByText("Test Product")).toBeInTheDocument();
+      });
+      ```
+
+- id: test-naming-conventions
+  description: >
+    Use descriptive test names following the format: "should [expected behavior] when [condition]".
+  details: |
+    • **Good Examples**:
+      - `should display error message when API call fails`
+      - `should increment quantity when plus button is clicked`
+      - `should disable submit button when form is invalid`
+      - `should redirect to login page when user is not authenticated`
+    
+    • **Bad Examples**:
+      - `test1`, `works`, `button click`, `handles error`
+    
+    • **File Naming**:
+      - Unit tests: `*.test.ts` or `*.test.tsx`
+      - Component tests: `*.test.tsx`
+      - E2E tests: `*.spec.js` or `*.spec.ts`
+    
+    • **Test Organization**:
+      ```typescript
+      describe("ComponentName", () => {
+        describe("Rendering", () => { /* rendering tests */ });
+        describe("User Interactions", () => { /* interaction tests */ });
+        describe("State Management", () => { /* state tests */ });
+        describe("Error Handling", () => { /* error tests */ });
+      });
+      ```
+
+- id: component-testing-requirements
+  description: >
+    Component tests must cover rendering, user interactions, state management, and error handling.
+  details: |
+    • **Rendering Tests** (Required):
+      - Render all required elements
+      - Render with correct props
+      - Render loading states
+      - Render error states
+      - Render empty states
+    
+    • **User Interaction Tests** (Required):
+      - Button clicks
+      - Form submissions
+      - Input changes
+      - Keyboard navigation
+      - Modal/dialog interactions
+    
+    • **State Management Tests**:
+      - State updates on user input
+      - State resets
+      - Context integration
+      - Hook integration
+    
+    • **Async Operations Tests**:
+      - Data loading states
+      - Error handling
+      - Success states
+      - Use `waitFor` for async assertions
+    
+    • **Example Structure**:
+      ```typescript
+      describe("ComponentName", () => {
+        describe("Rendering", () => {
+          it("should render all required elements", () => {});
+          it("should render with correct props", () => {});
+          it("should render loading state", () => {});
+        });
+        
+        describe("User Interactions", () => {
+          it("should handle button click", () => {});
+          it("should handle form submission", () => {});
+        });
+        
+        describe("Async Operations", () => {
+          it("should handle data loading", async () => {});
+          it("should handle errors", async () => {});
+        });
+      });
+      ```
+
+- id: api-service-testing-requirements
+  description: >
+    API service tests must verify correct endpoint calls, response handling, and error scenarios.
+  details: |
+    • **Required Test Cases**:
+      - Call API with correct endpoint and parameters
+      - Return formatted response
+      - Handle API errors (404, 500, network errors)
+      - Handle different parameter types
+      - Use correct HTTP methods (GET, POST, PUT, DELETE)
+    
+    • **Mocking Pattern**:
+      ```typescript
+      describe("ServiceName", () => {
+        let service: ServiceName;
+        let callApiSpy: jest.SpyInstance;
+        
+        beforeEach(() => {
+          service = new ServiceName();
+          callApiSpy = jest.spyOn(BaseService.prototype as any, "callApi");
+        });
+        
+        afterEach(() => {
+          callApiSpy.mockRestore();
+          jest.clearAllMocks();
+        });
+        
+        it("should call API with correct endpoint", async () => {
+          callApiSpy.mockResolvedValueOnce(mockResponse);
+          await service.getData();
+          expect(callApiSpy).toHaveBeenCalledWith(
+            "expected-endpoint",
+            expect.any(Object),
+            expect.any(Object),
+            "GET",
+            expect.any(Object)
+          );
+        });
+      });
+      ```
+
+- id: utility-function-testing-requirements
+  description: >
+    Utility function tests must cover all edge cases, boundary conditions, and error scenarios.
+  details: |
+    • **Required Test Cases**:
+      - Happy path scenarios
+      - Edge cases (empty arrays, null, undefined)
+      - Boundary values (min, max, zero)
+      - Invalid inputs
+      - Type conversions (string to number, etc.)
+      - Decimal numbers
+      - Very large/very small numbers
+    
+    • **Example**:
+      ```typescript
+      describe("utilityFunction", () => {
+        it("should handle normal input", () => {});
+        it("should handle empty input", () => {});
+        it("should handle null/undefined", () => {});
+        it("should handle boundary values", () => {});
+        it("should handle invalid inputs", () => {});
+      });
+      ```
+
+- id: mocking-guidelines
+  description: >
+    Mock external dependencies, use factories for test data, and ensure test independence.
+  details: |
+    • **Mock External Dependencies**:
+      ```typescript
+      // Mock Next.js
+      jest.mock("next/navigation", () => ({
+        useRouter: () => ({ push: jest.fn(), replace: jest.fn() }),
+      }));
+      
+      // Mock API services
+      jest.mock("@/lib/api/ProductService", () => ({
+        getProduct: jest.fn(),
+      }));
+      
+      // Mock hooks
+      jest.mock("@/hooks/useCart", () => ({
+        useCart: () => ({ cart: [], addToCart: jest.fn() }),
+      }));
+      ```
+    
+    • **Test Data Factories**:
+      ```typescript
+      // test-utils/factories.ts
+      export const createMockCartItem = (overrides?: Partial<CartItem>): CartItem => ({
+        productId: 1,
+        quantity: 1,
+        unitPrice: 100,
+        ...overrides,
+      });
+      ```
+    
+    • **Test Independence**:
+      - Each test must be independent
+      - Use `beforeEach` for setup
+      - Use `afterEach` to clean up mocks
+      - Reset mocks between tests: `jest.clearAllMocks()`
+
+- id: testing-library-best-practices
+  description: >
+    Use React Testing Library queries that prioritize accessibility and user-centric testing.
+  details: |
+    • **Query Priority** (in order):
+      1. `getByRole` - Most accessible, preferred
+      2. `getByLabelText` - For form inputs
+      3. `getByText` - For visible text
+      4. `getByTestId` - Last resort only
+    
+    • **Good Examples**:
+      ```typescript
+      // Good: Role-based query
+      screen.getByRole("button", { name: /add to cart/i });
+      screen.getByRole("textbox", { name: /email/i });
+      
+      // Good: Label-based query
+      screen.getByLabelText("Email address");
+      
+      // Avoid: Test ID unless necessary
+      screen.getByTestId("submit-button"); // Only if no better option
+      ```
+    
+    • **User-Centric Testing**:
+      - Test what users see and do
+      - Avoid testing implementation details
+      - Use `fireEvent` or `userEvent` for interactions
+      - Use `waitFor` for async operations
+
+- id: coverage-requirements
+  description: >
+    Maintain minimum 70% coverage for branches, functions, lines, and statements. Focus on critical paths.
+  details: |
+    • **Coverage Thresholds** (from jest.config.js):
+      - Branches: 70%
+      - Functions: 70%
+      - Lines: 70%
+      - Statements: 70%
+    
+    • **Priority Coverage**:
+      - Authentication flows: 100%
+      - Payment processing: 100%
+      - Order submission: 100%
+      - Critical business logic: 100%
+    
+    • **Coverage Commands**:
+      ```bash
+      npm run test:coverage
+      open coverage/index.html
+      ```
+
+- id: error-handling-tests
+  description: >
+    All components and functions must have error handling tests.
+  details: |
+    • **Required Error Test Cases**:
+      - API errors (404, 500, network errors)
+      - Validation errors
+      - Invalid inputs
+      - Timeout errors
+      - Edge case errors
+    
+    • **Example**:
+      ```typescript
+      describe("Error Handling", () => {
+        it("should handle API errors", async () => {
+          jest.spyOn(api, "fetchData").mockRejectedValue(new Error("API Error"));
+          render(<Component />);
+          await waitFor(() => {
+            expect(screen.getByText(/error/i)).toBeInTheDocument();
+          });
+        });
+        
+        it("should handle validation errors", () => {
+          render(<Form />);
+          fireEvent.click(screen.getByRole("button", { name: /submit/i }));
+          expect(screen.getByText(/required/i)).toBeInTheDocument();
+        });
+      });
+      ```
+
+- id: async-testing-patterns
+  description: >
+    Use proper async testing patterns with waitFor and proper error handling.
+  details: |
+    • **Async Testing Pattern**:
+      ```typescript
+      it("should handle async data loading", async () => {
+        jest.spyOn(api, "fetchData").mockResolvedValue(mockData);
+        
+        render(<Component />);
+        
+        // Show loading state
+        expect(screen.getByText(/loading/i)).toBeInTheDocument();
+        
+        // Wait for data
+        await waitFor(() => {
+          expect(screen.getByText("Expected Data")).toBeInTheDocument();
+        });
+        
+        // Loading should be gone
+        expect(screen.queryByText(/loading/i)).not.toBeInTheDocument();
+      });
+      ```
+    
+    • **Error Handling in Async Tests**:
+      ```typescript
+      it("should handle async errors", async () => {
+        jest.spyOn(api, "fetchData").mockRejectedValue(new Error("Error"));
+        
+        render(<Component />);
+        
+        await waitFor(() => {
+          expect(screen.getByText(/error/i)).toBeInTheDocument();
+        }, { timeout: 3000 });
+      });
+      ```
+
+- id: accessibility-testing
+  description: >
+    Include accessibility tests for ARIA attributes, keyboard navigation, and screen reader support.
+  details: |
+    • **ARIA Testing**:
+      ```typescript
+      it("should have proper ARIA labels", () => {
+        render(<Component />);
+        expect(screen.getByRole("button", { name: /add to cart/i }))
+          .toHaveAttribute("aria-label", "Add to cart");
+      });
+      ```
+    
+    • **Keyboard Navigation**:
+      ```typescript
+      it("should support keyboard navigation", () => {
+        render(<Component />);
+        const button = screen.getByRole("button");
+        button.focus();
+        expect(button).toHaveFocus();
+        fireEvent.keyDown(button, { key: "Enter" });
+        // Assert expected behavior
+      });
+      ```
+
+- id: test-file-organization
+  description: >
+    Organize test files alongside source files with clear naming and structure.
+  details: |
+    • **File Location**:
+      - Component tests: Same directory as component
+      - Utility tests: Same directory as utility
+      - Service tests: Same directory as service
+      - Example: `CartProductCard.tsx` → `CartProductCard.test.tsx`
+    
+    • **Test Data Location**:
+      - Create `*.mocks.ts` files for mock data
+      - Create `test-utils/` directory for shared test utilities
+      - Use factories for reusable test data
+    
+    • **Import Organization**:
+      ```typescript
+      // 1. External libraries
+      import { render, screen } from "@testing-library/react";
+      
+      // 2. Internal imports
+      import Component from "./Component";
+      
+      // 3. Test utilities
+      import { createMockData } from "./Component.mocks";
+      ```
+
+- id: test-execution-commands
+  description: >
+    Use appropriate test commands for different scenarios.
+  details: |
+    • **Available Commands**:
+      ```bash
+      # Run all tests
+      npm test
+      
+      # Run tests in watch mode
+      npm run test:watch
+      
+      # Run tests with coverage
+      npm run test:coverage
+      
+      # Run specific test file
+      npm test -- ComponentName.test.tsx
+      
+      # Run tests matching pattern
+      npm test -- --testNamePattern="should render"
+      
+      # Run E2E tests
+      npm run test:e2e
+      ```
+
+- id: test-quality-checklist
+  description: >
+    Before submitting tests, verify they meet all quality standards.
+  details: |
+    • **Pre-Writing Checklist**:
+      - [ ] Understand what the component/function should do
+      - [ ] Identify all user interactions
+      - [ ] Identify edge cases and error scenarios
+      - [ ] Plan test structure and organization
+    
+    • **While Writing Checklist**:
+      - [ ] Follow AAA pattern (Arrange, Act, Assert)
+      - [ ] Use descriptive test names
+      - [ ] Test one thing per test
+      - [ ] Use appropriate queries (getByRole, getByLabelText)
+      - [ ] Mock external dependencies
+      - [ ] Test both happy paths and error cases
+    
+    • **Post-Writing Checklist**:
+      - [ ] Tests are independent
+      - [ ] Tests pass consistently
+      - [ ] Test coverage meets thresholds
+      - [ ] Tests are readable and serve as documentation
+      - [ ] All mocks are cleaned up
+      - [ ] Error scenarios are covered
