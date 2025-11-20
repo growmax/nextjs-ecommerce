@@ -26,7 +26,16 @@ export function ProductStructuredData({
   const primaryImage = getPrimaryImageUrl(product);
 
   // Extract origin from URL for constructing absolute paths
-  const origin = url ? new URL(url).origin : "";
+  const origin = (() => {
+    if (!url) return "";
+    try {
+      // Ensure URL has protocol before parsing
+      const fullUrl = url.startsWith("http") ? url : `https://${url}`;
+      return new URL(fullUrl).origin;
+    } catch {
+      return "";
+    }
+  })();
 
   // Get all images
   const images = product.product_assetss
@@ -38,19 +47,20 @@ export function ProductStructuredData({
     "@context": "https://schema.org",
     "@type": "Product",
     name: product.title,
-    description: product.product_description || product.product_short_description,
+    description:
+      product.product_description || product.product_short_description,
     image: images,
     sku: product.brand_product_id,
     mpn: product.product_index_name,
     gtin13: product.hsn_code, // If applicable
-    
+
     // Enhanced brand information
     brand: {
       "@type": "Brand",
       name: brandName,
       ...(origin && { logo: `${origin}/logo.png` }), // Only add logo if origin is available
     },
-    
+
     // Enhanced offers with more details
     offers: {
       "@type": "Offer",
@@ -59,9 +69,9 @@ export function ProductStructuredData({
       price: product.unit_list_price,
       priceValidUntil: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000)
         .toISOString()
-        .split('T')[0], // 1 year from now
-      availability: availability.available 
-        ? "https://schema.org/InStock" 
+        .split("T")[0], // 1 year from now
+      availability: availability.available
+        ? "https://schema.org/InStock"
         : "https://schema.org/OutOfStock",
       itemCondition: "https://schema.org/NewCondition",
       seller: {
@@ -84,49 +94,74 @@ export function ProductStructuredData({
             unitCode: "DAY",
           },
           transitTime: {
-            "@type": "QuantitativeValue", 
-            minValue: product.standard_lead_time ? parseInt(product.standard_lead_time) || 1 : 1,
-            maxValue: product.standard_lead_time ? (parseInt(product.standard_lead_time) || 1) + 2 : 3,
+            "@type": "QuantitativeValue",
+            minValue: product.standard_lead_time
+              ? parseInt(product.standard_lead_time) || 1
+              : 1,
+            maxValue: product.standard_lead_time
+              ? (parseInt(product.standard_lead_time) || 1) + 2
+              : 3,
             unitCode: "DAY",
           },
         },
       },
-      ...(product.unit_mrp && product.unit_mrp > product.unit_list_price && {
-        priceSpecification: {
-          "@type": "PriceSpecification",
-          price: product.unit_mrp,
-          priceCurrency: "INR",
-        },
-      }),
+      ...(product.unit_mrp &&
+        product.unit_mrp > product.unit_list_price && {
+          priceSpecification: {
+            "@type": "PriceSpecification",
+            price: product.unit_mrp,
+            priceCurrency: "INR",
+          },
+        }),
     },
-    
+
     // Enhanced additional properties
     additionalProperty: [
-      ...(product.hsn_code ? [{
-        "@type": "PropertyValue",
-        name: "HSN Code",
-        value: product.hsn_code,
-      }] : []),
-      ...(product.min_order_quantity ? [{
-        "@type": "PropertyValue", 
-        name: "Minimum Order Quantity",
-        value: product.min_order_quantity,
-      }] : []),
-      ...(product.unit_of_measure ? [{
-        "@type": "PropertyValue",
-        name: "Unit of Measure", 
-        value: product.unit_of_measure,
-      }] : []),
-      ...(product.net_weight ? [{
-        "@type": "PropertyValue",
-        name: "Weight",
-        value: product.net_weight,
-      }] : []),
-      ...(product.packaging_dimension ? [{
-        "@type": "PropertyValue",
-        name: "Dimensions",
-        value: product.packaging_dimension,
-      }] : []),
+      ...(product.hsn_code
+        ? [
+            {
+              "@type": "PropertyValue",
+              name: "HSN Code",
+              value: product.hsn_code,
+            },
+          ]
+        : []),
+      ...(product.min_order_quantity
+        ? [
+            {
+              "@type": "PropertyValue",
+              name: "Minimum Order Quantity",
+              value: product.min_order_quantity,
+            },
+          ]
+        : []),
+      ...(product.unit_of_measure
+        ? [
+            {
+              "@type": "PropertyValue",
+              name: "Unit of Measure",
+              value: product.unit_of_measure,
+            },
+          ]
+        : []),
+      ...(product.net_weight
+        ? [
+            {
+              "@type": "PropertyValue",
+              name: "Weight",
+              value: product.net_weight,
+            },
+          ]
+        : []),
+      ...(product.packaging_dimension
+        ? [
+            {
+              "@type": "PropertyValue",
+              name: "Dimensions",
+              value: product.packaging_dimension,
+            },
+          ]
+        : []),
       ...(product.product_specifications?.slice(0, 10).map(spec => ({
         "@type": "PropertyValue",
         name: spec.name,
