@@ -12,7 +12,9 @@ import { AppHeader } from "./app-header";
 jest.mock("@/hooks/Profile/useUserProfile");
 jest.mock("@/hooks/Auth/useLogout");
 jest.mock("@/contexts/CartContext");
-jest.mock("@/contexts/UserDetailsContext");
+jest.mock("@/contexts/UserDetailsContext", () => ({
+  useUserDetails: jest.fn(),
+}));
 jest.mock("next/navigation", () => ({
   useRouter: jest.fn(),
 }));
@@ -25,28 +27,49 @@ jest.mock("@/components/AvatarCard/AvatarCard", () => ({
 }));
 
 // Type assertion for the mocked hooks
-const useUserProfileMock = useUserProfile as jest.Mock;
-const useLogoutMock = useLogout as jest.Mock;
-const useCartMock = useCart as jest.Mock;
-const useRouterMock = useRouter as jest.Mock;
-const useSearchMock = useSearch as jest.Mock;
-const useUserDetailsMock = UserDetailsContext.useUserDetails as jest.Mock;
+const useUserProfileMock = useUserProfile as jest.MockedFunction<typeof useUserProfile>;
+const useLogoutMock = useLogout as jest.MockedFunction<typeof useLogout>;
+const useCartMock = useCart as jest.MockedFunction<typeof useCart>;
+const useRouterMock = useRouter as jest.MockedFunction<typeof useRouter>;
+const useSearchMock = useSearch as jest.MockedFunction<typeof useSearch>;
+const useUserDetailsMock = UserDetailsContext.useUserDetails as jest.MockedFunction<typeof UserDetailsContext.useUserDetails>;
 
 describe("AppHeader", () => {
   const mockPush = jest.fn();
 
   beforeEach(() => {
     jest.clearAllMocks();
-    useUserProfileMock.mockReturnValue({ userProfile: null });
+    useUserProfileMock.mockReturnValue({ 
+      userProfile: null,
+      fetchUserProfile: jest.fn(),
+    });
     useLogoutMock.mockReturnValue({
       isLoggingOut: false,
       handleLogout: jest.fn(),
     });
-    useCartMock.mockReturnValue({ cartCount: 0 });
+    useCartMock.mockReturnValue({
+      cart: [],
+      cartCount: 0,
+      isLoading: false,
+      cartComment: "",
+      cartAttachments: [],
+      handleCartComment: jest.fn(),
+      handleUploadCartAttachments: jest.fn(),
+      getCart: jest.fn(),
+      refreshCart: jest.fn(),
+      setCart: jest.fn(),
+      updateCartCount: jest.fn(),
+      syncGuestCart: jest.fn(),
+      clearGuestCart: jest.fn(),
+    } as any);
     useRouterMock.mockReturnValue({
       push: mockPush,
       prefetch: jest.fn(),
-    });
+      back: jest.fn(),
+      forward: jest.fn(),
+      refresh: jest.fn(),
+      replace: jest.fn(),
+    } as any);
     useSearchMock.mockReturnValue({
       data: [],
       loading: false,
@@ -61,7 +84,7 @@ describe("AppHeader", () => {
       login: jest.fn(),
       logout: jest.fn(),
       checkAuth: jest.fn(),
-    });
+    } as any);
   });
 
   afterEach(() => {
@@ -118,6 +141,8 @@ describe("AppHeader", () => {
       },
       roleId: 1,
       roleName: "Admin",
+      role: "Admin",
+      accountRole: "Admin",
       tenantId: "tenant1",
       timeZone: "UTC",
       dateFormat: "MM/DD/YYYY",
@@ -139,7 +164,10 @@ describe("AppHeader", () => {
         logout: jest.fn(),
         checkAuth: jest.fn(),
       });
-      useUserProfileMock.mockReturnValue({ userProfile: mockUser });
+      useUserProfileMock.mockReturnValue({ 
+        userProfile: mockUser as any,
+        fetchUserProfile: jest.fn(),
+      });
       render(
         <SidebarProvider>
           <AppHeader />

@@ -31,4 +31,16 @@ declare module "*.svg" {
   export default content;
 }
 
+// Extend jest types for SpyInstance
+declare module "@jest/globals" {
+  namespace jest {
+    interface SpyInstance<T = unknown, Y extends unknown[] = unknown[]> {
+      (...args: Y): T;
+      mockResolvedValue(value: T | Promise<T>): this;
+      mockRejectedValue(value: unknown): this;
+      mockRestore(): void;
+    }
+  }
+}
+
 export {};

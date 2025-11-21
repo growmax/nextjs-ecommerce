@@ -1,4 +1,4 @@
-import { discountClient, RequestContext } from "../../client";
+import { coreCommerceClient, discountClient, RequestContext } from "../../client";
 import { BaseService } from "../BaseService";
 
 export interface Discount {
@@ -82,6 +82,26 @@ export interface CheckVolumeDiscountEnabledResponse {
   data?: boolean | unknown;
   message?: string;
   status?: string;
+}
+
+// Volume Discount Request Item
+export interface VolumeDiscountRequestItem {
+  productId: number;
+  quantity: number;
+  defaultDiscount: number;
+}
+
+// Volume Discount Request
+export interface VolumeDiscountRequest {
+  companyId: number | string;
+  body: VolumeDiscountRequestItem[];
+}
+
+// Volume Discount Response
+export interface VolumeDiscountResponse {
+  status: string;
+  message: string;
+  data?: unknown;
 }
 
 export class DiscountService extends BaseService<DiscountService> {
@@ -223,6 +243,77 @@ export class DiscountService extends BaseService<DiscountService> {
         method: "POST",
       }
     )) as CheckVolumeDiscountEnabledResponse | null;
+  }
+
+  /**
+   * Check volume discount for products
+   * Endpoint: POST /product/getVolumeDiscountDetailsNonSpecialNew?dealerCompanyId={companyId}
+   * Used by: useCheckVD hook
+   * Note: This endpoint is in coreCommerce, not discount service, but kept here for logical grouping
+   * 
+   * @param request - Volume discount request with companyId and product array
+   * @returns Volume discount response with status and data
+   */
+  async checkVolumeDiscount(
+    request: VolumeDiscountRequest
+  ): Promise<VolumeDiscountResponse> {
+    const endpoint = `/product/getVolumeDiscountDetailsNonSpecialNew?dealerCompanyId=${request.companyId}`;
+    
+    // Use coreCommerceClient for this endpoint (product endpoints are in coreCommerce)
+    const response = await this.callWith(
+      endpoint,
+      request.body,
+      {
+        method: "POST",
+        client: coreCommerceClient,
+      }
+    ) as VolumeDiscountResponse;
+
+    return response;
+  }
+
+  /**
+   * Server-side version that returns null on error
+   * @param request - Volume discount request
+   * @returns Volume discount response or null if error
+   */
+  async checkVolumeDiscountServerSide(
+    request: VolumeDiscountRequest
+  ): Promise<VolumeDiscountResponse | null> {
+    const endpoint = `/product/getVolumeDiscountDetailsNonSpecialNew?dealerCompanyId=${request.companyId}`;
+    
+    return this.callWithSafe(
+      endpoint,
+      request.body,
+      {
+        method: "POST",
+        client: coreCommerceClient,
+      }
+    ) as Promise<VolumeDiscountResponse | null>;
+  }
+
+  /**
+   * Server-side version with custom context (for API routes)
+   * @param request - Volume discount request
+   * @param context - Request context with accessToken and tenantCode
+   * @returns Volume discount response or null if error
+   */
+  async checkVolumeDiscountWithContext(
+    request: VolumeDiscountRequest,
+    context: RequestContext
+  ): Promise<VolumeDiscountResponse | null> {
+    const endpoint = `/product/getVolumeDiscountDetailsNonSpecialNew?dealerCompanyId=${request.companyId}`;
+    
+    // Use coreCommerceClient for this endpoint
+    return this.callWithSafe(
+      endpoint,
+      request.body,
+      {
+        context,
+        method: "POST",
+        client: coreCommerceClient,
+      }
+    ) as Promise<VolumeDiscountResponse | null>;
   }
 }
 

@@ -134,6 +134,121 @@ export class QuoteSubmissionService extends BaseService<QuoteSubmissionService> 
       "POST"
     ) as Promise<QuoteSubmissionResponse | null>;
   }
+
+  /**
+   * Create quote from summary page (new quote creation)
+   * Endpoint: POST quotes/submitRFQToSingleDealer?userId={userId}&companyId={companyId}
+   * Used by: useSummarySubmission hook
+   * 
+   * @param params - Parameters for quote creation
+   * @param quoteData - Transformed quote data from summary (using summaryReqDTO)
+   * @returns Quote creation response with quotationIdentifier
+   */
+  async createQuoteFromSummary(
+    params: {
+      userId: string | number;
+      companyId: string | number;
+    },
+    quoteData: any
+  ): Promise<{ quotationIdentifier: string }> {
+    const queryString = `userId=${params.userId}&companyId=${params.companyId}`;
+    const response = await this.call(
+      `quotes/submitRFQToSingleDealer?${queryString}`,
+      quoteData,
+      "POST"
+    );
+    
+    // Normalize response format
+    // Backend returns: { success: "success", data: { quotationIdentifier: "..." } }
+    if (response && typeof response === "object") {
+      if ("data" in response) {
+        const data = (response as { data: unknown }).data;
+        if (data && typeof data === "object" && "quotationIdentifier" in data) {
+          return data as { quotationIdentifier: string };
+        }
+        // If data is directly the identifier string
+        if (typeof data === "string") {
+          return { quotationIdentifier: data };
+        }
+      }
+      // If response itself has quotationIdentifier
+      if ("quotationIdentifier" in response) {
+        return response as { quotationIdentifier: string };
+      }
+    }
+
+    throw new Error("Invalid response format from quote creation");
+  }
+
+  /**
+   * Server-safe version of create quote from summary
+   * @param params - Parameters for quote creation
+   * @param quoteData - Transformed quote data from summary
+   * @returns Quote creation response or null if error
+   */
+  async createQuoteFromSummaryServerSide(
+    params: {
+      userId: string | number;
+      companyId: string | number;
+    },
+    quoteData: any
+  ): Promise<{ quotationIdentifier: string } | null> {
+    try {
+      return await this.createQuoteFromSummary(params, quoteData);
+    } catch {
+      return null;
+    }
+  }
+
+  /**
+   * Create quote from summary with custom context
+   * @param params - Parameters for quote creation
+   * @param quoteData - Transformed quote data from summary
+   * @param context - Request context
+   * @returns Quote creation response with quotationIdentifier
+   */
+  async createQuoteFromSummaryWithContext(
+    params: {
+      userId: string | number;
+      companyId: string | number;
+    },
+    quoteData: any,
+    context: {
+      accessToken: string;
+      companyId: number;
+      isMobile: boolean;
+      userId: number;
+      tenantCode: string;
+    }
+  ): Promise<{ quotationIdentifier: string }> {
+    const queryString = `userId=${params.userId}&companyId=${params.companyId}`;
+    const response = await this.callWith(
+      `quotes/submitRFQToSingleDealer?${queryString}`,
+      quoteData,
+      {
+        context,
+        method: "POST",
+      }
+    );
+    
+    // Normalize response format (same as createQuoteFromSummary)
+    if (response && typeof response === "object") {
+      if ("data" in response) {
+        const data = (response as { data: unknown }).data;
+        if (data && typeof data === "object" && "quotationIdentifier" in data) {
+          return data as { quotationIdentifier: string };
+        }
+        if (typeof data === "string") {
+          return { quotationIdentifier: data };
+        }
+      }
+      if ("quotationIdentifier" in response) {
+        return response as { quotationIdentifier: string };
+      }
+    }
+
+    throw new Error("Invalid response format from quote creation");
+  }
 }
 
 export default QuoteSubmissionService.getInstance();
