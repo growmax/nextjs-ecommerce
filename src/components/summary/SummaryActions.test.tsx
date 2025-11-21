@@ -21,14 +21,10 @@ describe("SummaryActions", () => {
       );
 
       // Assert
-      // @ts-expect-error - jest-dom matchers are available at runtime
-      expect(
-        screen.getByRole("button", { name: /cancel/i })
-      ).toBeInTheDocument();
-      // @ts-expect-error - jest-dom matchers are available at runtime
+      expect(screen.getByRole("button", { name: /cancel/i })).toBeTruthy();
       expect(
         screen.getByRole("button", { name: /request quote/i })
-      ).toBeInTheDocument();
+      ).toBeTruthy();
     });
 
     it("should render order-specific labels when isOrder is true", () => {
@@ -40,10 +36,7 @@ describe("SummaryActions", () => {
       );
 
       // Assert
-      // @ts-expect-error - jest-dom matchers are available at runtime
-      expect(
-        screen.getByRole("button", { name: /place order/i })
-      ).toBeInTheDocument();
+      expect(screen.getByRole("button", { name: /place order/i })).toBeTruthy();
     });
 
     it("should render quote-specific labels when isOrder is false", () => {
@@ -55,10 +48,9 @@ describe("SummaryActions", () => {
       );
 
       // Assert
-      // @ts-expect-error - jest-dom matchers are available at runtime
       expect(
         screen.getByRole("button", { name: /request quote/i })
-      ).toBeInTheDocument();
+      ).toBeTruthy();
     });
 
     it("should render custom submit label when provided", () => {
@@ -70,10 +62,9 @@ describe("SummaryActions", () => {
       );
 
       // Assert
-      // @ts-expect-error - jest-dom matchers are available at runtime
       expect(
         screen.getByRole("button", { name: /custom submit/i })
-      ).toBeInTheDocument();
+      ).toBeTruthy();
     });
 
     it("should render custom cancel label when provided", () => {
@@ -85,10 +76,9 @@ describe("SummaryActions", () => {
       );
 
       // Assert
-      // @ts-expect-error - jest-dom matchers are available at runtime
       expect(
         screen.getByRole("button", { name: /custom cancel/i })
-      ).toBeInTheDocument();
+      ).toBeTruthy();
     });
 
     it("should apply custom className", () => {
@@ -100,8 +90,7 @@ describe("SummaryActions", () => {
       );
 
       // Assert
-      // @ts-expect-error - jest-dom matchers are available at runtime
-      expect(container.querySelector(".custom-class")).toBeInTheDocument();
+      expect(container.querySelector(".custom-class")).toBeTruthy();
     });
   });
 
@@ -172,8 +161,7 @@ describe("SummaryActions", () => {
       );
 
       // Assert
-      // @ts-expect-error - jest-dom matchers are available at runtime
-      expect(screen.getByText(/placing order.../i)).toBeInTheDocument();
+      expect(screen.getByText(/placing order.../i)).toBeTruthy();
     });
 
     it("should show loading state when isSubmitting is true for quotes", () => {
@@ -185,8 +173,7 @@ describe("SummaryActions", () => {
       );
 
       // Assert
-      // @ts-expect-error - jest-dom matchers are available at runtime
-      expect(screen.getByText(/creating quote.../i)).toBeInTheDocument();
+      expect(screen.getByText(/creating quote.../i)).toBeTruthy();
     });
 
     it("should disable buttons when isSubmitting is true", () => {
@@ -198,12 +185,16 @@ describe("SummaryActions", () => {
       );
 
       // Assert
-      // @ts-expect-error - jest-dom matchers are available at runtime
-      expect(
-        screen.getByRole("button", { name: /creating quote.../i })
-      ).toBeDisabled();
-      // @ts-expect-error - jest-dom matchers are available at runtime
-      expect(screen.getByRole("button", { name: /cancel/i })).toBeDisabled();
+      const creatingBtn = screen.getByRole("button", {
+        name: /creating quote.../i,
+      }) as HTMLButtonElement;
+      const cancelBtn = screen.getByRole("button", {
+        name: /cancel/i,
+      }) as HTMLButtonElement;
+      expect(creatingBtn).toBeTruthy();
+      expect(creatingBtn.disabled).toBe(true);
+      expect(cancelBtn).toBeTruthy();
+      expect(cancelBtn.disabled).toBe(true);
     });
 
     it("should show spinner icon when isSubmitting is true", () => {
@@ -215,8 +206,7 @@ describe("SummaryActions", () => {
       );
 
       // Assert
-      // @ts-expect-error - jest-dom matchers are available at runtime
-      expect(container.querySelector(".animate-spin")).toBeInTheDocument();
+      expect(container.querySelector(".animate-spin")).toBeTruthy();
     });
   });
 
@@ -230,12 +220,16 @@ describe("SummaryActions", () => {
       );
 
       // Assert
-      // @ts-expect-error - jest-dom matchers are available at runtime
-      expect(
-        screen.getByRole("button", { name: /request quote/i })
-      ).toBeDisabled();
-      // @ts-expect-error - jest-dom matchers are available at runtime
-      expect(screen.getByRole("button", { name: /cancel/i })).toBeDisabled();
+      const requestBtn = screen.getByRole("button", {
+        name: /request quote/i,
+      }) as HTMLButtonElement;
+      const cancelBtn2 = screen.getByRole("button", {
+        name: /cancel/i,
+      }) as HTMLButtonElement;
+      expect(requestBtn).toBeTruthy();
+      expect(requestBtn.disabled).toBe(true);
+      expect(cancelBtn2).toBeTruthy();
+      expect(cancelBtn2.disabled).toBe(true);
     });
 
     it("should enable buttons when disabled prop is false", () => {
@@ -247,14 +241,16 @@ describe("SummaryActions", () => {
       );
 
       // Assert
-      // @ts-expect-error - jest-dom matchers are available at runtime
-      expect(
-        screen.getByRole("button", { name: /request quote/i })
-      ).not.toBeDisabled();
-      // @ts-expect-error - jest-dom matchers are available at runtime
-      expect(
-        screen.getByRole("button", { name: /cancel/i })
-      ).not.toBeDisabled();
+      const requestBtn2 = screen.getByRole("button", {
+        name: /request quote/i,
+      }) as HTMLButtonElement;
+      const cancelBtn3 = screen.getByRole("button", {
+        name: /cancel/i,
+      }) as HTMLButtonElement;
+      expect(requestBtn2).toBeTruthy();
+      expect(requestBtn2.disabled).toBe(false);
+      expect(cancelBtn3).toBeTruthy();
+      expect(cancelBtn3.disabled).toBe(false);
     });
 
     it("should disable buttons when both isSubmitting and disabled are true", () => {
@@ -266,12 +262,16 @@ describe("SummaryActions", () => {
       );
 
       // Assert
-      // @ts-expect-error - jest-dom matchers are available at runtime
-      expect(
-        screen.getByRole("button", { name: /creating quote.../i })
-      ).toBeDisabled();
-      // @ts-expect-error - jest-dom matchers are available at runtime
-      expect(screen.getByRole("button", { name: /cancel/i })).toBeDisabled();
+      const creatingBtn2 = screen.getByRole("button", {
+        name: /creating quote.../i,
+      }) as HTMLButtonElement;
+      const cancelBtn4 = screen.getByRole("button", {
+        name: /cancel/i,
+      }) as HTMLButtonElement;
+      expect(creatingBtn2).toBeTruthy();
+      expect(creatingBtn2.disabled).toBe(true);
+      expect(cancelBtn4).toBeTruthy();
+      expect(cancelBtn4.disabled).toBe(true);
     });
   });
 
@@ -286,8 +286,7 @@ describe("SummaryActions", () => {
 
       // Assert
       // ShoppingCart icon should be present
-      // @ts-expect-error - jest-dom matchers are available at runtime
-      expect(container.querySelector("svg")).toBeInTheDocument();
+      expect(container.querySelector("svg")).toBeTruthy();
     });
 
     it("should show FileText icon for quotes when not submitting", () => {
@@ -300,8 +299,7 @@ describe("SummaryActions", () => {
 
       // Assert
       // FileText icon should be present
-      // @ts-expect-error - jest-dom matchers are available at runtime
-      expect(container.querySelector("svg")).toBeInTheDocument();
+      expect(container.querySelector("svg")).toBeTruthy();
     });
   });
 
@@ -334,12 +332,10 @@ describe("SummaryActions", () => {
 
       // Act & Assert - buttons should be focusable
       submitButton.focus();
-      // @ts-expect-error - jest-dom matchers are available at runtime
-      expect(submitButton).toHaveFocus();
+      expect(document.activeElement).toBe(submitButton);
 
       cancelButton.focus();
-      // @ts-expect-error - jest-dom matchers are available at runtime
-      expect(cancelButton).toHaveFocus();
+      expect(document.activeElement).toBe(cancelButton);
     });
   });
 
@@ -381,14 +377,10 @@ describe("SummaryActions", () => {
       );
 
       // Assert
-      // @ts-expect-error - jest-dom matchers are available at runtime
-      expect(
-        screen.getByRole("button", { name: /request quote/i })
-      ).toBeInTheDocument();
-      // @ts-expect-error - jest-dom matchers are available at runtime
-      expect(
-        screen.getByRole("button", { name: /cancel/i })
-      ).toBeInTheDocument();
+      const reqBtn = screen.getByRole("button", { name: /request quote/i });
+      const cancelBtn5 = screen.getByRole("button", { name: /cancel/i });
+      expect(reqBtn).toBeTruthy();
+      expect(cancelBtn5).toBeTruthy();
     });
   });
 });

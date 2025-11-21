@@ -129,7 +129,7 @@ export class OpenElasticSearchService extends BaseService<OpenElasticSearchServi
     try {
       const response = await this.callWith("", body, requestOptions);
       return formatProductSearchResponse(response);
-    } catch (error) {
+    } catch {
       return createErrorSearchResponse();
     }
   }

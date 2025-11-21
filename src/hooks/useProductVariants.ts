@@ -7,6 +7,7 @@ import variantService, {
 import type { ProductDetail } from "@/types/product/product-detail";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useCallback, useEffect, useMemo, useState } from "react";
+import type { ElasticVariantAttributes } from "@/types/product/product-group";
 
 interface UseProductVariantsOptions {
   productGroupId: number;
@@ -39,6 +40,7 @@ interface UseProductVariantsReturn {
   hasVariants: boolean;
   selectedAttributes: Record<string, string>;
   isValidSelection: boolean;
+  variantAttributes: ElasticVariantAttributes[];
 }
 
 export function useProductVariants({
@@ -53,7 +55,7 @@ export function useProductVariants({
 
   // State
   const [variants, setVariants] = useState<VariantData[]>([]);
-  const [variantAttributes, setVariantAttributes] = useState<
+  const [variantAttributes, _setVariantAttributes] = useState<
     ElasticVariantAttributes[]
   >([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -77,22 +79,27 @@ export function useProductVariants({
           throw new Error("Missing elasticIndex");
         }
 
-        const variantData = await variantService.getVariantsByGroup(
+        // Try to fetch Product Group structure and variants together
+        const groupResult = await variantService.getVariantsWithGroup(
           productGroupId,
           elasticIndex,
-          pgIndexName,
+          baseProduct?.pg_index_name,
           context
         );
 
         // Loaded variant data
-        setVariants(variantData);
+        setVariants(groupResult.variants || []);
+        _setVariantAttributes(groupResult.variantAttributes || []);
 
         // Initialize selection from URL params if available
         const urlSelection = getSelectionFromUrl(searchParams);
 
-        if (urlSelection && variantData.length > 0) {
+        // Use the freshly loaded variants from groupResult to avoid referencing
+        // the outer `variants` state inside this effect (prevents stale dep lint).
+        const loadedVariants = groupResult.variants || [];
+        if (urlSelection && loadedVariants.length > 0) {
           const matchingVariant = variantService.findVariantByAttributes(
-            variantData,
+            loadedVariants,
             urlSelection
           );
           if (matchingVariant) {
