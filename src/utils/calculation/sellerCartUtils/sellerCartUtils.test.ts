@@ -433,7 +433,11 @@ describe("sellerCartUtils utilities", () => {
       const item = { productId: "prod-2", sellerId: "seller-2" };
       const pricingData = {
         "no-seller-id": [
-          { ProductVariantId: "prod-2", MasterPrice: 200, sellerId: "seller-2" },
+          {
+            ProductVariantId: "prod-2",
+            MasterPrice: 200,
+            sellerId: "seller-2",
+          },
         ],
       };
       const result = findBestPricingMatch(item, pricingData);
@@ -494,7 +498,6 @@ describe("sellerCartUtils utilities", () => {
 
       expect(result["seller-1"]).toEqual([]);
     });
-
 
     it("should return empty object when empty", () => {
       const result = mergeSellerPricing({});

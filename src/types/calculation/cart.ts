@@ -147,10 +147,7 @@ export interface AdditionalDiscount {
 }
 
 // Pricing source tracking
-export type PricingSource =
-  | "seller-specific"
-  | "no-seller-id"
-  | "no-pricing";
+export type PricingSource = "seller-specific" | "no-seller-id" | "no-pricing";
 
 // Calculated cart value structure
 export interface CartValue {

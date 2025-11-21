@@ -8,7 +8,7 @@ import { setTaxBreakup } from "@/utils/calculation/tax-breakdown";
 /**
  * Hook to calculate tax breakup for summary pages
  * Migrated from buyer-fe/src/components/Summary/hooks/useTaxBreakup.js
- * 
+ *
  * @param products - Array of products
  * @param setBillingAddress - Billing address object
  * @param warehouse - Warehouse address object
@@ -41,7 +41,7 @@ export default function useTaxBreakup(
     isInter: false,
   });
   const [dataInserted, setDataInserted] = useState(false);
-  
+
   const { globalCalc } = useCalculation();
 
   // Determine if inter-state or intra-state
@@ -133,4 +133,3 @@ export default function useTaxBreakup(
     isInter: data?.isInter,
   };
 }
-

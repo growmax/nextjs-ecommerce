@@ -1,9 +1,9 @@
 import { describe, expect, it } from "@jest/globals";
 import {
-    containsXSS,
-    sanitizeFormInput,
-    stripHtmlTags,
-    XSS_ERROR_MESSAGE,
+  containsXSS,
+  sanitizeFormInput,
+  stripHtmlTags,
+  XSS_ERROR_MESSAGE,
 } from "./sanitization.utils";
 
 describe("sanitization.utils", () => {
@@ -57,8 +57,6 @@ describe("sanitization.utils", () => {
         // Assert
         expect(result).toBe(true);
       });
-
-
     });
 
     describe("Iframe and Object Detection", () => {
@@ -121,7 +119,8 @@ describe("sanitization.utils", () => {
 
       it("should detect data:text/html protocol", () => {
         // Arrange
-        const maliciousInput = '<a href="data:text/html,<script>alert(1)</script>">Click</a>';
+        const maliciousInput =
+          '<a href="data:text/html,<script>alert(1)</script>">Click</a>';
 
         // Act
         const result = containsXSS(maliciousInput);
@@ -167,7 +166,7 @@ describe("sanitization.utils", () => {
 
       it("should detect style tags", () => {
         // Arrange
-        const maliciousInput = '<style>body { background: red; }</style>';
+        const maliciousInput = "<style>body { background: red; }</style>";
 
         // Act
         const result = containsXSS(maliciousInput);
@@ -189,7 +188,8 @@ describe("sanitization.utils", () => {
 
       it("should detect meta tags", () => {
         // Arrange
-        const maliciousInput = '<meta http-equiv="refresh" content="0;url=evil.com">';
+        const maliciousInput =
+          '<meta http-equiv="refresh" content="0;url=evil.com">';
 
         // Act
         const result = containsXSS(maliciousInput);
@@ -386,7 +386,7 @@ describe("sanitization.utils", () => {
 
       it("should decode &quot; entity", () => {
         // Arrange
-        const input = 'Say &quot;Hello&quot;';
+        const input = "Say &quot;Hello&quot;";
 
         // Act
         const result = stripHtmlTags(input);
@@ -518,7 +518,9 @@ describe("sanitization.utils", () => {
       const result = sanitizeFormInput(input);
 
       // Assert
-      expect(result).toBe("This is a safe comment with numbers 123 and symbols !@#");
+      expect(result).toBe(
+        "This is a safe comment with numbers 123 and symbols !@#"
+      );
     });
   });
 

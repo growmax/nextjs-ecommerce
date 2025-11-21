@@ -17,8 +17,10 @@ export async function POST(request: NextRequest) {
   try {
     // Check authentication
     const cookieStore = await cookies();
-    const token = cookieStore.get("access_token")?.value || cookieStore.get("access_token_client")?.value;
-    
+    const token =
+      cookieStore.get("access_token")?.value ||
+      cookieStore.get("access_token_client")?.value;
+
     if (!token) {
       return NextResponse.json(
         { error: "Authentication required" },
@@ -79,4 +81,3 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ success: true });
   }
 }
-

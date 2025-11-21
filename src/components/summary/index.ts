@@ -10,4 +10,3 @@ export { default as SummaryTermsSection } from "./SummaryTermsSection";
 export { default as SummaryAdditionalInfo } from "./SummaryAdditionalInfo";
 export { default as SummaryPriceDetails } from "./SummaryPriceDetails";
 export { default as SummaryActions } from "./SummaryActions";
-

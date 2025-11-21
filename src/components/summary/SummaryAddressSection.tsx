@@ -12,7 +12,7 @@ interface SummaryAddressSectionProps {
 /**
  * Address section component for summary pages
  * Wraps OrderContactDetails with form integration
- * 
+ *
  * @param isEditable - Whether addresses can be edited
  * @param className - Additional CSS classes
  */
@@ -75,4 +75,3 @@ export default function SummaryAddressSection({
     </div>
   );
 }
-

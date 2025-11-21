@@ -14,7 +14,9 @@ jest.mock("next/navigation", () => ({
 jest.mock("@/lib/utils/navigation"); // Mock the redirectTo utility
 
 // Type assertion for the mocked hooks and utility
-const useUserDetailsMock = useUserDetails as jest.MockedFunction<typeof useUserDetails>;
+const useUserDetailsMock = useUserDetails as jest.MockedFunction<
+  typeof useUserDetails
+>;
 const useRouterMock = useRouter as jest.MockedFunction<typeof useRouter>;
 const redirectToMock = redirectTo as jest.MockedFunction<typeof redirectTo>; // Mocked redirectTo
 

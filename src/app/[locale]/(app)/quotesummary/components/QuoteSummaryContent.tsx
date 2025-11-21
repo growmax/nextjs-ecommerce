@@ -56,12 +56,7 @@ export default function QuoteSummaryContent() {
     reValidateMode: "onChange",
   });
 
-  const {
-    watch,
-    getValues,
-    setValue,
-    trigger,
-  } = formMethods;
+  const { watch, getValues, setValue, trigger } = formMethods;
 
   // Get form values
   const products = watch("products") || [];
@@ -79,43 +74,53 @@ export default function QuoteSummaryContent() {
   const paymentTermsId = preferences?.paymentTermsId;
   const cashDiscountTerm = preferences?.cashDiscountTerm;
   const cashdiscount = watch("cashdiscount" as any);
-  
+
   // Determine cash discount value
   const cashDiscountValue =
     paymentTermsId?.cashdiscountValue ||
     cashDiscountTerm?.cashdiscountValue ||
     0;
-  
-  const isCashDiscountApplied = Boolean(cashdiscount || paymentTermsId?.cashdiscount);
-  
-  // Get latest payment terms if default cash discount is not enabled
-  const isDefaultCashDiscountEnabled = Boolean(paymentTermsId?.cashdiscountValue);
-  const { latestPaymentTerms, latestPaymentTermsLoading } = useGetLatestPaymentTerms(
-    !isDefaultCashDiscountEnabled
+
+  const isCashDiscountApplied = Boolean(
+    cashdiscount || paymentTermsId?.cashdiscount
   );
-  
+
+  // Get latest payment terms if default cash discount is not enabled
+  const isDefaultCashDiscountEnabled = Boolean(
+    paymentTermsId?.cashdiscountValue
+  );
+  const { latestPaymentTerms, latestPaymentTermsLoading } =
+    useGetLatestPaymentTerms(!isDefaultCashDiscountEnabled);
+
   // Cash discount handlers
-  const { handleCDApply: handleCDApplyBase, handleRemoveCD: handleRemoveCDBase } = useCashDiscountHandlers({
+  const {
+    handleCDApply: handleCDApplyBase,
+    handleRemoveCD: handleRemoveCDBase,
+  } = useCashDiscountHandlers({
     products,
     setProducts: (updatedProducts: any[]) => {
       setValue("products", updatedProducts);
     },
     isOrder: false,
   });
-  
+
   // Wrapper functions that update form state
   const handleCDApply = (
     cashDiscountValue: number,
     islatestTermAvailable: boolean,
     latestpaymentTerms?: any
   ) => {
-    handleCDApplyBase(cashDiscountValue, islatestTermAvailable, latestpaymentTerms);
+    handleCDApplyBase(
+      cashDiscountValue,
+      islatestTermAvailable,
+      latestpaymentTerms
+    );
     if (islatestTermAvailable && latestpaymentTerms) {
       setValue("preferences.paymentTermsId", latestpaymentTerms);
     }
     setValue("cashdiscount" as any, true);
   };
-  
+
   const handleRemoveCD = (prevTerms?: any) => {
     handleRemoveCDBase(prevTerms);
     setValue("cashdiscount" as any, false);
@@ -177,7 +182,6 @@ export default function QuoteSummaryContent() {
     // Trigger recalculation - this will be handled by useTaxBreakup/useMultipleDiscount
   };
 
-
   // Handle quote submission
   const handleRequestQuote = async () => {
     // Set quote name in form
@@ -201,7 +205,9 @@ export default function QuoteSummaryContent() {
       (product: any) => (product.totalPrice || 0) < 0
     );
     if (hasNegativePrice) {
-      toast.error("Some products have negative prices. Please check your cart.");
+      toast.error(
+        "Some products have negative prices. Please check your cart."
+      );
       return;
     }
 
@@ -308,7 +314,7 @@ export default function QuoteSummaryContent() {
                     <Checkbox
                       id="spr-toggle"
                       checked={sprEnabled || false}
-                      onCheckedChange={(checked) => {
+                      onCheckedChange={checked => {
                         setValue("sprDetails.spr", checked === true);
                         trigger("sprDetails");
                       }}
@@ -326,21 +332,25 @@ export default function QuoteSummaryContent() {
                       sellerCompanyId={sellerCompanyId}
                       customerName={sprDetails?.companyName || ""}
                       projectName={sprDetails?.projectName || ""}
-                      competitors={Array.isArray(sprDetails?.competitorNames) ? sprDetails.competitorNames as string[] : []}
+                      competitors={
+                        Array.isArray(sprDetails?.competitorNames)
+                          ? (sprDetails.competitorNames as string[])
+                          : []
+                      }
                       priceJustification={sprDetails?.priceJustification || ""}
-                      onCustomerNameChange={(value) => {
+                      onCustomerNameChange={value => {
                         setValue("sprDetails.companyName" as any, value);
                         trigger("sprDetails");
                       }}
-                      onProjectNameChange={(value) => {
+                      onProjectNameChange={value => {
                         setValue("sprDetails.projectName" as any, value);
                         trigger("sprDetails");
                       }}
-                      onCompetitorsChange={(value) => {
+                      onCompetitorsChange={value => {
                         setValue("sprDetails.competitorNames" as any, value);
                         trigger("sprDetails");
                       }}
-                      onPriceJustificationChange={(value) => {
+                      onPriceJustificationChange={value => {
                         setValue("sprDetails.priceJustification" as any, value);
                         trigger("sprDetails");
                       }}
@@ -366,7 +376,9 @@ export default function QuoteSummaryContent() {
                     isCashDiscountApplied={isCashDiscountApplied}
                     isSummaryPage={true}
                     cashDiscountValue={cashDiscountValue}
-                    islatestTermAvailable={!!latestPaymentTerms && !latestPaymentTermsLoading}
+                    islatestTermAvailable={
+                      !!latestPaymentTerms && !latestPaymentTermsLoading
+                    }
                     prevPaymentTerms={paymentTermsId}
                     isOrder={false}
                   />

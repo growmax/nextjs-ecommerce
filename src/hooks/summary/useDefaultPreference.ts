@@ -9,7 +9,7 @@ import useGetLatestPaymentTerms from "@/hooks/useGetLatestPaymentTerms/useGetLat
 /**
  * Hook to fetch default company preferences for summary pages
  * Migrated from buyer-fe/src/components/Summary/hooks/useDefaultPreference.js
- * 
+ *
  * @param trigger - Timestamp or value to force refresh
  * @param selectedSellerId - Selected seller company ID (optional, for summary/reorder/clone)
  * @param isSummary - Whether this is a summary page (uses V1 endpoint)
@@ -23,12 +23,14 @@ export default function useDefaultPreference(
   const { companydata } = useUser();
   const companyId = (companydata as { companyId?: number })?.companyId;
 
-  const {
-    data,
-    error,
-    isLoading,
-  } = useQuery({
-    queryKey: ["defaultpreference", trigger, companyId, selectedSellerId, isSummary],
+  const { data, error, isLoading } = useQuery({
+    queryKey: [
+      "defaultpreference",
+      trigger,
+      companyId,
+      selectedSellerId,
+      isSummary,
+    ],
     queryFn: async () => {
       if (!companyId) {
         throw new Error("Company ID is required");
@@ -45,7 +47,7 @@ export default function useDefaultPreference(
       if (response && typeof response === "object" && "data" in response) {
         return (response as { data: unknown }).data;
       }
-      
+
       return response;
     },
     enabled: !!companyId,
@@ -62,26 +64,29 @@ export default function useDefaultPreference(
     data.paymentTermsId &&
     typeof data.paymentTermsId === "object" &&
     "cashdiscount" in data.paymentTermsId &&
-    Boolean((data.paymentTermsId as { cashdiscountValue?: number }).cashdiscountValue);
+    Boolean(
+      (data.paymentTermsId as { cashdiscountValue?: number }).cashdiscountValue
+    );
 
   const { latestPaymentTerms } = useGetLatestPaymentTerms(
     !isDefaultCashDiscountEnabled
   );
 
   // Merge payment terms data
-  const mergedData = data && typeof data === "object"
-    ? {
-        ...data,
-        prevPaymentTerms: (data as { paymentTermsId?: unknown }).paymentTermsId,
-        cashDiscountTerm: !isEmpty(latestPaymentTerms)
-          ? latestPaymentTerms
-          : (data as { paymentTermsId?: unknown }).paymentTermsId,
-      }
-    : null;
+  const mergedData =
+    data && typeof data === "object"
+      ? {
+          ...data,
+          prevPaymentTerms: (data as { paymentTermsId?: unknown })
+            .paymentTermsId,
+          cashDiscountTerm: !isEmpty(latestPaymentTerms)
+            ? latestPaymentTerms
+            : (data as { paymentTermsId?: unknown }).paymentTermsId,
+        }
+      : null;
 
   return {
     defaultpreference: mergedData,
     defaultpreferenceLoading: isLoading || (!error && !data),
   };
 }
-

@@ -42,6 +42,30 @@ const intlMiddleware = createIntlMiddleware({
 export async function middleware(request: NextRequest) {
   const domain = getDomain(request.headers.get("host") || "localhost:3000");
   const pathname = request.nextUrl.pathname;
+
+  // If the request targets a public/static asset (possibly with a locale prefix)
+  // rewrite locale-prefixed asset requests to the non-prefixed path so Next.js
+  // can serve the file from `public/` (e.g. `/en/asset/foo` -> `/asset/foo`).
+  const pathWithoutLocale =
+    pathname.replace(/^\/[a-z]{2}(-[A-Z]{2})?/, "") || "/";
+
+  // For asset and images, rewrite to the unprefixed path so static serving works
+  if (
+    pathWithoutLocale.startsWith("/asset") ||
+    pathWithoutLocale.startsWith("/images")
+  ) {
+    const targetUrl = new URL(pathWithoutLocale, request.url);
+    return NextResponse.rewrite(targetUrl);
+  }
+
+  // For Next internals, API and favicon, just pass through
+  if (
+    pathWithoutLocale.startsWith("/_next") ||
+    pathWithoutLocale.startsWith("/api") ||
+    pathname === "/favicon.ico"
+  ) {
+    return NextResponse.next();
+  }
   const isAuthenticated = hasAccessToken(request);
 
   // Bypass middleware for static files
@@ -60,17 +84,15 @@ export async function middleware(request: NextRequest) {
     ".ttf",
     ".eot",
   ];
-  
-  const isStaticFile = staticFileExtensions.some((ext) =>
-    pathname.endsWith(ext)
-  );
-  
+
+  const isStaticFile = staticFileExtensions.some(ext => pathname.endsWith(ext));
+
   if (isStaticFile) {
     // If static file has locale prefix (e.g., /en/growmax-logo.png),
     // rewrite to root path (e.g., /growmax-logo.png)
     const localePattern = /^\/([a-z]{2}(-[A-Z]{2})?)\/(.+)$/;
     const match = pathname.match(localePattern);
-    
+
     if (match) {
       // Extract the file path after locale
       const filePath = `/${match[2]}`;
@@ -79,7 +101,7 @@ export async function middleware(request: NextRequest) {
       url.pathname = filePath;
       return NextResponse.rewrite(url);
     }
-    
+
     return NextResponse.next();
   }
 
@@ -140,7 +162,7 @@ export async function middleware(request: NextRequest) {
 }
 
 export const config = {
-  matcher: [
-    "/((?!api|_next/static|_next/image|favicon.ico|manifest.json|.*\\.(?:png|jpg|jpeg|webp|svg|gif|ico|woff|woff2|ttf|eot|json)).*)",
-  ],
+  // Exclude API routes, Next internals and static/public asset paths from middleware
+  // so they are served directly and not rewritten with locale prefixes.
+  matcher: ["/((?!api|_next/static|_next/image|favicon.ico|asset|images).*)"],
 };

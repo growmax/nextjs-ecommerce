@@ -166,14 +166,18 @@ export function DashboardChart() {
                   <div className="flex justify-between items-center ml-3">
                     <span>Acknowledged:</span>
                     <span>
-                      <PricingFormat value={Number(dataPoint.acknowledged) || 0} />
+                      <PricingFormat
+                        value={Number(dataPoint.acknowledged) || 0}
+                      />
                     </span>
                   </div>
                 )}
                 {(Number(dataPoint.booked) || 0) > 0 && (
                   <div className="flex justify-between items-center ml-3">
                     <span>Booked:</span>
-                    <span><PricingFormat value={Number(dataPoint.booked) || 0} /></span>
+                    <span>
+                      <PricingFormat value={Number(dataPoint.booked) || 0} />
+                    </span>
                   </div>
                 )}
                 {(Number(dataPoint.received) || 0) > 0 && (
@@ -188,7 +192,9 @@ export function DashboardChart() {
                   <div className="flex justify-between items-center ml-3">
                     <span>Edit Enabled:</span>
                     <span>
-                      <PricingFormat value={Number(dataPoint.editEnabled) || 0} />
+                      <PricingFormat
+                        value={Number(dataPoint.editEnabled) || 0}
+                      />
                     </span>
                   </div>
                 )}
@@ -196,7 +202,9 @@ export function DashboardChart() {
                   <div className="flex justify-between items-center ml-3">
                     <span>Requested Edit:</span>
                     <span>
-                      <PricingFormat value={Number(dataPoint.requestedEdit) || 0} />
+                      <PricingFormat
+                        value={Number(dataPoint.requestedEdit) || 0}
+                      />
                     </span>
                   </div>
                 )}
@@ -204,7 +212,9 @@ export function DashboardChart() {
                   <div className="flex justify-between items-center ml-3">
                     <span>Partially Shipped:</span>
                     <span>
-                      <PricingFormat value={Number(dataPoint.partiallyShipped) || 0} />
+                      <PricingFormat
+                        value={Number(dataPoint.partiallyShipped) || 0}
+                      />
                     </span>
                   </div>
                 )}
@@ -224,21 +234,27 @@ export function DashboardChart() {
                   <div className="flex justify-between items-center ml-3">
                     <span>In Progress:</span>
                     <span>
-                      <PricingFormat value={Number(dataPoint.inProgress) || 0} />
+                      <PricingFormat
+                        value={Number(dataPoint.inProgress) || 0}
+                      />
                     </span>
                   </div>
                 )}
                 {(Number(dataPoint.open) || 0) > 0 && (
                   <div className="flex justify-between items-center ml-3">
                     <span>Open:</span>
-                    <span><PricingFormat value={Number(dataPoint.open) || 0} /></span>
+                    <span>
+                      <PricingFormat value={Number(dataPoint.open) || 0} />
+                    </span>
                   </div>
                 )}
                 {(Number(dataPoint.orderPlaced) || 0) > 0 && (
                   <div className="flex justify-between items-center ml-3">
                     <span>Order Placed:</span>
                     <span>
-                      <PricingFormat value={Number(dataPoint.orderPlaced) || 0} />
+                      <PricingFormat
+                        value={Number(dataPoint.orderPlaced) || 0}
+                      />
                     </span>
                   </div>
                 )}

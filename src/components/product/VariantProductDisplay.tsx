@@ -1,12 +1,15 @@
 "use client";
 
-import { memo, useMemo } from "react";
-import { ProductDetail } from "@/types/product/product-detail";
-import { VariantData } from "@/lib/api/services/VariantService";
-import { formatPrice, getProductAvailability } from "@/utils/product/product-formatter";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
+import { VariantData } from "@/lib/api/services/VariantService";
 import { cn } from "@/lib/utils";
+import { ProductDetail } from "@/types/product/product-detail";
+import {
+  formatPrice,
+  getProductAvailability,
+} from "@/utils/product/product-formatter";
+import { memo, useMemo } from "react";
 
 interface VariantProductDisplayProps {
   baseProduct: ProductDetail;
@@ -39,24 +42,21 @@ function VariantProductDisplay({
 
   const primaryImageUrl = useMemo(() => {
     const images = displayProduct.product_assetss || [];
-    console.log("Display images:", images);
-    
+
     if (!images.length) {
       return "/asset/default-placeholder.png";
     }
-    
+
     // Find primary image from the product assets
     const primaryImageAsset = images.find(img => img.isDefault) || images[0];
     const imageUrl = primaryImageAsset?.source;
-    
-    console.log("Primary image URL:", imageUrl);
-    
+
     // Validate image URL
     if (!imageUrl || imageUrl.trim() === "") {
       console.warn("Empty image source, using fallback");
       return "/asset/default-placeholder.png";
     }
-    
+
     return imageUrl;
   }, [displayProduct.product_assetss]);
 
@@ -64,7 +64,8 @@ function VariantProductDisplay({
     return getProductAvailability(displayProduct);
   }, [displayProduct]);
 
-  const hasVariantChanged = selectedVariant && selectedVariant.product_id !== baseProduct.product_id;
+  const hasVariantChanged =
+    selectedVariant && selectedVariant.product_id !== baseProduct.product_id;
 
   return (
     <div className={cn("space-y-6", className)}>
@@ -75,8 +76,11 @@ function VariantProductDisplay({
             Variant Selected
           </Badge>
           <span className="text-sm text-muted-foreground">
-            Showing {selectedVariant.attributes.color && `${selectedVariant.attributes.color} `}
-            {selectedVariant.attributes.size && `${selectedVariant.attributes.size} `}
+            Showing{" "}
+            {selectedVariant.attributes.color &&
+              `${selectedVariant.attributes.color} `}
+            {selectedVariant.attributes.size &&
+              `${selectedVariant.attributes.size} `}
             variant
           </span>
         </div>
@@ -87,17 +91,19 @@ function VariantProductDisplay({
         <h1 className="text-2xl md:text-3xl font-bold text-foreground leading-tight">
           {displayProduct.title || displayProduct.product_short_description}
         </h1>
-        
+
         <div className="flex flex-wrap items-center gap-4 text-sm text-muted-foreground">
           <span className="flex items-center">
             <span className="font-medium">Brand:</span>
             <span className="ml-1">{displayProduct.brand_name}</span>
           </span>
-          
+
           {displayProduct.brand_product_id && (
             <span className="flex items-center">
               <span className="font-medium">SKU:</span>
-              <span className="ml-1 font-mono">{displayProduct.brand_product_id}</span>
+              <span className="ml-1 font-mono">
+                {displayProduct.brand_product_id}
+              </span>
             </span>
           )}
         </div>
@@ -109,16 +115,18 @@ function VariantProductDisplay({
           <div className="aspect-square w-full max-w-md mx-auto rounded-lg overflow-hidden bg-gray-100">
             <img
               src={primaryImageUrl}
-              alt={displayProduct.title || displayProduct.product_short_description}
+              alt={
+                displayProduct.title || displayProduct.product_short_description
+              }
               className="w-full h-full object-cover transition-opacity duration-300"
               loading="eager"
-              onError={(e) => {
+              onError={e => {
                 console.warn("Image failed to load:", primaryImageUrl);
                 e.currentTarget.src = "/asset/default-placeholder.png";
               }}
             />
           </div>
-          
+
           {/* Variant-specific badges */}
           {selectedVariant && (
             <div className="absolute top-2 right-2 flex flex-col gap-1">
@@ -143,31 +151,34 @@ function VariantProductDisplay({
           <span className="text-3xl font-bold text-foreground">
             {formatPrice(displayProduct.unit_list_price)}
           </span>
-          
-          {displayProduct.unit_mrp && displayProduct.unit_mrp > displayProduct.unit_list_price && (
-            <span className="text-lg text-muted-foreground line-through">
-              {formatPrice(displayProduct.unit_mrp)}
-            </span>
-          )}
-          
-          {displayProduct.unit_mrp && displayProduct.unit_mrp > displayProduct.unit_list_price && (
-            <Badge variant="destructive" className="text-xs">
-              {Math.round(
-                ((displayProduct.unit_mrp - displayProduct.unit_list_price) /
-                  displayProduct.unit_mrp) *
-                  100
-              )}
-              % OFF
-            </Badge>
-          )}
+
+          {displayProduct.unit_mrp &&
+            displayProduct.unit_mrp > displayProduct.unit_list_price && (
+              <span className="text-lg text-muted-foreground line-through">
+                {formatPrice(displayProduct.unit_mrp)}
+              </span>
+            )}
+
+          {displayProduct.unit_mrp &&
+            displayProduct.unit_mrp > displayProduct.unit_list_price && (
+              <Badge variant="destructive" className="text-xs">
+                {Math.round(
+                  ((displayProduct.unit_mrp - displayProduct.unit_list_price) /
+                    displayProduct.unit_mrp) *
+                    100
+                )}
+                % OFF
+              </Badge>
+            )}
         </div>
 
         {/* Price breakdown for variants */}
-        {selectedVariant && selectedVariant.product_id !== baseProduct.product_id && (
-          <div className="text-sm text-muted-foreground">
-            <span>Variant pricing applied</span>
-          </div>
-        )}
+        {selectedVariant &&
+          selectedVariant.product_id !== baseProduct.product_id && (
+            <div className="text-sm text-muted-foreground">
+              <span>Variant pricing applied</span>
+            </div>
+          )}
       </div>
 
       {/* Availability Status */}
@@ -198,16 +209,19 @@ function VariantProductDisplay({
           <div className="space-y-3">
             <h3 className="font-semibold">Selected Options:</h3>
             <div className="flex flex-wrap gap-2">
-              {Object.entries(selectedVariant.attributes).map(([key, value]) => {
-                if (!value) return null;
-                
-                const displayName = key.charAt(0).toUpperCase() + key.slice(1);
-                return (
-                  <Badge key={key} variant="outline" className="text-xs">
-                    {displayName}: {value}
-                  </Badge>
-                );
-              })}
+              {Object.entries(selectedVariant.attributes).map(
+                ([key, value]) => {
+                  if (!value) return null;
+
+                  const displayName =
+                    key.charAt(0).toUpperCase() + key.slice(1);
+                  return (
+                    <Badge key={key} variant="outline" className="text-xs">
+                      {displayName}: {value}
+                    </Badge>
+                  );
+                }
+              )}
             </div>
           </div>
         </>

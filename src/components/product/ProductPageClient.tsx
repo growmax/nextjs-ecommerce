@@ -29,7 +29,7 @@ function VariantLoadingSkeleton() {
           <Skeleton className="w-10 h-10 rounded-full" />
         </div>
       </div>
-      
+
       <div className="space-y-4">
         <Skeleton className="h-6 w-16" />
         <div className="flex gap-2">
@@ -71,9 +71,12 @@ export default function ProductPageClient({
     setSelectedVariant(selectedVariant);
   }, [selectedVariant, setSelectedVariant]);
 
-  const handleSelectionChange = useCallback((newSelection: typeof selection) => {
-    setSelection(newSelection);
-  }, [setSelection]);
+  const handleSelectionChange = useCallback(
+    (newSelection: typeof selection) => {
+      setSelection(newSelection);
+    },
+    [setSelection]
+  );
 
   if (isLoading) {
     return (
@@ -85,7 +88,7 @@ export default function ProductPageClient({
 
   if (error) {
     console.warn("Variant loading failed:", error);
-    
+
     // Show error message but don't block the page
     return (
       <div className="space-y-6">
@@ -97,12 +100,13 @@ export default function ProductPageClient({
                 Variant Selection Unavailable
               </h3>
               <p className="text-sm text-yellow-700 mt-1">
-                Unable to load product variants. Showing base product information.
+                Unable to load product variants. Showing base product
+                information.
               </p>
             </div>
           </div>
         </div>
-        
+
         <VariantDebugInfo
           product={product}
           variants={[]}
@@ -126,16 +130,12 @@ export default function ProductPageClient({
       <div className="flex items-center justify-between mb-4">
         <h2 className="text-xl font-semibold">Choose Your Options</h2>
         {Object.keys(selection).length > 0 && (
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={clearSelection}
-          >
+          <Button variant="outline" size="sm" onClick={clearSelection}>
             Clear Selection
           </Button>
         )}
       </div>
-      
+
       <VariantSelector
         variantGroups={variantGroups}
         selection={selection}

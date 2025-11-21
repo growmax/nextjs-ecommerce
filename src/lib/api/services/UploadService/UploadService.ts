@@ -46,4 +46,3 @@ export class UploadService extends BaseService<UploadService> {
 }
 
 export default UploadService.getInstance();
-

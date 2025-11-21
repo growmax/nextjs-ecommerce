@@ -1,6 +1,6 @@
 /**
  * Product Group Types
- * 
+ *
  * TypeScript interfaces matching OpenSearch/Elasticsearch response structure
  * for Product Group documents containing variant attribute definitions.
  */
@@ -42,4 +42,3 @@ export interface ProductGroupResponse {
   data: ProductGroup | null;
   message?: string;
 }
-

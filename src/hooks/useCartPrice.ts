@@ -35,7 +35,10 @@ export default function useCartPrice(cart?: CartItem[]) {
 
   // Use provided cart or fallback to context cart
   // Memoize to prevent dependency issues
-  const cartItems = useMemo(() => cart || contextCart || [], [cart, contextCart]);
+  const cartItems = useMemo(
+    () => cart || contextCart || [],
+    [cart, contextCart]
+  );
 
   // Extract product IDs from cart items
   const productIds = useMemo(() => {
@@ -107,16 +110,10 @@ export default function useCartPrice(cart?: CartItem[]) {
     ) {
       // If no discount data but we have cart items, calculate with existing data
       try {
-        const result = cartCalculation(
-          cartItems,
-          true,
-          0,
-          2,
-          {
-            roundingAdjustment: false,
-            itemWiseShippingTax: false,
-          } as any
-        );
+        const result = cartCalculation(cartItems, true, 0, 2, {
+          roundingAdjustment: false,
+          itemWiseShippingTax: false,
+        } as any);
         setCartValue(result);
         setProcessedItems(cartItems); // Store items as-is if no discount data
       } catch (error) {
@@ -125,7 +122,6 @@ export default function useCartPrice(cart?: CartItem[]) {
         setProcessedItems([]);
       }
     }
-     
   }, [
     discountdataLoading,
     cartLoading,
@@ -141,4 +137,3 @@ export default function useCartPrice(cart?: CartItem[]) {
     isLoading: discountdataLoading || cartLoading || companyLoading,
   };
 }
-

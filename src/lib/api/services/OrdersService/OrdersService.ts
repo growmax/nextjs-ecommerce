@@ -394,7 +394,7 @@ export class OrdersService extends BaseService<OrdersService> {
    * Create order from summary page
    * Endpoint: POST orders/createOrderByBuyer?userId={userId}&companyId={companyId}
    * Used by: useSummarySubmission hook
-   * 
+   *
    * @param params - Parameters for order creation
    * @param orderData - Transformed order data from summary (using summaryReqDTO)
    * @returns Order creation response with orderIdentifier

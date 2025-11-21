@@ -54,11 +54,7 @@ export default function OrderSummaryContent() {
     reValidateMode: "onChange",
   });
 
-  const {
-    watch,
-    getValues,
-    setValue,
-  } = formMethods;
+  const { watch, getValues, setValue } = formMethods;
 
   // Get form values
   const products = watch("products") || [];
@@ -71,43 +67,53 @@ export default function OrderSummaryContent() {
   const paymentTermsId = preferences?.paymentTermsId;
   const cashDiscountTerm = preferences?.cashDiscountTerm;
   const cashdiscount = watch("cashdiscount" as any);
-  
+
   // Determine cash discount value
   const cashDiscountValue =
     paymentTermsId?.cashdiscountValue ||
     cashDiscountTerm?.cashdiscountValue ||
     0;
-  
-  const isCashDiscountApplied = Boolean(cashdiscount || paymentTermsId?.cashdiscount);
-  
-  // Get latest payment terms if default cash discount is not enabled
-  const isDefaultCashDiscountEnabled = Boolean(paymentTermsId?.cashdiscountValue);
-  const { latestPaymentTerms, latestPaymentTermsLoading } = useGetLatestPaymentTerms(
-    !isDefaultCashDiscountEnabled
+
+  const isCashDiscountApplied = Boolean(
+    cashdiscount || paymentTermsId?.cashdiscount
   );
-  
+
+  // Get latest payment terms if default cash discount is not enabled
+  const isDefaultCashDiscountEnabled = Boolean(
+    paymentTermsId?.cashdiscountValue
+  );
+  const { latestPaymentTerms, latestPaymentTermsLoading } =
+    useGetLatestPaymentTerms(!isDefaultCashDiscountEnabled);
+
   // Cash discount handlers
-  const { handleCDApply: handleCDApplyBase, handleRemoveCD: handleRemoveCDBase } = useCashDiscountHandlers({
+  const {
+    handleCDApply: handleCDApplyBase,
+    handleRemoveCD: handleRemoveCDBase,
+  } = useCashDiscountHandlers({
     products,
     setProducts: (updatedProducts: any[]) => {
       setValue("products", updatedProducts);
     },
     isOrder: true,
   });
-  
+
   // Wrapper functions that update form state
   const handleCDApply = (
     cashDiscountValue: number,
     islatestTermAvailable: boolean,
     latestpaymentTerms?: any
   ) => {
-    handleCDApplyBase(cashDiscountValue, islatestTermAvailable, latestpaymentTerms);
+    handleCDApplyBase(
+      cashDiscountValue,
+      islatestTermAvailable,
+      latestpaymentTerms
+    );
     if (islatestTermAvailable && latestpaymentTerms) {
       setValue("preferences.paymentTermsId", latestpaymentTerms);
     }
     setValue("cashdiscount" as any, true);
   };
-  
+
   const handleRemoveCD = (prevTerms?: any) => {
     handleRemoveCDBase(prevTerms);
     setValue("cashdiscount" as any, false);
@@ -161,7 +167,6 @@ export default function OrderSummaryContent() {
     // Trigger recalculation - this will be handled by useTaxBreakup/useMultipleDiscount
   };
 
-
   // Handle order submission
   const handlePlaceOrder = async () => {
     // Set order name in form
@@ -185,7 +190,9 @@ export default function OrderSummaryContent() {
       (product: any) => (product.totalPrice || 0) < 0
     );
     if (hasNegativePrice) {
-      toast.error("Some products have negative prices. Please check your cart.");
+      toast.error(
+        "Some products have negative prices. Please check your cart."
+      );
       return;
     }
 
@@ -234,23 +241,23 @@ export default function OrderSummaryContent() {
     <FormProvider {...formMethods}>
       <div className="min-h-screen bg-background">
         {/* Header */}
-      <SalesHeader
+        <SalesHeader
           title={orderName}
           identifier=""
-        buttons={[
-          {
-            label: "CANCEL",
-            variant: "outline",
+          buttons={[
+            {
+              label: "CANCEL",
+              variant: "outline",
               onClick: handleCancel,
-          },
-          {
-            label: "PLACE ORDER",
-            variant: "default",
-            onClick: handlePlaceOrder,
+            },
+            {
+              label: "PLACE ORDER",
+              variant: "default",
+              onClick: handlePlaceOrder,
               disabled: isSubmitting,
-          },
-        ]}
-      />
+            },
+          ]}
+        />
 
         {/* Main Content */}
         <div className="container mx-auto px-4 py-6 space-y-6">
@@ -301,7 +308,9 @@ export default function OrderSummaryContent() {
                   isCashDiscountApplied={isCashDiscountApplied}
                   isSummaryPage={true}
                   cashDiscountValue={cashDiscountValue}
-                  islatestTermAvailable={!!latestPaymentTerms && !latestPaymentTermsLoading}
+                  islatestTermAvailable={
+                    !!latestPaymentTerms && !latestPaymentTermsLoading
+                  }
                   prevPaymentTerms={paymentTermsId}
                   isOrder={true}
                 />
@@ -320,7 +329,7 @@ export default function OrderSummaryContent() {
             onCancel={handleCancel}
           />
         </div>
-    </div>
+      </div>
     </FormProvider>
   );
 }

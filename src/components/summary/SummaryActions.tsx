@@ -19,7 +19,7 @@ interface SummaryActionsProps {
 /**
  * Action buttons component for summary pages
  * Provides submit and cancel buttons with loading states
- * 
+ *
  * @param isOrder - Whether this is an order (true) or quote (false)
  * @param isSubmitting - Whether form is currently submitting
  * @param onSubmit - Submit handler
@@ -81,4 +81,3 @@ export default function SummaryActions({
     </Card>
   );
 }
-

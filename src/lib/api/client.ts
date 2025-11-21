@@ -24,6 +24,9 @@ const API_CONFIG = {
   OPENSEARCH_URL:
     process.env.OPENSEARCH_URL ||
     "https://api.myapptino.com/opensearch/invocations",
+  ELASTIC_URL:
+    process.env.ELASTIC_URL ||
+    "https://api.myapptino.com/elasticsearch/invocations",
 } as const;
 
 // Types
@@ -282,6 +285,10 @@ export const openSearchClient = createApiClient({
 // Generic API client
 export const apiClient = createApiClient({
   baseURL: API_CONFIG.API_BASE_URL,
+});
+
+export const elasticClient = createApiClient({
+  baseURL: API_CONFIG.ELASTIC_URL,
 });
 
 export const preferenceClient = createApiClient({

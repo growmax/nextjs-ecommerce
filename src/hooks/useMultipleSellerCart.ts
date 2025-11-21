@@ -48,10 +48,7 @@ const useMultipleSellerCart = (cartItems: any, calculationParams: any = {}) => {
       const cart = groupedCarts[sellerId];
 
       const itemsWithSellerPricing = cart.items.map((item: any) => {
-        const itemPricing = findBestPricingMatch(
-          item,
-          sellerPricingData
-        );
+        const itemPricing = findBestPricingMatch(item, sellerPricingData);
 
         if (itemPricing) {
           const pricedItem: any = assign_pricelist_discounts_data_to_products(

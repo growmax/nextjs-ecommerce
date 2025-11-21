@@ -23,7 +23,7 @@ import useGetDefaultBusinessUnit from "./useGetDefaultBusinessUnit";
 /**
  * Main hook that orchestrates all summary page data fetching and calculations
  * Migrated from buyer-fe/src/components/Summary/hooks/useSummaryDefault.js
- * 
+ *
  * @param isOrder - Whether this is an order summary (true) or quote summary (false)
  * @param isSummary - Whether this is a summary page (affects preference endpoint)
  * @returns Complete initial values and loading state for summary forms
@@ -37,7 +37,8 @@ export default function useSummaryDefault(
   const companyId = (companydata as { companyId?: number })?.companyId;
   const userData = (companydata as { userData?: unknown })?.userData;
   const taxExempted = (companydata as { taxExempted?: boolean })?.taxExempted;
-  const taxExemptionId = (companydata as { taxExemptionId?: number })?.taxExemptionId;
+  const taxExemptionId = (companydata as { taxExemptionId?: number })
+    ?.taxExemptionId;
   const currency = (companydata as { currency?: unknown })?.currency;
 
   const searchParams = useSearchParams();
@@ -58,31 +59,38 @@ export default function useSummaryDefault(
   const selectedSellerId = currentSelectedSellerId || selectedSellerIdFromQuery;
 
   // For compatibility, use filtered cart for product IDs and other operations
-  const filteredCart = useMemo(() => selectedSellerItems || cart || [], [selectedSellerItems, cart]);
-  const PrdId = map(filteredCart, (o) => o.productId);
+  const filteredCart = useMemo(
+    () => selectedSellerItems || cart || [],
+    [selectedSellerItems, cart]
+  );
+  const PrdId = map(filteredCart, o => o.productId);
 
   // Extract seller company ID from cart items
   const sellerCompanyId = useMemo((): number | string | null | undefined => {
     if (selectedSellerId && filteredCart && filteredCart.length > 0) {
       // Try to find seller company ID from cart items
       const firstItem = filteredCart[0];
-      const extractedId = (
+      const extractedId =
         (firstItem as any).sellerCompanyId ||
         (firstItem as any).partnerCompanyId ||
         (firstItem as any).vendorCompanyId ||
         (firstItem as any).partnerId ||
         (firstItem as any).vendorId ||
-        selectedSellerId
-      );
+        selectedSellerId;
       return extractedId as number | string | null | undefined;
     }
     return selectedSellerId as number | string | null | undefined;
   }, [selectedSellerId, filteredCart]);
 
-  const { billingDatas: billingAddressData, loading: billingAddressDataLoading } = useBilling(
-    userId && companyId ? { userId, companyId } : null
-  );
-  const buyerbranchId = billingAddressData[0]?.id as number | string | null | undefined;
+  const {
+    billingDatas: billingAddressData,
+    loading: billingAddressDataLoading,
+  } = useBilling(userId && companyId ? { userId, companyId } : null);
+  const buyerbranchId = billingAddressData[0]?.id as
+    | number
+    | string
+    | null
+    | undefined;
 
   const { defaultSellerAddress, defaultSellerAddressLoading } =
     useDefaultSellerAddress(PrdId, buyerbranchId, sellerCompanyId);
@@ -107,8 +115,11 @@ export default function useSummaryDefault(
   // Use timestamp as trigger to force refresh on each page load/mount
   const [trigger] = useState(() => Date.now());
 
-  const { defaultpreference, defaultpreferenceLoading } =
-    useDefaultPreference(trigger, selectedSellerId, isSummary);
+  const { defaultpreference, defaultpreferenceLoading } = useDefaultPreference(
+    trigger,
+    selectedSellerId,
+    isSummary
+  );
   const defaultpref = defaultpreference as any;
   const pfRate = showPfRate ? defaultpref?.pkgFwdId?.pfPercentage : 0;
   const isBeforeTax = defaultpref?.freightId?.beforeTax;
@@ -126,7 +137,7 @@ export default function useSummaryDefault(
     // If we have a selected seller, filter the cart
     if (selectedSellerId && cart && cart.length > 0) {
       return cart.filter(
-        (item) =>
+        item =>
           String(
             (item as any).sellerId ||
               (item as any).vendorId ||
@@ -144,11 +155,7 @@ export default function useSummaryDefault(
     return cart || [];
   }, [cart, selectedSellerId, selectedSellerItems, hasMultipleSellers]);
 
-  const {
-    productDetails,
-    getBreakup,
-    isInter,
-  } = useTaxBreakup(
+  const { productDetails, getBreakup, isInter } = useTaxBreakup(
     cartForCalculations,
     billingAddressData[0],
     defaultWarehouseAddress,
@@ -192,7 +199,7 @@ export default function useSummaryDefault(
   const filteredProducts = useMemo(() => {
     if (selectedSellerId && products) {
       return products.filter(
-        (item) => String((item as any).sellerId) === String(selectedSellerId)
+        item => String((item as any).sellerId) === String(selectedSellerId)
       );
     }
     return products || [];
@@ -204,8 +211,8 @@ export default function useSummaryDefault(
         additionalTerms: isOrder
           ? ""
           : showCashDiscount
-          ? `Cash discount ${defaultpref?.cashDiscountTerm?.cashdiscountValue} % is available`
-          : "",
+            ? `Cash discount ${defaultpref?.cashDiscountTerm?.cashdiscountValue} % is available`
+            : "",
         reOrder: false,
         reorderValidityFrom: null,
         reorderValidityTill: null,
@@ -324,4 +331,3 @@ export default function useSummaryDefault(
     ]
   );
 }
-

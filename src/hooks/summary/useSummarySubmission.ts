@@ -14,7 +14,7 @@ import { map } from "lodash";
 
 /**
  * Hook to handle summary form submission (both orders and quotes)
- * 
+ *
  * @param isOrder - Whether this is an order (true) or quote (false)
  * @param getValues - Form getValues function
  * @param trigger - Form trigger function for validation
@@ -80,7 +80,9 @@ export default function useSummarySubmission(
         toast.error("Invalid content detected in price justification");
         return false;
       }
-      if (sprDetails.competitorNames?.some((name: string) => containsXSS(name))) {
+      if (
+        sprDetails.competitorNames?.some((name: string) => containsXSS(name))
+      ) {
         toast.error("Invalid content detected in competitor names");
         return false;
       }
@@ -96,12 +98,13 @@ export default function useSummarySubmission(
     const formValues = getValues();
     const setShippingAddress = formValues.setShippingAddress;
     const setBillingAddress = formValues.setBillingAddress;
-    const setRegisterAddress = formValues.setRegisterAddress || setBillingAddress;
+    const setRegisterAddress =
+      formValues.setRegisterAddress || setBillingAddress;
     const setSellerAddress = formValues.setSellerAddress;
 
     // Prepare products with bundle handling if needed
     let products = formValues.products || [];
-    
+
     // TODO: Add bundle product handling if needed
     // products = formBundleProductsPayload(products);
 
@@ -136,9 +139,11 @@ export default function useSummarySubmission(
       branchBusinessUnit: formValues.branchBusinessUnit || null,
       deliveryPlace: formValues.deliveryPlace || null,
       quoteSettings: {
-        showInsuranceCharges: formValues.preferences?.insuranceId?.insuranceValue !== null,
+        showInsuranceCharges:
+          formValues.preferences?.insuranceId?.insuranceValue !== null,
       },
-      cashdiscount: formValues.preferences?.paymentTermsId?.cashdiscount || false,
+      cashdiscount:
+        formValues.preferences?.paymentTermsId?.cashdiscount || false,
     };
 
     return summaryData;
@@ -228,22 +233,35 @@ export default function useSummarySubmission(
 
       // Add quote-specific fields
       const formValues = getValues();
-      const shippingDetails = body.shippingAddressDetails as Record<string, unknown>;
-      const billingDetails = body.billingAddressDetails as Record<string, unknown>;
-      
+      const shippingDetails = body.shippingAddressDetails as Record<
+        string,
+        unknown
+      >;
+      const billingDetails = body.billingAddressDetails as Record<
+        string,
+        unknown
+      >;
+
       shippingDetails.email = formValues.setShippingAddress?.email || "";
-      shippingDetails.lattitude = formValues.setShippingAddress?.lattitude || null;
-      shippingDetails.longitude = formValues.setShippingAddress?.longitude || null;
-      shippingDetails.mobileNo = formValues.setShippingAddress?.mobileNo || null;
+      shippingDetails.lattitude =
+        formValues.setShippingAddress?.lattitude || null;
+      shippingDetails.longitude =
+        formValues.setShippingAddress?.longitude || null;
+      shippingDetails.mobileNo =
+        formValues.setShippingAddress?.mobileNo || null;
       shippingDetails.phone = formValues.setShippingAddress?.phone || null;
-      shippingDetails.countryCode = formValues.setShippingAddress?.countryCode || null;
+      shippingDetails.countryCode =
+        formValues.setShippingAddress?.countryCode || null;
 
       billingDetails.email = formValues.setBillingAddress?.email || "";
-      billingDetails.lattitude = formValues.setBillingAddress?.lattitude || null;
-      billingDetails.longitude = formValues.setBillingAddress?.longitude || null;
+      billingDetails.lattitude =
+        formValues.setBillingAddress?.lattitude || null;
+      billingDetails.longitude =
+        formValues.setBillingAddress?.longitude || null;
       billingDetails.mobileNo = formValues.setBillingAddress?.mobileNo || null;
       billingDetails.phone = formValues.setBillingAddress?.phone || null;
-      billingDetails.countryCode = formValues.setBillingAddress?.countryCode || null;
+      billingDetails.countryCode =
+        formValues.setBillingAddress?.countryCode || null;
 
       body.rfq = true;
       body.versionName = "RFQ";
@@ -300,7 +318,9 @@ export default function useSummarySubmission(
       throw new Error("Quote creation failed");
     } catch (error: any) {
       console.error("Error submitting quote:", error);
-      toast.error(error?.message || "Failed to create quote. Please try again.");
+      toast.error(
+        error?.message || "Failed to create quote. Please try again."
+      );
       return null;
     } finally {
       setIsSubmitting(false);
@@ -326,4 +346,3 @@ export default function useSummarySubmission(
     validateForm,
   };
 }
-
