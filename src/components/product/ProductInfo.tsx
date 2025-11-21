@@ -1,248 +1,304 @@
 import { Badge } from "@/components/ui/badge";
+import { CollapsibleSection } from "@/components/ui/collapsible";
 import { Separator } from "@/components/ui/separator";
-import { cn } from "@/lib/utils";
 import { ProductDetail } from "@/types/product/product-detail";
 import {
   formatLeadTime,
-  formatPrice,
   getProductAvailability,
 } from "@/utils/product/product-formatter";
-import { Box, Building2, Calendar, Package, Truck } from "lucide-react";
-import AddToCartSection from "./AddToCartSection";
+import {
+  Box,
+  Building2,
+  Calendar,
+  Clock,
+  Info,
+  Package,
+  Ruler,
+  ShieldCheck,
+  Truck,
+  Weight,
+} from "lucide-react";
+import AddToCartSectionWrapper from "./AddToCartSectionWrapper";
+import SpecificationsTable from "./SpecificationsTable";
+import VariantInventoryUpdater from "./VariantInventoryUpdater";
+import VariantPriceUpdater from "./VariantPriceUpdater";
 
 interface ProductInfoProps {
   product: ProductDetail;
-  locale: string;
 }
 
-export default function ProductInfo({
-  product,
-  locale: _locale,
-}: ProductInfoProps) {
+export default function ProductInfo({ product }: ProductInfoProps) {
   const availability = getProductAvailability(product);
-
-  // Check inventory status
-  const hasInventory = product.inventory && product.inventory.length > 0;
-  const totalAvailableQty = hasInventory
-    ? product.inventory.reduce(
-        (sum, inv) => sum + (inv.availableQuantity || 0),
-        0
-      )
-    : 0;
-  const isInStock = hasInventory && product.inventory.some(inv => inv.inStock);
+  console.log(product);
 
   return (
-    <div className="space-y-5">
-      {/* Brand/Store Name */}
-      {(product.brands_name || product.brand_name) && (
-        <div className="text-sm">
-          <span className="text-primary hover:underline cursor-pointer">
-            Visit {product.brands_name || product.brand_name} Store
-          </span>
-        </div>
-      )}
-
-      {/* Product Title */}
-      <div className="space-y-2">
-        <h1 className="text-2xl md:text-3xl font-bold text-foreground leading-tight">
-          {product.product_short_description || product.title}
-        </h1>
-        <div className="text-sm text-muted-foreground">
-          SKU# {product.brand_product_id}
-        </div>
-      </div>
-
-      {/* Stock Status Badge */}
-      <div>
-        <Badge
-          variant={isInStock ? "default" : "destructive"}
-          className={cn(
-            "text-sm py-1.5 px-3 font-medium",
-            isInStock
-              ? "bg-emerald-500 hover:bg-emerald-600 text-white"
-              : "bg-red-500 hover:bg-red-600 text-white"
+    <div className="space-y-8">
+      {/* Product Title & Key Info */}
+      <div className="space-y-4">
+        <div className="flex items-center gap-3 flex-wrap">
+          <h1
+            id="product-title"
+            className="text-2xl md:text-3xl font-bold text-foreground leading-tight"
+          >
+            {product.product_short_description || product.title}
+          </h1>
+          {product.is_new && (
+            <Badge className="bg-orange-500 hover:bg-orange-600 text-white border-0 text-xs font-semibold py-1 px-3">
+              NEW
+            </Badge>
           )}
-        >
-          {isInStock ? "✓ In Stock" : "✕ Out of Stock"}
-        </Badge>
-        {hasInventory && isInStock && totalAvailableQty > 0 && (
-          <span className="text-sm text-muted-foreground ml-2">
-            ({totalAvailableQty} available)
-          </span>
-        )}
-      </div>
+        </div>
 
-      {/* Product Information List */}
-      <div className="space-y-3 text-sm">
-        {/* Brand Name */}
-        {(product.brands_name || product.brand_name) && (
+        {/* Quick Stats Bar */}
+        <div className="flex flex-wrap gap-4 p-4 bg-muted/30 rounded-lg border">
           <div className="flex items-center gap-2">
-            <Building2 className="h-4 w-4 text-muted-foreground shrink-0" />
-            <span className="font-medium">Brand Name:</span>
-            <span className="text-muted-foreground">
+            <Building2 className="h-4 w-4 text-muted-foreground" />
+            <span className="text-sm font-medium">
               {product.brands_name || product.brand_name}
             </span>
           </div>
-        )}
-
-        {/* HSN Code */}
-        {product.hsn_code && (
           <div className="flex items-center gap-2">
-            <Package className="h-4 w-4 text-muted-foreground shrink-0" />
-            <span className="font-medium">HSN#</span>
-            <span className="font-mono text-muted-foreground">
-              {product.hsn_code}
+            <Package className="h-4 w-4 text-muted-foreground" />
+            <span className="text-sm text-muted-foreground">
+              SKU: {product.brand_product_id}
             </span>
           </div>
-        )}
-
-        {/* Delivery Time */}
-        {product.standard_lead_time && (
-          <div className="flex items-center gap-2">
-            <Truck className="h-4 w-4 text-muted-foreground shrink-0" />
-            <span className="font-medium">Delivery Time:</span>
-            <span className="text-muted-foreground">
-              {formatLeadTime(product.standard_lead_time, product.lead_uom)}
-            </span>
-          </div>
-        )}
-
-        {/* Minimum Order Quantity */}
-        {product.min_order_quantity && (
-          <div className="flex items-center gap-2">
-            <Package className="h-4 w-4 text-muted-foreground shrink-0" />
-            <span className="font-medium">Min. Order Quantity:</span>
-            <span className="text-muted-foreground">
-              {product.min_order_quantity} {product.unit_of_measure}
-            </span>
-          </div>
-        )}
-
-        {/* Pack Quantity */}
-        {product.packaging_qty && (
-          <div className="flex items-center gap-2">
-            <Box className="h-4 w-4 text-muted-foreground shrink-0" />
-            <span className="font-medium">Pack of:</span>
-            <span className="text-muted-foreground">
-              {product.packaging_qty}
-            </span>
-          </div>
-        )}
-
-        {/* Weight */}
-        {product.net_weight && (
-          <div className="flex items-center gap-2">
-            <Package className="h-4 w-4 text-muted-foreground shrink-0" />
-            <span className="font-medium">Weight:</span>
-            <span className="text-muted-foreground">{product.net_weight}</span>
-          </div>
-        )}
-
-        {/* Dimensions */}
-        {product.packaging_dimension && (
-          <div className="flex items-center gap-2">
-            <Box className="h-4 w-4 text-muted-foreground shrink-0" />
-            <span className="font-medium">Dimensions:</span>
-            <span className="text-muted-foreground">
-              {product.packaging_dimension}
-            </span>
-          </div>
-        )}
-
-        {/* Outer Pack Quantity */}
-        {product.outer_pack_qty && (
-          <div className="flex items-center gap-2">
-            <Package className="h-4 w-4 text-muted-foreground shrink-0" />
-            <span className="font-medium">Outer Pack Qty:</span>
-            <span className="text-muted-foreground">
-              {product.outer_pack_qty}
-            </span>
-          </div>
-        )}
-
-        {/* Unit of Measure */}
-        {product.unit_of_measure && (
-          <div className="flex items-center gap-2">
-            <Calendar className="h-4 w-4 text-muted-foreground shrink-0" />
-            <span className="font-medium">Unit of Measure:</span>
-            <span className="text-muted-foreground">
-              {product.unit_of_measure}
-            </span>
-          </div>
-        )}
-      </div>
-
-      <Separator className="my-4" />
-
-      {/* Price Section */}
-      <div className="space-y-2">
-        <div className="flex items-baseline gap-2">
-          <span className="text-4xl font-bold text-foreground">
-            {formatPrice(product.unit_list_price)}
-          </span>
+          {product.min_order_quantity && (
+            <div className="flex items-center gap-2">
+              <Package className="h-4 w-4 text-muted-foreground" />
+              <span className="text-sm text-muted-foreground">
+                Min: {product.min_order_quantity}
+              </span>
+            </div>
+          )}
         </div>
-        {product.show_price === false && (
-          <p className="text-sm text-muted-foreground">
-            Please contact seller for pricing information
-          </p>
-        )}
       </div>
 
-      {/* Add to Cart Section - Client Component */}
-      <AddToCartSection
-        productId={product.product_id}
+      {/* Stock Status Badge - Client Component for Variant Updates */}
+      <VariantInventoryUpdater
+        baseInventory={product.inventory || []}
+      />
+
+      {/* Price Section - Client Component for Variant Updates */}
+      <VariantPriceUpdater
+        basePrice={product.unit_list_price}
+        baseMrp={product.unit_mrp}
+        showPrice={product.show_price}
+        isTaxInclusive={product.is_tax_inclusive}
+      />
+
+      {/* Add to Cart Section - Client Component with Variant Support */}
+      <AddToCartSectionWrapper
+        baseProductId={product.product_id}
         productTitle={product.product_short_description || product.title}
         isAvailable={availability.available}
       />
+
+      {/* Product Information - Collapsible Sections */}
+      <div className="space-y-4">
+        {/* Basic Information */}
+        <CollapsibleSection
+          title="Product Information"
+          icon={<Info className="h-5 w-5" />}
+          defaultOpen={true}
+        >
+          <div className="space-y-4 text-sm">
+            {/* Brand Name */}
+            {(product.brands_name || product.brand_name) && (
+              <div className="flex items-center gap-3">
+                <Building2 className="h-4 w-4 text-muted-foreground shrink-0" />
+                <div className="flex-1">
+                  <span className="font-medium">Brand Name:</span>
+                  <span className="text-muted-foreground ml-2">
+                    {product.brands_name || product.brand_name}
+                  </span>
+                </div>
+              </div>
+            )}
+
+            {/* HSN Code */}
+            {product.hsn_code && (
+              <div className="flex items-center gap-3">
+                <Box className="h-4 w-4 text-muted-foreground shrink-0" />
+                <div className="flex-1">
+                  <span className="font-medium">HSN Code:</span>
+                  <span className="font-mono text-muted-foreground ml-2">
+                    {product.hsn_code}
+                  </span>
+                </div>
+              </div>
+            )}
+
+            {/* Primary UOM */}
+            {product.primary_uom && product.primary_uom.trim() !== "" && (
+              <div className="flex items-center gap-3">
+                <Calendar className="h-4 w-4 text-muted-foreground shrink-0" />
+                <div className="flex-1">
+                  <span className="font-medium">Primary UOM:</span>
+                  <span className="text-muted-foreground ml-2">
+                    {product.primary_uom}
+                  </span>
+                </div>
+              </div>
+            )}
+
+            {/* Secondary UOM */}
+            {product.secondary_uom && product.secondary_uom.trim() !== "" && (
+              <div className="flex items-center gap-3">
+                <Calendar className="h-4 w-4 text-muted-foreground shrink-0" />
+                <div className="flex-1">
+                  <span className="font-medium">Secondary UOM:</span>
+                  <span className="text-muted-foreground ml-2">
+                    {product.secondary_uom}
+                  </span>
+                </div>
+              </div>
+            )}
+
+            {/* Unit of Measure (Fallback) */}
+            {(!product.primary_uom || product.primary_uom.trim() === "") &&
+              (!product.secondary_uom || product.secondary_uom.trim() === "") &&
+              product.unit_of_measure && (
+                <div className="flex items-center gap-3">
+                  <Calendar className="h-4 w-4 text-muted-foreground shrink-0" />
+                  <div className="flex-1">
+                    <span className="font-medium">Unit of Measure:</span>
+                    <span className="text-muted-foreground ml-2">
+                      {product.unit_of_measure}
+                    </span>
+                  </div>
+                </div>
+              )}
+          </div>
+        </CollapsibleSection>
+
+        {/* Shipping & Logistics */}
+        <CollapsibleSection
+          title="Shipping & Logistics"
+          icon={<Truck className="h-5 w-5" />}
+        >
+          <div className="space-y-4 text-sm">
+            {/* Delivery Time */}
+            {product.standard_lead_time && (
+              <div className="flex items-center gap-3">
+                <Clock className="h-4 w-4 text-muted-foreground shrink-0" />
+                <div className="flex-1">
+                  <span className="font-medium">Delivery Time:</span>
+                  <span className="text-muted-foreground ml-2">
+                    {formatLeadTime(
+                      product.standard_lead_time,
+                      product.lead_uom
+                    )}
+                  </span>
+                </div>
+              </div>
+            )}
+
+            {/* Minimum Order Quantity */}
+            {product.min_order_quantity && (
+              <div className="flex items-center gap-3">
+                <Package className="h-4 w-4 text-muted-foreground shrink-0" />
+                <div className="flex-1">
+                  <span className="font-medium">Min. Order Quantity:</span>
+                  <span className="text-muted-foreground ml-2">
+                    {product.min_order_quantity} {product.unit_of_measure}
+                  </span>
+                </div>
+              </div>
+            )}
+
+            {/* Pack Quantity */}
+            {product.packaging_qty && (
+              <div className="flex items-center gap-3">
+                <Box className="h-4 w-4 text-muted-foreground shrink-0" />
+                <div className="flex-1">
+                  <span className="font-medium">Pack of:</span>
+                  <span className="text-muted-foreground ml-2">
+                    {product.packaging_qty}
+                  </span>
+                </div>
+              </div>
+            )}
+
+            {/* Outer Pack Quantity */}
+            {product.outer_pack_qty && (
+              <div className="flex items-center gap-3">
+                <Package className="h-4 w-4 text-muted-foreground shrink-0" />
+                <div className="flex-1">
+                  <span className="font-medium">Outer Pack Qty:</span>
+                  <span className="text-muted-foreground ml-2">
+                    {product.outer_pack_qty}
+                  </span>
+                </div>
+              </div>
+            )}
+          </div>
+        </CollapsibleSection>
+
+        {/* Physical Specifications */}
+        <CollapsibleSection
+          title="Physical Specifications"
+          icon={<Ruler className="h-5 w-5" />}
+        >
+          <div className="space-y-4 text-sm">
+            {/* Weight */}
+            {product.net_weight && (
+              <div className="flex items-center gap-3">
+                <Weight className="h-4 w-4 text-muted-foreground shrink-0" />
+                <div className="flex-1">
+                  <span className="font-medium">Weight:</span>
+                  <span className="text-muted-foreground ml-2">
+                    {product.net_weight}
+                  </span>
+                </div>
+              </div>
+            )}
+
+            {/* Dimensions */}
+            {product.packaging_dimension && (
+              <div className="flex items-center gap-3">
+                <Box className="h-4 w-4 text-muted-foreground shrink-0" />
+                <div className="flex-1">
+                  <span className="font-medium">Dimensions:</span>
+                  <span className="text-muted-foreground ml-2">
+                    {product.packaging_dimension}
+                  </span>
+                </div>
+              </div>
+            )}
+          </div>
+        </CollapsibleSection>
+      </div>
 
       <Separator className="my-6" />
 
       {/* Description */}
       {product.product_description && (
-        <div className="space-y-3">
-          <h2 className="text-xl font-semibold text-foreground">Description</h2>
-          <p className="text-muted-foreground leading-relaxed">
-            {product.product_description}
-          </p>
+        <div className="space-y-4">
+          <h2 className="text-xl font-semibold text-foreground flex items-center gap-2">
+            <Info className="h-5 w-5" />
+            Description
+          </h2>
+          <div className="prose prose-sm max-w-none">
+            <p className="text-muted-foreground leading-relaxed">
+              {product.product_description}
+            </p>
+          </div>
         </div>
       )}
 
-      {/* Specifications Table */}
+      {/* Technical Specifications */}
       {product.product_specifications &&
         product.product_specifications.length > 0 && (
-          <>
-            <Separator className="my-6" />
-            <div className="space-y-4">
-              <h2 className="text-xl font-semibold text-foreground">
-                Technical Specifications
-              </h2>
-              <div className="border rounded-lg overflow-hidden">
-                <table className="w-full">
-                  <tbody>
-                    {product.product_specifications.map((spec, index) => (
-                      <tr
-                        key={spec.id || index}
-                        className={cn(
-                          "border-b last:border-b-0",
-                          index % 2 === 0 ? "bg-muted/30" : "bg-background"
-                        )}
-                      >
-                        <td className="px-4 py-3 font-medium text-sm w-1/3">
-                          {spec.name}
-                        </td>
-                        <td className="px-4 py-3 text-sm text-muted-foreground">
-                          {spec.value}
-                          {spec.unit && (
-                            <span className="ml-1">{spec.unit}</span>
-                          )}
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            </div>
-          </>
+          <div className="space-y-4">
+            <h2 className="text-xl font-semibold text-foreground flex items-center gap-2">
+              <ShieldCheck className="h-5 w-5" />
+              Technical Specifications
+            </h2>
+            <SpecificationsTable
+              specifications={product.product_specifications}
+            />
+          </div>
         )}
     </div>
   );

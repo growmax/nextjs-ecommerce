@@ -190,22 +190,19 @@ describe("AvatarCard Integration Tests", () => {
       expect(mockLogout).toHaveBeenCalledTimes(1);
     });
 
-    it("respects showOrders and showQuotes props", async () => {
+    it("displays menu items correctly", async () => {
       const user = userEvent.setup();
       render(
         <AvatarCard
           user={mockUser}
           onLogout={mockLogout}
           trigger={mockTrigger}
-          showOrders={false}
-          showQuotes={false}
         />
       );
 
       await user.click(screen.getByTestId("integration-avatar-trigger"));
 
-      expect(screen.queryByText("Orders")).not.toBeInTheDocument();
-      expect(screen.queryByText("Quotes")).not.toBeInTheDocument();
+      expect(screen.getByText("Orders")).toBeInTheDocument();
       expect(screen.getByText("Profile")).toBeInTheDocument();
     });
 

@@ -26,10 +26,9 @@ const useMultipleSellerCart = (cartItems: any, calculationParams: any = {}) => {
     return Object.keys(groupedCarts);
   }, [cartItems]);
 
-  // Fetch seller-specific pricing data with getAllSellerPrices fallback
+  // Fetch seller-specific pricing data from discount service
   const {
     sellerPricingData,
-    allSellerPricesData,
     isLoading: pricingLoading,
     revalidate: revalidatePricing,
   } = useMultipleSellerPricing(cartItems, sellerIds);
@@ -51,8 +50,7 @@ const useMultipleSellerCart = (cartItems: any, calculationParams: any = {}) => {
       const itemsWithSellerPricing = cart.items.map((item: any) => {
         const itemPricing = findBestPricingMatch(
           item,
-          sellerPricingData,
-          allSellerPricesData
+          sellerPricingData
         );
 
         if (itemPricing) {
@@ -92,7 +90,7 @@ const useMultipleSellerCart = (cartItems: any, calculationParams: any = {}) => {
       calculationParams
     );
     return cartsWithPricing;
-  }, [cartItems, calculationParams, sellerPricingData, allSellerPricesData]);
+  }, [cartItems, calculationParams, sellerPricingData]);
 
   // Calculate overall summary
   const overallSummary = useMemo(() => {

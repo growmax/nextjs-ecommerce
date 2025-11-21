@@ -31,20 +31,17 @@ declare module "*.svg" {
   export default content;
 }
 
-// Slugify type declaration
-declare module "slugify" {
-  function slugify(
-    text: string,
-    options?: {
-      replacement?: string;
-      remove?: RegExp;
-      lower?: boolean;
-      strict?: boolean;
-      locale?: string;
-      trim?: boolean;
+// Extend jest types for SpyInstance
+declare module "@jest/globals" {
+  namespace jest {
+    interface SpyInstance<T = unknown, Y extends unknown[] = unknown[]> {
+      (...args: Y): T;
+      mockResolvedValue(value: T | Promise<T>): this;
+      mockRejectedValue(value: unknown): this;
+      mockRestore(): void;
     }
-  ): string;
-  export default slugify;
+  }
 }
 
-export {};
+export { };
+

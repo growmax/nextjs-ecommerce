@@ -1,5 +1,14 @@
+"use client";
+
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { useRoutePrefetch } from "@/hooks/useRoutePrefetch";
 import { PackageX, Home, Search } from "lucide-react";
 import Link from "next/link";
 
@@ -8,6 +17,8 @@ import Link from "next/link";
  * Displayed when a product ID doesn't exist
  */
 export default function ProductNotFound() {
+  const { prefetch } = useRoutePrefetch();
+
   return (
     <div className="min-h-screen bg-background flex items-center justify-center p-4">
       <Card className="max-w-md w-full">
@@ -17,12 +28,12 @@ export default function ProductNotFound() {
           </div>
           <CardTitle className="text-2xl">Product Not Found</CardTitle>
         </CardHeader>
-        
+
         <CardContent className="space-y-4">
           <p className="text-center text-muted-foreground">
             Sorry, we couldn't find the product you're looking for.
           </p>
-          
+
           <div className="p-4 bg-muted rounded-lg">
             <p className="text-sm text-muted-foreground">
               The product may have been:
@@ -40,14 +51,18 @@ export default function ProductNotFound() {
         </CardContent>
 
         <CardFooter className="flex flex-col sm:flex-row gap-3">
-          <Link href="/search" className="flex-1">
+          <Link
+            href="/search"
+            className="flex-1"
+            onMouseEnter={() => prefetch("/search")}
+          >
             <Button variant="default" className="w-full">
               <Search className="mr-2 h-4 w-4" />
               Search Products
             </Button>
           </Link>
-          
-          <Link href="/" className="flex-1">
+
+          <Link href="/" className="flex-1" onMouseEnter={() => prefetch("/")}>
             <Button variant="outline" className="w-full">
               <Home className="mr-2 h-4 w-4" />
               Go Home
@@ -58,4 +73,3 @@ export default function ProductNotFound() {
     </div>
   );
 }
-

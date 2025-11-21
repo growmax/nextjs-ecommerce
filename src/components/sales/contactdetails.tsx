@@ -708,15 +708,15 @@ export default function OrderContactDetails({
     }
   };
   return (
-    <Card className="shadow-sm h-full">
-      <CardHeader className="px-6 -my-5  bg-gray-50 rounded-t-lg items-end">
+    <Card className="shadow-sm pb-0">
+      <CardHeader className="px-6 -my-5  bg-gray-50 rounded-t-lg items-end gap-0">
         <CardTitle className="text-xl font-semibold text-gray-900 m-0!">
           Contact Details
         </CardTitle>
       </CardHeader>
       <Separator />
-      <CardContent className="px-6 pt-2 pb-0">
-        <div className="divide-y divide-gray-100">
+      <CardContent className="px-6 pt-2 pb-0 gap-0 -mt-5">
+        <div className="divide-y divide-gray-100 [&>div]:py-1.5 [&>div:last-child]:pb-0">
           {/* Company */}
           <DetailRow label="Company" value={sellerAddress?.sellerCompanyName} />
 

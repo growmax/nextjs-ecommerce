@@ -18,6 +18,7 @@ export default async function RootLayout({
     <html lang="en">
       <head>
         <meta name="next-strict-mode" content="false" />
+        <link rel="manifest" href="/manifest.json" />
       </head>
       <body>
         <ErrorBoundary>

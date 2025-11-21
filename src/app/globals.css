@@ -144,12 +144,73 @@
 
   body {
     @apply bg-background text-foreground font-sans antialiased;
-    overflow: hidden; /* Prevent body scroll - let child containers handle scrolling */
-    height: 100vh;
+    overflow: auto; /* Allow body scrolling for content that needs it */
+    min-height: 100vh;
   }
 
   html {
-    overflow: hidden;
-    height: 100vh;
+    overflow: auto;
+    min-height: 100vh;
+  }
+
+  /* Custom scrollbar-hide class */
+  .scrollbar-hide {
+    -ms-overflow-style: none; /* IE and Edge */
+    scrollbar-width: none; /* Firefox */
+  }
+
+  .scrollbar-hide::-webkit-scrollbar {
+    display: none; /* Chrome, Safari, Opera */
+  }
+
+  /* Custom small scrollbar for tables */
+  .scrollbar-thin {
+    scrollbar-width: thin; /* Firefox */
+    scrollbar-color: #cbd5e1 #f1f5f9; /* thumb and track color for Firefox */
+  }
+
+  .scrollbar-thin::-webkit-scrollbar {
+    height: 8px; /* Horizontal scrollbar height */
+    width: 8px; /* Vertical scrollbar width */
+  }
+
+  .scrollbar-thin::-webkit-scrollbar-track {
+    background: #f1f5f9; /* Track color */
+    border-radius: 4px;
+  }
+
+  .scrollbar-thin::-webkit-scrollbar-thumb {
+    background: #cbd5e1; /* Thumb color */
+    border-radius: 4px;
+    border: 1px solid #f1f5f9;
+  }
+
+  .scrollbar-thin::-webkit-scrollbar-thumb:hover {
+    background: #94a3b8; /* Thumb color on hover */
+  }
+
+  .scrollbar-thin-horizontal {
+    scrollbar-width: thin; /* Firefox */
+    scrollbar-color: #cbd5e1 #f1f5f9; /* thumb and track color for Firefox */
+  }
+
+  .scrollbar-thin-horizontal::-webkit-scrollbar {
+    height: 8px; /* Horizontal scrollbar height */
+    width: 0; /* Hide vertical scrollbar */
+  }
+
+  .scrollbar-thin-horizontal::-webkit-scrollbar-track {
+    background: #f1f5f9; /* Track color */
+    border-radius: 4px;
+  }
+
+  .scrollbar-thin-horizontal::-webkit-scrollbar-thumb {
+    background: #cbd5e1; /* Thumb color */
+    border-radius: 4px;
+    border: 1px solid #f1f5f9;
+  }
+
+  .scrollbar-thin-horizontal::-webkit-scrollbar-thumb:hover {
+    background: #94a3b8; /* Thumb color on hover */
   }
 }

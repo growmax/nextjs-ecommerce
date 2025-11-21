@@ -12,6 +12,47 @@
 - **Use cn() utility**: Always import `cn` from `@/lib/utils` for className merging
 - **Follow shadcn/ui patterns**: Use the same prop interfaces and styling patterns
 
+### Component Discovery & Integration Workflow
+
+**PRIMARY: Context7 MCP Tool for Component Discovery**
+
+- **Use Context7 MCP as primary discovery engine** for UI primitives, tokens, and unknown packages
+- **Leverage Context7 MCP capabilities**:
+  - Discover available Shadcn components and their implementations
+  - Extract component metadata and usage patterns
+  - Access component schemas and prop definitions
+  - Find design tokens and styling information
+
+**SECONDARY: Cross-Reference & Escalation Strategy**
+
+- **Cross-reference component usage** across registries when Context7 provides multiple options
+- **When Context7 fails to resolve**:
+  1. **Escalate to Serper (web search)** for component documentation and examples
+  2. **Use Fetch MCP for web scraping** to extract code from GitHub repos or component libraries
+  3. **Search official Shadcn/ui documentation** for implementation details
+
+**CUSTOM COMPONENT INTEGRATION**
+
+- **For user-provided component URLs or GitHub repos**:
+  - Extract metadata using **Fetch MCP** for comprehensive analysis
+  - Analyze component structure and extract relevant code patterns
+  - Prioritize **schema-aligned component extraction** for type safety
+  - Convert custom components to Shadcn/ui patterns when possible
+
+**COMPONENT ADOPTION WORKFLOW**
+
+```bash
+# 1. Discover with Context7 MCP
+# mcp_context7_resolve_library_id("shadcn/ui")
+# mcp_context7_get_library_docs("/shadcn-ui/components")
+
+# 2. If Context7 fails, search externally
+# web_search("shadcn/ui button component implementation")
+
+# 3. Extract from custom repos
+# fetch_mcp_resource(server="github", uri="user/repo") 
+```
+
 ### Current shadcn/ui Configuration
 
 - **Style**: new-york

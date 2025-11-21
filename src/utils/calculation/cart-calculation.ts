@@ -111,25 +111,27 @@ export const calculateCart = ({
     cartValue.totalTax += data.totalTax!;
     cartValue.totalValue += data.totalPrice;
     cartValue.pfRate += data.pfRate;
-    cartValue.taxableAmount = cartValue.totalValue + cartValue.pfRate;
-    cartValue.insuranceCharges = round(insuranceCharges, precision);
-
-    cartValue.calculatedTotal =
-      cartValue.totalTax +
-      cartValue.totalValue +
-      cartValue.pfRate +
-      cartValue.totalShipping +
-      cartValue.insuranceCharges;
-
-    cartValue.grandTotal = settings.roundingAdjustment
-      ? round(cartValue.calculatedTotal)
-      : cartValue.calculatedTotal;
-
-    cartValue.roundingAdjustment =
-      cartValue.grandTotal - cartValue.calculatedTotal;
 
     return data;
   });
+
+  // Calculate final totals after all items processed
+  cartValue.taxableAmount = cartValue.totalValue + cartValue.pfRate;
+  cartValue.insuranceCharges = round(insuranceCharges, precision);
+
+  cartValue.calculatedTotal =
+    cartValue.totalTax +
+    cartValue.totalValue +
+    cartValue.pfRate +
+    cartValue.totalShipping +
+    cartValue.insuranceCharges;
+
+  cartValue.grandTotal = settings.roundingAdjustment
+    ? round(cartValue.calculatedTotal)
+    : cartValue.calculatedTotal;
+
+  cartValue.roundingAdjustment =
+    cartValue.grandTotal - cartValue.calculatedTotal;
 
   // Check for negative total prices
   if (some(cartArray, item => item.totalPrice < 0)) {

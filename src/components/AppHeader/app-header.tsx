@@ -1,6 +1,7 @@
 "use client";
 
 import ProductSearchResults from "@/components/search/ProductSearchResults";
+import { useUserDetails } from "@/contexts/UserDetailsContext";
 import useSearch from "@/hooks/useSearch";
 
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -18,10 +19,12 @@ import {
 import { AvatarCard } from "@/components/AvatarCard/AvatarCard";
 import { Input } from "@/components/ui/input";
 import { Separator } from "@/components/ui/separator";
-import { SidebarTrigger } from "@/components/ui/sidebar";
+import { SidebarTrigger, useSidebar } from "@/components/ui/sidebar";
 import { useCart } from "@/contexts/CartContext";
 import useLogout from "@/hooks/Auth/useLogout";
 import useUserProfile from "@/hooks/Profile/useUserProfile";
+import { useRoutePrefetch } from "@/hooks/useRoutePrefetch";
+import { cn } from "@/lib/utils";
 import { getUserInitials } from "@/utils/General/general";
 import {
   Bell,
@@ -38,6 +41,8 @@ export function AppHeader() {
   const { userProfile } = useUserProfile();
   const { isLoggingOut, handleLogout } = useLogout();
   const router = useRouter();
+  const { isAuthenticated } = useUserDetails();
+  const { prefetch, prefetchAndNavigate } = useRoutePrefetch();
   // Type definitions for search items
   interface RawOpenSearchProduct {
     productId: number;
@@ -180,28 +185,40 @@ export function AppHeader() {
     return [...ordersAndQuotes, ...products];
   };
 
+  // Handle search item hover to prefetch route
+  const handleSearchItemHover = (item: SearchResultItem) => {
+    if (item.type === "order") {
+      prefetch(`/details/orderDetails/${item.id}`);
+    } else if (item.type === "quote") {
+      prefetch(`/details/quoteDetails/${item.id}`);
+    } else if (item.type === "product") {
+      const productId = item.productData?.productId || item.id;
+      prefetch(`/products/${productId}`);
+    }
+  };
+
   // Handle search selection with smart routing
   const handleSearchSelect = (item: SearchResultItem) => {
     if (item.type === "order") {
-      router.push(`/details/orderDetails/${item.id}`);
+      prefetchAndNavigate(`/details/orderDetails/${item.id}`);
     } else if (item.type === "quote") {
-      router.push(`/details/quoteDetails/${item.id}`);
+      prefetchAndNavigate(`/details/quoteDetails/${item.id}`);
     } else if (item.type === "product") {
       // Route to product details using productIndexName if available
       const productId = item.productData?.productId || item.id;
-      router.push(`/products/${productId}`);
+      prefetchAndNavigate(`/products/${productId}`);
     } else {
       // Handle navigation shortcuts
       if (item.name.toLowerCase().includes("order")) {
-        router.push("/landing/orderslanding");
+        prefetchAndNavigate("/landing/orderslanding");
       } else if (item.name.toLowerCase().includes("quote")) {
-        router.push("/quotesummary");
+        prefetchAndNavigate("/quotesummary");
       } else if (item.name.toLowerCase().includes("product")) {
-        router.push("/products");
+        prefetchAndNavigate("/products");
       } else if (item.name.toLowerCase().includes("cart")) {
-        router.push("/cart");
+        prefetchAndNavigate("/cart");
       } else if (item.name.toLowerCase().includes("dashboard")) {
-        router.push("/dashboard");
+        prefetchAndNavigate("/dashboard");
       }
     }
 
@@ -226,9 +243,20 @@ export function AppHeader() {
     return () => document.removeEventListener("keydown", down);
   }, []);
 
+  const { state: sidebarState } = useSidebar();
+  const isSidebarCollapsed = sidebarState === "collapsed";
+
   return (
     <>
-      <header className="sticky top-0 z-50 w-full border-b bg-background/80 backdrop-blur-md supports-[backdrop-filter]:bg-background/80">
+      <header
+        className={cn(
+          "fixed top-0 z-[100] border-b bg-background/80 backdrop-blur-md supports-[backdrop-filter]:bg-background/80 transition-all duration-200",
+          isSidebarCollapsed
+            ? "left-[var(--sidebar-width-icon)]"
+            : "left-[var(--sidebar-width)]"
+        )}
+        style={{ right: 0 }}
+      >
         <div className="flex h-16 items-center gap-2 px-4 transition-[width,height] ease-linear group-has-data-[collapsible=icon]/sidebar-wrapper:h-12">
           {/* Mobile: Search icon moved to left (after sidebar trigger) */}
           <div className="md:hidden">
@@ -272,21 +300,27 @@ export function AppHeader() {
             {/* Desktop Right Side Icons */}
             <div className="hidden md:flex items-center gap-1">
               {/* Notifications */}
-              <Button variant="ghost" size="icon" className="h-8 w-8 relative">
-                <Bell className="h-4 w-4" />
-                {notificationsCount > 0 && (
-                  <span className="absolute -top-1 -right-1 h-4 w-4 rounded-full bg-red-500 text-xs text-white flex items-center justify-center">
-                    {notificationsCount > 9 ? "9+" : notificationsCount}
-                  </span>
-                )}
-              </Button>
+              {isAuthenticated && (
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-8 w-8 relative"
+                >
+                  <Bell className="h-4 w-4" />
+                  {notificationsCount > 0 && (
+                    <span className="absolute -top-1 -right-1 h-4 w-4 rounded-full bg-red-500 text-xs text-white flex items-center justify-center">
+                      {notificationsCount > 9 ? "9+" : notificationsCount}
+                    </span>
+                  )}
+                </Button>
+              )}
 
               {/* Cart */}
               <Button
                 variant="ghost"
                 size="icon"
                 className="h-8 w-8 relative"
-                onClick={() => router.push("/cart")}
+                onClick={() => prefetchAndNavigate("/cart")}
               >
                 <ShoppingCart className="h-4 w-4" />
                 {cartCount > 0 && (
@@ -295,33 +329,44 @@ export function AppHeader() {
                   </span>
                 )}
               </Button>
-
               {/* Vertical Separator before Avatar */}
               <Separator orientation="vertical" className="h-6 mx-1" />
 
               {/* Profile Dropdown with Real Data */}
-              <AvatarCard
-                user={userProfile}
-                onLogout={handleLogout}
-                isLoggingOut={isLoggingOut}
-                align="end"
-                trigger={
-                  <Button
-                    variant="ghost"
-                    className="relative h-8 w-8 rounded-full"
-                  >
-                    <Avatar className="h-8 w-8">
-                      <AvatarImage
-                        src={userProfile?.picture || ""}
-                        alt={userProfile?.displayName || "User"}
-                      />
-                      <AvatarFallback>
-                        {getUserInitials(userProfile?.displayName || "")}
-                      </AvatarFallback>
-                    </Avatar>
-                  </Button>
-                }
-              />
+              {isAuthenticated ? (
+                <AvatarCard
+                  user={userProfile}
+                  onLogout={handleLogout}
+                  isLoggingOut={isLoggingOut}
+                  align="end"
+                  trigger={
+                    <Button
+                      variant="ghost"
+                      className="relative h-8 w-8 rounded-full"
+                    >
+                      <Avatar className="h-8 w-8">
+                        <AvatarImage
+                          src={userProfile?.picture || ""}
+                          alt={userProfile?.displayName || "User"}
+                        />
+                        <AvatarFallback>
+                          {getUserInitials(userProfile?.displayName || "")}
+                        </AvatarFallback>
+                      </Avatar>
+                    </Button>
+                  }
+                />
+              ) : (
+                <Button
+                  variant="ghost"
+                  onClick={() => prefetchAndNavigate("/login")}
+                  className="h-8 p-0"
+                >
+                  <div className="bg-sidebar-primary text-sidebar-primary-foreground flex items-center justify-center rounded-lg px-3 h-8">
+                    <span className="text-sm font-medium">Login</span>
+                  </div>
+                </Button>
+              )}
             </div>
 
             {/* Mobile Right Side Icons (Condensed) */}
@@ -337,28 +382,40 @@ export function AppHeader() {
               </Button>
 
               {/* Profile Dropdown with Real Data */}
-              <AvatarCard
-                user={userProfile}
-                onLogout={handleLogout}
-                isLoggingOut={isLoggingOut}
-                align="end"
-                trigger={
-                  <Button
-                    variant="ghost"
-                    className="relative h-8 w-8 rounded-full"
-                  >
-                    <Avatar className="h-8 w-8">
-                      <AvatarImage
-                        src={userProfile?.picture || ""}
-                        alt={userProfile?.displayName || "User"}
-                      />
-                      <AvatarFallback>
-                        {getUserInitials(userProfile?.displayName || "")}
-                      </AvatarFallback>
-                    </Avatar>
-                  </Button>
-                }
-              />
+              {isAuthenticated ? (
+                <AvatarCard
+                  user={userProfile}
+                  onLogout={handleLogout}
+                  isLoggingOut={isLoggingOut}
+                  align="end"
+                  trigger={
+                    <Button
+                      variant="ghost"
+                      className="relative h-8 w-8 rounded-full"
+                    >
+                      <Avatar className="h-8 w-8">
+                        <AvatarImage
+                          src={userProfile?.picture || ""}
+                          alt={userProfile?.displayName || "User"}
+                        />
+                        <AvatarFallback>
+                          {getUserInitials(userProfile?.displayName || "")}
+                        </AvatarFallback>
+                      </Avatar>
+                    </Button>
+                  }
+                />
+              ) : (
+                <Button
+                  variant="ghost"
+                  onClick={() => prefetchAndNavigate("/login")}
+                  className="h-8 p-0"
+                >
+                  <div className="bg-sidebar-primary text-sidebar-primary-foreground flex items-center justify-center rounded-lg px-3 h-8">
+                    <span className="text-sm font-medium">Login</span>
+                  </div>
+                </Button>
+              )}
             </div>
           </div>
         </div>
@@ -455,6 +512,7 @@ export function AppHeader() {
                         <CommandItem
                           key={item.id}
                           onSelect={() => handleSearchSelect(item)}
+                          onMouseEnter={() => handleSearchItemHover(item)}
                           className="px-3 py-2.5 rounded-lg cursor-pointer hover:bg-accent hover:text-accent-foreground data-[selected=true]:bg-accent data-[selected=true]:text-accent-foreground"
                         >
                           <div className="flex items-center gap-3 w-full">
@@ -499,6 +557,7 @@ export function AppHeader() {
                         <CommandItem
                           key={item.id}
                           onSelect={() => handleSearchSelect(item)}
+                          onMouseEnter={() => handleSearchItemHover(item)}
                           className="px-3 py-2.5 rounded-lg cursor-pointer hover:bg-accent hover:text-accent-foreground data-[selected=true]:bg-accent data-[selected=true]:text-accent-foreground"
                         >
                           <div className="flex items-center gap-3 w-full">
@@ -587,10 +646,11 @@ export function AppHeader() {
                     {searchValue.toLowerCase().includes("order") && (
                       <CommandItem
                         onSelect={() => {
-                          router.push("/landing/orderslanding");
+                          prefetchAndNavigate("/landing/orderslanding");
                           setOpen(false);
                           setSearchValue("");
                         }}
+                        onMouseEnter={() => prefetch("/landing/orderslanding")}
                         className="px-3 py-2.5 rounded-lg cursor-pointer hover:bg-accent hover:text-accent-foreground data-[selected=true]:bg-accent data-[selected=true]:text-accent-foreground"
                       >
                         <div className="flex items-center gap-3 w-full">
@@ -608,10 +668,11 @@ export function AppHeader() {
                     {searchValue.toLowerCase().includes("quote") && (
                       <CommandItem
                         onSelect={() => {
-                          router.push("/quotesummary");
+                          prefetchAndNavigate("/quotesummary");
                           setOpen(false);
                           setSearchValue("");
                         }}
+                        onMouseEnter={() => prefetch("/quotesummary")}
                         className="px-3 py-2.5 rounded-lg cursor-pointer hover:bg-accent hover:text-accent-foreground data-[selected=true]:bg-accent data-[selected=true]:text-accent-foreground"
                       >
                         <div className="flex items-center gap-3 w-full">
@@ -629,10 +690,11 @@ export function AppHeader() {
                     {searchValue.toLowerCase().includes("dashboard") && (
                       <CommandItem
                         onSelect={() => {
-                          router.push("/dashboard");
+                          prefetchAndNavigate("/dashboard");
                           setOpen(false);
                           setSearchValue("");
                         }}
+                        onMouseEnter={() => prefetch("/dashboard")}
                         className="px-3 py-2.5 rounded-lg cursor-pointer hover:bg-accent hover:text-accent-foreground data-[selected=true]:bg-accent data-[selected=true]:text-accent-foreground"
                       >
                         <div className="flex items-center gap-3 w-full">
@@ -650,10 +712,11 @@ export function AppHeader() {
                     {searchValue.toLowerCase().includes("cart") && (
                       <CommandItem
                         onSelect={() => {
-                          router.push("/cart");
+                          prefetchAndNavigate("/cart");
                           setOpen(false);
                           setSearchValue("");
                         }}
+                        onMouseEnter={() => prefetch("/cart")}
                         className="px-3 py-2.5 rounded-lg cursor-pointer hover:bg-accent hover:text-accent-foreground data-[selected=true]:bg-accent data-[selected=true]:text-accent-foreground"
                       >
                         <div className="flex items-center gap-3 w-full">
@@ -686,10 +749,11 @@ export function AppHeader() {
             >
               <CommandItem
                 onSelect={() => {
-                  router.push("/landing/orderslanding");
+                  prefetchAndNavigate("/landing/orderslanding");
                   setOpen(false);
                   setSearchValue("");
                 }}
+                onMouseEnter={() => prefetch("/landing/orderslanding")}
                 className="px-3 py-2.5 rounded-lg cursor-pointer hover:bg-accent hover:text-accent-foreground data-[selected=true]:bg-accent data-[selected=true]:text-accent-foreground"
               >
                 <div className="flex items-center gap-3 w-full">
@@ -705,10 +769,12 @@ export function AppHeader() {
 
               <CommandItem
                 onSelect={() => {
+                  prefetch("/dashboard");
                   router.push("/dashboard");
                   setOpen(false);
                   setSearchValue("");
                 }}
+                onMouseEnter={() => prefetch("/dashboard")}
                 className="px-3 py-2.5 rounded-lg cursor-pointer hover:bg-accent hover:text-accent-foreground data-[selected=true]:bg-accent data-[selected=true]:text-accent-foreground"
               >
                 <div className="flex items-center gap-3 w-full">

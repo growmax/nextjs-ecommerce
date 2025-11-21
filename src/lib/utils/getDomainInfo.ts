@@ -4,8 +4,6 @@
  * In production, uses actual origin/domain.
  */
 
-import { headers } from "next/headers";
-
 export async function getDomainInfo(): Promise<{
   domainUrl: string;
   origin: string;
@@ -23,17 +21,25 @@ export async function getDomainInfo(): Promise<{
         : `http://${defaultDomain}`);
 
     try {
+      // Dynamic import to avoid build-time issues with next/headers
+      const { headers } = await import("next/headers");
       const headersList = await headers();
       const headerDomain =
         headersList.get("x-tenant-domain") ??
         headersList.get("host") ??
         defaultDomain;
-      const headerOrigin =
+      let headerOrigin =
         headersList.get("x-tenant-origin") ??
         headersList.get("origin") ??
         (env === "production"
           ? `https://${headerDomain}`
           : `http://${headerDomain}`);
+
+      // Ensure origin has protocol
+      if (headerOrigin && !headerOrigin.startsWith("http")) {
+        const protocol = env === "production" ? "https" : "http";
+        headerOrigin = `${protocol}://${headerOrigin}`;
+      }
 
       return { domainUrl: headerDomain, origin: headerOrigin };
     } catch {

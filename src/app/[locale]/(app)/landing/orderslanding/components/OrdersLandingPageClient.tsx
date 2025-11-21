@@ -1,14 +1,24 @@
 "use client";
 
 import { DashboardToolbar } from "@/components/custom/dashboard-toolbar";
+import { LandingLayout, PageLayout } from "@/components/layout";
 import { Toaster } from "@/components/ui/sonner";
+import { useRoutePrefetch } from "@/hooks/useRoutePrefetch";
 import { Download } from "lucide-react";
-import { useCallback, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { toast } from "sonner";
 import OrdersLandingTable from "./OrdersLandingTable/OrdersLandingTable";
 
 export default function OrdersLandingPageClient() {
-  const [refreshTrigger, setRefreshTrigger] = useState(0);
+  const { prefetch } = useRoutePrefetch();
+
+  useEffect(() => {
+    prefetch("/landing/quoteslanding");
+    prefetch("/settings/profile");
+    prefetch("/settings/company");
+    prefetch("/dashboard");
+  }, [prefetch]);
+  const [refreshTrigger] = useState(0);
 
   const [exportCallback, setExportCallback] = useState<(() => void) | null>(
     null
@@ -22,32 +32,28 @@ export default function OrdersLandingPageClient() {
     }
   }, [exportCallback]);
 
-  const handleRefresh = useCallback(() => {
-    setRefreshTrigger(prev => prev + 1);
-    toast.success("Data has been refreshed successfully!");
-  }, []);
-
   return (
-    <>
-      <DashboardToolbar
-        title="Orders"
-        secondary={{
-          condition: true,
-          value: "Export",
-          handleClick: handleExport,
-          startIcon: <Download />,
-        }}
-        refresh={{
-          condition: true,
-          handleRefresh,
-        }}
-      />
-      <OrdersLandingTable
-        refreshTrigger={refreshTrigger}
-        setExportCallback={setExportCallback}
-      />
+    <LandingLayout>
+      <PageLayout>
+        <DashboardToolbar
+          title="Orders"
+          primary={{
+            condition: true,
+            value: "Export",
+            handleClick: handleExport,
+            startIcon: <Download />,
+          }}
+        />
+      </PageLayout>
+
+      <PageLayout variant="content">
+        <OrdersLandingTable
+          refreshTrigger={refreshTrigger}
+          setExportCallback={setExportCallback}
+        />
+      </PageLayout>
 
       <Toaster richColors />
-    </>
+    </LandingLayout>
   );
 }

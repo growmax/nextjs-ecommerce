@@ -1,12 +1,13 @@
 "use client";
 
+import React from "react";
 import { cn } from "@/lib/utils";
 
 export type LayoutType = "full-width" | "centered" | "auto";
 
 interface PageContentProps {
   children: React.ReactNode;
-  layout?: LayoutType;
+  layout?: "auto" | "full-width" | "centered";
   className?: string;
 }
 
@@ -15,14 +16,17 @@ export function PageContent({
   layout = "auto",
   className,
 }: PageContentProps) {
-  // Layout-specific classes
   const layoutClasses = {
-    "full-width": "w-full",
-    centered: "max-w-7xl mx-auto px-6 sm:px-8 lg:px-10",
-    auto: "max-w-8xl mx-auto px-2 sm:px-4 sm:mx-12 lg:mx-60", // Added px-2 for mobile spacing
+    auto: "container mx-auto px-4 py-4 relative",
+    "full-width": "w-full px-4 py-4 relative", 
+    centered: "container mx-auto px-4 py-4 max-w-4xl relative",
   };
 
-  return <div className={cn(layoutClasses[layout], className)}>{children}</div>;
+  return (
+    <div className={cn(layoutClasses[layout], className)}>
+      {children}
+    </div>
+  );
 }
 
 // Individual layout components for more explicit usage

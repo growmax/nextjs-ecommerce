@@ -2,7 +2,15 @@ import { NextRequest, NextResponse } from "next/server";
 
 export async function POST(request: NextRequest) {
   try {
-    const body = await request.json();
+    let body: any = {};
+    const contentType = request.headers.get("content-type");
+    if (contentType?.includes("application/json")) {
+      try {
+        body = await request.json();
+      } catch {
+        body = {};
+      }
+    }
     // Get tokens from both request body and cookies
     const accessTokenFromCookie = request.cookies.get("access_token");
     const refreshTokenFromCookie = request.cookies.get("refresh_token");
@@ -29,7 +37,7 @@ export async function POST(request: NextRequest) {
       refreshToken,
     };
 
-    const response = await fetch(`${process.env.AUTH_URL}/auth/logout`, {
+    const response = await fetch(`${process.env.AUTH_URL}/logout`, {
       method: "POST",
       headers: {
         Origin:

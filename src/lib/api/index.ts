@@ -46,7 +46,9 @@ import QuotesService from "./services/QuotesService/QuotesService";
 import QuoteStatusService from "./services/StatusService/StatusService";
 
 // Import additional services
+import AccountOwnerService from "./services/AccountOwnerService/AccountOwnerService";
 import BillingBranchService from "./services/BillingBranchService/BillingBranchService";
+import CurrencyService from "./services/CurrencyService/CurrencyService";
 import ManufacturerCompetitorService from "./services/ManufacturerCompetitorService/ManufacturerCompetitorService";
 import OrderDetailsService from "./services/OrderDetailsService/OrderDetailsService";
 import OrderNameService from "./services/OrderNameService/OrderNameService";
@@ -54,22 +56,27 @@ import OrdersFilterService from "./services/OrdersFilterService/OrdersFilterServ
 import OrderVersionService from "./services/OrderVersionService/OrderVersionService";
 import PaymentService from "./services/PaymentService/PaymentService";
 import ProductAssetsService from "./services/ProductAssetsService/ProductAssetsService";
+import { ProductPageService } from "./services/ProductPageService";
 import QuotationDetailsService from "./services/QuotationDetailsService/QuotationDetailsService";
 import QuotationNameService from "./services/QuotationNameService/QuotationNameService";
 import QuotationVersionService from "./services/QuotationVersionService/QuotationVersionService";
 import QuoteSubmissionService from "./services/QuoteSubmissionService/QuoteSubmissionService";
 import RequestEditService from "./services/RequestEditService/RequestEditService";
+import SalesService from "./services/SalesService/SalesService";
 import SearchService from "./services/SearchService/SearchService";
 import SellerWarehouseService from "./services/SellerWarehouseService/SellerWarehouseService";
+import UploadService from "./services/UploadService/UploadService";
 
 // Export services
 export {
+  AccountOwnerService,
   AuthService,
   AuthTokenService,
   BillingBranchService,
   CartService,
   CatalogService,
   CompanyService,
+  CurrencyService,
   DashboardService,
   DiscountService,
   LocationService,
@@ -84,6 +91,7 @@ export {
   PaymentService,
   PreferenceService,
   ProductAssetsService,
+  ProductPageService,
   QuotationDetailsService,
   QuotationNameService,
   QuotationVersionService,
@@ -92,12 +100,14 @@ export {
   QuoteSubmissionService,
   RequestEditService,
   RequestQueueService,
+  SalesService,
   SearchService,
   SellerWarehouseService,
   StoreFrontService,
   SubIndustryService,
   TenantService,
   TokenRefreshService,
+  UploadService,
   UserService,
 };
 
@@ -165,10 +175,14 @@ export type {
 } from "./services/PreferenceService/PreferenceService";
 
 export type {
+  CheckVolumeDiscountEnabledResponse,
   Discount,
   DiscountApiResponse,
   DiscountItem,
   DiscountRequest,
+  VolumeDiscountRequest,
+  VolumeDiscountRequestItem,
+  VolumeDiscountResponse,
 } from "./services/DiscountService/DiscountService";
 
 // Export CompanyService types
@@ -360,10 +374,12 @@ export {
 
 // Convenience re-exports for common patterns
 export const API = {
+  AccountOwner: AccountOwnerService,
   Auth: AuthService,
   Cart: CartService,
   Catalog: CatalogService,
   Company: CompanyService,
+  Currency: CurrencyService,
   Dashboard: DashboardService,
   Discount: DiscountService,
   Orders: OrdersService,
@@ -372,8 +388,10 @@ export const API = {
   Preference: PreferenceService,
   Quotes: QuotesService,
   QuoteStatus: QuoteStatusService,
+  Sales: SalesService,
   StoreFront: StoreFrontService,
   Tenant: TenantService,
+  Upload: UploadService,
   User: UserService,
   SubIndustry: SubIndustryService,
   // Token management services

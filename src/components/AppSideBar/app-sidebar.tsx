@@ -1,16 +1,19 @@
 "use client";
 
+import { useUserDetails } from "@/contexts/UserDetailsContext";
 import { Map, PieChart, Settings2, SquareTerminal } from "lucide-react";
 import * as React from "react";
 
 import { NavMain } from "@/components/nav-main";
 import { NavUser } from "@/components/nav-user";
-import { TeamSwitcher } from "@/components/TeamSwitcher/team-switcher";
 import {
   Sidebar,
   SidebarContent,
   SidebarFooter,
   SidebarHeader,
+  SidebarMenu,
+  SidebarMenuButton,
+  SidebarMenuItem,
   SidebarRail,
   useSidebar,
 } from "@/components/ui/sidebar";
@@ -63,6 +66,7 @@ const data = {
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const { isMobile, setOpenMobile } = useSidebar();
+  const { isAuthenticated } = useUserDetails();
 
   const handleNavigation = (_url: string) => {
     // Auto-close sidebar on mobile after navigation
@@ -71,17 +75,34 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
     }
   };
 
+  const navItems = isAuthenticated
+    ? data.navMain
+    : data.navMain.filter(
+        item => !["Dashboard", "Sales", "Settings"].includes(item.title)
+      );
+
   return (
     <Sidebar collapsible="icon" {...props}>
       <SidebarHeader>
-        <TeamSwitcher />
+        <SidebarMenu>
+          <SidebarMenuItem>
+            <SidebarMenuButton size="lg" asChild>
+              <div className="flex items-center gap-2 cursor-default">
+                <div className="bg-black text-white flex aspect-square size-8 items-center justify-center rounded-lg">
+                  <span className="text-base font-bold">S</span>
+                </div>
+                <div className="grid flex-1 text-left text-sm leading-tight">
+                  <span className="truncate font-semibold">Siemens</span>
+                </div>
+              </div>
+            </SidebarMenuButton>
+          </SidebarMenuItem>
+        </SidebarMenu>
       </SidebarHeader>
       <SidebarContent>
-        <NavMain items={data.navMain} onNavigate={handleNavigation} />
+        <NavMain items={navItems} onNavigate={handleNavigation} />
       </SidebarContent>
-      <SidebarFooter>
-        <NavUser />
-      </SidebarFooter>
+      <SidebarFooter>{isAuthenticated && <NavUser />}</SidebarFooter>
       <SidebarRail />
     </Sidebar>
   );

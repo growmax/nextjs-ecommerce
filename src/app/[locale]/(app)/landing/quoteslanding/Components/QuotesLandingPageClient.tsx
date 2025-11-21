@@ -1,14 +1,25 @@
 "use client";
 
-import { SectionToolbar } from "@/components/Global/SectionToolbar/SectionToolbar";
+import { DashboardToolbar } from "@/components/custom/dashboard-toolbar";
+import { LandingLayout, PageLayout } from "@/components/layout";
 import { Toaster } from "@/components/ui/sonner";
+import { useRoutePrefetch } from "@/hooks/useRoutePrefetch";
 import { Download } from "lucide-react";
-import { useCallback, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { toast } from "sonner";
 import QuotesLandingTable from "../Components/QuotesLandingTable/QuotesLandingTable";
 
 export default function QuotesLandingPageClient() {
-  const [refreshTrigger, setRefreshTrigger] = useState(0);
+  const { prefetch } = useRoutePrefetch();
+
+  useEffect(() => {
+    prefetch("/landing/orderslanding");
+    prefetch("/settings/profile");
+    prefetch("/settings/company");
+    prefetch("/dashboard");
+  }, [prefetch]);
+  const [refreshTrigger] = useState(0);
+
   const [exportCallback, setExportCallback] = useState<(() => void) | null>(
     null
   );
@@ -21,34 +32,28 @@ export default function QuotesLandingPageClient() {
     }
   }, [exportCallback]);
 
-  const handleRefresh = useCallback(() => {
-    setRefreshTrigger(prev => prev + 1);
-    toast.success("Data has been refreshed successfully!");
-  }, []);
-
   return (
-    <div className="h-full flex flex-col">
-      <SectionToolbar
-        title="Quotes"
-        secondary={{
-          condition: true,
-          value: "Export",
-          handleClick: handleExport,
-          startIcon: <Download className="h-4 w-4" />,
-        }}
-        refresh={{
-          condition: true,
-          handleRefresh,
-        }}
-      />
-      <div className="flex-1 overflow-hidden">
+    <LandingLayout>
+      <PageLayout>
+        <DashboardToolbar
+          title="Quotes"
+          primary={{
+            condition: true,
+            value: "Export",
+            handleClick: handleExport,
+            startIcon: <Download />,
+          }}
+        />
+      </PageLayout>
+
+      <PageLayout variant="content">
         <QuotesLandingTable
           refreshTrigger={refreshTrigger}
           setExportCallback={setExportCallback}
         />
-      </div>
+      </PageLayout>
 
       <Toaster richColors />
-    </div>
+    </LandingLayout>
   );
 }
