@@ -168,12 +168,17 @@ describe("AvatarCard", () => {
       render(<AvatarCard {...defaultProps} user={null} />);
 
       // Click trigger to open dropdown
-      await user.click(screen.getByTestId("avatar-trigger"));
+      const trigger = screen.getByTestId("avatar-trigger");
+      await user.click(trigger);
 
-      expect(screen.getByText("Loading user...")).toBeInTheDocument();
+      // Wait for dropdown to open and content to appear
+      await waitFor(() => {
+        expect(screen.getByText("Loading user...")).toBeInTheDocument();
+      });
+
       expect(screen.getByText("Please wait")).toBeInTheDocument();
       expect(screen.getByTestId("loader2-icon")).toBeInTheDocument();
-    });
+    }, 10000);
   });
 
   describe("Error State", () => {

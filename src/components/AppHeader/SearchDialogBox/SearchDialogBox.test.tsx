@@ -93,6 +93,7 @@ describe("SearchDialogBox", () => {
     });
 
     it("should call fetch when search input changes", async () => {
+      jest.useFakeTimers();
       const mockResponse = {
         ok: true,
         json: async () => ({
@@ -118,13 +119,18 @@ describe("SearchDialogBox", () => {
 
       fireEvent.change(searchInput, { target: { value: "test" } });
 
-      // Wait for debounce to trigger fetch
+      // Advance timers to trigger debounce
+      jest.advanceTimersByTime(300);
+
+      // Wait for fetch to be called
       await waitFor(
         () => {
           expect(global.fetch).toHaveBeenCalled();
         },
-        { timeout: 600 }
+        { timeout: 100 }
       );
+
+      jest.useRealTimers();
     });
 
     it("should handle API errors gracefully", async () => {
@@ -197,6 +203,7 @@ describe("SearchDialogBox", () => {
 
   describe("Search Results Rendering", () => {
     it("should accept search input and update state", async () => {
+      jest.useFakeTimers();
       const mockResponse = {
         ok: true,
         json: async () => ({
@@ -230,18 +237,24 @@ describe("SearchDialogBox", () => {
       fireEvent.change(searchInput, { target: { value: "product" } });
       expect(searchInput.value).toBe("product");
 
+      // Advance timers to trigger debounce
+      jest.advanceTimersByTime(300);
+
       // Wait for fetch to be called after debounce
       await waitFor(
         () => {
           expect(global.fetch).toHaveBeenCalled();
         },
-        { timeout: 600 }
+        { timeout: 100 }
       );
+
+      jest.useRealTimers();
     });
   });
 
   describe("Loading State", () => {
     it("should handle async API responses", async () => {
+      jest.useFakeTimers();
       const mockResponse = {
         ok: true,
         json: async () => ({
@@ -259,14 +272,23 @@ describe("SearchDialogBox", () => {
 
       fireEvent.change(searchInput, { target: { value: "test" } });
 
-      await waitFor(() => {
-        expect(global.fetch).toHaveBeenCalled();
-      });
+      // Advance timers to trigger debounce
+      jest.advanceTimersByTime(300);
+
+      await waitFor(
+        () => {
+          expect(global.fetch).toHaveBeenCalled();
+        },
+        { timeout: 100 }
+      );
+
+      jest.useRealTimers();
     });
   });
 
   describe("API Request Format", () => {
     it("should call API with correct endpoint", async () => {
+      jest.useFakeTimers();
       const mockResponse = {
         ok: true,
         json: async () => ({
@@ -283,6 +305,9 @@ describe("SearchDialogBox", () => {
       ) as HTMLInputElement;
 
       fireEvent.change(searchInput, { target: { value: "test" } });
+
+      // Advance timers to trigger debounce
+      jest.advanceTimersByTime(300);
 
       await waitFor(
         () => {
@@ -291,8 +316,10 @@ describe("SearchDialogBox", () => {
             expect.any(Object)
           );
         },
-        { timeout: 600 }
+        { timeout: 100 }
       );
+
+      jest.useRealTimers();
     });
   });
 });

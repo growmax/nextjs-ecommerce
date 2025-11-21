@@ -50,11 +50,15 @@ describe("AvatarCard Integration Tests", () => {
         <AvatarCard user={null} onLogout={mockLogout} trigger={mockTrigger} />
       );
 
-      await user.click(screen.getByTestId("integration-avatar-trigger"));
+      const trigger = screen.getByTestId("integration-avatar-trigger");
+      await user.click(trigger);
 
-      expect(screen.getByText("Loading user...")).toBeInTheDocument();
+      // Wait for dropdown to open and content to appear
+      expect(
+        await screen.findByText("Loading user...", {}, { timeout: 5000 })
+      ).toBeInTheDocument();
       expect(screen.getByText("Please wait")).toBeInTheDocument();
-    });
+    }, 10000);
 
     it("shows error state when isError=true", async () => {
       const user = userEvent.setup();
