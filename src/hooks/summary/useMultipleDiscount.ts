@@ -3,7 +3,10 @@
 import { useEffect, useMemo, useState, useRef } from "react";
 import { map, find, some } from "lodash";
 import { assign_pricelist_discounts_data_to_products } from "@/utils/functionalUtils";
-import { cartCalculation, discountDetails } from "@/utils/calculation/cartCalculation";
+import {
+  cartCalculation,
+  discountDetails,
+} from "@/utils/calculation/cartCalculation";
 import useProductDiscounts from "@/hooks/useProductDiscounts";
 import useCurrencyFactor from "./useCurrencyFactor";
 import DiscountService from "@/lib/api/services/DiscountService/DiscountService";
@@ -15,9 +18,9 @@ import useModuleSettings from "@/hooks/useModuleSettings";
 /**
  * Simplified hook for fetching discounts and calculating cart values for summary pages
  * Reuses existing hooks (useProductDiscounts) instead of duplicating logic
- * 
+ *
  * Migrated from buyer-fe/src/components/Summary/hooks/useMultipeDiscounts.js
- * 
+ *
  * @param cart - Array of cart items
  * @param pfRate - Package forwarding rate
  * @param isInter - Whether transaction is inter-state
@@ -99,7 +102,7 @@ export default function useMultipleDiscount(
       CurrencyFactor !== undefined
     ) {
       try {
-        const cart1 = map(cart || [], (item) => {
+        const cart1 = map(cart || [], item => {
           // Set pfItemValue from pfRate
           item.pfItemValue = pfRate;
           item.volumeDiscountApplied = false;
@@ -108,7 +111,7 @@ export default function useMultipleDiscount(
           let prd_wise_discData =
             find(
               discountdata,
-              (disc) => disc["ProductVariantId"] === item["productId"]
+              disc => disc["ProductVariantId"] === item["productId"]
             ) || {};
 
           // Validate if the discount data belongs to the correct seller
@@ -118,10 +121,11 @@ export default function useMultipleDiscount(
             String(prd_wise_discData.sellerId) !== String(sellerId)
           ) {
             // Try to find the correct pricing from getAllSellerPrices
-            const correctSellerPrices = allSellerPricesBySeller[String(sellerId)] || [];
+            const correctSellerPrices =
+              allSellerPricesBySeller[String(sellerId)] || [];
             const correctPricing = find(
               correctSellerPrices,
-              (price) => String(price.ProductVariantId) === String(item.productId)
+              price => String(price.ProductVariantId) === String(item.productId)
             );
 
             if (correctPricing) {
@@ -179,10 +183,10 @@ export default function useMultipleDiscount(
   ]);
 
   return {
-    isLoading: (!discountdata && !discountdataLoading) || !calculationRef.current,
+    isLoading:
+      (!discountdata && !discountdataLoading) || !calculationRef.current,
     cartValue: cartValue,
     cart: cart, // Return original cart (products are enriched in cartValue calculation)
     ApprovalRequired: some(discountdata, ["approvalReq", 1]),
   };
 }
-

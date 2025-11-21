@@ -1,8 +1,5 @@
 import { find, groupBy } from "lodash";
-import {
-  cartCalculation,
-  VolumeDiscountCalculation,
-} from "../cartCalculation";
+import { cartCalculation, VolumeDiscountCalculation } from "../cartCalculation";
 import { processDiscountDetails } from "../product-utils";
 
 export const groupCartItemsBySeller = (cartItems: any, _debugMode = true) => {
@@ -316,10 +313,7 @@ export const applyVolumeDiscountsToSellerCarts = (
  * @returns {object | null} - Best matching pricing data or null
  */
 
-export const findBestPricingMatch = (
-  item: any,
-  sellerPricingData: any
-) => {
+export const findBestPricingMatch = (item: any, sellerPricingData: any) => {
   const productId = item.productId;
   const sellerId = item.sellerId;
   const vendorId = item.vendorId;
@@ -368,9 +362,7 @@ export const findBestPricingMatch = (
  * @deprecated This function is no longer needed as all pricing comes from discount service
  */
 
-export const mergeSellerPricing = (
-  sellerPricingData: any
-) => {
+export const mergeSellerPricing = (sellerPricingData: any) => {
   // All pricing data comes from discount service, so no merging is needed
   return { ...sellerPricingData };
 };

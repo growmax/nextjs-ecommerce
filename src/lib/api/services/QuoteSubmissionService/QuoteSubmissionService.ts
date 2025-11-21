@@ -139,7 +139,7 @@ export class QuoteSubmissionService extends BaseService<QuoteSubmissionService> 
    * Create quote from summary page (new quote creation)
    * Endpoint: POST quotes/submitRFQToSingleDealer?userId={userId}&companyId={companyId}
    * Used by: useSummarySubmission hook
-   * 
+   *
    * @param params - Parameters for quote creation
    * @param quoteData - Transformed quote data from summary (using summaryReqDTO)
    * @returns Quote creation response with quotationIdentifier
@@ -157,7 +157,7 @@ export class QuoteSubmissionService extends BaseService<QuoteSubmissionService> 
       quoteData,
       "POST"
     );
-    
+
     // Normalize response format
     // Backend returns: { success: "success", data: { quotationIdentifier: "..." } }
     if (response && typeof response === "object") {
@@ -230,7 +230,7 @@ export class QuoteSubmissionService extends BaseService<QuoteSubmissionService> 
         method: "POST",
       }
     );
-    
+
     // Normalize response format (same as createQuoteFromSummary)
     if (response && typeof response === "object") {
       if ("data" in response) {

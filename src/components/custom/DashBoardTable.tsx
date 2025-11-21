@@ -1,24 +1,24 @@
 import React from "react";
 
 import {
-    Cell,
-    ColumnDef,
-    ColumnResizeMode,
-    Header,
-    HeaderGroup,
-    Row,
-    flexRender,
-    getCoreRowModel,
-    useReactTable,
+  Cell,
+  ColumnDef,
+  ColumnResizeMode,
+  Header,
+  HeaderGroup,
+  Row,
+  flexRender,
+  getCoreRowModel,
+  useReactTable,
 } from "@tanstack/react-table";
 
 import {
-    Table,
-    TableBody,
-    TableCell,
-    TableHead,
-    TableHeader,
-    TableRow,
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
 } from "@/components/ui/table";
 import { cn } from "@/lib/utils";
 import { Button } from "../ui/button";

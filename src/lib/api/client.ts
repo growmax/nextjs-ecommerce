@@ -29,7 +29,10 @@ const API_CONFIG = {
   BUCKET_NAME: process.env.NEXT_PUBLIC_S3BUCKET || 'growmax-dev-app-assets',
   ACCESS_KEY: process.env.AWS_S3_ACCESS_KEY,
   SECRET_KEY: process.env.AWS_S3_SECRET_KEY,
-  REGION: process.env.AWS_S3_REGION || 'ap-northeast-1'
+  REGION: process.env.AWS_S3_REGION || 'ap-northeast-1',
+  ELASTIC_URL:
+    process.env.ELASTIC_URL ||
+    "https://api.myapptino.com/elasticsearch/invocations",
 } as const;
 
 // Types
@@ -288,6 +291,10 @@ export const openSearchClient = createApiClient({
 // Generic API client
 export const apiClient = createApiClient({
   baseURL: API_CONFIG.API_BASE_URL,
+});
+
+export const elasticClient = createApiClient({
+  baseURL: API_CONFIG.ELASTIC_URL,
 });
 
 export const preferenceClient = createApiClient({

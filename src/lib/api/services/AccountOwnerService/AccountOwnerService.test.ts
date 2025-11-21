@@ -1,4 +1,11 @@
-import { afterEach, beforeEach, describe, expect, it, jest } from "@jest/globals";
+import {
+  afterEach,
+  beforeEach,
+  describe,
+  expect,
+  it,
+  jest,
+} from "@jest/globals";
 import { AccountOwnerService } from "./AccountOwnerService";
 
 describe("AccountOwnerService", () => {
@@ -282,7 +289,9 @@ describe("AccountOwnerService", () => {
         callSpy.mockRejectedValue(error);
 
         // Act & Assert
-        await expect(service.getAccountOwners(123)).rejects.toThrow("API Error");
+        await expect(service.getAccountOwners(123)).rejects.toThrow(
+          "API Error"
+        );
       });
 
       it("should handle network errors", async () => {
@@ -291,7 +300,9 @@ describe("AccountOwnerService", () => {
         callSpy.mockRejectedValue(networkError);
 
         // Act & Assert
-        await expect(service.getAccountOwners(123)).rejects.toThrow("Network Error");
+        await expect(service.getAccountOwners(123)).rejects.toThrow(
+          "Network Error"
+        );
       });
 
       it("should handle 404 errors", async () => {
@@ -305,7 +316,9 @@ describe("AccountOwnerService", () => {
         callSpy.mockRejectedValue(notFoundError);
 
         // Act & Assert
-        await expect(service.getAccountOwners(123)).rejects.toEqual(notFoundError);
+        await expect(service.getAccountOwners(123)).rejects.toEqual(
+          notFoundError
+        );
       });
 
       it("should handle 500 errors", async () => {
@@ -319,7 +332,9 @@ describe("AccountOwnerService", () => {
         callSpy.mockRejectedValue(serverError);
 
         // Act & Assert
-        await expect(service.getAccountOwners(123)).rejects.toEqual(serverError);
+        await expect(service.getAccountOwners(123)).rejects.toEqual(
+          serverError
+        );
       });
 
       it("should handle authentication errors", async () => {

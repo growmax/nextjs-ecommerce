@@ -158,11 +158,13 @@ export interface SummaryFormData {
 /**
  * Transform summary form data to API payload format
  * Migrated from buyer-fe/src/utils/summary-utils.js
- * 
+ *
  * @param props - Summary form data
  * @returns API payload object
  */
-export const summaryReqDTO = (props: SummaryFormData): Record<string, unknown> => {
+export const summaryReqDTO = (
+  props: SummaryFormData
+): Record<string, unknown> => {
   const {
     additionalTerms,
     companyId,
@@ -224,7 +226,10 @@ export const summaryReqDTO = (props: SummaryFormData): Record<string, unknown> =
       : null,
     dbProductDetails: products,
     deliveryDate: null,
-    domainURL: typeof window !== "undefined" ? window.location.origin : "demo.schwingstetterindia.com",
+    domainURL:
+      typeof window !== "undefined"
+        ? window.location.origin
+        : "demo.schwingstetterindia.com",
 
     // REVIEW - Grand Total Calculation...
     calculatedTotal: VDDetails.calculatedTotal
@@ -244,9 +249,7 @@ export const summaryReqDTO = (props: SummaryFormData): Record<string, unknown> =
     sprDetails: sprDetails,
     modifiedByUsername: authData?.displayName
       ? authData?.displayName
-      : "" + ", " + (authData?.companyName
-      ? authData?.companyName
-      : ""),
+      : "" + ", " + (authData?.companyName ? authData?.companyName : ""),
     notes: null,
     [isOrder ? "orderDescription" : "quoteDescription"]: "string",
     [isOrder ? "orderDivisionId" : "quoteDivisionId"]: division
@@ -258,8 +261,8 @@ export const summaryReqDTO = (props: SummaryFormData): Record<string, unknown> =
     [isOrder ? "orderTerms" : "quoteTerms"]: {
       beforeTax: preferences?.freightId?.beforeTax,
       beforeTaxPercentage: preferences?.freightId?.beforeTaxPercentage,
-      deliveryTerms: preferences?.deliveryTermsId?.name 
-        ? preferences?.deliveryTermsId?.name 
+      deliveryTerms: preferences?.deliveryTermsId?.name
+        ? preferences?.deliveryTermsId?.name
         : preferences?.deliveryTermsId?.description,
       deliveryTermsId: preferences?.deliveryTermsId?.id,
       deliveryTermsCode2: deliveryPlace,
@@ -290,7 +293,8 @@ export const summaryReqDTO = (props: SummaryFormData): Record<string, unknown> =
       ptValue: 0,
       // pfValue: preferences.pkgFwdId.pfValue || pfRate ? pfRate : null,
       pfValue: null, // hardcoded to null, due to pf issue.
-      pfPercentage: preferences?.pkgFwdId?.pfPercentage || pfRate ? pfRate : null,
+      pfPercentage:
+        preferences?.pkgFwdId?.pfPercentage || pfRate ? pfRate : null,
       warranty: preferences?.warrantyId?.name,
       warrantyId: preferences?.warrantyId?.id,
       warrantyValue: 0,
@@ -372,4 +376,3 @@ export const summaryReqDTO = (props: SummaryFormData): Record<string, unknown> =
 
   return body;
 };
-

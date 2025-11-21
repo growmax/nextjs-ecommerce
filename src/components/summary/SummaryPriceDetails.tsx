@@ -10,7 +10,7 @@ interface SummaryPriceDetailsProps {
 /**
  * Price details component for summary pages
  * Wraps CartPriceDetails with form integration
- * 
+ *
  * @param className - Additional CSS classes
  */
 export default function SummaryPriceDetails({
@@ -21,8 +21,8 @@ export default function SummaryPriceDetails({
   const cartValue = watch("cartValue") || {};
   const currency = watch("currency");
   const taxExempted = watch("taxExempted") || false;
-  const isBeforeTax = watch("isOrder") 
-    ? watch("orderTerms")?.isBeforeTax 
+  const isBeforeTax = watch("isOrder")
+    ? watch("orderTerms")?.isBeforeTax
     : watch("quoteTerms")?.isBeforeTax;
   const getBreakup = watch("getBreakup") || [];
   const VolumeDiscountAvailable = watch("VolumeDiscountAvailable") || false;
@@ -48,4 +48,3 @@ export default function SummaryPriceDetails({
     </div>
   );
 }
-

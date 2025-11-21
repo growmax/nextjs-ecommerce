@@ -8,11 +8,20 @@ const createJestConfig = nextJest({
 // Add any custom config to be passed to Jest
 const customJestConfig = {
   setupFilesAfterEnv: ["<rootDir>/jest.setup.js"],
+  setupFiles: ["<rootDir>/jest-setup-node.js"],
   testEnvironment: "jest-environment-jsdom",
+  testEnvironmentOptions: {
+    // Allow Node environment to use localStorage
+    localStorageFile: "<rootDir>/.jest-localstorage.json",
+  },
   moduleNameMapper: {
     "^@/(.*)$": "<rootDir>/src/$1",
   },
-  testPathIgnorePatterns: ["<rootDir>/.next/", "<rootDir>/node_modules/"],
+  testPathIgnorePatterns: [
+    "<rootDir>/.next/",
+    "<rootDir>/node_modules/",
+    "<rootDir>/src/app/api/auth/logout/",
+  ],
   transformIgnorePatterns: ["node_modules/(?!(next-intl|use-intl)/)"],
   collectCoverageFrom: [
     "src/**/*.{js,jsx,ts,tsx}",

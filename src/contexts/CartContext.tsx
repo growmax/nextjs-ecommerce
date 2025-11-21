@@ -53,13 +53,13 @@ export function CartProvider({ children, userId }: CartProviderProps) {
   const [cart, setCart] = useState<CartItem[]>([]);
   const [cartCount, setCartCount] = useState(0);
   const [isLoading, setIsLoading] = useState(false);
-  
+
   // Cart comments and attachments state
   const [cartComment, setCartComment] = useState<string>(() => {
     if (typeof window === "undefined") return "";
     return localStorage.getItem(CART_COMMENT_KEY) || "";
   });
-  
+
   const [cartAttachments, setCartAttachments] = useState<unknown[]>(() => {
     if (typeof window === "undefined") return [];
     try {
@@ -90,7 +90,7 @@ export function CartProvider({ children, userId }: CartProviderProps) {
   // Sync guest cart from localStorage
   const syncGuestCart = useCallback(() => {
     if (typeof window === "undefined" || userId) return;
-    
+
     try {
       const cartData =
         localStorage.getItem(GUEST_CART_KEY) ||
@@ -136,11 +136,7 @@ export function CartProvider({ children, userId }: CartProviderProps) {
       if (Array.isArray(res)) {
         // API returns cart items array directly
         cartData = res;
-      } else if (
-        res &&
-        typeof res === "object" &&
-        "data" in res
-      ) {
+      } else if (res && typeof res === "object" && "data" in res) {
         // Handle nested data structure: { data: { data: CartItem[] } } or { data: CartItem[] }
         const data = (res as { data: unknown }).data;
         if (Array.isArray(data)) {
@@ -165,14 +161,15 @@ export function CartProvider({ children, userId }: CartProviderProps) {
       }
 
       // Process bundle products (migrate from buyer-fe)
-      cartData = cartData.map((item) => {
+      cartData = cartData.map(item => {
         const processedItem = { ...item };
         // Preserve seller information
         if (item.sellerId || item.vendorId || item.partnerId) {
           const sellerId = item.sellerId || item.vendorId || item.partnerId;
-          const sellerName = item.sellerName || item.vendorName || item.partnerName;
+          const sellerName =
+            item.sellerName || item.vendorName || item.partnerName;
           const sellerLocation = item.sellerLocation || item.vendorLocation;
-          
+
           if (sellerId !== undefined) {
             processedItem.sellerId = sellerId;
           }
@@ -184,12 +181,18 @@ export function CartProvider({ children, userId }: CartProviderProps) {
           }
         }
         // Process bundle products
-        if (item.bundleProducts && Array.isArray(item.bundleProducts) && item.bundleProducts.length > 0) {
-          processedItem.bundleProducts = item.bundleProducts.map((bp) => {
+        if (
+          item.bundleProducts &&
+          Array.isArray(item.bundleProducts) &&
+          item.bundleProducts.length > 0
+        ) {
+          processedItem.bundleProducts = item.bundleProducts.map(bp => {
             const bundleSelected = bp.bundleSelected ?? bp.isBundleSelected_fe;
             return {
               ...bp,
-              ...(bundleSelected !== undefined ? { isBundleSelected_fe: bundleSelected } : {}),
+              ...(bundleSelected !== undefined
+                ? { isBundleSelected_fe: bundleSelected }
+                : {}),
             };
           });
         }

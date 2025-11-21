@@ -38,7 +38,7 @@ interface SummaryAdditionalInfoProps {
 /**
  * Component for additional information section (customer info, comments, attachments)
  * Combines EndCustomerInfo, Comments, and Attachments from buyer-fe
- * 
+ *
  * @param isOrder - Whether this is an order (affects field names)
  * @param showCustomerInfo - Whether to show customer information fields
  * @param showComments - Whether to show comments field
@@ -73,27 +73,31 @@ export default function SummaryAdditionalInfo({
   const [uploadProgress, setUploadProgress] = useState(0);
 
   // Handle comment change with XSS validation
-  const handleCommentChange = async (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+  const handleCommentChange = async (
+    e: React.ChangeEvent<HTMLTextAreaElement>
+  ) => {
     const value = e.target.value;
-    
+
     if (value && containsXSS(value)) {
       toast.error("Invalid content detected");
       return;
     }
-    
+
     setValue("comment", value);
     await trigger("comment");
   };
 
   // Handle buyer reference number change with XSS validation
-  const handleBuyerRefChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleBuyerRefChange = async (
+    e: React.ChangeEvent<HTMLInputElement>
+  ) => {
     const value = e.target.value;
-    
+
     if (value && containsXSS(value)) {
       toast.error("Invalid content detected");
       return;
     }
-    
+
     setValue("buyerReferenceNumber", value);
     await trigger("buyerReferenceNumber");
   };
@@ -103,7 +107,9 @@ export default function SummaryAdditionalInfo({
     if (date) {
       const minDate = addDays(new Date(), requiredIncDate);
       if (date < minDate) {
-        toast.error("Date must be at least " + requiredIncDate + " days from today");
+        toast.error(
+          "Date must be at least " + requiredIncDate + " days from today"
+        );
         return;
       }
     }
@@ -149,7 +155,7 @@ export default function SummaryAdditionalInfo({
 
       // Upload to S3 using presigned URL
       const formData = new FormData();
-      Object.keys(presignedData.fields).forEach((key) => {
+      Object.keys(presignedData.fields).forEach(key => {
         const value = presignedData.fields[key];
         if (value !== undefined) {
           formData.append(key, value);
@@ -161,7 +167,7 @@ export default function SummaryAdditionalInfo({
       const s3UploadClient = axios.create();
       await s3UploadClient.post(presignedData.url, formData, {
         headers: { "Content-Type": "multipart/form-data" },
-        onUploadProgress: (evt) => {
+        onUploadProgress: evt => {
           if (evt.total) {
             const progress = Math.round((evt.loaded / evt.total) * 100);
             setUploadProgress(progress);
@@ -261,7 +267,10 @@ export default function SummaryAdditionalInfo({
             {/* Required Date */}
             {isCustomerDateRequired && (
               <div className="space-y-2">
-                <Label htmlFor="customerRequiredDate" className="text-sm font-medium">
+                <Label
+                  htmlFor="customerRequiredDate"
+                  className="text-sm font-medium"
+                >
                   Required Date {isCustomerDateRequired ? "*" : ""}
                 </Label>
                 <Popover>
@@ -285,9 +294,13 @@ export default function SummaryAdditionalInfo({
                   <PopoverContent className="w-auto p-0" align="start">
                     <Calendar
                       mode="single"
-                      selected={customerRequiredDate ? new Date(customerRequiredDate) : undefined}
+                      selected={
+                        customerRequiredDate
+                          ? new Date(customerRequiredDate)
+                          : undefined
+                      }
                       onSelect={handleDateChange}
-                      disabled={(date) => date < minDate}
+                      disabled={date => date < minDate}
                       initialFocus
                     />
                   </PopoverContent>
@@ -302,7 +315,10 @@ export default function SummaryAdditionalInfo({
 
             {/* Buyer Reference Number */}
             <div className="space-y-2">
-              <Label htmlFor="buyerReferenceNumber" className="text-sm font-medium">
+              <Label
+                htmlFor="buyerReferenceNumber"
+                className="text-sm font-medium"
+              >
                 Buyer Reference Number
               </Label>
               <Input
@@ -387,27 +403,31 @@ export default function SummaryAdditionalInfo({
               {/* Attached Files List */}
               {uploadedDocumentDetails.length > 0 && (
                 <div className="space-y-2 mt-4">
-                  {uploadedDocumentDetails.map((attachment: any, index: number) => (
-                    <div
-                      key={attachment.id || index}
-                      className="flex items-center justify-between p-2 border rounded-md"
-                    >
-                      <div className="flex items-center gap-2 flex-1 min-w-0">
-                        <FileText className="h-4 w-4 text-muted-foreground flex-shrink-0" />
-                        <span className="text-sm truncate">
-                          {attachment.fileName || attachment.name || `File ${index + 1}`}
-                        </span>
-                      </div>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        onClick={() => handleFileRemove(index)}
-                        className="flex-shrink-0"
+                  {uploadedDocumentDetails.map(
+                    (attachment: any, index: number) => (
+                      <div
+                        key={attachment.id || index}
+                        className="flex items-center justify-between p-2 border rounded-md"
                       >
-                        <X className="h-4 w-4" />
-                      </Button>
-                    </div>
-                  ))}
+                        <div className="flex items-center gap-2 flex-1 min-w-0">
+                          <FileText className="h-4 w-4 text-muted-foreground flex-shrink-0" />
+                          <span className="text-sm truncate">
+                            {attachment.fileName ||
+                              attachment.name ||
+                              `File ${index + 1}`}
+                          </span>
+                        </div>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => handleFileRemove(index)}
+                          className="flex-shrink-0"
+                        >
+                          <X className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    )
+                  )}
                 </div>
               )}
             </div>
@@ -417,4 +437,3 @@ export default function SummaryAdditionalInfo({
     </Card>
   );
 }
-

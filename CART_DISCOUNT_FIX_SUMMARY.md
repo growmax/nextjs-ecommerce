@@ -3,6 +3,7 @@
 ## Issues Found and Fixed
 
 ### Issue 1: Wrong Discount Processing Function
+
 **Problem**: `sellerCartUtils.ts` was using `discountDetails` (JavaScript version) instead of `processDiscountDetails` (TypeScript version)
 
 **Fix**: Changed import and usage to `processDiscountDetails` from `product-utils.ts`
@@ -10,9 +11,11 @@
 **File**: `src/utils/calculation/sellerCartUtils/sellerCartUtils.ts`
 
 ### Issue 2: Cart Calculation Bypassing Discount Processing
+
 **Problem**: `CartPageClient.tsx` was calling `cartCalculation` directly on raw cart items, bypassing discount fetching and processing
 
 **Fix**: Updated to use `selectedSellerPricing` from `useSelectedSellerCart` which already includes:
+
 - Discount data fetching
 - Discount application
 - Discount processing
@@ -21,17 +24,21 @@
 **File**: `src/app/[locale]/(app)/cart/components/CartPageClient.tsx`
 
 ### Issue 3: Items Without SellerId Not Getting Pricing
-**Problem**: 
+
+**Problem**:
+
 - Items without `sellerId` were grouped under `undefined`/`null`
 - Pricing data for items without sellerId was being deleted
 - `findBestPricingMatch` couldn't find pricing for items without sellerId
 
 **Fixes**:
+
 1. Updated `groupCartItemsBySeller` to group items without sellerId under "no-seller"
 2. Updated `useMultipleSellerPricing` to keep "no-seller-id" pricing data
 3. Updated `findBestPricingMatch` to search "no-seller-id" group for items without sellerId
 
 **Files**:
+
 - `src/utils/calculation/sellerCartUtils/sellerCartUtils.ts`
 - `src/hooks/useMultipleSellerPricing.ts`
 
@@ -96,4 +103,3 @@
 3. Check that discount percentages are displayed correctly
 4. Verify tax calculations with discounts
 5. Test edge cases (no discount, multiple discounts, volume discounts)
-

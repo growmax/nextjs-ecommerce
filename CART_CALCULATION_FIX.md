@@ -14,12 +14,14 @@ The cart calculation was not working correctly because:
 ## Root Cause
 
 In buyer-fe, the flow is:
+
 1. Fetch discount data using `getProductDiscountsFetcher`
 2. Apply discount data using `assign_pricelist_discounts_data_to_products` (sets `discountDetails`, `unitListPrice`, `discount`, `discountedPrice`, `unitPrice`)
 3. Process discount details using `discountDetails()` (calculates `discountedPrice`, `unitPrice`, etc.)
 4. Calculate cart using `cartCalculation()` with processed items
 
 In the current implementation:
+
 - `useMultipleSellerCart` does fetch discount data and apply it ✓
 - But `calculateSellerCartPricing` was using the wrong `discountDetails` function ✗
 - `CartPageClient` was calling `cartCalculation` directly on raw items, bypassing discount processing ✗
@@ -27,10 +29,12 @@ In the current implementation:
 ## Fixes Applied
 
 ### 1. Fixed `sellerCartUtils.ts`
+
 - Changed from `discountDetails` (JS version) to `processDiscountDetails` (TS version)
 - This ensures discount details are processed correctly before cart calculation
 
 ### 2. Updated `CartPageClient.tsx`
+
 - Now uses `selectedSellerPricing` from `useSelectedSellerCart` which already includes:
   - Discount data fetching
   - Discount application
@@ -89,4 +93,3 @@ In the current implementation:
 2. Check API responses to ensure discount data structure matches
 3. Verify that `assign_pricelist_discounts_data_to_products` is working correctly
 4. Test edge cases (no discount, multiple discounts, volume discounts)
-

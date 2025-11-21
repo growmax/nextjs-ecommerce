@@ -18,10 +18,6 @@ export async function GET() {
     });
   } catch (error) {
     console.error("Error reading manifest.json:", error);
-    return NextResponse.json(
-      { error: "Manifest not found" },
-      { status: 404 }
-    );
+    return NextResponse.json({ error: "Manifest not found" }, { status: 404 });
   }
 }
-

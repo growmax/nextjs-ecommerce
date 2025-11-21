@@ -6,7 +6,7 @@ import { orderBy, each, uniqBy } from "lodash";
 /**
  * Hook to fetch and determine default business unit
  * Migrated from buyer-fe/src/components/Sales/hooks/useGetBusinessUnit.js
- * 
+ *
  * @param sellerBranchId - Seller branch ID
  * @param products - Array of products to determine business unit from
  * @returns Default business unit with loading state
@@ -15,11 +15,7 @@ export default function useGetDefaultBusinessUnit(
   sellerBranchId: number | string | null | undefined,
   products: any[] = []
 ) {
-  const {
-    data,
-    error,
-    isLoading,
-  } = useQuery({
+  const { data, error, isLoading } = useQuery({
     queryKey: ["getBuListData", sellerBranchId],
     queryFn: async () => {
       if (!sellerBranchId) {
@@ -41,7 +37,7 @@ export default function useGetDefaultBusinessUnit(
    */
   function getHigherpriority(arr: any[]) {
     let productsBuList: any[] = [];
-    each(products, (prod) => {
+    each(products, prod => {
       if (prod.businessUnit) {
         productsBuList.push(prod.businessUnit);
       }
@@ -49,8 +45,8 @@ export default function useGetDefaultBusinessUnit(
 
     let combinedBuList: any[] = [];
 
-    each(arr, (data) => {
-      each(productsBuList, (prdBu) => {
+    each(arr, data => {
+      each(productsBuList, prdBu => {
         if (data.businessUnitId?.id === prdBu.id) {
           combinedBuList.push({
             businessUnitId: prdBu,
@@ -75,7 +71,9 @@ export default function useGetDefaultBusinessUnit(
     }
   }
 
-  const defaultBu = data ? getHigherpriority((data as any)?.data?.data || []) : null;
+  const defaultBu = data
+    ? getHigherpriority((data as any)?.data?.data || [])
+    : null;
 
   return {
     businessUnitListData: (data as any)?.data?.data || [],
@@ -83,4 +81,3 @@ export default function useGetDefaultBusinessUnit(
     businessUnitListDataLoading: isLoading || (!error && !data),
   };
 }
-

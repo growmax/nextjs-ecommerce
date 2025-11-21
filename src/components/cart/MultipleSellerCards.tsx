@@ -52,7 +52,9 @@ export default function MultipleSellerCards({
   const { user } = useCurrentUser();
   const { emptyCartBySeller, isCartLoading } = useCart();
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
-  const [selectedSellerId, setSelectedSellerId] = useState<string | number | null>(null);
+  const [selectedSellerId, setSelectedSellerId] = useState<
+    string | number | null
+  >(null);
   const [isDeleting, setIsDeleting] = useState(false);
 
   // Get calculation parameters
@@ -77,7 +79,7 @@ export default function MultipleSellerCards({
     sellerIds,
     isPricingLoading: pricingLoadingFromHook,
   } = useMultipleSellerCart(cart, calculationParams);
-  
+
   // Use prop value if provided, otherwise use hook's loading state
   const isPricingLoadingState = isPricingLoading ?? pricingLoadingFromHook;
 
@@ -98,12 +100,16 @@ export default function MultipleSellerCards({
   const currency = user?.currency;
 
   // Determine default expanded seller (first seller when multiple sellers exist)
-  const defaultSellerId = hasMultipleSellers && sellerIds.length > 0
-    ? String(sellerIds[0])
-    : undefined;
+  const defaultSellerId =
+    hasMultipleSellers && sellerIds.length > 0
+      ? String(sellerIds[0])
+      : undefined;
 
   // Handle delete icon click
-  const handleDeleteClick = (e: React.MouseEvent, sellerId: string | number) => {
+  const handleDeleteClick = (
+    e: React.MouseEvent,
+    sellerId: string | number
+  ) => {
     e.stopPropagation(); // Prevent accordion toggle
     setSelectedSellerId(sellerId);
     setDeleteDialogOpen(true);
@@ -143,7 +149,7 @@ export default function MultipleSellerCards({
         {...(defaultSellerId ? { defaultValue: defaultSellerId } : {})}
         className="w-full"
       >
-        {sellerIds.map((sellerId) => {
+        {sellerIds.map(sellerId => {
           const sellerCart = sellerCarts[sellerId];
 
           if (!sellerCart) return null;
@@ -156,10 +162,7 @@ export default function MultipleSellerCards({
               key={sellerId}
               className="overflow-hidden transition-all duration-200 mb-6 last:mb-0 border-2 border-gray-200 shadow-sm hover:shadow-md"
             >
-              <AccordionItem
-                value={String(sellerId)}
-                className="border-0"
-              >
+              <AccordionItem value={String(sellerId)} className="border-0">
                 <AccordionTrigger className="hover:no-underline px-6 py-4 bg-transparent hover:bg-transparent">
                   <div className="flex flex-1 items-center justify-between pr-4">
                     <div className="flex flex-col items-start gap-2">
@@ -167,12 +170,13 @@ export default function MultipleSellerCards({
                         <span className="font-semibold text-lg">
                           {sellerCart.seller?.name || `Seller ${sellerId}`}
                         </span>
-                        {sellerCart.seller?.location && 
-                         sellerCart.seller.location !== "Location not specified" && (
-                          <span className="text-sm text-muted-foreground">
-                            • {sellerCart.seller.location}
-                          </span>
-                        )}
+                        {sellerCart.seller?.location &&
+                          sellerCart.seller.location !==
+                            "Location not specified" && (
+                            <span className="text-sm text-muted-foreground">
+                              • {sellerCart.seller.location}
+                            </span>
+                          )}
                       </div>
                       <div className="flex items-center gap-3 text-sm text-muted-foreground">
                         <span className="inline-flex items-center justify-center px-2.5 py-1 text-xs font-medium bg-muted text-muted-foreground rounded-full">
@@ -194,7 +198,7 @@ export default function MultipleSellerCards({
                   </div>
                   <button
                     type="button"
-                    onClick={(e) => handleDeleteClick(e, sellerId)}
+                    onClick={e => handleDeleteClick(e, sellerId)}
                     className="ml-2 p-1.5 text-muted-foreground hover:text-destructive transition-colors rounded-md hover:bg-muted shrink-0 translate-y-0.5 flex items-center justify-center"
                     aria-label="Delete seller cart items"
                   >
@@ -205,27 +209,29 @@ export default function MultipleSellerCards({
                   <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 px-6 pb-6 pt-2">
                     {/* Left Column: Products List (2/3 width) */}
                     <div className="lg:col-span-2 space-y-4">
-                      {sellerCart.items?.map((item: CartItem, itemIndex: number) => (
-                        <CartProductCard
-                          key={`${item.productId}-${item.itemNo}-${itemIndex}`}
-                          item={item}
-                          isPricingLoading={isPricingLoadingState}
-                          onUpdate={quantity => {
-                            if (onItemUpdate) {
-                              onItemUpdate(item, quantity);
-                            }
-                          }}
-                          onDelete={() => {
-                            if (onItemDelete) {
-                              onItemDelete(
-                                Number(item.productId),
-                                item.itemNo || "",
-                                item.sellerId
-                              );
-                            }
-                          }}
-                        />
-                      ))}
+                      {sellerCart.items?.map(
+                        (item: CartItem, itemIndex: number) => (
+                          <CartProductCard
+                            key={`${item.productId}-${item.itemNo}-${itemIndex}`}
+                            item={item}
+                            isPricingLoading={isPricingLoadingState}
+                            onUpdate={quantity => {
+                              if (onItemUpdate) {
+                                onItemUpdate(item, quantity);
+                              }
+                            }}
+                            onDelete={() => {
+                              if (onItemDelete) {
+                                onItemDelete(
+                                  Number(item.productId),
+                                  item.itemNo || "",
+                                  item.sellerId
+                                );
+                              }
+                            }}
+                          />
+                        )
+                      )}
                     </div>
 
                     {/* Right Column: Price Details & Buttons (1/3 width) */}
@@ -242,10 +248,16 @@ export default function MultipleSellerCards({
 
                         <CartProceedButton
                           selectedSellerId={sellerId}
-                          disabled={!sellerCart.items || sellerCart.items.length === 0}
+                          disabled={
+                            !sellerCart.items || sellerCart.items.length === 0
+                          }
                           isLoading={isPricingLoadingState}
-                          {...(handleQuote ? { onRequestQuote: () => handleQuote(sellerId) } : {})}
-                          {...(handleOrder ? { onPlaceOrder: () => handleOrder(sellerId) } : {})}
+                          {...(handleQuote
+                            ? { onRequestQuote: () => handleQuote(sellerId) }
+                            : {})}
+                          {...(handleOrder
+                            ? { onPlaceOrder: () => handleOrder(sellerId) }
+                            : {})}
                         />
                       </div>
                     </div>

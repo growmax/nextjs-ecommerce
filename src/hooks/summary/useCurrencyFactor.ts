@@ -7,22 +7,18 @@ import CurrencyService from "@/lib/api/services/CurrencyService/CurrencyService"
 /**
  * Hook to fetch currency factor for a company
  * Migrated from buyer-fe/src/components/Summary/hooks/useCurrencyFactor.js
- * 
+ *
  * @param companyId - Optional company ID (defaults to user's company ID)
  * @returns Currency factor with loading state
  */
 export default function useCurrencyFactor(companyId?: number | string | null) {
   const { companydata } = useUser();
   const userCompanyId = (companydata as { companyId?: number })?.companyId;
-  
+
   // Use provided companyId or fallback to user's companyId
   const targetCompanyId = companyId || userCompanyId;
 
-  const {
-    data,
-    error,
-    isLoading,
-  } = useQuery({
+  const { data, error, isLoading } = useQuery({
     queryKey: ["get-Currency", targetCompanyId],
     queryFn: async () => {
       if (!targetCompanyId) {
@@ -30,13 +26,13 @@ export default function useCurrencyFactor(companyId?: number | string | null) {
       }
 
       const response = await CurrencyService.getCurrencyFactor(targetCompanyId);
-      
+
       // Normalize response format
       // Backend returns: { success: "success", data: number }
       if (response && typeof response === "object" && "data" in response) {
         return (response as { data: unknown }).data;
       }
-      
+
       return response;
     },
     enabled: !!targetCompanyId,
@@ -50,4 +46,3 @@ export default function useCurrencyFactor(companyId?: number | string | null) {
     CurrencyFactorLoading: isLoading || (!error && !data),
   };
 }
-

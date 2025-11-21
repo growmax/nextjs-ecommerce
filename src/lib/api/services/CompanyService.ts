@@ -737,7 +737,7 @@ export class CompanyService extends BaseService<CompanyService> {
   /**
    * Get company preferences (default preferences for orders/quotes)
    * Used by: useDefaultPreference hook
-   * 
+   *
    * @param params - Parameters for getting preferences
    * @returns Company preferences response
    */
@@ -753,7 +753,9 @@ export class CompanyService extends BaseService<CompanyService> {
     // For summary, reorder, or clone: use V1 endpoint with buyer and seller company IDs
     if (isSummary || reorder || clone) {
       if (!selectedSellerId) {
-        throw new Error("selectedSellerId is required for summary/reorder/clone preferences");
+        throw new Error(
+          "selectedSellerId is required for summary/reorder/clone preferences"
+        );
       }
       const endpoint = `/companypreferenceses/getUpdatedPreferencesV1?buyerCompanyId=${companyId}&sellerCompanyId=${selectedSellerId}`;
       return await this.call(endpoint, {}, "GET");

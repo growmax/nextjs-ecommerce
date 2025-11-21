@@ -408,10 +408,6 @@ export default function EditOrderPage({ params }: EditOrderPageProps) {
       // Check if any of the possible IDs match editedQuantities
       for (const id of possibleIds) {
         if (id && editedQuantities[id] !== undefined) {
-          console.log(
-            `[Edit Order] Found edited quantity for ${id}:`,
-            editedQuantities[id]
-          );
           quantity = editedQuantities[id];
           break;
         }
@@ -623,12 +619,7 @@ export default function EditOrderPage({ params }: EditOrderPageProps) {
 
   // Log calculated data when it changes
   useEffect(() => {
-    console.log("[Edit Order] calculatedData updated:", {
-      totalValue: calculatedData?.cartValue?.totalValue,
-      totalTax: calculatedData?.cartValue?.totalTax,
-      grandTotal: calculatedData?.cartValue?.grandTotal,
-      productCount: calculatedData?.products?.length,
-    });
+    // calculatedData updated - debug logging removed
   }, [calculatedData]);
 
   const effectiveProducts = useMemo(() => {

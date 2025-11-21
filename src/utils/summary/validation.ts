@@ -4,7 +4,7 @@ import { containsXSS } from "../sanitization/sanitization.utils";
 /**
  * Buyer Quote Summary Validation Schema
  * Migrated from buyer-fe/src/validations/Sales/sales.validation.js
- * 
+ *
  * Validates:
  * - customerRequiredDate (conditional based on isCustomerDateRequired)
  * - buyerReferenceNumber (XSS validation, max 35 chars)
@@ -26,42 +26,54 @@ export const BuyerQuoteSummaryValidations = yup.object().shape({
     .string()
     .nullable()
     .max(35, "Invalid content")
-    .test("validation", "Invalid content", (value: any) => !value || !containsXSS(value)),
+    .test(
+      "validation",
+      "Invalid content",
+      (value: any) => !value || !containsXSS(value)
+    ),
   comment: yup
     .string()
     .nullable()
     .max(2000, "Invalid content")
-    .test("validation", "Invalid content", (value: any) => !value || !containsXSS(value)),
+    .test(
+      "validation",
+      "Invalid content",
+      (value: any) => !value || !containsXSS(value)
+    ),
   sprDetails: yup.object().shape({
     spr: yup.boolean(),
     companyName: yup
       .string()
-      .test("xss-validation", "Invalid content", (value: any) => !value || !containsXSS(value))
+      .test(
+        "xss-validation",
+        "Invalid content",
+        (value: any) => !value || !containsXSS(value)
+      )
       .when("spr", {
         is: true,
         then: (schema: any) =>
-          schema
-            .required("Invalid content")
-            .max(250, "Invalid content"),
+          schema.required("Invalid content").max(250, "Invalid content"),
         otherwise: (schema: any) => schema.notRequired(),
       }),
     projectName: yup
       .string()
-      .test("xss-validation", "Invalid content", (value: any) => !value || !containsXSS(value))
+      .test(
+        "xss-validation",
+        "Invalid content",
+        (value: any) => !value || !containsXSS(value)
+      )
       .when("spr", {
         is: true,
         then: (schema: any) =>
-          schema
-            .required("Invalid content")
-            .max(250, "Invalid content"),
+          schema.required("Invalid content").max(250, "Invalid content"),
         otherwise: (schema: any) => schema.notRequired(),
       }),
     competitorNames: yup
       .array()
       .test("xss-validation", "Invalid content", (value: any) => {
         if (!value) return true;
-        return !value.some((name: unknown) => 
-          typeof name === "string" && containsXSS(name)
+        return !value.some(
+          (name: unknown) => typeof name === "string" && containsXSS(name)
         );
       })
       .when("spr", {
@@ -71,13 +83,15 @@ export const BuyerQuoteSummaryValidations = yup.object().shape({
       }),
     priceJustification: yup
       .string()
-      .test("xss-validation", "Invalid content", (value: any) => !value || !containsXSS(value))
+      .test(
+        "xss-validation",
+        "Invalid content",
+        (value: any) => !value || !containsXSS(value)
+      )
       .when("spr", {
         is: true,
         then: (schema: any) =>
-          schema
-            .required("Invalid content")
-            .max(1000, "Invalid content"),
+          schema.required("Invalid content").max(1000, "Invalid content"),
         otherwise: (schema: any) => schema.notRequired(),
       }),
   }),
@@ -90,11 +104,13 @@ export const BuyerQuoteSummaryValidations = yup.object().shape({
         stepCheck?: boolean;
       };
 
-      const packagingQuantity = parseFloat(String(productValue.packagingQuantity || 1));
+      const packagingQuantity = parseFloat(
+        String(productValue.packagingQuantity || 1)
+      );
       const minOrderQuantity = productValue.minOrderQuantity
         ? parseFloat(String(productValue.minOrderQuantity))
         : packagingQuantity;
-      
+
       productValue.stepCheck =
         (productValue.askedQuantity || 0) % packagingQuantity === 0;
 
@@ -122,5 +138,6 @@ export const BuyerQuoteSummaryValidations = yup.object().shape({
   ),
 });
 
-export type BuyerQuoteSummaryFormData = yup.InferType<typeof BuyerQuoteSummaryValidations>;
-
+export type BuyerQuoteSummaryFormData = yup.InferType<
+  typeof BuyerQuoteSummaryValidations
+>;
