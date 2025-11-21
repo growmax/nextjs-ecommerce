@@ -16,7 +16,7 @@ The OpenSearch index `schwingstetterpgandproducts` stores product data with comp
   "product_group_id": 54518,
   "tenant_id": 0,
   "pg_name": "Milwakee PG ",
-  "pg_index_name": "PrdGrp0000054518",
+  "pg_index_name": "PrdGrp000054518",
   "brand_id": 411,
   "brand_name": "Milwakee",
   "brand_product_id": "P000034"
@@ -414,7 +414,7 @@ In addition to search queries, OpenSearch supports direct document retrieval usi
   "product_group_id": 54518,
   "tenant_id": 0,
   "pg_name": "Milwakee PG ",
-  "pg_index_name": "PrdGrp0000054518",
+  "pg_index_name": "PrdGrp000054518",
   "brand_id": 411,
   "brand_name": "Milwakee",
   "brand_product_id": "P000038",

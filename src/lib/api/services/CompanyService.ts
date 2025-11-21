@@ -587,6 +587,57 @@ export class CompanyService extends BaseService<CompanyService> {
       "POST"
     )) as DashboardResponse;
   }
+
+  /**
+   * Get company preferences (default preferences for orders/quotes)
+   * Used by: useDefaultPreference hook
+   *
+   * @param params - Parameters for getting preferences
+   * @returns Company preferences response
+   */
+  async getDefaultPreferences(params: {
+    companyId: number | string;
+    selectedSellerId?: number | string | null;
+    isSummary?: boolean;
+    reorder?: boolean;
+    clone?: boolean;
+  }): Promise<unknown> {
+    const { companyId, selectedSellerId, isSummary, reorder, clone } = params;
+
+    // For summary, reorder, or clone: use V1 endpoint with buyer and seller company IDs
+    if (isSummary || reorder || clone) {
+      if (!selectedSellerId) {
+        throw new Error(
+          "selectedSellerId is required for summary/reorder/clone preferences"
+        );
+      }
+      const endpoint = `/companypreferenceses/getUpdatedPreferencesV1?buyerCompanyId=${companyId}&sellerCompanyId=${selectedSellerId}`;
+      return await this.call(endpoint, {}, "GET");
+    }
+
+    // Regular preferences: use standard endpoint
+    const endpoint = `/companypreferenceses/getUpdatedPreferences?companyId=${companyId}`;
+    return await this.call(endpoint, {}, "GET");
+  }
+
+  /**
+   * Server-side version that returns null on error
+   * @param params - Parameters for getting preferences
+   * @returns Company preferences or null if error
+   */
+  async getDefaultPreferencesServerSide(params: {
+    companyId: number | string;
+    selectedSellerId?: number | string | null;
+    isSummary?: boolean;
+    reorder?: boolean;
+    clone?: boolean;
+  }): Promise<unknown | null> {
+    try {
+      return await this.getDefaultPreferences(params);
+    } catch {
+      return null;
+    }
+  }
 }
 
 export default CompanyService.getInstance();

@@ -1,16 +1,18 @@
 "use client";
 
-import { memo, useCallback } from "react";
-import { cn } from "@/lib/utils";
+import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
+import { cn } from "@/lib/utils";
+import type { ElasticVariantAttributes } from "@/types/product/product-group";
+import { memo, useCallback, useMemo } from "react";
 import ColorVariantSelector from "./ColorVariantSelector";
 import SizeVariantSelector from "./SizeVariantSelector";
-import { Badge } from "@/components/ui/badge";
 
 interface AttributeOption {
   value: string;
   count: number;
   hexCode?: string;
+  available?: boolean;
 }
 
 interface VariantGroups {
@@ -29,6 +31,7 @@ interface VariantSelectorProps {
   variantGroups: VariantGroups;
   selection: VariantSelection;
   onSelectionChange: (selection: VariantSelection) => void;
+  variantAttributes?: ElasticVariantAttributes[]; // Optional: from Product Group
   className?: string;
   showLabels?: boolean;
 }
@@ -43,27 +46,31 @@ function OtherAttributeSelector({
   options: AttributeOption[];
   selectedValue?: string;
   onChange: (value: string) => void;
+  displayType?: string;
 }) {
   if (!options.length) return null;
 
-  const displayName = attributeName.charAt(0).toUpperCase() + attributeName.slice(1);
+  const displayName =
+    attributeName.charAt(0).toUpperCase() + attributeName.slice(1);
 
   return (
     <div className="space-y-3">
       <div className="flex items-center justify-between">
-        <h3 className="text-lg font-semibold text-foreground">{displayName}:</h3>
+        <h3 className="text-lg font-semibold text-foreground">
+          {displayName}:
+        </h3>
         {selectedValue && (
           <Badge variant="outline" className="text-xs">
             {selectedValue}
           </Badge>
         )}
       </div>
-      
+
       <div className="flex flex-wrap gap-2">
-        {options.map((option) => {
+        {options.map(option => {
           const isSelected = selectedValue === option.value;
-          const isDisabled = option.count === 0;
-          
+          const isDisabled = option.count === 0 || option.available === false;
+
           return (
             <button
               key={`${attributeName}-${option.value}`}
@@ -92,14 +99,31 @@ function VariantSelector({
   variantGroups,
   selection,
   onSelectionChange,
+  variantAttributes,
   className,
   showLabels = true,
 }: VariantSelectorProps) {
+  // Determine attribute order and display types from Product Group if available
+  const attributeOrder = useMemo(() => {
+    if (variantAttributes && variantAttributes.length > 0) {
+      return variantAttributes.map(attr => ({
+        key: attr.name.toLowerCase().replace(/\s+/g, "_"),
+        name: attr.name,
+        displayType: attr.displayType,
+      }));
+    }
+    // Fallback: infer from variantGroups (backward compatibility)
+    return Object.keys(variantGroups).map(key => ({
+      key,
+      name: key.charAt(0).toUpperCase() + key.slice(1),
+      displayType: key === "color" ? "color" : "text",
+    }));
+  }, [variantAttributes, variantGroups]);
   const handleColorChange = useCallback(
     (color: string) => {
-      const newSelection = { 
-        ...selection, 
-        color: selection.color === color ? "" as const : color 
+      const newSelection = {
+        ...selection,
+        color: selection.color === color ? ("" as const) : color,
       };
       onSelectionChange(newSelection);
     },
@@ -108,9 +132,9 @@ function VariantSelector({
 
   const handleSizeChange = useCallback(
     (size: string) => {
-      const newSelection = { 
-        ...selection, 
-        size: selection.size === size ? "" as const : size 
+      const newSelection = {
+        ...selection,
+        size: selection.size === size ? ("" as const) : size,
       };
       onSelectionChange(newSelection);
     },
@@ -121,14 +145,16 @@ function VariantSelector({
     (attributeName: string, value: string) => {
       const newSelection = {
         ...selection,
-        [attributeName]: selection[attributeName] === value ? "" as const : value,
+        [attributeName]:
+          selection[attributeName] === value ? ("" as const) : value,
       };
       onSelectionChange(newSelection);
     },
     [selection, onSelectionChange]
   );
 
-  const selectedAttributesCount = Object.values(selection).filter(Boolean).length;
+  const selectedAttributesCount =
+    Object.values(selection).filter(Boolean).length;
 
   return (
     <div className={cn("space-y-6", className)}>
@@ -170,18 +196,22 @@ function VariantSelector({
         </>
       )}
 
-      {/* Other Attributes */}
-      {Object.entries(variantGroups)
-        .filter(([key]) => key !== "color" && key !== "size")
-        .map(([attributeName, options]) => {
+      {/* Other Attributes - Use Product Group order if available */}
+      {attributeOrder
+        .filter(({ key }) => key !== "color" && key !== "size")
+        .map(({ key, name, displayType }) => {
+          const options = variantGroups[key];
+          if (!options || options.length === 0) return null;
+
           return (
-            <div key={attributeName}>
+            <div key={key}>
               {(variantGroups.color || variantGroups.size) && <Separator />}
               <OtherAttributeSelector
-                attributeName={attributeName}
-                options={options || []}
-                selectedValue={selection[attributeName] || ""}
-                onChange={(value) => handleOtherAttributeChange(attributeName, value)}
+                attributeName={name}
+                options={options}
+                selectedValue={selection[key] || ""}
+                onChange={value => handleOtherAttributeChange(key, value)}
+                displayType={displayType}
               />
             </div>
           );

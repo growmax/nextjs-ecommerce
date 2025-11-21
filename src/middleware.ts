@@ -68,6 +68,43 @@ export async function middleware(request: NextRequest) {
   }
   const isAuthenticated = hasAccessToken(request);
 
+  // Bypass middleware for static files
+  // Handle manifest.json and static assets (images, fonts, etc.)
+  const staticFileExtensions = [
+    ".json",
+    ".png",
+    ".jpg",
+    ".jpeg",
+    ".webp",
+    ".svg",
+    ".gif",
+    ".ico",
+    ".woff",
+    ".woff2",
+    ".ttf",
+    ".eot",
+  ];
+
+  const isStaticFile = staticFileExtensions.some(ext => pathname.endsWith(ext));
+
+  if (isStaticFile) {
+    // If static file has locale prefix (e.g., /en/growmax-logo.png),
+    // rewrite to root path (e.g., /growmax-logo.png)
+    const localePattern = /^\/([a-z]{2}(-[A-Z]{2})?)\/(.+)$/;
+    const match = pathname.match(localePattern);
+
+    if (match) {
+      // Extract the file path after locale
+      const filePath = `/${match[2]}`;
+      // Rewrite to root path
+      const url = new URL(request.url);
+      url.pathname = filePath;
+      return NextResponse.rewrite(url);
+    }
+
+    return NextResponse.next();
+  }
+
   // Handle internationalization FIRST to ensure locale is in the pathname
   const intlResponse = intlMiddleware(request);
   const response = intlResponse || NextResponse.next();

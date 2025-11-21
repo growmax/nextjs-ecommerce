@@ -1,0 +1,23 @@
+{
+  "folders": [
+    {
+      "path": ".",
+    },
+    {
+      "path": "../e2e",
+    },
+    {
+      "path": "../../../../../Users/prak/Downloads/opensearch-main",
+    },
+  ],
+  "settings": {
+    "typescript.preferences.includePackageJsonAutoImports": "on",
+    "files.associations": {
+      "*.css": "tailwindcss",
+    },
+    "emmet.includeLanguages": {
+      "javascript": "javascriptreact",
+      "typescript": "typescriptreact",
+    },
+  },
+}

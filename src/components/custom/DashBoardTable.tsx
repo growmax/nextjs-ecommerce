@@ -84,7 +84,7 @@ const DashboardTable = <T,>({
   return (
     <div
       className={cn(
-        "border rounded-xl overflow-x-hidden flex flex-col w-full",
+        "border rounded-lg overflow-x-hidden flex flex-col w-full",
         tableHeight || ""
       )}
     >
@@ -109,7 +109,7 @@ const DashboardTable = <T,>({
           </div>
         )}
         <Table className="min-w-full table-auto">
-          <TableHeader className="bg-gray-100 sticky top-0 z-30 rounded-t-xl">
+          <TableHeader className="bg-gray-100 sticky top-0 z-30 rounded-t-lg">
             {table.getHeaderGroups().map((headerGroup: HeaderGroup<T>) => (
               <TableRow key={headerGroup.id}>
                 {headerGroup.headers.map((header: Header<T, unknown>) => {
@@ -229,7 +229,7 @@ const DashboardTable = <T,>({
           </TableBody>
         </Table>
       </div>
-      <div className="flex items-center justify-between px-4 py-2 border-t bg-background rounded-b-xl">
+      <div className="flex items-center justify-between px-4 py-2 border-t bg-background rounded-b-lg">
         <div className="flex items-center gap-2">
           <span className="text-xs lg:text-sm text-muted-foreground">
             {Math.min(page * rowPerPage + 1, totalDataCount)} -{" "}

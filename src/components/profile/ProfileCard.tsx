@@ -1,13 +1,13 @@
 "use client";
 
-import { ReactNode } from "react";
-import { User } from "lucide-react";
+import { FormField } from "@/components/forms/FormField";
+import { ImageUpload } from "@/components/forms/ImageUpload";
+import { PhoneInput } from "@/components/forms/PhoneInput";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
-import { FormField } from "@/components/forms/FormField";
-import { PhoneInput } from "@/components/forms/PhoneInput";
-import { ImageUpload } from "@/components/forms/ImageUpload";
+import { User } from "lucide-react";
+import { ReactNode } from "react";
 
 interface Profile {
   name: string;
@@ -51,7 +51,7 @@ export function ProfileCard({
         <CardContent className="space-y-6">
           {/* Avatar Skeleton */}
           <div className="flex justify-center sm:justify-start">
-            <Skeleton className="w-20 h-20 sm:w-28 sm:h-28 rounded-xl" />
+            <Skeleton className="w-20 h-20 sm:w-28 sm:h-28 rounded-lg" />
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">

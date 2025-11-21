@@ -5,16 +5,20 @@ import { useRouter } from "next/navigation";
 import useLogout from "./useLogout";
 
 // Mock the hooks and utility
-jest.mock("@/contexts/UserDetailsContext");
+jest.mock("@/contexts/UserDetailsContext", () => ({
+  useUserDetails: jest.fn(),
+}));
 jest.mock("next/navigation", () => ({
   useRouter: jest.fn(),
 }));
 jest.mock("@/lib/utils/navigation"); // Mock the redirectTo utility
 
 // Type assertion for the mocked hooks and utility
-const useUserDetailsMock = useUserDetails as jest.Mock;
-const useRouterMock = useRouter as jest.Mock;
-const redirectToMock = redirectTo as jest.Mock; // Mocked redirectTo
+const useUserDetailsMock = useUserDetails as jest.MockedFunction<
+  typeof useUserDetails
+>;
+const useRouterMock = useRouter as jest.MockedFunction<typeof useRouter>;
+const redirectToMock = redirectTo as jest.MockedFunction<typeof redirectTo>; // Mocked redirectTo
 
 describe("useLogout", () => {
   const mockLogout = jest.fn();
@@ -27,10 +31,15 @@ describe("useLogout", () => {
 
     useUserDetailsMock.mockReturnValue({
       logout: mockLogout,
-    });
+    } as any);
     useRouterMock.mockReturnValue({
       push: mockPush,
-    });
+      prefetch: jest.fn(),
+      back: jest.fn(),
+      forward: jest.fn(),
+      refresh: jest.fn(),
+      replace: jest.fn(),
+    } as any);
   });
 
   it("should redirect to '/' after successful logout", async () => {

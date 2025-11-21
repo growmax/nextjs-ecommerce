@@ -1,11 +1,11 @@
 "use client";
 
-import { useState } from "react";
-import { Upload, Plus } from "lucide-react";
-import Image from "next/image";
-import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+import { Plus, Upload } from "lucide-react";
+import Image from "next/image";
+import { useState } from "react";
 
 interface ImageUploadProps {
   currentImage?: string | null;
@@ -121,7 +121,7 @@ export function ImageUpload({
         <div
           className={cn(
             sizeClasses[size],
-            "rounded-xl bg-white flex items-center justify-center relative overflow-hidden border border-gray-200 hover:bg-accent/50 transition-colors shadow-sm cursor-pointer",
+            "rounded-lg bg-white flex items-center justify-center relative overflow-hidden border border-gray-200 hover:bg-accent/50 transition-colors shadow-sm cursor-pointer",
             disabled && "opacity-50 cursor-not-allowed"
           )}
         >
@@ -131,7 +131,7 @@ export function ImageUpload({
               alt={alt}
               width={112}
               height={112}
-              className="w-full h-full object-cover rounded-xl"
+              className="w-full h-full object-cover rounded-lg"
             />
           ) : (
             <div className="flex items-center justify-center">

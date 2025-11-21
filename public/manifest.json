@@ -1,0 +1,71 @@
+{
+  "name": "E-commerce Store",
+  "short_name": "E-commerce",
+  "description": "Multi-tenant e-commerce platform",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#1a1a1a",
+  "orientation": "any",
+  "lang": "en-US",
+  "dir": "auto",
+  "scope": "/",
+  "icons": [
+    {
+      "src": "/growmax-logo.png",
+      "sizes": "384x120",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/growmax-logo.webp",
+      "sizes": "384x120",
+      "type": "image/webp",
+      "purpose": "any"
+    },
+    {
+      "src": "/growmax-logo.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/growmax-logo.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "View Cart",
+      "short_name": "Cart",
+      "description": "View your shopping cart",
+      "url": "/checkout/cart",
+      "icons": [
+        {
+          "src": "/growmax-logo.png",
+          "sizes": "96x96",
+          "type": "image/png"
+        }
+      ]
+    },
+    {
+      "name": "Browse Products",
+      "short_name": "Products",
+      "description": "Browse all products",
+      "url": "/products",
+      "icons": [
+        {
+          "src": "/growmax-logo.png",
+          "sizes": "96x96",
+          "type": "image/png"
+        }
+      ]
+    }
+  ],
+  "categories": ["shopping", "ecommerce", "business"],
+  "screenshots": [],
+  "related_applications": [],
+  "prefer_related_applications": false
+}

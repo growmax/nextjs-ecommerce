@@ -2,6 +2,7 @@
 
 import CartServices from "@/lib/api/CartServices";
 import { ApiClientError } from "@/lib/api/client";
+import type { CartItem as CartItemType } from "@/types/calculation/cart";
 import React, {
   createContext,
   useCallback,
@@ -13,34 +14,26 @@ import React, {
 } from "react";
 import { toast } from "sonner";
 
-interface CartItem {
-  productId: number;
-  quantity: number;
-  replacement?: boolean;
-  showPrice?: boolean;
-  inventoryResponse?: {
-    inStock: boolean;
-  };
-  itemNo: string;
-  sellerId?: string;
-  productName?: string;
-  shortDescription?: string;
-  brandName?: string;
-  unitPrice?: number;
-  unitListPrice?: number;
-  discount?: number;
-  discountPercentage?: number;
-  [key: string]: unknown;
-}
+// Use the comprehensive CartItem type from types
+type CartItem = CartItemType;
 
 interface CartContextType {
   cart: CartItem[];
   cartCount: number;
   isLoading: boolean;
+  // Cart comments and attachments
+  cartComment: string;
+  cartAttachments: unknown[];
+  handleCartComment: (value: string) => void;
+  handleUploadCartAttachments: (attachments: unknown[]) => void;
+  // Cart operations
   getCart: () => Promise<void>;
   refreshCart: () => Promise<void>;
   setCart: React.Dispatch<React.SetStateAction<CartItem[]>>;
   updateCartCount: (count: number) => void;
+  // Local storage sync for guest cart
+  syncGuestCart: () => void;
+  clearGuestCart: () => void;
 }
 
 const CartContext = createContext<CartContextType | undefined>(undefined);
@@ -50,36 +43,113 @@ interface CartProviderProps {
   userId?: string | number | null;
 }
 
+// Local storage keys for guest cart
+const GUEST_CART_KEY = "CapacitorStorage.CartInfo";
+const GUEST_CART_KEY_ALT = "_cap_CartInfo";
+const CART_COMMENT_KEY = "cartComment";
+const CART_ATTACHMENTS_KEY = "cartAttachments";
+
 export function CartProvider({ children, userId }: CartProviderProps) {
   const [cart, setCart] = useState<CartItem[]>([]);
   const [cartCount, setCartCount] = useState(0);
   const [isLoading, setIsLoading] = useState(false);
 
-  const getCart = useCallback(async () => {
-    if (!userId) {
+  // Cart comments and attachments state
+  const [cartComment, setCartComment] = useState<string>(() => {
+    if (typeof window === "undefined") return "";
+    return localStorage.getItem(CART_COMMENT_KEY) || "";
+  });
+
+  const [cartAttachments, setCartAttachments] = useState<unknown[]>(() => {
+    if (typeof window === "undefined") return [];
+    try {
+      const stored = localStorage.getItem(CART_ATTACHMENTS_KEY);
+      return stored ? JSON.parse(stored) : [];
+    } catch {
+      return [];
+    }
+  });
+
+  // Handle cart comment updates
+  const handleCartComment = useCallback((value: string) => {
+    setCartComment(value);
+    if (typeof window !== "undefined") {
+      localStorage.setItem(CART_COMMENT_KEY, value);
+    }
+  }, []);
+
+  // Handle cart attachments updates
+  const handleUploadCartAttachments = useCallback((attachments: unknown[]) => {
+    const values = attachments || [];
+    setCartAttachments(values);
+    if (typeof window !== "undefined") {
+      localStorage.setItem(CART_ATTACHMENTS_KEY, JSON.stringify(values));
+    }
+  }, []);
+
+  // Sync guest cart from localStorage
+  const syncGuestCart = useCallback(() => {
+    if (typeof window === "undefined" || userId) return;
+
+    try {
+      const cartData =
+        localStorage.getItem(GUEST_CART_KEY) ||
+        localStorage.getItem(GUEST_CART_KEY_ALT) ||
+        JSON.stringify({ data: [] });
+      const parsedData = JSON.parse(cartData);
+      const guestCart: CartItem[] = parsedData?.data || [];
+      setCart(guestCart);
+      setCartCount(guestCart.length);
+    } catch (error) {
+      console.error("Error syncing guest cart:", error);
       setCart([]);
       setCartCount(0);
+    }
+  }, [userId]);
+
+  // Clear guest cart from localStorage
+  const clearGuestCart = useCallback(() => {
+    if (typeof window === "undefined") return;
+    localStorage.setItem(GUEST_CART_KEY, JSON.stringify({ data: [] }));
+    localStorage.setItem(GUEST_CART_KEY_ALT, JSON.stringify({ data: [] }));
+    setCart([]);
+    setCartCount(0);
+  }, []);
+
+  const getCart = useCallback(async () => {
+    if (!userId) {
+      // For guest users, load from localStorage
+      syncGuestCart();
       return;
     }
 
     try {
       setIsLoading(true);
-      const res = await CartServices.getCart(Number(userId));
+      const res = await CartServices.getCart({
+        userId: Number(userId),
+        useMultiSellerCart: true,
+      });
 
-      // Handle different possible response structures
+      // Handle different possible response structures (buyer-fe returns { data: { data: CartItem[] } })
       let cartData: CartItem[] = [];
 
       if (Array.isArray(res)) {
         // API returns cart items array directly
         cartData = res;
-      } else if (
-        res &&
-        typeof res === "object" &&
-        "data" in res &&
-        Array.isArray(res.data)
-      ) {
-        // API returns { data: CartItem[] }
-        cartData = res.data;
+      } else if (res && typeof res === "object" && "data" in res) {
+        // Handle nested data structure: { data: { data: CartItem[] } } or { data: CartItem[] }
+        const data = (res as { data: unknown }).data;
+        if (Array.isArray(data)) {
+          cartData = data;
+        } else if (
+          data &&
+          typeof data === "object" &&
+          "data" in data &&
+          Array.isArray((data as { data: unknown }).data)
+        ) {
+          // Nested structure: { data: { data: CartItem[] } }
+          cartData = (data as { data: CartItem[] }).data;
+        }
       } else if (
         res &&
         typeof res === "object" &&
@@ -88,8 +158,46 @@ export function CartProvider({ children, userId }: CartProviderProps) {
       ) {
         // Alternative structure: { cartItems: CartItem[] }
         cartData = res.cartItems;
-      } else {
       }
+
+      // Process bundle products (migrate from buyer-fe)
+      cartData = cartData.map(item => {
+        const processedItem = { ...item };
+        // Preserve seller information
+        if (item.sellerId || item.vendorId || item.partnerId) {
+          const sellerId = item.sellerId || item.vendorId || item.partnerId;
+          const sellerName =
+            item.sellerName || item.vendorName || item.partnerName;
+          const sellerLocation = item.sellerLocation || item.vendorLocation;
+
+          if (sellerId !== undefined) {
+            processedItem.sellerId = sellerId;
+          }
+          if (sellerName !== undefined) {
+            processedItem.sellerName = sellerName;
+          }
+          if (sellerLocation !== undefined) {
+            processedItem.sellerLocation = sellerLocation;
+          }
+        }
+        // Process bundle products
+        if (
+          item.bundleProducts &&
+          Array.isArray(item.bundleProducts) &&
+          item.bundleProducts.length > 0
+        ) {
+          processedItem.bundleProducts = item.bundleProducts.map(bp => {
+            const bundleSelected = bp.bundleSelected ?? bp.isBundleSelected_fe;
+            return {
+              ...bp,
+              ...(bundleSelected !== undefined
+                ? { isBundleSelected_fe: bundleSelected }
+                : {}),
+            };
+          });
+        }
+        return processedItem;
+      });
 
       setCart(cartData);
       setCartCount(cartData.length);
@@ -133,7 +241,7 @@ export function CartProvider({ children, userId }: CartProviderProps) {
     } finally {
       setIsLoading(false);
     }
-  }, [userId]);
+  }, [userId, syncGuestCart]);
 
   const refreshCart = useCallback(async () => {
     await getCart();
@@ -168,17 +276,43 @@ export function CartProvider({ children, userId }: CartProviderProps) {
     }
   }, [userId, getCart]);
 
+  // Load guest cart on mount if no userId
+  useEffect(() => {
+    if (!userId) {
+      syncGuestCart();
+    }
+  }, [userId, syncGuestCart]);
+
   const contextValue = useMemo(
     () => ({
       cart,
       cartCount,
       isLoading,
+      cartComment,
+      cartAttachments,
+      handleCartComment,
+      handleUploadCartAttachments,
       getCart,
       refreshCart,
       setCart,
       updateCartCount,
+      syncGuestCart,
+      clearGuestCart,
     }),
-    [cart, cartCount, isLoading, getCart, refreshCart, updateCartCount]
+    [
+      cart,
+      cartCount,
+      isLoading,
+      cartComment,
+      cartAttachments,
+      handleCartComment,
+      handleUploadCartAttachments,
+      getCart,
+      refreshCart,
+      updateCartCount,
+      syncGuestCart,
+      clearGuestCart,
+    ]
   );
 
   return (

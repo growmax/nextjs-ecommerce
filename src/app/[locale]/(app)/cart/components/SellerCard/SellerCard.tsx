@@ -1,4 +1,4 @@
-import ImageWithFallback from "@/components/ImageWithFallback";
+import CartProductCard from "@/components/cart/CartProductCard";
 import CartPriceDetails from "@/components/sales/CartPriceDetails";
 import {
   Accordion,
@@ -9,15 +9,8 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import {
-  AlertCircle,
-  ArrowLeft,
-  CheckCircle2,
-  Minus,
-  Package,
-  Plus,
-  Trash,
-} from "lucide-react";
+import { ArrowLeft, Package } from "lucide-react";
+import type { CartItem } from "@/types/calculation/cart";
 import CartSkeleton from "../CartSkeleton";
 interface CartProduct {
   productId: number;
@@ -201,8 +194,9 @@ export default function SellerCard({
           const sellerCart = sellerCarts[sellerId];
           const items = sellerCart?.items || [];
           const sellerName = sellerCart?.seller?.name || "Unknown Seller";
-          const sellerLocation =
-            String(items[0]?.sellerLocation || sellerCart?.seller?.location || "");
+          const sellerLocation = String(
+            items[0]?.sellerLocation || sellerCart?.seller?.location || ""
+          );
           const sellerPricing = sellerCart?.pricing;
           return (
             <div
@@ -239,205 +233,63 @@ export default function SellerCard({
                   <div className="flex flex-col lg:flex-row gap-6">
                     {/* Left side - Product List */}
                     <div className="flex-1 space-y-4">
-                      {items.map((product: CartProduct, index: number) => (
-                        <div
-                          key={product.productId || index}
-                          className="flex md:flex-row flex-col border rounded-lg overflow-hidden mb-3 bg-white"
-                        >
-                          {/* Image - full width on mobile, left side on desktop */}
-                          <div className="relative flex-shrink-0 w-full md:w-32 h-48 md:h-auto">
-                            <ImageWithFallback
-                              src={product.img}
-                              alt={
-                                product.productName ||
-                                product.shortDescription ||
-                                "Product"
-                              }
-                              width={100}
-                              height={120}
-                              objectFit="cover"
-                              className="h-full w-full object-cover"
-                            />
+                      {items.map((product: CartProduct, index: number) => {
+                        // Convert CartProduct to CartItem format
+                        const cartItem: CartItem = {
+                          productId: String(product.productId),
+                          itemNo: product.itemNo,
+                          quantity: product.quantity,
+                          unitPrice: product.unitPrice || 0,
+                          totalPrice:
+                            (product.unitPrice || 0) * product.quantity,
+                          unitListPrice: product.unitListPrice,
+                          discountPercentage:
+                            product.discountPercentage || product.discount,
+                          productName: product.productName,
+                          shortDescription: product.shortDescription,
+                          sellerId: product.sellerId,
+                          sellerName: sellerName,
+                          sellerLocation: sellerLocation,
+                          img: product.img,
+                          showPrice: product.showPrice,
+                          priceNotAvailable: !product.showPrice,
+                          packagingQuantity: product.packagingQuantity,
+                          minOrderQuantity: product.minOrderQuantity,
+                          replacement: product.replacement,
+                        } as CartItem;
+
+                        return (
+                          <div
+                            key={product.productId || index}
+                            className="relative"
+                          >
+                            {/* Inventory Badge */}
                             {product?.inventoryResponse?.inStock !== false ? (
-                              <Badge className="absolute top-2 left-6 bg-green-500 hover:bg-green-600 text-[8px] px-1.5 py-0.5">
-                                <CheckCircle2 className="h-3 w-3 mr-1" />
+                              <Badge className="absolute top-2 left-2 z-10 bg-green-500 hover:bg-green-600 text-[8px] px-1.5 py-0.5">
                                 In Stock
                               </Badge>
                             ) : (
-                              <Badge className="absolute top-2 left-6 bg-red-500 hover:bg-red-600 text-[8px] px-1.5 py-0.5">
-                                <AlertCircle className="h-3 w-3 mr-1" />
+                              <Badge className="absolute top-2 left-2 z-10 bg-red-500 hover:bg-red-600 text-[8px] px-1.5 py-0.5">
                                 Out of Stock
                               </Badge>
                             )}
+                            <CartProductCard
+                              item={cartItem}
+                              isPricingLoading={isPricingLoading}
+                              onUpdate={async quantity => {
+                                await onItemUpdate(product, quantity);
+                              }}
+                              onDelete={async () => {
+                                onItemDelete(
+                                  product.productId,
+                                  product.itemNo,
+                                  product.sellerId
+                                );
+                              }}
+                            />
                           </div>
-
-                          {/* Content wrapper - below image on mobile, right side on desktop */}
-                          <div className="flex-1 flex flex-col md:flex-row min-w-0">
-                            {/* Product details section */}
-                            <div className="flex-1 flex flex-col justify-between p-3 md:p-4 min-w-0">
-                              <div className="flex justify-between gap-2">
-                                <div className="flex flex-col gap-1 flex-1 min-w-0">
-                                  <h3 className="font-medium text-sm sm:text-base md:text-sm line-clamp-2 leading-tight">
-                                    {product.shortDescription ||
-                                      product.productName}
-                                  </h3>
-                                  <p className="text-xs md:text-sm text-gray-600 truncate">
-                                    {product.brandName} • {product.hsnCode}
-                                  </p>
-                                </div>
-                                {/* Delete button - mobile only, shown at top right */}
-                                <Button
-                                  className="md:hidden h-6 w-6 p-0 flex items-center justify-center bg-transparent text-black hover:bg-gray-100 rounded-lg border-0 flex-shrink-0"
-                                  onClick={() =>
-                                    onItemDelete(
-                                      product.productId,
-                                      product.itemNo,
-                                      product.sellerId
-                                    )
-                                  }
-                                  disabled={isLoading}
-                                >
-                                  <Trash className="h-4 w-4" />
-                                </Button>
-                              </div>
-
-                              {/* Bottom row: Quantity controls and Price (mobile only) */}
-                              <div className="flex items-center justify-between mt-3 md:hidden">
-                                {/* Quantity controls */}
-                                <div className="flex items-center gap-2.5">
-                                  <Button
-                                    className="h-8 w-8 p-0 flex items-center justify-center bg-white text-black hover:bg-gray-100 border border-gray-300 rounded-md flex-shrink-0"
-                                    onClick={() =>
-                                      onItemUpdate(
-                                        product,
-                                        Math.max(1, product.quantity - 1)
-                                      )
-                                    }
-                                    disabled={
-                                      isLoading || product.quantity <= 1
-                                    }
-                                  >
-                                    <Minus className="h-4 w-4" />
-                                  </Button>
-                                  <span className="text-base font-medium min-w-[24px] text-center">
-                                    {product.quantity}
-                                  </span>
-                                  <Button
-                                    className="h-8 w-8 p-0 flex items-center justify-center bg-white text-black hover:bg-gray-100 border border-gray-300 rounded-md flex-shrink-0"
-                                    onClick={() =>
-                                      onItemUpdate(
-                                        product,
-                                        product.quantity + 1
-                                      )
-                                    }
-                                    disabled={isLoading}
-                                  >
-                                    <Plus className="h-4 w-4" />
-                                  </Button>
-                                </div>
-
-                                {/* Price - mobile */}
-                                {isPricingLoading ? (
-                                  <div className="h-6 w-20 bg-gray-200 animate-pulse rounded"></div>
-                                ) : (
-                                  <div className="flex flex-col items-end">
-                                    <span className="text-[14px] font-semibold text-black whitespace-nowrap">
-                                      {currency?.currencyCode === "INR"
-                                        ? "₹"
-                                        : currency?.currencyCode || "₹"}
-                                      {product.unitPrice?.toFixed(2) ||
-                                        product.unitListPrice?.toFixed(2)}
-                                    </span>
-                                    <span className="text-[12px] font-medium text-[#2E7D32] whitespace-nowrap">
-                                      {product?.discount}% OFF
-                                    </span>
-                                    {(product.unitListPrice ?? 0) >
-                                      (product.unitPrice ?? 0) && (
-                                      <span className="text-[12px] text-gray-400 line-through whitespace-nowrap">
-                                        {currency?.currencyCode === "INR"
-                                          ? "₹"
-                                          : currency?.currencyCode || "₹"}
-                                        {product.unitListPrice?.toFixed(2)}
-                                      </span>
-                                    )}
-                                  </div>
-                                )}
-                              </div>
-
-                              {/* Quantity controls - desktop only */}
-                              <div className="hidden md:flex items-center gap-2 mt-2">
-                                <Button
-                                  className="h-11 w-11 p-0 flex items-center justify-center bg-white text-black hover:bg-gray-100 border border-gray-300 rounded-lg flex-shrink-0"
-                                  onClick={() =>
-                                    onItemUpdate(
-                                      product,
-                                      Math.max(1, product.quantity - 1)
-                                    )
-                                  }
-                                  disabled={isLoading || product.quantity <= 1}
-                                >
-                                  <Minus className="h-4 w-4" />
-                                </Button>
-                                <span className="text-base font-medium min-w-[24px] text-center">
-                                  {product.quantity}
-                                </span>
-                                <Button
-                                  className="h-11 w-11 p-0 flex items-center justify-center bg-white text-black hover:bg-gray-100 border border-gray-300 rounded-lg flex-shrink-0"
-                                  onClick={() =>
-                                    onItemUpdate(product, product.quantity + 1)
-                                  }
-                                  disabled={isLoading}
-                                >
-                                  <Plus className="h-4 w-4" />
-                                </Button>
-                              </div>
-                            </div>
-
-                            {/* Right section: Delete button and Price - desktop only */}
-                            <div className="hidden md:flex flex-col justify-between items-end p-2.5 sm:p-4 flex-shrink-0">
-                              <Button
-                                className="h-6 w-6 sm:h-7 sm:w-7 p-0 flex items-center justify-center bg-transparent text-black hover:bg-gray-100 rounded-lg border-0"
-                                onClick={() =>
-                                  onItemDelete(
-                                    product.productId,
-                                    product.itemNo,
-                                    product.sellerId
-                                  )
-                                }
-                                disabled={isLoading}
-                              >
-                                <Trash className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
-                              </Button>
-
-                              {isPricingLoading ? (
-                                <div className="h-5 sm:h-7 w-16 sm:w-24 bg-gray-200 animate-pulse rounded"></div>
-                              ) : (
-                                <div className="flex flex-col items-end gap-1">
-                                  <span className="text-lg sm:text-base md:text-sm font-semibold text-black whitespace-nowrap mr-1">
-                                    {currency?.currencyCode === "INR"
-                                      ? "₹"
-                                      : currency?.currencyCode || "₹"}
-                                    {product.unitPrice?.toFixed(2) ||
-                                      product.unitListPrice?.toFixed(2)}
-                                  </span>
-                                  <span className="text-[12px] font-medium text-[#2E7D32] whitespace-nowrap mr-1.5">
-                                    {product?.discount}% OFF
-                                  </span>
-                                  {(product.unitListPrice ?? 0) >
-                                    (product.unitPrice ?? 0) && (
-                                    <span className="text-lg sm:text-base md:text-sm text-gray-400 line-through whitespace-nowrap mt-0.5">
-                                      {currency?.currencyCode === "INR"
-                                        ? "₹"
-                                        : currency?.currencyCode || "₹"}
-                                      {product.unitListPrice?.toFixed(2)}
-                                    </span>
-                                  )}
-                                </div>
-                              )}
-                            </div>
-                          </div>
-                        </div>
-                      ))}
+                        );
+                      })}
                     </div>
 
                     {/* Right side - Price Details and Actions */}

@@ -1,9 +1,6 @@
 import { find, groupBy } from "lodash";
-import {
-  cartCalculation,
-  discountDetails,
-  VolumeDiscountCalculation,
-} from "../cartCalculation";
+import { cartCalculation, VolumeDiscountCalculation } from "../cartCalculation";
+import { processDiscountDetails } from "../product-utils";
 
 export const groupCartItemsBySeller = (cartItems: any, _debugMode = true) => {
   if (!cartItems || cartItems.length === 0) {
@@ -11,7 +8,8 @@ export const groupCartItemsBySeller = (cartItems: any, _debugMode = true) => {
   }
 
   const groupedItems = groupBy(cartItems, (item: any) => {
-    const groupKey = item.sellerId;
+    // Group by sellerId, vendorId, or "no-seller" if neither exists
+    const groupKey = item.sellerId || item.vendorId || "no-seller";
     return groupKey;
   });
 
@@ -60,7 +58,7 @@ export const calculateSellerCartPricing = (
   insuranceCharges = 0,
   precision = 2,
   Settings: any = {},
-  isSeller = false,
+  _isSeller = false,
   taxExemption = false
 ) => {
   if (!sellerItems || sellerItems.length === 0) {
@@ -82,9 +80,9 @@ export const calculateSellerCartPricing = (
   }
 
   // Apply discount details processing
-  const processedItems = discountDetails(
+  // Use processDiscountDetails (TypeScript version) instead of discountDetails (JS version)
+  const processedItems = processDiscountDetails(
     sellerItems,
-    isSeller,
     taxExemption,
     precision
   );
@@ -119,7 +117,7 @@ export const calculateAllSellerCartPricing = (
     insuranceCharges = 0,
     precision = 2,
     Settings = {},
-    isSeller = false,
+    isSeller: _isSellerParam = false,
     taxExemption = false,
   } = calculationParams;
 
@@ -133,7 +131,7 @@ export const calculateAllSellerCartPricing = (
       insuranceCharges,
       precision,
       Settings,
-      isSeller,
+      _isSellerParam,
       taxExemption
     );
 
@@ -309,24 +307,20 @@ export const applyVolumeDiscountsToSellerCarts = (
 };
 
 /**
- * Finds the best matching pricing data for a product from multiple sources
+ * Finds the best matching pricing data for a product from discount service
  * @param {object} item - Cart item
- * @param {object} sellerPricingData - Seller-specific pricing data
- * @param {object} allSellerPricesData - All seller prices data (fallback)
+ * @param {object} sellerPricingData - Seller-specific pricing data from discount service
  * @returns {object | null} - Best matching pricing data or null
  */
 
-export const findBestPricingMatch = (
-  item: any,
-  sellerPricingData: any,
-  allSellerPricesData: any
-) => {
+export const findBestPricingMatch = (item: any, sellerPricingData: any) => {
   const productId = item.productId;
   const sellerId = item.sellerId;
   const vendorId = item.vendorId;
 
   const sellerIdentifiers = [sellerId, vendorId].filter(Boolean);
 
+  // Find seller-specific pricing (by sellerId or vendorId)
   for (const identifier of sellerIdentifiers) {
     if (sellerPricingData && sellerPricingData[identifier]) {
       const specificPricing = find(
@@ -343,65 +337,34 @@ export const findBestPricingMatch = (
     }
   }
 
-  if (allSellerPricesData) {
-    for (const identifier of sellerIdentifiers) {
-      if (allSellerPricesData[identifier]) {
-        const fallbackPricing = find(
-          allSellerPricesData[identifier],
-          price => String(price.ProductVariantId) === String(productId)
-        );
-        if (fallbackPricing) {
-          return {
-            ...fallbackPricing,
-            pricingSource: "getAllSellerPrices-exact",
-            matchedSellerId: identifier,
-          };
-        }
-      }
-    }
-
-    // Only use cross-seller pricing if not in strict mode
-    for (const [otherSellerId, prices] of Object.entries(allSellerPricesData)) {
-      const anyPricing = find(
-        prices as any,
-        price => String(price.ProductVariantId) === String(productId)
-      );
-      if (anyPricing) {
-        return {
-          ...anyPricing,
-          pricingSource: "getAllSellerPrices-cross-seller",
-          originalSellerIds: sellerIdentifiers,
-          actualSellerId: otherSellerId,
-        };
-      }
+  // If no seller-specific pricing found, try "no-seller-id" group
+  if (sellerPricingData && sellerPricingData["no-seller-id"]) {
+    const noSellerPricing = find(
+      sellerPricingData["no-seller-id"],
+      price => String(price.ProductVariantId) === String(productId)
+    );
+    if (noSellerPricing) {
+      return {
+        ...noSellerPricing,
+        pricingSource: "no-seller-id",
+        matchedSellerId: "no-seller-id",
+      };
     }
   }
+
   return null;
 };
 
 /**
- * Merges seller-specific pricing with getAllSellerPrices data
- * @param {object} sellerPricingData - Seller-specific pricing
- * @param {object} allSellerPricesData - All seller prices (fallback)
- * @returns {object} - Merged pricing data
+ * Merges seller-specific pricing data
+ * @param {object} sellerPricingData - Seller-specific pricing from discount service
+ * @returns {object} - Pricing data (no merging needed as all data comes from discount service)
+ * @deprecated This function is no longer needed as all pricing comes from discount service
  */
 
-export const mergeSellerPricing = (
-  sellerPricingData: any,
-  allSellerPricesData: any
-) => {
-  const mergedData = { ...sellerPricingData };
-
-  // Add any sellers from allSellerPrices that don't have specific pricing
-  if (allSellerPricesData) {
-    Object.keys(allSellerPricesData).forEach(sellerId => {
-      if (!mergedData[sellerId] || mergedData[sellerId].length === 0) {
-        mergedData[sellerId] = allSellerPricesData[sellerId];
-      }
-    });
-  }
-
-  return mergedData;
+export const mergeSellerPricing = (sellerPricingData: any) => {
+  // All pricing data comes from discount service, so no merging is needed
+  return { ...sellerPricingData };
 };
 
 /**
@@ -430,8 +393,7 @@ export const getPricingResolutionSummary = (sellerCarts: any) => {
     totalProducts: 0,
     pricingBySources: {
       "seller-specific": 0,
-      "getAllSellerPrices-exact": 0,
-      "getAllSellerPrices-cross-seller": 0,
+      "no-seller-id": 0,
       "no-pricing": 0,
     },
     productsWithoutPricing: [],

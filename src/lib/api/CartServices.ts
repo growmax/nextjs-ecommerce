@@ -25,7 +25,7 @@ export interface AddToCartRequest {
     productsId: number;
     productId: number;
     quantity: number;
-    itemNo: number;
+    itemNo?: number;
     pos: number;
     addBundle: boolean;
     sellerId?: number;
@@ -54,19 +54,56 @@ export interface DeleteCartRequest {
   itemNo: number;
   pos: number;
   productId: number;
-  sellerId: number;
+  sellerId?: number;
   tenantId: string | number;
   userId: number;
 }
 
+export interface AddMultipleItemsRequest {
+  userId: number;
+  tenantId: string;
+  body: Array<{
+    productsId: number;
+    productId: number;
+    quantity: number;
+    addBundle: boolean;
+    sellerId?: number;
+    sellerName?: string;
+    sellerLocation?: string;
+    price?: number;
+    itemNo?: number;
+    pos?: number;
+  }>;
+}
+
+export interface ClearCartBySellerRequest {
+  userId: number;
+  sellerId: number;
+  tenantId: string;
+}
+
+export interface GetCartRequest {
+  userId: number;
+  tenantId?: string;
+  useMultiSellerCart?: boolean;
+}
+
 export class CartService extends BaseService<CartService> {
   protected defaultClient = coreCommerceClient;
-  async getCart(params: number): Promise<unknown> {
-    return this.call(
-      `/carts?userId=${params}&find=ByUserId&pos=0`,
-      {}, // Empty body as per the original API route
-      "GET"
-    );
+  async getCart(params: number | GetCartRequest): Promise<unknown> {
+    // Support both legacy (number) and new (object) format
+    if (typeof params === "number") {
+      return this.call(
+        `/carts?userId=${params}&find=ByUserId&pos=0`,
+        {},
+        "GET"
+      );
+    }
+
+    const { userId } = params;
+    // Note: useMultiSellerCart flag is handled by backend automatically based on cart data structure
+    // The backend returns multi-seller cart when items have sellerId fields
+    return this.call(`/carts?userId=${userId}&find=ByUserId&pos=0`, {}, "GET");
   }
   async geBilling(params: cartBilling): Promise<unknown> {
     return this.call(
@@ -96,6 +133,10 @@ export class CartService extends BaseService<CartService> {
       "GET"
     );
   }
+  /**
+   * @deprecated Use DiscountService.getDiscount() instead. This method will be removed in a future version.
+   * getAllSellerPrice is no longer needed as discount service returns all sellers' pricing when sellerId is not provided.
+   */
   async getAllSellerPrice(
     params: SellerPrice & { body: unknown }
   ): Promise<unknown> {
@@ -125,10 +166,45 @@ export class CartService extends BaseService<CartService> {
   ): Promise<unknown> {
     const { userId, method = "PUT" } = params;
 
-    return this.callWith(`/carts?userId=${userId}&pos=0`, params.body, {
-      method: method as "POST" | "PUT" | "DELETE", // Support POST, PUT, and DELETE methods
-      client: coreCommerceClient, // Use coreCommerceClient for cart operations
+    console.log("🔷 [CartServices.postCart] Called with:", {
+      userId,
+      method,
+      tenantId: params.tenantId,
+      useMultiSellerCart: params.useMultiSellerCart,
+      body: params.body,
     });
+
+    // For DELETE method, use the specific delete endpoint pattern
+    if (method === "DELETE" && params.body && typeof params.body === "object") {
+      const body = params.body as {
+        productsId?: number;
+        productId?: number;
+        itemNo?: number;
+      };
+      if (body.productsId && body.itemNo) {
+        console.log("🗑️ [CartServices.postCart] Using DELETE endpoint");
+        return this.call(
+          `/carts/${userId}?productsId=${body.productsId}&itemNo=${body.itemNo}&pos=0`,
+          {},
+          "DELETE"
+        );
+      }
+    }
+
+    const endpoint = `/carts?userId=${userId}&pos=0`;
+    console.log("📡 [CartServices.postCart] Making API call:", {
+      endpoint,
+      method,
+      body: params.body,
+    });
+
+    const result = await this.callWith(endpoint, params.body, {
+      method: method as "POST" | "PUT", // POST and PUT use same endpoint
+      client: coreCommerceClient,
+    });
+
+    console.log("✅ [CartServices.postCart] API call completed:", result);
+    return result;
   }
   async deleteCart(params: DeleteCartRequest): Promise<unknown> {
     const { userId, tenantId, productId, itemNo, sellerId, pos } = params;
@@ -149,6 +225,35 @@ export class CartService extends BaseService<CartService> {
   async emptyCart(params: emptyCart): Promise<unknown> {
     return this.call(
       `/carts?userId=${params?.userId}&find=ByUserId&pos=0`,
+      {},
+      "DELETE"
+    );
+  }
+
+  /**
+   * Add multiple items to cart at once
+   * Endpoint: POST /carts/addMultipleProducts?userId={userId}&pos=0
+   */
+  async addMultipleItems(params: AddMultipleItemsRequest): Promise<unknown> {
+    const { userId, body } = params;
+    return this.callWith(
+      `/carts/addMultipleProducts?userId=${userId}&pos=0`,
+      body,
+      {
+        method: "POST",
+        client: coreCommerceClient,
+      }
+    );
+  }
+
+  /**
+   * Clear cart items for a specific seller
+   * Endpoint: DELETE /carts/clearCartBySeller?userId={userId}&sellerId={sellerId}
+   */
+  async clearCartBySeller(params: ClearCartBySellerRequest): Promise<unknown> {
+    const { userId, sellerId } = params;
+    return this.call(
+      `/carts/clearCartBySeller?userId=${userId}&sellerId=${sellerId}`,
       {},
       "DELETE"
     );

@@ -4,6 +4,7 @@ import { ColumnDef } from "@tanstack/react-table";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 
+import PricingFormat from "@/components/PricingFormat";
 import DashboardTable from "@/components/custom/DashBoardTable";
 import SideDrawer from "@/components/custom/sidedrawer";
 import FilterDrawer from "@/components/sales/FilterDrawer";
@@ -24,16 +25,12 @@ import ordersFilterService, {
   OrderFilter,
 } from "@/lib/api/services/OrdersFilterService/OrdersFilterService";
 import { type Order } from "@/types/dashboard/DasbordOrderstable/DashboardOrdersTable";
+import { getAccounting } from "@/utils/calculation/salesCalculation/salesCalculation";
 import { OrdersLandingTableProps } from "../../types/ordertypes";
 
 // Helper functions
 const formatDate = (date: string | null | undefined): string =>
   date ? new Date(date).toLocaleDateString() : "-";
-
-const formatCurrency = (
-  amount: number | null | undefined,
-  symbol?: string
-): string => `${symbol || "USD"} ${Number(amount || 0).toLocaleString()}`;
 
 const convertDateToString = (
   date: Date | string | null | undefined
@@ -203,11 +200,14 @@ function OrdersLandingTable({
         meta: {
           alignRight: true,
         },
-        cell: ({ row }) =>
-          formatCurrency(
-            row.original.subTotal,
-            row.original.currencySymbol?.symbol
-          ),
+        cell: ({ row }) => (
+          <PricingFormat
+            {...(row.original.currencySymbol && {
+              buyerCurrency: row.original.currencySymbol,
+            })}
+            value={row.original.subTotal || 0}
+          />
+        ),
       },
       {
         accessorKey: "taxableAmount",
@@ -216,11 +216,14 @@ function OrdersLandingTable({
         meta: {
           alignRight: true,
         },
-        cell: ({ row }) =>
-          formatCurrency(
-            row.original.taxableAmount,
-            row.original.currencySymbol?.symbol
-          ),
+        cell: ({ row }) => (
+          <PricingFormat
+            {...(row.original.currencySymbol && {
+              buyerCurrency: row.original.currencySymbol,
+            })}
+            value={row.original.taxableAmount || 0}
+          />
+        ),
       },
       {
         accessorKey: "grandTotal",
@@ -231,10 +234,12 @@ function OrdersLandingTable({
         },
         cell: ({ row }) => (
           <span className="font-semibold">
-            {formatCurrency(
-              row.original.grandTotal,
-              row.original.currencySymbol?.symbol
-            )}
+            <PricingFormat
+              {...(row.original.currencySymbol && {
+                buyerCurrency: row.original.currencySymbol,
+              })}
+              value={row.original.grandTotal || 0}
+            />
           </span>
         ),
       },
@@ -486,17 +491,20 @@ function OrdersLandingTable({
         "Last Modified Date": formatDate(order.lastUpdatedDate),
         "Account Name": order.sellerCompanyName || "-",
         "Total Items": order.itemcount || 0,
-        "Sub Total": formatCurrency(
-          order.subTotal,
-          order.currencySymbol?.symbol
+        "Sub Total": getAccounting(
+          order.currencySymbol || null,
+          order.subTotal || 0,
+          order.currencySymbol || undefined
         ),
-        "Taxable Amount": formatCurrency(
-          order.taxableAmount,
-          order.currencySymbol?.symbol
+        "Taxable Amount": getAccounting(
+          order.currencySymbol || null,
+          order.taxableAmount || 0,
+          order.currencySymbol || undefined
         ),
-        "Grand Total": formatCurrency(
-          order.grandTotal,
-          order.currencySymbol?.symbol
+        "Grand Total": getAccounting(
+          order.currencySymbol || null,
+          order.grandTotal || 0,
+          order.currencySymbol || undefined
         ),
         Status: order.updatedBuyerStatus || "-",
         "Required Date": formatDate(order.requiredDate),

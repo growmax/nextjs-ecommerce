@@ -54,6 +54,7 @@ export interface CartItem {
   BasePrice?: number;
   priceListCode?: string;
   plnErpCode?: string;
+  discountsList?: DiscountRange[]; // Array of quantity-based discount ranges from discount API
   packagingQuantity?: number;
   minOrderQuantity?: number;
   checkMOQ?: boolean;
@@ -98,15 +99,45 @@ export interface CartItem {
   overrideDiscount?: number;
   disc_prd_related_obj?: PriceListDiscountData;
   isApprovalRequired?: boolean;
+  // Replacement/Alternative product fields
+  replacement?: boolean;
+  alternativeProduct?: string | number;
+  // Product display fields
+  productName?: string;
+  shortDescription?: string;
+  brandName?: string;
+  brandsName?: string;
+  img?: string;
+  productAssetss?: Array<{
+    source: string;
+    isDefault?: boolean;
+  }>;
+  // Inventory fields
+  inventoryResponse?: {
+    inStock: boolean;
+  };
+  // Additional product metadata
+  id?: string | number;
+  partnerId?: string | number;
+  partnerName?: string;
   // Dynamic tax properties (added at runtime)
   [taxName: string]: any;
 }
 
 // Bundle product structure
 export interface BundleProduct {
+  productId?: number;
+  bundleProductsId?: number;
+  accessoryProductId?: number;
   unitListPrice: number;
   isBundleSelected_fe?: boolean;
   bundleSelected?: boolean;
+  isParentProduct?: boolean;
+  productName?: string;
+  shortDescription?: string;
+  img?: string;
+  // Additional bundle fields
+  [key: string]: any;
 }
 
 // Additional discount structure
@@ -116,10 +147,7 @@ export interface AdditionalDiscount {
 }
 
 // Pricing source tracking
-export type PricingSource =
-  | "seller-specific"
-  | "getAllSellerPrices-exact"
-  | "getAllSellerPrices-cross-seller";
+export type PricingSource = "seller-specific" | "no-seller-id" | "no-pricing";
 
 // Calculated cart value structure
 export interface CartValue {
