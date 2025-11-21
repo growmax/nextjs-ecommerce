@@ -12,7 +12,7 @@ import {
     getProductAvailability,
 } from "@/utils/product/product-formatter";
 import { Minus, Plus, ShoppingCart, Trash2 } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { toast } from "sonner";
 
 interface MobileCartActionProps {
@@ -24,19 +24,12 @@ const CartServices = new CartService();
 export default function MobileCartAction({ product }: MobileCartActionProps) {
   const [quantity, setQuantity] = useState(1);
   const [isAddingToCart, setIsAddingToCart] = useState(false);
-  const [isVisible, setIsVisible] = useState(false);
   const [showQuantity, setShowQuantity] = useState(false);
   const { user } = useCurrentUser();
   const { tenantData } = useTenantData();
   const router = useRouter();
 
   const availability = getProductAvailability(product);
-
-  useEffect(() => {
-    // Show the mobile cart action bar after a slight delay
-    const timer = setTimeout(() => setIsVisible(true), 300);
-    return () => clearTimeout(timer);
-  }, []);
 
   // Validation helper
   const validateBeforeAdd = (): "ok" | "login" | "unavailable" => {
@@ -139,9 +132,7 @@ export default function MobileCartAction({ product }: MobileCartActionProps) {
     <div
       className={cn(
         "fixed bottom-0 left-0 right-0 z-50 lg:hidden",
-        "bg-background/95 backdrop-blur-sm border-t shadow-lg",
-        "transition-transform duration-300 ease-in-out",
-        isVisible ? "translate-y-0" : "translate-y-full"
+        "bg-background/95 backdrop-blur-sm border-t shadow-lg"
       )}
     >
       <div className="container mx-auto px-4 py-4">
