@@ -1,10 +1,12 @@
 "use client";
 
-import { useState, useEffect, useCallback, useMemo } from "react";
-import { VariantData, VariantSelection } from "@/lib/api/services/VariantService";
-import variantService from "@/lib/api/services/VariantService";
+import variantService, {
+  VariantData,
+  VariantSelection,
+} from "@/lib/api/services/VariantService";
 import type { ProductDetail } from "@/types/product/product-detail";
-import { useSearchParams, useRouter, usePathname } from "next/navigation";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
+import { useCallback, useEffect, useMemo, useState } from "react";
 
 interface UseProductVariantsOptions {
   productGroupId: number;
@@ -19,17 +21,20 @@ interface UseProductVariantsOptions {
 interface UseProductVariantsReturn {
   // State
   variants: VariantData[];
-  variantGroups: Record<string, Array<{ value: string; count: number; hexCode?: string }>>;
+  variantGroups: Record<
+    string,
+    Array<{ value: string; count: number; hexCode?: string }>
+  >;
   selectedVariant: VariantData | null;
   selection: VariantSelection;
   isLoading: boolean;
   error: string | null;
-  
+
   // Actions
   setSelection: (selection: VariantSelection) => void;
   clearSelection: () => void;
   findVariantBySelection: (selection: VariantSelection) => VariantData | null;
-  
+
   // Computed
   hasVariants: boolean;
   selectedAttributes: Record<string, string>;
@@ -45,7 +50,7 @@ export function useProductVariants({
   const searchParams = useSearchParams();
   const router = useRouter();
   const pathname = usePathname();
-  
+
   // State
   const [variants, setVariants] = useState<VariantData[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -58,44 +63,44 @@ export function useProductVariants({
       try {
         setIsLoading(true);
         setError(null);
-        
-        console.log("Loading variants with params:", {
-          productGroupId,
-          elasticIndex,
-          context
-        });
-        
+
+        // Loading variants with params
+
         if (!productGroupId) {
           throw new Error("Missing productGroupId");
         }
-        
+
         if (!elasticIndex) {
           throw new Error("Missing elasticIndex");
         }
-        
+
         const variantData = await variantService.getVariantsByGroup(
           productGroupId,
           elasticIndex,
           context
         );
-        
-        console.log("Loaded variant data:", variantData.length, "variants");
+
+        // Loaded variant data
         setVariants(variantData);
-        
+
         // Initialize selection from URL params if available
         const urlSelection = getSelectionFromUrl(searchParams);
-        console.log("URL selection:", urlSelection);
-        
+
         if (urlSelection && variantData.length > 0) {
-          const matchingVariant = variantService.findVariantByAttributes(variantData, urlSelection);
-          console.log("Matching variant from URL:", matchingVariant);
+          const matchingVariant = variantService.findVariantByAttributes(
+            variantData,
+            urlSelection
+          );
           if (matchingVariant) {
             setSelectionState(urlSelection);
           }
         }
       } catch (err) {
         console.error("Failed to load variants:", err);
-        const errorMessage = err instanceof Error ? err.message : "Failed to load product variants";
+        const errorMessage =
+          err instanceof Error
+            ? err.message
+            : "Failed to load product variants";
         setError(errorMessage);
       } finally {
         setIsLoading(false);
@@ -123,28 +128,31 @@ export function useProductVariants({
   }, [variants, selection]);
 
   // Set selection and update URL
-  const setSelection = useCallback((newSelection: VariantSelection) => {
-    setSelectionState(newSelection);
-    
-    // Update URL parameters using Next.js router (no page reload)
-    const params = new URLSearchParams(searchParams.toString());
-    
-    // Clear existing variant params
-    ["color", "size", "material", "style", "pattern"].forEach(param => {
-      params.delete(param);
-    });
-    
-    // Add new selection to URL
-    Object.entries(newSelection).forEach(([key, value]) => {
-      if (value) {
-        params.set(key.toLowerCase(), value);
-      }
-    });
-    
-    // Update URL without page reload
-    const newUrl = `${pathname}${params.toString() ? `?${params.toString()}` : ""}`;
-    router.replace(newUrl, { scroll: false });
-  }, [searchParams, pathname, router]);
+  const setSelection = useCallback(
+    (newSelection: VariantSelection) => {
+      setSelectionState(newSelection);
+
+      // Update URL parameters using Next.js router (no page reload)
+      const params = new URLSearchParams(searchParams.toString());
+
+      // Clear existing variant params
+      ["color", "size", "material", "style", "pattern"].forEach(param => {
+        params.delete(param);
+      });
+
+      // Add new selection to URL
+      Object.entries(newSelection).forEach(([key, value]) => {
+        if (value) {
+          params.set(key.toLowerCase(), value);
+        }
+      });
+
+      // Update URL without page reload
+      const newUrl = `${pathname}${params.toString() ? `?${params.toString()}` : ""}`;
+      router.replace(newUrl, { scroll: false });
+    },
+    [searchParams, pathname, router]
+  );
 
   // Clear selection
   const clearSelection = useCallback(() => {
@@ -152,9 +160,12 @@ export function useProductVariants({
   }, [setSelection]);
 
   // Find variant by selection
-  const findVariantBySelection = useCallback((selectionToFind: VariantSelection) => {
-    return variantService.findVariantByAttributes(variants, selectionToFind);
-  }, [variants]);
+  const findVariantBySelection = useCallback(
+    (selectionToFind: VariantSelection) => {
+      return variantService.findVariantByAttributes(variants, selectionToFind);
+    },
+    [variants]
+  );
 
   // Computed values
   const hasVariants = variants.length > 1; // More than just the base product
@@ -180,12 +191,12 @@ export function useProductVariants({
     selection,
     isLoading,
     error,
-    
+
     // Actions
     setSelection,
     clearSelection,
     findVariantBySelection,
-    
+
     // Computed
     hasVariants,
     selectedAttributes,
@@ -196,17 +207,17 @@ export function useProductVariants({
 // Helper function to extract selection from URL parameters
 function getSelectionFromUrl(searchParams: URLSearchParams): VariantSelection {
   const selection: VariantSelection = {};
-  
+
   // Common variant parameters
   const variantParams = ["color", "size", "material", "style", "pattern"];
-  
+
   variantParams.forEach(param => {
     const value = searchParams.get(param);
     if (value) {
       selection[param] = value;
     }
   });
-  
+
   return selection;
 }
 

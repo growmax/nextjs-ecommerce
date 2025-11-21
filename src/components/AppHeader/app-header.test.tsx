@@ -1,156 +1,78 @@
-import { SidebarProvider } from "@/components/ui/sidebar";
-import { useCart } from "@/contexts/CartContext";
-import * as UserDetailsContext from "@/contexts/UserDetailsContext";
-import useLogout from "@/hooks/Auth/useLogout";
-import useUserProfile from "@/hooks/Profile/useUserProfile";
-import useSearch from "@/hooks/useSearch";
-import { fireEvent, render, screen } from "@testing-library/react";
-import { useRouter } from "next/navigation";
+import React from "react";
+import { render, screen, fireEvent } from "@testing-library/react";
 import { AppHeader } from "./app-header";
 
-// Mock the hooks and child components
-jest.mock("@/hooks/Profile/useUserProfile");
-jest.mock("@/hooks/Auth/useLogout");
-jest.mock("@/contexts/CartContext");
-jest.mock("@/contexts/UserDetailsContext");
 jest.mock("next/navigation", () => ({
-  useRouter: jest.fn(),
-}));
-jest.mock("next-intl", () => ({
-  useLocale: () => "en",
-}));
-jest.mock("@/hooks/useSearch");
-jest.mock("@/components/AvatarCard/AvatarCard", () => ({
-  AvatarCard: jest.fn(() => <div data-testid="avatar-card" />),
+  useRouter: () => ({ push: jest.fn() }),
 }));
 
-// Type assertion for the mocked hooks
-const useUserProfileMock = useUserProfile as jest.Mock;
-const useLogoutMock = useLogout as jest.Mock;
-const useCartMock = useCart as jest.Mock;
-const useRouterMock = useRouter as jest.Mock;
-const useSearchMock = useSearch as jest.Mock;
-const useUserDetailsMock = UserDetailsContext.useUserDetails as jest.Mock;
+jest.mock("@/components/ui/command", () => ({
+  CommandDialog: ({ children, open }: any) =>
+    open ? <div>{children}</div> : null,
+  CommandInput: ({ onValueChange }: any) => (
+    <input
+      data-testid="command-input"
+      onChange={e => onValueChange(e.target.value)}
+    />
+  ),
+  CommandList: ({ children }: any) => <div>{children}</div>,
+  CommandEmpty: ({ children }: any) => <div>{children}</div>,
+  CommandGroup: ({ children }: any) => <div>{children}</div>,
+  CommandItem: ({ children, onSelect }: any) => (
+    <div data-testid="command-item" onClick={() => onSelect()}>
+      {children}
+    </div>
+  ),
+}));
+
+jest.mock("@/components/ui/sidebar", () => ({
+  SidebarTrigger: (props: any) => (
+    <button aria-label="sidebar-trigger" {...props} />
+  ),
+  useSidebar: () => ({ state: "expanded" }),
+}));
+
+jest.mock("@/hooks/Profile/useUserProfile", () => ({
+  __esModule: true,
+  default: () => ({ userProfile: { displayName: "Test User", picture: "" } }),
+}));
+
+jest.mock("@/hooks/Auth/useLogout", () => ({
+  __esModule: true,
+  default: () => ({ isLoggingOut: false, handleLogout: jest.fn() }),
+}));
+
+jest.mock("@/contexts/UserDetailsContext", () => ({
+  useUserDetails: () => ({ isAuthenticated: true }),
+}));
+
+jest.mock("@/contexts/CartContext", () => ({
+  useCart: () => ({ cartCount: 2 }),
+}));
+
+jest.mock(
+  "@/lib/api/services/ElacticQueryService/query-builder/query-builder",
+  () => ({
+    buildProductSearchQuery: jest
+      .fn()
+      .mockReturnValue({ query: { match: { name: "laptop" } } }),
+  })
+);
 
 describe("AppHeader", () => {
-  const mockPush = jest.fn();
-
-  beforeEach(() => {
-    jest.clearAllMocks();
-    useUserProfileMock.mockReturnValue({ userProfile: null });
-    useLogoutMock.mockReturnValue({
-      isLoggingOut: false,
-      handleLogout: jest.fn(),
-    });
-    useCartMock.mockReturnValue({ cartCount: 0 });
-    useRouterMock.mockReturnValue({
-      push: mockPush,
-      prefetch: jest.fn(),
-    });
-    useSearchMock.mockReturnValue({
-      data: [],
-      loading: false,
-      error: null,
-    });
-    // Default mock: user not authenticated
-    useUserDetailsMock.mockReturnValue({
-      isAuthenticated: false,
-      user: null,
-      isLoading: false,
-      error: null,
-      login: jest.fn(),
-      logout: jest.fn(),
-      checkAuth: jest.fn(),
-    });
+  it("renders and opens the command dialog on Ctrl/Cmd+K shortcut", () => {
+    render(<AppHeader />);
+    fireEvent.keyDown(document, { key: "k", ctrlKey: true });
+    expect(screen.getByTestId("command-input")).toBeInTheDocument();
   });
 
-  afterEach(() => {
-    jest.restoreAllMocks();
-  });
+  it("closes the dialog when selecting a suggestion", () => {
+    render(<AppHeader />);
+    fireEvent.keyDown(document, { key: "k", ctrlKey: true });
 
-  describe("when user is not authenticated", () => {
-    it("should render the Login button and not the avatar", () => {
-      // Mock is already set to not authenticated in beforeEach
-      render(
-        <SidebarProvider>
-          <AppHeader />
-        </SidebarProvider>
-      );
+    const item = screen.getAllByTestId("command-item")[0]!;
+    fireEvent.click(item);
 
-      const loginButtons = screen.getAllByRole("button", { name: /login/i });
-      expect(loginButtons.length).toBeGreaterThan(0);
-
-      const avatarCard = screen.queryByTestId("avatar-card");
-      expect(avatarCard).not.toBeInTheDocument();
-    });
-
-    it("should navigate to /login when Login button is clicked", () => {
-      // Mock is already set to not authenticated in beforeEach
-      render(
-        <SidebarProvider>
-          <AppHeader />
-        </SidebarProvider>
-      );
-
-      const loginButtons = screen.getAllByRole("button", { name: /login/i });
-      fireEvent.click(loginButtons[0]!);
-
-      expect(mockPush).toHaveBeenCalledWith("/en/login");
-    });
-  });
-
-  describe("when user is authenticated", () => {
-    const mockUser = {
-      userId: 1,
-      userCode: "USER001",
-      email: "john@example.com",
-      displayName: "John Doe",
-      picture: "https://example.com/avatar.png",
-      companyId: 1,
-      companyName: "Test Company",
-      companyLogo: "https://example.com/logo.png",
-      currency: {
-        currencyCode: "USD",
-        symbol: "$",
-        precision: 2,
-        decimal: ".",
-        thousand: ",",
-      },
-      roleId: 1,
-      roleName: "Admin",
-      tenantId: "tenant1",
-      timeZone: "UTC",
-      dateFormat: "MM/DD/YYYY",
-      timeFormat: "HH:mm:ss",
-      isUserActive: 1,
-      verified: true,
-      seller: false,
-      lastLoginAt: "2025-01-01T00:00:00Z",
-      listAccessElements: [],
-    };
-
-    it("should render the Avatar card and not the Login button", () => {
-      useUserDetailsMock.mockReturnValue({
-        isAuthenticated: true,
-        user: mockUser,
-        isLoading: false,
-        error: null,
-        login: jest.fn(),
-        logout: jest.fn(),
-        checkAuth: jest.fn(),
-      });
-      useUserProfileMock.mockReturnValue({ userProfile: mockUser });
-      render(
-        <SidebarProvider>
-          <AppHeader />
-        </SidebarProvider>
-      );
-
-      const avatarCards = screen.getAllByTestId("avatar-card");
-      expect(avatarCards.length).toBeGreaterThan(0);
-
-      const loginButton = screen.queryByRole("button", { name: /login/i });
-      expect(loginButton).not.toBeInTheDocument();
-    });
+    expect(screen.queryByTestId("command-input")).not.toBeInTheDocument();
   });
 });

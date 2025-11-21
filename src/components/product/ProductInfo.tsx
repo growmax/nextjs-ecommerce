@@ -29,7 +29,7 @@ interface ProductInfoProps {
 
 export default function ProductInfo({ product }: ProductInfoProps) {
   const availability = getProductAvailability(product);
-  console.log(product);
+  // product data available for rendering
 
   return (
     <div className="space-y-8">
@@ -75,9 +75,7 @@ export default function ProductInfo({ product }: ProductInfoProps) {
       </div>
 
       {/* Stock Status Badge - Client Component for Variant Updates */}
-      <VariantInventoryUpdater
-        baseInventory={product.inventory || []}
-      />
+      <VariantInventoryUpdater baseInventory={product.inventory || []} />
 
       {/* Price Section - Client Component for Variant Updates */}
       <VariantPriceUpdater

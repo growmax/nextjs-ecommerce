@@ -54,12 +54,7 @@ export class VariantService extends BaseService<VariantService> {
     context?: RequestContext
   ): Promise<VariantData[]> {
     try {
-      console.log(
-        "Fetching variants for group:",
-        productGroupId,
-        "index:",
-        elasticIndex
-      );
+      // Fetching variants for group
 
       const body = {
         Elasticindex: elasticIndex,
@@ -86,7 +81,7 @@ export class VariantService extends BaseService<VariantService> {
         queryType: "search",
       };
 
-      console.log("Request body:", body);
+      // Request body prepared for opensearch
 
       const options: { method: "POST"; context?: RequestContext } = {
         method: "POST",
@@ -94,13 +89,13 @@ export class VariantService extends BaseService<VariantService> {
       if (context) options.context = context;
 
       const response = await this.callWith("", body, options);
-      console.log("OpenSearch response:", response);
+      // OpenSearch response received
 
       const products = extractOpenSearchHits<ProductDetail>(response) || [];
-      console.log("Extracted products:", products.length);
+      // Extracted products count
 
       const variantData = products.map(this.transformToVariantData);
-      console.log("Transformed variants:", variantData.length);
+      // Transformed variants count
 
       return variantData;
     } catch (error) {

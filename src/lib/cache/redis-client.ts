@@ -1,4 +1,6 @@
-import Redis from "ioredis";
+// "use server";
+
+import type Redis from "ioredis";
 
 let redisClient: Redis | null = null;
 
@@ -18,7 +20,15 @@ export function getRedisClient(): Redis | null {
   try {
     const redisUrl = process.env.REDIS_URL || "redis://localhost:6379";
 
-    redisClient = new Redis(redisUrl, {
+    // Import ioredis at runtime on the server only to avoid bundlers
+    // pulling Node-only modules into client builds.
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
+    const IORedis = require("ioredis");
+    const RedisCtor = (IORedis && IORedis.default) || IORedis;
+
+    // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+    // @ts-ignore - runtime constructor from require
+    redisClient = new RedisCtor(redisUrl, {
       maxRetriesPerRequest: 3,
       retryStrategy: (times: number) => {
         if (times > 3) {
@@ -29,15 +39,20 @@ export function getRedisClient(): Redis | null {
       lazyConnect: true,
     });
 
-    redisClient.on("error", () => {});
+    const client = redisClient as any;
+    if (client) {
+      client.on("error", () => {});
+      client.on("connect", () => {});
 
-    redisClient.on("connect", () => {});
+      // Connect in background; if it fails, null out the client
+      // Note: connect() returns a Promise
+      void client.connect().catch(() => {
+        // If connection fails, drop the client so subsequent calls can retry
+        redisClient = null;
+      });
+    }
 
-    redisClient.connect().catch(() => {
-      redisClient = null;
-    });
-
-    return redisClient;
+    return client;
   } catch {
     return null;
   }

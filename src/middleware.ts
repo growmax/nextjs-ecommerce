@@ -42,6 +42,30 @@ const intlMiddleware = createIntlMiddleware({
 export async function middleware(request: NextRequest) {
   const domain = getDomain(request.headers.get("host") || "localhost:3000");
   const pathname = request.nextUrl.pathname;
+
+  // If the request targets a public/static asset (possibly with a locale prefix)
+  // rewrite locale-prefixed asset requests to the non-prefixed path so Next.js
+  // can serve the file from `public/` (e.g. `/en/asset/foo` -> `/asset/foo`).
+  const pathWithoutLocale =
+    pathname.replace(/^\/[a-z]{2}(-[A-Z]{2})?/, "") || "/";
+
+  // For asset and images, rewrite to the unprefixed path so static serving works
+  if (
+    pathWithoutLocale.startsWith("/asset") ||
+    pathWithoutLocale.startsWith("/images")
+  ) {
+    const targetUrl = new URL(pathWithoutLocale, request.url);
+    return NextResponse.rewrite(targetUrl);
+  }
+
+  // For Next internals, API and favicon, just pass through
+  if (
+    pathWithoutLocale.startsWith("/_next") ||
+    pathWithoutLocale.startsWith("/api") ||
+    pathname === "/favicon.ico"
+  ) {
+    return NextResponse.next();
+  }
   const isAuthenticated = hasAccessToken(request);
 
   // Handle internationalization FIRST to ensure locale is in the pathname
@@ -101,5 +125,7 @@ export async function middleware(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ["/((?!api|_next/static|_next/image|favicon.ico).*)"],
+  // Exclude API routes, Next internals and static/public asset paths from middleware
+  // so they are served directly and not rewritten with locale prefixes.
+  matcher: ["/((?!api|_next/static|_next/image|favicon.ico|asset|images).*)"],
 };
