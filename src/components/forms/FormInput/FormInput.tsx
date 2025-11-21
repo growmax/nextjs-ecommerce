@@ -28,7 +28,7 @@ const FormInput = ({
   placeholder,
   disabled = false,
   loading = false,
-  required = false,
+  required: _required = false,
   rules = {},
 }: FormInputProps) => {
   return (

@@ -13,7 +13,7 @@ import { Label } from "@/components/ui/label";
 import { Shield } from "lucide-react";
 import { useState } from "react";
 
-interface OTPDialogProps {
+export interface OTPDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onVerify: (otp: string) => Promise<void>;

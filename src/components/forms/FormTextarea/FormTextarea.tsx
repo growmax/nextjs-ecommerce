@@ -26,7 +26,7 @@ const FormTextarea = ({
   placeholder,
   disabled = false,
   loading = false,
-  required = false,
+  required: _required = false,
 }: FormTextareaProps) => {
   return (
     <FormField

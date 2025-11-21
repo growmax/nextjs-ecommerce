@@ -33,7 +33,7 @@ export default function ProfilePageClient() {
     loadProfile,
     loadPreferences,
   } = useProfileData();
-   const {user}=useCurrentUser();
+   const {user,sub1}=useCurrentUser();
    const defaultCountryCallingCode = user?.defaultCountryCallingCode || "";
    const userId = user?.userId;
   const [isSaving, setIsSaving] = useState(false);
@@ -47,6 +47,7 @@ export default function ProfilePageClient() {
   const tenantId = tenantInfo?.tenantCode;
   const { isAuthenticated } = useUserDetails();
   const [sub, setSub] = useState<string | null>(null);
+  const [companyId, setCompanyId] = useState<number | null>(null);
   useEffect(() => {
     if (isAuthenticated) {
       const token = AuthStorage.getAccessToken();
@@ -54,9 +55,11 @@ export default function ProfilePageClient() {
         const jwtService = JWTService.getInstance();
         const payload = jwtService.decodeToken(token);
         setSub(payload?.sub || null);
+        setCompanyId(payload?.companyId || null);
       }
     } else {
       setSub(null);
+      setCompanyId(null);
     }
   }, [isAuthenticated]);
   // Unified change tracking
@@ -358,6 +361,11 @@ export default function ProfilePageClient() {
             phoneVerified={phoneVerified}
             isLoading={isSaving}
             dataLoading={dataLoading}
+            folderName={
+              companyId && sub1
+                ? `app_assets/company_images/${companyId}/profile/${sub1}`
+                : undefined
+            }
             headerActions={
               <Button
                 variant="outline"

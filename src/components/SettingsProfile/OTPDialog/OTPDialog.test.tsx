@@ -69,7 +69,7 @@ const defaultProps = {
 };
 
 // Create a test wrapper that manages OTP state
-const OTPDialogWrapper = (props: Omit<typeof defaultProps, "otp" | "setOtp">) => {
+const OTPDialogWrapper = (props: Omit<import("./OTPDialog").OTPDialogProps, "otp" | "setOtp">) => {
   const React = require("react");
   const [otp, setOtp] = React.useState("");
   return React.createElement(OTPDialog, { ...props, otp, setOtp });

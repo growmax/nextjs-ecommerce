@@ -118,7 +118,7 @@ describe("ImageUpload component", () => {
 
     fireEvent.change(input, { target: { files: [bigFile] } });
 
-    expect(screen.getByText(/File size must be less than/)).toBeTruthy();
+    expect(screen.getByText(/Maximum file size of/)).toBeTruthy();
     expect(onImageChange).not.toHaveBeenCalled();
   });
 

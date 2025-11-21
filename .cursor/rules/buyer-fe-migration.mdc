@@ -1,0 +1,420 @@
+---
+alwaysApply: true
+description: >
+  Migration guide for rewriting buyer-fe features into nextjs-ecommerce.
+  Focus on extracting business logic while adapting to new architecture:
+  MUI→Shadcn/Tailwind, Context→TanStack Query, API Routes→Direct Server Calls.
+rules:
+
+- id: buyer-fe-reference-mandatory
+  description: >
+    ALWAYS reference buyer-fe codebase when implementing any feature or functionality.
+  details: |
+    • **MANDATORY FIRST STEP**: When asked to implement ANY feature, component, API route, or functionality:
+      1. Search buyer-fe codebase (`/Volumes/Work/Growmax-GitHub/Growmax/e2e/buyer-fe`) for existing implementation
+      2. **Extract business logic** - Understand calculations, validations, workflows
+      3. **Identify UI components** - Note MUI components used
+      4. **Identify state management** - Note Context usage, SWR hooks, local state
+      5. **Identify API calls** - Note API routes and data fetching patterns
+      6. Document the existing implementation approach
+    
+    • **Reference Path**: Always check `/Volumes/Work/Growmax-GitHub/Growmax/e2e/buyer-fe` first
+    
+    • **Search Strategy**:
+      - Use semantic search to find related functionality
+      - Check `pages/` for API routes and page components
+      - Check `src/components/` for React components
+      - Check `src/hooks/` for custom hooks (especially SWR-based)
+      - Check `src/context/` for Context providers
+      - Check `src/utils/` for utility functions and business logic
+      - Check `lib/` for server-side utilities
+
+- id: business-logic-extraction
+  description: >
+    Extract and preserve ALL business logic from buyer-fe, regardless of architecture changes.
+  details: |
+    • **Business Logic is Sacred**: 
+      - **Cart calculations** (discounts, taxes, shipping) must remain identical
+      - **Validation rules** (forms, inputs, business rules) must match exactly
+      - **Workflow logic** (order placement, quote creation, payment processing) must function the same
+      - **Data transformations** (formatting, calculations, aggregations) must produce same results
+      - **Multi-tenant logic** (tenant resolution, config handling) must be maintained
+      - **Error handling patterns** (what errors are shown, when) should match
+    
+    • **What to Extract**:
+      - Calculation functions (pricing, discounts, taxes)
+      - Validation schemas and rules
+      - Data transformation logic
+      - Business rule implementations
+      - Workflow state machines
+      - Error message logic
+    
+    • **How to Extract**:
+      1. Find the business logic in buyer-fe (often in utils, hooks, or components)
+      2. Copy the logic (not the implementation details)
+      3. Convert to TypeScript with proper types
+      4. Place in appropriate location (`src/utils/[feature]/` or `src/lib/[feature]/`)
+      5. Test that outputs match buyer-fe exactly
+
+- id: ui-library-migration-mui-to-shadcn
+  description: >
+    Migrate from Material-UI (MUI) to Shadcn UI + Tailwind CSS.
+  details: |
+    • **Component Mapping Strategy**:
+      - **DO NOT** try to find 1:1 component mappings
+      - **DO** understand what the MUI component does, then implement with Shadcn/Tailwind
+      - Focus on functionality and UX, not visual similarity
+    
+    • **Common MUI → Shadcn Migrations**:
+      - `Button` (MUI) → `Button` (Shadcn) - Similar API, different styling
+      - `TextField` (MUI) → `Input` or `Textarea` (Shadcn) - May need custom wrapper
+      - `Dialog` (MUI) → `Dialog` (Shadcn) - Similar structure
+      - `Select` (MUI) → `Select` (Shadcn) - Different API, adapt accordingly
+      - `Table` (MUI) → `Table` (Shadcn) - Different structure, rebuild
+      - `Card` (MUI) → `Card` (Shadcn) - Similar concept
+      - `Drawer` (MUI) → `Sheet` (Shadcn) - Similar functionality
+      - `Snackbar` (MUI) → `Toast` (Shadcn via sonner) - Different API
+      - `Autocomplete` (MUI) → `Combobox` (Shadcn) - Different implementation
+      - `Tabs` (MUI) → `Tabs` (Shadcn) - Similar structure
+      - `Accordion` (MUI) → `Accordion` (Shadcn) - Similar concept
+    
+    • **Migration Process**:
+      1. Identify MUI component in buyer-fe
+      2. Understand its props, behavior, and functionality
+      3. Find or create equivalent Shadcn component
+      4. Adapt props and styling to match functionality
+      5. Use Tailwind classes for custom styling (not MUI's `sx` prop)
+      6. Test that user interactions work the same way
+    
+    • **Styling Approach**:
+      - Replace MUI's `sx` prop with Tailwind classes
+      - Replace MUI theme with Tailwind CSS variables
+      - Use Shadcn's theming system for consistent styling
+      - Maintain responsive behavior (mobile-first with Tailwind breakpoints)
+      - Preserve accessibility features (ARIA labels, keyboard navigation)
+
+- id: state-management-context-to-tanstack
+  description: >
+    Replace React Context with TanStack React Query for data fetching and state.
+  details: |
+    • **Key Difference**: 
+      - **buyer-fe**: Uses Context for global state (Cart, Header, User data)
+      - **nextjs-ecommerce**: Uses TanStack React Query for server state, minimal Context
+    
+    • **Context Migration Strategy**:
+      - **Server State** (data from API) → Use TanStack React Query hooks
+      - **Client State** (UI state, form state) → Use React state or Zustand if needed
+      - **Global App State** (user, tenant) → Use existing Context (`UserDetailsContext`, `TenantContext`)
+    
+    • **SWR → TanStack React Query Migration**:
+      
+      // buyer-fe (SWR)
+      const { data, error, mutate } = useSWR('/api/endpoint', fetcher);
+      
+      // nextjs-ecommerce (TanStack Query)
+      const { data, error, refetch } = useQuery({
+        queryKey: ['endpoint'],
+        queryFn: () => service.getData(),
+      });
+          
+    • **Context → TanStack Query Pattern**:
+  
+      // buyer-fe: Context provider with API calls
+      const CartContext = createContext();
+      // Inside provider: useSWR or fetch in useEffect
+      
+      // nextjs-ecommerce: Custom hook with TanStack Query
+      export function useCart() {
+        return useQuery({
+          queryKey: ['cart'],
+          queryFn: () => CartService.getCart(),
+        });
+      }
+          
+    • **When to Keep Context**:
+      - User authentication state (`UserDetailsContext`)
+      - Tenant/company data (`TenantContext`)
+      - UI state that doesn't come from server (modals, drawers, form state)
+      - Client-only state that doesn't need caching
+    
+    • **When to Use TanStack Query**:
+      - Any data fetched from API
+      - Data that needs caching and revalidation
+      - Data that multiple components need
+      - Server state that changes over time
+
+- id: api-routes-to-direct-server-calls
+  description: >
+    Replace API routes with direct service calls in Server Components.
+  details: |
+    • **Key Difference**:
+      - **buyer-fe**: `pages/api/[route].js` → Client calls `/api/[route]` → API route calls backend
+      - **nextjs-ecommerce**: Server Component → Service → Direct backend call (no API route needed)
+    
+    • **Migration Pattern**:
+      
+      // buyer-fe: API Route
+      // pages/api/cart/getCart.js
+      export default async function handler(req, res) {
+        const data = await fetchBackend('/cart');
+        res.json(data);
+      }
+      
+      // Client component
+      const { data } = useSWR('/api/cart/getCart', fetcher);
+      
+      // nextjs-ecommerce: Direct Service Call
+      // app/[locale]/(app)/cart/page.tsx (Server Component)
+      import { CartService } from '@/lib/api';
+      
+      export default async function CartPage() {
+        const cart = await CartService.getCartServerSide();
+        return <CartClient cart={cart} />;
+      }
+      
+      // Or client-side with TanStack Query
+      // components/cart/CartClient.tsx
+      const { data: cart } = useQuery({
+        queryKey: ['cart'],
+        queryFn: () => CartService.getCart(),
+      });
+          • **Service Creation** (Follow `CREATE_SERVICE_GUIDE.md`):
+      - Extend `BaseService<T>` for consistency
+      - Use `this.call()` for client-side calls
+      - Use `this.callSafe()` or `*ServerSide()` methods for server-side
+      - Define types within service file
+      - Export from `src/lib/api/index.ts`
+    
+    • **When to Keep API Routes**:
+      - Webhooks (external services calling your API)
+      - Public endpoints (no auth required, CORS needed)
+      - Endpoints that need request/response transformation
+      - Endpoints that handle file uploads (sometimes)
+    
+    • **When to Use Direct Service Calls**:
+      - Server Components fetching data
+      - Authenticated API calls (use services directly)
+      - Data that doesn't need CORS
+      - Better performance (no extra HTTP hop)
+
+- id: server-vs-client-components
+  description: >
+    Understand Server vs Client Components and migrate accordingly.
+  details: |
+    • **buyer-fe**: Everything is client-side (Pages Router, all components client)
+    • **nextjs-ecommerce**: App Router with Server Components by default
+    
+    • **Server Components** (Default):
+      - Data fetching (use services directly)
+      - Static content
+      - SEO-critical content
+      - No `"use client"` directive
+      - Cannot use hooks, browser APIs, or event handlers
+    
+    • **Client Components** (Add `"use client"`):
+      - Interactive UI (buttons, forms, modals)
+      - Hooks (useState, useEffect, TanStack Query)
+      - Browser APIs (localStorage, window)
+      - Event handlers (onClick, onChange)
+    
+    • **Migration Strategy**:
+      1. Start with Server Component for data fetching
+      2. Extract interactive parts to Client Components
+      3. Pass data as props from Server to Client
+      4. Use TanStack Query in Client Components for mutations/refetching
+    
+    • **Example Pattern**:
+      // page.tsx (Server Component)
+      import { CartService } from '@/lib/api';
+      import { CartClient } from './components/CartClient';
+      
+      export default async function CartPage() {
+        const cart = await CartService.getCartServerSide();
+        return <CartClient initialCart={cart} />;
+      }
+      
+      // CartClient.tsx (Client Component)
+      "use client";
+      export function CartClient({ initialCart }) {
+        const { data: cart } = useQuery({
+          queryKey: ['cart'],
+          queryFn: () => CartService.getCart(),
+          initialData: initialCart, // Use server data as initial
+        });
+        // Interactive UI here
+      }
+      - id: migration-workflow
+  description: >
+    Step-by-step workflow for migrating features from buyer-fe.
+  details: |
+    • **Step 1: Research buyer-fe Implementation**
+      1. Search buyer-fe for the feature
+      2. Identify all related files:
+         - Page component (`pages/[page].js`)
+         - API routes (`pages/api/[route].js`)
+         - Components (`src/components/[Feature]/`)
+         - Hooks (`src/hooks/use[Feature].js`)
+         - Context (`src/context/[Context].js`)
+         - Utils (`src/utils/[utility].js`)
+      3. Understand the data flow and business logic
+      4. Document what the feature does (not how it's implemented)
+    
+    • **Step 2: Extract Business Logic**
+      1. Copy calculation/validation/transformation logic
+      2. Convert to TypeScript with proper types
+      3. Place in `src/utils/[feature]/` or `src/lib/[feature]/`
+      4. Create unit tests to verify logic matches buyer-fe
+    
+    • **Step 3: Create Service (if needed)**
+      1. Check if service exists in `src/lib/api/services/`
+      2. If not, create following `CREATE_SERVICE_GUIDE.md`
+      3. Add `*ServerSide()` methods for server components
+      4. Export from `src/lib/api/index.ts`
+    
+    • **Step 4: Create Server Component (Page)**
+      1. Create `app/[locale]/(app)/[page]/page.tsx`
+      2. Fetch data using service (Server Component)
+      3. Keep JSX minimal, compose layout components
+      4. Generate metadata if needed
+    
+    • **Step 5: Create Client Components**
+      1. Identify interactive parts
+      2. Create Client Components with `"use client"`
+      3. Replace MUI components with Shadcn equivalents
+      4. Use TanStack Query for data fetching/mutations
+      5. Style with Tailwind CSS
+    
+    • **Step 6: Migrate Hooks**
+      1. Convert `useSWR` to `useQuery` (TanStack Query)
+      2. Convert Context hooks to TanStack Query hooks
+      3. Maintain same hook interface for compatibility
+      4. Add proper TypeScript types
+    
+    • **Step 7: Test and Verify**
+      1. Test business logic produces same results
+      2. Test user flows match buyer-fe
+      3. Verify API calls work correctly
+      4. Check responsive design
+      5. Verify accessibility
+
+- id: file-location-mapping
+  description: >
+    Map buyer-fe file locations to nextjs-ecommerce equivalents.
+  details: |
+    • **Pages**:
+      - `pages/[page].js` → `app/[locale]/(app)/[page]/page.tsx`
+      - `pages/auth/login.js` → `app/[locale]/(auth)/login/page.tsx`
+      - `pages/dashboard.jsx` → `app/[locale]/(app)/dashboard/page.tsx`
+    
+    • **API Routes** (Usually NOT needed):
+      - `pages/api/[feature]/[route].js` → **Remove**, use service directly
+      - Only keep if: webhook, public endpoint, CORS needed
+    
+    • **Components**:
+      - `src/components/[Feature]/[Component].js` → `src/components/[feature]/[Component].tsx`
+      - Replace MUI imports with Shadcn imports
+      - Replace MUI styling with Tailwind classes
+    
+    • **Hooks**:
+      - `src/hooks/use[Feature].js` → `src/hooks/use[Feature].ts`
+      - Convert `useSWR` to `useQuery`
+      - Convert Context usage to TanStack Query
+      - Maintain same hook interface
+    
+    • **Context** (Minimal usage):
+      - `src/context/[Context].js` → Usually **Remove** or convert to TanStack Query hook
+      - Keep only: `UserDetailsContext`, `TenantContext`
+      - Other contexts → Convert to TanStack Query hooks
+    
+    • **Utils**:
+      - `src/utils/[utility].js` → `src/utils/[utility].ts`
+      - `lib/[utility].js` → `lib/[utility].ts` (server-side)
+      - Extract business logic, convert to TypeScript
+    
+    • **Services** (New):
+      - Create in `src/lib/api/services/[Feature]Service.ts`
+      - Extend `BaseService<T>`
+      - Export from `src/lib/api/index.ts`
+
+- id: common-migration-patterns
+  description: >
+    Common patterns for migrating specific buyer-fe features.
+  details: |
+    • **Cart Feature**:
+      - buyer-fe: `src/context/Cart/CartContext.js` + `src/hooks/useCart.js` + `pages/api/cart/*.js`
+      - nextjs-ecommerce: `src/hooks/useCart.ts` (TanStack Query) + `src/lib/api/services/CartService.ts`
+      - Business logic: Extract cart calculations to `src/utils/cart/`
+    
+    • **Product Listing**:
+      - buyer-fe: `pages/browse/[...slug].js` + `src/hooks/useProductlist.js` + SWR
+      - nextjs-ecommerce: `app/[locale]/(app)/products/page.tsx` (Server) + `useQuery` hook
+      - Business logic: Extract filtering/sorting to utils
+    
+    • **Forms**:
+      - buyer-fe: MUI `TextField`, `Select`, etc. + React Hook Form
+      - nextjs-ecommerce: Shadcn `Input`, `Select`, etc. + React Hook Form (same)
+      - Business logic: Keep validation schemas, convert to TypeScript
+    
+    • **Data Tables**:
+      - buyer-fe: MUI `Table` with custom styling
+      - nextjs-ecommerce: Shadcn `Table` + TanStack Table (if complex) + Tailwind
+      - Business logic: Extract sorting/filtering logic
+    
+    • **Modals/Dialogs**:
+      - buyer-fe: MUI `Dialog` or `Drawer`
+      - nextjs-ecommerce: Shadcn `Dialog` or `Sheet`
+      - State: Use React state (not Context) for open/close
+
+- id: testing-migration
+  description: >
+    Ensure migrated features work identically to buyer-fe.
+  details: |
+    • **Business Logic Testing**:
+      - Unit test calculation functions (must match buyer-fe outputs)
+      - Test validation rules produce same errors
+      - Verify data transformations are identical
+    
+    • **Functional Testing**:
+      - Test all user flows match buyer-fe behavior
+      - Verify API calls produce same results
+      - Check multi-tenant functionality works
+      - Test error scenarios
+    
+    • **UI/UX Testing**:
+      - Verify interactions work (clicks, forms, navigation)
+      - Check responsive design (mobile, tablet, desktop)
+      - Test accessibility (keyboard nav, screen readers)
+      - Verify loading and error states
+
+## Migration Checklist
+
+When implementing any feature from buyer-fe:
+
+- [ ] Searched buyer-fe codebase for existing implementation
+- [ ] Extracted business logic (calculations, validations, workflows)
+- [ ] Identified MUI components to migrate
+- [ ] Identified Context/SWR usage to migrate
+- [ ] Identified API routes (decide if needed or use direct service)
+- [ ] Created/updated service in `src/lib/api/services/`
+- [ ] Created Server Component for data fetching
+- [ ] Created Client Components with Shadcn UI
+- [ ] Replaced MUI with Shadcn equivalents
+- [ ] Replaced Context/SWR with TanStack Query
+- [ ] Replaced API routes with direct service calls (where applicable)
+- [ ] Converted to TypeScript with proper types
+- [ ] Styled with Tailwind CSS (not MUI)
+- [ ] Tested business logic matches buyer-fe
+- [ ] Tested user flows match buyer-fe
+- [ ] Documented migration decisions
+```
+
+This rule covers:
+1. Business logic extraction and preservation
+2. MUI → Shadcn/Tailwind migration
+3. Context → TanStack React Query migration
+4. API routes → Direct server calls migration
+5. Server vs Client Components
+6. Step-by-step migration workflow
+
+Should I save this to `.cursor/rules/buyer-fe-migration.mdc`?
+alwaysApply: true

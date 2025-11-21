@@ -5,7 +5,7 @@ import FormInput from "./FormInput";
 // Mock form primitives used by the component
 jest.mock("@/components/ui/form", () => {
   const React = require("react");
-  const FormFieldComponent = ({ render, control, name }: any) => {
+  const FormFieldComponent = ({ render, control: _control, name }: any) => {
     if (render && typeof render === "function") {
       const renderResult = render({ 
         field: { value: "", onChange: () => {}, name: name || "test", onBlur: () => {}, ref: () => {} },

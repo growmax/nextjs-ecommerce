@@ -30,6 +30,7 @@ interface ProfileCardProps {
   originalPhone?: string | null;
   originalAltPhone?: string | null;
   headerActions?: React.ReactNode;
+  folderName?: string | undefined; // S3 folder path for image uploads
 }
 
 export function ProfileCard({
@@ -45,6 +46,7 @@ export function ProfileCard({
   originalPhone = null,
   originalAltPhone = null,
   headerActions = null,
+  folderName,
 }: ProfileCardProps) {
   if (dataLoading || !profile) {
     return (
@@ -106,6 +108,7 @@ export function ProfileCard({
                 size="lg"
                 shape="square"
                 disabled={isLoading}
+                folderName={folderName}
               />
             </div>
           </div>

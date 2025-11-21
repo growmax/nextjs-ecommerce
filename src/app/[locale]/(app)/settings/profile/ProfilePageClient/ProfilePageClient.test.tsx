@@ -136,7 +136,6 @@ jest.mock(
 );
 
 jest.mock("@/components/ui/sonner", () => {
-  const React = require("react");
   return {
     Toaster: () => null,
     toast: {
@@ -193,13 +192,15 @@ const mockGetInstance = jest.fn(() => mockJWTInstance);
 
 jest.mock("@/lib/services/JWTService", () => ({
   JWTService: {
-    getInstance: (...args: any[]) => mockGetInstance(...args),
+    getInstance: () => {
+      return mockGetInstance();
+    },
   },
 }));
 
 // Mock parsePhoneNumberFromString - must be defined before jest.mock
 jest.mock("libphonenumber-js", () => {
-  const mockParsePhoneNumber = jest.fn((phone: string, country?: string) => ({
+  const mockParsePhoneNumber = jest.fn((phone: string, _country?: string) => ({
     countryCallingCode: "+1",
     country: "US",
     nationalNumber: phone || "1234567890",

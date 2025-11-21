@@ -4,7 +4,6 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { useCart } from "@/contexts/CartContext";
-import { useTenantInfo } from "@/contexts/TenantContext";
 import { useCurrentUser } from "@/hooks/useCurrentUser";
 import { Minus, Plus, ShoppingCart, Trash2 } from "lucide-react";
 import { useState } from "react";
@@ -15,7 +14,6 @@ export default function CartPageClient() {
   const { cart, cartCount, refreshCart, isLoading: isCartLoading } = useCart();
 
   const [updatingItems, setUpdatingItems] = useState<Set<number>>(new Set());
-  const tenantInfo = useTenantInfo();
   // If user is not logged in, show a message
   if (!user) {
     return (

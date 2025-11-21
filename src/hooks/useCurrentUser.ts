@@ -85,17 +85,23 @@ export function useCurrentUser() {
         const response = await UserServices.getUser({ sub });
 
         if (response?.data) {
+          const data = response.data as typeof response.data & {
+            roundOff?: string | number | null;
+            taxExempted?: boolean;
+            defaultCountryCallingCode?: string;
+            defaultCountryCodeIso?: string;
+          };
           const userData: CurrentUser = {
-            currency: response.data.currency,
-            userId: response.data.userId,
-            companyId: response.data.companyId,
-            displayName: response.data.displayName || "",
-            email: response.data.email || "",
-            role: response.data.roleName,
-            roundOff: response.data.roundOff || "",
-            taxExempted: response.data.taxExempted || false,
-            defaultCountryCallingCode: response.data.defaultCountryCallingCode || "",
-            defaultCountryCodeIso: response.data.defaultCountryCodeIso || "",
+            currency: data.currency,
+            userId: data.userId,
+            companyId: data.companyId,
+            displayName: data.displayName || "",
+            email: data.email || "",
+            role: data.roleName,
+            roundOff: data.roundOff || "",
+            taxExempted: data.taxExempted || false,
+            defaultCountryCallingCode: data.defaultCountryCallingCode || "",
+            defaultCountryCodeIso: data.defaultCountryCodeIso || "",
 
 
 
@@ -114,5 +120,5 @@ export function useCurrentUser() {
     fetchUser();
   }, [sub]);
 
-  return { user, loading, error };
+  return { user, sub1: sub, loading, error };
 }
