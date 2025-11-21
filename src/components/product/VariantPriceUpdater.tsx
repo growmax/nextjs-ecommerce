@@ -1,10 +1,10 @@
 "use client";
 
-import { useMemo } from "react";
+import { Badge } from "@/components/ui/badge";
 import { useProductVariantContext } from "@/contexts/ProductVariantContext";
 import { formatPrice } from "@/utils/product/product-formatter";
-import { Badge } from "@/components/ui/badge";
 import { Info } from "lucide-react";
+import { useMemo } from "react";
 
 interface VariantPriceUpdaterProps {
   basePrice: number;
@@ -37,7 +37,7 @@ export default function VariantPriceUpdater({
   }, [selectedVariant, baseMrp]);
 
   return (
-    <div className="p-6 bg-gradient-to-r from-green-50 to-emerald-50 rounded-xl border border-green-200">
+    <div className="p-6 bg-gradient-to-r from-green-50 to-emerald-50 rounded-lg border border-green-200">
       <div className="flex items-baseline gap-3">
         <span className="text-4xl font-bold text-green-700">
           {showPrice !== false ? (

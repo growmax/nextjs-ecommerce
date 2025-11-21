@@ -8,8 +8,8 @@ import { CartService } from "@/lib/api/CartServices";
 import { cn } from "@/lib/utils";
 import { ProductDetail } from "@/types/product/product-detail";
 import {
-  formatPrice,
-  getProductAvailability,
+    formatPrice,
+    getProductAvailability,
 } from "@/utils/product/product-formatter";
 import { Minus, Plus, ShoppingCart, Trash2 } from "lucide-react";
 import { useEffect, useState } from "react";
@@ -185,7 +185,7 @@ export default function MobileCartAction({ product }: MobileCartActionProps) {
           {product.show_price !== false && !showQuantity && (
             <Button
               size="lg"
-              className="h-10 sm:h-12 px-6 sm:px-8 rounded-lg sm:rounded-xl bg-black text-white hover:bg-neutral-900 active:scale-95 transition flex items-center gap-2 whitespace-nowrap min-w-40 sm:min-w-52 text-sm sm:text-base flex-shrink-0"
+              className="h-10 sm:h-12 px-6 sm:px-8 rounded-lg sm:rounded-lg bg-black text-white hover:bg-neutral-900 active:scale-95 transition flex items-center gap-2 whitespace-nowrap min-w-40 sm:min-w-52 text-sm sm:text-base flex-shrink-0"
               onClick={() => handleQuantityChange("initial")}
               disabled={!availability.available || isAddingToCart}
               aria-label={`Add ${product.product_short_description || "item"} to cart`}
@@ -198,7 +198,7 @@ export default function MobileCartAction({ product }: MobileCartActionProps) {
           )}
 
           {product.show_price !== false && showQuantity && (
-            <div className="flex items-center border border-gray-300 rounded-lg sm:rounded-xl h-10 sm:h-12 bg-white min-w-40 sm:min-w-52 flex-shrink-0">
+            <div className="flex items-center border border-gray-300 rounded-lg sm:rounded-lg h-10 sm:h-12 bg-white min-w-40 sm:min-w-52 flex-shrink-0">
               <Button
                 variant="ghost"
                 size="icon"
@@ -236,7 +236,7 @@ export default function MobileCartAction({ product }: MobileCartActionProps) {
           {product.show_price === false && (
             <Button
               size="lg"
-              className="h-10 sm:h-12 px-6 sm:px-8 rounded-lg sm:rounded-xl bg-black text-white hover:bg-neutral-900 active:scale-95 transition flex items-center gap-2 whitespace-nowrap min-w-40 sm:min-w-52 text-sm sm:text-base flex-shrink-0"
+              className="h-10 sm:h-12 px-6 sm:px-8 rounded-lg sm:rounded-lg bg-black text-white hover:bg-neutral-900 active:scale-95 transition flex items-center gap-2 whitespace-nowrap min-w-40 sm:min-w-52 text-sm sm:text-base flex-shrink-0"
               onClick={() => handleQuantityChange("initial")}
               disabled={!availability.available || isAddingToCart}
               aria-label="Request quote"

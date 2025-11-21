@@ -389,6 +389,60 @@ export class OrdersService extends BaseService<OrdersService> {
     );
     return response as { orderIdentifier: string };
   }
+
+  /**
+   * Create order from summary page
+   * Endpoint: POST orders/createOrderByBuyer?userId={userId}&companyId={companyId}
+   * Used by: useSummarySubmission hook
+   * 
+   * @param params - Parameters for order creation
+   * @param orderData - Transformed order data from summary (using summaryReqDTO)
+   * @returns Order creation response with orderIdentifier
+   */
+  async createOrderFromSummary(
+    params: {
+      userId: string | number;
+      companyId: string | number;
+    },
+    orderData: any
+  ): Promise<{ orderIdentifier: string }> {
+    // Reuse the same endpoint as placeOrderFromQuote
+    return this.placeOrderFromQuote(params, orderData);
+  }
+
+  /**
+   * Server-safe version of create order from summary
+   * @param params - Parameters for order creation
+   * @param orderData - Transformed order data from summary
+   * @returns Order creation response or null if error
+   */
+  async createOrderFromSummaryServerSide(
+    params: {
+      userId: string | number;
+      companyId: string | number;
+    },
+    orderData: any
+  ): Promise<{ orderIdentifier: string } | null> {
+    return this.placeOrderFromQuoteServerSide(params, orderData);
+  }
+
+  /**
+   * Create order from summary with custom context
+   * @param params - Parameters for order creation
+   * @param orderData - Transformed order data from summary
+   * @param context - Request context
+   * @returns Order creation response with orderIdentifier
+   */
+  async createOrderFromSummaryWithContext(
+    params: {
+      userId: string | number;
+      companyId: string | number;
+    },
+    orderData: any,
+    context: RequestContext
+  ): Promise<{ orderIdentifier: string }> {
+    return this.placeOrderFromQuoteWithContext(params, orderData, context);
+  }
 }
 
 export default OrdersService.getInstance();
