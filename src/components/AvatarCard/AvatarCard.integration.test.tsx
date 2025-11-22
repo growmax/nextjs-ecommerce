@@ -229,10 +229,10 @@ describe("AvatarCard Integration Tests", () => {
       expect(companyLink).toHaveAttribute("href", "/settings/company");
 
       const ordersLink = screen.getByText("Orders").closest("a");
-      expect(ordersLink).toHaveAttribute("href", "/orders");
+      expect(ordersLink).toHaveAttribute("href", "/landing/orderslanding");
 
       const quotesLink = screen.getByText("Quotes").closest("a");
-      expect(quotesLink).toHaveAttribute("href", "/quotesummary");
+      expect(quotesLink).toHaveAttribute("href", "/landing/quoteslanding");
     });
   });
 
