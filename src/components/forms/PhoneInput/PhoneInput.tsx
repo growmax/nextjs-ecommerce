@@ -22,6 +22,8 @@ interface PhoneInputProps {
   countryCode?: string;
   // originalValue allows parent to supply the original number (for RHF dirty checks)
   originalValue?: string | null;
+  // External error message (overrides internal validation)
+  error?: string;
 }
 
 export function PhoneInput({
@@ -38,9 +40,13 @@ export function PhoneInput({
   // originalValue can be provided by parent (e.g., RHF dirty/original value)
   originalValue,
   countryCode,
+  error: externalError,
 }: PhoneInputProps) {
   const { validatePhone } = useFormValidation();
-  const [error, setError] = useState<string>("");
+  const [internalError, setInternalError] = useState<string>("");
+  
+  // Use external error if provided, otherwise use internal error
+  const error = externalError || internalError;
   // keep the initial value so we can tell if the user entered a new number
   const initialValueRef = useRef<string | null>(null);
 
@@ -57,9 +63,11 @@ export function PhoneInput({
     // Only allow digits and limit length
     const cleanValue = inputValue.replace(/\D/g, "").slice(0, maxLength);
 
-    // Validate
-    const validationError = validatePhone(cleanValue);
-    setError(validationError || "");
+    // Validate (only if no external error)
+    if (!externalError) {
+      const validationError = validatePhone(cleanValue);
+      setInternalError(validationError || "");
+    }
 
     onChange(cleanValue);
   };

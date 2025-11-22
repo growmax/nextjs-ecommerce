@@ -65,7 +65,21 @@ jest.mock("lucide-react", () => {
 
 // Mock router
 const mockPush = jest.fn();
-jest.mock("next/navigation", () => ({ useRouter: () => ({ push: mockPush }) }));
+const mockPrefetch = jest.fn();
+jest.mock("next/navigation", () => ({
+  useRouter: () => ({ push: mockPush, prefetch: mockPrefetch }),
+  useLocale: () => "en",
+}));
+
+// Mock useRoutePrefetch hook
+jest.mock("@/hooks/useRoutePrefetch", () => ({
+  useRoutePrefetch: () => ({
+    prefetch: jest.fn(),
+    prefetchMultiple: jest.fn(),
+    prefetchAndNavigate: jest.fn(),
+    clearCache: jest.fn(),
+  }),
+}));
 
 // Mock hooks: useLogout and useUserProfile
 const mockHandleLogout = jest.fn();

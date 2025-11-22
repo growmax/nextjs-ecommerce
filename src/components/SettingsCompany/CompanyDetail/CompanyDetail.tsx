@@ -21,6 +21,8 @@ import {
 } from "@/components/ui/form";
 import { CompanyService, SubIndustryService } from "@/lib/api";
 import type { CompanyApiResponse } from "@/lib/api/services/CompanyService";
+import { AuthStorage } from "@/lib/auth";
+import { JWTService } from "@/lib/services/JWTService";
 import { ChevronDown } from "lucide-react";
 import React, { useEffect, useRef, useState } from "react";
 import { useForm } from "react-hook-form";
@@ -100,15 +102,46 @@ const CompanyDetail = () => {
   const subIndustryOptions = form.watch("subIndustryOptions");
   const [loading, setLoading] = useState(true);
   const [profileImage, setProfileImage] = useState<string | null>(null);
+  // Store the uploaded logo URL separately for the logo parameter
+  const [uploadedLogoUrl, setUploadedLogoUrl] = useState<string | null>(null);
   // new: track dropdown open + sub-fetch state to lazy-load options on click
   const [subLoading, setSubLoading] = useState(false);
   const isFetchingSubRef = useRef(false);
   const [isSaving, setIsSaving] = useState(false);
   // Add a new state to track if the form is ready
   const [isFormReady, setIsFormReady] = useState(false);
+  
+  // Get company info for folderName
+  const [companyId, setCompanyId] = useState<number | null>(null);
+  const [sub1, setSub1] = useState<string | null>(null);
+  
+  useEffect(() => {
+    const token = AuthStorage.getAccessToken();
+    if (token) {
+      const jwtService = JWTService.getInstance();
+      const payload = jwtService.decodeToken(token);
+      setCompanyId(payload?.companyId || null);
+      setSub1(payload?.sub || payload?.userId?.toString() || null);
+    }
+  }, []);
+  
+  // Validation errors type
+  type ValidationErrors = {
+    name?: string;
+    taxId?: string;
+    businessType?: string;
+    accountType?: string;
+    currency?: string;
+    subIndustry?: string;
+  };
+
+  // Validation errors state
+  const [, setValidationErrors] = useState<ValidationErrors>({});
 
   // Store initial values in a ref to preserve them
   const defaultValuesRef = useRef<CompanyFormValues | null>(null);
+  // Store initial logo URL to track changes
+  const initialLogoRef = useRef<string | null>(null);
 
   // Update the fetchBranch function to store initial values
   useEffect(() => {
@@ -123,6 +156,16 @@ const CompanyDetail = () => {
 
         // Set form values
         form.reset(normalizedData);
+        
+        // Set initial logo image if available
+        if (response?.data?.logo) {
+          const logoUrl = response.data.logo;
+          setProfileImage(logoUrl);
+          initialLogoRef.current = logoUrl;
+        } else {
+          initialLogoRef.current = null;
+        }
+        
         // Set form ready after initial data is loaded
         setIsFormReady(true);
       } catch {
@@ -159,21 +202,72 @@ const CompanyDetail = () => {
     }
   };
 
-  // Image upload handling is performed by the ImageUpload component via
-  // the `onImageChange` prop which directly calls `setProfileImage`.
-  // The previous `handleImageUpload` helper was unused and removed to
-  // satisfy strict TypeScript checks.
+  // Handle image upload - store both preview and S3 URL
+  const handleImageChange = (image: string) => {
+    setProfileImage(image);
+    
+    // Store the merged URL if it's a full S3 URL (not a blob URL)
+    if (image && !image.startsWith('blob:')) {
+      setUploadedLogoUrl(image);
+    }
+  };
+
+  // Check if image has changed from initial value
+  const hasImageChanged = profileImage !== initialLogoRef.current;
 
   const {
     formState: { isDirty, dirtyFields },
     reset,
   } = form;
 
-  // Simple form watcher for dirty fields
+  // Simple form watcher for dirty fields - clear validation errors when fields change
   useEffect(() => {
-    const subscription = form.watch((_value, { type }) => {
-      if (type === "change") {
-        // Form change tracked
+    const subscription = form.watch((_value, { name, type }) => {
+      if (type === "change" && name) {
+        // Clear validation error for the changed field
+        if (name === "data.name") {
+          setValidationErrors(prev => {
+            const newErrors = { ...prev };
+            delete newErrors.name;
+            return newErrors;
+          });
+          form.clearErrors("data.name");
+        } else if (name === "data.taxDetailsId.pan") {
+          setValidationErrors(prev => {
+            const newErrors = { ...prev };
+            delete newErrors.taxId;
+            return newErrors;
+          });
+          form.clearErrors("data.taxDetailsId.pan");
+        } else if (name === "data.businessTypeId.name") {
+          setValidationErrors(prev => {
+            const newErrors = { ...prev };
+            delete newErrors.businessType;
+            return newErrors;
+          });
+          form.clearErrors("data.businessTypeId.name");
+        } else if (name === "data.accountTypeId.name") {
+          setValidationErrors(prev => {
+            const newErrors = { ...prev };
+            delete newErrors.accountType;
+            return newErrors;
+          });
+          form.clearErrors("data.accountTypeId.name");
+        } else if (name === "data.currencyId.currencyCode") {
+          setValidationErrors(prev => {
+            const newErrors = { ...prev };
+            delete newErrors.currency;
+            return newErrors;
+          });
+          form.clearErrors("data.currencyId.currencyCode");
+        } else if (name === "subIndustry") {
+          setValidationErrors(prev => {
+            const newErrors = { ...prev };
+            delete newErrors.subIndustry;
+            return newErrors;
+          });
+          form.clearErrors("subIndustry");
+        }
       }
     });
 
@@ -184,21 +278,117 @@ const CompanyDetail = () => {
     };
   }, [form]);
 
+  // Validation helper
+  const validateCompany = (): { isValid: boolean; errors: ValidationErrors } => {
+    const errors: ValidationErrors = {};
+    const formData = form.getValues();
+
+    // Clear previous errors
+    form.clearErrors();
+
+    // Validate Company Name (required)
+    if (!formData.data?.name || (formData.data.name as string).trim() === "") {
+      errors.name = "Company Name is required";
+      form.setError("data.name", {
+        type: "validate",
+        message: "Company Name is required",
+      });
+    }
+
+    // Validate Tax ID / GST# (required)
+    const taxDetailsId = formData.data?.taxDetailsId as { pan?: string } | undefined;
+    if (!taxDetailsId?.pan || taxDetailsId.pan.trim() === "") {
+      errors.taxId = "Tax ID / GST# is required";
+      form.setError("data.taxDetailsId.pan", {
+        type: "validate",
+        message: "Tax ID / GST# is required",
+      });
+    }
+
+    // Validate Business Type (required)
+    const businessTypeId = formData.data?.businessTypeId as { name?: string } | undefined;
+    if (!businessTypeId?.name || businessTypeId.name.trim() === "") {
+      errors.businessType = "Business Type is required";
+      form.setError("data.businessTypeId.name", {
+        type: "validate",
+        message: "Business Type is required",
+      });
+    }
+
+    // Validate Account Type (required)
+    const accountTypeId = formData.data?.accountTypeId as { name?: string } | undefined;
+    if (!accountTypeId?.name || accountTypeId.name.trim() === "") {
+      errors.accountType = "Account Type is required";
+      form.setError("data.accountTypeId.name", {
+        type: "validate",
+        message: "Account Type is required",
+      });
+    }
+
+    // Validate Default Currency (required)
+    const currencyId = formData.data?.currencyId as { currencyCode?: string } | undefined;
+    if (!currencyId?.currencyCode || currencyId.currencyCode.trim() === "") {
+      errors.currency = "Default Currency is required";
+      form.setError("data.currencyId.currencyCode", {
+        type: "validate",
+        message: "Default Currency is required",
+      });
+    }
+
+    // Validate SubIndustry (required)
+    if (!formData.subIndustry || formData.subIndustry.trim() === "") {
+      errors.subIndustry = "SubIndustry is required";
+      form.setError("subIndustry", {
+        type: "validate",
+        message: "SubIndustry is required",
+      });
+    }
+
+    return {
+      isValid: Object.keys(errors).length === 0,
+      errors,
+    };
+  };
+
   // Unified cancel handler
   const handleCancel = () => {
     // Reset to initial values
     if (defaultValuesRef.current) {
       form.reset(defaultValuesRef.current);
+      // Reset image to original logo if available
+      const originalLogo = initialLogoRef.current;
+      if (originalLogo) {
+        setProfileImage(originalLogo);
+      } else {
+        setProfileImage(null);
+      }
     } else {
       form.reset(defaultFormValues);
+      setProfileImage(null);
     }
-    // Reset image if needed
-    setProfileImage(null);
-    toast.info("All changes cancelled");
+    // Clear uploaded logo URL
+    setUploadedLogoUrl(null);
+    // Clear validation errors
+    setValidationErrors({});
+    toast.info("All changes cancelled", {
+      position: "top-right",
+    });
   };
 
   // Unified save handler
   const handleSave = async () => {
+    // Validate company data first
+    const validation = validateCompany();
+    if (!validation.isValid) {
+      // Set validation errors for display
+      setValidationErrors(validation.errors);
+      setIsSaving(false);
+      return;
+    }
+    
+    // Clear validation errors if validation passes
+    setValidationErrors({});
+
     // Define changedFields outside try block so it's available in catch block
     const formData = form.getValues();
     const changedFields = Object.keys(dirtyFields).reduce((acc: any, key) => {
@@ -296,6 +486,11 @@ const CompanyDetail = () => {
         subIndustryId: subIndustryPayload,
       } as Partial<CompanyApiResponse["data"]>;
 
+      // Add logo parameter if uploaded logo URL is available
+      if (uploadedLogoUrl) {
+        updatePayload.logo = uploadedLogoUrl;
+      }
+
       const response = await CompanyService.updateCompanyProfile(
         Number(companyId),
         updatePayload
@@ -308,6 +503,20 @@ const CompanyDetail = () => {
 
       // Reset form state after successful save
       reset(normalizedData);
+      
+      // Update profileImage with the saved logo from response
+      const logo = (normalizedData.data as any)?.logo;
+      if (logo && typeof logo === 'string') {
+        setProfileImage(logo);
+        initialLogoRef.current = logo; // Update initial logo reference
+      }
+      
+      // Clear uploaded logo URL after successful save
+      setUploadedLogoUrl(null);
+      
+      // Clear validation errors on successful save
+      setValidationErrors({});
+      form.clearErrors();
 
       toast.success("Changes saved successfully!");
     } catch {
@@ -321,75 +530,98 @@ const CompanyDetail = () => {
     <div>
       <SectionCard title="Company Detail" className="py-2.5">
         <Form {...form}>
-          <form className="grid grid-cols-1 md:grid-cols-4 gap-4">
+          <form className="grid grid-cols-1 md:grid-cols-4 gap-6 md:gap-6 lg:gap-8 items-start">
             {/* Image Upload Section */}
-            <div className="p-6 md:p-8 flex flex-col items-stretch gap-2">
-              {/* Align and style the image upload like ProfileCard for visual consistency */}
-              <div className="col-span-1 flex justify-center items-center">
+            <div className="flex flex-col items-center md:items-start justify-start w-full mb-6 sm:mb-8 md:mb-0">
+              <div className="w-full max-w-[140px] sm:max-w-[160px] md:max-w-[180px] lg:max-w-[200px] mx-auto md:mx-0">
                 <ImageUpload
                   currentImage={profileImage || null}
-                  onImageChange={img => setProfileImage(img)}
+                  onImageChange={handleImageChange}
                   alt="Company Logo"
                   size="lg"
                   shape="square"
-                  className="sm:mb-4"
+                  className="w-full"
                   disabled={loading}
+                  folderName={
+                    companyId && sub1
+                      ? `app_assets/company_images/${companyId}/logo/${sub1}`
+                      : undefined
+                  }
                 />
               </div>
             </div>
 
             {/* Form Fields Section */}
-            <div className="col-span-3 grid grid-cols-1 md:grid-cols-2 gap-y-2 gap-x-4">
-              <CompanyFormInput
-                control={form.control}
-                name="data.name"
-                label={<LabelWithAsterisk label="Company Name" required />}
-                placeholder="Company Name"
-                loading={loading}
-              />
+            <div className="col-span-3 grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-5 md:gap-6 lg:gap-7 w-full">
+              {/* Company Name */}
+              <div className="w-full min-w-0">
+                <CompanyFormInput
+                  control={form.control}
+                  name="data.name"
+                  label={<LabelWithAsterisk label="Company Name" required />}
+                  placeholder="Company Name"
+                  loading={loading}
+                />
+              </div>
 
-              <CompanyFormInput
-                control={form.control}
-                name="data.website"
-                label={<LabelWithAsterisk label="Website" />}
-                placeholder="Website URL"
-                loading={loading}
-              />
+              {/* Website */}
+              <div className="w-full min-w-0">
+                <CompanyFormInput
+                  control={form.control}
+                  name="data.website"
+                  label={<LabelWithAsterisk label="Website" />}
+                  placeholder="Website URL"
+                  loading={loading}
+                />
+              </div>
 
-              <CompanyFormInput
-                control={form.control}
-                name="data.taxDetailsId.pan"
-                label={<LabelWithAsterisk label="Tax ID / GST#" />}
-                placeholder="Tax ID or GST#"
-                loading={loading}
-              />
+              {/* Tax ID / GST# */}
+              <div className="w-full min-w-0">
+                <CompanyFormInput
+                  control={form.control}
+                  name="data.taxDetailsId.pan"
+                  label={<LabelWithAsterisk label="Tax ID / GST#" />}
+                  placeholder="Tax ID or GST#"
+                  loading={loading}
+                />
+              </div>
 
-              <CompanyFormInput
-                control={form.control}
-                name="data.businessTypeId.name"
-                label={<LabelWithAsterisk label="Business Type" />}
-                placeholder="Business Type"
-                loading={loading}
-              />
+              {/* Business Type */}
+              <div className="w-full min-w-0">
+                <CompanyFormInput
+                  control={form.control}
+                  name="data.businessTypeId.name"
+                  label={<LabelWithAsterisk label="Business Type" />}
+                  placeholder="Business Type"
+                  loading={loading}
+                />
+              </div>
 
-              <CompanyFormInput
-                control={form.control}
-                name="data.accountTypeId.name"
-                label={<LabelWithAsterisk label="Account Type" />}
-                placeholder="Account Type"
-                loading={loading}
-              />
+              {/* Account Type */}
+              <div className="w-full min-w-0">
+                <CompanyFormInput
+                  control={form.control}
+                  name="data.accountTypeId.name"
+                  label={<LabelWithAsterisk label="Account Type" />}
+                  placeholder="Account Type"
+                  loading={loading}
+                />
+              </div>
 
-              <CompanyFormInput
-                control={form.control}
-                name="data.currencyId.currencyCode"
-                label={<LabelWithAsterisk label="Default Currency" />}
-                placeholder="Default Currency"
-                loading={loading}
-              />
+              {/* Default Currency */}
+              <div className="w-full min-w-0">
+                <CompanyFormInput
+                  control={form.control}
+                  name="data.currencyId.currencyCode"
+                  label={<LabelWithAsterisk label="Default Currency" />}
+                  placeholder="Default Currency"
+                  loading={loading}
+                />
+              </div>
 
               {/* SubIndustry */}
-              <FormField
+              <div className="w-full min-w-0">
+                <FormField
                 control={form.control}
                 name="subIndustry"
                 render={({ field }) => (
@@ -482,10 +714,12 @@ const CompanyDetail = () => {
                   </FormItem>
                 )}
               />
+              </div>
+
               {/* Industry Description */}
-              <div>
+              <div className="w-full min-w-0">
                 {/* prefer option data when loaded; otherwise fallback to prefilled form values */}
-                <FormLabel>
+                <FormLabel className="text-xs font-medium">
                   Industry Description :{" "}
                   {form.watch("data.subIndustryId.id")
                     ? (
@@ -498,7 +732,7 @@ const CompanyDetail = () => {
                       ""
                     : ""}
                 </FormLabel>
-                <p className="text-xs text-muted-foreground">
+                <p className="text-xs text-muted-foreground mt-1">
                   {form.watch("data.subIndustryId.id")
                     ? (
                         (subIndustryOptions ?? []).find(
@@ -516,9 +750,9 @@ const CompanyDetail = () => {
         </Form>
       </SectionCard>
 
-      {isDirty && isFormReady && !loading && (
+      {(isDirty || hasImageChanged) && isFormReady && !loading && (
         <SaveCancelToolbar
-          show={isDirty}
+          show={isDirty || hasImageChanged}
           onSave={handleSave}
           onCancel={handleCancel}
           isLoading={isSaving}

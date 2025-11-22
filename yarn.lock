@@ -124,9 +124,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@aws-sdk/client-s3@npm:3.936.0, @aws-sdk/client-s3@npm:^3.936.0":
-  version: 3.936.0
-  resolution: "@aws-sdk/client-s3@npm:3.936.0"
+"@aws-sdk/client-s3@npm:3.937.0, @aws-sdk/client-s3@npm:^3.936.0":
+  version: 3.937.0
+  resolution: "@aws-sdk/client-s3@npm:3.937.0"
   dependencies:
     "@aws-crypto/sha1-browser": "npm:5.2.0"
     "@aws-crypto/sha256-browser": "npm:5.2.0"
@@ -183,7 +183,7 @@ __metadata:
     "@smithy/util-utf8": "npm:^4.2.0"
     "@smithy/util-waiter": "npm:^4.2.5"
     tslib: "npm:^2.6.2"
-  checksum: 10c0/a788cf8962353e74f5755776f20d8cc6c04ee371a3d628eddc449a1b6cb2eb3c2ed039ae25c841ed67d3d0926a850211752bc1d2e18d4fddd652f8eddfd3b0f8
+  checksum: 10c0/f9bdb7d52f0074170478cb6f407522c2de1b6f5d7a6a8a592af40c3d6d7989288078b5e51a58ad5db16ede96d8a1d0ee6e52033af48a528156021f1f416db5b7
   languageName: node
   linkType: hard
 
@@ -591,10 +591,10 @@ __metadata:
   linkType: hard
 
 "@aws-sdk/s3-presigned-post@npm:^3.936.0":
-  version: 3.936.0
-  resolution: "@aws-sdk/s3-presigned-post@npm:3.936.0"
+  version: 3.937.0
+  resolution: "@aws-sdk/s3-presigned-post@npm:3.937.0"
   dependencies:
-    "@aws-sdk/client-s3": "npm:3.936.0"
+    "@aws-sdk/client-s3": "npm:3.937.0"
     "@aws-sdk/types": "npm:3.936.0"
     "@aws-sdk/util-format-url": "npm:3.936.0"
     "@smithy/middleware-endpoint": "npm:^4.3.12"
@@ -603,7 +603,7 @@ __metadata:
     "@smithy/util-hex-encoding": "npm:^4.2.0"
     "@smithy/util-utf8": "npm:^4.2.0"
     tslib: "npm:^2.6.2"
-  checksum: 10c0/0d1adcaf231e1c830d3be7879791c41f3cc0527e3b4b089ff3292b2d42e04beb3be7c26b053c25b884c851bb777fc33f195f3d85e07dbe8728c5e55d7841063e
+  checksum: 10c0/6badec2034f01e159c96ea924e882aaecf3917382b0d79afd6f507eb01d1dfb1cf58fda7fc71bb4db0b822a7220c05cd6c61fef691bbaa3e3ad69e136bad8751
   languageName: node
   linkType: hard
 
@@ -731,9 +731,9 @@ __metadata:
   linkType: hard
 
 "@aws/lambda-invoke-store@npm:^0.2.0":
-  version: 0.2.0
-  resolution: "@aws/lambda-invoke-store@npm:0.2.0"
-  checksum: 10c0/ff37fe5d7c3b59afffa4591f9be89c5b53b808fe9dd85dd02d324bbd2b8f11366de481569284b9a5b65221cf17ba254730085aa00d6a3d1a57d9ab08a3a39879
+  version: 0.2.1
+  resolution: "@aws/lambda-invoke-store@npm:0.2.1"
+  checksum: 10c0/7fdfd6e4b175d36dae522556efc51b0f7445af3d55e516acee0f4e52946833ec9655be45cb3bdefec5974c0c6e5bcca3ad1bce7d397eb5f7a2393623867fb4b2
   languageName: node
   linkType: hard
 
@@ -2268,11 +2268,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-<<<<<<< HEAD
 "@emnapi/runtime@npm:^1.4.3, @emnapi/runtime@npm:^1.7.0":
-=======
-"@emnapi/runtime@npm:^1.4.3, @emnapi/runtime@npm:^1.5.0":
->>>>>>> 2a0dea214072aed758256f7c55e7222b43149671
   version: 1.7.1
   resolution: "@emnapi/runtime@npm:1.7.1"
   dependencies:

@@ -3,7 +3,6 @@ import { DataTable } from "@/components/Global/DataTable";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Toaster } from "@/components/ui/sonner";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import CompanyService from "@/lib/api/services/CompanyService";
 import type { ColumnDef } from "@tanstack/react-table";
@@ -272,8 +271,6 @@ const CompanyBranchTable = () => {
 
   return (
     <>
-      <Toaster position="bottom-right" richColors />
-
       <SectionCard
         title="Branches"
         className="h-full flex flex-col py-2.5"

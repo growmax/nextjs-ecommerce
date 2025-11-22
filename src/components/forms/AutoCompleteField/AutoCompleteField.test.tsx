@@ -40,6 +40,8 @@ jest.mock("@/components/ui/command", () => {
         { role: "option", onClick: () => onSelect && onSelect() },
         children
       ),
+    CommandList: ({ children }: any) =>
+      React.createElement("div", null, children),
   };
 });
 

@@ -6,7 +6,9 @@ import { ImageUpload } from "@/components/forms/ImageUpload/ImageUpload";
 import { PhoneInput } from "@/components/forms/PhoneInput/PhoneInput";
 import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
+import { cn } from "@/lib/utils";
 import React from "react";
+import { toast } from "sonner";
 
 interface Profile {
   name: string;
@@ -15,6 +17,7 @@ interface Profile {
   altPhone?: string;
   altEmail: string;
   avatar?: string | null;
+  picture?: string | null;
 }
 
 interface ProfileCardProps {
@@ -31,6 +34,11 @@ interface ProfileCardProps {
   originalAltPhone?: string | null;
   headerActions?: React.ReactNode;
   folderName?: string | undefined; // S3 folder path for image uploads
+  validationErrors?: {
+    name?: string;
+    phone?: string;
+    altEmail?: string;
+  };
 }
 
 export function ProfileCard({
@@ -47,6 +55,7 @@ export function ProfileCard({
   originalAltPhone = null,
   headerActions = null,
   folderName,
+  validationErrors = {},
 }: ProfileCardProps) {
   if (dataLoading || !profile) {
     return (
@@ -54,31 +63,32 @@ export function ProfileCard({
         title="Personal Information"
         className="w-full py-2.5"
         headerActions={headerActions}
+        headerContainerClassName="flex-row justify-between items-center"
       >
-        <div>
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-3 md:gap-4 lg:gap-5">
-            <div className="flex flex-col items-center md:items-start justify-center p-2 md:p-3 lg:p-4 mb-3 md:mb-0 w-full md:w-auto md:self-start">
-              <Skeleton className="w-full max-w-[120px] sm:max-w-[100px] md:max-w-[110px] lg:max-w-[120px] aspect-square rounded-xl mx-auto md:mx-0" />
+        <div className="w-full">
+          <div className="grid grid-cols-1 md:grid-cols-12 gap-6 md:gap-6 lg:gap-8 items-start">
+            <div className="flex flex-col items-center md:items-start justify-start md:col-span-3 w-full mb-6 sm:mb-8 md:mb-0">
+              <Skeleton className="w-full max-w-[140px] sm:max-w-[160px] md:max-w-[180px] lg:max-w-[200px] aspect-square rounded-xl mx-auto md:mx-0" />
             </div>
 
-            <div className="col-span-1 md:col-span-3 grid grid-cols-1 sm:grid-cols-2 gap-x-3 md:gap-x-4 gap-y-3 md:gap-y-4">
-              <div className="space-y-1.5">
+            <div className="col-span-1 md:col-span-9 grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-5 md:gap-6 lg:gap-7 w-full">
+              <div className="w-full space-y-1.5">
                 <Skeleton className="h-4 w-24" />
                 <Skeleton className="h-9 w-full" />
               </div>
-              <div className="space-y-1.5">
+              <div className="w-full space-y-1.5">
                 <Skeleton className="h-4 w-20" />
                 <Skeleton className="h-9 w-full" />
               </div>
-              <div className="space-y-1.5">
+              <div className="w-full space-y-1.5">
                 <Skeleton className="h-4 w-28" />
                 <Skeleton className="h-9 w-full" />
               </div>
-              <div className="space-y-1.5">
+              <div className="w-full space-y-1.5">
                 <Skeleton className="h-4 w-32" />
                 <Skeleton className="h-9 w-full" />
               </div>
-              <div className="space-y-1.5 sm:col-span-2">
+              <div className="w-full space-y-1.5 sm:col-span-2">
                 <Skeleton className="h-4 w-28" />
                 <Skeleton className="h-9 w-full" />
               </div>
@@ -94,56 +104,70 @@ export function ProfileCard({
       title="Personal Information"
       className="w-full py-2.5"
       headerActions={headerActions}
+      headerContainerClassName="flex-row justify-between items-center"
     >
-      <div>
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-3 md:gap-4 lg:gap-5">
-
+      <div className="w-full">
+        <div className="grid grid-cols-1 md:grid-cols-12 gap-6 md:gap-6 lg:gap-8 items-start">
           {/* Profile Image */}
-          <div className="flex flex-col items-center md:items-start justify-center p-2 md:p-3 lg:p-4 mb-3 md:mb-0 w-full md:w-auto md:self-start">
-            <div className="w-full max-w-[120px] sm:max-w-[100px] md:max-w-[110px] lg:max-w-[120px] mx-auto md:mx-0">
+          <div className="flex flex-col items-center md:items-start justify-start md:col-span-3 w-full mb-6 sm:mb-8 md:mb-0">
+            <div className="w-full max-w-[140px] sm:max-w-[160px] md:max-w-[180px] lg:max-w-[200px] mx-auto md:mx-0">
               <ImageUpload
-                currentImage={profileImage || profile.avatar || null}
+                currentImage={profile.picture || profile.avatar || profileImage || null}
                 onImageChange={onImageChange}
+                onUploadSuccess={() => {
+                  toast.success("Image uploaded successfully", {
+                    description: "Please update your profile information.",
+                    duration: 3000,
+                  });
+                }}
                 alt="Profile"
                 size="lg"
                 shape="square"
                 disabled={isLoading}
                 folderName={folderName}
+                className="w-full"
               />
             </div>
           </div>
 
           {/* Form Fields */}
-          <div className="col-span-1 md:col-span-3 grid grid-cols-1 sm:grid-cols-2 gap-x-3 md:gap-x-4 gap-y-3 md:gap-y-4">
+          <div className="col-span-1 md:col-span-9 grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-5 md:gap-6 lg:gap-7 w-full">
 
             {/* Name */}
-            <div className="min-w-0">
-              <FormField label="Name" required>
+            <div className="w-full min-w-0">
+              <FormField 
+                label="Name" 
+                required 
+                {...(validationErrors.name && { error: validationErrors.name })}
+              >
                 <Input
                   type="text"
                   value={profile.name}
                   onChange={(e) => onChange("name", e.target.value)}
                   placeholder="Enter your full name"
                   disabled={isLoading}
-                  className="h-9"
+                  className={cn(
+                    "h-9 w-full",
+                    validationErrors.name && "border-red-500 focus-visible:ring-red-500"
+                  )}
                 />
               </FormField>
             </div>
 
             {/* Email */}
-            <div className="min-w-0">
+            <div className="w-full min-w-0">
               <FormField label="Email">
                 <Input
                   type="email"
                   value={profile.email}
                   disabled
-                  className="bg-muted h-9"
+                  className="bg-muted h-9 w-full"
                 />
               </FormField>
             </div>
 
             {/* Phone */}
-            <div className="min-w-0">
+            <div className="w-full min-w-0">
               <PhoneInput
                 label="Mobile Number"
                 value={profile.phone}
@@ -154,11 +178,12 @@ export function ProfileCard({
                 verified={phoneVerified}
                 required
                 disabled={isLoading}
+                {...(validationErrors.phone && { error: validationErrors.phone })}
               />
             </div>
 
             {/* Secondary Phone */}
-            <div className="min-w-0">
+            <div className="w-full min-w-0">
               <PhoneInput
                 label="Secondary Phone"
                 value={profile.altPhone || ""}
@@ -171,15 +196,21 @@ export function ProfileCard({
             </div>
 
             {/* Alternate Email */}
-            <div className="min-w-0 sm:col-span-2">
-              <FormField label="Alternate Email">
+            <div className="w-full min-w-0 sm:col-span-2 mt-0">
+              <FormField 
+                label="Alternate Email"
+                {...(validationErrors.altEmail && { error: validationErrors.altEmail })}
+              >
                 <Input
                   type="email"
                   value={profile.altEmail}
                   onChange={(e) => onChange("altEmail", e.target.value)}
                   placeholder="Enter alternate email address"
                   disabled={isLoading}
-                  className="h-9"
+                  className={cn(
+                    "h-9 w-full",
+                    validationErrors.altEmail && "border-red-500 focus-visible:ring-red-500"
+                  )}
                 />
               </FormField>
             </div>

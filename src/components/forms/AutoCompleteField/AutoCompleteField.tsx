@@ -1,7 +1,7 @@
 "use client";
 
 import { Button } from "@/components/ui/button";
-import { Command, CommandGroup, CommandItem } from "@/components/ui/command";
+import { Command, CommandGroup, CommandItem, CommandList } from "@/components/ui/command";
 import {
   Popover,
   PopoverContent,
@@ -80,23 +80,25 @@ export function AutoCompleteField({
           style={{ width: dropdownWidth }}
         >
           <Command>
-            <CommandGroup>
-              {options.map(option => (
-                <CommandItem
-                  key={option.value}
-                  onSelect={() => {
-                    onChange(option.value);
-                    setOpen(false);
-                  }}
-                  className="flex justify-between px-2 py-1.5 text-sm cursor-pointer select-none rounded-md hover:bg-accent hover:text-accent-foreground"
-                >
-                  <span className="truncate">{option.label}</span>
-                  {value === option.value && (
-                    <Check className="h-4 w-4 text-primary" />
-                  )}
-                </CommandItem>
-              ))}
-            </CommandGroup>
+            <CommandList>
+              <CommandGroup>
+                {options.map(option => (
+                  <CommandItem
+                    key={option.value}
+                    onSelect={() => {
+                      onChange(option.value);
+                      setOpen(false);
+                    }}
+                    className="flex justify-between px-2 py-1.5 text-sm cursor-pointer select-none rounded-md hover:bg-accent hover:text-accent-foreground"
+                  >
+                    <span className="truncate">{option.label}</span>
+                    {value === option.value && (
+                      <Check className="h-4 w-4 text-primary" />
+                    )}
+                  </CommandItem>
+                ))}
+              </CommandGroup>
+            </CommandList>
           </Command>
         </PopoverContent>
       </Popover>

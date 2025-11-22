@@ -14,6 +14,7 @@ interface Profile {
   altPhone?: string;
   altEmail: string;
   avatar?: string | null;
+  picture?: string | null;
 }
 
 interface UserPreferencesData {
@@ -100,6 +101,7 @@ export function useProfileData() {
           altPhone: apiData.secondaryPhoneNumber || "",
           altEmail: apiData.secondaryEmail || "",
           avatar: apiData.avatar || null,
+          picture: apiData.picture || null,
         };
 
         setProfile(data);
@@ -199,12 +201,11 @@ export function useProfileData() {
   const saveProfile = async (profileData: Profile) => {
     try {
       setProfile(profileData);
-      toast.success("Profile saved successfully!");
-
+      // Note: Toast notification is handled by the calling component
       return true;
     } catch (error) {
       console.error("Failed to save profile:", error);
-      toast.error("Failed to save profile. Please try again.");
+      // Note: Error toast is handled by the calling component
       return false;
     }
   };
@@ -257,12 +258,12 @@ export function useProfileData() {
 
       // Update state after successful API call
       setPreferences(saved);
-      toast.success("Preferences saved successfully!");
+      // Note: Toast notification is handled by the calling component
 
       return true;
     } catch (error) {
       console.error("Failed to save preferences:", error);
-      toast.error("Failed to save preferences. Please try again.");
+      // Note: Error toast is handled by the calling component
       return false;
     }
   };

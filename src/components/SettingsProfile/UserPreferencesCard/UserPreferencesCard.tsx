@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { CompanyService } from "@/lib/api";
 import { Calendar, Clock, Globe } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 
 interface UserPreferencesData {
@@ -56,30 +56,68 @@ export function UserPreferencesCard({
   const [originalPreferences, setOriginalPreferences] = useState<UserPreferencesData | null>(null);
   const [hasChanges, setHasChanges] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
+  const isCancellingRef = useRef(false);
+  
+  // Local state that mirrors preferences - allows instant reset without waiting for parent
+  const [localPreferences, setLocalPreferences] = useState<UserPreferencesData>(() => preferences);
+
+  // Sync localPreferences with preferences prop (but not during cancel)
+  useEffect(() => {
+    if (preferences.timeZone && preferences.dateFormat && preferences.timeFormat) {
+      // Only update local if we're not cancelling (to prevent reset from being overwritten)
+      if (!isCancellingRef.current) {
+        setLocalPreferences(prev => {
+          // Only update if there's an actual difference
+          const hasDiff = 
+            preferences.timeZone !== prev.timeZone ||
+            preferences.dateFormat !== prev.dateFormat ||
+            preferences.timeFormat !== prev.timeFormat;
+          
+          return hasDiff ? { ...preferences } : prev;
+        });
+      }
+    }
+  }, [preferences]);
 
   // Initialize original preferences when data loads
   useEffect(() => {
     if (
-      preferences.timeZone &&
-      preferences.dateFormat &&
-      preferences.timeFormat &&
+      localPreferences.timeZone &&
+      localPreferences.dateFormat &&
+      localPreferences.timeFormat &&
       !originalPreferences
     ) {
-      setOriginalPreferences({ ...preferences });
+      setOriginalPreferences({ ...localPreferences });
       setErrors({});
+      setHasChanges(false);
     }
-  }, [preferences, originalPreferences]);
+  }, [localPreferences, originalPreferences]);
 
-  // Detect changes
+  // Detect changes - skip detection during cancel operation
   useEffect(() => {
-    if (originalPreferences) {
-      const changed =
-        preferences.timeZone !== originalPreferences.timeZone ||
-        preferences.dateFormat !== originalPreferences.dateFormat ||
-        preferences.timeFormat !== originalPreferences.timeFormat;
-      setHasChanges(changed);
+    if (!originalPreferences) return;
+    
+    const allMatch =
+      localPreferences.timeZone === originalPreferences.timeZone &&
+      localPreferences.dateFormat === originalPreferences.dateFormat &&
+      localPreferences.timeFormat === originalPreferences.timeFormat;
+    
+    // If we're canceling and all values now match, clear the canceling flag
+    if (isCancellingRef.current && allMatch) {
+      isCancellingRef.current = false;
+      setHasChanges(false);
+      return;
     }
-  }, [preferences, originalPreferences]);
+    
+    // Skip change detection if we're in the middle of canceling (values still don't match)
+    if (isCancellingRef.current) {
+      return;
+    }
+    
+    // Normal change detection
+    const changed = !allMatch;
+    setHasChanges(changed);
+  }, [localPreferences, originalPreferences]);
 
   // Validate field on change
   const handleFieldChange = (
@@ -101,7 +139,10 @@ export function UserPreferencesCard({
       }));
     }
 
-    // Call parent onChange
+    // Update local state immediately for instant UI update
+    setLocalPreferences(prev => ({ ...prev, [field]: value }));
+    
+    // Call parent onChange to sync with parent state
     onChange(field, value);
   };
 
@@ -124,7 +165,7 @@ export function UserPreferencesCard({
     }
 
     // Validate required fields
-    if (!preferences.timeZone || !preferences.dateFormat || !preferences.timeFormat) {
+    if (!localPreferences.timeZone || !localPreferences.dateFormat || !localPreferences.timeFormat) {
       toast.error("Please fill all required preference fields");
       return;
     }
@@ -132,9 +173,9 @@ export function UserPreferencesCard({
     setIsSaving(true);
     try {
       const payload = {
-        dateFormat: preferences.dateFormat,
-        timeFormat: preferences.timeFormat,
-        timeZone: preferences.timeZone,
+        dateFormat: localPreferences.dateFormat,
+        timeFormat: localPreferences.timeFormat,
+        timeZone: localPreferences.timeZone,
         userId: { id: userId },
         ...(preferenceId && { id: preferenceId }),
         ...(tenantId && { tenantId: typeof tenantId === "string" ? parseInt(tenantId) || 0 : tenantId }),
@@ -144,7 +185,7 @@ export function UserPreferencesCard({
       await CompanyService.saveUserPreferences(payload);
       
       // Update original preferences after successful save
-      setOriginalPreferences({ ...preferences });
+      setOriginalPreferences({ ...localPreferences });
       setHasChanges(false);
       
       // Reload preferences after successful save
@@ -170,19 +211,33 @@ export function UserPreferencesCard({
 
   // Handle cancel
   const handleCancel = () => {
-    if (originalPreferences) {
-      // Reset to original values
-      onChange("timeZone", originalPreferences.timeZone);
-      onChange("dateFormat", originalPreferences.dateFormat);
-      onChange("timeFormat", originalPreferences.timeFormat);
-      setHasChanges(false);
-      setErrors({});
-      toast.info("Changes cancelled");
-    }
+    if (!originalPreferences) return;
+    
+    // Set flag to prevent change detection during reset
+    isCancellingRef.current = true;
+    
+    // Clear errors and immediately hide buttons
+    setErrors({});
+    setHasChanges(false);
+    
+    // Reset local preferences immediately - UI updates instantly
+    setLocalPreferences({ ...originalPreferences });
+    
+    // Sync with parent state - update all three values
+    onChange("timeZone", originalPreferences.timeZone);
+    onChange("dateFormat", originalPreferences.dateFormat);
+    onChange("timeFormat", originalPreferences.timeFormat);
+    
+    // Clear canceling flag after a brief delay to allow parent state to update
+    setTimeout(() => {
+      isCancellingRef.current = false;
+    }, 100);
+    
+    toast.info("Changes cancelled");
   };
 
   // Show skeleton when loading or data is not available
-  if (dataLoading || !preferences || !preferences.timeZone || !preferences.dateFormat || !preferences.timeFormat) {
+  if (dataLoading || !localPreferences || !localPreferences.timeZone || !localPreferences.dateFormat || !localPreferences.timeFormat) {
     return (
       <SectionCard title="User Preferences" className="w-full">
         <div className="space-y-4">
@@ -244,7 +299,7 @@ export function UserPreferencesCard({
         {/* Time Zone */}
         <AutoCompleteField
           label="Time Zone"
-          value={preferences.timeZone}
+          value={localPreferences.timeZone}
           onChange={value => handleFieldChange("timeZone", value)}
           options={timeZoneOptions}
           placeholder="Select timezone"
@@ -256,7 +311,7 @@ export function UserPreferencesCard({
         {/* Date Format */}
         <AutoCompleteField
           label="Date Display Format"
-          value={preferences.dateFormat}
+          value={localPreferences.dateFormat}
           onChange={value => handleFieldChange("dateFormat", value)}
           options={dateFormatOptions}
           placeholder="Select date format"
@@ -268,7 +323,7 @@ export function UserPreferencesCard({
         {/* Time Format */}
         <AutoCompleteField
           label="Time Format"
-          value={preferences.timeFormat}
+          value={localPreferences.timeFormat}
           onChange={value => handleFieldChange("timeFormat", value)}
           options={timeFormatOptions}
           placeholder="Select time format"
@@ -286,12 +341,12 @@ export function UserPreferencesCard({
           <div className="text-sm text-muted-foreground space-y-1">
             <p className="flex items-center gap-2">
               <Globe className="h-3 w-3" />
-              Timezone: {preferences.timeZone || "Not selected"}
+              Timezone: {localPreferences.timeZone || "Not selected"}
             </p>
             <DateTimePreview
-              dateFormat={preferences.dateFormat}
-              timeFormat={preferences.timeFormat}
-              timeZone={preferences.timeZone}
+              dateFormat={localPreferences.dateFormat}
+              timeFormat={localPreferences.timeFormat}
+              timeZone={localPreferences.timeZone}
             />
           </div>
         </div>

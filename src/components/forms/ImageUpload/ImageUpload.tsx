@@ -1,14 +1,14 @@
 "use client";
 
-import { useState } from "react";
-import { Upload, Plus } from "lucide-react";
-import Image from "next/image";
-import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { cn } from "@/lib/utils";
-import { toast } from "sonner";
-import { UploadService } from "@/lib/api/services/UploadService";
+import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
+import UploadServices from "@/lib/api/services/UploadServices/UploadServices";
+import { cn } from "@/lib/utils";
+import { Plus, Upload } from "lucide-react";
+import Image from "next/image";
+import { useState } from "react";
+import { toast } from "sonner";
 
 interface ImageUploadProps {
   currentImage?: string | null;
@@ -23,6 +23,7 @@ interface ImageUploadProps {
   className?: string;
   folderName?: string | undefined; // S3 folder path (e.g., "app_assets/company_images/123/profile/456")
   onUploadProgress?: (progress: number) => void; // Progress callback (0-100)
+  onUploadSuccess?: (imageUrl: string) => void; // Success callback after upload completes
 }
 
 export function ImageUpload({
@@ -38,6 +39,7 @@ export function ImageUpload({
   className,
   folderName,
   onUploadProgress,
+  onUploadSuccess,
 }: ImageUploadProps) {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string>("");
@@ -46,7 +48,7 @@ export function ImageUpload({
   const sizeClasses = {
     sm: "w-16 h-16",
     md: "w-20 h-20 sm:w-28 sm:h-28",
-    lg: "w-40 h-40",
+    lg: "w-full max-w-[140px] sm:max-w-[160px] md:max-w-[180px] lg:max-w-[200px] aspect-square",
   };
 
   const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -84,7 +86,7 @@ export function ImageUpload({
         onImageChange(previewUrl);
 
         // Upload to S3
-        const result = await UploadService.uploadFile(
+        const result = await UploadServices.postUpload(
           file,
           {
             folderName,
@@ -98,10 +100,16 @@ export function ImageUpload({
             onUploadProgress?.(percent);
           }
         );
-
-        // Update with S3 URL
+        
+        // Update with merged S3 URL (url + key)
         onImageChange(result.Location);
-        toast.success("Image uploaded successfully");
+        // Call success callback if provided (for showing toast notifications)
+        if (onUploadSuccess) {
+          onUploadSuccess(result.Location);
+        } else {
+          // Default toast if no callback provided
+          toast.success("Image uploaded successfully");
+        }
       } else {
         // Fallback: Just create preview URL (existing behavior)
         const url = URL.createObjectURL(file);
@@ -123,12 +131,13 @@ export function ImageUpload({
 
   if (shape === "circle") {
     return (
-      <div className={cn("flex flex-col items-center gap-2", className)}>
+      <div className={cn("flex flex-col items-center gap-2 w-full", className)}>
         <Avatar
           className={cn(
             sizeClasses[size],
             "cursor-pointer hover:opacity-80 transition-opacity",
-            (disabled || isLoading) && "opacity-50 cursor-not-allowed"
+            (disabled || isLoading) && "opacity-50 cursor-not-allowed",
+            className && !className.includes("w-") && "w-full"
           )}
         >
           <AvatarImage src={currentImage || undefined} alt={alt} />
@@ -191,11 +200,11 @@ export function ImageUpload({
 
   return (
     <div className={cn("flex flex-col items-center gap-2", className)}>
-      <div className="relative">
+      <div className="relative w-full">
         <label
           htmlFor="image-upload"
           className={cn(
-            "cursor-pointer block",
+            "cursor-pointer block w-full",
             (disabled || isLoading) && "cursor-not-allowed"
           )}
         >

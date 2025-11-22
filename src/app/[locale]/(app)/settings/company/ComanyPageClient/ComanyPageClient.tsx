@@ -4,26 +4,27 @@ import CompanyDetail from "../../../../../../components/SettingsCompany/CompanyD
 
 const ComanyPageClient = () => {
   return (
-    <div className="flex flex-col h-screen">
+    <div className="flex flex-col h-full">
       {/* --- Sticky Header (Non-scrollable) --- */}
       <div
         id="profile-header"
-        className="h-[24px] md:h-[32px] sticky top-0 z-50 bg-white"
+        className="h-[48px] md:h-[64px] flex-shrink-0"
       >
         <HeaderBar title="Company Settings" />
       </div>
 
       {/* --- Scrollable Content --- */}
-      <div className="flex-1 overflow-y-auto p-4 md:p-12 flex flex-col items-stretch gap-8">
-        {/* Add extra spacing in mobile */}
-        <div className="w-full mt-4 md:mt-0">
-          <CompanyDetail />
-        </div>
+      <main className="flex-1 px-4 sm:px-4 md:px-8 lg:px-16 pt-4 pb-4 md:pt-6 overflow-x-hidden overflow-y-auto min-h-0">
+        <div className="max-w-6xl mx-auto space-y-6 w-full">
+          <div className="w-full">
+            <CompanyDetail />
+          </div>
 
-        <div className="w-full">
-          <CompanyBranchTable />
+          <div className="w-full">
+            <CompanyBranchTable />
+          </div>
         </div>
-      </div>
+      </main>
     </div>
   );
 };

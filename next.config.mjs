@@ -98,6 +98,10 @@ const nextConfig = {
       },
       {
         protocol: "https",
+        hostname: "s3.ap-northeast-1.amazonaws.com",
+      },
+      {
+        protocol: "https",
         hostname: "**.s3.amazonaws.com",
       },
       {

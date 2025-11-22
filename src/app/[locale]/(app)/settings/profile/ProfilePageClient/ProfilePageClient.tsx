@@ -10,7 +10,6 @@ import { PasswordChangeDialog } from "@/components/SettingsProfile/PasswordChang
 import { ProfileCard } from "@/components/SettingsProfile/ProfileCard/ProfileCard";
 import { UserPreferencesCard } from "@/components/SettingsProfile/UserPreferencesCard/UserPreferencesCard";
 import { Button } from "@/components/ui/button";
-import { Toaster } from "@/components/ui/sonner";
 import { useTenantInfo } from "@/contexts/TenantContext";
 import { useUserDetails } from "@/contexts/UserDetailsContext";
 import { useProfileData } from "@/hooks/Profile/useProfileData";
@@ -67,6 +66,13 @@ export default function ProfilePageClient() {
   const [changedSections, setChangedSections] = useState<
     Set<"profile" | "preferences">
   >(new Set());
+  
+  // Validation errors state
+  const [validationErrors, setValidationErrors] = useState<{
+    name?: string;
+    phone?: string;
+    altEmail?: string;
+  }>({});
 
   // Original values for reset functionality
   const [originalProfile, setOriginalProfile] = useState(profile);
@@ -103,16 +109,36 @@ export default function ProfilePageClient() {
     if(field === "phone"){
       setPhoneNumber(`+${defaultCountryCallingCode}${value}`)
     }
+    
+    // Clear validation error for this field when user types
+    if (validationErrors[field as keyof typeof validationErrors]) {
+      setValidationErrors((prev) => {
+        const newErrors = { ...prev };
+        delete newErrors[field as keyof typeof validationErrors];
+        return newErrors;
+      });
+    }
+    
     const updatedProfile = { ...profile, [field]: value };
     setProfile(updatedProfile);
     updateChangedSections("profile");
   };
  
+  // Store the uploaded image URL separately for the picture parameter
+  const [uploadedPictureUrl, setUploadedPictureUrl] = useState<string | null>(null);
+
   const handleImageChange = (image: string) => {
     if (!profile) return;
 
-    const updatedProfile = { ...profile, avatar: image };
+    // Update both avatar and picture fields for immediate preview
+    const updatedProfile = { ...profile, avatar: image, picture: image };
     setProfile(updatedProfile);
+    
+    // Store the merged URL if it's a full S3 URL (not a blob URL)
+    if (image && !image.startsWith('blob:')) {
+      setUploadedPictureUrl(image);
+    }
+    
     updateChangedSections("profile");
   };
 
@@ -134,10 +160,49 @@ export default function ProfilePageClient() {
     if (changedSections.has("preferences") && originalPreferences) {
       setPreferences(originalPreferences);
     }
+    // Clear validation errors when canceling
+    setValidationErrors({});
     setChangedSections(new Set());
     setHasChanges(false);
   };
  
+  // Email validation helper
+  const isValidEmail = (email: string): boolean => {
+    if (!email || email.trim() === "") return true; // Empty is allowed for optional fields
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    return emailRegex.test(email.trim());
+  };
+
+  // Validation helper
+  const validateProfile = (): { isValid: boolean; errors: string[] } => {
+    const errors: string[] = [];
+
+    if (!profile) {
+      return { isValid: false, errors: ["Profile data is missing"] };
+    }
+
+    // Validate required fields
+    if (!profile.name || profile.name.trim() === "") {
+      errors.push("Name is required");
+    }
+
+    if (!profile.phone || profile.phone.trim() === "") {
+      errors.push("Mobile Number is required");
+    }
+
+    // Validate email format for alternate email
+    if (profile.altEmail && profile.altEmail.trim() !== "") {
+      if (!isValidEmail(profile.altEmail)) {
+        errors.push("Alternate Email must be a valid email address");
+      }
+    }
+
+    return {
+      isValid: errors.length === 0,
+      errors,
+    };
+  };
+
   // Unified save handler
   const handleSave = async () => {
     if (!hasChanges) return;
@@ -151,6 +216,24 @@ export default function ProfilePageClient() {
       return;
     }
 
+    // Validate profile data
+    const validation = validateProfile();
+    if (!validation.isValid) {
+      // Set validation errors for display (no toast notifications)
+      const errors: typeof validationErrors = {};
+      validation.errors.forEach((error) => {
+        if (error.includes("Name")) errors.name = error;
+        if (error.includes("Mobile Number")) errors.phone = error;
+        if (error.includes("Alternate Email")) errors.altEmail = error;
+      });
+      setValidationErrors(errors);
+      setIsSaving(false);
+      return;
+    }
+    
+    // Clear validation errors if validation passes
+    setValidationErrors({});
+
     setIsSaving(true);
     const phoneWithCountryCode = profile?.phone 
       ? `+${defaultCountryCallingCode}${profile.phone}` 
@@ -162,7 +245,7 @@ export default function ProfilePageClient() {
       const countryCode = (defaultCountryCodeIso || "IN") as any;
       const parsedMobileNumber = parsePhoneNumberFromString(profile?.phone || "", countryCode);
       
-      const body = {
+      const body: any = {
         id: String(profileData?.id || ""),
         tenantId: String(tenantId),
         displayName: String(profile?.name || ""),
@@ -184,6 +267,11 @@ export default function ProfilePageClient() {
         nationalMobileNumSecondary: String(profile?.altPhone || ""),
         secondaryPhoneNumber: String(profile?.altPhone || ""),
       };
+
+      // Add picture parameter if uploaded image URL is available
+      if (uploadedPictureUrl) {
+        body.picture = uploadedPictureUrl;
+      }
 
       const promises: Promise<boolean>[] = [];
       
@@ -224,6 +312,8 @@ export default function ProfilePageClient() {
           await loadProfile(true); // Force reload
           // toast.success("Changes saved successfully!");
           setOriginalProfile(profile);
+          // Clear uploaded picture URL after successful save
+          setUploadedPictureUrl(null);
         }
         if (changedSections.has("preferences")) {
           await loadPreferences(true); // Force reload
@@ -349,7 +439,7 @@ export default function ProfilePageClient() {
       </div>
 
       <main
-        className={`flex-1 px-4 pb-4 overflow-x-hidden overflow-y-auto min-h-0 ${hasChanges ? "pb-32 md:pb-24" : "pb-16"}`}
+        className={`flex-1 px-4  sm:px-4 md:px-8 lg:px-16 pt-4 pb-4 md:pt-6 overflow-x-hidden overflow-y-auto min-h-0 ${hasChanges ? "pb-32 md:pb-24" : "pb-16"}`}
       >
         <div className="max-w-6xl mx-auto space-y-6 w-full">
           {/* Profile Information */}
@@ -361,6 +451,7 @@ export default function ProfilePageClient() {
             phoneVerified={phoneVerified}
             isLoading={isSaving}
             dataLoading={dataLoading}
+            validationErrors={validationErrors}
             folderName={
               companyId && sub1
                 ? `app_assets/company_images/${companyId}/profile/${sub1}`
@@ -432,8 +523,6 @@ export default function ProfilePageClient() {
         {...(profile?.email && { userName: profile.email })}
       />
 
-      {/* Toaster for toast notifications */}
-      <Toaster richColors position="bottom-right" />
     </div>
   );
 }

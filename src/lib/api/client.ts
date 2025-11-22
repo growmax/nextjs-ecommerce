@@ -37,7 +37,7 @@ const API_CONFIG = {
 
 // Types
 export interface ApiClientConfig {
-  baseURL?: string;
+  baseURL?: string | undefined;
   timeout?: number;
   withCredentials?: boolean;
 }
@@ -119,7 +119,12 @@ function getTenantFromToken(token: string): string | null {
 
 // Create axios instance factory
 function createApiClient(config: ApiClientConfig = {}): AxiosInstance {
-  const instance = axios.create({
+  const axiosConfig: {
+    timeout: number;
+    withCredentials: boolean;
+    headers: { "Content-Type": string };
+    baseURL?: string;
+  } = {
     timeout: 30000,
     // Only use withCredentials for same-origin requests to avoid CORS conflicts
     // External APIs with wildcard CORS headers don't support credentials
@@ -127,8 +132,13 @@ function createApiClient(config: ApiClientConfig = {}): AxiosInstance {
     headers: {
       "Content-Type": "application/json",
     },
-    ...config,
-  });
+  };
+  
+  if (config.baseURL !== undefined) {
+    axiosConfig.baseURL = config.baseURL;
+  }
+  
+  const instance = axios.create(axiosConfig);
 
   // Request interceptor
   instance.interceptors.request.use(
@@ -263,6 +273,9 @@ function createApiClient(config: ApiClientConfig = {}): AxiosInstance {
 // Pre-configured API clients
 export const authClient = createApiClient({
   baseURL: API_CONFIG.AUTH_URL,
+});
+export const BasePageUrl = createApiClient({
+  baseURL: API_CONFIG.API_BASE_URL,
 });
 
 export const homePageClient = createApiClient({
