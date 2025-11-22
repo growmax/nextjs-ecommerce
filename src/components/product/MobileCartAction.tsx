@@ -8,8 +8,8 @@ import { CartService } from "@/lib/api/CartServices";
 import { cn } from "@/lib/utils";
 import { ProductDetail } from "@/types/product/product-detail";
 import {
-    formatPrice,
-    getProductAvailability,
+  formatPrice,
+  getProductAvailability,
 } from "@/utils/product/product-formatter";
 import { Minus, Plus, ShoppingCart, Trash2 } from "lucide-react";
 import { useState } from "react";

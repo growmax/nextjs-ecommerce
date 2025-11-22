@@ -1,4 +1,8 @@
-import { coreCommerceClient, discountClient, RequestContext } from "../../client";
+import {
+  coreCommerceClient,
+  discountClient,
+  RequestContext,
+} from "../../client";
 import { BaseService } from "../BaseService";
 
 export interface Discount {
@@ -250,7 +254,7 @@ export class DiscountService extends BaseService<DiscountService> {
    * Endpoint: POST /product/getVolumeDiscountDetailsNonSpecialNew?dealerCompanyId={companyId}
    * Used by: useCheckVD hook
    * Note: This endpoint is in coreCommerce, not discount service, but kept here for logical grouping
-   * 
+   *
    * @param request - Volume discount request with companyId and product array
    * @returns Volume discount response with status and data
    */
@@ -258,16 +262,12 @@ export class DiscountService extends BaseService<DiscountService> {
     request: VolumeDiscountRequest
   ): Promise<VolumeDiscountResponse> {
     const endpoint = `/product/getVolumeDiscountDetailsNonSpecialNew?dealerCompanyId=${request.companyId}`;
-    
+
     // Use coreCommerceClient for this endpoint (product endpoints are in coreCommerce)
-    const response = await this.callWith(
-      endpoint,
-      request.body,
-      {
-        method: "POST",
-        client: coreCommerceClient,
-      }
-    ) as VolumeDiscountResponse;
+    const response = (await this.callWith(endpoint, request.body, {
+      method: "POST",
+      client: coreCommerceClient,
+    })) as VolumeDiscountResponse;
 
     return response;
   }
@@ -281,15 +281,11 @@ export class DiscountService extends BaseService<DiscountService> {
     request: VolumeDiscountRequest
   ): Promise<VolumeDiscountResponse | null> {
     const endpoint = `/product/getVolumeDiscountDetailsNonSpecialNew?dealerCompanyId=${request.companyId}`;
-    
-    return this.callWithSafe(
-      endpoint,
-      request.body,
-      {
-        method: "POST",
-        client: coreCommerceClient,
-      }
-    ) as Promise<VolumeDiscountResponse | null>;
+
+    return this.callWithSafe(endpoint, request.body, {
+      method: "POST",
+      client: coreCommerceClient,
+    }) as Promise<VolumeDiscountResponse | null>;
   }
 
   /**
@@ -303,17 +299,13 @@ export class DiscountService extends BaseService<DiscountService> {
     context: RequestContext
   ): Promise<VolumeDiscountResponse | null> {
     const endpoint = `/product/getVolumeDiscountDetailsNonSpecialNew?dealerCompanyId=${request.companyId}`;
-    
+
     // Use coreCommerceClient for this endpoint
-    return this.callWithSafe(
-      endpoint,
-      request.body,
-      {
-        context,
-        method: "POST",
-        client: coreCommerceClient,
-      }
-    ) as Promise<VolumeDiscountResponse | null>;
+    return this.callWithSafe(endpoint, request.body, {
+      context,
+      method: "POST",
+      client: coreCommerceClient,
+    }) as Promise<VolumeDiscountResponse | null>;
   }
 }
 

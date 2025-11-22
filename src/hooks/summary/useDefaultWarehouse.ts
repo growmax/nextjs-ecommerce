@@ -6,16 +6,14 @@ import SellerWarehouseService from "@/lib/api/services/SellerWarehouseService/Se
 /**
  * Hook to fetch default warehouse address by seller branch ID
  * Migrated from buyer-fe/src/components/Summary/hooks/useDefaultWarehosue.js
- * 
+ *
  * @param sellerBranchId - Seller branch ID
  * @returns Default warehouse address with loading state
  */
-export default function useDefaultWarehouse(sellerBranchId: number | null | undefined) {
-  const {
-    data,
-    error,
-    isLoading,
-  } = useQuery({
+export default function useDefaultWarehouse(
+  sellerBranchId: number | null | undefined
+) {
+  const { data, error, isLoading } = useQuery({
     queryKey: ["defaultwarehouse", sellerBranchId],
     queryFn: async () => {
       if (!sellerBranchId) {
@@ -34,7 +32,8 @@ export default function useDefaultWarehouse(sellerBranchId: number | null | unde
 
   return {
     defaultWarehouseAddress: data || null,
-    defaultWarehouseAddressLoading: sellerBranchId ? (isLoading || (!error && !data)) : false,
+    defaultWarehouseAddressLoading: sellerBranchId
+      ? isLoading || (!error && !data)
+      : false,
   };
 }
-

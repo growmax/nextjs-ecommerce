@@ -8,14 +8,14 @@ import SalesService from "@/lib/api/services/SalesService/SalesService";
 /**
  * Hook to fetch divisions and determine the most common division from products
  * Migrated from buyer-fe/src/components/Summary/hooks/useGetDivision.js
- * 
+ *
  * @param products - Array of products to determine division from
  * @returns Most common division from products
  */
-export default function useGetDivision(products?: Array<{ division?: { id: number } }>) {
-  const {
-    data,
-  } = useQuery({
+export default function useGetDivision(
+  products?: Array<{ division?: { id: number } }>
+) {
+  const { data } = useQuery({
     queryKey: ["getDivision"],
     queryFn: async () => {
       return await SalesService.getDivision();
@@ -30,7 +30,7 @@ export default function useGetDivision(products?: Array<{ division?: { id: numbe
   let productDivisionIds: (number | undefined)[] = [];
 
   if (data && products && products.length > 0) {
-    productDivisionIds = map(products, (o) => {
+    productDivisionIds = map(products, o => {
       if (o.division) {
         return o.division.id;
       }
@@ -39,16 +39,15 @@ export default function useGetDivision(products?: Array<{ division?: { id: numbe
 
     // Find the most common division ID
     const result = _.head(
-      _(productDivisionIds)
-        .countBy()
-        .entries()
-        .maxBy(_.last)
+      _(productDivisionIds).countBy().entries().maxBy(_.last)
     );
 
     if (result) {
       division =
-        filter(data, (o) => parseInt(String(o.id)) === parseInt(String(result)))[0] ||
-        null;
+        filter(
+          data,
+          o => parseInt(String(o.id)) === parseInt(String(result))
+        )[0] || null;
     }
   }
 
@@ -56,4 +55,3 @@ export default function useGetDivision(products?: Array<{ division?: { id: numbe
     division,
   };
 }
-

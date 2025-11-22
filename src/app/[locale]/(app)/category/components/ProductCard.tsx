@@ -11,9 +11,9 @@ interface ProductTileProps {
   title: string;
   img: string;
   alt?: string;
-  sku?: string;
+  sku?: string | undefined;
   link?: string;
-  price?: number;
+  price?: number | undefined;
   currency?: string;
   inStock?: boolean;
   flashSale?: boolean;

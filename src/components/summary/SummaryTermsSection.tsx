@@ -11,7 +11,7 @@ interface SummaryTermsSectionProps {
 /**
  * Terms section component for summary pages
  * Wraps OrderTermsCard with form integration
- * 
+ *
  * @param isOrder - Whether this is an order (true) or quote (false)
  * @param className - Additional CSS classes
  */
@@ -41,4 +41,3 @@ export default function SummaryTermsSection({
     </div>
   );
 }
-

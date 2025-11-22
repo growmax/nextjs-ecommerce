@@ -11,9 +11,9 @@ describe("BuyerQuoteSummaryValidations", () => {
       };
 
       // Act & Assert
-      await expect(
-        BuyerQuoteSummaryValidations.validate(data)
-      ).rejects.toThrow("Provide required delivery date");
+      await expect(BuyerQuoteSummaryValidations.validate(data)).rejects.toThrow(
+        "Provide required delivery date"
+      );
     });
 
     it("should accept valid date when isCustomerDateRequired is true", async () => {
@@ -92,9 +92,9 @@ describe("BuyerQuoteSummaryValidations", () => {
       };
 
       // Act & Assert
-      await expect(
-        BuyerQuoteSummaryValidations.validate(data)
-      ).rejects.toThrow("Invalid content");
+      await expect(BuyerQuoteSummaryValidations.validate(data)).rejects.toThrow(
+        "Invalid content"
+      );
     });
 
     it("should reject reference number with XSS content", async () => {
@@ -104,9 +104,9 @@ describe("BuyerQuoteSummaryValidations", () => {
       };
 
       // Act & Assert
-      await expect(
-        BuyerQuoteSummaryValidations.validate(data)
-      ).rejects.toThrow("Invalid content");
+      await expect(BuyerQuoteSummaryValidations.validate(data)).rejects.toThrow(
+        "Invalid content"
+      );
     });
 
     it("should accept reference number at max length (35 chars)", async () => {
@@ -157,9 +157,9 @@ describe("BuyerQuoteSummaryValidations", () => {
       };
 
       // Act & Assert
-      await expect(
-        BuyerQuoteSummaryValidations.validate(data)
-      ).rejects.toThrow("Invalid content");
+      await expect(BuyerQuoteSummaryValidations.validate(data)).rejects.toThrow(
+        "Invalid content"
+      );
     });
 
     it("should reject comment with XSS content", async () => {
@@ -169,9 +169,9 @@ describe("BuyerQuoteSummaryValidations", () => {
       };
 
       // Act & Assert
-      await expect(
-        BuyerQuoteSummaryValidations.validate(data)
-      ).rejects.toThrow("Invalid content");
+      await expect(BuyerQuoteSummaryValidations.validate(data)).rejects.toThrow(
+        "Invalid content"
+      );
     });
 
     it("should accept comment at max length (2000 chars)", async () => {
@@ -190,14 +190,17 @@ describe("BuyerQuoteSummaryValidations", () => {
     it("should accept comment with special characters", async () => {
       // Arrange
       const data = {
-        comment: "Price: $100.50 & delivery in 2-3 days! Contact: test@example.com",
+        comment:
+          "Price: $100.50 & delivery in 2-3 days! Contact: test@example.com",
       };
 
       // Act
       const result = await BuyerQuoteSummaryValidations.validate(data);
 
       // Assert
-      expect(result.comment).toBe("Price: $100.50 & delivery in 2-3 days! Contact: test@example.com");
+      expect(result.comment).toBe(
+        "Price: $100.50 & delivery in 2-3 days! Contact: test@example.com"
+      );
     });
   });
 
@@ -329,8 +332,13 @@ describe("BuyerQuoteSummaryValidations", () => {
         // Assert
         expect(result.sprDetails?.companyName).toBe("Company A");
         expect(result.sprDetails?.projectName).toBe("Project A");
-        expect(result.sprDetails?.competitorNames).toEqual(["Competitor 1", "Competitor 2"]);
-        expect(result.sprDetails?.priceJustification).toBe("We offer better quality and service");
+        expect(result.sprDetails?.competitorNames).toEqual([
+          "Competitor 1",
+          "Competitor 2",
+        ]);
+        expect(result.sprDetails?.priceJustification).toBe(
+          "We offer better quality and service"
+        );
       });
 
       it("should reject companyName exceeding 250 characters", async () => {

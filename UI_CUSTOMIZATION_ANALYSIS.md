@@ -1,4 +1,5 @@
 # UI Customization Analysis Report
+
 ## Next.js E-Commerce Application with shadcn/ui & Tailwind CSS
 
 **Analysis Date:** November 21, 2025  
@@ -14,12 +15,14 @@ This report analyzes the global UI customization architecture of your Next.js e-
 ### Overall Assessment: ⚠️ **MODERATE - Needs Improvement**
 
 **Strengths:**
+
 - ✅ Proper CSS variable-based theming system
 - ✅ shadcn/ui components use design tokens
 - ✅ Centralized theme configuration
 - ✅ Dark mode support
 
 **Weaknesses:**
+
 - ❌ **Significant hardcoded border radius values** throughout the codebase
 - ❌ Inconsistent use of Tailwind utility classes vs. design tokens
 - ❌ Mixed border radius patterns (rounded-lg, rounded-xl, rounded-md)
@@ -37,7 +40,7 @@ Your application uses a **CSS variable-based design system** which is excellent 
 
 ```css
 :root {
-  --radius: 0.625rem;  /* 10px - Global border radius token */
+  --radius: 0.625rem; /* 10px - Global border radius token */
   --background: 223.8136 -172.5242% 100%;
   --foreground: 223.8136 0% 3.9388%;
   --card: 223.8136 -172.5242% 100%;
@@ -46,7 +49,7 @@ Your application uses a **CSS variable-based design system** which is excellent 
 }
 
 .dark {
-  --radius: 0.625rem;  /* Same radius in dark mode */
+  --radius: 0.625rem; /* Same radius in dark mode */
   --background: 223.8136 0% 3.9388%;
   /* ... dark mode colors */
 }
@@ -73,6 +76,7 @@ borderRadius: {
 **Global Token:** `--radius: 0.625rem` (10px)
 
 **Tailwind Mappings:**
+
 - `rounded-lg` → `var(--radius)` → **10px** ✅
 - `rounded-md` → `calc(var(--radius) - 2px)` → **8px** ✅
 - `rounded-sm` → `calc(var(--radius) - 4px)` → **6px** ✅
@@ -83,46 +87,53 @@ Analysis of the codebase reveals **343+ instances** of hardcoded `rounded-*` uti
 
 #### **Breakdown by Pattern:**
 
-| Pattern | Count | Uses Global Token? | Impact |
-|---------|-------|-------------------|--------|
-| `rounded-xl` | 11+ | ❌ NO (hardcoded 12px) | HIGH |
-| `rounded-lg` | 93+ | ⚠️ MIXED | MEDIUM |
-| `rounded-md` | 50+ | ⚠️ MIXED | MEDIUM |
-| `rounded-sm` | 15+ | ⚠️ MIXED | LOW |
-| `rounded-full` | 30+ | ✅ YES (circles) | NONE |
-| Custom (2xl, 3xl) | 0 | N/A | NONE |
+| Pattern           | Count | Uses Global Token?     | Impact |
+| ----------------- | ----- | ---------------------- | ------ |
+| `rounded-xl`      | 11+   | ❌ NO (hardcoded 12px) | HIGH   |
+| `rounded-lg`      | 93+   | ⚠️ MIXED               | MEDIUM |
+| `rounded-md`      | 50+   | ⚠️ MIXED               | MEDIUM |
+| `rounded-sm`      | 15+   | ⚠️ MIXED               | LOW    |
+| `rounded-full`    | 30+   | ✅ YES (circles)       | NONE   |
+| Custom (2xl, 3xl) | 0     | N/A                    | NONE   |
 
 ### 2.3 Problematic Components
 
 #### **High Priority Issues:**
 
 1. **Card Component** (`src/components/ui/card.tsx`)
+
    ```tsx
    // Line 10 - Uses rounded-xl instead of rounded-lg
-   className="bg-card text-card-foreground flex flex-col gap-6 rounded-xl border py-6 shadow-sm"
+   className =
+     "bg-card text-card-foreground flex flex-col gap-6 rounded-xl border py-6 shadow-sm";
    ```
+
    **Issue:** Uses `rounded-xl` (12px) instead of `rounded-lg` (var(--radius) = 10px)
    **Impact:** Cards won't respond to global radius changes
 
 2. **DashBoardTable** (`src/components/custom/DashBoardTable.tsx`)
+
    ```tsx
    // Line 87
-   "border rounded-xl overflow-x-hidden flex flex-col w-full"
-   
+   "border rounded-xl overflow-x-hidden flex flex-col w-full";
+
    // Line 112
-   "bg-gray-100 sticky top-0 z-30 rounded-t-xl"
-   
+   "bg-gray-100 sticky top-0 z-30 rounded-t-xl";
+
    // Line 232
-   "flex items-center justify-between px-4 py-2 border-t bg-background rounded-b-xl"
+   "flex items-center justify-between px-4 py-2 border-t bg-background rounded-b-xl";
    ```
+
    **Issue:** Multiple hardcoded `rounded-xl` values
    **Impact:** Tables won't match global theme
 
 3. **DataTable Component** (`src/components/Global/DataTable/DataTable.tsx`)
+
    ```tsx
    // Line 340
    <div className="overflow-hidden rounded-lg border">
    ```
+
    **Issue:** Uses `rounded-lg` but it's unclear if this maps to the token
    **Impact:** May or may not respond to global changes
 
@@ -152,7 +163,7 @@ Analysis of the codebase reveals **343+ instances** of hardcoded `rounded-*` uti
 // Card variant 1
 <Card className="rounded-xl" />  // 12px
 
-// Card variant 2  
+// Card variant 2
 <div className="rounded-lg border" />  // 10px (if using token)
 
 // Card variant 3
@@ -181,12 +192,14 @@ All UI elements should update to use 16px border radius
 **Actual Behavior:**
 
 #### ✅ **WILL UPDATE** (Components using design tokens):
+
 - `Button` component (uses `rounded-md` which maps to token)
 - `Input` component (uses `rounded-md`)
 - `Dialog` component (uses `rounded-lg`)
 - Tailwind's `rounded-lg`, `rounded-md`, `rounded-sm` utilities
 
 #### ❌ **WILL NOT UPDATE** (Hardcoded values):
+
 - Main `Card` component (hardcoded `rounded-xl`)
 - `DashBoardTable` (hardcoded `rounded-xl`)
 - `ImageUpload` (hardcoded `rounded-xl`)
@@ -198,6 +211,7 @@ All UI elements should update to use 16px border radius
 ### 3.2 Visual Impact
 
 **Result:** Your UI would have **mixed border radius values**, creating an inconsistent, unprofessional appearance:
+
 - Some cards: 16px (updated)
 - Other cards: 12px (hardcoded `rounded-xl`)
 - Buttons: 14px (calc(16px - 2px))
@@ -212,11 +226,13 @@ All UI elements should update to use 16px border radius
 **Location:** `src/i18n/`
 
 Files found:
+
 - `config.ts` - i18n configuration
 - `navigation.ts` - Localized routing
 - `request.ts` - Request handling
 
 **App Structure:**
+
 ```
 src/app/
   [locale]/          ← Dynamic locale routing
@@ -270,17 +286,17 @@ src/app/
 
 **Border Radius Usage:**
 
-| Component | Uses Token? | Notes |
-|-----------|-------------|-------|
-| `card.tsx` | ❌ NO | Uses `rounded-xl` instead of `rounded-lg` |
-| `button.tsx` | ✅ YES | Uses `rounded-md` (token-based) |
-| `input.tsx` | ✅ YES | Uses `rounded-md` (token-based) |
-| `dialog.tsx` | ✅ YES | Uses `rounded-lg` (token-based) |
-| `avatar.tsx` | ⚠️ PARTIAL | Uses `rounded-full` (correct for avatars) |
-| `badge.tsx` | ⚠️ UNKNOWN | Need to verify |
-| `alert.tsx` | ⚠️ UNKNOWN | Need to verify |
-| `select.tsx` | ⚠️ UNKNOWN | Need to verify |
-| `sidebar.tsx` | ❌ NO | Uses `rounded-xl` in some variants |
+| Component     | Uses Token? | Notes                                     |
+| ------------- | ----------- | ----------------------------------------- |
+| `card.tsx`    | ❌ NO       | Uses `rounded-xl` instead of `rounded-lg` |
+| `button.tsx`  | ✅ YES      | Uses `rounded-md` (token-based)           |
+| `input.tsx`   | ✅ YES      | Uses `rounded-md` (token-based)           |
+| `dialog.tsx`  | ✅ YES      | Uses `rounded-lg` (token-based)           |
+| `avatar.tsx`  | ⚠️ PARTIAL  | Uses `rounded-full` (correct for avatars) |
+| `badge.tsx`   | ⚠️ UNKNOWN  | Need to verify                            |
+| `alert.tsx`   | ⚠️ UNKNOWN  | Need to verify                            |
+| `select.tsx`  | ⚠️ UNKNOWN  | Need to verify                            |
+| `sidebar.tsx` | ❌ NO       | Uses `rounded-xl` in some variants        |
 
 **Critical Finding:** The most commonly used component (`card.tsx`) does NOT use the design token!
 
@@ -291,25 +307,29 @@ src/app/
 ### 6.1 Immediate Actions (High Priority)
 
 #### **1. Fix Card Component**
+
 ```tsx
 // Current (WRONG):
-className="... rounded-xl ..."
+className = "... rounded-xl ...";
 
 // Should be (CORRECT):
-className="... rounded-lg ..."
+className = "... rounded-lg ...";
 ```
 
 **Files to update:**
+
 - `src/components/ui/card.tsx` (Line 10)
 
 **Impact:** This single change will fix the most commonly used component.
 
 #### **2. Fix DashBoardTable**
+
 ```tsx
 // Replace all instances of rounded-xl with rounded-lg
 ```
 
 **Files to update:**
+
 - `src/components/custom/DashBoardTable.tsx` (Lines 87, 112, 232)
 
 #### **3. Audit All `rounded-xl` Usage**
@@ -338,11 +358,13 @@ Create `DESIGN_TOKENS.md`:
 # Design Tokens
 
 ## Border Radius
+
 - `rounded-lg` → var(--radius) → 10px (default)
 - `rounded-md` → calc(var(--radius) - 2px) → 8px
 - `rounded-sm` → calc(var(--radius) - 4px) → 6px
 
 ## Usage Guidelines
+
 - ✅ Cards: Use `rounded-lg`
 - ✅ Buttons: Use `rounded-md` (default in button component)
 - ✅ Inputs: Use `rounded-md`
@@ -438,6 +460,7 @@ Create a systematic review process:
 5. **Verify:** Repeat test until all components respond correctly
 
 **Pages to test:**
+
 - Homepage
 - Product listing page
 - Product detail page
@@ -465,26 +488,26 @@ After making changes:
 
 ### Priority 1: Core Components (Do First)
 
-| File | Line(s) | Current | Should Be | Impact |
-|------|---------|---------|-----------|--------|
-| `ui/card.tsx` | 10 | `rounded-xl` | `rounded-lg` | HIGH |
-| `custom/DashBoardTable.tsx` | 87, 112, 232 | `rounded-xl` | `rounded-lg` | HIGH |
-| `styles/responsive-layout.css` | 72 | `clamp(...)` | `var(--radius)` | MEDIUM |
+| File                           | Line(s)      | Current      | Should Be       | Impact |
+| ------------------------------ | ------------ | ------------ | --------------- | ------ |
+| `ui/card.tsx`                  | 10           | `rounded-xl` | `rounded-lg`    | HIGH   |
+| `custom/DashBoardTable.tsx`    | 87, 112, 232 | `rounded-xl` | `rounded-lg`    | HIGH   |
+| `styles/responsive-layout.css` | 72           | `clamp(...)` | `var(--radius)` | MEDIUM |
 
 ### Priority 2: Product Components
 
-| File | Line(s) | Current | Should Be | Impact |
-|------|---------|---------|-----------|--------|
-| `product/MobileCartAction.tsx` | 188, 201, 239 | `rounded-xl` | `rounded-lg` | MEDIUM |
-| `forms/ImageUpload.tsx` | 124, 134 | `rounded-xl` | `rounded-lg` | MEDIUM |
-| `product/VariantPriceUpdater.tsx` | 40 | `rounded-xl` | `rounded-lg` | LOW |
+| File                              | Line(s)       | Current      | Should Be    | Impact |
+| --------------------------------- | ------------- | ------------ | ------------ | ------ |
+| `product/MobileCartAction.tsx`    | 188, 201, 239 | `rounded-xl` | `rounded-lg` | MEDIUM |
+| `forms/ImageUpload.tsx`           | 124, 134      | `rounded-xl` | `rounded-lg` | MEDIUM |
+| `product/VariantPriceUpdater.tsx` | 40            | `rounded-xl` | `rounded-lg` | LOW    |
 
 ### Priority 3: Profile & Misc
 
-| File | Line(s) | Current | Should Be | Impact |
-|------|---------|---------|-----------|--------|
-| `profile/ProfileCard.tsx` | 54 | `rounded-xl` | `rounded-lg` | LOW |
-| `ui/sidebar.tsx` | 334 | `rounded-xl` | `rounded-lg` | LOW |
+| File                      | Line(s) | Current      | Should Be    | Impact |
+| ------------------------- | ------- | ------------ | ------------ | ------ |
+| `profile/ProfileCard.tsx` | 54      | `rounded-xl` | `rounded-lg` | LOW    |
+| `ui/sidebar.tsx`          | 334     | `rounded-xl` | `rounded-lg` | LOW    |
 
 ---
 
@@ -493,12 +516,14 @@ After making changes:
 ### 9.1 Current State: ⚠️ **PARTIALLY SUFFICIENT**
 
 **You have:**
+
 - ✅ A solid foundation with CSS variables
 - ✅ Proper Tailwind configuration
 - ✅ shadcn/ui with CSS variables mode
 - ✅ Good i18n setup (separate concern)
 
 **You lack:**
+
 - ❌ Consistent application of design tokens
 - ❌ Enforcement mechanisms (linting)
 - ❌ Documentation for developers
@@ -507,10 +532,12 @@ After making changes:
 ### 9.2 If You Changed `--radius` Tomorrow
 
 **Estimated Coverage:**
+
 - ✅ **~60%** of components would update correctly
 - ❌ **~40%** would remain unchanged (hardcoded values)
 
 **Visual Result:**
+
 - ⚠️ **INCONSISTENT** - Mixed border radius throughout the UI
 - ⚠️ **UNPROFESSIONAL** - Lack of visual cohesion
 - ⚠️ **REQUIRES MANUAL FIXES** - Not truly "global" customization
@@ -518,6 +545,7 @@ After making changes:
 ### 9.3 Effort to Fix
 
 **Estimated Time:**
+
 - **Priority 1 fixes:** 2-3 hours
 - **Priority 2 fixes:** 3-4 hours
 - **Priority 3 fixes:** 2-3 hours
@@ -533,6 +561,7 @@ After making changes:
 Your theming infrastructure is **well-designed** but **inconsistently applied**. The good news is that the foundation is solid, and the fixes are straightforward.
 
 **Action Items:**
+
 1. ✅ Fix the `Card` component immediately (highest impact)
 2. ✅ Audit and fix all `rounded-xl` usage
 3. ✅ Add linting rules to prevent regression
@@ -548,6 +577,7 @@ Your theming infrastructure is **well-designed** but **inconsistently applied**.
 ### A. Complete List of Hardcoded Border Radius Instances
 
 **rounded-xl:** 11 files
+
 - `ui/card.tsx`
 - `custom/DashBoardTable.tsx`
 - `profile/ProfileCard.tsx`
@@ -564,7 +594,7 @@ Your theming infrastructure is **well-designed** but **inconsistently applied**.
 
 ```css
 /* Current Global Tokens */
---radius: 0.625rem;                    /* 10px */
+--radius: 0.625rem; /* 10px */
 --shadow-xs: 0 1px 3px 0px hsl(...);
 --shadow-sm: 0 1px 3px 0px hsl(...);
 --shadow: 0 1px 3px 0px hsl(...);

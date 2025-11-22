@@ -1,7 +1,7 @@
 /**
  * Validates quantity based on step, minimum, and maximum values
  * Migrated from buyer-fe/src/utils/productUtils.js
- * 
+ *
  * @param step - Packaging quantity or step value
  * @param min - Minimum order quantity (MOQ)
  * @param max - Maximum allowed quantity
@@ -39,7 +39,7 @@ export function ValidateQuantity(
 /**
  * Validates if value follows the step pattern from stepBase
  * Migrated from buyer-fe/src/utils/productUtils.js
- * 
+ *
  * @param step - Step value
  * @param stepBase - Base step value (usually MOQ)
  * @param value - Value to validate
@@ -64,7 +64,7 @@ export function ValidateStep(
 /**
  * Counts decimal places in a number
  * Migrated from buyer-fe/src/utils/productUtils.js
- * 
+ *
  * @param value - Number to count decimals for
  * @returns Number of decimal places
  */
@@ -75,5 +75,3 @@ export function countDecimals(value: number): number {
   }
   return numString.split(".")[1]?.length || 0;
 }
-
-

@@ -1,7 +1,9 @@
 "use client";
 
 import { useFormContext } from "react-hook-form";
-import OrderProductsTable, { ProductItem } from "@/components/sales/order-products-table";
+import OrderProductsTable, {
+  ProductItem,
+} from "@/components/sales/order-products-table";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 
@@ -17,7 +19,7 @@ interface SummaryProductsTableProps {
 /**
  * Products table component for summary pages
  * Wraps OrderProductsTable with summary-specific configuration
- * 
+ *
  * @param products - Array of products to display
  * @param isEditable - Whether quantities can be edited
  * @param onQuantityChange - Callback when quantity changes
@@ -73,4 +75,3 @@ export default function SummaryProductsTable({
     </Card>
   );
 }
-

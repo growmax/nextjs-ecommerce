@@ -20,13 +20,13 @@ function CartPageSkeleton() {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Cart Items Skeleton */}
         <div className="lg:col-span-2 space-y-4">
-          {[1, 2].map((i) => (
+          {[1, 2].map(i => (
             <Card key={i}>
               <CardContent className="p-4">
                 <div className="flex gap-6 relative">
                   {/* Product Image Skeleton */}
                   <Skeleton className="w-24 h-24 rounded-lg flex-shrink-0" />
-                  
+
                   {/* Product Info - Center */}
                   <div className="flex-1 min-w-0">
                     {/* Title */}

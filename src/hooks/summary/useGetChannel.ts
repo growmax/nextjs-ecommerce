@@ -6,15 +6,11 @@ import SalesService from "@/lib/api/services/SalesService/SalesService";
 /**
  * Hook to fetch channels
  * Migrated from buyer-fe/src/components/Summary/hooks/useGetChannel.js
- * 
+ *
  * @returns Channel data with loading state
  */
 export default function useGetChannel() {
-  const {
-    data,
-    error,
-    isLoading,
-  } = useQuery({
+  const { data, error, isLoading } = useQuery({
     queryKey: ["getChannel"],
     queryFn: async () => {
       return await SalesService.getChannel();
@@ -30,4 +26,3 @@ export default function useGetChannel() {
     channelLoading: isLoading || (!error && !data),
   };
 }
-

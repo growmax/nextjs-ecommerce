@@ -32,11 +32,11 @@ export default function useMultipleSellerPricing(
   const auth = true;
 
   const productIds = useMemo(() => {
-    return uniqBy(cartItems || [], "productId").map(
-      (item: CartItem) => Number(item.productId)
+    return uniqBy(cartItems || [], "productId").map((item: CartItem) =>
+      Number(item.productId)
     );
   }, [cartItems]);
-  
+
   // Create a stable, sorted array for the query key to ensure React Query deduplicates properly
   // Sort to ensure consistent key even if productIds array order changes
   const stableProductIds = useMemo(() => {

@@ -8,7 +8,7 @@ import SellerWarehouseService from "@/lib/api/services/SellerWarehouseService/Se
 /**
  * Hook to fetch default seller address/branch
  * Migrated from buyer-fe/src/hooks/useSellerAddress.js
- * 
+ *
  * @param PrdId - Array of product IDs
  * @param buyerBranchId - Buyer branch ID
  * @param selectedSellerId - Selected seller company ID
@@ -23,11 +23,7 @@ export default function useDefaultSellerAddress(
   const userId = (companydata as { userId?: number })?.userId;
   const companyId = (companydata as { companyId?: number })?.companyId;
 
-  const {
-    data,
-    error,
-    isLoading,
-  } = useQuery({
+  const { data, error, isLoading } = useQuery({
     queryKey: [
       "defualtSellerAddress",
       buyerBranchId,
@@ -66,11 +62,10 @@ export default function useDefaultSellerAddress(
   });
 
   // Return the full branch objects, not just branchId
-  const formatAddress = map(data || [], (o) => (o as any).branchId || o);
+  const formatAddress = map(data || [], o => (o as any).branchId || o);
 
   return {
     defaultSellerAddress: formatAddress || [],
     defaultSellerAddressLoading: isLoading || (!error && !data),
   };
 }
-

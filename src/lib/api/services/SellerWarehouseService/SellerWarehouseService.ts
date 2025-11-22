@@ -107,11 +107,13 @@ export class SellerWarehouseService extends BaseService<SellerWarehouseService> 
    * Find warehouse (wrapper method for buyer-fe compatibility)
    * Accepts POST format: { sellerBranchId }
    * Used by: useDefaultWarehouse hook
-   * 
+   *
    * @param params - Parameters with sellerBranchId
    * @returns Warehouse or null
    */
-  async findWarehouse(params: { sellerBranchId: number }): Promise<Warehouse | null> {
+  async findWarehouse(params: {
+    sellerBranchId: number;
+  }): Promise<Warehouse | null> {
     return this.findWarehouseByBranchId(params.sellerBranchId);
   }
 
@@ -120,7 +122,9 @@ export class SellerWarehouseService extends BaseService<SellerWarehouseService> 
    * @param params - Parameters with sellerBranchId
    * @returns Warehouse or null
    */
-  async findWarehouseServerSide(params: { sellerBranchId: number }): Promise<Warehouse | null> {
+  async findWarehouseServerSide(params: {
+    sellerBranchId: number;
+  }): Promise<Warehouse | null> {
     try {
       return await this.findWarehouse(params);
     } catch {

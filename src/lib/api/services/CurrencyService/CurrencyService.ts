@@ -25,7 +25,7 @@ export class CurrencyService extends BaseService<CurrencyService> {
   /**
    * Get currency factor for a company
    * Endpoint: GET /companys/currencyFactor?companyId={companyId}
-   * 
+   *
    * @param companyId - The company ID
    * @returns Currency factor response
    */
@@ -33,22 +33,24 @@ export class CurrencyService extends BaseService<CurrencyService> {
     companyId: number | string
   ): Promise<CurrencyFactorResponse> {
     const endpoint = `/companys/currencyFactor?companyId=${companyId}`;
-    
-    const response = await this.call(
+
+    const response = (await this.call(
       endpoint,
       {},
       "GET"
-    ) as CurrencyFactorApiResponse;
+    )) as CurrencyFactorApiResponse;
 
     // Normalize response format
     // Backend returns: { success: "success", data: <number> }
     // We need to wrap it in our expected format
     if (response && typeof response === "object") {
       if ("data" in response) {
-        const factor = typeof response.data === "number" 
-          ? response.data 
-          : (response.data as CurrencyFactorResponse)?.data?.currencyFactor || 1;
-        
+        const factor =
+          typeof response.data === "number"
+            ? response.data
+            : (response.data as CurrencyFactorResponse)?.data?.currencyFactor ||
+              1;
+
         return {
           data: {
             currencyFactor: factor,
@@ -111,4 +113,3 @@ export class CurrencyService extends BaseService<CurrencyService> {
 }
 
 export default CurrencyService.getInstance();
-

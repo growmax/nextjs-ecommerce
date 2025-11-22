@@ -54,23 +54,21 @@ export class SalesService extends BaseService<SalesService> {
   /**
    * Get all divisions
    * Endpoint: GET /division
-   * 
+   *
    * @returns Division list
    */
   async getDivision(): Promise<Division[]> {
     const endpoint = `/division`;
-    
-    const response = await this.call(
-      endpoint,
-      {},
-      "GET"
-    ) as DivisionResponse | Division[];
+
+    const response = (await this.call(endpoint, {}, "GET")) as
+      | DivisionResponse
+      | Division[];
 
     // Normalize response format
     if (Array.isArray(response)) {
       return response as Division[];
     }
-    
+
     if (response && typeof response === "object" && "data" in response) {
       const data = (response as DivisionResponse).data;
       if (Array.isArray(data)) {
@@ -97,23 +95,21 @@ export class SalesService extends BaseService<SalesService> {
   /**
    * Get all channels
    * Endpoint: GET /channel
-   * 
+   *
    * @returns Channel list
    */
   async getChannel(): Promise<Channel[]> {
     const endpoint = `/channel`;
-    
-    const response = await this.call(
-      endpoint,
-      {},
-      "GET"
-    ) as ChannelResponse | Channel[];
+
+    const response = (await this.call(endpoint, {}, "GET")) as
+      | ChannelResponse
+      | Channel[];
 
     // Normalize response format
     if (Array.isArray(response)) {
       return response as Channel[];
     }
-    
+
     if (response && typeof response === "object" && "data" in response) {
       const data = (response as ChannelResponse).data;
       if (Array.isArray(data)) {
@@ -140,7 +136,7 @@ export class SalesService extends BaseService<SalesService> {
   /**
    * Get manufacturer competitors (for SPR - Special Price Request)
    * Endpoint: POST /api/sales/getManufacturerCompetitor
-   * 
+   *
    * @param params - Request parameters
    * @returns Manufacturer competitor list
    */
@@ -150,18 +146,16 @@ export class SalesService extends BaseService<SalesService> {
     // Note: Need to find the actual backend endpoint for this
     // For now, using a placeholder endpoint
     const endpoint = `/sales/getManufacturerCompetitor`;
-    
-    const response = await this.call(
-      endpoint,
-      params || {},
-      "POST"
-    ) as ManufacturerCompetitorResponse | ManufacturerCompetitor[];
+
+    const response = (await this.call(endpoint, params || {}, "POST")) as
+      | ManufacturerCompetitorResponse
+      | ManufacturerCompetitor[];
 
     // Normalize response format
     if (Array.isArray(response)) {
       return response as ManufacturerCompetitor[];
     }
-    
+
     if (response && typeof response === "object" && "data" in response) {
       const data = (response as ManufacturerCompetitorResponse).data;
       if (Array.isArray(data)) {
@@ -190,4 +184,3 @@ export class SalesService extends BaseService<SalesService> {
 }
 
 export default SalesService.getInstance();
-

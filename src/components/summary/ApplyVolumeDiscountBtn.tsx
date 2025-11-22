@@ -22,7 +22,7 @@ interface ApplyVolumeDiscountBtnProps {
 /**
  * Volume Discount Button Component
  * Migrated from buyer-fe/src/components/Summary/Components/VolumeDiscountButton/ApplyVolumeDiscountBtn.jsx
- * 
+ *
  * Applies volume discount to products based on category and order value
  */
 export default function ApplyVolumeDiscountBtn({
@@ -37,23 +37,71 @@ export default function ApplyVolumeDiscountBtn({
   const { globalCalc } = useCalculation();
 
   // Watch form values
-  const products = watch(isSummary ? "products" : isQuoteToOrder ? "quotationDetails[0].dbProductDetails" : "orderDetails[0].dbProductDetails");
-  const cartValue = watch(isSummary ? "cartValue" : isQuoteToOrder ? "quotationDetails[0].cartValue" : "orderDetails[0].cartValue");
-  const getBreakup = watch(isSummary ? "getBreakup" : isQuoteToOrder ? "quotationDetails[0].breakup" : "orderDetails[0].breakup");
-  const isInter = watch(isSummary ? "isInter" : isQuoteToOrder ? "quotationDetails[0].isInter" : "orderDetails[0].isInter");
-  const ShowVDButton = watch(isSummary ? "ShowVDButton" : isQuoteToOrder ? "quotationDetails[0].ShowVDButton" : "orderDetails[0].ShowVDButton");
-  const VolumeDiscountAvailable = watch(isSummary ? "VolumeDiscountAvailable" : isQuoteToOrder ? "quotationDetails[0].VolumeDiscountAvailable" : "orderDetails[0].VolumeDiscountAvailable");
+  const products = watch(
+    isSummary
+      ? "products"
+      : isQuoteToOrder
+        ? "quotationDetails[0].dbProductDetails"
+        : "orderDetails[0].dbProductDetails"
+  );
+  const cartValue = watch(
+    isSummary
+      ? "cartValue"
+      : isQuoteToOrder
+        ? "quotationDetails[0].cartValue"
+        : "orderDetails[0].cartValue"
+  );
+  const getBreakup = watch(
+    isSummary
+      ? "getBreakup"
+      : isQuoteToOrder
+        ? "quotationDetails[0].breakup"
+        : "orderDetails[0].breakup"
+  );
+  const isInter = watch(
+    isSummary
+      ? "isInter"
+      : isQuoteToOrder
+        ? "quotationDetails[0].isInter"
+        : "orderDetails[0].isInter"
+  );
+  const ShowVDButton = watch(
+    isSummary
+      ? "ShowVDButton"
+      : isQuoteToOrder
+        ? "quotationDetails[0].ShowVDButton"
+        : "orderDetails[0].ShowVDButton"
+  );
+  const VolumeDiscountAvailable = watch(
+    isSummary
+      ? "VolumeDiscountAvailable"
+      : isQuoteToOrder
+        ? "quotationDetails[0].VolumeDiscountAvailable"
+        : "orderDetails[0].VolumeDiscountAvailable"
+  );
 
   // Get values for calculation
   const beforeTax = isSummary
     ? getValues("preferences")?.freightId?.beforeTax
-    : getValues(isQuoteToOrder ? "quotationDetails[0].quoteTerms" : "orderDetails[0].orderTerms")?.beforeTax;
+    : getValues(
+        isQuoteToOrder
+          ? "quotationDetails[0].quoteTerms"
+          : "orderDetails[0].orderTerms"
+      )?.beforeTax;
   const beforeTaxPercentage = isSummary
     ? getValues("preferences")?.freightId?.beforeTaxPercentage
-    : getValues(isQuoteToOrder ? "quotationDetails[0].quoteTerms" : "orderDetails[0].orderTerms")?.beforeTaxPercentage;
+    : getValues(
+        isQuoteToOrder
+          ? "quotationDetails[0].quoteTerms"
+          : "orderDetails[0].orderTerms"
+      )?.beforeTaxPercentage;
   const overallShipping = isSummary
     ? getValues("overallShipping")
-    : getValues(isQuoteToOrder ? "quotationDetails[0].overallShipping" : "orderDetails[0].overallShipping");
+    : getValues(
+        isQuoteToOrder
+          ? "quotationDetails[0].overallShipping"
+          : "orderDetails[0].overallShipping"
+      );
 
   const subTotal = cartValue?.totalValue || 0;
   const insuranceCharges = cartValue?.insuranceCharges || 0;
@@ -66,7 +114,7 @@ export default function ApplyVolumeDiscountBtn({
    * Maps products to volume discount request format
    */
   const create_GetVolumeDiscount_Payload = (products: any[]) => {
-    return map(products, (prd) => {
+    return map(products, prd => {
       try {
         let unitListPrice = prd?.unitListPrice || 0;
         if (prd.taxInclusive) {
@@ -108,7 +156,7 @@ export default function ApplyVolumeDiscountBtn({
 
       // Create payload
       const rawPayload = create_GetVolumeDiscount_Payload(products);
-      
+
       // Transform payload to match VolumeDiscountRequestItem type
       const payload: VolumeDiscountRequestItem[] = rawPayload
         .filter((item: any) => item.ProdutId) // Filter out empty objects
@@ -153,7 +201,7 @@ export default function ApplyVolumeDiscountBtn({
       // Update cart value with VD data
       const updatedCartValue = { ...cartValue };
       updatedCartValue.pfRate = calculated_Vd_response?.pfRate || 0;
-      
+
       // Update tax breakup totals
       if (getBreakup && Array.isArray(getBreakup)) {
         each(getBreakup, (breakup: any) => {
@@ -167,24 +215,24 @@ export default function ApplyVolumeDiscountBtn({
         isSummary
           ? "ShowVDButton"
           : isQuoteToOrder
-          ? "quotationDetails.0.ShowVDButton"
-          : "orderDetails.0.ShowVDButton",
+            ? "quotationDetails.0.ShowVDButton"
+            : "orderDetails.0.ShowVDButton",
         false
       );
       setValue(
         isSummary
           ? "VDapplied"
           : isQuoteToOrder
-          ? "quotationDetails.0.VDapplied"
-          : "orderDetails.0.VDapplied",
+            ? "quotationDetails.0.VDapplied"
+            : "orderDetails.0.VDapplied",
         true
       );
       setValue(
         isSummary
           ? "VDDetails"
           : isQuoteToOrder
-          ? "quotationDetails.0.VDDetails"
-          : "orderDetails.0.VDDetails",
+            ? "quotationDetails.0.VDDetails"
+            : "orderDetails.0.VDDetails",
         calculated_Vd_response?.vdDetails
       );
 
@@ -206,27 +254,33 @@ export default function ApplyVolumeDiscountBtn({
         isSummary
           ? "products"
           : isQuoteToOrder
-          ? "quotationDetails.0.dbProductDetails"
-          : "orderDetails[0].dbProductDetails",
+            ? "quotationDetails.0.dbProductDetails"
+            : "orderDetails[0].dbProductDetails",
         calcResult?.products || calculated_Vd_response?.products || []
       );
 
       // Update GMDetails if available (from calcResult or calculated_Vd_response)
-      const gmDetails = (calcResult as any)?.GMDetails || (calculated_Vd_response as any)?.GMDetails;
+      const gmDetails =
+        (calcResult as any)?.GMDetails ||
+        (calculated_Vd_response as any)?.GMDetails;
       if (gmDetails) {
         setValue(
           isSummary
             ? "GMDetails"
             : isQuoteToOrder
-            ? "quotationDetails[0].GMDetails"
-            : "orderDetails[0].GMDetails",
+              ? "quotationDetails[0].GMDetails"
+              : "orderDetails[0].GMDetails",
           gmDetails
         );
       }
 
       // Update cart value
       setValue(
-        isSummary ? "cartValue" : isQuoteToOrder ? "quotationDetails[0].cartValue" : "orderDetails[0].cartValue",
+        isSummary
+          ? "cartValue"
+          : isQuoteToOrder
+            ? "quotationDetails[0].cartValue"
+            : "orderDetails[0].cartValue",
         {
           ...updatedCartValue,
           ...calcResult?.cartValue,
@@ -242,7 +296,7 @@ export default function ApplyVolumeDiscountBtn({
       const snackbar_text = is_vd_applied_to_products
         ? "Volume discount applied successfully"
         : "Selected products don't meet VD criteria";
-      
+
       if (is_vd_applied_to_products) {
         toast.success(snackbar_text);
       } else {
@@ -280,4 +334,3 @@ export default function ApplyVolumeDiscountBtn({
     </Button>
   );
 }
-

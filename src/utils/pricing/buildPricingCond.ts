@@ -47,4 +47,3 @@ export function BuildPricingCond(
 
   return result;
 }
-

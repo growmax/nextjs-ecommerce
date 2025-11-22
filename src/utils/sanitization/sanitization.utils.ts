@@ -23,7 +23,7 @@ const XSS_PATTERNS = [
 ];
 
 // Error messages for XSS detection
-export const XSS_ERROR_MESSAGE = 'Invalid content';
+export const XSS_ERROR_MESSAGE = "Invalid content";
 
 /**
  * Check if a string contains potential XSS patterns
@@ -31,8 +31,8 @@ export const XSS_ERROR_MESSAGE = 'Invalid content';
  * @returns True if XSS patterns are detected
  */
 export const containsXSS = (input: string | null | undefined): boolean => {
-  if (!input || typeof input !== 'string') return false;
-  
+  if (!input || typeof input !== "string") return false;
+
   // Check against all XSS patterns
   return XSS_PATTERNS.some(pattern => pattern.test(input));
 };
@@ -43,19 +43,19 @@ export const containsXSS = (input: string | null | undefined): boolean => {
  * @returns String with all HTML tags removed
  */
 export const stripHtmlTags = (input: string | null | undefined): string => {
-  if (!input || typeof input !== 'string') return input || '';
-  
+  if (!input || typeof input !== "string") return input || "";
+
   // Remove all HTML tags
   return input
-    .replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, '')
-    .replace(/<style\b[^<]*(?:(?!<\/style>)<[^<]*)*<\/style>/gi, '')
-    .replace(/<[^>]+>/g, '')
-    .replace(/&lt;/g, '<')
-    .replace(/&gt;/g, '>')
-    .replace(/&amp;/g, '&')
+    .replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, "")
+    .replace(/<style\b[^<]*(?:(?!<\/style>)<[^<]*)*<\/style>/gi, "")
+    .replace(/<[^>]+>/g, "")
+    .replace(/&lt;/g, "<")
+    .replace(/&gt;/g, ">")
+    .replace(/&amp;/g, "&")
     .replace(/&quot;/g, '"')
     .replace(/&#x27;/g, "'")
-    .replace(/&#x2F;/g, '/')
+    .replace(/&#x2F;/g, "/")
     .trim();
 };
 
@@ -65,9 +65,8 @@ export const stripHtmlTags = (input: string | null | undefined): string => {
  * @returns Sanitized input
  */
 export const sanitizeFormInput = (input: string | null | undefined): string => {
-  if (!input || typeof input !== 'string') return input || '';
-  
+  if (!input || typeof input !== "string") return input || "";
+
   // For form inputs, strip all HTML tags
   return stripHtmlTags(input);
 };
-

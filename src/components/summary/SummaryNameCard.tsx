@@ -21,7 +21,7 @@ interface SummaryNameCardProps {
 /**
  * Component for editing quote/order name
  * Migrated from buyer-fe/src/components/Summary/Components/NameCard/NameCard.js
- * 
+ *
  * @param name - Current name value
  * @param onNameChange - Callback when name changes
  * @param title - Title label (e.g., "Quote Name", "Order Name")
@@ -47,21 +47,21 @@ export default function SummaryNameCard({
 
   const handleTempNameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const tempVal = e.target.value;
-    
+
     if (tempVal.length > maxLength) {
       setError("Invalid content");
       setTempName(name); // Reset to original safe value
       toast.error("Invalid content detected");
       return;
     }
-    
+
     if (containsXSS(tempVal)) {
       setError("Invalid content");
       setTempName(name); // Reset to original safe value
       toast.error("Invalid content detected");
       return;
     }
-    
+
     setError("");
     setTempName(tempVal);
   };
@@ -70,7 +70,7 @@ export default function SummaryNameCard({
     if (error) {
       return;
     }
-    
+
     if (tempName.trim() !== name.trim()) {
       onNameChange(tempName.trim());
     }
@@ -120,7 +120,7 @@ export default function SummaryNameCard({
                 variant="ghost"
                 size="icon"
                 className="ml-2 flex-shrink-0"
-                onClick={(e) => {
+                onClick={e => {
                   e.stopPropagation();
                   setIsEditing(true);
                 }}
@@ -179,4 +179,3 @@ export default function SummaryNameCard({
     </Card>
   );
 }
-

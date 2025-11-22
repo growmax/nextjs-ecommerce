@@ -9,10 +9,7 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import {
-  ArrowLeft,
-  Package,
-} from "lucide-react";
+import { ArrowLeft, Package } from "lucide-react";
 import type { CartItem } from "@/types/calculation/cart";
 import CartSkeleton from "../CartSkeleton";
 interface CartProduct {
@@ -197,8 +194,9 @@ export default function SellerCard({
           const sellerCart = sellerCarts[sellerId];
           const items = sellerCart?.items || [];
           const sellerName = sellerCart?.seller?.name || "Unknown Seller";
-          const sellerLocation =
-            String(items[0]?.sellerLocation || sellerCart?.seller?.location || "");
+          const sellerLocation = String(
+            items[0]?.sellerLocation || sellerCart?.seller?.location || ""
+          );
           const sellerPricing = sellerCart?.pricing;
           return (
             <div
@@ -242,9 +240,11 @@ export default function SellerCard({
                           itemNo: product.itemNo,
                           quantity: product.quantity,
                           unitPrice: product.unitPrice || 0,
-                          totalPrice: (product.unitPrice || 0) * product.quantity,
+                          totalPrice:
+                            (product.unitPrice || 0) * product.quantity,
                           unitListPrice: product.unitListPrice,
-                          discountPercentage: product.discountPercentage || product.discount,
+                          discountPercentage:
+                            product.discountPercentage || product.discount,
                           productName: product.productName,
                           shortDescription: product.shortDescription,
                           sellerId: product.sellerId,
@@ -259,7 +259,10 @@ export default function SellerCard({
                         } as CartItem;
 
                         return (
-                          <div key={product.productId || index} className="relative">
+                          <div
+                            key={product.productId || index}
+                            className="relative"
+                          >
                             {/* Inventory Badge */}
                             {product?.inventoryResponse?.inStock !== false ? (
                               <Badge className="absolute top-2 left-2 z-10 bg-green-500 hover:bg-green-600 text-[8px] px-1.5 py-0.5">
@@ -273,7 +276,7 @@ export default function SellerCard({
                             <CartProductCard
                               item={cartItem}
                               isPricingLoading={isPricingLoading}
-                              onUpdate={async (quantity) => {
+                              onUpdate={async quantity => {
                                 await onItemUpdate(product, quantity);
                               }}
                               onDelete={async () => {

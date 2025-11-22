@@ -6,7 +6,7 @@ import useUser from "@/hooks/useUser";
 /**
  * Hook to fetch register address (sold-to, ship-to, bill-to)
  * Migrated from buyer-fe/src/hooks/useRegisterAddress.js
- * 
+ *
  * @returns Register address data with loading state
  */
 export default function useRegisterAddress() {
@@ -14,11 +14,7 @@ export default function useRegisterAddress() {
   const companyId = (companydata as { companyId?: number })?.companyId;
   const userId = (companydata as { userId?: number })?.userId;
 
-  const {
-    data,
-    error,
-    isLoading,
-  } = useQuery({
+  const { data, error, isLoading } = useQuery({
     queryKey: ["registerAddressData", userId, companyId],
     queryFn: async () => {
       if (!companyId) {
@@ -41,4 +37,3 @@ export default function useRegisterAddress() {
     registerAddressDataLoading: isLoading || (!error && !data),
   };
 }
-

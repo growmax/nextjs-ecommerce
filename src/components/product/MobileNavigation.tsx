@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { useRouter } from "@/i18n/navigation";
 import { cn } from "@/lib/utils";
 import { ProductDetail } from "@/types/product/product-detail";
-import { ArrowLeft, Share2, Heart, MoreHorizontal } from "lucide-react";
+import { ArrowLeft, Heart, MoreHorizontal, Share2 } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
 
@@ -13,7 +13,10 @@ interface MobileNavigationProps {
   className?: string;
 }
 
-export default function MobileNavigation({ product, className }: MobileNavigationProps) {
+export default function MobileNavigation({
+  product,
+  className,
+}: MobileNavigationProps) {
   const router = useRouter();
   const [isWishlisted, setIsWishlisted] = useState(false);
   const [isSharing, setIsSharing] = useState(false);
@@ -28,7 +31,9 @@ export default function MobileNavigation({ product, className }: MobileNavigatio
       if (navigator.share) {
         await navigator.share({
           title: product.product_short_description || product.title,
-          text: product.product_description || `Check out this product: ${product.product_short_description}`,
+          text:
+            product.product_description ||
+            `Check out this product: ${product.product_short_description}`,
           url: window.location.href,
         });
       } else {
@@ -38,7 +43,8 @@ export default function MobileNavigation({ product, className }: MobileNavigatio
       }
     } catch (error) {
       // User cancelled sharing or error occurred
-      console.log("Share cancelled or failed:", error);
+      // swallow error; optionally show a toast in the future
+      console.debug("Share cancelled or failed:", error);
     } finally {
       setIsSharing(false);
     }
@@ -46,9 +52,7 @@ export default function MobileNavigation({ product, className }: MobileNavigatio
 
   const handleWishlist = () => {
     setIsWishlisted(!isWishlisted);
-    toast.success(
-      isWishlisted ? "Removed from wishlist" : "Added to wishlist"
-    );
+    toast.success(isWishlisted ? "Removed from wishlist" : "Added to wishlist");
   };
 
   const handleMore = () => {
@@ -57,11 +61,13 @@ export default function MobileNavigation({ product, className }: MobileNavigatio
   };
 
   return (
-    <div className={cn(
-      "md:hidden sticky top-0 z-40 bg-background/95 backdrop-blur-sm border-b border-border",
-      "transition-all duration-300",
-      className
-    )}>
+    <div
+      className={cn(
+        "md:hidden sticky top-0 z-40 bg-background/95 backdrop-blur-sm border-b border-border",
+        "transition-all duration-300",
+        className
+      )}
+    >
       <div className="flex items-center justify-between p-4">
         {/* Back Button */}
         <Button
@@ -94,18 +100,20 @@ export default function MobileNavigation({ product, className }: MobileNavigatio
           >
             <Share2 className={cn("h-4 w-4", isSharing && "animate-pulse")} />
           </Button>
-          
+
           <Button
             variant="ghost"
             size="icon"
             onClick={handleWishlist}
             className={cn(
               "h-9 w-9 hover:bg-muted/50",
-              isWishlisted 
-                ? "text-red-500 hover:text-red-600" 
+              isWishlisted
+                ? "text-red-500 hover:text-red-600"
                 : "text-foreground"
             )}
-            aria-label={isWishlisted ? "Remove from wishlist" : "Add to wishlist"}
+            aria-label={
+              isWishlisted ? "Remove from wishlist" : "Add to wishlist"
+            }
           >
             <Heart className={cn("h-4 w-4", isWishlisted && "fill-current")} />
           </Button>

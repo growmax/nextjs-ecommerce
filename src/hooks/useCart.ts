@@ -66,7 +66,7 @@ export function useCart() {
 
   const userIdFromContext = useUserId();
   const tenantIdNum = useTenantId();
-  
+
   // Fallback: Try to get userId from JWT token if context doesn't have it
   // This ensures we can still make API calls even if UserDetailsContext hasn't loaded yet
   const userIdFromToken = useMemo(() => {
@@ -77,20 +77,26 @@ export function useCart() {
         const payload = jwtService.decodeToken(token) as any;
         if (payload?.userId || payload?.id) {
           const extractedUserId = Number(payload.userId || payload.id);
-          console.log("🔑 [useCart] Extracted userId from JWT token:", extractedUserId);
+          console.log(
+            "🔑 [useCart] Extracted userId from JWT token:",
+            extractedUserId
+          );
           return extractedUserId;
         }
       }
     } catch (error) {
       // If JWT decode fails, return null
-      console.warn("⚠️ [useCart] Failed to extract userId from JWT token:", error);
+      console.warn(
+        "⚠️ [useCart] Failed to extract userId from JWT token:",
+        error
+      );
     }
     return null;
   }, []); // Token doesn't change, no need to depend on userIdFromContext
 
   // Use userId from context if available, otherwise fallback to JWT token
   const userId = userIdFromContext || userIdFromToken;
-  
+
   // Convert tenantId to string (backend expects string)
   const tenantId = tenantIdNum ? String(tenantIdNum) : null;
   const [isCartLoading, setIsCartLoading] = useState(false);
@@ -561,7 +567,10 @@ export function useCart() {
             method: "PUT",
           });
 
-          console.log("✅ [changeQty] API call successful, response:", response);
+          console.log(
+            "✅ [changeQty] API call successful, response:",
+            response
+          );
 
           // Parse and update cart with backend response (contains calculated prices, taxes, etc.)
           // This uses the backend-calculated values instead of making another API call
@@ -585,12 +594,15 @@ export function useCart() {
         }
       } else {
         // Guest user: update localStorage
-        console.warn("⚠️ [changeQty] Skipping API call - missing userId or tenantId", {
-          userId,
-          tenantId,
-          hasUserId: !!userId,
-          hasTenantId: !!tenantId,
-        });
+        console.warn(
+          "⚠️ [changeQty] Skipping API call - missing userId or tenantId",
+          {
+            userId,
+            tenantId,
+            hasUserId: !!userId,
+            hasTenantId: !!tenantId,
+          }
+        );
         if (isInCart) {
           const updatedCart = cart.map(item => {
             if (

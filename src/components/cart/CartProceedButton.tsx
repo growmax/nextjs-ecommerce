@@ -29,9 +29,7 @@ export default function CartProceedButton({
     if (onRequestQuote) {
       onRequestQuote();
     } else {
-      const query = selectedSellerId
-        ? `?sellerId=${selectedSellerId}`
-        : "";
+      const query = selectedSellerId ? `?sellerId=${selectedSellerId}` : "";
       router.push(`/quotesummary${query}`);
     }
   };
@@ -40,9 +38,7 @@ export default function CartProceedButton({
     if (onPlaceOrder) {
       onPlaceOrder();
     } else {
-      const query = selectedSellerId
-        ? `?sellerId=${selectedSellerId}`
-        : "";
+      const query = selectedSellerId ? `?sellerId=${selectedSellerId}` : "";
       router.push(`/ordersummary${query}`);
     }
   };
@@ -102,4 +98,3 @@ export default function CartProceedButton({
     </div>
   );
 }
-

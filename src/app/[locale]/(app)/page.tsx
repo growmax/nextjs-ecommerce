@@ -1,5 +1,13 @@
 import type { Metadata } from "next";
-import { Suspense } from "react";
+import { headers } from "next/headers";
+import { ServerAuth } from "@/lib/auth-server";
+import { StoreFrontService } from "@/lib/api/services/StoreFrontService";
+import HomepageClient from "@/components/homepage/HomepageClient";
+import BuyerFooter from "@/components/homepage/BuyerFooter";
+import type {
+  HomepageConfig,
+  HomepageSection,
+} from "@/hooks/useHomepageConfig";
 
 export const metadata: Metadata = {
   title: "Home | E-Commerce",
@@ -11,127 +19,148 @@ export const metadata: Metadata = {
 // while still being updated periodically
 export const revalidate = 3600; // 1 hour
 
-export default function HomePage() {
-  // Simulate some mock data (this renders instantly as HTML)
-  const mockProducts = Array.from({ length: 12 }, (_, i) => ({
-    id: i + 1,
-    name: `Product ${i + 1}`,
-    price: Math.round(Math.random() * 1000 + 100),
-  }));
+/**
+ * Server-side function to fetch homepage configuration
+ * This matches the logic from useHomepageConfig hook but runs on the server
+ */
+export async function getHomepageConfig(
+  domain: string,
+  token?: string | null
+): Promise<HomepageConfig | null> {
+  try {
+    const service = StoreFrontService.getInstance();
 
-  const mockCategories = Array.from({ length: 6 }, (_, i) => ({
-    id: i + 1,
-    name: `Category ${i + 1}`,
-  }));
+    // Extract tenant code from token if available (buyer-fe uses iss from token)
+    let tenantCode: string | undefined;
+    if (token) {
+      try {
+        const parts = token.split(".");
+        if (parts.length === 3) {
+          const payload = JSON.parse(atob(parts[1]!));
+          tenantCode = payload.iss || payload.tenantId || payload.tenantCode;
+        }
+      } catch (error) {
+        console.error("Failed to extract tenant code from token:", error);
+      }
+    }
+
+    // Use tenant code if available, otherwise use domain
+    const queryDomain = tenantCode || domain;
+    const context = token
+      ? { accessToken: token, ...(tenantCode && { tenantCode }) }
+      : undefined;
+
+    const response = await service.getStoreFrontConfig(queryDomain, context);
+
+    // Find HOMEPAGELIST entry
+    const homepageListEntry = response.data.getAllByDomain.find(
+      item => item.storeFrontProperty === "HOMEPAGELIST"
+    );
+
+    // Find THEME entry
+    const themeEntry = response.data.getAllByDomain.find(
+      item => item.storeFrontProperty === "THEME"
+    );
+
+    // Parse dataJson - match buyer-fe logic exactly
+    let HomePageList: HomepageSection[] = [];
+    if (homepageListEntry?.dataJson) {
+      try {
+        const parsed =
+          typeof homepageListEntry.dataJson === "string"
+            ? JSON.parse(homepageListEntry.dataJson)
+            : homepageListEntry.dataJson;
+
+        // In buyer-fe, it checks isArray(HomePageList), so ensure it's an array
+        if (Array.isArray(parsed)) {
+          HomePageList = parsed;
+        } else if (parsed && typeof parsed === "object") {
+          // If it's an object, try to extract an array from it
+          // Some configurations might wrap the array in an object
+          if ("list" in parsed && Array.isArray(parsed.list)) {
+            HomePageList = parsed.list;
+          } else if ("sections" in parsed && Array.isArray(parsed.sections)) {
+            HomePageList = parsed.sections;
+          } else {
+            // If it's a single object, wrap it in an array
+            HomePageList = [parsed as HomepageSection];
+          }
+        }
+      } catch (error) {
+        console.error("Failed to parse HomePageList:", error);
+      }
+    }
+
+    let ThemeData: HomepageConfig["ThemeData"] = {};
+    if (themeEntry?.dataJson) {
+      try {
+        ThemeData =
+          typeof themeEntry.dataJson === "string"
+            ? JSON.parse(themeEntry.dataJson)
+            : themeEntry.dataJson;
+      } catch (error) {
+        console.error("Failed to parse ThemeData:", error);
+      }
+    }
+
+    // Find ELASTIC_INDEX (might be in a different property)
+    const elasticIndexEntry = response.data.getAllByDomain.find(
+      item => item.storeFrontProperty === "ELASTIC_INDEX"
+    );
+    let ELASTIC_INDEX: string | undefined;
+    if (elasticIndexEntry?.dataJson) {
+      try {
+        if (typeof elasticIndexEntry.dataJson === "string") {
+          // Try to parse as JSON first, if it fails, treat as plain string
+          try {
+            const parsed = JSON.parse(elasticIndexEntry.dataJson);
+            ELASTIC_INDEX = typeof parsed === "string" ? parsed : undefined;
+          } catch {
+            // If JSON.parse fails, it's likely a plain string
+            ELASTIC_INDEX = elasticIndexEntry.dataJson;
+          }
+        } else {
+          ELASTIC_INDEX =
+            typeof elasticIndexEntry.dataJson === "string"
+              ? elasticIndexEntry.dataJson
+              : undefined;
+        }
+      } catch (error) {
+        console.error("Failed to parse ELASTIC_INDEX:", error);
+      }
+    }
+
+    return {
+      HomePageList,
+      StoreFrontdata: response.data.getAllByDomain,
+      ThemeData,
+      ELASTIC_INDEX,
+    };
+  } catch (error) {
+    console.error("Failed to fetch homepage config:", error);
+    return null;
+  }
+}
+
+export default async function HomePage() {
+  // Get domain from headers
+  const headersList = await headers();
+  const domain =
+    headersList.get("x-tenant-domain") ||
+    headersList.get("host") ||
+    process.env.DEFAULT_DOMAIN ||
+    "localhost:3000";
+
+  // Get access token if available
+  const accessToken = await ServerAuth.getAccessToken();
+
+  // Fetch homepage config server-side
+  const initialConfig = await getHomepageConfig(domain, accessToken);
 
   return (
-    <div className="container mx-auto p-8 space-y-8">
-      {/* Performance Indicator - Static HTML */}
-      <div className="bg-blue-500 text-white p-6 rounded-lg shadow-lg">
-        <h1 className="text-3xl font-bold mb-2">
-          ⚡ Lightning Fast Homepage Demo
-        </h1>
-        <p className="text-lg">
-          This page demonstrates progressive hydration - HTML loads instantly,
-          JavaScript enhances later!
-        </p>
-      </div>
-
-      {/* HTML Load Time Indicator */}
-      <div className="bg-yellow-100 border-2 border-yellow-400 rounded-lg p-4">
-        <p className="text-yellow-900 font-semibold">
-          ✅ Initial HTML Loaded: ~0ms (You see this immediately!)
-        </p>
-        <p className="text-sm text-yellow-800 mt-1">
-          All content below is pure HTML - no JavaScript blocking the render
-        </p>
-      </div>
-
-      {/* Hero Section - Static HTML */}
-      <section className="bg-gradient-to-r from-purple-500 to-pink-500 text-white p-12 rounded-lg shadow-xl">
-        <h2 className="text-4xl font-bold mb-4">Welcome to Our Store</h2>
-        <p className="text-xl mb-6">
-          Discover amazing products with lightning-fast page loads
-        </p>
-        <div className="inline-block bg-white text-purple-600 px-6 py-3 rounded-lg font-semibold">
-          Shop Now (Static HTML Button)
-        </div>
-      </section>
-
-      {/* Categories Grid - Static HTML */}
-      <section>
-        <h2 className="text-2xl font-bold mb-4 text-gray-800">
-          📦 Categories (Static HTML)
-        </h2>
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
-          {mockCategories.map(category => (
-            <div
-              key={category.id}
-              className="bg-indigo-100 border-2 border-indigo-300 p-6 rounded-lg text-center hover:shadow-md transition-shadow"
-            >
-              <div className="text-4xl mb-2">🏷️</div>
-              <h3 className="font-semibold text-indigo-900">{category.name}</h3>
-            </div>
-          ))}
-        </div>
-      </section>
-
-      {/* Products Grid - Static HTML */}
-      <section>
-        <h2 className="text-2xl font-bold mb-4 text-gray-800">
-          🛍️ Featured Products (Static HTML)
-        </h2>
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-          {mockProducts.map(product => (
-            <div
-              key={product.id}
-              className="bg-white border-2 border-gray-200 rounded-lg p-4 hover:shadow-lg transition-shadow"
-            >
-              <div className="w-full h-40 bg-gradient-to-br from-gray-200 to-gray-300 rounded-lg mb-3 flex items-center justify-center">
-                <span className="text-4xl">📦</span>
-              </div>
-              <h3 className="font-semibold text-gray-900 mb-2">
-                {product.name}
-              </h3>
-              <p className="text-xl font-bold text-green-600 mb-3">
-                ${product.price}
-              </p>
-              <div className="w-full bg-blue-500 text-white text-center py-2 rounded hover:bg-blue-600 transition-colors">
-                Add to Cart
-              </div>
-            </div>
-          ))}
-        </div>
-      </section>
-
-      {/* Interactive Section - Hydrates Later */}
-      <section>
-        <h2 className="text-2xl font-bold mb-4 text-gray-800">
-          🎮 Interactive Demo (Loads After HTML)
-        </h2>
-        <Suspense
-          fallback={
-            <div className="border-2 border-gray-300 rounded-lg p-6 bg-gray-50">
-              <p className="text-gray-600">Loading interactive section...</p>
-            </div>
-          }
-        ></Suspense>
-      </section>
-
-      {/* Performance Summary */}
-      <div className="bg-gradient-to-r from-green-400 to-blue-500 text-white p-6 rounded-lg">
-        <h3 className="text-xl font-bold mb-3">🚀 Performance Summary</h3>
-        <ul className="space-y-2 text-sm">
-          <li>✅ HTML rendered instantly (0ms blocking)</li>
-          <li>✅ All content readable immediately</li>
-          <li>✅ Page is scrollable before JavaScript loads</li>
-          <li>✅ Interactive features enhance progressively</li>
-          <li>✅ Smaller initial JavaScript bundle</li>
-        </ul>
-        <p className="mt-4 text-xs opacity-90">
-          This is the Grainger pattern: Content First, Interactivity Later!
-        </p>
-      </div>
-    </div>
+    <>
+      <HomepageClient initialConfig={initialConfig} domain={domain} />
+      <BuyerFooter initialConfig={initialConfig} domain={domain} />
+    </>
   );
 }
