@@ -1,6 +1,7 @@
 import { Card, CardFooter } from "@/components/ui/card";
 import Image from "next/image";
 import React from "react";
+import { useTranslations } from "next-intl";
 
 interface CategoryCardProps {
   index?: number;
@@ -35,6 +36,7 @@ const CategoryCard: React.FC<CategoryCardProps> = ({
   hoverEffect = true,
   children,
 }) => {
+  const t = useTranslations("category");
   // Inline style for outer wrapper
   const wrapperStyle: React.CSSProperties = {
     width: cardWidth,
@@ -55,7 +57,7 @@ const CategoryCard: React.FC<CategoryCardProps> = ({
           >
             <Image
               src={img}
-              alt={alt || title || `Category Image ${index}`}
+              alt={alt || title || `${t("categoryImage")} ${index}`}
               width={imageWidth}
               height={imageHeight}
               className="object-contain max-h-full"

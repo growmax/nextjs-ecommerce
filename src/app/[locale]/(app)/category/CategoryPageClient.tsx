@@ -11,13 +11,15 @@ import CategoryCard from "./components/CategoryCard";
 import PaginationControl from "./components/PaginationControl";
 import ProductTile from "./components/ProductCard";
 import { bannerCategories, categories, sampleProducts } from "./mockData";
+import { useTranslations } from "next-intl";
 
 const CategoryPageClient: React.FC = () => {
+  const t = useTranslations("category");
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(12);
 
   const handleAddToCart = (id: string) => {
-    alert(`Added product ${id} to cart!`);
+    alert(t("addedToCart", { id }));
   };
 
   const handleSortChange = (sortOption: string) => {
@@ -40,7 +42,7 @@ const CategoryPageClient: React.FC = () => {
   return (
     <>
       <h2 className="text-2xl font-bold mb-6 text-slate-800 dark:text-slate-100">
-        Categories
+        {t("title")}
       </h2>
       <div className="flex flex-row items-center gap-6 overflow-x-auto flex-nowrap justify-between pb-2 pr-[10%]">
         <div className="w-7/8 flex-shrink-0 flex flex-row gap-4 items-center">
@@ -49,7 +51,7 @@ const CategoryPageClient: React.FC = () => {
               key={category.src ?? index}
               index={index}
               img={category.src || "/banner1.jpg"}
-              alt={category.alt || "Category Image"}
+              alt={category.alt || t("categoryImage")}
               imageWidth={200}
               imageHeight={100}
               cardWidth={180}
@@ -58,26 +60,28 @@ const CategoryPageClient: React.FC = () => {
           ))}
         </div>
         <div className="w-1/8 flex items-center gap-2 justify-end">
-          <span className="text-sm font-medium text-gray-700">Sort By:</span>
+          <span className="text-sm font-medium text-gray-700">
+            {t("sortBy")}
+          </span>
           <DropdownMenu>
             <DropdownMenuTrigger className="px-4 py-2 bg-gray-200 rounded-md text-sm font-medium">
-              Best Match
+              {t("bestMatch")}
             </DropdownMenuTrigger>
             <DropdownMenuContent className="absolute right-0">
               <DropdownMenuItem
-                onClick={() => handleSortChange("Price: Low to High")}
+                onClick={() => handleSortChange(t("priceLowToHigh"))}
               >
-                Price: Low to High
+                {t("priceLowToHigh")}
               </DropdownMenuItem>
               <DropdownMenuItem
-                onClick={() => handleSortChange("Price: High to Low")}
+                onClick={() => handleSortChange(t("priceHighToLow"))}
               >
-                Price: High to Low
+                {t("priceHighToLow")}
               </DropdownMenuItem>
               <DropdownMenuItem
-                onClick={() => handleSortChange("Rating: High to Low")}
+                onClick={() => handleSortChange(t("ratingHighToLow"))}
               >
-                Rating: High to Low
+                {t("ratingHighToLow")}
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
@@ -85,7 +89,7 @@ const CategoryPageClient: React.FC = () => {
       </div>
       <section className="px-6 py-10">
         <h2 className="text-2xl font-bold mb-6 text-slate-800 dark:text-slate-100">
-          Categories
+          {t("categories")}
         </h2>
 
         <div className="flex flex-row items-start gap-6 overflow-x-auto flex-nowrap justify-start pb-2">

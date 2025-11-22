@@ -173,10 +173,10 @@ describe("AvatarCard", () => {
 
       // Wait for dropdown to open and content to appear
       await waitFor(() => {
-        expect(screen.getByText("Loading user...")).toBeInTheDocument();
+        expect(screen.getByText("loadingUser")).toBeInTheDocument();
       });
 
-      expect(screen.getByText("Please wait")).toBeInTheDocument();
+      expect(screen.getByText("pleaseWait")).toBeInTheDocument();
       expect(screen.getByTestId("loader2-icon")).toBeInTheDocument();
     }, 10000);
   });
@@ -191,8 +191,8 @@ describe("AvatarCard", () => {
       // Click trigger to open dropdown
       await user.click(screen.getByTestId("avatar-trigger"));
 
-      expect(screen.getByText("Failed to load user")).toBeInTheDocument();
-      expect(screen.getByText("Please try again")).toBeInTheDocument();
+      expect(screen.getByText("failedToLoadUser")).toBeInTheDocument();
+      expect(screen.getByText("pleaseTryAgain")).toBeInTheDocument();
       expect(screen.getByTestId("alert-circle-icon")).toBeInTheDocument();
     });
 
@@ -205,7 +205,7 @@ describe("AvatarCard", () => {
       // Click trigger to open dropdown
       await user.click(screen.getByTestId("avatar-trigger"));
 
-      const retryButton = screen.getByText("Retry");
+      const retryButton = screen.getByText("retry");
       await user.click(retryButton);
 
       expect(mockOnRetry).toHaveBeenCalledTimes(1);
@@ -341,11 +341,11 @@ describe("AvatarCard", () => {
       // Click trigger to open dropdown
       await user.click(screen.getByTestId("avatar-trigger"));
 
-      expect(screen.getByText("Profile")).toBeInTheDocument();
-      expect(screen.getByText("Company Settings")).toBeInTheDocument();
-      expect(screen.getByText("Orders")).toBeInTheDocument();
-      expect(screen.getByText("Quotes")).toBeInTheDocument();
-      expect(screen.getByText("Log out")).toBeInTheDocument();
+      expect(screen.getByText("profile")).toBeInTheDocument();
+      expect(screen.getByText("companySettings")).toBeInTheDocument();
+      expect(screen.getByText("orders")).toBeInTheDocument();
+      expect(screen.getByText("quotes")).toBeInTheDocument();
+      expect(screen.getByText("logOut")).toBeInTheDocument();
     });
 
     it("should have correct href attributes for navigation links", async () => {
@@ -356,19 +356,19 @@ describe("AvatarCard", () => {
       await user.click(screen.getByTestId("avatar-trigger"));
 
       // Check Profile link
-      const profileLink = screen.getByText("Profile").closest("a");
+      const profileLink = screen.getByText("profile").closest("a");
       expect(profileLink).toHaveAttribute("href", "/settings/profile");
 
       // Check Company Settings link
-      const companyLink = screen.getByText("Company Settings").closest("a");
+      const companyLink = screen.getByText("companySettings").closest("a");
       expect(companyLink).toHaveAttribute("href", "/settings/company");
 
       // Check Orders link
-      const ordersLink = screen.getByText("Orders").closest("a");
+      const ordersLink = screen.getByText("orders").closest("a");
       expect(ordersLink).toHaveAttribute("href", "/landing/orderslanding");
 
       // Check Quotes link
-      const quotesLink = screen.getByText("Quotes").closest("a");
+      const quotesLink = screen.getByText("quotes").closest("a");
       expect(quotesLink).toHaveAttribute("href", "/landing/quoteslanding");
     });
 
@@ -391,7 +391,7 @@ describe("AvatarCard", () => {
       });
 
       // Verify content is accessible when open
-      expect(screen.getByText("Profile")).toBeInTheDocument();
+      expect(screen.getByText("profile")).toBeInTheDocument();
 
       // Click trigger again to close dropdown
       await user.click(dropdownTrigger);
@@ -414,7 +414,7 @@ describe("AvatarCard", () => {
       // Click trigger to open dropdown
       await user.click(screen.getByTestId("avatar-trigger"));
 
-      const logoutButton = screen.getByText("Log out");
+      const logoutButton = screen.getByText("logOut");
       await user.click(logoutButton);
 
       expect(mockOnLogout).toHaveBeenCalledTimes(1);
@@ -427,7 +427,7 @@ describe("AvatarCard", () => {
       // Click trigger to open dropdown
       await user.click(screen.getByTestId("avatar-trigger"));
 
-      expect(screen.getByText("Logging out...")).toBeInTheDocument();
+      expect(screen.getByText("loggingOut")).toBeInTheDocument();
       expect(screen.getByTestId("loader2-icon")).toBeInTheDocument();
     });
 
@@ -440,7 +440,7 @@ describe("AvatarCard", () => {
 
       // Find the logout menu item (which is a button-like element)
       const logoutMenuItem = screen
-        .getByText("Logging out...")
+        .getByText("loggingOut")
         .closest('[role="menuitem"]');
       expect(logoutMenuItem).toHaveAttribute("aria-disabled", "true");
     });
@@ -571,7 +571,7 @@ describe("AvatarCard", () => {
 
       // Should show fallback initial 'U' and still render menu
       expect(screen.getByText("U")).toBeInTheDocument();
-      expect(screen.getByText("Profile")).toBeInTheDocument();
+      expect(screen.getByText("profile")).toBeInTheDocument();
     });
 
     it("should not render company name when it's 'No company'", async () => {
@@ -663,7 +663,7 @@ describe("AvatarCard", () => {
       await user.keyboard("{Enter}");
 
       // Menu should be open
-      expect(screen.getByText("Profile")).toBeInTheDocument();
+      expect(screen.getByText("profile")).toBeInTheDocument();
     });
 
     it("should have proper menu item roles and attributes", async () => {
@@ -686,7 +686,7 @@ describe("AvatarCard", () => {
       await user.click(screen.getByTestId("avatar-trigger"));
 
       const disabledItem = screen
-        .getByText("Logging out...")
+        .getByText("loggingOut")
         .closest('[role="menuitem"]');
       expect(disabledItem).toHaveAttribute("aria-disabled", "true");
     });

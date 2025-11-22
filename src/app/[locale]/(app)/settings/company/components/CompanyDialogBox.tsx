@@ -2,6 +2,7 @@
 
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
+import { useTranslations } from "next-intl";
 import {
   Dialog,
   DialogContent,
@@ -41,28 +42,33 @@ interface CompanyDialogBoxProps {
   onSuccess?: () => void;
 }
 
-// Zod validation schema
-const addressFormSchema = z.object({
-  id: z.number().optional(),
-  companyName: z.string().optional(),
-  branchName: z.string().min(1),
-  addressLine: z.string().min(1),
-  locality: z.string().optional(),
-  country: z.string().refine(val => val.length > 0),
-  state: z.string().refine(val => val.length > 0),
-  district: z.string().optional(),
-  pinCode: z.string().min(1),
-  city: z.string().optional(),
-  lattitude: z.string().optional(),
-  longitude: z.string().optional(),
-  isBilling: z.boolean(),
-  isShipping: z.boolean(),
-  gst: z.string().optional(),
-  contactName: z.string().optional(),
-  contactNumber: z.string().optional(),
-});
+// Create schema function that accepts translations
+const createAddressFormSchema = (t: (key: string) => string) =>
+  z.object({
+    id: z.number().optional(),
+    companyName: z.string().optional(),
+    branchName: z.string().min(1, t("validation.branchNameRequired")),
+    addressLine: z.string().min(1, t("validation.addressLineRequired")),
+    locality: z.string().optional(),
+    country: z.string().refine(val => val.length > 0, {
+      message: t("validation.countryRequired"),
+    }),
+    state: z.string().refine(val => val.length > 0, {
+      message: t("validation.stateRequired"),
+    }),
+    district: z.string().optional(),
+    pinCode: z.string().min(1, t("validation.pinCodeRequired")),
+    city: z.string().optional(),
+    lattitude: z.string().optional(),
+    longitude: z.string().optional(),
+    isBilling: z.boolean(),
+    isShipping: z.boolean(),
+    gst: z.string().optional(),
+    contactName: z.string().optional(),
+    contactNumber: z.string().optional(),
+  });
 
-type AddressFormData = z.infer<typeof addressFormSchema>;
+type AddressFormData = z.infer<ReturnType<typeof createAddressFormSchema>>;
 
 const CompanyDialogBox = ({
   open,
@@ -72,6 +78,12 @@ const CompanyDialogBox = ({
   branchId = null,
   onSuccess,
 }: CompanyDialogBoxProps) => {
+  const t = useTranslations("companySettings");
+  const tValidation = useTranslations("validation");
+  const addressFormSchema = useMemo(
+    () => createAddressFormSchema(tValidation),
+    [tValidation]
+  );
   const emptyDefaults = useMemo<AddressFormData>(
     () => ({
       // Address Information
@@ -101,7 +113,9 @@ const CompanyDialogBox = ({
   const form = useForm<AddressFormData>({
     resolver: zodResolver(addressFormSchema),
     defaultValues:
-      mode === "create" ? emptyDefaults : initialData || emptyDefaults,
+      mode === "create"
+        ? emptyDefaults
+        : (initialData as AddressFormData) || emptyDefaults,
   });
 
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -301,9 +315,7 @@ const CompanyDialogBox = ({
 
         // If we couldn't resolve user/company ids locally, stop early to avoid sending a bad request
         if (resolvedUserId === undefined || resolvedCompanyId === undefined) {
-          throw new Error(
-            "Missing authentication (userId/companyId) - cannot create branch"
-          );
+          throw new Error(t("missingAuthCannotCreateBranch"));
         }
 
         // attach resolved ids to the payload explicitly
@@ -330,9 +342,7 @@ const CompanyDialogBox = ({
 
         if (!addrWithId.id) {
           setIsSubmitting(false);
-          throw new Error(
-            "Missing address id for update. Please re-open the branch or refresh the list and try again."
-          );
+          throw new Error(t("missingAddressIdForUpdate"));
         }
 
         const payload: UpdateBranchRequest = {
@@ -361,9 +371,7 @@ const CompanyDialogBox = ({
         };
 
         if (resolvedUserId === undefined || resolvedCompanyId === undefined) {
-          throw new Error(
-            "Missing authentication (userId/companyId) - cannot update branch"
-          );
+          throw new Error(t("missingAuthCannotUpdateBranch"));
         }
 
         // attach resolved ids to the payload explicitly
@@ -460,7 +468,7 @@ const CompanyDialogBox = ({
         <div className="px-4 sm:px-6 pt-6 pb-4 border-b shrink-0">
           <DialogHeader>
             <DialogTitle>
-              {mode === "create" ? "Create Address" : "Edit Address"}
+              {mode === "create" ? t("createAddress") : t("editAddress")}
             </DialogTitle>
           </DialogHeader>
         </div>
@@ -477,24 +485,24 @@ const CompanyDialogBox = ({
               <FormInput
                 control={form.control}
                 name="branchName"
-                label="Branch"
-                placeholder="Enter branch name"
+                label={t("branch")}
+                placeholder={t("enterBranchName")}
                 required
               />
 
               <FormTextarea
                 control={form.control}
                 name="addressLine"
-                label="Address"
-                placeholder="Enter address"
+                label={t("address")}
+                placeholder={t("enterAddress")}
                 required
               />
 
               <FormInput
                 control={form.control}
                 name="locality"
-                label="Locality"
-                placeholder="Enter locality"
+                label={t("locality")}
+                placeholder={t("enterLocality")}
               />
 
               {/* Country & State Grid */}
@@ -502,11 +510,11 @@ const CompanyDialogBox = ({
                 <FormDropdown
                   control={form.control}
                   name="country"
-                  label="Country"
+                  label={t("country")}
                   placeholder={
                     countriesLoading
-                      ? "Loading countries..."
-                      : "Search A Country"
+                      ? t("loadingCountries")
+                      : t("searchACountry")
                   }
                   required
                   options={countries.length > 0 ? countries : []}
@@ -515,11 +523,11 @@ const CompanyDialogBox = ({
                 <FormDropdown
                   control={form.control}
                   name="state"
-                  label="State/Province"
+                  label={t("stateProvince")}
                   placeholder={
                     statesLoading
-                      ? "Loading states..."
-                      : "Search A State/Province"
+                      ? t("loadingStates")
+                      : t("searchAStateProvince")
                   }
                   required
                   options={states.length > 0 ? states : []}
@@ -531,11 +539,11 @@ const CompanyDialogBox = ({
                 <FormDropdown
                   control={form.control}
                   name="district"
-                  label="District"
+                  label={t("district")}
                   placeholder={
                     districtsLoading
-                      ? "Loading districts..."
-                      : "Select district"
+                      ? t("loadingDistricts")
+                      : t("selectDistrict")
                   }
                   options={districts.length > 0 ? districts : []}
                 />
@@ -543,8 +551,8 @@ const CompanyDialogBox = ({
                 <FormInput
                   control={form.control}
                   name="pinCode"
-                  label="PostalCode/PinCode"
-                  placeholder="Enter postal code"
+                  label={t("postalCodePinCode")}
+                  placeholder={t("enterPostalCode")}
                   required
                 />
               </div>
@@ -554,27 +562,27 @@ const CompanyDialogBox = ({
                 <FormInput
                   control={form.control}
                   name="city"
-                  label="City"
-                  placeholder="Enter city"
+                  label={t("city")}
+                  placeholder={t("enterCity")}
                 />
                 <FormInput
                   control={form.control}
                   name="lattitude"
-                  label="lattitude"
-                  placeholder="Enter lattitude"
+                  label={t("latitude")}
+                  placeholder={t("enterLatitude")}
                 />
 
                 <FormInput
                   control={form.control}
                   name="longitude"
-                  label="Longitude"
-                  placeholder="Enter longitude"
+                  label={t("longitude")}
+                  placeholder={t("enterLongitude")}
                 />
               </div>
 
               {/* Address Type Checkboxes */}
               <div className="space-y-3 py-2">
-                <p className="text-sm font-medium">Address for</p>
+                <p className="text-sm font-medium">{t("addressFor")}</p>
                 <div className="flex gap-6">
                   <FormField
                     control={form.control}
@@ -588,7 +596,7 @@ const CompanyDialogBox = ({
                           />
                         </FormControl>
                         <FormLabel className="!mt-0 cursor-pointer">
-                          Billing
+                          {t("billing")}
                         </FormLabel>
                       </FormItem>
                     )}
@@ -606,7 +614,7 @@ const CompanyDialogBox = ({
                           />
                         </FormControl>
                         <FormLabel className="!mt-0 cursor-pointer">
-                          Shipping
+                          {t("shipping")}
                         </FormLabel>
                       </FormItem>
                     )}
@@ -618,29 +626,29 @@ const CompanyDialogBox = ({
               <FormInput
                 control={form.control}
                 name="gst"
-                label="Tax ID / GST#"
-                placeholder="Enter GST number"
+                label={t("taxIdGst")}
+                placeholder={t("enterGstNumber")}
               />
 
               <Separator />
 
               {/* Contact Details Section */}
               <div className="space-y-4">
-                <p className="text-sm font-semibold">Contact Details</p>
+                <p className="text-sm font-semibold">{t("contactDetails")}</p>
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <FormInput
                     control={form.control}
                     name="contactName"
-                    label="Contact Name"
-                    placeholder="Enter contact name"
+                    label={t("contactName")}
+                    placeholder={t("enterContactName")}
                   />
 
                   <FormInput
                     control={form.control}
                     name="contactNumber"
-                    label="Contact Number"
-                    placeholder="Enter contact number"
+                    label={t("contactNumber")}
+                    placeholder={t("enterContactNumber")}
                   />
                 </div>
               </div>
@@ -652,10 +660,10 @@ const CompanyDialogBox = ({
         <div className="px-4 sm:px-6 pt-4 pb-6 border-t shrink-0">
           <DialogFooter className="gap-2">
             <Button variant="outline" onClick={handleCancel} type="button">
-              Cancel
+              {t("cancel")}
             </Button>
             <Button type="submit" form="address-form" disabled={isSubmitting}>
-              {isSubmitting ? "Saving..." : "Save"}
+              {isSubmitting ? t("saving") : t("save")}
             </Button>
           </DialogFooter>
         </div>

@@ -16,8 +16,9 @@ jest.mock("@/components/custom/dashboard-toolbar", () => {
   return {
     DashboardToolbar: jest.fn(({ title, primary }) =>
       React.createElement("div", { "data-testid": "dashboard-toolbar" }, [
-        React.createElement("span", { key: "title" }, title),
+        title && React.createElement("span", { key: "title" }, title),
         primary &&
+          primary.condition &&
           React.createElement("button", { key: "primary" }, primary.value),
       ])
     ),
@@ -63,7 +64,8 @@ describe("OrdersLandingPageClient", () => {
 
     const toolbar = getByTestId("dashboard-toolbar");
     expect(toolbar).toBeInTheDocument();
-    expect(toolbar.textContent).toContain("Orders");
+    // The component uses t("title") which returns the key "title" with our mock
+    expect(toolbar.textContent).toContain("title");
   });
 
   it("should render OrdersLandingTable component", () => {
@@ -76,6 +78,7 @@ describe("OrdersLandingPageClient", () => {
     const { getByTestId } = render(<OrdersLandingPageClient />);
 
     const toolbar = getByTestId("dashboard-toolbar");
-    expect(toolbar.textContent).toContain("Export");
+    // The component uses t("export") which returns the key "export" with our mock
+    expect(toolbar.textContent).toContain("export");
   });
 });

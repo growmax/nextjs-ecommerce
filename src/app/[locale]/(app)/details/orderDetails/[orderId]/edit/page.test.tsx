@@ -9,6 +9,11 @@ jest.mock("next/navigation", () => ({
 
 jest.mock("next-intl", () => ({
   useLocale: () => "en",
+  useTranslations: () => (key: string) => key,
+  useFormatter: () => ({
+    dateTime: (date: Date) => date.toISOString(),
+    number: (value: number) => value.toString(),
+  }),
 }));
 
 jest.mock("@/hooks/usePageScroll", () => ({
@@ -588,7 +593,7 @@ describe("EditOrderPage", () => {
 
     await waitFor(() => {
       const buttons = screen.getAllByTestId("button");
-      expect(buttons.some(btn => btn.textContent === "PLACE ORDER")).toBe(true);
+      expect(buttons.some(btn => btn.textContent === "placeOrder")).toBe(true);
     });
   });
 });

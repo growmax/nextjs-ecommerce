@@ -6,6 +6,7 @@ import { Separator } from "@/components/ui/separator";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Subtitle, TypographyMuted } from "@/components/ui/typography";
 import { useCurrentUser } from "@/hooks/useCurrentUser";
+import { useTranslations } from "next-intl";
 
 interface SellerPricing {
   totalItems?: number;
@@ -33,6 +34,7 @@ export default function PriceDetails({
 }: PriceDetailsProps) {
   const { user } = useCurrentUser();
   const currency = user?.currency;
+  const t = useTranslations("cart");
 
   // Calculate discount (following reference logic)
   const DISCOUNT =
@@ -47,12 +49,12 @@ export default function PriceDetails({
   return (
     <Card className="shadow-lg bg-white gap-2">
       <CardHeader>
-        <Subtitle>Price Details</Subtitle>
+        <Subtitle>{t("priceDetails")}</Subtitle>
       </CardHeader>
       <CardContent className="space-y-3">
         {/* Total Items */}
         <div className="flex justify-between items-center">
-          <TypographyMuted>Total Items</TypographyMuted>
+          <TypographyMuted>{t("totalItems")}</TypographyMuted>
           {isPricingLoading ? (
             <Skeleton className="h-4 w-12" />
           ) : (
@@ -63,7 +65,7 @@ export default function PriceDetails({
         {/* Total LP (List Price) - Optional */}
         {showListPrice && (
           <div className="flex justify-between items-center">
-            <span className="text-sm text-gray-600">Total LP</span>
+            <span className="text-sm text-gray-600">{t("totalLP")}</span>
             {isPricingLoading ? (
               <Skeleton className="h-4 w-20" />
             ) : (
@@ -80,7 +82,7 @@ export default function PriceDetails({
         {/* Discount - Optional */}
         {showDiscount && (
           <div className="flex justify-between items-center">
-            <span className="text-sm text-green-600">Discount</span>
+            <span className="text-sm text-green-600">{t("discount")}</span>
             {isPricingLoading ? (
               <Skeleton className="h-4 w-20" />
             ) : (
@@ -97,7 +99,9 @@ export default function PriceDetails({
 
         {/* Subtotal */}
         <div className="flex justify-between items-center">
-          <span className="text-sm font-semibold text-black">Subtotal</span>
+          <span className="text-sm font-semibold text-black">
+            {t("subtotal")}
+          </span>
           {isPricingLoading ? (
             <Skeleton className="h-4 w-24" />
           ) : (
@@ -112,7 +116,7 @@ export default function PriceDetails({
 
         {/* Tax */}
         <div className="flex justify-between items-center">
-          <TypographyMuted>Tax</TypographyMuted>
+          <TypographyMuted>{t("tax")}</TypographyMuted>
 
           {isPricingLoading ? (
             <Skeleton className="h-4 w-24" />
@@ -130,7 +134,7 @@ export default function PriceDetails({
 
         {/* Total */}
         <div className="flex justify-between items-center pt-2">
-          <span className="text-base font-bold text-black">Total</span>
+          <span className="text-base font-bold text-black">{t("total")}</span>
           {isPricingLoading ? (
             <Skeleton className="h-5 w-28" />
           ) : (

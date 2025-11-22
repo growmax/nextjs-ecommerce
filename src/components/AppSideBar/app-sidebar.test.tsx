@@ -68,7 +68,8 @@ describe("AppSidebar", () => {
       // Check that NavMain receives only the "Home" item
       const navMainProps = NavMainMock.mock.calls[0][0];
       expect(navMainProps.items).toHaveLength(1);
-      expect(navMainProps.items[0].title).toBe("Home");
+      // The component uses t("home") which returns the key "home" with our mock
+      expect(navMainProps.items[0].title).toBe("home");
     });
 
     it("should not render NavUser when user is not authenticated", () => {
@@ -99,10 +100,12 @@ describe("AppSidebar", () => {
         (item: { title: string }) => item.title
       );
 
-      expect(titles).toContain("Home");
-      expect(titles).toContain("Dashboard");
-      expect(titles).toContain("Sales");
-      expect(titles).toContain("Settings");
+      // The component uses translation keys like t("home"), t("dashboard"), etc.
+      // which return the keys "home", "dashboard", etc. with our mock
+      expect(titles).toContain("home");
+      expect(titles).toContain("dashboard");
+      expect(titles).toContain("sales");
+      expect(titles).toContain("settings");
       expect(navMainProps.items).toHaveLength(4);
     });
 
@@ -115,18 +118,21 @@ describe("AppSidebar", () => {
 
       const navMainProps = NavMainMock.mock.calls[0][0];
       const salesItem = navMainProps.items.find(
-        (item: { title: string }) => item.title === "Sales"
+        (item: { title: string }) => item.title === "sales"
       );
       const settingsItem = navMainProps.items.find(
-        (item: { title: string }) => item.title === "Settings"
+        (item: { title: string }) => item.title === "settings"
       );
 
+      expect(salesItem).toBeDefined();
+      expect(settingsItem).toBeDefined();
+      // The component uses translation keys which return the keys with our mock
       expect(salesItem.items.map((i: { title: string }) => i.title)).toEqual([
-        "Orders",
-        "Quotes",
+        "orders",
+        "quotes",
       ]);
       expect(settingsItem.items.map((i: { title: string }) => i.title)).toEqual(
-        ["Company", "Profile"]
+        ["company", "profile"]
       );
     });
 

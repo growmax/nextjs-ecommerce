@@ -4,6 +4,7 @@ import PricingFormat from "@/components/PricingFormat";
 import { useDashboardChartData } from "@/hooks/useDashboardData";
 import { TrendingDown, TrendingUp } from "lucide-react";
 import { Area, AreaChart, CartesianGrid, XAxis, YAxis } from "recharts";
+import { useTranslations } from "next-intl";
 
 import {
   Card,
@@ -14,25 +15,40 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { ChartContainer, ChartTooltip } from "@/components/ui/chart";
-import { chartConfig } from "@/const/dashboard/dashboard.const";
+import { chartConfig as baseChartConfig } from "@/const/dashboard/dashboard.const";
 
 export function DashboardChart() {
   const { data, isLoading, error, isError } = useDashboardChartData();
+  const t = useTranslations("dashboard");
+  const tMessages = useTranslations("messages");
+  const tNav = useTranslations("navigation");
+
+  // Create chart config with translated labels
+  const chartConfig = {
+    orders: {
+      label: tNav("orders"),
+      color: baseChartConfig.orders.color,
+    },
+    quotes: {
+      label: tNav("quotes"),
+      color: baseChartConfig.quotes.color,
+    },
+  };
 
   const chartData = data?.chartData || [];
   const stats = data?.stats || null;
   const trendPercentage = data?.trendPercentage || 0;
-  const dateRange = data?.dateRange || "Loading...";
+  const dateRange = data?.dateRange || tMessages("loading");
 
   if (isLoading) {
     return (
       <Card>
         <CardHeader>
-          <CardTitle>Revenue Overview</CardTitle>
-          <CardDescription>Loading dashboard data...</CardDescription>
+          <CardTitle>{t("revenueOverview")}</CardTitle>
+          <CardDescription>{t("loadingDashboardData")}</CardDescription>
         </CardHeader>
         <CardContent className="flex items-center justify-center h-[400px]">
-          <div className="text-muted-foreground">Loading chart...</div>
+          <div className="text-muted-foreground">{t("loadingChart")}</div>
         </CardContent>
       </Card>
     );
@@ -42,14 +58,12 @@ export function DashboardChart() {
     return (
       <Card>
         <CardHeader>
-          <CardTitle>Revenue Overview</CardTitle>
-          <CardDescription>Error loading data</CardDescription>
+          <CardTitle>{t("revenueOverview")}</CardTitle>
+          <CardDescription>{t("errorLoadingData")}</CardDescription>
         </CardHeader>
         <CardContent className="flex items-center justify-center h-[400px]">
           <div className="text-destructive">
-            {error instanceof Error
-              ? error.message
-              : "Failed to load dashboard data"}
+            {error instanceof Error ? error.message : t("failedToLoadData")}
           </div>
         </CardContent>
       </Card>
@@ -60,13 +74,11 @@ export function DashboardChart() {
     return (
       <Card>
         <CardHeader>
-          <CardTitle>Revenue Overview</CardTitle>
-          <CardDescription>No data available</CardDescription>
+          <CardTitle>{t("revenueOverview")}</CardTitle>
+          <CardDescription>{t("noData")}</CardDescription>
         </CardHeader>
         <CardContent className="flex items-center justify-center h-[400px]">
-          <div className="text-muted-foreground">
-            No data available for the selected period
-          </div>
+          <div className="text-muted-foreground">{t("noDataForPeriod")}</div>
         </CardContent>
       </Card>
     );
@@ -98,7 +110,7 @@ export function DashboardChart() {
 
           <div className="space-y-2 text-xs">
             <div className="flex justify-between items-center">
-              <span className="text-muted-foreground">Total Revenue:</span>
+              <span className="text-muted-foreground">{t("totalRevenue")}</span>
               <span className="font-medium">
                 <PricingFormat value={Number(dataPoint.total) || 0} />
               </span>
@@ -111,15 +123,17 @@ export function DashboardChart() {
                     className="w-2 h-2 rounded-full"
                     style={{ backgroundColor: chartConfig.orders.color }}
                   ></span>
-                  Orders:
+                  {t("orders")}
                 </span>
                 <span className="font-medium">
                   <PricingFormat value={Number(dataPoint.orders) || 0} />
                 </span>
               </div>
               <div className="flex justify-between items-center text-muted-foreground ml-3">
-                <span>Count:</span>
-                <span>{Number(dataPoint.orderCount) || 0} orders</span>
+                <span>{t("count")}</span>
+                <span>
+                  {Number(dataPoint.orderCount) || 0} {t("orderCount")}
+                </span>
               </div>
             </div>
 
@@ -130,15 +144,17 @@ export function DashboardChart() {
                     className="w-2 h-2 rounded-full"
                     style={{ backgroundColor: chartConfig.quotes.color }}
                   ></span>
-                  Quotes:
+                  {t("quotes")}
                 </span>
                 <span className="font-medium">
                   <PricingFormat value={Number(dataPoint.quotes) || 0} />
                 </span>
               </div>
               <div className="flex justify-between items-center text-muted-foreground ml-3">
-                <span>Count:</span>
-                <span>{Number(dataPoint.quoteCount) || 0} quotes</span>
+                <span>{t("count")}</span>
+                <span>
+                  {Number(dataPoint.quoteCount) || 0} {t("quoteCount")}
+                </span>
               </div>
             </div>
 
@@ -152,11 +168,11 @@ export function DashboardChart() {
               (Number(dataPoint.partiallyShipped) || 0) > 0) && (
               <div className="border-t pt-2 space-y-1">
                 <div className="text-muted-foreground">
-                  Order Status Breakdown:
+                  {t("orderStatusBreakdown")}
                 </div>
                 {(Number(dataPoint.invoiced) || 0) > 0 && (
                   <div className="flex justify-between items-center ml-3">
-                    <span>Invoiced:</span>
+                    <span>{t("invoiced")}</span>
                     <span>
                       <PricingFormat value={Number(dataPoint.invoiced) || 0} />
                     </span>
@@ -164,7 +180,7 @@ export function DashboardChart() {
                 )}
                 {(Number(dataPoint.acknowledged) || 0) > 0 && (
                   <div className="flex justify-between items-center ml-3">
-                    <span>Acknowledged:</span>
+                    <span>{t("acknowledged")}</span>
                     <span>
                       <PricingFormat
                         value={Number(dataPoint.acknowledged) || 0}
@@ -174,7 +190,7 @@ export function DashboardChart() {
                 )}
                 {(Number(dataPoint.booked) || 0) > 0 && (
                   <div className="flex justify-between items-center ml-3">
-                    <span>Booked:</span>
+                    <span>{t("booked")}</span>
                     <span>
                       <PricingFormat value={Number(dataPoint.booked) || 0} />
                     </span>
@@ -182,7 +198,7 @@ export function DashboardChart() {
                 )}
                 {(Number(dataPoint.received) || 0) > 0 && (
                   <div className="flex justify-between items-center ml-3">
-                    <span>Received:</span>
+                    <span>{t("received")}</span>
                     <span>
                       <PricingFormat value={Number(dataPoint.received) || 0} />
                     </span>
@@ -190,7 +206,7 @@ export function DashboardChart() {
                 )}
                 {(Number(dataPoint.editEnabled) || 0) > 0 && (
                   <div className="flex justify-between items-center ml-3">
-                    <span>Edit Enabled:</span>
+                    <span>{t("editEnabled")}</span>
                     <span>
                       <PricingFormat
                         value={Number(dataPoint.editEnabled) || 0}
@@ -200,7 +216,7 @@ export function DashboardChart() {
                 )}
                 {(Number(dataPoint.requestedEdit) || 0) > 0 && (
                   <div className="flex justify-between items-center ml-3">
-                    <span>Requested Edit:</span>
+                    <span>{t("requestedEdit")}</span>
                     <span>
                       <PricingFormat
                         value={Number(dataPoint.requestedEdit) || 0}
@@ -210,7 +226,7 @@ export function DashboardChart() {
                 )}
                 {(Number(dataPoint.partiallyShipped) || 0) > 0 && (
                   <div className="flex justify-between items-center ml-3">
-                    <span>Partially Shipped:</span>
+                    <span>{t("partiallyShipped")}</span>
                     <span>
                       <PricingFormat
                         value={Number(dataPoint.partiallyShipped) || 0}
@@ -228,11 +244,11 @@ export function DashboardChart() {
               (Number(dataPoint.quoteSent) || 0) > 0) && (
               <div className="border-t pt-2 space-y-1">
                 <div className="text-muted-foreground">
-                  Quote Status Breakdown:
+                  {t("quoteStatusBreakdown")}
                 </div>
                 {(Number(dataPoint.inProgress) || 0) > 0 && (
                   <div className="flex justify-between items-center ml-3">
-                    <span>In Progress:</span>
+                    <span>{t("inProgress")}</span>
                     <span>
                       <PricingFormat
                         value={Number(dataPoint.inProgress) || 0}
@@ -242,7 +258,7 @@ export function DashboardChart() {
                 )}
                 {(Number(dataPoint.open) || 0) > 0 && (
                   <div className="flex justify-between items-center ml-3">
-                    <span>Open:</span>
+                    <span>{t("open")}</span>
                     <span>
                       <PricingFormat value={Number(dataPoint.open) || 0} />
                     </span>
@@ -250,7 +266,7 @@ export function DashboardChart() {
                 )}
                 {(Number(dataPoint.orderPlaced) || 0) > 0 && (
                   <div className="flex justify-between items-center ml-3">
-                    <span>Order Placed:</span>
+                    <span>{t("orderPlaced")}</span>
                     <span>
                       <PricingFormat
                         value={Number(dataPoint.orderPlaced) || 0}
@@ -260,7 +276,7 @@ export function DashboardChart() {
                 )}
                 {(Number(dataPoint.quoteSent) || 0) > 0 && (
                   <div className="flex justify-between items-center ml-3">
-                    <span>Quote Sent:</span>
+                    <span>{t("quoteSent")}</span>
                     <span>
                       <PricingFormat value={Number(dataPoint.quoteSent) || 0} />
                     </span>
@@ -271,7 +287,7 @@ export function DashboardChart() {
 
             <div className="border-t pt-2 text-muted-foreground">
               <div className="flex justify-between items-center">
-                <span>Total Transactions:</span>
+                <span>{t("totalTransactions")}</span>
                 <span>
                   {(Number(dataPoint.orderCount) || 0) +
                     (Number(dataPoint.quoteCount) || 0)}
@@ -288,10 +304,10 @@ export function DashboardChart() {
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Revenue Overview - {new Date().getFullYear()}</CardTitle>
-        <CardDescription>
-          Monthly orders and quotes performance with detailed statistics
-        </CardDescription>
+        <CardTitle>
+          {t("revenueOverviewYear", { year: new Date().getFullYear() })}
+        </CardTitle>
+        <CardDescription>{t("monthlyPerformance")}</CardDescription>
       </CardHeader>
       <CardContent>
         <ChartContainer config={chartConfig}>
@@ -352,8 +368,8 @@ export function DashboardChart() {
         <div className="flex w-full items-start gap-2 text-sm">
           <div className="grid gap-2">
             <div className="flex items-center gap-2 leading-none font-medium">
-              {isTrendingUp ? "Trending up by" : "Trending down by"}{" "}
-              {Math.abs(trendPercentage).toFixed(1)}% this month
+              {isTrendingUp ? t("trendingUpBy") : t("trendingDownBy")}{" "}
+              {Math.abs(trendPercentage).toFixed(1)}% {t("thisMonth")}
               {isTrendingUp ? (
                 <TrendingUp className="h-4 w-4 text-green-500" />
               ) : (
@@ -361,9 +377,9 @@ export function DashboardChart() {
               )}
             </div>
             <div className="text-muted-foreground flex items-center gap-2 leading-none">
-              {dateRange} • Total Revenue:{" "}
+              {dateRange} • {t("totalRevenue")}{" "}
               <PricingFormat value={Number(stats?.totalRevenue) || 0} /> •{" "}
-              {Number(stats?.totalTransactions) || 0} transactions
+              {Number(stats?.totalTransactions) || 0} {t("transactions")}
             </div>
           </div>
         </div>

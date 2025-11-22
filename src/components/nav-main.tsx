@@ -1,10 +1,11 @@
 "use client";
 
-import { useRoutePrefetch } from "@/hooks/useRoutePrefetch";
 import { ChevronRight, type LucideIcon } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState } from "react";
+import { useRoutePrefetch } from "@/hooks/useRoutePrefetch";
+import { useTranslations } from "next-intl";
 
 import {
   Collapsible,
@@ -116,6 +117,7 @@ export function NavMain({
   const { state, isMobile } = useSidebar();
   const isCollapsed = state === "collapsed" && !isMobile;
   const { prefetch } = useRoutePrefetch();
+  const t = useTranslations("navigation");
 
   // Remove locale prefix (e.g., /en, /es, /fr) from pathname for comparison
   const getPathWithoutLocale = (path: string): string => {
@@ -131,7 +133,7 @@ export function NavMain({
 
   return (
     <SidebarGroup>
-      <SidebarGroupLabel>Main Menu</SidebarGroupLabel>
+      <SidebarGroupLabel>{t("mainMenu")}</SidebarGroupLabel>
       <SidebarMenu>
         {items.map(item => {
           const hasSubItems = item.items && item.items.length > 0;

@@ -23,7 +23,7 @@ describe("SummaryActions", () => {
       // Assert
       expect(screen.getByRole("button", { name: /cancel/i })).toBeTruthy();
       expect(
-        screen.getByRole("button", { name: /request quote/i })
+        screen.getByRole("button", { name: /requestQuote/i })
       ).toBeTruthy();
     });
 
@@ -36,7 +36,7 @@ describe("SummaryActions", () => {
       );
 
       // Assert
-      expect(screen.getByRole("button", { name: /place order/i })).toBeTruthy();
+      expect(screen.getByRole("button", { name: /placeOrder/i })).toBeTruthy();
     });
 
     it("should render quote-specific labels when isOrder is false", () => {
@@ -49,7 +49,7 @@ describe("SummaryActions", () => {
 
       // Assert
       expect(
-        screen.getByRole("button", { name: /request quote/i })
+        screen.getByRole("button", { name: /requestQuote/i })
       ).toBeTruthy();
     });
 
@@ -105,7 +105,7 @@ describe("SummaryActions", () => {
       );
 
       // Act
-      fireEvent.click(screen.getByRole("button", { name: /request quote/i }));
+      fireEvent.click(screen.getByRole("button", { name: /requestQuote/i }));
 
       // Assert
       expect(handleSubmit).toHaveBeenCalledTimes(1);
@@ -142,7 +142,7 @@ describe("SummaryActions", () => {
       );
 
       // Act
-      fireEvent.click(screen.getByRole("button", { name: /request quote/i }));
+      fireEvent.click(screen.getByRole("button", { name: /requestQuote/i }));
       fireEvent.click(screen.getByRole("button", { name: /cancel/i }));
 
       // Assert
@@ -161,7 +161,7 @@ describe("SummaryActions", () => {
       );
 
       // Assert
-      expect(screen.getByText(/placing order.../i)).toBeTruthy();
+      expect(screen.getByText(/placingOrder/i)).toBeTruthy();
     });
 
     it("should show loading state when isSubmitting is true for quotes", () => {
@@ -173,7 +173,7 @@ describe("SummaryActions", () => {
       );
 
       // Assert
-      expect(screen.getByText(/creating quote.../i)).toBeTruthy();
+      expect(screen.getByText(/creatingQuote/i)).toBeTruthy();
     });
 
     it("should disable buttons when isSubmitting is true", () => {
@@ -186,7 +186,7 @@ describe("SummaryActions", () => {
 
       // Assert
       const creatingBtn = screen.getByRole("button", {
-        name: /creating quote.../i,
+        name: /creatingQuote/i,
       }) as HTMLButtonElement;
       const cancelBtn = screen.getByRole("button", {
         name: /cancel/i,
@@ -221,7 +221,7 @@ describe("SummaryActions", () => {
 
       // Assert
       const requestBtn = screen.getByRole("button", {
-        name: /request quote/i,
+        name: /requestQuote/i,
       }) as HTMLButtonElement;
       const cancelBtn2 = screen.getByRole("button", {
         name: /cancel/i,
@@ -242,7 +242,7 @@ describe("SummaryActions", () => {
 
       // Assert
       const requestBtn2 = screen.getByRole("button", {
-        name: /request quote/i,
+        name: /requestQuote/i,
       }) as HTMLButtonElement;
       const cancelBtn3 = screen.getByRole("button", {
         name: /cancel/i,
@@ -263,7 +263,7 @@ describe("SummaryActions", () => {
 
       // Assert
       const creatingBtn2 = screen.getByRole("button", {
-        name: /creating quote.../i,
+        name: /creatingQuote/i,
       }) as HTMLButtonElement;
       const cancelBtn4 = screen.getByRole("button", {
         name: /cancel/i,
@@ -326,7 +326,7 @@ describe("SummaryActions", () => {
       );
 
       const submitButton = screen.getByRole("button", {
-        name: /request quote/i,
+        name: /requestQuote/i,
       });
       const cancelButton = screen.getByRole("button", { name: /cancel/i });
 
@@ -350,7 +350,7 @@ describe("SummaryActions", () => {
 
       // Assert - should not throw error
       expect(() => {
-        fireEvent.click(screen.getByRole("button", { name: /request quote/i }));
+        fireEvent.click(screen.getByRole("button", { name: /requestQuote/i }));
       }).not.toThrow();
     });
 
@@ -377,7 +377,7 @@ describe("SummaryActions", () => {
       );
 
       // Assert
-      const reqBtn = screen.getByRole("button", { name: /request quote/i });
+      const reqBtn = screen.getByRole("button", { name: /requestQuote/i });
       const cancelBtn5 = screen.getByRole("button", { name: /cancel/i });
       expect(reqBtn).toBeTruthy();
       expect(cancelBtn5).toBeTruthy();

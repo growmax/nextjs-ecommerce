@@ -1,4 +1,7 @@
+"use client";
+
 import React from "react";
+import { useTranslations } from "next-intl";
 
 import {
   Cell,
@@ -69,6 +72,7 @@ const DashboardTable = <T,>({
   pagination: _pagination,
   setPagination: _setPagination,
 }: TableProps<T>) => {
+  const t = useTranslations("table");
   const pageCount = Math.ceil(totalDataCount / rowPerPage);
 
   const table = useReactTable({
@@ -104,7 +108,7 @@ const DashboardTable = <T,>({
                 <div className="w-2 h-2 bg-primary rounded-full animate-bounce [animation-delay:-0.15s]"></div>
                 <div className="w-2 h-2 bg-primary rounded-full animate-bounce"></div>
               </div>
-              <p className="text-sm text-muted-foreground">Loading...</p>
+              <p className="text-sm text-muted-foreground">{t("loading")}</p>
             </div>
           </div>
         )}
@@ -222,7 +226,7 @@ const DashboardTable = <T,>({
                   colSpan={columns.length}
                   className="text-center py-4 text-xs sm:text-sm text-muted-foreground"
                 >
-                  No data available
+                  {t("noDataAvailable")}
                 </TableCell>
               </TableRow>
             )}
@@ -233,8 +237,8 @@ const DashboardTable = <T,>({
         <div className="flex items-center gap-2">
           <span className="text-xs lg:text-sm text-muted-foreground">
             {Math.min(page * rowPerPage + 1, totalDataCount)} -{" "}
-            {Math.min((page + 1) * rowPerPage, totalDataCount)} of{" "}
-            {totalDataCount} row(s)
+            {Math.min((page + 1) * rowPerPage, totalDataCount)} {t("of")}{" "}
+            {totalDataCount} {t("rows")}
           </span>
         </div>
         <div className="flex gap-2">
@@ -250,7 +254,7 @@ const DashboardTable = <T,>({
                 : "text-gray-600 bg-gray-100 border-gray-200 hover:bg-gray-200"
             )}
           >
-            Previous
+            {t("previous")}
           </Button>
           <Button
             variant="outline"
@@ -264,7 +268,7 @@ const DashboardTable = <T,>({
                 : "text-gray-900 bg-white border-gray-300 hover:bg-gray-50"
             )}
           >
-            Next
+            {t("next")}
           </Button>
         </div>
       </div>

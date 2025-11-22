@@ -30,6 +30,7 @@ import { useCart } from "@/contexts/CartContext";
 import useLogout from "@/hooks/Auth/useLogout";
 import { useRoutePrefetch } from "@/hooks/useRoutePrefetch";
 import useUserProfile from "@/hooks/Profile/useUserProfile";
+import { useTranslations } from "next-intl";
 
 export function SiteHeader() {
   const { toggleSidebar } = useSidebar();
@@ -39,6 +40,8 @@ export function SiteHeader() {
   const { prefetch } = useRoutePrefetch();
   const { cartCount } = useCart();
   const notificationCount = 3;
+  const tNav = useTranslations("navigation");
+  const tAuth = useTranslations("auth");
 
   const initials =
     userProfile?.displayName
@@ -120,7 +123,7 @@ export function SiteHeader() {
                   <Avatar className="h-8 w-8 rounded-lg">
                     <AvatarImage
                       src={userProfile.picture || ""}
-                      alt={userProfile.displayName || "User"}
+                      alt={userProfile.displayName || tAuth("user")}
                     />
                     <AvatarFallback className="rounded-lg text-xs">
                       {initials}
@@ -139,7 +142,7 @@ export function SiteHeader() {
                     <Avatar className="h-8 w-8 rounded-lg">
                       <AvatarImage
                         src={userProfile.picture || ""}
-                        alt={userProfile.displayName || "User"}
+                        alt={userProfile.displayName || tAuth("user")}
                       />
                       <AvatarFallback className="rounded-lg">
                         {initials}
@@ -163,7 +166,7 @@ export function SiteHeader() {
                       onMouseEnter={() => prefetch("/settings/profile")}
                     >
                       <IdCard className="h-4 w-4" />
-                      Profile
+                      {tNav("profile")}
                     </Link>
                   </DropdownMenuItem>
                   <DropdownMenuItem asChild>
@@ -172,7 +175,7 @@ export function SiteHeader() {
                       onMouseEnter={() => prefetch("/settings/company")}
                     >
                       <Building2 className="h-4 w-4" />
-                      Company Settings
+                      {tNav("companySettings")}
                     </Link>
                   </DropdownMenuItem>
                 </DropdownMenuGroup>
@@ -187,14 +190,14 @@ export function SiteHeader() {
                   ) : (
                     <LogOut className="h-4 w-4" />
                   )}
-                  {isLoggingOut ? "Logging out..." : "Log out"}
+                  {isLoggingOut ? tAuth("loggingOut") : tAuth("logOut")}
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
           ) : (
             <Button asChild variant="default" size="sm">
               <Link href="/login" onMouseEnter={() => prefetch("/login")}>
-                Login
+                {tAuth("login")}
               </Link>
             </Button>
           )}

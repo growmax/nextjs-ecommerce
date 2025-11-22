@@ -14,11 +14,17 @@ import {
 import { cn } from "@/lib/utils";
 import { zoneDateTimeCalculator } from "@/utils/date-format/date-format";
 import { Info } from "lucide-react";
+import { useTranslations } from "next-intl";
 import PricingFormat from "../PricingFormat";
 
 export interface OrderStatusStep {
   key: string;
   label: string;
+  order: number;
+}
+
+interface OrderStatusStepConfig {
+  key: string;
   order: number;
 }
 
@@ -46,15 +52,15 @@ type PaymentHistoryItem = {
   referenceNumber?: string | null;
 };
 
-// Define the order status flow
-const ORDER_STATUS_STEPS: OrderStatusStep[] = [
-  { key: "ORDER SENT", label: "Sent", order: 1 },
-  { key: "ORDER ACKNOWLEDGED", label: "Acknowledged", order: 2 },
-  { key: "REQUESTED EDIT", label: "Edit", order: 3 },
-  { key: "ORDER ACCEPTED", label: "Accepted", order: 4 },
-  { key: "ORDER BOOKED", label: "Booked", order: 5 },
-  { key: "INVOICED", label: "Invoiced", order: 6 },
-  { key: "SHIPPED", label: "Shipped", order: 7 },
+// Define the order status flow - labels will be translated in the component
+const ORDER_STATUS_STEPS: OrderStatusStepConfig[] = [
+  { key: "ORDER SENT", order: 1 },
+  { key: "ORDER ACKNOWLEDGED", order: 2 },
+  { key: "REQUESTED EDIT", order: 3 },
+  { key: "ORDER ACCEPTED", order: 4 },
+  { key: "ORDER BOOKED", order: 5 },
+  { key: "INVOICED", order: 6 },
+  { key: "SHIPPED", order: 7 },
 ];
 
 // Map status to step order for determining progress
@@ -85,6 +91,30 @@ export default function OrderStatusTracker({
   currencySymbol: _currencySymbol = "INR ₹",
   paymentHistory,
 }: OrderStatusTrackerProps) {
+  const t = useTranslations("components");
+
+  // Get translated status labels
+  const getStatusLabel = (key: string): string => {
+    switch (key) {
+      case "ORDER SENT":
+        return t("statusSent");
+      case "ORDER ACKNOWLEDGED":
+        return t("statusAcknowledged");
+      case "REQUESTED EDIT":
+        return t("statusEdit");
+      case "ORDER ACCEPTED":
+        return t("statusAccepted");
+      case "ORDER BOOKED":
+        return t("statusBooked");
+      case "INVOICED":
+        return t("statusInvoiced");
+      case "SHIPPED":
+        return t("statusShipped");
+      default:
+        return key;
+    }
+  };
+
   // Get the current step order from the status
   const currentStepOrder = currentStatus
     ? STATUS_ORDER_MAP[currentStatus.toUpperCase()] || 0
@@ -150,7 +180,7 @@ export default function OrderStatusTracker({
           <div className="flex flex-wrap gap-2 sm:gap-4 text-[10px] sm:text-xs">
             {total !== undefined && (
               <div className="flex flex-col min-w-[70px]">
-                <span className="text-gray-600 font-medium">TOTAL:</span>
+                <span className="text-gray-600 font-medium">{t("total")}</span>
                 <span className="text-gray-900 font-semibold">
                   <PricingFormat value={total} />
                 </span>
@@ -159,7 +189,7 @@ export default function OrderStatusTracker({
             {paid !== undefined && (
               <div className="flex flex-col min-w-[70px]">
                 <span className="text-gray-600 font-medium inline-flex items-center gap-1">
-                  PAID:
+                  {t("paid")}
                   <Popover>
                     <PopoverTrigger asChild>
                       <Info
@@ -169,7 +199,7 @@ export default function OrderStatusTracker({
                     </PopoverTrigger>
                     <PopoverContent className="w-[300px] sm:w-[360px] p-3">
                       <div className="text-sm font-semibold mb-2">
-                        Payment Details
+                        {t("paymentDetails")}
                       </div>
                       {Array.isArray(paymentHistory) &&
                       paymentHistory.length > 0 ? (
@@ -180,24 +210,30 @@ export default function OrderStatusTracker({
                                 key={`payment-${p.referenceNumber || p.paymentDate || idx}`}
                                 className="grid grid-cols-[100px_1fr] gap-x-2 text-xs"
                               >
-                                <div className="text-gray-600">Amount:</div>
+                                <div className="text-gray-600">
+                                  {t("amount")}
+                                </div>
                                 <div className="text-gray-900 font-medium">
                                   <PricingFormat
                                     value={p.amountReceived || 0}
                                   />
                                 </div>
 
-                                <div className="text-gray-600">Gateway:</div>
+                                <div className="text-gray-600">
+                                  {t("gateway")}
+                                </div>
                                 <div className="text-gray-900">
                                   {p.gatewayName || "-"}
                                 </div>
 
-                                <div className="text-gray-600">Method:</div>
+                                <div className="text-gray-600">
+                                  {t("method")}
+                                </div>
                                 <div className="text-gray-900">
                                   {p.paymentMode || "-"}
                                 </div>
 
-                                <div className="text-gray-600">Date:</div>
+                                <div className="text-gray-600">{t("date")}</div>
                                 <div className="text-gray-900">
                                   {p.paymentDate
                                     ? zoneDateTimeCalculator(
@@ -211,7 +247,7 @@ export default function OrderStatusTracker({
                                 </div>
 
                                 <div className="text-gray-600">
-                                  Reference Id:
+                                  {t("referenceId")}
                                 </div>
                                 <div className="text-gray-900 break-all">
                                   {p.referenceNumber || "-"}
@@ -222,7 +258,7 @@ export default function OrderStatusTracker({
                         </div>
                       ) : (
                         <div className="text-xs text-gray-600">
-                          No payments yet
+                          {t("noPaymentsYet")}
                         </div>
                       )}
                     </PopoverContent>
@@ -235,7 +271,7 @@ export default function OrderStatusTracker({
             )}
             {computedToPay !== undefined && (
               <div className="flex flex-col min-w-[70px]">
-                <span className="text-gray-600 font-medium">TO PAY:</span>
+                <span className="text-gray-600 font-medium">{t("toPay")}</span>
                 <span className="text-red-600 font-semibold">
                   <PricingFormat value={computedToPay || 0} />
                 </span>
@@ -243,7 +279,7 @@ export default function OrderStatusTracker({
             )}
             <div className="flex flex-col min-w-[90px]">
               <span className="text-gray-600 font-medium whitespace-nowrap">
-                LAST DATE:
+                {t("lastDate")}
               </span>
               <span className="text-red-600 font-semibold text-[10px] sm:text-xs">
                 {lastDateToPay
@@ -257,8 +293,8 @@ export default function OrderStatusTracker({
                         preferences.dateFormat,
                         preferences.timeFormat,
                         false
-                      ) || "No due"
-                  : "No due"}
+                      ) || t("noDue")
+                  : t("noDue")}
               </span>
             </div>
           </div>
@@ -270,6 +306,7 @@ export default function OrderStatusTracker({
         {ORDER_STATUS_STEPS.map((step, index) => {
           const isActive = currentStepOrder >= step.order;
           const isLast = index === ORDER_STATUS_STEPS.length - 1;
+          const label = getStatusLabel(step.key);
 
           return (
             <HoverCard key={step.key}>
@@ -289,7 +326,7 @@ export default function OrderStatusTracker({
                   )}
                 >
                   <span className="text-[10px] sm:text-xs px-1 sm:px-2 text-center font-semibold tracking-wide transition-all duration-300 ease-in-out group-hover:scale-105">
-                    {step.label}
+                    {label}
                   </span>
                   {/* Add a subtle inner shadow for depth */}
                   {isActive && (
@@ -302,9 +339,7 @@ export default function OrderStatusTracker({
                 </div>
               </HoverCardTrigger>
               <HoverCardContent className="w-auto p-2">
-                <div className="text-sm font-medium text-center">
-                  {step.label}
-                </div>
+                <div className="text-sm font-medium text-center">{label}</div>
               </HoverCardContent>
             </HoverCard>
           );

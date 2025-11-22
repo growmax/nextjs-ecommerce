@@ -23,6 +23,7 @@ import {
   User,
 } from "lucide-react";
 import Link from "next/link";
+import { useTranslations } from "next-intl";
 import { AvatarCardProps } from "./Avatarcard.types";
 
 export function AvatarCard({
@@ -37,26 +38,28 @@ export function AvatarCard({
   menuClassName,
 }: AvatarCardProps) {
   const { prefetch } = useRoutePrefetch();
+  const tNav = useTranslations("navigation");
+  const tAuth = useTranslations("auth");
   const menuItems = [
     {
       href: "/settings/profile",
       icon: IdCard,
-      label: "Profile",
+      label: tNav("profile"),
     },
     {
       href: "/settings/company",
       icon: Building2,
-      label: "Company Settings",
+      label: tNav("companySettings"),
     },
     {
       href: "/landing/orderslanding",
       icon: ShoppingCart,
-      label: "Orders",
+      label: tNav("orders"),
     },
     {
       href: "/landing/quoteslanding",
       icon: User,
-      label: "Quotes",
+      label: tNav("quotes"),
     },
   ];
   // Handle logout state
@@ -74,8 +77,10 @@ export function AvatarCard({
           <DropdownMenuItem disabled className="flex items-center gap-2">
             <Loader2 className="h-4 w-4 animate-spin" />
             <div className="flex flex-col">
-              <span className="text-sm">Logging out...</span>
-              <span className="text-xs text-muted-foreground">Please wait</span>
+              <span className="text-sm">{tAuth("loggingOut")}</span>
+              <span className="text-xs text-muted-foreground">
+                {tAuth("pleaseWait")}
+              </span>
             </div>
           </DropdownMenuItem>
         </DropdownMenuContent>
@@ -98,9 +103,9 @@ export function AvatarCard({
           <DropdownMenuItem disabled className="flex items-center gap-2">
             <AlertCircle className="h-4 w-4 text-red-500" />
             <div className="flex flex-col">
-              <span className="text-sm">Failed to load user</span>
+              <span className="text-sm">{tAuth("failedToLoadUser")}</span>
               <span className="text-xs text-muted-foreground">
-                Please try again
+                {tAuth("pleaseTryAgain")}
               </span>
             </div>
           </DropdownMenuItem>
@@ -110,7 +115,7 @@ export function AvatarCard({
               className="flex items-center gap-2"
             >
               <RefreshCw className="h-4 w-4" />
-              <span>Retry</span>
+              <span>{tAuth("retry")}</span>
             </DropdownMenuItem>
           )}
         </DropdownMenuContent>
@@ -133,8 +138,10 @@ export function AvatarCard({
           <DropdownMenuItem disabled className="flex items-center gap-2">
             <Loader2 className="h-4 w-4 animate-spin" />
             <div className="flex flex-col">
-              <span className="text-sm">Loading user...</span>
-              <span className="text-xs text-muted-foreground">Please wait</span>
+              <span className="text-sm">{tAuth("loadingUser")}</span>
+              <span className="text-xs text-muted-foreground">
+                {tAuth("pleaseWait")}
+              </span>
             </div>
           </DropdownMenuItem>
         </DropdownMenuContent>
@@ -157,7 +164,7 @@ export function AvatarCard({
             <Avatar className="h-8 w-8 shrink-0">
               <AvatarImage
                 src={user.picture || undefined}
-                alt={user.displayName || "User"}
+                alt={user.displayName || tAuth("user")}
                 className="aspect-square object-cover"
               />
               <AvatarFallback>
@@ -204,7 +211,7 @@ export function AvatarCard({
           ) : (
             <LogOut className="h-4 w-4" />
           )}
-          <span>{isLoggingOut ? "Logging out..." : "Log out"}</span>
+          <span>{isLoggingOut ? tAuth("loggingOut") : tAuth("logOut")}</span>
         </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>

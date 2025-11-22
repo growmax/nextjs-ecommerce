@@ -26,6 +26,7 @@ import { getAccounting } from "@/utils/calculation/salesCalculation/salesCalcula
 import { ColumnDef } from "@tanstack/react-table";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
+import { useTranslations } from "next-intl";
 
 interface QuotesLandingTableProps {
   refreshTrigger?: number;
@@ -39,6 +40,7 @@ function QuotesLandingTable({
   const { user } = useCurrentUser();
   const { prefetch, prefetchMultiple, prefetchAndNavigate } =
     useRoutePrefetch();
+  const t = useTranslations("quotes");
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const [quotes, setQuotes] = useState<QuoteItem[]>([]);
   const [loading, setLoading] = useState(true);
@@ -61,17 +63,17 @@ function QuotesLandingTable({
     <div className="rounded-md border shadow-sm overflow-hidden flex flex-col">
       <div className="border-b border-gray-200 bg-gray-50 flex-shrink-0">
         <div className="flex font-medium text-sm text-gray-700">
-          <div className="px-2 py-3 w-[150px] pl-2">Quote Id</div>
-          <div className="px-2 py-3 w-[200px]">Quote Name</div>
-          <div className="px-2 py-3 w-[150px]">Quoted Date</div>
-          <div className="px-2 py-3 w-[150px]">Last Modified</div>
-          <div className="px-2 py-3 w-[300px]">Account Name</div>
-          <div className="px-2 py-3 w-[150px]">Total Items</div>
-          <div className="px-2 py-3 w-[150px]">Sub total</div>
-          <div className="px-2 py-3 w-[150px]">Taxable Amount</div>
-          <div className="px-2 py-3 w-[150px]">Total</div>
-          <div className="px-2 py-3 w-[200px]">Status</div>
-          <div className="px-2 py-3 w-[150px]">Required Date</div>
+          <div className="px-2 py-3 w-[150px] pl-2">{t("quoteId")}</div>
+          <div className="px-2 py-3 w-[200px]">{t("quoteName")}</div>
+          <div className="px-2 py-3 w-[150px]">{t("quotedDate")}</div>
+          <div className="px-2 py-3 w-[150px]">{t("lastModified")}</div>
+          <div className="px-2 py-3 w-[300px]">{t("accountName")}</div>
+          <div className="px-2 py-3 w-[150px]">{t("totalItems")}</div>
+          <div className="px-2 py-3 w-[150px]">{t("subtotal")}</div>
+          <div className="px-2 py-3 w-[150px]">{t("taxableAmount")}</div>
+          <div className="px-2 py-3 w-[150px]">{t("total")}</div>
+          <div className="px-2 py-3 w-[200px]">{t("status")}</div>
+          <div className="px-2 py-3 w-[150px]">{t("requiredDate")}</div>
         </div>
       </div>
       <div className="flex-1 overflow-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
@@ -106,7 +108,7 @@ function QuotesLandingTable({
     () => [
       {
         accessorKey: "quotationIdentifier",
-        header: () => <span className="pl-2">Quote Id</span>,
+        header: () => <span className="pl-2">{t("quoteId")}</span>,
         size: 150,
         meta: {
           sticky: true,
@@ -126,7 +128,7 @@ function QuotesLandingTable({
       },
       {
         accessorKey: "quoteName",
-        header: () => <span className="pl-2">Quote Name</span>,
+        header: () => <span className="pl-2">{t("quoteName")}</span>,
         size: 200,
         cell: ({ row }) => (
           <div
@@ -139,7 +141,7 @@ function QuotesLandingTable({
       },
       {
         accessorKey: "createdDate",
-        header: "Quoted Date",
+        header: t("quotedDate"),
         size: 150,
         cell: ({ row }) => {
           const date = row.original.createdDate;
@@ -148,7 +150,7 @@ function QuotesLandingTable({
       },
       {
         accessorKey: "lastModifiedDate",
-        header: "Last Modified",
+        header: t("lastModified"),
         size: 150,
         cell: ({ row }) => {
           const date = row.original.lastUpdatedDate;
@@ -157,7 +159,7 @@ function QuotesLandingTable({
       },
       {
         accessorKey: "buyerCompanyName",
-        header: "Account Name",
+        header: t("accountName"),
         size: 300,
         cell: ({ row }) => (
           <div
@@ -170,7 +172,7 @@ function QuotesLandingTable({
       },
       {
         accessorKey: "itemCount",
-        header: "Total Items",
+        header: t("totalItems"),
         size: 150,
         meta: {
           alignCenter: true,
@@ -193,7 +195,7 @@ function QuotesLandingTable({
       },
       {
         accessorKey: "subTotal",
-        header: "Sub total",
+        header: t("subtotal"),
         size: 150,
         meta: {
           alignRight: true,
@@ -209,7 +211,7 @@ function QuotesLandingTable({
       },
       {
         accessorKey: "taxableAmount",
-        header: "Taxable Amount",
+        header: t("taxableAmount"),
         size: 150,
         meta: {
           alignRight: true,
@@ -225,7 +227,7 @@ function QuotesLandingTable({
       },
       {
         accessorKey: "grandTotal",
-        header: "Total",
+        header: t("total"),
         size: 150,
         meta: {
           alignRight: true,
@@ -243,7 +245,7 @@ function QuotesLandingTable({
       },
       {
         accessorKey: "updatedBuyerStatus",
-        header: () => <span className="pl-[30px]">Status</span>,
+        header: () => <span className="pl-[30px]">{t("status")}</span>,
         size: 200,
         cell: ({ row }) => {
           const status = row.original.updatedBuyerStatus;
@@ -270,7 +272,7 @@ function QuotesLandingTable({
       },
       {
         accessorKey: "requiredDate",
-        header: "Required Date",
+        header: t("requiredDate"),
         size: 150,
         cell: ({ row }) => {
           const date = row.original.customerRequiredDate;
@@ -278,7 +280,7 @@ function QuotesLandingTable({
         },
       },
     ],
-    []
+    [t]
   );
 
   // Sync pagination state
@@ -636,7 +638,7 @@ function QuotesLandingTable({
       setQuotes(response.data.quotesResponse || []);
       setTotalCount(response.data.totalQuoteCount || 0);
     } catch {
-      toast.error("Failed to fetch quotes");
+      toast.error(t("failedToFetch"));
       setQuotes([]);
     } finally {
       setLoading(false);
@@ -644,7 +646,7 @@ function QuotesLandingTable({
         setInitialLoad(false);
       }
     }
-  }, [page, rowPerPage, user, filterPreferences, filterData, initialLoad]);
+  }, [page, rowPerPage, user, filterPreferences, filterData, initialLoad, t]);
 
   useEffect(() => {
     fetchQuotes();
@@ -653,7 +655,7 @@ function QuotesLandingTable({
   const handleExport = useCallback(async () => {
     try {
       if (quotes.length === 0) {
-        toast.error("No data to export");
+        toast.error(t("noDataToExport"));
         return;
       }
 
@@ -666,29 +668,29 @@ function QuotesLandingTable({
 
       // Prepare data for export
       const exportData = quotes.map(q => ({
-        "Quote Id": q.quotationIdentifier,
-        Name: q.quoteName || "",
-        "Quoted Date": formatDate(q.createdDate),
-        Date: formatDate(q.lastUpdatedDate),
-        "Account Name": q.buyerCompanyName || "",
-        "Total Items": q.itemCount || 0,
-        Subtotal: getAccounting(
+        [t("quoteId")]: q.quotationIdentifier,
+        [t("quoteName")]: q.quoteName || "",
+        [t("quotedDate")]: formatDate(q.createdDate),
+        [t("lastModified")]: formatDate(q.lastUpdatedDate),
+        [t("accountName")]: q.buyerCompanyName || "",
+        [t("totalItems")]: q.itemCount || 0,
+        [t("subTotal")]: getAccounting(
           q.curencySymbol || null,
           q.subTotal || q.grandTotal || 0,
           q.curencySymbol || undefined
         ),
-        "Taxable Amount": getAccounting(
+        [t("taxableAmount")]: getAccounting(
           q.curencySymbol || null,
           q.taxableAmount || 0,
           q.curencySymbol || undefined
         ),
-        Total: getAccounting(
+        [t("grandTotal")]: getAccounting(
           q.curencySymbol || null,
           q.grandTotal || 0,
           q.curencySymbol || undefined
         ),
-        Status: q.updatedBuyerStatus || "",
-        "Required Date": formatDate(q.customerRequiredDate || undefined),
+        [t("status")]: q.updatedBuyerStatus || "",
+        [t("requiredDate")]: formatDate(q.customerRequiredDate || undefined),
       }));
 
       // Create workbook and worksheet
@@ -712,7 +714,7 @@ function QuotesLandingTable({
       ws["!cols"] = colWidths;
 
       // Add worksheet to workbook
-      XLSX.utils.book_append_sheet(wb, ws, "Quotes");
+      XLSX.utils.book_append_sheet(wb, ws, t("title"));
 
       // Generate filename with current date
       const filename = `quotes_${new Date().toISOString().split("T")[0]}.xlsx`;
@@ -720,11 +722,11 @@ function QuotesLandingTable({
       // Write and download file
       XLSX.writeFile(wb, filename);
 
-      toast.success("Export completed successfully!");
+      toast.success(t("exportCompleted"));
     } catch {
-      toast.error("Failed to export quotes");
+      toast.error(t("exportFailed"));
     }
-  }, [quotes]);
+  }, [quotes, t]);
 
   // Register export callback with parent component
   useEffect(() => {
@@ -740,25 +742,25 @@ function QuotesLandingTable({
   const handleQuoteFilterSubmit = (data: QuoteFilterFormData) => {
     setFilterData(data);
     setPage(0); // Reset to first page when applying filters
-    toast.success("Filters have been applied successfully!");
+    toast.success(t("filtersApplied"));
   };
 
   const handleQuoteFilterReset = () => {
     setFilterData(null);
     setPage(0);
-    toast.success("Filters have been reset successfully!");
+    toast.success(t("filtersReset"));
   };
 
   const handleQuoteFilterSave = async (data: QuoteFilterFormData) => {
     try {
       if (!data.filterName || data.filterName.trim() === "") {
-        toast.error("Please enter a filter name");
+        toast.error(t("pleaseEnterFilterName"));
         return;
       }
 
       // Here you would implement the save functionality
       // For now, just show success message
-      toast.success(`Filter "${data.filterName}" saved successfully!`);
+      toast.success(t("filterSaved"));
 
       // Apply the filter immediately
       setFilterData(data);
@@ -767,7 +769,7 @@ function QuotesLandingTable({
       // Refresh filter preferences to show the new filter
       await loadFilterPreferences();
     } catch {
-      toast.error("Failed to save filter");
+      toast.error(t("filterSaveFailed"));
     }
   };
 
@@ -813,7 +815,7 @@ function QuotesLandingTable({
         onSubmit={handleQuoteFilterSubmit}
         onReset={handleQuoteFilterReset}
         onSave={handleQuoteFilterSave}
-        title="Quote Filters"
+        title={t("quoteFilters")}
         filterType="Quote"
         userId={user?.userId}
         companyId={user?.companyId}
@@ -825,12 +827,10 @@ function QuotesLandingTable({
       <SideDrawer
         open={isAddDrawerOpen}
         onClose={handleAddDrawerClose}
-        title="Add New Quote"
+        title={t("addNewQuote")}
       >
         <div className="space-y-4">
-          <p className="text-gray-600">
-            Add new quote functionality will be implemented here.
-          </p>
+          <p className="text-gray-600">{t("addNewQuoteDescription")}</p>
         </div>
       </SideDrawer>
 
@@ -841,7 +841,7 @@ function QuotesLandingTable({
               <TableSkeleton rows={rowPerPage} />
             ) : !initialLoad && quotes.length === 0 ? (
               <div className="flex items-center justify-center text-gray-500 py-8">
-                No quotes found
+                {t("noQuotes")}
               </div>
             ) : (
               <DashboardTable
@@ -881,20 +881,19 @@ function QuotesLandingTable({
       <Dialog open={isItemsDialogOpen} onOpenChange={setIsItemsDialogOpen}>
         <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle>Quote Items</DialogTitle>
+            <DialogTitle>{t("quoteItems")}</DialogTitle>
             <DialogDescription>
-              {selectedQuoteItems && (
-                <>
-                  Quote ID: {selectedQuoteItems.quotationIdentifier} -{" "}
-                  {selectedQuoteItems.quoteName}
-                </>
-              )}
+              {selectedQuoteItems &&
+                t("quoteItemsDescription", {
+                  quoteId: selectedQuoteItems.quotationIdentifier,
+                  quoteName: selectedQuoteItems.quoteName,
+                })}
             </DialogDescription>
           </DialogHeader>
 
           <div className="py-2">
             <div className="text-center text-gray-500 py-8">
-              Quote items details will be displayed here.
+              {t("quoteItemsDetails")}
             </div>
           </div>
         </DialogContent>

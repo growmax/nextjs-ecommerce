@@ -14,6 +14,7 @@ import { Textarea } from "@/components/ui/textarea";
 import useGetManufacturerCompetitors, {
   type CompetitorDetail,
 } from "@/hooks/useGetManufacturerCompetitors/useGetManufacturerCompetitors";
+import { useTranslations } from "next-intl";
 
 interface SPRFormProps {
   sellerCompanyId?: number;
@@ -38,6 +39,7 @@ export default function SPRForm({
   onCompetitorsChange,
   onPriceJustificationChange,
 }: SPRFormProps) {
+  const t = useTranslations("components");
   // Fetch competitors from the hook
   const { competitors: competitorsList, competitorsLoading } =
     useGetManufacturerCompetitors(sellerCompanyId, !!sellerCompanyId);
@@ -58,24 +60,24 @@ export default function SPRForm({
 
   return (
     <Card className="shadow-sm bg-white">
-      <CardHeader className="px-4 py-3 bg-blue-50 rounded-t-lg">
-        <CardTitle className="text-lg font-semibold text-gray-800">
-          Customer Information
+      <CardHeader className="px-4 py-3 bg-blue-50 rounded-t-lg gap-0 -mt-6">
+        <CardTitle className="text-lg font-semibold text-gray-800 ">
+          {t("customerInformation")}
         </CardTitle>
       </CardHeader>
 
-      <CardContent className="px-4 py-4 space-y-4">
+      <CardContent className="px-4 py-4 space-y-4 -mt-6">
         {/* End Customer Name */}
         <div className="space-y-2">
           <Label htmlFor="customer-name" className="text-sm text-gray-600">
-            End Customer Name
+            {t("endCustomerName")}
           </Label>
           <Input
             id="customer-name"
             type="text"
             value={customerName}
             onChange={e => onCustomerNameChange?.(e.target.value)}
-            placeholder="Enter customer name"
+            placeholder={t("enterCustomerName")}
             className="w-full"
           />
         </div>
@@ -83,14 +85,14 @@ export default function SPRForm({
         {/* Project Name */}
         <div className="space-y-2">
           <Label htmlFor="project-name" className="text-sm text-gray-600">
-            Project Name
+            {t("projectName")}
           </Label>
           <Input
             id="project-name"
             type="text"
             value={projectName}
             onChange={e => onProjectNameChange?.(e.target.value)}
-            placeholder="Enter project name"
+            placeholder={t("enterProjectName")}
             className="w-full"
           />
         </div>
@@ -98,7 +100,7 @@ export default function SPRForm({
         {/* Competitors */}
         <div className="space-y-2">
           <Label htmlFor="competitors" className="text-sm text-gray-600">
-            Competitors
+            {t("competitors")}
           </Label>
           <Select
             onValueChange={handleCompetitorSelect}
@@ -108,15 +110,15 @@ export default function SPRForm({
               <SelectValue
                 placeholder={
                   competitorsLoading
-                    ? "Loading competitors..."
-                    : "Select competitors"
+                    ? t("loadingCompetitors")
+                    : t("selectCompetitors")
                 }
               />
             </SelectTrigger>
             <SelectContent>
               {competitorsList.length === 0 ? (
                 <SelectItem value="no-competitors" disabled>
-                  No competitors available
+                  {t("noCompetitorsAvailable")}
                 </SelectItem>
               ) : (
                 competitorsList.map((competitor: CompetitorDetail) => (
@@ -144,7 +146,7 @@ export default function SPRForm({
                     type="button"
                     onClick={() => handleRemoveCompetitor(competitor)}
                     className="ml-1 hover:text-blue-600"
-                    aria-label={`Remove ${competitor}`}
+                    aria-label={t("removeCompetitor", { competitor })}
                   >
                     ×
                   </button>
@@ -160,13 +162,13 @@ export default function SPRForm({
             htmlFor="price-justification"
             className="text-sm text-gray-600"
           >
-            Price Justification
+            {t("priceJustification")}
           </Label>
           <Textarea
             id="price-justification"
             value={priceJustification}
             onChange={e => onPriceJustificationChange?.(e.target.value)}
-            placeholder="Enter price justification"
+            placeholder={t("enterPriceJustification")}
             className="w-full min-h-[100px] resize-none"
           />
         </div>

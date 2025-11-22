@@ -3,6 +3,7 @@
 import { Layers } from "lucide-react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
+import { useTranslations } from "next-intl";
 
 import {
   VersionsDialog,
@@ -107,6 +108,9 @@ interface EditQuotePageProps {
 
 export default function EditQuotePage({ params }: EditQuotePageProps) {
   usePageScroll();
+  const t = useTranslations("quotes");
+  const tDetails = useTranslations("details");
+  const tEcommerce = useTranslations("ecommerce");
 
   const searchParams = useSearchParams();
   const isPlaceOrderMode = searchParams.get("placeOrder") === "true";
@@ -281,12 +285,20 @@ export default function EditQuotePage({ params }: EditQuotePageProps) {
           const versionName =
             quoteVersions.find(
               (v: Version) => v.versionNumber === selectedVersion.versionNumber
-            )?.versionName || `Version ${selectedVersion.versionNumber}`;
-          toast.success(`Loaded ${versionName} details`);
+            )?.versionName ||
+            `${tDetails("version")} ${selectedVersion.versionNumber}`;
+          toast.success(t("loadedQuoteVersionDetails", { versionName }));
         }
       }
     }
-  }, [versionData, versionLoading, selectedVersion, quoteVersions]);
+  }, [
+    versionData,
+    versionLoading,
+    selectedVersion,
+    quoteVersions,
+    t,
+    tDetails,
+  ]);
 
   // Extract data for display - use version data if available, otherwise use quote details
   const displayQuoteDetails = useMemo(() => {
@@ -695,9 +707,9 @@ export default function EditQuotePage({ params }: EditQuotePageProps) {
         quotationIdentifier: quoteIdentifier,
       });
       setQuoteDetails(response);
-      toast.success("Quote details refreshed successfully");
+      toast.success(t("quoteDetailsRefreshed"));
     } catch {
-      toast.error("Failed to refresh quote details");
+      toast.error(t("failedToRefreshQuoteDetails"));
     } finally {
       setLoading(false);
     }
@@ -749,7 +761,7 @@ export default function EditQuotePage({ params }: EditQuotePageProps) {
   // Handle adding a product to the quote
   const handleProductAdd = (product: ProductSearchResult) => {
     if (!quoteDetails || !quoteDetails.data?.quotationDetails?.[0]) {
-      toast.error("Quote details not loaded");
+      toast.error(t("quoteDetailsNotLoaded"));
       return;
     }
 
@@ -803,11 +815,9 @@ export default function EditQuotePage({ params }: EditQuotePageProps) {
         };
       });
 
-      toast.success(
-        `${product.brandProductId || product.productName || "Product"} added to quote`
-      );
+      toast.success(t("productAddedSuccessfullyToQuote"));
     } catch {
-      toast.error("Failed to add product to quote");
+      toast.error(t("failedToAddProductToQuote"));
     }
   };
 
@@ -910,13 +920,13 @@ export default function EditQuotePage({ params }: EditQuotePageProps) {
       );
 
       if (response?.orderIdentifier) {
-        toast.success("Order placed successfully!");
+        toast.success(t("orderPlacedSuccessfullyFromQuote"));
         // Navigate to the order details page
         prefetchAndNavigate(
           `/details/orderDetails/${response.orderIdentifier}`
         );
       } else {
-        toast.error("Failed to place order. Please try again.");
+        toast.error(t("failedToPlaceOrderFromQuote"));
       }
     } catch (error) {
       toast.error(
@@ -1101,7 +1111,9 @@ export default function EditQuotePage({ params }: EditQuotePageProps) {
           menuOptions={[]}
           buttons={[
             {
-              label: isPlaceOrderMode ? "Place Order" : "Submit",
+              label: isPlaceOrderMode
+                ? tEcommerce("placeOrder")
+                : t("submitButton"),
               variant: "default",
               onClick: isPlaceOrderMode ? handlePlaceOrder : handleSaveQuote,
               disabled: saving || isSubmitting,
@@ -1701,12 +1713,12 @@ export default function EditQuotePage({ params }: EditQuotePageProps) {
                 <path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z" />
                 <polyline points="14 2 14 8 20 8" />
               </svg>
-              {isPlaceOrderMode ? "Place Order" : "Submit"}
+              {isPlaceOrderMode ? tEcommerce("placeOrder") : t("submitButton")}
             </DialogTitle>
             <DialogDescription className="pt-2">
               {isPlaceOrderMode
-                ? "Are you sure you want to convert this quote to an order?"
-                : "Note: New version will be created for this quotation"}
+                ? t("placeOrderConfirmationDescription")
+                : t("newVersionCreatedNote")}
             </DialogDescription>
           </DialogHeader>
           <DialogFooter className="sm:justify-end gap-2">
@@ -1715,7 +1727,7 @@ export default function EditQuotePage({ params }: EditQuotePageProps) {
               onClick={() => setConfirmDialogOpen(false)}
               disabled={saving || isSubmitting}
             >
-              CANCEL
+              {t("cancel")}
             </Button>
             <Button
               variant="default"
@@ -1724,9 +1736,9 @@ export default function EditQuotePage({ params }: EditQuotePageProps) {
             >
               {saving || isSubmitting
                 ? isPlaceOrderMode
-                  ? "PLACING ORDER..."
-                  : "SUBMITTING..."
-                : "YES"}
+                  ? t("placingOrder")
+                  : t("submitting")
+                : t("yes")}
             </Button>
           </DialogFooter>
         </DialogContent>

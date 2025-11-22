@@ -9,6 +9,7 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover";
 import { Command, CommandGroup, CommandItem } from "@/components/ui/command";
+import { useTranslations } from "next-intl";
 import { FormField } from "./FormField";
 
 interface AutoCompleteOption {
@@ -34,13 +35,15 @@ export function AutoCompleteField({
   value,
   onChange,
   options,
-  placeholder = "Select an option",
+  placeholder,
   required = false,
   error,
   hint,
   disabled = false,
   className,
 }: AutoCompleteFieldProps) {
+  const t = useTranslations("profileSettings");
+  const defaultPlaceholder = placeholder || t("selectAnOption");
   const [open, setOpen] = useState(false);
   const triggerRef = useRef<HTMLButtonElement>(null);
   const [dropdownWidth, setDropdownWidth] = useState<number | undefined>();
@@ -71,7 +74,9 @@ export function AutoCompleteField({
             className="w-full justify-between border rounded-lg px-2.5 py-1.5 text-sm text-left font-normal"
             ref={triggerRef}
           >
-            <span className="truncate">{displayValue || placeholder}</span>
+            <span className="truncate">
+              {displayValue || defaultPlaceholder}
+            </span>
             <ChevronDown className="h-4 w-4 opacity-50" />
           </Button>
         </PopoverTrigger>

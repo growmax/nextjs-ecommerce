@@ -1,3 +1,5 @@
+"use client";
+
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -17,6 +19,7 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { cn } from "@/lib/utils";
+import { useTranslations } from "next-intl";
 import { Check, ChevronDown } from "lucide-react";
 import { Control, FieldPath, FieldValues } from "react-hook-form";
 
@@ -68,7 +71,7 @@ export function FormDropdown<
   name,
   label,
   description,
-  placeholder = "Select an option",
+  placeholder,
   options = [],
   groups = [],
   triggerClassName,
@@ -81,6 +84,9 @@ export function FormDropdown<
   showCheckIcon = true,
   onValueChange,
 }: FormDropdownProps<TFieldValues, TName>) {
+  const t = useTranslations("companySettings");
+  const defaultPlaceholder = placeholder || t("selectAnOption");
+
   // Determine if we're using groups or flat options
   const useGroups = groups.length > 0;
   const allOptions = useGroups
@@ -89,7 +95,7 @@ export function FormDropdown<
 
   const getSelectedLabel = (value: string) => {
     const option = allOptions.find(opt => opt.value === value);
-    return option?.label || placeholder;
+    return option?.label || defaultPlaceholder;
   };
 
   return (

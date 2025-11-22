@@ -1,7 +1,7 @@
 "use client";
 
 import { Layers } from "lucide-react";
-import { useLocale } from "next-intl";
+import { useLocale, useTranslations } from "next-intl";
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
@@ -113,6 +113,8 @@ const decodeUnicode = (str: string): string => {
 export default function EditOrderPage({ params }: EditOrderPageProps) {
   const router = useRouter();
   const locale = useLocale();
+  const t = useTranslations("orders");
+  const tDetails = useTranslations("details");
 
   usePageScroll();
 
@@ -215,12 +217,20 @@ export default function EditOrderPage({ params }: EditOrderPageProps) {
           const versionName =
             orderVersions.find(
               (v: Version) => v.versionNumber === selectedVersion.versionNumber
-            )?.versionName || `Version ${selectedVersion.versionNumber}`;
-          toast.success(`Loaded ${versionName} details`);
+            )?.versionName ||
+            `${tDetails("version")} ${selectedVersion.versionNumber}`;
+          toast.success(t("loadedVersionDetails", { versionName }));
         }
       }
     }
-  }, [versionData, versionLoading, selectedVersion, orderVersions]);
+  }, [
+    versionData,
+    versionLoading,
+    selectedVersion,
+    orderVersions,
+    t,
+    tDetails,
+  ]);
 
   // Extract data for display - use version data if available, otherwise use order details
   const displayOrderDetails = useMemo(() => {
@@ -733,12 +743,12 @@ export default function EditOrderPage({ params }: EditOrderPageProps) {
       const errorMessage =
         fetchOrderError instanceof Error
           ? fetchOrderError.message
-          : "Failed to fetch order details";
+          : t("failedToFetchOrderDetails");
       setError(errorMessage);
     } else {
       setError(null);
     }
-  }, [fetchOrderError]);
+  }, [fetchOrderError, t]);
 
   // Handler functions
   const handleRefresh = async () => {
@@ -748,9 +758,9 @@ export default function EditOrderPage({ params }: EditOrderPageProps) {
     try {
       // Use the hook's mutate function to refresh data
       await fetchOrderResponseMutate();
-      toast.success("Order details refreshed successfully");
+      toast.success(t("orderDetailsRefreshed"));
     } catch {
-      toast.error("Failed to refresh order details");
+      toast.error(t("failedToRefreshOrderDetails"));
     } finally {
       setLoading(false);
     }
@@ -802,7 +812,7 @@ export default function EditOrderPage({ params }: EditOrderPageProps) {
   // Handle adding a product to the order
   const handleProductAdd = (product: ProductSearchResult) => {
     if (!orderDetails || !orderDetails.data?.orderDetails?.[0]) {
-      toast.error("Order details not loaded");
+      toast.error(t("orderDetailsNotLoaded"));
       return;
     }
 
@@ -857,11 +867,9 @@ export default function EditOrderPage({ params }: EditOrderPageProps) {
         };
       });
 
-      toast.success(
-        `${product.brandProductId || product.productName || "Product"} added to order`
-      );
+      toast.success(t("productAddedSuccessfully"));
     } catch {
-      toast.error("Failed to add product to order");
+      toast.error(t("failedToAddProductToOrder"));
     }
   };
 
@@ -1115,15 +1123,13 @@ export default function EditOrderPage({ params }: EditOrderPageProps) {
       await fetchOrderResponseMutate();
 
       // Step 5: Show success message
-      toast.success("New version created successfully");
+      toast.success(t("newVersionCreatedSuccessfully"));
 
       // Step 6: Navigate back to order details page
       router.push(`/${locale}/details/orderDetails/${orderId}`);
     } catch (error) {
       toast.error(
-        error instanceof Error
-          ? error.message
-          : "Failed to place order. Please try again."
+        error instanceof Error ? error.message : t("failedToPlaceOrder")
       );
     } finally {
       setSaving(false);
@@ -1209,7 +1215,7 @@ export default function EditOrderPage({ params }: EditOrderPageProps) {
           menuOptions={[]}
           buttons={[
             {
-              label: "PLACE ORDER",
+              label: t("placeOrder"),
               variant: "default",
               onClick: handlePlaceOrder,
               disabled: saving,
@@ -1568,10 +1574,10 @@ export default function EditOrderPage({ params }: EditOrderPageProps) {
                 <path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z" />
                 <polyline points="14 2 14 8 20 8" />
               </svg>
-              Place Order
+              {t("placeOrderDialogTitle")}
             </DialogTitle>
             <DialogDescription className="pt-2">
-              Note: New version will be created for this order
+              {t("placeOrderDialogDescription")}
             </DialogDescription>
           </DialogHeader>
           <DialogFooter className="sm:justify-end gap-2">
@@ -1580,14 +1586,14 @@ export default function EditOrderPage({ params }: EditOrderPageProps) {
               onClick={() => setConfirmDialogOpen(false)}
               disabled={saving}
             >
-              CANCEL
+              {tDetails("cancel")}
             </Button>
             <Button
               variant="default"
               onClick={confirmPlaceOrder}
               disabled={saving}
             >
-              YES
+              {tDetails("yes")}
             </Button>
           </DialogFooter>
         </DialogContent>

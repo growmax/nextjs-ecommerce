@@ -8,6 +8,7 @@ import {
 } from "@/components/ui/dialog";
 import { zoneDateTimeCalculator } from "@/utils/date-format/date-format";
 import { ExternalLink, X } from "lucide-react";
+import { useTranslations } from "next-intl";
 
 export interface Version {
   versionNumber: number;
@@ -60,6 +61,7 @@ export function VersionsDialog({
   currentVersionNumber,
   onVersionSelect,
 }: VersionsDialogProps) {
+  const t = useTranslations("components");
   const preferences = getUserPreferences();
 
   // Format date and time
@@ -100,7 +102,7 @@ export function VersionsDialog({
           <DialogHeader className="px-4 py-3 border-b border-gray-200 shrink-0">
             <div className="flex items-center justify-between gap-4">
               <DialogTitle className="text-base font-bold text-gray-900 flex-1">
-                Versions
+                {t("versions")}
               </DialogTitle>
               <button
                 onClick={() => onOpenChange(false)}
@@ -117,12 +119,12 @@ export function VersionsDialog({
           <div className="flex-1 overflow-y-auto px-6 pt-6 pb-10 bg-white">
             {loading ? (
               <div className="flex items-center justify-center py-12">
-                <div className="text-sm text-gray-500">Loading versions...</div>
+                <div className="text-sm text-gray-500">{t("loading")}</div>
               </div>
             ) : displayVersions.length === 0 ? (
               <div className="flex items-center justify-center py-12">
                 <div className="text-sm text-gray-500">
-                  No versions available
+                  {t("noVersionsAvailable")}
                 </div>
               </div>
             ) : (

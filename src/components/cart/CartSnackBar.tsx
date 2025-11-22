@@ -7,6 +7,7 @@ import { cartCalculation } from "@/utils/calculation/cartCalculation";
 import { ShoppingCart } from "lucide-react";
 import PricingFormat from "@/components/PricingFormat";
 import { useCurrentUser } from "@/hooks/useCurrentUser";
+import { useTranslations } from "next-intl";
 
 interface CartSnackBarProps {
   href?: string;
@@ -25,6 +26,7 @@ export default function CartSnackBar({
   const { cart, cartCount } = useCartContext();
   const { user } = useCurrentUser();
   const currency = user?.currency;
+  const t = useTranslations("cart");
 
   // Calculate cart totals
   const cartCalculationResult =
@@ -66,7 +68,8 @@ export default function CartSnackBar({
             <ShoppingCart className="h-5 w-5" />
             <div>
               <p className="text-sm font-medium">
-                {totalItems} {totalItems === 1 ? "Item" : "Items"}
+                {totalItems}{" "}
+                {totalItems === 1 ? t("itemLabel") : t("itemsLabel")}
               </p>
               {subtotal > 0 && (
                 <p className="text-xs opacity-90">
@@ -84,7 +87,7 @@ export default function CartSnackBar({
             onClick={handleClick}
             className="ml-auto"
           >
-            View Details
+            {t("viewDetails")}
           </Button>
         </div>
       </div>

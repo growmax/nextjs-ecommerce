@@ -3,6 +3,7 @@
 import HeaderBar from "@/components/Global/HeaderBar/HeaderBar";
 import { SaveCancelToolbar } from "@/components/custom/save-cancel-toolbar";
 import { useRoutePrefetch } from "@/hooks/useRoutePrefetch";
+import { useTranslations } from "next-intl";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 
@@ -17,6 +18,7 @@ import { Shield } from "lucide-react";
 
 export default function ProfilePageClient() {
   const { prefetch } = useRoutePrefetch();
+  const t = useTranslations("profileSettings");
   const {
     profile,
     preferences,
@@ -142,12 +144,12 @@ export default function ProfilePageClient() {
         // Clear change tracking only (don't reset values after successful save)
         setChangedSections(new Set());
         setHasChanges(false);
-        toast.success("Changes saved successfully!");
+        toast.success(t("changesSavedSuccessfully"));
       } else {
-        toast.error("Some changes failed to save. Please try again.");
+        toast.error(t("someChangesFailedToSave"));
       }
     } catch {
-      toast.error("Failed to save changes. Please try again.");
+      toast.error(t("failedToSaveChanges"));
     }
 
     setIsSaving(false);
@@ -156,7 +158,7 @@ export default function ProfilePageClient() {
   // Unified cancel handler
   const handleCancel = () => {
     resetAllChanges();
-    toast.info("All changes cancelled");
+    toast.info(t("allChangesCancelled"));
   };
 
   const handleVerifyPhone = (_phone: string) => {
@@ -167,7 +169,7 @@ export default function ProfilePageClient() {
     // Simulate OTP verification
     await new Promise(resolve => setTimeout(resolve, 2000));
     setPhoneVerified(true);
-    toast.success("Phone number verified successfully!");
+    toast.success(t("phoneNumberVerifiedSuccessfully"));
   };
 
   const handlePasswordChange = async (_data: {
@@ -176,19 +178,19 @@ export default function ProfilePageClient() {
   }) => {
     // Simulate password change
     await new Promise(resolve => setTimeout(resolve, 2000));
-    toast.success("Password changed successfully!");
+    toast.success(t("passwordChangedSuccessfully"));
   };
 
   const handleSendPasswordOtp = async () => {
     // Simulate OTP sending
     await new Promise(resolve => setTimeout(resolve, 1000));
-    toast.success("OTP sent successfully!");
+    toast.success(t("otpSentSuccessfully"));
   };
 
   return (
     <>
       <div id="profile-header" className="h-[48px] md:h-[64px]">
-        <HeaderBar title="Profile Settings" />
+        <HeaderBar title={t("profileSettings")} />
       </div>
 
       <main
@@ -209,10 +211,10 @@ export default function ProfilePageClient() {
                 variant="outline"
                 size="sm"
                 onClick={() => setShowPasswordDialog(true)}
-                aria-label="Change Password"
+                aria-label={t("changePassword")}
               >
                 <Shield className="h-4 w-4" />
-                Change Password
+                {t("changePassword")}
               </Button>
             }
           />
@@ -238,8 +240,8 @@ export default function ProfilePageClient() {
         onSave={handleSave}
         onCancel={handleCancel}
         isLoading={isSaving}
-        saveText="Save Changes"
-        cancelText="Cancel"
+        saveText={t("saveChanges")}
+        cancelText={t("cancel")}
         className="bottom-4 left-0 right-0 md:bottom-auto md:top-[69px] md:left-0 lg:left-64 z-50"
         anchorSelector="#profile-header"
       />
@@ -249,8 +251,8 @@ export default function ProfilePageClient() {
         open={showOTPDialog}
         onOpenChange={setShowOTPDialog}
         onVerify={handleOTPVerify}
-        title="Verify Phone Number"
-        description="Enter the OTP sent to your mobile number"
+        title={t("verifyPhoneNumber")}
+        description={t("enterOtpSentToMobile")}
       />
 
       {/* Password Change Dialog */}
