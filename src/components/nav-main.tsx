@@ -1,9 +1,10 @@
 "use client";
 
+import { useRoutePrefetch } from "@/hooks/useRoutePrefetch";
 import { ChevronRight, type LucideIcon } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useRoutePrefetch } from "@/hooks/useRoutePrefetch";
+import { useState } from "react";
 
 import {
   Collapsible,
@@ -28,6 +29,73 @@ import {
 } from "@/components/ui/sidebar";
 import { cn } from "@/lib/utils";
 
+// Separate component for collapsed menu items to properly use hooks
+function CollapsedMenuItem({
+  item,
+  Icon,
+  hasActiveSub,
+  isActive,
+  onNavigate,
+  prefetch,
+}: {
+  item: {
+    title: string;
+    url: string;
+    items?: { title: string; url: string }[];
+  };
+  Icon?: LucideIcon;
+  hasActiveSub: boolean;
+  isActive: (url: string) => boolean;
+  onNavigate?: (url: string) => void;
+  prefetch: (url: string) => void;
+}) {
+  const [isOpen, setIsOpen] = useState(false);
+
+  return (
+    <SidebarMenuItem>
+      <Popover open={isOpen} onOpenChange={setIsOpen}>
+        <PopoverTrigger asChild>
+          <SidebarMenuButton
+            tooltip={item.title}
+            isActive={hasActiveSub}
+            className="justify-center w-full"
+          >
+            {Icon && <Icon className="size-5" />}
+          </SidebarMenuButton>
+        </PopoverTrigger>
+        <PopoverContent
+          side="right"
+          align="start"
+          sideOffset={8}
+          className="w-56 p-2"
+        >
+          <div className="flex flex-col gap-1">
+            {item.items?.map(subItem => (
+              <Link
+                key={subItem.title}
+                href={subItem.url}
+                className={cn(
+                  "text-sm font-medium text-sidebar-foreground rounded-md px-3 py-1.5 transition-colors",
+                  isActive(subItem.url)
+                    ? "bg-sidebar-accent text-sidebar-accent-foreground"
+                    : "hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
+                )}
+                onClick={() => {
+                  onNavigate?.(subItem.url);
+                  setIsOpen(false); // Close popover on navigation
+                }}
+                onMouseEnter={() => prefetch(subItem.url)}
+              >
+                {subItem.title}
+              </Link>
+            ))}
+          </div>
+        </PopoverContent>
+      </Popover>
+    </SidebarMenuItem>
+  );
+}
+
 export function NavMain({
   items,
   onNavigate,
@@ -45,8 +113,8 @@ export function NavMain({
   onNavigate?: (url: string) => void;
 }) {
   const pathname = usePathname();
-  const { state } = useSidebar();
-  const isCollapsed = state === "collapsed";
+  const { state, isMobile } = useSidebar();
+  const isCollapsed = state === "collapsed" && !isMobile;
   const { prefetch } = useRoutePrefetch();
 
   // Remove locale prefix (e.g., /en, /es, /fr) from pathname for comparison
@@ -102,44 +170,15 @@ export function NavMain({
 
           if (isCollapsed) {
             return (
-              <SidebarMenuItem key={item.title}>
-                <Popover>
-                  <PopoverTrigger asChild>
-                    <SidebarMenuButton
-                      tooltip={item.title}
-                      isActive={hasActiveSub}
-                      className="justify-center w-full"
-                    >
-                      {Icon && <Icon className="size-5" />}
-                    </SidebarMenuButton>
-                  </PopoverTrigger>
-                  <PopoverContent
-                    side="right"
-                    align="start"
-                    sideOffset={8}
-                    className="w-56 p-2"
-                  >
-                    <div className="flex flex-col gap-1">
-                      {item.items?.map(subItem => (
-                        <Link
-                          key={subItem.title}
-                          href={subItem.url}
-                          className={cn(
-                            "text-sm font-medium text-sidebar-foreground rounded-md px-3 py-1.5 transition-colors",
-                            isActive(subItem.url)
-                              ? "bg-sidebar-accent text-sidebar-accent-foreground"
-                              : "hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
-                          )}
-                          onClick={() => onNavigate?.(subItem.url)}
-                          onMouseEnter={() => prefetch(subItem.url)}
-                        >
-                          {subItem.title}
-                        </Link>
-                      ))}
-                    </div>
-                  </PopoverContent>
-                </Popover>
-              </SidebarMenuItem>
+              <CollapsedMenuItem
+                key={item.title}
+                item={item}
+                {...(Icon && { Icon })}
+                hasActiveSub={hasActiveSub}
+                isActive={isActive}
+                {...(onNavigate && { onNavigate })}
+                prefetch={prefetch}
+              />
             );
           }
 

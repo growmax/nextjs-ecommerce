@@ -365,11 +365,11 @@ describe("AvatarCard", () => {
 
       // Check Orders link
       const ordersLink = screen.getByText("Orders").closest("a");
-      expect(ordersLink).toHaveAttribute("href", "/orders");
+      expect(ordersLink).toHaveAttribute("href", "/landing/orderslanding");
 
       // Check Quotes link
       const quotesLink = screen.getByText("Quotes").closest("a");
-      expect(quotesLink).toHaveAttribute("href", "/quotesummary");
+      expect(quotesLink).toHaveAttribute("href", "/landing/quoteslanding");
     });
 
     it("should open and close dropdown menu on trigger click", async () => {

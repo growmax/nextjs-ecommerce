@@ -44,7 +44,11 @@ export function ProductCard({ product, viewMode = "grid" }: ProductCardProps) {
             }`}
           />
           {product.isNew && (
-            <Badge className="absolute top-6 left-2 bg-red-500 hover:bg-red-600">
+            <Badge
+              className={`absolute top-6 left-2 bg-red-500 hover:bg-red-600 ${
+                !isGrid ? "md:top-12" : ""
+              }`}
+            >
               New
             </Badge>
           )}
@@ -60,7 +64,7 @@ export function ProductCard({ product, viewMode = "grid" }: ProductCardProps) {
             {/* Price */}
             <div className="flex flex-wrap items-center gap-2">
               <span className="text-lg font-bold text-blue-600">
-                ${(product.price / 100).toFixed(2)}
+                ₹{(product.price / 100).toFixed(2)}
               </span>
             </div>
 
@@ -83,7 +87,7 @@ export function ProductCard({ product, viewMode = "grid" }: ProductCardProps) {
               productId={product.id}
               productTitle={product.title}
               isAvailable={product.inStock}
-              className="w-full"
+              className={`w-full ${!isGrid ? "md:w-1/2" : ""}`}
             />
           </div>
         </div>

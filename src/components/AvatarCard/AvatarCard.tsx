@@ -49,12 +49,12 @@ export function AvatarCard({
       label: "Company Settings",
     },
     {
-      href: "/orders",
+      href: "/landing/orderslanding",
       icon: ShoppingCart,
       label: "Orders",
     },
     {
-      href: "/quotesummary",
+      href: "/landing/quoteslanding",
       icon: User,
       label: "Quotes",
     },
@@ -146,7 +146,7 @@ export function AvatarCard({
     <DropdownMenu>
       <DropdownMenuTrigger asChild>{trigger}</DropdownMenuTrigger>
       <DropdownMenuContent
-        className={cn("w-56", menuClassName)}
+        className={cn("w-56 z-[120]", menuClassName)}
         align={align}
         {...(side ? { side } : {})}
         forceMount

@@ -1,6 +1,6 @@
 "use client";
 
-import { ChevronDown, DollarSign, Filter } from "lucide-react";
+import { ChevronDown, Filter, IndianRupee } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 
@@ -215,7 +215,7 @@ export function FilterSection() {
                   className="flex w-full items-center justify-between p-0 hover:bg-transparent"
                 >
                   <div className="flex items-center gap-2">
-                    <DollarSign className="h-4 w-4 text-muted-foreground" />
+                    <IndianRupee className="h-4 w-4 text-muted-foreground" />
                     <h3 className="text-sm font-semibold lg:text-base">Price Range</h3>
                   </div>
                   <ChevronDown
@@ -231,11 +231,11 @@ export function FilterSection() {
                   {/* Price Display */}
                   <div className="flex items-center justify-between rounded-md bg-accent/30 px-3 py-2">
                     <span className="text-xs font-medium text-muted-foreground">
-                      ${(priceRange[0] / 100).toFixed(2)}
+                      ₹{(priceRange[0] / 100).toFixed(2)}
                     </span>
                     <span className="text-xs text-muted-foreground">—</span>
                     <span className="text-xs font-medium text-muted-foreground">
-                      ${(priceRange[1] / 100).toFixed(2)}
+                      ₹{(priceRange[1] / 100).toFixed(2)}
                     </span>
                   </div>
 
@@ -244,7 +244,7 @@ export function FilterSection() {
                     <Slider
                       value={priceRange}
                       onValueChange={setPriceRange}
-                      max={300000}
+                      max={5000000}
                       step={1000}
                       className="w-full"
                     />
@@ -287,11 +287,11 @@ export function FilterSection() {
                         onChange={(e) =>
                           setPriceRange([
                             priceRange[0],
-                            Number(e.target.value) || 300000,
+                            Number(e.target.value) || 5000000,
                           ])
                         }
                         className="h-9 text-sm"
-                        placeholder="300000"
+                        placeholder="5000000"
                       />
                     </div>
                   </div>

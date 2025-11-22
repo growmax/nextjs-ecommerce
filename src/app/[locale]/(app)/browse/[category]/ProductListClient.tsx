@@ -1,12 +1,12 @@
 "use client";
 
 import {
-    FilterSection,
-    MobileFilterSheet,
-    ProductGrid,
-    ProductGridSkeleton,
-    SearchBar,
-    ViewToggle,
+  FilterSection,
+  MobileFilterSheet,
+  ProductGrid,
+  ProductGridSkeleton,
+  SearchBar,
+  ViewToggle,
 } from "@/components/ProductList";
 import { CustomPagination } from "@/components/ui/custom-pagination";
 import { useSidebar } from "@/components/ui/sidebar";
@@ -59,6 +59,11 @@ export default function ProductListClient({
     
     loadData();
   }, [setProducts, initialCategory, setSelectedCategory]);
+
+  // Scroll to top when page changes
+  useEffect(() => {
+    window.scrollTo({ top: 0, behavior: "instant" });
+  }, [currentPage]);
 
   return (
     <div

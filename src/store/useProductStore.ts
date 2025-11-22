@@ -124,7 +124,7 @@ export const useProductStore = create<ProductStoreState>((set, get) => ({
   selectedCategory: "all",
   selectedBrands: [],
   selectedColors: [],
-  priceRange: [0, 300000], // $0 to $3000 (in cents)
+  priceRange: [0, 5000000], // ₹0 to ₹50,000 (in paise)
   searchQuery: "",
   viewMode: "grid",
   loading: false,
@@ -217,7 +217,7 @@ export const useProductStore = create<ProductStoreState>((set, get) => ({
       selectedCategory: "all",
       selectedBrands: [],
       selectedColors: [],
-      priceRange: [0, 300000],
+      priceRange: [0, 5000000],
       searchQuery: "",
       currentPage: 1,
     });

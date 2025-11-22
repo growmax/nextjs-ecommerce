@@ -2,6 +2,7 @@
 
 import { useUserDetails } from "@/contexts/UserDetailsContext";
 import { Map, PieChart, Settings2, SquareTerminal } from "lucide-react";
+import Link from "next/link";
 import * as React from "react";
 
 import { NavMain } from "@/components/nav-main";
@@ -82,19 +83,19 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
       );
 
   return (
-    <Sidebar collapsible="icon" {...props}>
+    <Sidebar collapsible={isMobile ? "offcanvas" : "icon"} {...props}>
       <SidebarHeader>
         <SidebarMenu>
           <SidebarMenuItem>
             <SidebarMenuButton size="lg" asChild>
-              <div className="flex items-center gap-2 cursor-default">
+              <Link href="/" className="flex items-center gap-2 cursor-pointer">
                 <div className="bg-black text-white flex aspect-square size-8 items-center justify-center rounded-lg">
                   <span className="text-base font-bold">S</span>
                 </div>
                 <div className="grid flex-1 text-left text-sm leading-tight">
                   <span className="truncate font-semibold">Siemens</span>
                 </div>
-              </div>
+              </Link>
             </SidebarMenuButton>
           </SidebarMenuItem>
         </SidebarMenu>
