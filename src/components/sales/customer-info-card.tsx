@@ -2,6 +2,7 @@
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
+import { useTranslations } from "next-intl";
 
 interface CustomerInfoCardProps {
   quoteValidity?: {
@@ -38,11 +39,13 @@ const InfoRow = ({
 
 export default function CustomerInfoCard({
   quoteValidity,
+  contractEnabled,
   endCustomerName,
   projectName,
   competitorNames,
   priceJustification,
 }: CustomerInfoCardProps) {
+  const t = useTranslations("components");
   // Format quote validity dates
   const formatDate = (dateString?: string) => {
     if (!dateString) return "-";
@@ -72,29 +75,32 @@ export default function CustomerInfoCard({
     <Card className="shadow-sm">
       <CardHeader className="px-6 -my-5 bg-gray-50 rounded-t-lg items-end">
         <CardTitle className="text-xl font-semibold text-gray-900 m-0!">
-          Customer Information
+          {t("customerInformation")}
         </CardTitle>
       </CardHeader>
       <Separator />
       <CardContent className="px-6 pt-2 pb-0">
         <div className="divide-y divide-gray-100">
           {/* Quote Validity */}
-          <InfoRow label="Quote Validity" value={validityDisplay} />
+          <InfoRow label={t("quoteValidity")} value={validityDisplay} />
 
           {/* Contract Enabled */}
-          <InfoRow label="Contract Enabled" value="No" />
+          <InfoRow
+            label={t("contractEnabled")}
+            value={contractEnabled ? t("yesLabel") : t("no")}
+          />
 
           {/* End Customer Name */}
-          <InfoRow label="End Customer Name" value={endCustomerName} />
+          <InfoRow label={t("endCustomerName")} value={endCustomerName} />
 
           {/* Project Name */}
-          <InfoRow label="Project Name" value={projectName} />
+          <InfoRow label={t("projectName")} value={projectName} />
 
           {/* Competitor Names */}
-          <InfoRow label="Competitor Names" value={competitorsDisplay} />
+          <InfoRow label={t("competitorNames")} value={competitorsDisplay} />
 
           {/* Price Justification */}
-          <InfoRow label="Price Justification" value={priceJustification} />
+          <InfoRow label={t("priceJustification")} value={priceJustification} />
         </div>
       </CardContent>
     </Card>

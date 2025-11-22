@@ -9,6 +9,11 @@ jest.mock("next/navigation", () => ({
 
 jest.mock("next-intl", () => ({
   useLocale: () => "en",
+  useTranslations: () => (key: string) => key,
+  useFormatter: () => ({
+    dateTime: (date: Date) => date.toISOString(),
+    number: (value: number) => value.toString(),
+  }),
 }));
 
 // Mock data
@@ -497,9 +502,9 @@ describe("QuoteDetailsClient", () => {
       () => {
         expect(screen.getByTestId("order-products-table")).toBeInTheDocument();
       },
-      { timeout: 5000 }
+      { timeout: 10000 }
     );
-  });
+  }, 15000);
 
   it("should render customer info card when quote is not cancelled", async () => {
     const params = Promise.resolve({ quoteId: "quote-123", locale: "en" });

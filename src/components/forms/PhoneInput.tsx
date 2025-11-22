@@ -4,6 +4,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useFormValidation } from "@/hooks/Forms/useFormValidation";
+import { useTranslations } from "next-intl";
 import { Check } from "lucide-react";
 import { useState } from "react";
 import { FormField } from "./FormField";
@@ -28,11 +29,13 @@ export function PhoneInput({
   onVerify,
   verified = false,
   required = false,
-  placeholder = "Enter 10-digit number",
+  placeholder,
   disabled = false,
   className,
   maxLength = 10,
 }: PhoneInputProps) {
+  const t = useTranslations("profileSettings");
+  const defaultPlaceholder = placeholder || t("enter10DigitNumber");
   const { validatePhone } = useFormValidation();
   const [error, setError] = useState<string>("");
 
@@ -68,7 +71,7 @@ export function PhoneInput({
           type="text"
           value={value}
           onChange={e => handleChange(e.target.value)}
-          placeholder={placeholder}
+          placeholder={defaultPlaceholder}
           disabled={disabled}
           className={`pr-20 ${error ? "border-red-500" : ""}`}
         />
@@ -80,14 +83,14 @@ export function PhoneInput({
             onClick={handleVerify}
             disabled={disabled}
           >
-            Verify
+            {t("verify")}
           </Button>
         )}
 
         {verified && (
           <Badge className="absolute right-2 top-1/2 -translate-y-1/2 bg-green-100 text-green-800 text-xs">
             <Check className="h-3 w-3 mr-1" />
-            Verified
+            {t("verified")}
           </Badge>
         )}
       </div>

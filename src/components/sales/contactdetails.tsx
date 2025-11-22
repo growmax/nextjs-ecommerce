@@ -2,6 +2,7 @@
 
 import { AddressDetailsDialog } from "@/components/dialogs/AddressDetailsDialog";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { useTranslations } from "next-intl";
 import {
   HoverCard,
   HoverCardContent,
@@ -160,6 +161,7 @@ const WarehouseRow = ({
   warehouseName?: string | undefined;
   warehouseAddress?: WarehouseAddressDetails | undefined;
 }) => {
+  const t = useTranslations("components");
   if (!warehouseName) return null;
 
   const hasAddressDetails =
@@ -175,7 +177,7 @@ const WarehouseRow = ({
     return (
       <div className="grid grid-cols-2 gap-4 py-1.5">
         <div>
-          <p className="text-sm font-normal text-gray-900">Warehouse</p>
+          <p className="text-sm font-normal text-gray-900">{t("warehouse")}</p>
         </div>
         <div>
           <p className="text-sm font-semibold text-gray-900">{warehouseName}</p>
@@ -187,7 +189,7 @@ const WarehouseRow = ({
   return (
     <div className="grid grid-cols-2 gap-4 py-1.5">
       <div>
-        <p className="text-sm font-normal text-gray-900">Warehouse</p>
+        <p className="text-sm font-normal text-gray-900">{t("warehouse")}</p>
       </div>
       <div>
         <HoverCard>
@@ -363,6 +365,7 @@ export default function OrderContactDetails({
   onSellerBranchChange,
   onWarehouseChange,
 }: OrderContactDetailsProps) {
+  const t = useTranslations("components");
   const [billingDialogOpen, setBillingDialogOpen] = useState(false);
   const [shippingDialogOpen, setShippingDialogOpen] = useState(false);
 
@@ -711,14 +714,17 @@ export default function OrderContactDetails({
     <Card className="shadow-sm pb-0">
       <CardHeader className="px-6 -my-5  bg-gray-50 rounded-t-lg items-end gap-0">
         <CardTitle className="text-xl font-semibold text-gray-900 m-0!">
-          Contact Details
+          {t("contactDetails")}
         </CardTitle>
       </CardHeader>
       <Separator />
       <CardContent className="px-6 pt-2 pb-0 gap-0 -mt-5">
         <div className="divide-y divide-gray-100 [&>div]:py-1.5 [&>div:last-child]:pb-0">
           {/* Company */}
-          <DetailRow label="Company" value={sellerAddress?.sellerCompanyName} />
+          <DetailRow
+            label={t("company")}
+            value={sellerAddress?.sellerCompanyName}
+          />
 
           {/* Warehouse */}
           <WarehouseRow
@@ -728,13 +734,13 @@ export default function OrderContactDetails({
 
           {/* Sales Branch */}
           <DetailRow
-            label="Sales Branch"
+            label={t("salesBranch")}
             value={salesBranch || sellerAddress?.sellerBranchName}
           />
 
           {/* Bill To */}
           <AddressRow
-            label="Bill To"
+            label={t("billTo")}
             addressName={
               billingAddress?.branchName && billingAddress?.billToCode
                 ? `${billingAddress.branchName} - ${billingAddress.billToCode}`
@@ -749,7 +755,7 @@ export default function OrderContactDetails({
 
           {/* Ship To */}
           <AddressRow
-            label="Ship To"
+            label={t("shipTo")}
             addressName={
               shippingAddress?.branchName && shippingAddress?.shipToCode
                 ? `${shippingAddress.branchName} - ${shippingAddress.shipToCode}`
@@ -763,13 +769,13 @@ export default function OrderContactDetails({
           {/* Required Date */}
           {isEditable ? (
             <EditableDateRow
-              label="Required Date"
+              label={t("requiredDate")}
               value={requiredDate}
               onChange={onRequiredDateChange}
             />
           ) : (
             <DetailRow
-              label="Required Date"
+              label={t("requiredDate")}
               value={
                 requiredDate
                   ? zoneDateTimeCalculator(
@@ -787,14 +793,14 @@ export default function OrderContactDetails({
           {/* Reference Number */}
           {isEditable ? (
             <EditableTextRow
-              label="Reference Number"
+              label={t("referenceNumber")}
               value={referenceNumber}
               onChange={onReferenceNumberChange}
-              placeholder="Reference Number"
+              placeholder={t("referenceNumber")}
             />
           ) : (
             <DetailRow
-              label="Reference Number"
+              label={t("referenceNumber")}
               value={referenceNumber}
               showEmpty={true}
             />

@@ -22,6 +22,7 @@ import { useDashboardOrders } from "@/hooks/useDashboardData";
 import { useRoutePrefetch } from "@/hooks/useRoutePrefetch";
 import { Order } from "@/types/dashboard/DasbordOrderstable/DashboardOrdersTable";
 import { ArrowDownIcon, ArrowUpDown } from "lucide-react";
+import { useTranslations } from "next-intl";
 import React, { useMemo, useState } from "react";
 
 const { createElement: h } = React;
@@ -33,6 +34,7 @@ export default function DashboardOrdersTable() {
   }>({ key: "orderName", direction: "desc" });
   const [displayCount] = useState(10);
   const { prefetchAndNavigate } = useRoutePrefetch();
+  const t = useTranslations("dashboard");
 
   const {
     data: result,
@@ -206,7 +208,7 @@ export default function DashboardOrdersTable() {
               h(
                 CardTitle,
                 { className: "text-sm font-medium text-gray-900 text-center" },
-                h("span", {}, "History of Orders "),
+                h("span", {}, `${t("historyOfOrders")} `),
                 totalCount > 0 &&
                   h(
                     "span",
@@ -250,7 +252,7 @@ export default function DashboardOrdersTable() {
                             role: "button",
                             tabIndex: 0,
                           },
-                          "Order Id",
+                          t("orderId"),
                           getSortIcon("orderIdentifier")
                         )
                       ),
@@ -269,7 +271,7 @@ export default function DashboardOrdersTable() {
                             role: "button",
                             tabIndex: 0,
                           },
-                          "Name",
+                          t("name"),
                           getSortIcon("orderName")
                         )
                       ),
@@ -289,7 +291,7 @@ export default function DashboardOrdersTable() {
                             role: "button",
                             tabIndex: 0,
                           },
-                          "Required Date",
+                          t("requiredDate"),
                           getSortIcon("requiredDate")
                         )
                       ),
@@ -309,7 +311,7 @@ export default function DashboardOrdersTable() {
                             role: "button",
                             tabIndex: 0,
                           },
-                          "Status",
+                          t("status"),
                           getSortIcon("updatedBuyerStatus")
                         )
                       )
@@ -329,7 +331,7 @@ export default function DashboardOrdersTable() {
                               className:
                                 "px-3 py-3 text-center text-sm text-red-500",
                             },
-                            `Failed to fetch orders: ${error instanceof Error ? error.message : "Unknown error"}`
+                            `${t("failedToFetchOrders")} ${error instanceof Error ? error.message : "Unknown error"}`
                           )
                         )
                       : displayedOrders.length === 0
@@ -343,7 +345,7 @@ export default function DashboardOrdersTable() {
                                 className:
                                   "px-3 py-3 text-center text-sm text-gray-500",
                               },
-                              "No orders found"
+                              t("noOrdersFound")
                             )
                           )
                         : displayedOrders.map((order, index) =>
@@ -421,7 +423,7 @@ export default function DashboardOrdersTable() {
                   className:
                     "text-black hover:bg-blacke-50 border-black-600 hover:border-black-700 normal-case text-sm font-medium px-3 py-1 min-h-[32px] transition-all cursor-pointer",
                 },
-                "Show More"
+                t("showMore")
               )
             )
         )

@@ -1,6 +1,9 @@
+"use client";
+
 import { SaveCancelToolbar } from "@/components/custom/save-cancel-toolbar";
 import SectionCard from "@/components/custom/SectionCard";
 import { Button } from "@/components/ui/button";
+import { useTranslations } from "next-intl";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -79,6 +82,7 @@ const normalizeCompanyData = (
 };
 
 const CompanyDetail = () => {
+  const t = useTranslations("companySettings");
   const defaultFormValues: CompanyFormValues = {
     data: {
       subIndustryId: {
@@ -196,7 +200,7 @@ const CompanyDetail = () => {
     }
     // Reset image if needed
     setProfileImage(null);
-    toast.info("All changes cancelled");
+    toast.info(t("allChangesCancelled"));
   };
 
   // Unified save handler
@@ -226,9 +230,9 @@ const CompanyDetail = () => {
         if (!found) {
           form.setError("subIndustry", {
             type: "validate",
-            message: "Please select a valid sub-industry.",
+            message: t("pleaseSelectValidSubIndustry"),
           });
-          toast.error("Please select a valid sub-industry.");
+          toast.error(t("pleaseSelectValidSubIndustry"));
           return;
         }
       }
@@ -239,7 +243,7 @@ const CompanyDetail = () => {
         | undefined;
 
       if (!companyId) {
-        throw new Error("Missing company identifier");
+        throw new Error(t("missingCompanyIdentifier"));
       }
 
       const subIndustryIdValue =
@@ -273,9 +277,9 @@ const CompanyDetail = () => {
       // Reset form state after successful save
       reset(normalizedData);
 
-      toast.success("Changes saved successfully!");
+      toast.success(t("changesSavedSuccessfully"));
     } catch {
-      toast.error("Failed to save changes. Please try again.");
+      toast.error(t("failedToSaveChanges"));
     } finally {
       setIsSaving(false);
     }
@@ -283,7 +287,7 @@ const CompanyDetail = () => {
 
   return (
     <div>
-      <SectionCard title="Company Detail">
+      <SectionCard title={t("companyDetail")}>
         <Form {...form}>
           <form className="grid grid-cols-1 md:grid-cols-4 gap-4">
             {/* Image Upload Section */}
@@ -299,14 +303,14 @@ const CompanyDetail = () => {
                 {profileImage ? (
                   <Image
                     src={profileImage}
-                    alt="Company Logo"
+                    alt={t("companyLogo")}
                     layout="fill"
                     objectFit="contain"
                     className="rounded-lg"
                   />
                 ) : (
                   <span className="text-xs text-muted-foreground font-medium">
-                    Click to Upload
+                    {t("clickToUpload")}
                   </span>
                 )}
               </div>
@@ -317,32 +321,32 @@ const CompanyDetail = () => {
               <CompanyFormInput
                 control={form.control}
                 name="data.name"
-                label="Company Name"
-                placeholder="Company Name"
+                label={t("companyName")}
+                placeholder={t("companyName")}
                 loading={loading}
               />
 
               <CompanyFormInput
                 control={form.control}
                 name="data.website"
-                label="Website"
-                placeholder="Website URL"
+                label={t("website")}
+                placeholder={t("websiteUrl")}
                 loading={loading}
               />
 
               <CompanyFormInput
                 control={form.control}
                 name="data.addressId.gst"
-                label="Tax ID / GST#"
-                placeholder="Tax ID or GST#"
+                label={t("taxIdGst")}
+                placeholder={t("taxIdOrGst")}
                 loading={loading}
               />
 
               <CompanyFormInput
                 control={form.control}
                 name="data.businessTypeId.name"
-                label="Business Type"
-                placeholder="Business Type"
+                label={t("businessType")}
+                placeholder={t("businessType")}
                 disabled
                 loading={loading}
               />
@@ -350,8 +354,8 @@ const CompanyDetail = () => {
               <CompanyFormInput
                 control={form.control}
                 name="data.accountTypeId.name"
-                label="Account Type"
-                placeholder="Account Type"
+                label={t("accountType")}
+                placeholder={t("accountType")}
                 disabled
                 loading={loading}
               />
@@ -359,8 +363,8 @@ const CompanyDetail = () => {
               <CompanyFormInput
                 control={form.control}
                 name="data.currencyId.currencyCode"
-                label="Default Currency"
-                placeholder="Default Currency"
+                label={t("defaultCurrency")}
+                placeholder={t("defaultCurrency")}
                 disabled
                 loading={loading}
               />
@@ -371,7 +375,7 @@ const CompanyDetail = () => {
                 name="subIndustry"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>SubIndustry</FormLabel>
+                    <FormLabel>{t("subIndustry")}</FormLabel>
                     <FormControl>
                       <DropdownMenu onOpenChange={handleSubOpenChange}>
                         <DropdownMenuTrigger asChild>
@@ -381,9 +385,9 @@ const CompanyDetail = () => {
                             disabled={subLoading || loading}
                           >
                             {loading
-                              ? "Loading company..."
+                              ? t("loadingCompany")
                               : subLoading
-                                ? "Loading..."
+                                ? t("loading")
                                 : field.value
                                   ? // First try to find from loaded options
                                     ((subIndustryOptions as any) ?? []).find(
@@ -393,7 +397,7 @@ const CompanyDetail = () => {
                                     // Fall back to initial value if options not loaded
                                     form.getValues("data.subIndustryId.name")
                                   : form.getValues("data.subIndustryId.name") ||
-                                    "Select SubIndustry"}
+                                    t("selectSubIndustry")}
                           </Button>
                         </DropdownMenuTrigger>
                         <DropdownMenuPortal>
@@ -405,18 +409,18 @@ const CompanyDetail = () => {
                           >
                             {subLoading ? (
                               <div className="p-3 text-sm">
-                                Loading sub-industries...
+                                {t("loadingSubIndustries")}
                               </div>
                             ) : (subIndustryOptions ?? []).length === 0 ? (
                               <div className="p-3 text-sm text-muted-foreground">
-                                No sub-industry options
+                                {t("noSubIndustryOptions")}
                               </div>
                             ) : (
                               Object.entries(
                                 (subIndustryOptions ?? []).reduce(
                                   (acc: any, opt: any) => {
                                     const group =
-                                      opt.industryId?.name || "Other";
+                                      opt.industryId?.name || t("other");
                                     if (!acc[group]) acc[group] = [];
                                     acc[group].push(opt);
                                     return acc;
@@ -460,7 +464,7 @@ const CompanyDetail = () => {
               <div>
                 {/* prefer option data when loaded; otherwise fallback to prefilled form values */}
                 <FormLabel>
-                  Industry Description :{" "}
+                  {t("industryDescription")}{" "}
                   {form.watch("data.subIndustryId.id")
                     ? (
                         (subIndustryOptions ?? []).find(
@@ -481,8 +485,8 @@ const CompanyDetail = () => {
                         ) as any
                       )?.description ||
                       form.getValues("data.subIndustryId.description") ||
-                      "No description available"
-                    : "Select a sub-industry to view description"}
+                      t("noDescriptionAvailable")
+                    : t("selectSubIndustryToViewDescription")}
                 </p>
               </div>
             </div>
@@ -496,8 +500,8 @@ const CompanyDetail = () => {
           onSave={handleSave}
           onCancel={handleCancel}
           isLoading={isSaving}
-          saveText="Save Changes"
-          cancelText="Cancel"
+          saveText={t("saveChanges")}
+          cancelText={t("cancel")}
           className="bottom-4 left-0 right-0 md:bottom-auto md:top-[69px] md:left-0 lg:left-64 z-50"
         />
       )}

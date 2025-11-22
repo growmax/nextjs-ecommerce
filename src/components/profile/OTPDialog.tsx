@@ -10,6 +10,7 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { useTranslations } from "next-intl";
 import { Shield } from "lucide-react";
 import { useState } from "react";
 
@@ -32,6 +33,7 @@ export function OTPDialog({
   description,
   isLoading = false,
 }: OTPDialogProps) {
+  const t = useTranslations("profileSettings");
   const [otp, setOtp] = useState("");
   const [isVerifying, setIsVerifying] = useState(false);
 
@@ -78,7 +80,7 @@ export function OTPDialog({
         <div className="space-y-4">
           <div className="space-y-2">
             <div className="flex items-center justify-between">
-              <Label htmlFor="otp">Enter OTP *</Label>
+              <Label htmlFor="otp">{t("enterOtp")}</Label>
               {onResend && (
                 <Button
                   variant="link"
@@ -87,7 +89,7 @@ export function OTPDialog({
                   disabled={isLoading || isVerifying}
                   className="h-auto p-0 text-xs"
                 >
-                  Resend OTP
+                  {t("resendOtp")}
                 </Button>
               )}
             </div>
@@ -99,7 +101,7 @@ export function OTPDialog({
                 const value = e.target.value.replace(/\D/g, "").slice(0, 6);
                 setOtp(value);
               }}
-              placeholder="Enter 6-digit OTP"
+              placeholder={t("enter6DigitOtp")}
               maxLength={6}
               disabled={isLoading || isVerifying}
               autoFocus
@@ -112,13 +114,13 @@ export function OTPDialog({
               onClick={handleClose}
               disabled={isLoading || isVerifying}
             >
-              Cancel
+              {t("cancel")}
             </Button>
             <Button
               onClick={handleVerify}
               disabled={isLoading || isVerifying || otp.length !== 6}
             >
-              {isVerifying ? "Verifying..." : "Verify OTP"}
+              {isVerifying ? t("verifying") : t("verifyOtp")}
             </Button>
           </div>
         </div>

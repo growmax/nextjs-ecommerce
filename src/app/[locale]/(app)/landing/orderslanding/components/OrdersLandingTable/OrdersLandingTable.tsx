@@ -3,6 +3,7 @@
 import { ColumnDef } from "@tanstack/react-table";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
+import { useTranslations } from "next-intl";
 
 import PricingFormat from "@/components/PricingFormat";
 import DashboardTable from "@/components/custom/DashBoardTable";
@@ -42,46 +43,52 @@ const convertDateToString = (
 };
 
 // Table Skeleton Component
-const TableSkeleton = ({ rows = 10 }: { rows?: number }) => (
-  <div className="rounded-md border shadow-sm overflow-hidden flex flex-col">
-    <div className="border-b border-gray-200 bg-gray-50 flex-shrink-0">
-      <div className="flex font-medium text-sm text-gray-700">
-        <div className="px-2 py-3 w-[150px]">Order Id</div>
-        <div className="px-2 py-3 w-[200px]">Order Name</div>
-        <div className="px-2 py-3 w-[150px]">Order Date</div>
-        <div className="px-2 py-3 w-[150px]">Date</div>
-        <div className="px-2 py-3 w-[300px]">Account Name</div>
-        <div className="px-2 py-3 w-[150px]">Total Items</div>
-        <div className="px-2 py-3 w-[150px]">Sub total</div>
-        <div className="px-2 py-3 w-[150px]">TaxableAmount</div>
-        <div className="px-2 py-3 w-[150px]">Total</div>
-        <div className="px-2 py-3 w-[200px]">Status</div>
-        <div className="px-2 py-3 w-[150px]">Required Date</div>
+const TableSkeleton = ({ rows = 10 }: { rows?: number }) => {
+  const t = useTranslations("orders");
+  return (
+    <div className="rounded-md border shadow-sm overflow-hidden flex flex-col">
+      <div className="border-b border-gray-200 bg-gray-50 flex-shrink-0">
+        <div className="flex font-medium text-sm text-gray-700">
+          <div className="px-2 py-3 w-[150px]">{t("orderId")}</div>
+          <div className="px-2 py-3 w-[200px]">{t("orderName")}</div>
+          <div className="px-2 py-3 w-[150px]">{t("orderDate")}</div>
+          <div className="px-2 py-3 w-[150px]">{t("date")}</div>
+          <div className="px-2 py-3 w-[300px]">{t("accountName")}</div>
+          <div className="px-2 py-3 w-[150px]">{t("totalItems")}</div>
+          <div className="px-2 py-3 w-[150px]">{t("subtotal")}</div>
+          <div className="px-2 py-3 w-[150px]">{t("taxableAmount")}</div>
+          <div className="px-2 py-3 w-[150px]">{t("total")}</div>
+          <div className="px-2 py-3 w-[200px]">{t("status")}</div>
+          <div className="px-2 py-3 w-[150px]">{t("requiredDate")}</div>
+        </div>
+      </div>
+      <div className="flex-1 overflow-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
+        {Array.from({ length: rows }).map((_, rowIndex) => (
+          <div
+            key={`row-${rowIndex}`}
+            className="border-b border-gray-100 flex "
+          >
+            {Array.from({ length: 11 }).map((_, colIndex) => (
+              <div
+                key={`cell-${rowIndex}-${colIndex}`}
+                className="px-2 py-3 w-[150px] flex items-center"
+              >
+                <Skeleton className="h-4 w-full bg-gray-200" />
+              </div>
+            ))}
+          </div>
+        ))}
+      </div>
+      <div className="flex items-center justify-end gap-4 px-4 py-2 border-t bg-gray-50/50 flex-shrink-0">
+        <Skeleton className="h-3 w-16" />
+        <Skeleton className="h-6 w-12" />
+        <Skeleton className="h-3 w-20" />
+        <Skeleton className="w-6 h-6" />
+        <Skeleton className="w-6 h-6" />
       </div>
     </div>
-    <div className="flex-1 overflow-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
-      {Array.from({ length: rows }).map((_, rowIndex) => (
-        <div key={`row-${rowIndex}`} className="border-b border-gray-100 flex ">
-          {Array.from({ length: 11 }).map((_, colIndex) => (
-            <div
-              key={`cell-${rowIndex}-${colIndex}`}
-              className="px-2 py-3 w-[150px] flex items-center"
-            >
-              <Skeleton className="h-4 w-full bg-gray-200" />
-            </div>
-          ))}
-        </div>
-      ))}
-    </div>
-    <div className="flex items-center justify-end gap-4 px-4 py-2 border-t bg-gray-50/50 flex-shrink-0">
-      <Skeleton className="h-3 w-16" />
-      <Skeleton className="h-6 w-12" />
-      <Skeleton className="h-3 w-20" />
-      <Skeleton className="w-6 h-6" />
-      <Skeleton className="w-6 h-6" />
-    </div>
-  </div>
-);
+  );
+};
 
 function OrdersLandingTable({
   refreshTrigger,
@@ -90,6 +97,7 @@ function OrdersLandingTable({
   const { user } = useCurrentUser();
   const { prefetch, prefetchMultiple, prefetchAndNavigate } =
     useRoutePrefetch();
+  const t = useTranslations("orders");
 
   // State
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
@@ -113,7 +121,7 @@ function OrdersLandingTable({
     () => [
       {
         accessorKey: "orderIdentifier",
-        header: () => <span className="pl-2">Order Id</span>,
+        header: () => <span className="pl-2">{t("orderId")}</span>,
         size: 150,
         meta: {
           sticky: true,
@@ -133,7 +141,7 @@ function OrdersLandingTable({
       },
       {
         accessorKey: "orderName",
-        header: () => <span className="pl-2">Order Name</span>,
+        header: () => <span className="pl-2">{t("orderName")}</span>,
         size: 200,
         cell: ({ row }) => (
           <div
@@ -146,20 +154,20 @@ function OrdersLandingTable({
       },
       {
         accessorKey: "lastModifiedDate",
-        header: "Date",
+        header: t("date"),
         size: 150,
         cell: ({ row }) => formatDate(row.original.lastUpdatedDate),
       },
       {
         accessorKey: "orderDate",
-        header: "Order Date",
+        header: t("orderDate"),
         size: 150,
         cell: ({ row }) => formatDate(row.original.createdDate),
       },
 
       {
         accessorKey: "accountName",
-        header: "Account Name",
+        header: t("accountName"),
         size: 300,
         cell: ({ row }) => (
           <div
@@ -172,7 +180,7 @@ function OrdersLandingTable({
       },
       {
         accessorKey: "totalItems",
-        header: "Total Items",
+        header: t("totalItems"),
         size: 150,
         meta: {
           alignCenter: true,
@@ -195,7 +203,7 @@ function OrdersLandingTable({
       },
       {
         accessorKey: "subTotal",
-        header: "Sub total",
+        header: t("subtotal"),
         size: 150,
         meta: {
           alignRight: true,
@@ -211,7 +219,7 @@ function OrdersLandingTable({
       },
       {
         accessorKey: "taxableAmount",
-        header: "TaxableAmount",
+        header: t("taxableAmount"),
         size: 150,
         meta: {
           alignRight: true,
@@ -227,7 +235,7 @@ function OrdersLandingTable({
       },
       {
         accessorKey: "grandTotal",
-        header: "Total",
+        header: t("total"),
         size: 150,
         meta: {
           alignRight: true,
@@ -245,7 +253,7 @@ function OrdersLandingTable({
       },
       {
         accessorKey: "status",
-        header: () => <span className="pl-[30px]">Status</span>,
+        header: () => <span className="pl-[30px]">{t("status")}</span>,
         size: 200,
         cell: ({ row }) => {
           const status = row.original.updatedBuyerStatus;
@@ -272,12 +280,12 @@ function OrdersLandingTable({
       },
       {
         accessorKey: "requiredDate",
-        header: "Required Date",
+        header: t("requiredDate"),
         size: 150,
         cell: ({ row }) => formatDate(row.original.requiredDate),
       },
     ],
-    []
+    [t]
   );
   // Create filter from form data
   const createFilterFromData = useCallback(
@@ -456,7 +464,7 @@ function OrdersLandingTable({
       setOrders(ordersData);
       setTotalCount(totalCountData);
     } catch {
-      toast.error("Failed to fetch orders");
+      toast.error(t("failedToFetch"));
       setOrders([]);
       setTotalCount(0);
     } finally {
@@ -473,56 +481,57 @@ function OrdersLandingTable({
     filterData,
     createFilterFromData,
     initialLoad,
+    t,
   ]);
 
   // Export functionality
   const handleExport = useCallback(async () => {
     if (orders.length === 0) {
-      toast.error("No data to export");
+      toast.error(t("noDataToExport"));
       return;
     }
 
     try {
       const XLSX = await import("xlsx");
       const exportData = orders.map(order => ({
-        "Order Id": order.orderIdentifier || "-",
-        "Order Name": order.orderName || "-",
-        "Order Date": formatDate(order.createdDate),
-        "Last Modified Date": formatDate(order.lastUpdatedDate),
-        "Account Name": order.sellerCompanyName || "-",
-        "Total Items": order.itemcount || 0,
-        "Sub Total": getAccounting(
+        [t("orderId")]: order.orderIdentifier || "-",
+        [t("orderName")]: order.orderName || "-",
+        [t("orderDate")]: formatDate(order.createdDate),
+        [t("lastModifiedDate")]: formatDate(order.lastUpdatedDate),
+        [t("accountName")]: order.sellerCompanyName || "-",
+        [t("totalItems")]: order.itemcount || 0,
+        [t("subTotal")]: getAccounting(
           order.currencySymbol || null,
           order.subTotal || 0,
           order.currencySymbol || undefined
         ),
-        "Taxable Amount": getAccounting(
+        [t("taxableAmount")]: getAccounting(
           order.currencySymbol || null,
           order.taxableAmount || 0,
           order.currencySymbol || undefined
         ),
-        "Grand Total": getAccounting(
+        [t("grandTotal")]: getAccounting(
           order.currencySymbol || null,
           order.grandTotal || 0,
           order.currencySymbol || undefined
         ),
-        Status: order.updatedBuyerStatus || "-",
-        "Required Date": formatDate(order.requiredDate),
+        [t("status")]: order.updatedBuyerStatus || "-",
+        [t("requiredDate")]: formatDate(order.requiredDate),
       }));
 
       const wb = XLSX.utils.book_new();
       const ws = XLSX.utils.json_to_sheet(exportData);
       ws["!cols"] = Array.from({ length: 11 }, () => ({ wch: 15 }));
-      XLSX.utils.book_append_sheet(wb, ws, "Orders");
+      XLSX.utils.book_append_sheet(wb, ws, t("title"));
       XLSX.writeFile(
         wb,
         `orders_${new Date().toISOString().split("T")[0]}.xlsx`
       );
-      toast.success("Export completed successfully!");
+      toast.success(t("exportCompleted"));
     } catch {
-      toast.error("Failed to export orders");
+      toast.error(t("exportFailed"));
     }
-  }, [orders]);
+  }, [orders, t]);
 
   // Event handlers
   const handlePaginationChange = useCallback(
@@ -549,7 +558,7 @@ function OrdersLandingTable({
   const handleSaveFilter = useCallback(
     async (filterData: QuoteFilterFormData) => {
       if (!user?.userId || !user?.companyId) {
-        toast.error("User information not available");
+        toast.error(t("userInfoNotAvailable"));
         return;
       }
 
@@ -564,12 +573,12 @@ function OrdersLandingTable({
           filter
         );
         // await loadFilterPreferences(); // Temporarily removed
-        toast.success("Filter saved successfully!");
+        toast.success(t("filterSaved"));
       } catch {
-        toast.error("Failed to save filter");
+        toast.error(t("filterSaveFailed"));
       }
     },
-    [user?.userId, user?.companyId, createFilterFromData]
+    [user?.userId, user?.companyId, createFilterFromData, t]
   );
 
   // Effects
@@ -588,9 +597,9 @@ function OrdersLandingTable({
   useEffect(() => {
     if (refreshTrigger && refreshTrigger > 0) {
       fetchOrders();
-      toast.success("Orders refreshed");
+      toast.success(t("ordersRefreshed"));
     }
-  }, [refreshTrigger, fetchOrders]);
+  }, [refreshTrigger, fetchOrders, t]);
   const handlePrevious = () => {
     setPage(prev => prev - 1);
   };
@@ -633,15 +642,15 @@ function OrdersLandingTable({
         onSubmit={data => {
           setFilterData(data);
           setPage(0);
-          toast.success("Filters applied successfully!");
+          toast.success(t("filtersApplied"));
         }}
         onReset={() => {
           setFilterData(null);
           setPage(0);
-          toast.success("Filters reset successfully!");
+          toast.success(t("filtersReset"));
         }}
         onSave={handleSaveFilter}
-        title="Order Filters"
+        title={t("orderFilters")}
         filterType="Order"
         activeTab="all"
         userId={user?.userId}
@@ -654,12 +663,10 @@ function OrdersLandingTable({
       <SideDrawer
         open={isAddDrawerOpen}
         onClose={() => setIsAddDrawerOpen(false)}
-        title="Add New Order"
+        title={t("addNewOrder")}
       >
         <div className="space-y-4">
-          <p className="text-gray-600">
-            Add new order functionality will be implemented here.
-          </p>
+          <p className="text-gray-600">{t("addNewOrderDescription")}</p>
         </div>
       </SideDrawer>
 
@@ -670,7 +677,7 @@ function OrdersLandingTable({
               <TableSkeleton rows={rowPerPage} />
             ) : !initialLoad && orders.length === 0 ? (
               <div className="flex items-center justify-center text-gray-500 py-8">
-                No orders found
+                {t("noOrders")}
               </div>
             ) : (
               <DashboardTable
@@ -709,15 +716,18 @@ function OrdersLandingTable({
       <Dialog open={isItemsDialogOpen} onOpenChange={setIsItemsDialogOpen}>
         <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle>Order Items</DialogTitle>
+            <DialogTitle>{t("orderItems")}</DialogTitle>
             <DialogDescription>
               {selectedOrderItems &&
-                `Order ID: ${selectedOrderItems.orderIdentifier} - ${selectedOrderItems.orderName}`}
+                t("orderItemsDescription", {
+                  orderId: selectedOrderItems.orderIdentifier,
+                  orderName: selectedOrderItems.orderName,
+                })}
             </DialogDescription>
           </DialogHeader>
           <div className="py-4">
             <div className="text-center text-gray-500 py-8">
-              No items to display
+              {t("noItemsToDisplay")}
             </div>
           </div>
         </DialogContent>

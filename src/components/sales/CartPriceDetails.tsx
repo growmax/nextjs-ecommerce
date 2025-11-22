@@ -8,6 +8,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { IconChevronDown } from "@tabler/icons-react";
 import { useState } from "react";
 import PricingFormat from "../PricingFormat";
+import { useTranslations } from "next-intl";
 
 interface SellerPricing {
   totalItems?: number;
@@ -83,6 +84,7 @@ export default function CartPriceDetails({
   VDDetails = {},
   roundingAdjustmentEnabled = false,
 }: PriceDetailsProps) {
+  const t = useTranslations("cart");
   const [taxExpanded, setTaxExpanded] = useState(false);
 
   // Calculate discount (following reference logic)
@@ -107,13 +109,13 @@ export default function CartPriceDetails({
   return (
     <Card className="shadow-lg bg-white gap-0 p-0 w-full">
       <CardHeader className="bg-[#8fbc8f] text-black py-4 px-6 m-0 rounded-t-lg">
-        <h2 className="text-lg font-semibold m-0">Price Details</h2>
+        <h2 className="text-lg font-semibold m-0">{t("priceDetails")}</h2>
       </CardHeader>
       <CardContent className="space-y-4 py-6 px-6 overflow-x-auto">
         {/* Total Items */}
         <div className="flex justify-between items-center gap-4 min-w-0">
           <span className="text-sm text-gray-600 flex-shrink-0">
-            Total Items
+            {t("totalItems")}
           </span>
           {isPricingLoading ? (
             <Skeleton className="h-5 w-12" />
@@ -128,7 +130,7 @@ export default function CartPriceDetails({
         {showListPrice && (
           <div className="flex justify-between items-center gap-4 min-w-0">
             <span className="text-sm text-gray-600 flex-shrink-0">
-              Total LP
+              {t("totalLP")}
             </span>
             {isPricingLoading ? (
               <Skeleton className="h-4 w-20" />
@@ -147,7 +149,7 @@ export default function CartPriceDetails({
         {showDiscount && (
           <div className="flex justify-between items-center gap-4 min-w-0">
             <span className="text-sm text-green-600 flex-shrink-0">
-              Discount
+              {t("discount")}
             </span>
             {isPricingLoading ? (
               <Skeleton className="h-4 w-20" />
@@ -171,7 +173,7 @@ export default function CartPriceDetails({
         {CASH_DISCOUNT > 0 && (
           <div className="flex justify-between items-center gap-4 min-w-0">
             <span className="text-sm text-green-600 flex-shrink-0">
-              Cash Discount{" "}
+              {t("cashDiscount")}{" "}
               {cartValue?.cashDiscountValue
                 ? `(${cartValue.cashDiscountValue}%)`
                 : ""}
@@ -194,8 +196,8 @@ export default function CartPriceDetails({
         <div className="flex justify-between items-center gap-4 min-w-0">
           <span className="text-sm text-gray-600 flex-shrink-0">
             {VolumeDiscountAvailable && VDapplied
-              ? "Subtotal (excl. VD)"
-              : "Subtotal"}
+              ? t("subtotalExclVD")
+              : t("subtotal")}
           </span>
           {isPricingLoading ? (
             <Skeleton className="h-5 w-28" />
@@ -217,7 +219,7 @@ export default function CartPriceDetails({
         {VolumeDiscountAvailable && VDapplied && (
           <div className="flex justify-between items-center gap-4 min-w-0">
             <span className="text-sm text-green-600 flex-shrink-0">
-              Volume Discount
+              {t("volumeDiscount")}
             </span>
             {isPricingLoading ? (
               <Skeleton className="h-4 w-20" />
@@ -238,7 +240,9 @@ export default function CartPriceDetails({
           VDapplied &&
           (VDDetails?.subTotalVolume || 0) > 0 && (
             <div className="flex justify-between items-center gap-4 min-w-0">
-              <span className="text-sm text-black flex-shrink-0">Subtotal</span>
+              <span className="text-sm text-black flex-shrink-0">
+                {t("subtotal")}
+              </span>
               {isPricingLoading ? (
                 <Skeleton className="h-4 w-24" />
               ) : (
@@ -256,7 +260,7 @@ export default function CartPriceDetails({
         {!isCart && (cartValue?.pfRate || 0) > 0 && (
           <div className="flex justify-between items-center gap-4 min-w-0">
             <span className="text-sm text-gray-600 flex-shrink-0">
-              P&F Rate
+              {t("pfRate")}
             </span>
             {isPricingLoading ? (
               <Skeleton className="h-4 w-20" />
@@ -277,7 +281,7 @@ export default function CartPriceDetails({
         {isBeforeTax && showShippingCharges && (
           <div className="flex justify-between items-center gap-4 min-w-0">
             <span className="text-sm text-gray-600 flex-shrink-0">
-              Shipping Charges
+              {t("shippingCharges")}
             </span>
             {isPricingLoading ? (
               <Skeleton className="h-4 w-20" />
@@ -318,7 +322,7 @@ export default function CartPriceDetails({
         {/* Tax with expandable breakdown */}
         <div className="flex justify-between items-center gap-4 min-w-0">
           <div className="flex items-center gap-1 flex-shrink-0">
-            <span className="text-sm text-gray-600">Tax</span>
+            <span className="text-sm text-gray-600">{t("tax")}</span>
             {!isCart &&
               !taxExempted &&
               getBreakup &&
@@ -330,7 +334,7 @@ export default function CartPriceDetails({
                   className="h-4 w-4 p-0 flex-shrink-0"
                   onClick={() => setTaxExpanded(!taxExpanded)}
                   aria-expanded={taxExpanded}
-                  aria-label="show more"
+                  aria-label={t("showMore")}
                 >
                   <IconChevronDown
                     className={`h-3 w-3 transition-transform ${
@@ -393,7 +397,7 @@ export default function CartPriceDetails({
         {!isBeforeTax && showShippingCharges && (
           <div className="flex justify-between items-center gap-4 min-w-0">
             <span className="text-sm text-gray-600 flex-shrink-0">
-              Shipping Charges
+              {t("shippingCharges")}
             </span>
             {isPricingLoading ? (
               <Skeleton className="h-4 w-20" />
@@ -412,7 +416,7 @@ export default function CartPriceDetails({
         {!isCart && (cartValue?.insuranceCharges || 0) > 0 && (
           <div className="flex justify-between items-center gap-4 min-w-0">
             <span className="text-sm text-gray-600 flex-shrink-0">
-              Insurance Charges
+              {t("insuranceCharges")}
             </span>
             {isPricingLoading ? (
               <Skeleton className="h-4 w-20" />
@@ -433,7 +437,7 @@ export default function CartPriceDetails({
         {Boolean(cartValue?.alreadyPaid) && (
           <>
             <div className="flex justify-between items-center gap-4 min-w-0">
-              <span className="text-sm flex-shrink-0">Total</span>
+              <span className="text-sm flex-shrink-0">{t("total")}</span>
               {isPricingLoading ? (
                 <Skeleton className="h-4 w-24" />
               ) : (
@@ -453,7 +457,7 @@ export default function CartPriceDetails({
 
             <div className="flex justify-between items-center gap-4 min-w-0">
               <span className="text-sm text-red-600 flex-shrink-0">
-                Already Paid
+                {t("alreadyPaid")}
               </span>
               {isPricingLoading ? (
                 <Skeleton className="h-4 w-20" />
@@ -473,7 +477,9 @@ export default function CartPriceDetails({
         {/* Calculated Total - Optional */}
         {!isCart && roundingAdjustmentEnabled && (
           <div className="flex justify-between items-center gap-4 min-w-0">
-            <span className="text-sm flex-shrink-0">Calculated Total</span>
+            <span className="text-sm flex-shrink-0">
+              {t("calculatedTotal")}
+            </span>
             {isPricingLoading ? (
               <Skeleton className="h-4 w-24" />
             ) : (
@@ -494,7 +500,9 @@ export default function CartPriceDetails({
         {/* Rounding Adjustment - Optional */}
         {!isCart && roundingAdjustmentEnabled && (
           <div className="flex justify-between items-center gap-4 min-w-0">
-            <span className="text-sm flex-shrink-0">Rounding Adjustment</span>
+            <span className="text-sm flex-shrink-0">
+              {t("roundingAdjustment")}
+            </span>
             {isPricingLoading ? (
               <Skeleton className="h-4 w-20" />
             ) : (
@@ -523,7 +531,7 @@ export default function CartPriceDetails({
         {/* Total / To Pay */}
         <div className="flex justify-between items-center pt-2 gap-4 min-w-0">
           <span className="text-base font-semibold text-black flex-shrink-0">
-            {cartValue?.alreadyPaid ? "To Pay" : "Total"}
+            {cartValue?.alreadyPaid ? t("toPay") : t("total")}
           </span>
           {isPricingLoading ? (
             <Skeleton className="h-7 w-36" />

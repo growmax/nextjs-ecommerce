@@ -2,6 +2,7 @@
 
 import SearchDialogBox from "@/components/AppHeader/SearchDialogBox/SearchDialogBox";
 import { AvatarCard } from "@/components/AvatarCard/AvatarCard";
+import { LanguageSwitcher } from "@/components/LanguageSwitcher/LanguageSwitcher";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -21,6 +22,7 @@ import {
   ShoppingCart,
 } from "lucide-react";
 import Link from "next/link";
+import { useTranslations } from "next-intl";
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useMemo, useState } from "react";
 
@@ -34,6 +36,9 @@ export function AppHeader() {
   const { prefetchAndNavigate } = useRoutePrefetch();
   const { cartCount } = useCart();
   const notificationsCount = 5;
+  const tNav = useTranslations("navigation");
+  const tAuth = useTranslations("auth");
+  const tSearch = useTranslations("search");
 
   // Keyboard shortcut to open search (Cmd/Ctrl + K)
   useEffect(() => {
@@ -59,18 +64,18 @@ export function AppHeader() {
     () => [
       {
         key: "orders",
-        label: "Orders",
+        label: tNav("orders"),
         icon: <ShoppingCart />,
         href: "/landing/orderslanding",
       },
       {
         key: "dashboard",
-        label: "Dashboard",
+        label: tNav("dashboard"),
         icon: <CommandIcon />,
         href: "/dashboard",
       },
     ],
-    []
+    [tNav]
   );
 
   const handleSelect = useCallback(
@@ -131,7 +136,7 @@ export function AppHeader() {
             <div className="relative w-full">
               <Search className="absolute left-2.5 lg:left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-3.5 w-3.5 lg:h-4 lg:w-4" />
               <Input
-                placeholder="Search products..."
+                placeholder={tSearch("placeholder")}
                 value={searchValue}
                 onChange={e => setSearchValue(e.target.value)}
                 className="pl-8 lg:pl-10 pr-12 lg:pr-16 text-sm h-8 lg:h-10"
@@ -146,9 +151,12 @@ export function AppHeader() {
           </div>
 
           {/* Right Side Icons */}
-          <div className="flex items-center gap-0.5 sm:gap-1 ml-auto">
-            {/* Tablet & Desktop Right Side Icons */}
-            <div className="hidden md:flex items-center gap-1 lg:gap-1.5">
+          <div className="flex items-center gap-1 ml-auto">
+            {/* Desktop Right Side Icons */}
+            <div className="hidden md:flex items-center gap-1">
+              {/* Language Switcher */}
+              <LanguageSwitcher />
+
               {/* Notifications */}
               {isAuthenticated && (
                 <Button
@@ -200,7 +208,7 @@ export function AppHeader() {
                       <Avatar className="h-7 w-7 md:h-8 md:w-8">
                         <AvatarImage
                           src={userProfile?.picture || ""}
-                          alt={userProfile?.displayName || "User"}
+                          alt={userProfile?.displayName || tAuth("user")}
                         />
                         <AvatarFallback>
                           {getUserInitials(userProfile?.displayName || "")}
@@ -215,17 +223,20 @@ export function AppHeader() {
                   onClick={() => prefetchAndNavigate("/login")}
                   className="h-7 md:h-8 p-0"
                 >
-                  <div className="bg-sidebar-primary text-sidebar-primary-foreground flex items-center justify-center rounded-lg px-2 md:px-3 h-7 md:h-8">
-                    <span className="text-xs md:text-sm font-medium">
-                      Login
+                  <div className="bg-sidebar-primary text-sidebar-primary-foreground flex items-center justify-center rounded-lg px-3 h-8">
+                    <span className="text-sm font-medium">
+                      {tAuth("login")}
                     </span>
                   </div>
                 </Button>
               )}
             </div>
 
-            {/* Small Mobile Right Side Icons (Condensed) */}
-            <div className="md:hidden flex items-center gap-0.5 sm:gap-1">
+            {/* Mobile Right Side Icons (Condensed) */}
+            <div className="md:hidden flex items-center gap-1">
+              {/* Language Switcher */}
+              <LanguageSwitcher />
+
               {/* Cart Icon */}
               <Button
                 variant="ghost"
@@ -255,7 +266,7 @@ export function AppHeader() {
                       <Avatar className="h-7 w-7 sm:h-8 sm:w-8">
                         <AvatarImage
                           src={userProfile?.picture || ""}
-                          alt={userProfile?.displayName || "User"}
+                          alt={userProfile?.displayName || tAuth("user")}
                         />
                         <AvatarFallback>
                           {getUserInitials(userProfile?.displayName || "")}
@@ -270,9 +281,9 @@ export function AppHeader() {
                   onClick={() => prefetchAndNavigate("/login")}
                   className="h-7 sm:h-8 p-0"
                 >
-                  <div className="bg-sidebar-primary text-sidebar-primary-foreground flex items-center justify-center rounded-lg px-2 sm:px-3 h-7 sm:h-8">
-                    <span className="text-xs sm:text-sm font-medium">
-                      Login
+                  <div className="bg-sidebar-primary text-sidebar-primary-foreground flex items-center justify-center rounded-lg px-3 h-8">
+                    <span className="text-sm font-medium">
+                      {tAuth("login")}
                     </span>
                   </div>
                 </Button>

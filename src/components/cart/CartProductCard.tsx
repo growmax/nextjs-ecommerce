@@ -15,6 +15,7 @@ import { BuildPricingCond } from "@/utils/pricing/buildPricingCond";
 import { getProductPricing } from "@/utils/pricing/getProductPricing";
 import { Minus, Plus, Trash2 } from "lucide-react";
 import { useMemo, useState } from "react";
+import { useTranslations } from "next-intl";
 
 interface CartProductCardProps {
   item: CartItem;
@@ -32,6 +33,7 @@ export default function CartProductCard({
   isPricingLoading = false,
 }: CartProductCardProps) {
   const { changeQty, DeleteCart } = useCart();
+  const t = useTranslations("cart");
 
   // Get taxExempted from JWT token
   const taxExempted = useMemo(() => {
@@ -211,13 +213,13 @@ export default function CartProductCard({
               `Product ${item.productId}`}
           </p>
           <p className="text-xs text-gray-500">
-            Qty: {item.quantity} ×{" "}
+            {t("qty")}: {item.quantity} ×{" "}
             {isPricingLoading ? (
               <Skeleton className="inline-block h-3 w-12" />
             ) : pricingResult ? (
               <PricingFormat value={pricingResult.final_listing_price} />
             ) : (
-              <span className="text-xs">Request Price</span>
+              <span className="text-xs">{t("requestPrice")}</span>
             )}
           </p>
         </div>
@@ -283,7 +285,7 @@ export default function CartProductCard({
             {/* Seller */}
             {item.sellerName && (
               <p className="text-sm text-gray-500 mb-2">
-                Seller: {item.sellerName}
+                {t("seller")}: {item.sellerName}
                 {item.sellerLocation && ` - ${item.sellerLocation}`}
               </p>
             )}
@@ -315,7 +317,7 @@ export default function CartProductCard({
                   {/* Tax Inclusive Note */}
                   {!taxExempted && item.taxInclusive && (
                     <span className="text-xs text-blue-600">
-                      Inclusive of all taxes
+                      {t("inclusiveOfAllTaxes")}
                     </span>
                   )}
                 </>
@@ -331,7 +333,9 @@ export default function CartProductCard({
                     <PricingFormat value={item.unitListPrice} />
                   </span>
                 ) : (
-                  <span className="font-bold text-base">Request Price</span>
+                  <span className="font-bold text-base">
+                    {t("requestPrice")}
+                  </span>
                 ))}
             </div>
 
@@ -342,14 +346,16 @@ export default function CartProductCard({
                 <>
                   <span>•</span>
                   <span>
-                    Pack of {item.packagingQuantity || item.packagingQty}
+                    {t("packOf")} {item.packagingQuantity || item.packagingQty}
                   </span>
                 </>
               )}
               {item.minOrderQuantity && (
                 <>
                   <span>•</span>
-                  <span>MOQ {item.minOrderQuantity}</span>
+                  <span>
+                    {t("moq")} {item.minOrderQuantity}
+                  </span>
                 </>
               )}
             </div>
@@ -363,13 +369,15 @@ export default function CartProductCard({
                     : "text-red-600"
                 }`}
               >
-                {item.inventoryResponse.inStock ? "In Stock" : "Out Of Stock"}
+                {item.inventoryResponse.inStock
+                  ? t("inStock")
+                  : t("outOfStock")}
               </p>
             )}
 
             {item.replacement && (
               <p className="text-xs text-orange-600 mb-1 mt-1">
-                Replacement Product
+                {t("replacementProduct")}
               </p>
             )}
             {errorMessage && (

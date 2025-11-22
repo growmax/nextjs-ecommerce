@@ -13,6 +13,7 @@ import {
 } from "@/components/ui/tooltip";
 import { useMediaQuery } from "@/hooks/use-media-query";
 import { cn } from "@/lib/utils";
+import { useTranslations } from "next-intl";
 import {
   Filter,
   LayoutGrid,
@@ -153,6 +154,8 @@ export function DashboardToolbar({
   toolbarWidth = "100%",
 }: DashboardToolbarProps) {
   const isMobile = useMediaQuery("(max-width: 768px)");
+  const t = useTranslations("toolbar");
+  const tButtons = useTranslations("buttons");
   const [searchValue, setSearchValue] = React.useState(
     showSearch.searchTextValue || ""
   );
@@ -216,7 +219,7 @@ export function DashboardToolbar({
                       </Button>
                     </TooltipTrigger>
                     <TooltipContent>
-                      <p>Click to see your {link.text}</p>
+                      <p>{t("clickToSee", { text: link.text ?? "" })}</p>
                     </TooltipContent>
                   </Tooltip>
                 </TooltipProvider>
@@ -235,7 +238,7 @@ export function DashboardToolbar({
                       <span className="absolute -top-1 -right-1 h-2 w-2 bg-red-500 rounded-full" />
                     )}
                   </div>
-                  Filters
+                  {t("filters")}
                 </Button>
               )}
 
@@ -245,7 +248,7 @@ export function DashboardToolbar({
                 <div className="relative flex-1 max-w-sm">
                   <Search className="absolute left-2 top-2 h-3 w-3 text-muted-foreground" />
                   <Input
-                    placeholder={showSearch.placeholder || "Search..."}
+                    placeholder={showSearch.placeholder || t("search")}
                     value={searchValue}
                     onChange={handleSearchChange}
                     className="pl-7 pr-7 h-7 text-xs"
@@ -320,15 +323,21 @@ export function DashboardToolbar({
               <ToggleGroup
                 type="single"
                 value={
-                  toggleButton.label || toggleButton.checked || "list view"
+                  toggleButton.label || toggleButton.checked || t("listView")
                 }
                 onValueChange={toggleButton.handleClick || (() => {})}
                 size="sm"
               >
-                <ToggleGroupItem value="list view" aria-label="List view">
+                <ToggleGroupItem
+                  value={t("listView")}
+                  aria-label={t("listView")}
+                >
                   <List className="h-3 w-3" />
                 </ToggleGroupItem>
-                <ToggleGroupItem value="board view" aria-label="Board view">
+                <ToggleGroupItem
+                  value={t("boardView")}
+                  aria-label={t("boardView")}
+                >
                   <LayoutGrid className="h-3 w-3" />
                 </ToggleGroupItem>
               </ToggleGroup>
@@ -349,7 +358,7 @@ export function DashboardToolbar({
                     </Button>
                   </TooltipTrigger>
                   <TooltipContent>
-                    <p>Settings</p>
+                    <p>{t("settings")}</p>
                   </TooltipContent>
                 </Tooltip>
               </TooltipProvider>
@@ -370,7 +379,7 @@ export function DashboardToolbar({
                     </Button>
                   </TooltipTrigger>
                   <TooltipContent>
-                    <p>More options</p>
+                    <p>{t("moreOptions")}</p>
                   </TooltipContent>
                 </Tooltip>
               </TooltipProvider>
@@ -399,7 +408,7 @@ export function DashboardToolbar({
                     </Button>
                   </TooltipTrigger>
                   <TooltipContent>
-                    <p>Click to refresh</p>
+                    <p>{t("clickToRefresh")}</p>
                   </TooltipContent>
                 </Tooltip>
               </TooltipProvider>
@@ -420,7 +429,7 @@ export function DashboardToolbar({
                     </Button>
                   </TooltipTrigger>
                   <TooltipContent>
-                    <p>Close</p>
+                    <p>{tButtons("close")}</p>
                   </TooltipContent>
                 </Tooltip>
               </TooltipProvider>

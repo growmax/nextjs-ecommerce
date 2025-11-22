@@ -1,10 +1,38 @@
 import React from "react";
 import { render, screen, fireEvent } from "@testing-library/react";
-import { AppHeader } from "./app-header";
+
+// Mock next-intl BEFORE importing AppHeader to avoid ESM parsing issues
+jest.mock("next-intl", () => ({
+  useTranslations: () => (key: string) => key,
+  useLocale: () => "en",
+  useFormatter: () => ({
+    dateTime: (date: Date) => date.toISOString(),
+    number: (value: number) => value.toString(),
+    relativeTime: (date: Date) => date.toISOString(),
+  }),
+  NextIntlClientProvider: ({ children }: { children: React.ReactNode }) =>
+    children,
+}));
+
+// Mock i18n config to avoid ESM parsing issues
+jest.mock("@/i18n/config", () => ({
+  getTranslations: jest.fn(),
+  getLocale: jest.fn(() => "en"),
+  getFormatter: jest.fn(),
+}));
+
+// Mock LanguageSwitcher to avoid next-intl dependency chain
+jest.mock("@/components/LanguageSwitcher/LanguageSwitcher", () => ({
+  LanguageSwitcher: () => (
+    <div data-testid="language-switcher">Language Switcher</div>
+  ),
+}));
 
 jest.mock("next/navigation", () => ({
   useRouter: () => ({ push: jest.fn() }),
 }));
+
+import { AppHeader } from "./app-header";
 
 jest.mock("@/components/ui/command", () => ({
   CommandDialog: ({ children, open }: any) =>

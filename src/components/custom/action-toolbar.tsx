@@ -12,6 +12,7 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { useTranslations } from "next-intl";
 import type {
   ActionToolbarProps,
   ActionToolbarRef,
@@ -72,6 +73,8 @@ const ActionToolbar = forwardRef<ActionToolbarRef, ActionToolbarProps>(
   ) => {
     const isMobile = useIsMobile();
     const toolbarRef = useRef<HTMLDivElement>(null);
+    const t = useTranslations("toolbar");
+    const tButtons = useTranslations("buttons");
 
     useImperativeHandle(ref, () => ({
       focus: () => {
@@ -90,11 +93,11 @@ const ActionToolbar = forwardRef<ActionToolbarRef, ActionToolbarProps>(
     const getSelectionText = (): string => {
       if (selectionText) return selectionText;
 
-      if (mode === "form") return "Unsaved changes";
+      if (mode === "form") return t("unsavedChanges");
 
       if (selectionCount > 0) {
         const itemText = pluralize(selectionCount, itemName, itemNamePlural);
-        return `${selectionCount} ${itemText} selected`;
+        return `${selectionCount} ${itemText} ${t("selected")}`;
       }
 
       return "";
@@ -119,7 +122,7 @@ const ActionToolbar = forwardRef<ActionToolbarRef, ActionToolbarProps>(
               onClick={onUncheckAll}
               className="text-primary hover:text-primary/80"
             >
-              Uncheck all
+              {t("uncheckAll")}
             </Button>
           )}
 
@@ -149,7 +152,7 @@ const ActionToolbar = forwardRef<ActionToolbarRef, ActionToolbarProps>(
                 onClick={formActions.onCancel}
                 disabled={formActions.isSubmitting}
               >
-                {formActions.cancelText || "Cancel"}
+                {formActions.cancelText || tButtons("cancel")}
               </Button>
 
               <LoadingButton
@@ -157,7 +160,7 @@ const ActionToolbar = forwardRef<ActionToolbarRef, ActionToolbarProps>(
                 onClick={formActions.onSave}
                 size={isMobile ? "sm" : "default"}
               >
-                {formActions.saveText || "Save"}
+                {formActions.saveText || tButtons("save")}
               </LoadingButton>
             </>
           ) : (
@@ -202,7 +205,7 @@ const ActionToolbar = forwardRef<ActionToolbarRef, ActionToolbarProps>(
                       <MoreVertical className="h-4 w-4" />
                     </Button>
                   </TooltipTrigger>
-                  <TooltipContent>More options</TooltipContent>
+                  <TooltipContent>{t("moreOptions")}</TooltipContent>
                 </Tooltip>
               )}
 

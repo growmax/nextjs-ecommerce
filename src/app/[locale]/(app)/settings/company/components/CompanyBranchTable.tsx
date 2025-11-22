@@ -3,6 +3,7 @@ import { DataTable } from "@/components/Global/DataTable";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { useTranslations } from "next-intl";
 import CompanyService from "@/lib/api/services/CompanyService";
 import type { ColumnDef } from "@tanstack/react-table";
 import { Loader2, Plus, Search, Trash2 } from "lucide-react";
@@ -43,6 +44,7 @@ interface Branch {
 }
 
 const CompanyBranchTable = () => {
+  const t = useTranslations("companySettings");
   const [branches, setBranches] = useState<Branch[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isError, setIsError] = useState(false);
@@ -173,7 +175,7 @@ const CompanyBranchTable = () => {
     () => [
       {
         accessorKey: "name",
-        header: "Branch",
+        header: t("branch"),
         size: 120,
         minSize: 100,
         cell: ({ row }) => {
@@ -187,7 +189,7 @@ const CompanyBranchTable = () => {
       },
       {
         accessorKey: "address",
-        header: "Address",
+        header: t("address"),
         size: 120,
         minSize: 180,
         cell: ({ row }) => {
@@ -215,7 +217,7 @@ const CompanyBranchTable = () => {
                     variant="secondary"
                     className="text-xs font-medium px-2.5 py-0.5 bg-primary/10 text-primary hover:bg-primary/20 border-primary/20"
                   >
-                    Billing
+                    {t("billing")}
                   </Badge>
                 )}
                 {branch.addressId?.isShipping && (
@@ -223,7 +225,7 @@ const CompanyBranchTable = () => {
                     variant="outline"
                     className="text-xs font-medium px-2.5 py-0.5 hover:bg-accent/20"
                   >
-                    Shipping
+                    {t("shipping")}
                   </Badge>
                 )}
               </div>
@@ -233,7 +235,7 @@ const CompanyBranchTable = () => {
       },
       {
         accessorKey: "gst",
-        header: "Tax ID / GST",
+        header: t("taxIdGst"),
         size: 120,
         minSize: 100,
         cell: ({ row }) => (
@@ -244,7 +246,7 @@ const CompanyBranchTable = () => {
       },
       {
         accessorKey: "primaryContact",
-        header: "Contact Person",
+        header: t("contactPerson"),
         size: 120,
         minSize: 100,
         cell: ({ row }) => (
@@ -255,7 +257,7 @@ const CompanyBranchTable = () => {
       },
       {
         accessorKey: "phone",
-        header: "Phone",
+        header: t("phone"),
         size: 130,
         minSize: 110,
         cell: ({ row }) => {
@@ -268,12 +270,12 @@ const CompanyBranchTable = () => {
         },
       },
     ],
-    []
+    [t]
   );
 
   return (
     <SectionCard
-      title="Company Branches"
+      title={t("companyBranches")}
       className="h-full flex flex-col"
       contentClassName="p-0 flex-1 overflow-hidden"
       showSeparator={false}
@@ -283,7 +285,7 @@ const CompanyBranchTable = () => {
           <div className="relative">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
             <Input
-              placeholder="Search branches..."
+              placeholder={t("searchBranches")}
               className="pl-9 h-9 w-[200px] sm:w-[250px]"
               value={searchQuery}
               onChange={handleSearchChange}
@@ -300,7 +302,7 @@ const CompanyBranchTable = () => {
             }}
           >
             <Plus className="h-4 w-4 mr-2" />
-            Add Branch
+            {t("addBranch")}
           </Button>
         </div>
       }
@@ -310,9 +312,7 @@ const CompanyBranchTable = () => {
         columns={columns}
         isLoading={isLoading}
         emptyMessage={
-          isError
-            ? "Failed to load branches. Please try again."
-            : "No branches found. Add a branch to get started."
+          isError ? t("failedToLoadBranches") : t("noBranchesFound")
         }
         enableActions
         renderRowActions={row => (
@@ -334,7 +334,7 @@ const CompanyBranchTable = () => {
             ) : (
               <Trash2 className="h-3.5 w-3.5" />
             )}
-            <span className="sr-only">Delete branch</span>
+            <span className="sr-only">{t("deleteBranch")}</span>
           </Button>
         )}
         enableSorting

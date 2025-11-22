@@ -5,6 +5,7 @@ import { Layers } from "lucide-react";
 import dynamic from "next/dynamic";
 import { Suspense, useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
+import { useTranslations } from "next-intl";
 
 import { EditOrderNameDialog } from "@/components/dialogs/EditOrderNameDialog";
 import {
@@ -58,6 +59,8 @@ export default function QuoteDetailsClient({
 }: QuoteDetailsClientProps) {
   const [quoteIdentifier, setQuoteIdentifier] = useState<string>("");
   const [paramsLoaded, setParamsLoaded] = useState(false);
+  const t = useTranslations("quotes");
+  const tDetails = useTranslations("details");
 
   const [quoteDetails, setQuoteDetails] =
     useState<QuotationDetailsResponse | null>(null);
@@ -124,9 +127,7 @@ export default function QuoteDetailsClient({
         lastFetchKeyRef.current = fetchKey;
       } catch (err) {
         const errorMessage =
-          err instanceof Error
-            ? err.message
-            : "Failed to fetch quotation details";
+          err instanceof Error ? err.message : t("failedToFetchQuoteDetails");
         setError(errorMessage);
         toast.error(errorMessage);
       } finally {
@@ -135,7 +136,7 @@ export default function QuoteDetailsClient({
     };
 
     fetchQuoteDetails();
-  }, [paramsLoaded, quoteIdentifier, userId, companyId, tenantCode]);
+  }, [paramsLoaded, quoteIdentifier, userId, companyId, tenantCode, t]);
 
   const {
     versions: quoteVersions,
@@ -170,11 +171,19 @@ export default function QuoteDetailsClient({
         const versionName =
           quoteVersions.find(
             (v: Version) => v.versionNumber === selectedVersion.versionNumber
-          )?.versionName || `Version ${selectedVersion.versionNumber}`;
-        toast.success(`Loaded ${versionName} details`);
+          )?.versionName ||
+          `${tDetails("version")} ${selectedVersion.versionNumber}`;
+        toast.success(t("loadedQuoteVersionDetails", { versionName }));
       }
     }
-  }, [versionData, versionLoading, selectedVersion, quoteVersions]);
+  }, [
+    versionData,
+    versionLoading,
+    selectedVersion,
+    quoteVersions,
+    t,
+    tDetails,
+  ]);
 
   const displayQuoteDetails = useMemo(() => {
     if (versionData && selectedVersion && versionData.data) {
@@ -221,7 +230,7 @@ export default function QuoteDetailsClient({
       quoteDetails?.data?.validityTill) as string | undefined;
 
     if (updatedBuyerStatus === "CANCELLED") {
-      toast.info("Quote was cancelled already", {
+      toast.info(t("quoteCancelledAlready"), {
         position: "bottom-left",
       });
       return;
@@ -241,7 +250,7 @@ export default function QuoteDetailsClient({
       endOfValidityDay.setHours(23, 59, 59, 999);
 
       if (new Date() > endOfValidityDay) {
-        toast.info("Contract validity expired", {
+        toast.info(t("contractValidityExpired"), {
           position: "bottom-left",
         });
         return;
@@ -250,14 +259,14 @@ export default function QuoteDetailsClient({
 
     // Check if order placed
     if (updatedBuyerStatus === "ORDER PLACED") {
-      toast.info("Quote was converted to order already", {
+      toast.info(t("quoteConvertedToOrderAlready"), {
         position: "bottom-left",
       });
       return;
     }
 
     // Default message for other statuses
-    toast.info("Quote owner is working on this quote", {
+    toast.info(t("quoteOwnerWorkingOnQuote"), {
       position: "bottom-left",
     });
   };
@@ -268,7 +277,7 @@ export default function QuoteDetailsClient({
 
   const handleSaveQuoteName = async (newQuoteName: string) => {
     if (!user || !displayQuoteId) {
-      throw new Error("Missing required data for updating quote name");
+      throw new Error(t("missingRequiredDataForUpdatingQuoteName"));
     }
 
     try {
@@ -310,10 +319,10 @@ export default function QuoteDetailsClient({
         quotationIdentifier: quoteIdentifier,
       });
       setQuoteDetails(response);
-      toast.success("Quote details refreshed successfully");
+      toast.success(t("quoteDetailsRefreshed"));
     } catch (err) {
       const errorMessage =
-        err instanceof Error ? err.message : "Failed to refresh quote details";
+        err instanceof Error ? err.message : t("failedToRefreshQuoteDetails");
       toast.error(errorMessage);
     } finally {
       setLoading(false);
@@ -325,11 +334,11 @@ export default function QuoteDetailsClient({
   };
 
   const handleClone = () => {
-    toast.info("Clone functionality will be implemented soon");
+    toast.info(t("cloneFunctionalityWillBeImplementedSoon"));
   };
 
   const handleDownloadPDF = () => {
-    toast.info("PDF download functionality will be implemented soon");
+    toast.info(t("pdfDownloadFunctionalityWillBeImplementedSoon"));
   };
 
   const handleConvertToOrder = () => {
@@ -341,7 +350,7 @@ export default function QuoteDetailsClient({
       quoteDetails?.data?.validityTill) as string | undefined;
 
     if (updatedBuyerStatus === "CANCELLED") {
-      toast.info("Quote was cancelled already", {
+      toast.info(t("quoteCancelledAlready"), {
         position: "bottom-left",
       });
       return;
@@ -353,7 +362,7 @@ export default function QuoteDetailsClient({
       endOfValidityDay.setHours(23, 59, 59, 999);
 
       if (new Date() > endOfValidityDay) {
-        toast.info("Contract validity expired", {
+        toast.info(t("contractValidityExpired"), {
           position: "bottom-left",
         });
         return;
@@ -362,17 +371,14 @@ export default function QuoteDetailsClient({
 
     // Check if quote is in OPEN status
     if (updatedBuyerStatus === "OPEN") {
-      toast.info(
-        "Quote owner is working on this quote, wait for quote owner to respond",
-        {
-          position: "bottom-left",
-        }
-      );
+      toast.info(t("quoteOwnerWorkingWaitForResponse"), {
+        position: "bottom-left",
+      });
       return;
     }
 
     if (updatedBuyerStatus === "ORDER PLACED") {
-      toast.info("Quote was converted to order already", {
+      toast.info(t("quoteConvertedToOrderAlready"), {
         position: "bottom-left",
       });
       return;
@@ -389,7 +395,7 @@ export default function QuoteDetailsClient({
     }
 
     // Default message for other statuses
-    toast.info("Quote owner is working on this quote", {
+    toast.info(t("quoteOwnerWorkingOnQuote"), {
       position: "bottom-left",
     });
   };
@@ -456,14 +462,14 @@ export default function QuoteDetailsClient({
 
   const headerButtons = [
     {
-      label: "EDIT QUOTE",
+      label: t("editQuoteButton"),
       variant: "outline" as const,
       onClick: handleEditQuote,
       onMouseEnter: () =>
         prefetch(`/details/quoteDetails/${quoteIdentifier}/edit`),
     },
     {
-      label: "PLACE ORDER",
+      label: t("placeOrderButton"),
       variant: "default" as const,
       onClick: handleConvertToOrder,
     },
@@ -474,7 +480,7 @@ export default function QuoteDetailsClient({
       {/* Sales Header - Fixed at top */}
       <div className="flex-shrink-0 sticky top-0 z-50 bg-gray-50">
         <SalesHeader
-          title={quoteName ? decodeUnicode(quoteName) : "Quote Details"}
+          title={quoteName ? decodeUnicode(quoteName) : t("quoteDetails")}
           identifier={displayQuoteId}
           {...(status && {
             status: {
@@ -487,11 +493,11 @@ export default function QuoteDetailsClient({
           onClose={handleClose}
           menuOptions={[
             {
-              label: "Clone",
+              label: tDetails("clone"),
               onClick: handleClone,
             },
             {
-              label: "Download PDF",
+              label: tDetails("downloadPDF"),
               onClick: handleDownloadPDF,
             },
           ]}
@@ -645,7 +651,7 @@ export default function QuoteDetailsClient({
                       onClick={handleRefresh}
                       className="mt-4 px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 transition-colors"
                     >
-                      Retry
+                      {tDetails("retry")}
                     </button>
                   </div>
                 )}
