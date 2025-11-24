@@ -1,10 +1,12 @@
 import { AppSidebar } from "@/components/AppSideBar/app-sidebar";
 import { CartProviderWrapper } from "@/components/providers/CartProviderWrapper";
-import { TenantDataProvider } from "@/components/TenantDataProvider";
+import { NavigationProgressProvider } from "@/components/providers/NavigationProgressProvider";
+import { TopProgressBarProvider } from "@/components/providers/TopProgressBarProvider";
 import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
 import { Toaster } from "@/components/ui/sonner";
 import { TenantProvider } from "@/contexts/TenantContext";
 import { UserDetailsProvider } from "@/contexts/UserDetailsContext";
+import { LoadingProvider } from "@/hooks/useGlobalLoader";
 import TenantService from "@/lib/api/services/TenantService";
 import { ServerAuth } from "@/lib/auth-server";
 import { ServerUserService } from "@/lib/services/ServerUserService";
@@ -14,7 +16,6 @@ import { headers } from "next/headers";
 
 // Import the AppHeader component
 import { AppHeader } from "@/components/AppHeader/app-header";
-import { RoutePrefetcher } from "@/components/RoutePrefetcher";
 
 export default async function AppLayout({
   children,
@@ -67,20 +68,22 @@ export default async function AppLayout({
           initialAuthState={isAuthenticated}
           initialUserData={userData?.data || null}
         >
-          <CartProviderWrapper>
-            <TenantDataProvider>
-              <SidebarProvider>
-                <RoutePrefetcher />
-                <AppSidebar />
-                <SidebarInset className="flex flex-col w-full overflow-x-hidden">
-                  <AppHeader />
-                  <main className="w-full overflow-x-hidden">{children}</main>
-                </SidebarInset>
-              </SidebarProvider>
-            </TenantDataProvider>
-          </CartProviderWrapper>
-          {/* Toaster for logout notifications - positioned top-right like login */}
-          <Toaster richColors position="top-right" theme="light" />
+          <LoadingProvider>
+            <TopProgressBarProvider />
+            <NavigationProgressProvider>
+              <CartProviderWrapper>
+                <SidebarProvider>
+                  <AppSidebar />
+                  <SidebarInset className="flex flex-col w-full overflow-x-hidden">
+                    <AppHeader />
+                    <main className="w-full overflow-x-hidden">{children}</main>
+                  </SidebarInset>
+                </SidebarProvider>
+              </CartProviderWrapper>
+              {/* Toaster for logout notifications - positioned top-right like login */}
+              <Toaster richColors position="top-right" theme="light" />
+            </NavigationProgressProvider>
+          </LoadingProvider>
         </UserDetailsProvider>
       </TenantProvider>
     </NextIntlClientProvider>

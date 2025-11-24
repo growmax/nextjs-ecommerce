@@ -8,8 +8,8 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { useRoutePrefetch } from "@/hooks/useRoutePrefetch";
-import { PackageX, Home, Search } from "lucide-react";
+
+import { Home, PackageX, Search } from "lucide-react";
 import Link from "next/link";
 
 /**
@@ -17,8 +17,6 @@ import Link from "next/link";
  * Displayed when a product ID doesn't exist
  */
 export default function ProductNotFound() {
-  const { prefetch } = useRoutePrefetch();
-
   return (
     <div className="min-h-screen bg-background flex items-center justify-center p-4">
       <Card className="max-w-md w-full">
@@ -51,18 +49,14 @@ export default function ProductNotFound() {
         </CardContent>
 
         <CardFooter className="flex flex-col sm:flex-row gap-3">
-          <Link
-            href="/search"
-            className="flex-1"
-            onMouseEnter={() => prefetch("/search")}
-          >
+          <Link href="/search" className="flex-1">
             <Button variant="default" className="w-full">
               <Search className="mr-2 h-4 w-4" />
               Search Products
             </Button>
           </Link>
 
-          <Link href="/" className="flex-1" onMouseEnter={() => prefetch("/")}>
+          <Link href="/" className="flex-1">
             <Button variant="outline" className="w-full">
               <Home className="mr-2 h-4 w-4" />
               Go Home

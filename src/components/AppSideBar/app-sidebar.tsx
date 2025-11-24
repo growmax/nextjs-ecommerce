@@ -2,7 +2,7 @@
 
 import { useUserDetails } from "@/contexts/UserDetailsContext";
 import { Map, PieChart, Settings2, SquareTerminal } from "lucide-react";
-import Link from "next/link";
+import { Link } from "@/i18n/navigation";
 import * as React from "react";
 import { useTranslations } from "next-intl";
 

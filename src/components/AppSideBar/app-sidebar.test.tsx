@@ -1,3 +1,22 @@
+// Mock @/i18n/navigation first to avoid ESM parsing issues
+jest.mock("@/i18n/navigation", () => {
+  const React = jest.requireActual<typeof import("react")>("react");
+  return {
+    Link: ({ children, href, ...props }: any) =>
+      React.createElement("a", { href, ...props }, children),
+    redirect: jest.fn(),
+    usePathname: () => "/",
+    useRouter: () => ({
+      push: jest.fn(),
+      replace: jest.fn(),
+      refresh: jest.fn(),
+      back: jest.fn(),
+      forward: jest.fn(),
+      prefetch: jest.fn(),
+    }),
+  };
+});
+
 import { NavMain } from "@/components/nav-main";
 import { SidebarProvider, useSidebar } from "@/components/ui/sidebar";
 import * as UserDetailsContext from "@/contexts/UserDetailsContext";

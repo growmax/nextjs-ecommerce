@@ -9,10 +9,10 @@ import {
   mockSellerCompanyIdString,
 } from "./useGetManufacturerCompetitors.mocks";
 
-// Mock SWR
-jest.mock("swr", () => ({
+// Mock React Query
+jest.mock("@tanstack/react-query", () => ({
   __esModule: true,
-  default: jest.fn(),
+  useQuery: jest.fn(),
 }));
 
 // Mock ManufacturerCompetitorService
@@ -20,10 +20,10 @@ jest.mock("@/lib/api", () => ({
   ManufacturerCompetitorService: mockManufacturerCompetitorService,
 }));
 
+import { useQuery } from "@tanstack/react-query";
 import useGetManufacturerCompetitors from "./useGetManufacturerCompetitors";
-import useSWR from "swr";
 
-const mockUseSWR = useSWR as jest.MockedFunction<typeof useSWR>;
+const mockUseQuery = useQuery as jest.MockedFunction<typeof useQuery>;
 
 describe("useGetManufacturerCompetitors", () => {
   beforeEach(() => {
@@ -34,12 +34,11 @@ describe("useGetManufacturerCompetitors", () => {
   });
 
   it("should fetch and return competitors successfully", () => {
-    mockUseSWR.mockReturnValue({
+    mockUseQuery.mockReturnValue({
       data: mockFetchCompetitorsResponse,
       error: undefined,
       isLoading: false,
-      isValidating: false,
-      mutate: jest.fn(),
+      refetch: jest.fn(),
     } as any);
 
     const { result } = renderHook(() =>
@@ -52,12 +51,11 @@ describe("useGetManufacturerCompetitors", () => {
   });
 
   it("should return empty array when no competitors are found", () => {
-    mockUseSWR.mockReturnValue({
+    mockUseQuery.mockReturnValue({
       data: mockEmptyResponse,
       error: undefined,
       isLoading: false,
-      isValidating: false,
-      mutate: jest.fn(),
+      refetch: jest.fn(),
     } as any);
 
     const { result } = renderHook(() =>
@@ -70,12 +68,11 @@ describe("useGetManufacturerCompetitors", () => {
   });
 
   it("should handle string sellerCompanyId", () => {
-    mockUseSWR.mockReturnValue({
+    mockUseQuery.mockReturnValue({
       data: mockFetchCompetitorsResponse,
       error: undefined,
       isLoading: false,
-      isValidating: false,
-      mutate: jest.fn(),
+      refetch: jest.fn(),
     } as any);
 
     const { result } = renderHook(() =>
@@ -86,75 +83,73 @@ describe("useGetManufacturerCompetitors", () => {
   });
 
   it("should not fetch when sellerCompanyId is undefined", () => {
-    mockUseSWR.mockReturnValue({
+    mockUseQuery.mockReturnValue({
       data: undefined,
       error: undefined,
       isLoading: false,
-      isValidating: false,
-      mutate: jest.fn(),
+      refetch: jest.fn(),
     } as any);
 
     const { result } = renderHook(() =>
       useGetManufacturerCompetitors(undefined)
     );
 
-    expect(mockUseSWR).toHaveBeenCalledWith(null, expect.any(Function), {
-      revalidateOnFocus: false,
-      revalidateOnReconnect: false,
-    });
+    expect(mockUseQuery).toHaveBeenCalledWith(
+      expect.objectContaining({
+        enabled: false,
+      })
+    );
     expect(result.current.competitors).toEqual([]);
     expect(result.current.competitorsLoading).toBe(false);
   });
 
   it("should not fetch when cond is false", () => {
-    mockUseSWR.mockReturnValue({
+    mockUseQuery.mockReturnValue({
       data: undefined,
       error: undefined,
       isLoading: false,
-      isValidating: false,
-      mutate: jest.fn(),
+      refetch: jest.fn(),
     } as any);
 
     const { result } = renderHook(() =>
       useGetManufacturerCompetitors(mockSellerCompanyId, false)
     );
 
-    expect(mockUseSWR).toHaveBeenCalledWith(null, expect.any(Function), {
-      revalidateOnFocus: false,
-      revalidateOnReconnect: false,
-    });
+    expect(mockUseQuery).toHaveBeenCalledWith(
+      expect.objectContaining({
+        enabled: false,
+      })
+    );
     expect(result.current.competitors).toEqual([]);
     expect(result.current.competitorsLoading).toBe(false);
   });
 
   it("should fetch when cond is true and sellerCompanyId is provided", () => {
-    mockUseSWR.mockReturnValue({
+    mockUseQuery.mockReturnValue({
       data: mockFetchCompetitorsResponse,
       error: undefined,
       isLoading: false,
-      isValidating: false,
-      mutate: jest.fn(),
+      refetch: jest.fn(),
     } as any);
 
     renderHook(() => useGetManufacturerCompetitors(mockSellerCompanyId, true));
 
-    expect(mockUseSWR).toHaveBeenCalledWith(
-      `get-Competitor-${mockSellerCompanyId}`,
-      expect.any(Function),
-      {
-        revalidateOnFocus: false,
-        revalidateOnReconnect: false,
-      }
+    expect(mockUseQuery).toHaveBeenCalledWith(
+      expect.objectContaining({
+        queryKey: ["competitors", mockSellerCompanyId],
+        enabled: true,
+        refetchOnWindowFocus: false,
+        refetchOnReconnect: false,
+      })
     );
   });
 
   it("should show loading state when isLoading is true", () => {
-    mockUseSWR.mockReturnValue({
+    mockUseQuery.mockReturnValue({
       data: undefined,
       error: undefined,
       isLoading: true,
-      isValidating: false,
-      mutate: jest.fn(),
+      refetch: jest.fn(),
     } as any);
 
     const { result } = renderHook(() =>
@@ -166,12 +161,11 @@ describe("useGetManufacturerCompetitors", () => {
   });
 
   it("should handle error state", () => {
-    mockUseSWR.mockReturnValue({
+    mockUseQuery.mockReturnValue({
       data: undefined,
       error: mockError,
       isLoading: false,
-      isValidating: false,
-      mutate: jest.fn(),
+      refetch: jest.fn(),
     } as any);
 
     const { result } = renderHook(() =>
@@ -183,79 +177,75 @@ describe("useGetManufacturerCompetitors", () => {
     expect(result.current.competitorsLoading).toBe(false);
   });
 
-  it("should create correct SWR key with sellerCompanyId", () => {
-    mockUseSWR.mockReturnValue({
+  it("should create correct query key with sellerCompanyId", () => {
+    mockUseQuery.mockReturnValue({
       data: mockFetchCompetitorsResponse,
       error: undefined,
       isLoading: false,
-      isValidating: false,
-      mutate: jest.fn(),
+      refetch: jest.fn(),
     } as any);
 
     renderHook(() => useGetManufacturerCompetitors(mockSellerCompanyId, true));
 
-    expect(mockUseSWR).toHaveBeenCalledWith(
-      `get-Competitor-${mockSellerCompanyId}`,
-      expect.any(Function),
-      {
-        revalidateOnFocus: false,
-        revalidateOnReconnect: false,
-      }
+    expect(mockUseQuery).toHaveBeenCalledWith(
+      expect.objectContaining({
+        queryKey: ["competitors", mockSellerCompanyId],
+      })
     );
   });
 
-  it("should call fetcher with correct service method when sellerCompanyId is provided", async () => {
-    mockUseSWR.mockReturnValue({
+  it("should call queryFn with correct service method when sellerCompanyId is provided", async () => {
+    mockUseQuery.mockReturnValue({
       data: mockFetchCompetitorsResponse,
       error: undefined,
       isLoading: false,
-      isValidating: false,
-      mutate: jest.fn(),
+      refetch: jest.fn(),
     } as any);
 
     renderHook(() => useGetManufacturerCompetitors(mockSellerCompanyId));
 
-    // Get the fetcher function that was passed to useSWR
-    const swrCall = mockUseSWR.mock.calls[0];
-    if (!swrCall) {
-      throw new Error("useSWR was not called");
+    // Get the queryFn function that was passed to useQuery
+    const queryCall = mockUseQuery.mock.calls[0];
+    if (!queryCall) {
+      throw new Error("useQuery was not called");
     }
-    const passedFetcher = swrCall[1];
-    if (!passedFetcher) {
-      throw new Error("Fetcher function was not provided");
+    const config = queryCall[0] as any;
+    const queryFn = config.queryFn;
+    if (!queryFn) {
+      throw new Error("queryFn was not provided");
     }
 
-    // Call the fetcher to verify it uses the service correctly
-    await passedFetcher();
+    // Call the queryFn to verify it uses the service correctly
+    await queryFn();
 
     expect(
       mockManufacturerCompetitorService.fetchCompetitors
     ).toHaveBeenCalledWith(mockSellerCompanyId);
   });
 
-  it("should return empty array from fetcher when sellerCompanyId is not provided", async () => {
-    mockUseSWR.mockReturnValue({
+  it("should return empty array from queryFn when sellerCompanyId is not provided", async () => {
+    mockUseQuery.mockReturnValue({
       data: undefined,
       error: undefined,
       isLoading: false,
-      isValidating: false,
-      mutate: jest.fn(),
+      refetch: jest.fn(),
     } as any);
 
     renderHook(() => useGetManufacturerCompetitors(undefined));
 
-    // Get the fetcher function that was passed to useSWR
-    const swrCall = mockUseSWR.mock.calls[0];
-    if (!swrCall) {
-      throw new Error("useSWR was not called");
+    // Get the queryFn function that was passed to useQuery
+    const queryCall = mockUseQuery.mock.calls[0];
+    if (!queryCall) {
+      throw new Error("useQuery was not called");
     }
-    const passedFetcher = swrCall[1];
-    if (!passedFetcher) {
-      throw new Error("Fetcher function was not provided");
+    const config = queryCall[0] as any;
+    const queryFn = config.queryFn;
+    if (!queryFn) {
+      throw new Error("queryFn was not provided");
     }
 
-    // Call the fetcher
-    const result = await passedFetcher();
+    // Call the queryFn
+    const result = await queryFn();
 
     expect(result).toEqual({ data: { competitorDetails: [] } });
     expect(
@@ -264,12 +254,11 @@ describe("useGetManufacturerCompetitors", () => {
   });
 
   it("should handle undefined data correctly", () => {
-    mockUseSWR.mockReturnValue({
+    mockUseQuery.mockReturnValue({
       data: undefined,
       error: undefined,
       isLoading: false,
-      isValidating: false,
-      mutate: jest.fn(),
+      refetch: jest.fn(),
     } as any);
 
     const { result } = renderHook(() =>
@@ -281,12 +270,11 @@ describe("useGetManufacturerCompetitors", () => {
   });
 
   it("should handle data without competitorDetails", () => {
-    mockUseSWR.mockReturnValue({
+    mockUseQuery.mockReturnValue({
       data: { data: {} },
       error: undefined,
       isLoading: false,
-      isValidating: false,
-      mutate: jest.fn(),
+      refetch: jest.fn(),
     } as any);
 
     const { result } = renderHook(() =>
@@ -298,47 +286,44 @@ describe("useGetManufacturerCompetitors", () => {
 
   it("should handle different sellerCompanyId types", () => {
     const testCases = [
-      { sellerCompanyId: 123, expected: "get-Competitor-123" },
-      { sellerCompanyId: "123", expected: "get-Competitor-123" },
-      { sellerCompanyId: 456, expected: "get-Competitor-456" },
+      { sellerCompanyId: 123, expected: ["competitors", 123] },
+      { sellerCompanyId: "123", expected: ["competitors", "123"] },
+      { sellerCompanyId: 456, expected: ["competitors", 456] },
     ];
 
     testCases.forEach(({ sellerCompanyId, expected }) => {
-      mockUseSWR.mockReturnValue({
+      mockUseQuery.mockReturnValue({
         data: mockFetchCompetitorsResponse,
         error: undefined,
         isLoading: false,
-        isValidating: false,
-        mutate: jest.fn(),
+        refetch: jest.fn(),
       } as any);
 
       renderHook(() => useGetManufacturerCompetitors(sellerCompanyId, true));
 
-      expect(mockUseSWR).toHaveBeenCalledWith(expected, expect.any(Function), {
-        revalidateOnFocus: false,
-        revalidateOnReconnect: false,
-      });
+      expect(mockUseQuery).toHaveBeenCalledWith(
+        expect.objectContaining({
+          queryKey: expected,
+        })
+      );
     });
   });
 
-  it("should use SWR options with revalidateOnFocus and revalidateOnReconnect set to false", () => {
-    mockUseSWR.mockReturnValue({
+  it("should use React Query options with refetchOnWindowFocus and refetchOnReconnect set to false", () => {
+    mockUseQuery.mockReturnValue({
       data: mockFetchCompetitorsResponse,
       error: undefined,
       isLoading: false,
-      isValidating: false,
-      mutate: jest.fn(),
+      refetch: jest.fn(),
     } as any);
 
     renderHook(() => useGetManufacturerCompetitors(mockSellerCompanyId));
 
-    expect(mockUseSWR).toHaveBeenCalledWith(
-      expect.any(String),
-      expect.any(Function),
-      {
-        revalidateOnFocus: false,
-        revalidateOnReconnect: false,
-      }
+    expect(mockUseQuery).toHaveBeenCalledWith(
+      expect.objectContaining({
+        refetchOnWindowFocus: false,
+        refetchOnReconnect: false,
+      })
     );
   });
 });

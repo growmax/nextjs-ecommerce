@@ -3,7 +3,6 @@ jest.mock("next/navigation", () => ({
   useRouter: () => ({
     push: jest.fn(),
     replace: jest.fn(),
-    prefetch: jest.fn(),
   }),
 }));
 
@@ -32,9 +31,8 @@ jest.mock("next/dynamic", () => {
   };
 });
 
-import { render, screen } from "@testing-library/react";
-import React from "react";
 import { usePageScroll } from "@/hooks/usePageScroll";
+import { render, screen } from "@testing-library/react";
 import OrdersLandingPage from "./page";
 
 describe("OrdersLandingPage", () => {

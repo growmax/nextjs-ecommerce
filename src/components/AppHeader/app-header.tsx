@@ -12,7 +12,8 @@ import { useCart } from "@/contexts/CartContext";
 import { useUserDetails } from "@/contexts/UserDetailsContext";
 import useLogout from "@/hooks/Auth/useLogout";
 import useUserProfile from "@/hooks/Profile/useUserProfile";
-import { useRoutePrefetch } from "@/hooks/useRoutePrefetch";
+import { useTenantData } from "@/hooks/useTenantData";
+
 import { cn } from "@/lib/utils";
 import { getUserInitials } from "@/utils/General/general";
 import {
@@ -21,8 +22,8 @@ import {
   Search,
   ShoppingCart,
 } from "lucide-react";
-import Link from "next/link";
 import { useTranslations } from "next-intl";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useMemo, useState } from "react";
 
@@ -33,7 +34,10 @@ export function AppHeader() {
   const { isLoggingOut, handleLogout } = useLogout();
   const router = useRouter();
   const { isAuthenticated } = useUserDetails();
-  const { prefetchAndNavigate } = useRoutePrefetch();
+
+  // Sync tenant data from context to Zustand store (early initialization)
+  useTenantData();
+
   const { cartCount } = useCart();
   const notificationsCount = 5;
   const tNav = useTranslations("navigation");
@@ -178,7 +182,7 @@ export function AppHeader() {
                 variant="ghost"
                 size="icon"
                 className="h-7 w-7 md:h-8 md:w-8 lg:h-8 lg:w-8 relative"
-                onClick={() => prefetchAndNavigate("/cart")}
+                onClick={() => router.push("/cart")}
               >
                 <ShoppingCart className="h-3.5 w-3.5 md:h-4 md:w-4" />
                 {cartCount > 0 && (
@@ -220,7 +224,7 @@ export function AppHeader() {
               ) : (
                 <Button
                   variant="ghost"
-                  onClick={() => prefetchAndNavigate("/login")}
+                  onClick={() => router.push("/login")}
                   className="h-7 md:h-8 p-0"
                 >
                   <div className="bg-sidebar-primary text-sidebar-primary-foreground flex items-center justify-center rounded-lg px-3 h-8">
@@ -278,7 +282,7 @@ export function AppHeader() {
               ) : (
                 <Button
                   variant="ghost"
-                  onClick={() => prefetchAndNavigate("/login")}
+                  onClick={() => router.push("/login")}
                   className="h-7 sm:h-8 p-0"
                 >
                   <div className="bg-sidebar-primary text-sidebar-primary-foreground flex items-center justify-center rounded-lg px-3 h-8">

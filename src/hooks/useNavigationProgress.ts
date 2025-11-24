@@ -137,30 +137,57 @@ export function useNavigationProgress({
     ]
   );
 
-  // Handle route changes
+  // Track previous pathname to detect navigation
+  const prevPathnameRef = useRef<string | null>(null);
+
+  // Handle route changes - detect navigation start and end
   useEffect(() => {
-    if (pathname && isNavigatingRef.current && mountedRef.current) {
-      // Small delay to allow for route change animation
-      setTimeout(() => {
-        if (mountedRef.current) {
+    if (!mountedRef.current) {
+      // Initialize on first mount
+      if (pathname && prevPathnameRef.current === null) {
+        prevPathnameRef.current = pathname;
+      }
+      return undefined;
+    }
+
+    if (!pathname) return undefined;
+
+    const currentPathname = pathname;
+
+    // If pathname changed, navigation is happening
+    if (
+      prevPathnameRef.current !== null &&
+      prevPathnameRef.current !== currentPathname
+    ) {
+      // Start navigation loading immediately when pathname changes
+      if (!isNavigatingRef.current) {
+        startNavigation("Loading page...");
+      }
+
+      // End navigation after page has had time to render
+      // Use a delay to ensure the page content starts loading
+      const timeoutId = setTimeout(() => {
+        if (mountedRef.current && isNavigatingRef.current) {
           endNavigation("route_change");
         }
-      }, 100);
+      }, 300);
+
+      // Update previous pathname immediately
+      prevPathnameRef.current = currentPathname;
+
+      return () => {
+        clearTimeout(timeoutId);
+      };
+    } else if (prevPathnameRef.current === null) {
+      // Initialize on first mount
+      prevPathnameRef.current = currentPathname;
     }
-  }, [pathname, endNavigation]);
+    return undefined;
+  }, [pathname, startNavigation, endNavigation]);
 
-  // Set up navigation event listeners (safe approach)
-  useEffect(() => {
-    if (!autoDetect || !mountedRef.current) return;
-
-    // For app router, we don't have router.events like pages router
-    // Instead, we'll rely on the global loading context
-    // This is a simplified implementation for app router compatibility
-
-    return () => {
-      // Cleanup
-    };
-  }, [autoDetect]);
+  // Note: For Next.js App Router, we rely on pathname changes to detect navigation
+  // rather than intercepting clicks, as Next.js Link handles navigation internally
+  // and click interception can interfere with the navigation flow
 
   // Handle global loading state changes
   useEffect(() => {
