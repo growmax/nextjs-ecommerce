@@ -61,9 +61,54 @@ const useMultipleSellerCart = (cartItems: any, calculationParams: any = {}) => {
           pricedItem.matchedSellerId = itemPricing.matchedSellerId;
           // Ensure showPrice is set to true when we have valid pricing
           pricedItem.showPrice = true;
+          
           return pricedItem;
         }
 
+        // When pricing not found, preserve original item data and try to use existing pricing
+        // Check if item has original pricing data that should be preserved
+        const hasOriginalPricing = 
+          item.disc_prd_related_obj?.MasterPrice || 
+          item.disc_prd_related_obj?.BasePrice ||
+          item.MasterPrice || 
+          item.BasePrice || 
+          item.unitListPrice ||
+          item.initial_unitListPrice_fe;
+
+        if (hasOriginalPricing) {
+          // Preserve all original item data and use existing pricing
+          const preservedItem = { ...item };
+          
+          // Use pricing from disc_prd_related_obj if available
+          if (item.disc_prd_related_obj) {
+            const discData = item.disc_prd_related_obj;
+            preservedItem.MasterPrice = discData.MasterPrice || item.MasterPrice;
+            preservedItem.BasePrice = discData.BasePrice || item.BasePrice;
+            preservedItem.isProductAvailableInPriceList = discData.isProductAvailableInPriceList ?? item.isProductAvailableInPriceList ?? true;
+            preservedItem.isOveridePricelist = discData.isOveridePricelist ?? item.isOveridePricelist ?? false;
+            preservedItem.isApprovalRequired = discData.isApprovalRequired ?? item.isApprovalRequired ?? false;
+          }
+          
+          // Set unitListPrice and unitPrice from available sources
+          preservedItem.unitListPrice = 
+            item.unitListPrice || 
+            item.initial_unitListPrice_fe ||
+            item.disc_prd_related_obj?.MasterPrice || 
+            item.disc_prd_related_obj?.BasePrice ||
+            item.MasterPrice || 
+            item.BasePrice || 
+            0;
+          
+          preservedItem.unitPrice = preservedItem.unitListPrice;
+          preservedItem.totalPrice = (preservedItem.unitPrice || 0) * (preservedItem.quantity || 1);
+          preservedItem.showPrice = true;
+          preservedItem.priceNotAvailable = false;
+          preservedItem.pricingSource = "item-pricing";
+          
+          return preservedItem;
+        }
+        
+        // No pricing available - mark as unavailable but preserve item structure
         return {
           ...item,
           priceNotAvailable: true,

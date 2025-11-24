@@ -14,8 +14,8 @@ import { getSuitableDiscountByQuantity } from "@/utils/calculation/discountCalcu
 import { BuildPricingCond } from "@/utils/pricing/buildPricingCond";
 import { getProductPricing } from "@/utils/pricing/getProductPricing";
 import { Minus, Plus, Trash2 } from "lucide-react";
-import { useMemo, useState } from "react";
 import { useTranslations } from "next-intl";
+import { useMemo, useState } from "react";
 
 interface CartProductCardProps {
   item: CartItem;
@@ -248,10 +248,10 @@ export default function CartProductCard({
 
   return (
     <Card>
-      <CardContent className="p-4">
-        <div className="flex gap-6 relative">
+      <CardContent className="p-3 sm:p-4">
+        <div className="flex gap-3 sm:gap-6 relative">
           {/* Product Image - Left */}
-          <div className="relative w-24 h-24 flex-shrink-0 bg-muted rounded-lg overflow-hidden">
+          <div className="relative w-20 h-20 sm:w-24 sm:h-24 flex-shrink-0 bg-muted rounded-lg overflow-hidden">
             <ImageWithFallback
               src={item.img}
               alt={item.productName || `Product ${item.productId}`}
@@ -264,7 +264,7 @@ export default function CartProductCard({
           {/* Product Info - Center */}
           <div className="flex-1 min-w-0">
             {/* Title - Product Short Description */}
-            <h3 className="font-bold text-base mb-1">
+            <h3 className="font-bold text-sm sm:text-base mb-1 line-clamp-2">
               {item.productShortDescription ||
                 item.shortDescription ||
                 item.productName ||
@@ -272,19 +272,19 @@ export default function CartProductCard({
             </h3>
 
             {/* Brand Name and Product ID */}
-            <div className="flex items-center gap-2 text-sm text-gray-500 mb-2">
+            <div className="flex items-center gap-1.5 sm:gap-2 text-xs sm:text-sm text-gray-500 mb-1.5 sm:mb-2">
               {item.brandName || item.brandsName ? (
                 <>
-                  <span>{item.brandName || item.brandsName}</span>
+                  <span className="truncate">{item.brandName || item.brandsName}</span>
                   {item.itemNo && <span>•</span>}
                 </>
               ) : null}
-              {item.itemNo && <span>{item.itemNo}</span>}
+              {item.itemNo && <span className="truncate">{item.itemNo}</span>}
             </div>
 
             {/* Seller */}
             {item.sellerName && (
-              <p className="text-sm text-gray-500 mb-2">
+              <p className="text-xs sm:text-sm text-gray-500 mb-1.5 sm:mb-2 line-clamp-1">
                 {t("seller")}: {item.sellerName}
                 {item.sellerLocation && ` - ${item.sellerLocation}`}
               </p>
@@ -340,20 +340,20 @@ export default function CartProductCard({
             </div>
 
             {/* Quantity, Pack of, and MOQ */}
-            <div className="flex items-center gap-2 text-sm text-gray-500 mb-1">
-              <span>{item.quantity}</span>
+            <div className="flex items-center gap-1 sm:gap-1.5 text-[10px] sm:text-xs text-gray-500 mb-1 whitespace-nowrap overflow-hidden">
+              <span className="shrink-0">{item.quantity}</span>
               {(item.packagingQuantity || item.packagingQty) && (
                 <>
-                  <span>•</span>
-                  <span>
+                  <span className="shrink-0">•</span>
+                  <span className="shrink-0">
                     {t("packOf")} {item.packagingQuantity || item.packagingQty}
                   </span>
                 </>
               )}
               {item.minOrderQuantity && (
                 <>
-                  <span>•</span>
-                  <span>
+                  <span className="shrink-0">•</span>
+                  <span className="shrink-0">
                     {t("moq")} {item.minOrderQuantity}
                   </span>
                 </>
@@ -363,7 +363,7 @@ export default function CartProductCard({
             {/* Inventory Status */}
             {item.inventoryResponse !== undefined && (
               <p
-                className={`text-sm font-bold ${
+                className={`text-xs sm:text-sm font-bold ${
                   item.inventoryResponse.inStock
                     ? "text-green-600"
                     : "text-red-600"
@@ -386,40 +386,40 @@ export default function CartProductCard({
           </div>
 
           {/* Right Section - Quantity Controls and Delete */}
-          <div className="flex flex-col items-end gap-3">
+          <div className="flex flex-col items-end gap-2 sm:gap-3 shrink-0">
             {/* Delete Button - Top Right */}
             <Button
               variant="ghost"
               size="icon"
-              className="h-8 w-8 rounded-md hover:bg-gray-200"
+              className="h-7 w-7 sm:h-8 sm:w-8 rounded-md hover:bg-gray-200"
               onClick={handleDelete}
               disabled={isUpdating}
             >
-              <Trash2 className="h-4 w-4" />
+              <Trash2 className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
             </Button>
 
             {/* Quantity Controls - Square rounded buttons */}
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-1.5 sm:gap-2">
               <Button
                 variant="outline"
                 size="icon"
-                className="h-8 w-8 rounded-md border-gray-300 hover:bg-gray-100"
+                className="h-7 w-7 sm:h-8 sm:w-8 rounded-md border-gray-300 hover:bg-gray-100"
                 onClick={() => handleQuantityChange(item.quantity - 1)}
                 disabled={isUpdating || item.quantity <= 1}
               >
-                <Minus className="h-4 w-4" />
+                <Minus className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
               </Button>
-              <span className="w-8 text-center font-medium text-base">
+              <span className="w-7 sm:w-8 text-center font-medium text-sm sm:text-base">
                 {item.quantity}
               </span>
               <Button
                 variant="outline"
                 size="icon"
-                className="h-8 w-8 rounded-md border-gray-300 hover:bg-gray-100"
+                className="h-7 w-7 sm:h-8 sm:w-8 rounded-md border-gray-300 hover:bg-gray-100"
                 onClick={() => handleQuantityChange(item.quantity + 1)}
                 disabled={isUpdating}
               >
-                <Plus className="h-4 w-4" />
+                <Plus className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
               </Button>
             </div>
           </div>
