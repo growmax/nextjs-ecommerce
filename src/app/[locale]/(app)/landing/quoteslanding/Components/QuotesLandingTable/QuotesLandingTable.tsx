@@ -15,7 +15,6 @@ import {
 } from "@/components/ui/dialog";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useCurrentUser } from "@/hooks/useCurrentUser";
-import { useRoutePrefetch } from "@/hooks/useRoutePrefetch";
 import PreferenceService, {
   FilterPreferenceResponse,
 } from "@/lib/api/services/PreferenceService/PreferenceService";
@@ -24,9 +23,10 @@ import QuotesService, {
 } from "@/lib/api/services/QuotesService/QuotesService";
 import { getAccounting } from "@/utils/calculation/salesCalculation/salesCalculation";
 import { ColumnDef } from "@tanstack/react-table";
+import { useTranslations } from "next-intl";
+import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
-import { useTranslations } from "next-intl";
 
 interface QuotesLandingTableProps {
   refreshTrigger?: number;
@@ -38,8 +38,7 @@ function QuotesLandingTable({
   setExportCallback,
 }: QuotesLandingTableProps) {
   const { user } = useCurrentUser();
-  const { prefetch, prefetchMultiple, prefetchAndNavigate } =
-    useRoutePrefetch();
+  const router = useRouter();
   const t = useTranslations("quotes");
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const [quotes, setQuotes] = useState<QuoteItem[]>([]);
@@ -781,32 +780,6 @@ function QuotesLandingTable({
     setPage(prev => prev + 1);
   };
 
-  // Prefetch routes for visible quotes (only first page for performance)
-  // More aggressive prefetching happens on hover
-  useEffect(() => {
-    if (quotes.length > 0 && !loading && page === 0) {
-      // Only prefetch first 10 quotes on initial load to avoid overwhelming
-      const routes = quotes
-        .slice(0, 10)
-        .map(quote => quote.quotationIdentifier)
-        .filter((id): id is string => Boolean(id))
-        .map(id => `/details/quoteDetails/${id}`);
-      if (routes.length > 0) {
-        prefetchMultiple(routes, 5);
-      }
-    }
-  }, [quotes, loading, page, prefetchMultiple]);
-
-  // Handle row hover to prefetch route
-  const handleRowHover = useCallback(
-    (row: QuoteItem) => {
-      if (row.quotationIdentifier) {
-        prefetch(`/details/quoteDetails/${row.quotationIdentifier}`);
-      }
-    },
-    [prefetch]
-  );
-
   return (
     <>
       <FilterDrawer
@@ -866,10 +839,9 @@ function QuotesLandingTable({
                 onRowClick={row => {
                   const quoteId = row.quotationIdentifier;
                   if (quoteId) {
-                    prefetchAndNavigate(`/details/quoteDetails/${quoteId}`);
+                    router.push(`/details/quoteDetails/${quoteId}`);
                   }
                 }}
-                onRowHover={handleRowHover}
                 tableHeight=""
               />
             )}

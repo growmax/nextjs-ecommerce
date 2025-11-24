@@ -19,10 +19,10 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { useDashboardOrders } from "@/hooks/useDashboardData";
-import { useRoutePrefetch } from "@/hooks/useRoutePrefetch";
 import { Order } from "@/types/dashboard/DasbordOrderstable/DashboardOrdersTable";
 import { ArrowDownIcon, ArrowUpDown } from "lucide-react";
 import { useTranslations } from "next-intl";
+import { useRouter } from "next/navigation";
 import React, { useMemo, useState } from "react";
 
 const { createElement: h } = React;
@@ -33,7 +33,7 @@ export default function DashboardOrdersTable() {
     direction: "asc" | "desc";
   }>({ key: "orderName", direction: "desc" });
   const [displayCount] = useState(10);
-  const { prefetchAndNavigate } = useRoutePrefetch();
+  const router = useRouter();
   const t = useTranslations("dashboard");
 
   const {
@@ -105,7 +105,7 @@ export default function DashboardOrdersTable() {
   }, [sortedOrders, displayCount]);
 
   const handleShowMore = () => {
-    prefetchAndNavigate(`/landing/orderslanding`);
+    router.push(`/landing/orderslanding`);
   };
 
   const handleSort = (key: keyof Order) => {

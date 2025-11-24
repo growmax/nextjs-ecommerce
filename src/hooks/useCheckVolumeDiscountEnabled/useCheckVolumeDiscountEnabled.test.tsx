@@ -14,18 +14,16 @@ jest.mock("axios", () => ({
   default: jest.fn(),
 }));
 
-// Mock SWR
-jest.mock("swr/immutable", () => ({
+// Mock React Query
+jest.mock("@tanstack/react-query", () => ({
   __esModule: true,
-  default: jest.fn(),
+  useQuery: jest.fn(),
 }));
 
+import { useQuery } from "@tanstack/react-query";
 import useCheckVolumeDiscountEnabled from "./useCheckVolumeDiscountEnabled";
-import useSWRImmutable from "swr/immutable";
 
-const mockUseSWR = useSWRImmutable as jest.MockedFunction<
-  typeof useSWRImmutable
->;
+const mockUseQuery = useQuery as jest.MockedFunction<typeof useQuery>;
 
 describe("useCheckVolumeDiscountEnabled", () => {
   beforeEach(() => {
@@ -33,12 +31,11 @@ describe("useCheckVolumeDiscountEnabled", () => {
   });
 
   it("should return volume discount enabled when API returns true", () => {
-    mockUseSWR.mockReturnValue({
+    mockUseQuery.mockReturnValue({
       data: mockAxiosResponseEnabled,
       error: undefined,
       isLoading: false,
-      isValidating: false,
-      mutate: jest.fn(),
+      refetch: jest.fn(),
     } as any);
 
     const { result } = renderHook(() =>
@@ -52,12 +49,11 @@ describe("useCheckVolumeDiscountEnabled", () => {
   });
 
   it("should return volume discount disabled when API returns false", () => {
-    mockUseSWR.mockReturnValue({
+    mockUseQuery.mockReturnValue({
       data: mockAxiosResponseDisabled,
       error: undefined,
       isLoading: false,
-      isValidating: false,
-      mutate: jest.fn(),
+      refetch: jest.fn(),
     } as any);
 
     const { result } = renderHook(() =>
@@ -71,12 +67,11 @@ describe("useCheckVolumeDiscountEnabled", () => {
   });
 
   it("should handle string companyId", () => {
-    mockUseSWR.mockReturnValue({
+    mockUseQuery.mockReturnValue({
       data: mockAxiosResponseEnabled,
       error: undefined,
       isLoading: false,
-      isValidating: false,
-      mutate: jest.fn(),
+      refetch: jest.fn(),
     } as any);
 
     const { result } = renderHook(() =>
@@ -88,83 +83,92 @@ describe("useCheckVolumeDiscountEnabled", () => {
   });
 
   it("should not fetch when companyId is undefined", () => {
-    mockUseSWR.mockReturnValue({
+    mockUseQuery.mockReturnValue({
       data: undefined,
       error: undefined,
       isLoading: false,
-      isValidating: false,
-      mutate: jest.fn(),
+      refetch: jest.fn(),
     } as any);
 
     const { result } = renderHook(() =>
       useCheckVolumeDiscountEnabled(undefined)
     );
 
-    expect(mockUseSWR).toHaveBeenCalledWith(null, expect.any(Function));
+    expect(mockUseQuery).toHaveBeenCalledWith(
+      expect.objectContaining({
+        enabled: false,
+      })
+    );
     expect(result.current.ShowVDButton).toBe(false);
     expect(result.current.VolumeDiscountAvailable).toBe(false);
-    // vdLoading is true when !data && !error (even when key is null)
-    expect(result.current.vdLoading).toBe(true);
+    expect(result.current.vdLoading).toBe(false);
   });
 
   it("should not fetch when companyId is null", () => {
-    mockUseSWR.mockReturnValue({
+    mockUseQuery.mockReturnValue({
       data: undefined,
       error: undefined,
       isLoading: false,
-      isValidating: false,
-      mutate: jest.fn(),
+      refetch: jest.fn(),
     } as any);
 
     const { result } = renderHook(() => useCheckVolumeDiscountEnabled(null));
 
-    expect(mockUseSWR).toHaveBeenCalledWith(null, expect.any(Function));
+    expect(mockUseQuery).toHaveBeenCalledWith(
+      expect.objectContaining({
+        enabled: false,
+      })
+    );
     expect(result.current.ShowVDButton).toBe(false);
     expect(result.current.VolumeDiscountAvailable).toBe(false);
   });
 
   it("should not fetch when cond is false", () => {
-    mockUseSWR.mockReturnValue({
+    mockUseQuery.mockReturnValue({
       data: undefined,
       error: undefined,
       isLoading: false,
-      isValidating: false,
-      mutate: jest.fn(),
+      refetch: jest.fn(),
     } as any);
 
     const { result } = renderHook(() =>
       useCheckVolumeDiscountEnabled(mockCompanyId, false)
     );
 
-    expect(mockUseSWR).toHaveBeenCalledWith(null, expect.any(Function));
+    expect(mockUseQuery).toHaveBeenCalledWith(
+      expect.objectContaining({
+        enabled: false,
+      })
+    );
     expect(result.current.ShowVDButton).toBe(false);
     expect(result.current.VolumeDiscountAvailable).toBe(false);
   });
 
   it("should fetch when cond is true and companyId is provided", () => {
-    mockUseSWR.mockReturnValue({
+    mockUseQuery.mockReturnValue({
       data: mockAxiosResponseEnabled,
       error: undefined,
       isLoading: false,
-      isValidating: false,
-      mutate: jest.fn(),
+      refetch: jest.fn(),
     } as any);
 
     renderHook(() => useCheckVolumeDiscountEnabled(mockCompanyId, true));
 
-    expect(mockUseSWR).toHaveBeenCalledWith(
-      ["Check_Is_Volume_Discount_Enabled", mockCompanyId, true],
-      expect.any(Function)
+    expect(mockUseQuery).toHaveBeenCalledWith(
+      expect.objectContaining({
+        queryKey: ["volumeDiscount", mockCompanyId],
+        enabled: true,
+        refetchOnWindowFocus: false,
+      })
     );
   });
 
-  it("should show loading state when data is not available and no error", () => {
-    mockUseSWR.mockReturnValue({
+  it("should show loading state when isLoading is true", () => {
+    mockUseQuery.mockReturnValue({
       data: undefined,
       error: undefined,
-      isLoading: false,
-      isValidating: false,
-      mutate: jest.fn(),
+      isLoading: true,
+      refetch: jest.fn(),
     } as any);
 
     const { result } = renderHook(() =>
@@ -177,12 +181,11 @@ describe("useCheckVolumeDiscountEnabled", () => {
   });
 
   it("should not show loading state when error is present", () => {
-    mockUseSWR.mockReturnValue({
+    mockUseQuery.mockReturnValue({
       data: undefined,
       error: mockAxiosError,
       isLoading: false,
-      isValidating: false,
-      mutate: jest.fn(),
+      refetch: jest.fn(),
     } as any);
 
     const { result } = renderHook(() =>
@@ -195,12 +198,11 @@ describe("useCheckVolumeDiscountEnabled", () => {
   });
 
   it("should not show loading state when data is available", () => {
-    mockUseSWR.mockReturnValue({
+    mockUseQuery.mockReturnValue({
       data: mockAxiosResponseEnabled,
       error: undefined,
       isLoading: false,
-      isValidating: false,
-      mutate: jest.fn(),
+      refetch: jest.fn(),
     } as any);
 
     const { result } = renderHook(() =>
@@ -210,47 +212,47 @@ describe("useCheckVolumeDiscountEnabled", () => {
     expect(result.current.vdLoading).toBe(false);
   });
 
-  it("should create correct SWR key with companyId and cond", () => {
-    mockUseSWR.mockReturnValue({
+  it("should create correct query key with companyId", () => {
+    mockUseQuery.mockReturnValue({
       data: mockAxiosResponseEnabled,
       error: undefined,
       isLoading: false,
-      isValidating: false,
-      mutate: jest.fn(),
+      refetch: jest.fn(),
     } as any);
 
     renderHook(() => useCheckVolumeDiscountEnabled(mockCompanyId, true));
 
-    expect(mockUseSWR).toHaveBeenCalledWith(
-      ["Check_Is_Volume_Discount_Enabled", mockCompanyId, true],
-      expect.any(Function)
+    expect(mockUseQuery).toHaveBeenCalledWith(
+      expect.objectContaining({
+        queryKey: ["volumeDiscount", mockCompanyId],
+      })
     );
   });
 
-  it("should call fetcher with correct axios configuration when key is not null", async () => {
+  it("should call queryFn with correct axios configuration when enabled", async () => {
     (mockAxios as any).mockResolvedValue(mockAxiosResponseEnabled);
-    mockUseSWR.mockReturnValue({
+    mockUseQuery.mockReturnValue({
       data: mockAxiosResponseEnabled,
       error: undefined,
       isLoading: false,
-      isValidating: false,
-      mutate: jest.fn(),
+      refetch: jest.fn(),
     } as any);
 
     renderHook(() => useCheckVolumeDiscountEnabled(mockCompanyId));
 
-    // Get the fetcher function that was passed to useSWR
-    const swrCall = mockUseSWR.mock.calls[0];
-    if (!swrCall) {
-      throw new Error("useSWR was not called");
+    // Get the queryFn function that was passed to useQuery
+    const queryCall = mockUseQuery.mock.calls[0];
+    if (!queryCall) {
+      throw new Error("useQuery was not called");
     }
-    const passedFetcher = swrCall[1];
-    if (!passedFetcher) {
-      throw new Error("Fetcher function was not provided");
+    const config = queryCall[0] as any;
+    const queryFn = config.queryFn;
+    if (!queryFn) {
+      throw new Error("queryFn was not provided");
     }
 
-    // Call the fetcher to verify it uses axios correctly
-    await passedFetcher();
+    // Call the queryFn to verify it uses axios correctly
+    await queryFn();
 
     // Verify axios was called with correct config
     expect(mockAxios).toHaveBeenCalledWith({
@@ -264,7 +266,7 @@ describe("useCheckVolumeDiscountEnabled", () => {
   });
 
   it("should handle falsy data values correctly", () => {
-    mockUseSWR.mockReturnValue({
+    mockUseQuery.mockReturnValue({
       data: {
         data: {
           data: null,
@@ -272,8 +274,7 @@ describe("useCheckVolumeDiscountEnabled", () => {
       },
       error: undefined,
       isLoading: false,
-      isValidating: false,
-      mutate: jest.fn(),
+      refetch: jest.fn(),
     } as any);
 
     const { result } = renderHook(() =>
@@ -285,12 +286,11 @@ describe("useCheckVolumeDiscountEnabled", () => {
   });
 
   it("should handle undefined data correctly", () => {
-    mockUseSWR.mockReturnValue({
+    mockUseQuery.mockReturnValue({
       data: undefined,
       error: undefined,
       isLoading: false,
-      isValidating: false,
-      mutate: jest.fn(),
+      refetch: jest.fn(),
     } as any);
 
     const { result } = renderHook(() =>
@@ -302,12 +302,11 @@ describe("useCheckVolumeDiscountEnabled", () => {
   });
 
   it("should always return VDapplied as false", () => {
-    mockUseSWR.mockReturnValue({
+    mockUseQuery.mockReturnValue({
       data: mockAxiosResponseEnabled,
       error: undefined,
       isLoading: false,
-      isValidating: false,
-      mutate: jest.fn(),
+      refetch: jest.fn(),
     } as any);
 
     const { result } = renderHook(() =>
@@ -319,26 +318,43 @@ describe("useCheckVolumeDiscountEnabled", () => {
 
   it("should handle different companyId types", () => {
     const testCases = [
-      { companyId: 123, expected: 123 },
-      { companyId: "123", expected: "123" },
-      { companyId: 456, expected: 456 },
+      { companyId: 123, expected: ["volumeDiscount", 123] },
+      { companyId: "123", expected: ["volumeDiscount", "123"] },
+      { companyId: 456, expected: ["volumeDiscount", 456] },
     ];
 
     testCases.forEach(({ companyId, expected }) => {
-      mockUseSWR.mockReturnValue({
+      mockUseQuery.mockReturnValue({
         data: mockAxiosResponseEnabled,
         error: undefined,
         isLoading: false,
-        isValidating: false,
-        mutate: jest.fn(),
+        refetch: jest.fn(),
       } as any);
 
       renderHook(() => useCheckVolumeDiscountEnabled(companyId));
 
-      expect(mockUseSWR).toHaveBeenCalledWith(
-        ["Check_Is_Volume_Discount_Enabled", expected, true],
-        expect.any(Function)
+      expect(mockUseQuery).toHaveBeenCalledWith(
+        expect.objectContaining({
+          queryKey: expected,
+        })
       );
     });
+  });
+
+  it("should use React Query options with refetchOnWindowFocus set to false", () => {
+    mockUseQuery.mockReturnValue({
+      data: mockAxiosResponseEnabled,
+      error: undefined,
+      isLoading: false,
+      refetch: jest.fn(),
+    } as any);
+
+    renderHook(() => useCheckVolumeDiscountEnabled(mockCompanyId));
+
+    expect(mockUseQuery).toHaveBeenCalledWith(
+      expect.objectContaining({
+        refetchOnWindowFocus: false,
+      })
+    );
   });
 });

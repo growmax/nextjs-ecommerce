@@ -1,10 +1,9 @@
 "use client";
 
 import { ChevronRight, type LucideIcon } from "lucide-react";
-import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { Link, usePathname } from "@/i18n/navigation";
 import { useState } from "react";
-import { useRoutePrefetch } from "@/hooks/useRoutePrefetch";
+
 import { useTranslations } from "next-intl";
 
 import {
@@ -37,7 +36,6 @@ function CollapsedMenuItem({
   hasActiveSub,
   isActive,
   onNavigate,
-  prefetch,
 }: {
   item: {
     title: string;
@@ -48,7 +46,6 @@ function CollapsedMenuItem({
   hasActiveSub: boolean;
   isActive: (url: string) => boolean;
   onNavigate?: (url: string) => void;
-  prefetch: (url: string) => void;
 }) {
   const [isOpen, setIsOpen] = useState(false);
 
@@ -85,7 +82,6 @@ function CollapsedMenuItem({
                   onNavigate?.(subItem.url);
                   setIsOpen(false); // Close popover on navigation
                 }}
-                onMouseEnter={() => prefetch(subItem.url)}
               >
                 {subItem.title}
               </Link>
@@ -116,7 +112,7 @@ export function NavMain({
   const pathname = usePathname();
   const { state, isMobile } = useSidebar();
   const isCollapsed = state === "collapsed" && !isMobile;
-  const { prefetch } = useRoutePrefetch();
+
   const t = useTranslations("navigation");
 
   // Remove locale prefix (e.g., /en, /es, /fr) from pathname for comparison
@@ -158,7 +154,6 @@ export function NavMain({
                       isCollapsed && "justify-center gap-0"
                     )}
                     onClick={() => onNavigate?.(item.url)}
-                    onMouseEnter={() => prefetch(item.url)}
                   >
                     {item.icon && <item.icon className="size-5" />}
                     {!isCollapsed && (
@@ -179,7 +174,6 @@ export function NavMain({
                 hasActiveSub={hasActiveSub}
                 isActive={isActive}
                 {...(onNavigate && { onNavigate })}
-                prefetch={prefetch}
               />
             );
           }
@@ -214,7 +208,6 @@ export function NavMain({
                           asChild
                           isActive={isActive(subItem.url)}
                           onClick={() => onNavigate?.(subItem.url)}
-                          onMouseEnter={() => prefetch(subItem.url)}
                         >
                           <Link href={subItem.url}>
                             <span>{subItem.title}</span>

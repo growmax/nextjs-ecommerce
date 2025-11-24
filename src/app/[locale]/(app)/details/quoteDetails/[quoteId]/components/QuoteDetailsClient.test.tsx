@@ -3,7 +3,6 @@ jest.mock("next/navigation", () => ({
   useRouter: () => ({
     push: jest.fn(),
     replace: jest.fn(),
-    prefetch: jest.fn(),
   }),
 }));
 
@@ -405,13 +404,13 @@ jest.mock("@/utils/General/general", () => ({
   decodeUnicode: jest.fn(str => str),
 }));
 
+import { QuotationDetailsService } from "@/lib/api";
+import QuotationNameService from "@/lib/api/services/QuotationNameService/QuotationNameService";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { render, screen, waitFor } from "@testing-library/react";
 import React, { ReactNode } from "react";
-import QuoteDetailsClient from "./QuoteDetailsClient";
-import { QuotationDetailsService } from "@/lib/api";
-import QuotationNameService from "@/lib/api/services/QuotationNameService/QuotationNameService";
 import { toast } from "sonner";
+import QuoteDetailsClient from "./QuoteDetailsClient";
 
 const mockFetchQuoteDetails =
   QuotationDetailsService.fetchQuotationDetails as jest.MockedFunction<

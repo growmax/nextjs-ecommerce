@@ -1,9 +1,9 @@
 "use client";
 
 import { ColumnDef } from "@tanstack/react-table";
+import { useTranslations } from "next-intl";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
-import { useTranslations } from "next-intl";
 
 import PricingFormat from "@/components/PricingFormat";
 import DashboardTable from "@/components/custom/DashBoardTable";
@@ -21,12 +21,12 @@ import { Skeleton } from "@/components/ui/skeleton";
 
 import { statusColor } from "@/components/custom/statuscolors";
 import { useCurrentUser } from "@/hooks/useCurrentUser";
-import { useRoutePrefetch } from "@/hooks/useRoutePrefetch";
 import ordersFilterService, {
   OrderFilter,
 } from "@/lib/api/services/OrdersFilterService/OrdersFilterService";
 import { type Order } from "@/types/dashboard/DasbordOrderstable/DashboardOrdersTable";
 import { getAccounting } from "@/utils/calculation/salesCalculation/salesCalculation";
+import { useRouter } from "next/navigation";
 import { OrdersLandingTableProps } from "../../types/ordertypes";
 
 // Helper functions
@@ -95,8 +95,7 @@ function OrdersLandingTable({
   setExportCallback,
 }: OrdersLandingTableProps) {
   const { user } = useCurrentUser();
-  const { prefetch, prefetchMultiple, prefetchAndNavigate } =
-    useRoutePrefetch();
+  const router = useRouter();
   const t = useTranslations("orders");
 
   // State
@@ -608,32 +607,6 @@ function OrdersLandingTable({
     setPage(prev => prev + 1);
   };
 
-  // Prefetch routes for visible orders (only first page for performance)
-  // More aggressive prefetching happens on hover
-  useEffect(() => {
-    if (orders.length > 0 && !loading && page === 0) {
-      // Only prefetch first 10 orders on initial load to avoid overwhelming
-      const routes = orders
-        .slice(0, 10)
-        .map(order => order.orderIdentifier)
-        .filter((id): id is string => Boolean(id))
-        .map(id => `/details/orderDetails/${id}`);
-      if (routes.length > 0) {
-        prefetchMultiple(routes, 5);
-      }
-    }
-  }, [orders, loading, page, prefetchMultiple]);
-
-  // Handle row hover to prefetch route
-  const handleRowHover = useCallback(
-    (row: Order) => {
-      if (row.orderIdentifier) {
-        prefetch(`/details/orderDetails/${row.orderIdentifier}`);
-      }
-    },
-    [prefetch]
-  );
-
   return (
     <>
       <FilterDrawer
@@ -702,10 +675,9 @@ function OrdersLandingTable({
                 onRowClick={row => {
                   const orderId = row.orderIdentifier;
                   if (orderId) {
-                    prefetchAndNavigate(`/details/orderDetails/${orderId}`);
+                    router.push(`/details/orderDetails/${orderId}`);
                   }
                 }}
-                onRowHover={handleRowHover}
                 tableHeight=""
               />
             )}

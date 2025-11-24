@@ -1,6 +1,6 @@
 "use client";
 
-import { createContext, useContext, useState, ReactNode } from "react";
+import { createContext, useContext, useMemo, useState, ReactNode } from "react";
 import {
   TenantContextData,
   Company,
@@ -115,8 +115,11 @@ export function TenantProvider({ children, initialData }: TenantProviderProps) {
     };
   });
 
+  // Memoize context value to prevent unnecessary re-renders
+  const contextValue = useMemo(() => tenantData, [tenantData]);
+
   return (
-    <TenantContext.Provider value={tenantData}>
+    <TenantContext.Provider value={contextValue}>
       {children}
     </TenantContext.Provider>
   );

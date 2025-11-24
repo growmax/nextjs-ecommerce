@@ -2,7 +2,7 @@
 
 import HeaderBar from "@/components/Global/HeaderBar/HeaderBar";
 import { SaveCancelToolbar } from "@/components/custom/save-cancel-toolbar";
-import { useRoutePrefetch } from "@/hooks/useRoutePrefetch";
+
 import { useTranslations } from "next-intl";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
@@ -17,7 +17,6 @@ import { useProfileData } from "@/hooks/Profile/useProfileData";
 import { Shield } from "lucide-react";
 
 export default function ProfilePageClient() {
-  const { prefetch } = useRoutePrefetch();
   const t = useTranslations("profileSettings");
   const {
     profile,
@@ -45,10 +44,6 @@ export default function ProfilePageClient() {
   // Original values for reset functionality
   const [originalProfile, setOriginalProfile] = useState(profile);
   const [originalPreferences, setOriginalPreferences] = useState(preferences);
-
-  useEffect(() => {
-    prefetch("/settings/company");
-  }, [prefetch]);
 
   useEffect(() => {
     if (profile && !originalProfile) {

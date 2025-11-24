@@ -8,7 +8,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { useRoutePrefetch } from "@/hooks/useRoutePrefetch";
+
 import { AlertCircle, Home, RefreshCw } from "lucide-react";
 import Link from "next/link";
 
@@ -23,8 +23,6 @@ export default function ProductError({
   error: Error & { digest?: string };
   reset: () => void;
 }) {
-  const { prefetch } = useRoutePrefetch();
-
   return (
     <div className="min-h-screen bg-background flex items-center justify-center p-4">
       <Card className="max-w-md w-full">
@@ -62,7 +60,7 @@ export default function ProductError({
             Try Again
           </Button>
 
-          <Link href="/" className="flex-1" onMouseEnter={() => prefetch("/")}>
+          <Link href="/" className="flex-1">
             <Button variant="outline" className="w-full">
               <Home className="mr-2 h-4 w-4" />
               Go Home

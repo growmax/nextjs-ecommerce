@@ -1,9 +1,9 @@
 "use client";
 
 import { Layers } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
-import { useTranslations } from "next-intl";
 
 import {
   VersionsDialog,
@@ -41,7 +41,7 @@ import useModuleSettings from "@/hooks/useModuleSettings";
 import { useOrderCalculation } from "@/hooks/useOrderCalculation/useOrderCalculation";
 import { usePageScroll } from "@/hooks/usePageScroll";
 import { useQuoteSubmission } from "@/hooks/useQuoteSubmission/useQuoteSubmission";
-import { useRoutePrefetch } from "@/hooks/useRoutePrefetch";
+
 import { useTenantData } from "@/hooks/useTenantData";
 import type { QuotationDetailsResponse } from "@/lib/api";
 import {
@@ -60,7 +60,7 @@ import { decodeUnicode } from "@/utils/General/general";
 import { prepareQuoteSubmissionDTO } from "@/utils/quote/quoteSubmissionDTO/quoteSubmissionDTO";
 import { isEmpty } from "lodash";
 import some from "lodash/some";
-import { useSearchParams } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 
 // Import types for proper typing
 interface AddressDetails {
@@ -114,7 +114,7 @@ export default function EditQuotePage({ params }: EditQuotePageProps) {
 
   const searchParams = useSearchParams();
   const isPlaceOrderMode = searchParams.get("placeOrder") === "true";
-  const { prefetchAndNavigate } = useRoutePrefetch();
+  const router = useRouter();
 
   const [quoteIdentifier, setQuoteIdentifier] = useState<string>("");
   const [paramsLoaded, setParamsLoaded] = useState(false);
@@ -716,7 +716,7 @@ export default function EditQuotePage({ params }: EditQuotePageProps) {
   };
 
   const handleCancel = () => {
-    prefetchAndNavigate(`/details/quoteDetails/${quoteIdentifier}`);
+    router.push(`/details/quoteDetails/${quoteIdentifier}`);
   };
 
   const handleQuantityChange = (productId: string, quantity: number) => {
@@ -922,9 +922,7 @@ export default function EditQuotePage({ params }: EditQuotePageProps) {
       if (response?.orderIdentifier) {
         toast.success(t("orderPlacedSuccessfullyFromQuote"));
         // Navigate to the order details page
-        prefetchAndNavigate(
-          `/details/orderDetails/${response.orderIdentifier}`
-        );
+        router.push(`/details/orderDetails/${response.orderIdentifier}`);
       } else {
         toast.error(t("failedToPlaceOrderFromQuote"));
       }
@@ -1016,7 +1014,7 @@ export default function EditQuotePage({ params }: EditQuotePageProps) {
 
       if (success) {
         // Navigate to quote details page after successful submission
-        prefetchAndNavigate(`/details/quoteDetails/${quoteIdentifier}`);
+        router.push(`/details/quoteDetails/${quoteIdentifier}`);
       }
     } catch (error) {
       toast.error(
