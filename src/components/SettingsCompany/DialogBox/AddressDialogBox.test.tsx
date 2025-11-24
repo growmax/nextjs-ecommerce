@@ -149,10 +149,10 @@ describe("CompanyDialogBox (AddressDialogBox)", () => {
     );
 
     // Title should be Create Address
-    expect(screen.getByText("Create Address")).toBeInTheDocument();
+    expect(screen.getByText("createAddress")).toBeInTheDocument();
 
     // Click Cancel button
-    const cancel = screen.getByText("Cancel");
+    const cancel = screen.getByText("cancel");
     fireEvent.click(cancel);
 
     expect(onOpenChange).toHaveBeenCalledWith(false);
@@ -203,7 +203,7 @@ describe("CompanyDialogBox (AddressDialogBox)", () => {
     });
 
     // Submit the form by clicking Save (we don't assert createBranchAddress here)
-    const save = screen.getByText("Save");
+    const save = screen.getByText("save");
     fireEvent.click(save);
 
     // Verify the form fields exist and were filled

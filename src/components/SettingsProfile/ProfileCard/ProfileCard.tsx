@@ -7,6 +7,7 @@ import { PhoneInput } from "@/components/forms/PhoneInput/PhoneInput";
 import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
+import { useTranslations } from "next-intl";
 import React from "react";
 import { toast } from "sonner";
 
@@ -57,10 +58,11 @@ export function ProfileCard({
   folderName,
   validationErrors = {},
 }: ProfileCardProps) {
+  const t = useTranslations("profileSettings");
   if (dataLoading || !profile) {
     return (
       <SectionCard
-        title="Personal Information"
+        title={t("profile") + " Information"}
         className="w-full py-2.5"
         headerActions={headerActions}
         headerContainerClassName="flex-row justify-between items-center"
@@ -101,7 +103,7 @@ export function ProfileCard({
 
   return (
     <SectionCard
-      title="Personal Information"
+      title={t("profile") + " Information"}
       className="w-full py-2.5"
       headerActions={headerActions}
       headerContainerClassName="flex-row justify-between items-center"
@@ -116,11 +118,11 @@ export function ProfileCard({
                 onImageChange={onImageChange}
                 onUploadSuccess={() => {
                   toast.success("Image uploaded successfully", {
-                    description: "Please update your profile information.",
+                    description: t("profile") + " updated.",
                     duration: 3000,
                   });
                 }}
-                alt="Profile"
+                alt={t("profile")}
                 size="lg"
                 shape="square"
                 disabled={isLoading}
@@ -136,7 +138,7 @@ export function ProfileCard({
             {/* Name */}
             <div className="w-full min-w-0">
               <FormField 
-                label="Name" 
+                label={t("name")} 
                 required 
                 {...(validationErrors.name && { error: validationErrors.name })}
               >
@@ -144,7 +146,7 @@ export function ProfileCard({
                   type="text"
                   value={profile.name}
                   onChange={(e) => onChange("name", e.target.value)}
-                  placeholder="Enter your full name"
+                  placeholder={t("enterFullName")}
                   disabled={isLoading}
                   className={cn(
                     "h-9 w-full",
@@ -156,7 +158,7 @@ export function ProfileCard({
 
             {/* Email */}
             <div className="w-full min-w-0">
-              <FormField label="Email">
+              <FormField label={t("email")}>
                 <Input
                   type="email"
                   value={profile.email}
@@ -169,7 +171,7 @@ export function ProfileCard({
             {/* Phone */}
             <div className="w-full min-w-0">
               <PhoneInput
-                label="Mobile Number"
+                label={t("mobileNumber")}
                 value={profile.phone}
                 onChange={(value) => onChange("phone", value)}
                 {...(onVerifyPhone && { onVerify: onVerifyPhone })}
@@ -185,7 +187,7 @@ export function ProfileCard({
             {/* Secondary Phone */}
             <div className="w-full min-w-0">
               <PhoneInput
-                label="Secondary Phone"
+                label={t("secondaryPhone")}
                 value={profile.altPhone || ""}
                 onChange={(value) => onChange("altPhone", value)}
                 // {...(onVerifyPhone && { onVerify: onVerifyPhone })}
@@ -198,14 +200,14 @@ export function ProfileCard({
             {/* Alternate Email */}
             <div className="w-full min-w-0 sm:col-span-2 mt-0">
               <FormField 
-                label="Alternate Email"
+                label={t("alternateEmail")}
                 {...(validationErrors.altEmail && { error: validationErrors.altEmail })}
               >
                 <Input
                   type="email"
                   value={profile.altEmail}
                   onChange={(e) => onChange("altEmail", e.target.value)}
-                  placeholder="Enter alternate email address"
+                  placeholder={t("enterAlternateEmail")}
                   disabled={isLoading}
                   className={cn(
                     "h-9 w-full",

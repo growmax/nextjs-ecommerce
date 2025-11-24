@@ -137,7 +137,7 @@ describe("CompanyBranchTable", () => {
     render(React.createElement(CompanyBranchTable));
     await waitFor(() => expect(mockGetAll).toHaveBeenCalled());
 
-    const addBtn = screen.getByRole("button", { name: /Add Branch/i });
+    const addBtn = screen.getByRole("button", { name: /addBranch/i });
     fireEvent.click(addBtn);
 
     // CompanyDialogBox should have been passed open true and mode 'create'
@@ -165,10 +165,10 @@ describe("CompanyBranchTable", () => {
 
     // The mocked DataTable renders the renderRowActions output which includes a button; find and click it
     const buttons = screen.getAllByRole("button");
-    // prefer a button that contains an accessible name 'Delete branch' (sr-only)
+    // prefer a button that contains an accessible name 'deleteBranch' (sr-only)
     const btnToClick =
       buttons.find(
-        b => b.querySelector("span")?.textContent === "Delete branch"
+        b => b.querySelector("span")?.textContent === "deleteBranch"
       ) || buttons[1];
     // assert btnToClick exists
     const btn = btnToClick!;

@@ -120,7 +120,7 @@ describe("ProfileCard", () => {
       })
     );
 
-    expect(screen.getByText("Personal Information")).toBeInTheDocument();
+    expect(screen.getByText("profile Information")).toBeInTheDocument();
     // skeleton placeholder present
     expect(screen.getAllByTestId("skeleton").length).toBeGreaterThan(0);
   });
@@ -141,7 +141,7 @@ describe("ProfileCard", () => {
     );
 
     // Title
-    expect(screen.getByText("Personal Information")).toBeInTheDocument();
+    expect(screen.getByText("profile Information")).toBeInTheDocument();
 
     // Name input should display current value
     const nameInput = screen.getByDisplayValue(

@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { CompanyService } from "@/lib/api";
 import { Calendar, Clock, Globe } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 
@@ -47,6 +48,7 @@ export function UserPreferencesCard({
   preferenceId,
   onSaveSuccess,
 }: UserPreferencesCardProps) {
+  const t = useTranslations("profileSettings");
   // Simple validation state - no react-hook-form needed
   const [errors, setErrors] = useState<
     Partial<Record<keyof UserPreferencesData, string>>
@@ -149,9 +151,9 @@ export function UserPreferencesCard({
   // Helper to get user-friendly field labels
   const getFieldLabel = (field: keyof UserPreferencesData): string => {
     const labels: Record<keyof UserPreferencesData, string> = {
-      timeZone: "Time zone",
-      dateFormat: "Date format",
-      timeFormat: "Time format",
+      timeZone: t("timeZone"),
+      dateFormat: t("dateDisplayFormat"),
+      timeFormat: t("timeFormat"),
     };
     return labels[field];
   };
@@ -160,13 +162,13 @@ export function UserPreferencesCard({
   const handleSave = async () => {
     if (!hasChanges) return;
     if (!userId) {
-      toast.error("User ID is required");
+      toast.error("User ID is required"); // TODO: Add translation key
       return;
     }
 
     // Validate required fields
     if (!localPreferences.timeZone || !localPreferences.dateFormat || !localPreferences.timeFormat) {
-      toast.error("Please fill all required preference fields");
+      toast.error(t("selectAnOption"));
       return;
     }
 
@@ -198,12 +200,12 @@ export function UserPreferencesCard({
       }
       
       // Show success message - ensure it's called after all operations
-      toast.success("Preferences Updated Successfully", {
+      toast.success(t("changesSavedSuccessfully"), {
         duration: 3000,
       });
     } catch (error) {
       console.error("Failed to save preferences:", error);
-      toast.error("Failed to save preferences. Please try again.");
+      toast.error(t("failedToSaveChanges"));
     } finally {
       setIsSaving(false);
     }
@@ -233,13 +235,13 @@ export function UserPreferencesCard({
       isCancellingRef.current = false;
     }, 100);
     
-    toast.info("Changes cancelled");
+    toast.info(t("allChangesCancelled"));
   };
 
   // Show skeleton when loading or data is not available
   if (dataLoading || !localPreferences || !localPreferences.timeZone || !localPreferences.dateFormat || !localPreferences.timeFormat) {
     return (
-      <SectionCard title="User Preferences" className="w-full">
+      <SectionCard title={t("userPreferences")} className="w-full">
         <div className="space-y-4">
           {/* Skeleton for dropdowns */}
           <div className="space-y-2">
@@ -271,7 +273,7 @@ export function UserPreferencesCard({
 
   return (
     <SectionCard 
-      title="User Preferences" 
+      title={t("userPreferences")} 
       className="w-full py-2.5"
       headerActions={
         hasChanges ? (
@@ -282,14 +284,14 @@ export function UserPreferencesCard({
               onClick={handleCancel}
               disabled={isSaving || isLoading}
             >
-              Cancel
+              {t("cancel")}
             </Button>
             <Button
               size="sm"
               onClick={handleSave}
               disabled={isSaving || isLoading}
             >
-              {isSaving ? "Saving..." : "Save"}
+              {isSaving ? t("saving") : t("save")}
             </Button>
           </div>
         ) : undefined
@@ -298,11 +300,11 @@ export function UserPreferencesCard({
       <div className="space-y-4">
         {/* Time Zone */}
         <AutoCompleteField
-          label="Time Zone"
+          label={t("timeZone")}
           value={localPreferences.timeZone}
           onChange={value => handleFieldChange("timeZone", value)}
           options={timeZoneOptions}
-          placeholder="Select timezone"
+          placeholder={t("selectTimezone")}
           required
           disabled={isLoading}
           {...(errors.timeZone && { error: errors.timeZone })}
@@ -310,11 +312,11 @@ export function UserPreferencesCard({
 
         {/* Date Format */}
         <AutoCompleteField
-          label="Date Display Format"
+          label={t("dateDisplayFormat")}
           value={localPreferences.dateFormat}
           onChange={value => handleFieldChange("dateFormat", value)}
           options={dateFormatOptions}
-          placeholder="Select date format"
+          placeholder={t("selectDateFormat")}
           required
           disabled={isLoading}
           {...(errors.dateFormat && { error: errors.dateFormat })}
@@ -322,11 +324,11 @@ export function UserPreferencesCard({
 
         {/* Time Format */}
         <AutoCompleteField
-          label="Time Format"
+          label={t("timeFormat")}
           value={localPreferences.timeFormat}
           onChange={value => handleFieldChange("timeFormat", value)}
           options={timeFormatOptions}
-          placeholder="Select time format"
+          placeholder={t("selectTimeFormat")}
           required
           disabled={isLoading}
           {...(errors.timeFormat && { error: errors.timeFormat })}
@@ -336,12 +338,12 @@ export function UserPreferencesCard({
         <div className="mt-6 p-4 bg-muted rounded-lg">
           <h4 className="text-sm font-medium mb-2 flex items-center gap-2">
             <Globe className="h-4 w-4" />
-            Preview
+            {t("preview")}
           </h4>
           <div className="text-sm text-muted-foreground space-y-1">
             <p className="flex items-center gap-2">
               <Globe className="h-3 w-3" />
-              Timezone: {localPreferences.timeZone || "Not selected"}
+              {t("timezone")} {localPreferences.timeZone || t("notSelected")}
             </p>
             <DateTimePreview
               dateFormat={localPreferences.dateFormat}
@@ -364,6 +366,7 @@ function DateTimePreview({
   timeFormat: string;
   timeZone: string;
 }) {
+  const t = useTranslations("profileSettings");
   const now = new Date();
 
   // helper to get localized parts (day, month, year, hour, minute)
@@ -447,11 +450,11 @@ function DateTimePreview({
     <>
       <p className="flex items-center gap-2">
         <Calendar className="h-3 w-3" />
-        Date: {formattedDate}
+        {t("date")} {formattedDate}
       </p>
       <p className="flex items-center gap-2">
         <Clock className="h-3 w-3" />
-        Time: {formattedTime}
+        {t("time")} {formattedTime}
       </p>
     </>
   );

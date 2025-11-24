@@ -1,6 +1,6 @@
-import type { Table } from "@tanstack/react-table";
 "use client";
 
+import type { Table } from "@tanstack/react-table";
 import {
   ChevronLeft,
   ChevronRight,

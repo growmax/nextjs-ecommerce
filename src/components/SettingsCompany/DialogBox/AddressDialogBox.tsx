@@ -43,26 +43,27 @@ interface CompanyDialogBoxProps {
   onSuccess?: () => void;
 }
 
-// Zod validation schema
-const addressFormSchema = z.object({
-  id: z.number().optional(),
-  companyName: z.string().optional(),
-  branchName: z.string().min(1, { message: "Branch name is required" }),
-  addressLine: z.string().min(1,{message: "Address is required"}),
-  locality: z.string().optional(),
-  country: z.string().min(1, { message: "Country is required" }),
-  state: z.string().min(1, { message: "State is required" }),
-  district: z.string().optional(),
-  pinCode: z.string().min(1,{message:"Postal code is required"}),
-  city: z.string().optional(),
-  lattitude: z.string().optional(),
-  longitude: z.string().optional(),
-  isBilling: z.boolean(),
-  isShipping: z.boolean(),
-  gst: z.string().optional(),
-  contactName: z.string().optional(),
-  contactNumber: z.string().optional(),
-});
+// Zod validation schema factory function
+const createAddressFormSchema = (t: (key: string) => string) =>
+  z.object({
+    id: z.number().optional(),
+    companyName: z.string().optional(),
+    branchName: z.string().min(1, { message: t("branchNameRequired") || "Branch name is required" }),
+    addressLine: z.string().min(1, { message: t("addressLineRequired") || "Address is required" }),
+    locality: z.string().optional(),
+    country: z.string().min(1, { message: t("countryRequired") || "Country is required" }),
+    state: z.string().min(1, { message: t("stateRequired") || "State is required" }),
+    district: z.string().optional(),
+    pinCode: z.string().min(1, { message: t("pinCodeRequired") || "Postal code is required" }),
+    city: z.string().optional(),
+    lattitude: z.string().optional(),
+    longitude: z.string().optional(),
+    isBilling: z.boolean(),
+    isShipping: z.boolean(),
+    gst: z.string().optional(),
+    contactName: z.string().optional(),
+    contactNumber: z.string().optional(),
+  });
 
 type AddressFormData = z.infer<ReturnType<typeof createAddressFormSchema>>;
 
@@ -237,14 +238,20 @@ const CompanyDialogBox = ({
         // Get state ID (handles both numeric IDs and names)
         let stateId: number | undefined;
         if (stateValue) {
-          if (/^\d+$/.test(stateValue)) {
+          // Check if it's already a numeric string (ID)
+          if (/^\d+$/.test(String(stateValue).trim())) {
             stateId = Number(stateValue);
           } else {
+            // It might be a state name, try to find it in the states list
             // Use functional update to access current states without dependency
             await new Promise<void>(resolve => {
               setStates(current => {
-                const found = current.find(s => s.label === stateValue);
-                if (found) stateId = Number(found.value);
+                const found = current.find(
+                  s => s.label === stateValue || s.value === String(stateValue)
+                );
+                if (found) {
+                  stateId = Number(found.value);
+                }
                 resolve();
                 return current;
               });
@@ -252,18 +259,32 @@ const CompanyDialogBox = ({
           }
         }
 
-        // Load districts
-        const resp = stateId
-          ? await LocationService.getDistrictsByState(stateId)
-          : await LocationService.getAllDistricts();
+        // If we don't have a valid stateId, clear districts and return
+        if (!stateId || isNaN(stateId)) {
+          console.warn("Invalid stateId for loading districts:", stateValue, stateId);
+          setDistricts([]);
+          return;
+        }
 
-        const raw = Array.isArray(resp?.data) ? resp.data : [];
-        const filtered = stateId
-          ? raw.filter((district: any) => district.stateId === stateId)
-          : raw;
-        const list = filtered.map(toDropdownOption).filter(o => o.value);
+        // Load districts - getDistrictsByState already filters by stateId
+        const resp = await LocationService.getDistrictsByState(stateId);
+
+        // Ensure we have valid response data
+        if (!resp || !Array.isArray(resp.data)) {
+          console.warn("Invalid districts response:", resp);
+          setDistricts([]);
+          return;
+        }
+
+        // Map to dropdown options - getDistrictsByState already filtered by stateId
+        const list = resp.data
+          .map(toDropdownOption)
+          .filter(o => o.value && o.label);
+
+        console.log(`Loaded ${list.length} districts for stateId ${stateId}`, list);
         setDistricts(list);
-      } catch {
+      } catch (error) {
+        console.error("Error loading districts:", error, { stateValue });
         setDistricts([]);
       } finally {
         setDistrictsLoading(false);
@@ -599,8 +620,8 @@ const CompanyDialogBox = ({
               <FormInput
                 control={form.control}
                 name="branchName"
-                label={<LabelWithAsterisk label="Branch" required />}
-                placeholder="Enter branch name"
+                label={<LabelWithAsterisk label={t("branch")} required />}
+                placeholder={t("enterBranchName")}
                 required
                 
               />
@@ -608,16 +629,16 @@ const CompanyDialogBox = ({
               <FormTextarea
                 control={form.control}
                 name="addressLine"
-                label={<LabelWithAsterisk label="Address" required />}
-                placeholder="Enter address"
+                label={<LabelWithAsterisk label={t("address")} required />}
+                placeholder={t("enterAddress")}
                 required
               />
 
               <FormInput
                 control={form.control}
                 name="locality"
-                label={<LabelWithAsterisk label="Locality" />}
-                placeholder="Enter locality"
+                label={<LabelWithAsterisk label={t("locality")} />}
+                placeholder={t("enterLocality")}
               />
 
               {/* Country & State Grid */}
@@ -625,11 +646,11 @@ const CompanyDialogBox = ({
                 <FormDropdown
                   control={form.control}
                   name="country"
-                  label={<LabelWithAsterisk label="Country" required />}
+                  label={<LabelWithAsterisk label={t("country")} required />}
                   placeholder={
                     countriesLoading
-                      ? "Loading countries..."
-                      : "Select Country"
+                      ? t("loadingCountries")
+                      : t("searchACountry")
                   }
                   options={countries.length > 0 ? countries : []}
                 />
@@ -637,11 +658,11 @@ const CompanyDialogBox = ({
                 <FormDropdown
                   control={form.control}
                   name="state"
-                  label={<LabelWithAsterisk label="State/Province" required />}
+                  label={<LabelWithAsterisk label={t("stateProvince")} required />}
                   placeholder={
                     statesLoading
-                      ? "Loading states..."
-                      : "Select State"
+                      ? t("loadingStates")
+                      : t("searchAStateProvince")
                   }
                   options={states.length > 0 ? states : []}
                 />
@@ -652,7 +673,7 @@ const CompanyDialogBox = ({
                 <FormDropdown
                   control={form.control}
                   name="district"
-                  label={<LabelWithAsterisk label="District" />}
+                  label={<LabelWithAsterisk label={t("district")} />}
                   placeholder={
                     districtsLoading
                       ? t("loadingDistricts")
@@ -665,9 +686,9 @@ const CompanyDialogBox = ({
                   control={form.control}
                   name="pinCode"
                   label={
-                    <LabelWithAsterisk label="PostalCode/PinCode" required />
+                    <LabelWithAsterisk label={t("postalCodePinCode")} required />
                   }
-                  placeholder="Enter postal code"
+                  placeholder={t("enterPostalCode")}
                   required
                 />
               </div>
@@ -677,21 +698,21 @@ const CompanyDialogBox = ({
                 <FormInput
                   control={form.control}
                   name="city"
-                  label={<LabelWithAsterisk label="City" />}
-                  placeholder="Enter city"
+                  label={<LabelWithAsterisk label={t("city")} />}
+                  placeholder={t("enterCity")}
                 />
                 <FormInput
                   control={form.control}
                   name="lattitude"
-                  label={<LabelWithAsterisk label="Lattitude" />}
-                  placeholder="Enter lattitude"
+                  label={<LabelWithAsterisk label={t("latitude")} />}
+                  placeholder={t("enterLatitude")}
                 />
 
                 <FormInput
                   control={form.control}
                   name="longitude"
-                  label={<LabelWithAsterisk label="Longitude" />}
-                  placeholder="Enter longitude"
+                  label={<LabelWithAsterisk label={t("longitude")} />}
+                  placeholder={t("enterLongitude")}
                 />
               </div>
 
@@ -741,8 +762,8 @@ const CompanyDialogBox = ({
               <FormInput
                 control={form.control}
                 name="gst"
-                label={<LabelWithAsterisk label="Tax ID / GST#" />}
-                placeholder="Enter GST number"
+                label={<LabelWithAsterisk label={t("taxIdGst")} />}
+                placeholder={t("enterGstNumber")}
               />
 
               <Separator />
@@ -755,15 +776,15 @@ const CompanyDialogBox = ({
                   <FormInput
                     control={form.control}
                     name="contactName"
-                    label={<LabelWithAsterisk label="Contact Name" />}
-                    placeholder="Enter contact name"
+                    label={<LabelWithAsterisk label={t("contactName")} />}
+                    placeholder={t("enterContactName")}
                   />
 
                   <FormInput
                     control={form.control}
                     name="contactNumber"
-                    label={<LabelWithAsterisk label="Contact Number" />}
-                    placeholder="Enter contact number"
+                    label={<LabelWithAsterisk label={t("contactNumber")} />}
+                    placeholder={t("enterContactNumber")}
                   />
                 </div>
               </div>

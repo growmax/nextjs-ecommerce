@@ -248,7 +248,7 @@ describe("ProfilePageClient", () => {
 
   test("renders header and child cards", () => {
     renderWithProviders(React.createElement(ProfilePageClient));
-    expect(screen.getByText("Profile Settings")).toBeInTheDocument();
+    expect(screen.getByText("profileSettings")).toBeInTheDocument();
     expect(screen.getByTestId("profile-card")).toBeInTheDocument();
     expect(screen.getByTestId("preferences-card")).toBeInTheDocument();
   });

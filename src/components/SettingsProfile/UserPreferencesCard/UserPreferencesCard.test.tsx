@@ -68,7 +68,7 @@ describe("UserPreferencesCard", () => {
       })
     );
     expect(screen.getAllByTestId("skeleton").length).toBeGreaterThan(0);
-    expect(screen.getByText("User Preferences")).toBeInTheDocument();
+    expect(screen.getByText("userPreferences")).toBeInTheDocument();
   });
 
   it("renders fields and calls onChange when values change", () => {
@@ -82,27 +82,27 @@ describe("UserPreferencesCard", () => {
     );
 
     // Time Zone
-    const tzInput = screen.getByLabelText("Time Zone") as HTMLInputElement;
+    const tzInput = screen.getByLabelText("timeZone") as HTMLInputElement;
     expect(tzInput.value).toBe(samplePreferences.timeZone);
     fireEvent.change(tzInput, { target: { value: "Asia/Kolkata" } });
     expect(onChange).toHaveBeenCalledWith("timeZone", "Asia/Kolkata");
 
     // Date Format
     const dfInput = screen.getByLabelText(
-      "Date Display Format"
+      "dateDisplayFormat"
     ) as HTMLInputElement;
     expect(dfInput.value).toBe(samplePreferences.dateFormat);
     fireEvent.change(dfInput, { target: { value: "DD-MM-YYYY" } });
     expect(onChange).toHaveBeenCalledWith("dateFormat", "DD-MM-YYYY");
 
     // Time Format
-    const tfInput = screen.getByLabelText("Time Format") as HTMLInputElement;
+    const tfInput = screen.getByLabelText("timeFormat") as HTMLInputElement;
     expect(tfInput.value).toBe(samplePreferences.timeFormat);
     fireEvent.change(tfInput, { target: { value: "24hr" } });
     expect(onChange).toHaveBeenCalledWith("timeFormat", "24hr");
 
     // Preview header and icons present
-    expect(screen.getByText("Preview")).toBeInTheDocument();
+    expect(screen.getByText("preview")).toBeInTheDocument();
     // globe icon appears multiple times (header + timezone line)
     expect(screen.getAllByTestId("icon-globe").length).toBeGreaterThan(0);
     expect(screen.getByTestId("icon-calendar")).toBeInTheDocument();
@@ -118,8 +118,8 @@ describe("UserPreferencesCard", () => {
       })
     );
 
-    expect(screen.getByLabelText("Time Zone")).toBeDisabled();
-    expect(screen.getByLabelText("Date Display Format")).toBeDisabled();
-    expect(screen.getByLabelText("Time Format")).toBeDisabled();
+    expect(screen.getByLabelText("timeZone")).toBeDisabled();
+    expect(screen.getByLabelText("dateDisplayFormat")).toBeDisabled();
+    expect(screen.getByLabelText("timeFormat")).toBeDisabled();
   });
 });

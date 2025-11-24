@@ -4,7 +4,7 @@ import HeaderBar from "@/components/Global/HeaderBar/HeaderBar";
 import { useRoutePrefetch } from "@/hooks/useRoutePrefetch";
 import { useTranslations } from "next-intl";
 import { useEffect } from "react";
-import CompanyBranchTable from "./CompanyBranchTable";
+import CompanyBranchTable from "@/components/SettingsCompany/CompanyBranchTable/CompanyBranchTable";
 import CompanyDetail from "./CompanyDetail";
 
 const ComanyPageClient = () => {

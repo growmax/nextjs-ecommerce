@@ -18,8 +18,10 @@ import { AuthService, CompanyService } from "@/lib/api";
 import { AuthStorage } from "@/lib/auth";
 import { JWTService } from "@/lib/services/JWTService";
 import parsePhoneNumberFromString from "libphonenumber-js";
+import { useTranslations } from "next-intl";
 import { Shield } from "lucide-react";
 export default function ProfilePageClient() {
+  const t = useTranslations("profileSettings");
   const {
     profile,
     preferences,
@@ -178,22 +180,22 @@ export default function ProfilePageClient() {
     const errors: string[] = [];
 
     if (!profile) {
-      return { isValid: false, errors: ["Profile data is missing"] };
+      return { isValid: false, errors: [t("profile") + " data is missing"] };
     }
 
     // Validate required fields
     if (!profile.name || profile.name.trim() === "") {
-      errors.push("Name is required");
+      errors.push(t("name") + " is required");
     }
 
     if (!profile.phone || profile.phone.trim() === "") {
-      errors.push("Mobile Number is required");
+      errors.push(t("mobileNumber") + " is required");
     }
 
     // Validate email format for alternate email
     if (profile.altEmail && profile.altEmail.trim() !== "") {
       if (!isValidEmail(profile.altEmail)) {
-        errors.push("Alternate Email must be a valid email address");
+        errors.push(t("alternateEmail") + " must be a valid email address");
       }
     }
 
@@ -208,11 +210,11 @@ export default function ProfilePageClient() {
     if (!hasChanges) return;
     if (!profile) return;
     if (!sub && !userId) {
-      toast.error("User ID is required");
+      toast.error("User ID is required"); // TODO: Add translation key
       return;
     }
     if (!tenantId) {
-      toast.error("Tenant ID is required");
+      toast.error("Tenant ID is required"); // TODO: Add translation key
       return;
     }
 
@@ -279,7 +281,7 @@ export default function ProfilePageClient() {
       if (changedSections.has("profile")) {
         const userIdToUse = sub;
         if (!userIdToUse) {
-          toast.error("User ID is required");
+          toast.error("User ID is required"); // TODO: Add translation key
           setIsSaving(false);
           return;
         }
@@ -298,7 +300,7 @@ export default function ProfilePageClient() {
 
       // If no promises to execute, return early
       if (promises.length === 0) {
-        toast.info("No changes to save");
+        toast.info(t("allChangesCancelled"));
         setIsSaving(false);
         return;
       }
@@ -323,13 +325,13 @@ export default function ProfilePageClient() {
         // Clear change tracking
         setChangedSections(new Set());
         setHasChanges(false);
-        toast.success("Profile Updated Successfully");
+        toast.success(t("changesSavedSuccessfully"));
       } else {
-        toast.error("Some changes failed to save. Please try again.");
+        toast.error(t("someChangesFailedToSave"));
       }
     } catch (error) {
       console.error("Failed to save profile:", error);
-      toast.error("Failed to save changes. Please try again.");
+      toast.error(t("failedToSaveChanges"));
     } finally {
       setIsSaving(false);
     }
@@ -338,12 +340,12 @@ export default function ProfilePageClient() {
   // Unified cancel handler
   const handleCancel = () => {
     resetAllChanges();
-    toast.info("All changes cancelled");
+      toast.info(t("allChangesCancelled"));
   };
 
   const handleVerifyPhone = async(phone: string) => {
     if (!phone) {
-      toast.error("Please enter a phone number");
+      toast.error(t("mobileNumber") + " is required");
       return;
     }
 
@@ -362,18 +364,18 @@ export default function ProfilePageClient() {
       }
     } catch (error) {
       console.error("Failed to send verification:", error);
-      toast.error("Failed to send verification code. Please try again.");
+      toast.error(t("failedToSaveChanges"));
     }
   };
 
   const handleOTPVerify = async (otpValue: string) => {
     if (!otpValue || otpValue.length !== 6) {
-      toast.error("Please enter a valid 6-digit OTP");
+      toast.error(t("enter6DigitOtp"));
       return;
     }
 
     if (!phoneNumber) {
-      toast.error("Phone number is required");
+      toast.error(t("mobileNumber") + " is required");
       return;
     }
 
@@ -394,11 +396,11 @@ export default function ProfilePageClient() {
       if (res) {
         setPhoneVerified(true);
         setShowOTPDialog(false);
-        toast.success("Phone number verified successfully!");
+        toast.success(t("phoneNumberVerifiedSuccessfully"));
       }
     } catch (error) {
       console.error("Failed to verify OTP:", error);
-      toast.error("Failed to verify OTP. Please try again.");
+      toast.error(t("failedToSaveChanges"));
     }
   };
 
@@ -407,7 +409,7 @@ export default function ProfilePageClient() {
     newPassword: string;
   }) => {
     if (!profile?.email) {
-      toast.error("Email is required for password change");
+      toast.error(t("email") + " is required for password change");
       return;
     }
 
@@ -417,11 +419,11 @@ export default function ProfilePageClient() {
         Otp: data.otp,
         Password: data.newPassword,
       });
-      toast.success("Password changed successfully!");
+      toast.success(t("passwordChangedSuccessfully"));
       setShowPasswordDialog(false);
     } catch (error) {
       console.error("Failed to change password:", error);
-      toast.error("Failed to change password. Please try again.");
+      toast.error(t("failedToSaveChanges"));
       throw error; // Re-throw so dialog can handle it
     }
   };
@@ -429,13 +431,13 @@ export default function ProfilePageClient() {
   const handleSendPasswordOtp = async () => {
     // Simulate OTP sending
     await new Promise(resolve => setTimeout(resolve, 1000));
-    toast.success("OTP sent successfully!");
+    toast.success(t("otpSentSuccessfully"));
   };
 
   return (
     <div className="flex flex-col h-full">
       <div id="profile-header" className="h-[48px] md:h-[64px] flex-shrink-0">
-        <HeaderBar title="Profile Settings" />
+        <HeaderBar title={t("profileSettings")} />
       </div>
 
       <main
@@ -465,7 +467,7 @@ export default function ProfilePageClient() {
                 aria-label="Change Password"
               >
                 <Shield className="h-4 w-4" />
-                Change Password
+                {t("changePassword")}
               </Button>
             }
           />
@@ -497,8 +499,8 @@ export default function ProfilePageClient() {
         onSave={handleSave}
         onCancel={handleCancel}
         isLoading={isSaving}
-        saveText="Save Changes"
-        cancelText="Cancel"
+        saveText={t("saveChanges")}
+        cancelText={t("cancel")}
         className="bottom-4 left-0 right-0 md:bottom-auto md:top-[69px] md:left-0 lg:left-64 z-50"
         anchorSelector="#profile-header"
       />
@@ -510,8 +512,8 @@ export default function ProfilePageClient() {
         open={showOTPDialog}
         onOpenChange={setShowOTPDialog}
         onVerify={handleOTPVerify}
-        title="Verify Phone Number"
-        description="Enter the OTP sent to your mobile number"
+        title={t("verifyPhoneNumber")}
+        description={t("enterOtpSentToMobile")}
       />
 
       {/* Password Change Dialog */}

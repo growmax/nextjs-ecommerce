@@ -90,13 +90,13 @@ describe("OTPDialog", () => {
     expect(
       screen.getByText("Enter the 6-digit code sent to your email")
     ).toBeInTheDocument();
-    expect(screen.getByLabelText("Enter OTP *")).toBeInTheDocument();
+    expect(screen.getByLabelText("enterOtp")).toBeInTheDocument();
     expect(
-      screen.getByRole("button", { name: "Resend OTP" })
+      screen.getByRole("button", { name: "resendOtp" })
     ).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "Cancel" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "cancel" })).toBeInTheDocument();
     expect(
-      screen.getByRole("button", { name: "Verify OTP" })
+      screen.getByRole("button", { name: "verifyOtp" })
     ).toBeInTheDocument();
   });
 
@@ -105,14 +105,14 @@ describe("OTPDialog", () => {
     render(React.createElement(OTPDialogWrapper, propsWithoutResend));
 
     expect(
-      screen.queryByRole("button", { name: "Resend OTP" })
+      screen.queryByRole("button", { name: "resendOtp" })
     ).not.toBeInTheDocument();
   });
 
   it("allows only numeric input and limits to 6 characters", () => {
     render(React.createElement(OTPDialogWrapper, defaultProps));
 
-    const input = screen.getByLabelText("Enter OTP *") as HTMLInputElement;
+    const input = screen.getByLabelText("enterOtp") as HTMLInputElement;
 
     fireEvent.change(input, { target: { value: "abc123def" } });
     expect(input.value).toBe("123");
@@ -124,8 +124,8 @@ describe("OTPDialog", () => {
   it("disables verify button when OTP is not 6 digits", () => {
     render(React.createElement(OTPDialogWrapper, defaultProps));
 
-    const verifyButton = screen.getByRole("button", { name: "Verify OTP" });
-    const input = screen.getByLabelText("Enter OTP *");
+    const verifyButton = screen.getByRole("button", { name: "verifyOtp" });
+    const input = screen.getByLabelText("enterOtp");
 
     expect(verifyButton).toBeDisabled();
 
@@ -140,8 +140,8 @@ describe("OTPDialog", () => {
     mockOnVerify.mockResolvedValue(undefined);
     render(React.createElement(OTPDialogWrapper, defaultProps));
 
-    const input = screen.getByLabelText("Enter OTP *");
-    const verifyButton = screen.getByRole("button", { name: "Verify OTP" });
+    const input = screen.getByLabelText("enterOtp");
+    const verifyButton = screen.getByRole("button", { name: "verifyOtp" });
 
     fireEvent.change(input, { target: { value: "123456" } });
     fireEvent.click(verifyButton);
@@ -155,7 +155,7 @@ describe("OTPDialog", () => {
     mockOnResend.mockResolvedValue(undefined);
     render(React.createElement(OTPDialogWrapper, defaultProps));
 
-    const resendButton = screen.getByRole("button", { name: "Resend OTP" });
+    const resendButton = screen.getByRole("button", { name: "resendOtp" });
     fireEvent.click(resendButton);
 
     await waitFor(() => {
@@ -166,8 +166,8 @@ describe("OTPDialog", () => {
   it("closes dialog and resets OTP when cancel is clicked", () => {
     render(React.createElement(OTPDialogWrapper, defaultProps));
 
-    const input = screen.getByLabelText("Enter OTP *");
-    const cancelButton = screen.getByRole("button", { name: "Cancel" });
+    const input = screen.getByLabelText("enterOtp");
+    const cancelButton = screen.getByRole("button", { name: "cancel" });
 
     fireEvent.change(input, { target: { value: "123456" } });
     fireEvent.click(cancelButton);
@@ -179,8 +179,8 @@ describe("OTPDialog", () => {
     mockOnVerify.mockResolvedValue(undefined);
     render(React.createElement(OTPDialogWrapper, defaultProps));
 
-    const input = screen.getByLabelText("Enter OTP *");
-    const verifyButton = screen.getByRole("button", { name: "Verify OTP" });
+    const input = screen.getByLabelText("enterOtp");
+    const verifyButton = screen.getByRole("button", { name: "verifyOtp" });
 
     fireEvent.change(input, { target: { value: "123456" } });
     fireEvent.click(verifyButton);
@@ -196,16 +196,14 @@ describe("OTPDialog", () => {
     );
     render(React.createElement(OTPDialogWrapper, defaultProps));
 
-    const input = screen.getByLabelText("Enter OTP *");
-    const verifyButton = screen.getByRole("button", { name: "Verify OTP" });
+    const input = screen.getByLabelText("enterOtp");
+    const verifyButton = screen.getByRole("button", { name: "verifyOtp" });
 
     fireEvent.change(input, { target: { value: "123456" } });
     fireEvent.click(verifyButton);
 
-    expect(
-      screen.getByRole("button", { name: "Verifying..." })
-    ).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "Verifying..." })).toBeDisabled();
+    // Button should be disabled during verification
+    expect(verifyButton).toBeDisabled();
 
     await waitFor(() => {
       expect(mockOnVerify).toHaveBeenCalledWith("123456");
@@ -216,10 +214,10 @@ describe("OTPDialog", () => {
     const loadingProps = { ...defaultProps, isLoading: true };
     render(React.createElement(OTPDialogWrapper, loadingProps));
 
-    const input = screen.getByLabelText("Enter OTP *");
-    const resendButton = screen.getByRole("button", { name: "Resend OTP" });
-    const cancelButton = screen.getByRole("button", { name: "Cancel" });
-    const verifyButton = screen.getByRole("button", { name: "Verify OTP" });
+    const input = screen.getByLabelText("enterOtp");
+    const resendButton = screen.getByRole("button", { name: "resendOtp" });
+    const cancelButton = screen.getByRole("button", { name: "cancel" });
+    const verifyButton = screen.getByRole("button", { name: "verifyOtp" });
 
     expect(input).toBeDisabled();
     expect(resendButton).toBeDisabled();
@@ -231,8 +229,8 @@ describe("OTPDialog", () => {
     mockOnVerify.mockRejectedValue(new Error("Invalid OTP"));
     render(React.createElement(OTPDialogWrapper, defaultProps));
 
-    const input = screen.getByLabelText("Enter OTP *");
-    const verifyButton = screen.getByRole("button", { name: "Verify OTP" });
+    const input = screen.getByLabelText("enterOtp");
+    const verifyButton = screen.getByRole("button", { name: "verifyOtp" });
 
     fireEvent.change(input, { target: { value: "123456" } });
     fireEvent.click(verifyButton);

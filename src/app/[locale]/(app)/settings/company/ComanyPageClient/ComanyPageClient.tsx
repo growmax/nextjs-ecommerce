@@ -1,8 +1,10 @@
 import HeaderBar from "@/components/Global/HeaderBar/HeaderBar";
+import { useTranslations } from "next-intl";
 import CompanyBranchTable from "../../../../../../components/SettingsCompany/CompanyBranchTable/CompanyBranchTable";
 import CompanyDetail from "../../../../../../components/SettingsCompany/CompanyDetail/CompanyDetail";
 
 const ComanyPageClient = () => {
+  const t = useTranslations("companySettings");
   return (
     <div className="flex flex-col h-full">
       {/* --- Sticky Header (Non-scrollable) --- */}
@@ -10,7 +12,7 @@ const ComanyPageClient = () => {
         id="profile-header"
         className="h-[48px] md:h-[64px] flex-shrink-0"
       >
-        <HeaderBar title="Company Settings" />
+        <HeaderBar title={t("companySettings")} />
       </div>
 
       {/* --- Scrollable Content --- */}

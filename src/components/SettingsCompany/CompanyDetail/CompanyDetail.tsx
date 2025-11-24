@@ -24,6 +24,7 @@ import type { CompanyApiResponse } from "@/lib/api/services/CompanyService";
 import { AuthStorage } from "@/lib/auth";
 import { JWTService } from "@/lib/services/JWTService";
 import { ChevronDown } from "lucide-react";
+import { useTranslations } from "next-intl";
 import React, { useEffect, useRef, useState } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
@@ -83,6 +84,7 @@ const normalizeCompanyData = (
 };
 
 const CompanyDetail = () => {
+  const t = useTranslations("companySettings");
   const defaultFormValues: CompanyFormValues = {
     data: {
       subIndustryId: {
@@ -288,59 +290,59 @@ const CompanyDetail = () => {
 
     // Validate Company Name (required)
     if (!formData.data?.name || (formData.data.name as string).trim() === "") {
-      errors.name = "Company Name is required";
+      errors.name = t("companyName") + " is required";
       form.setError("data.name", {
         type: "validate",
-        message: "Company Name is required",
+        message: t("companyName") + " is required",
       });
     }
 
     // Validate Tax ID / GST# (required)
     const taxDetailsId = formData.data?.taxDetailsId as { pan?: string } | undefined;
     if (!taxDetailsId?.pan || taxDetailsId.pan.trim() === "") {
-      errors.taxId = "Tax ID / GST# is required";
+      errors.taxId = t("taxIdGst") + " is required";
       form.setError("data.taxDetailsId.pan", {
         type: "validate",
-        message: "Tax ID / GST# is required",
+        message: t("taxIdGst") + " is required",
       });
     }
 
     // Validate Business Type (required)
     const businessTypeId = formData.data?.businessTypeId as { name?: string } | undefined;
     if (!businessTypeId?.name || businessTypeId.name.trim() === "") {
-      errors.businessType = "Business Type is required";
+      errors.businessType = t("businessType") + " is required";
       form.setError("data.businessTypeId.name", {
         type: "validate",
-        message: "Business Type is required",
+        message: t("businessType") + " is required",
       });
     }
 
     // Validate Account Type (required)
     const accountTypeId = formData.data?.accountTypeId as { name?: string } | undefined;
     if (!accountTypeId?.name || accountTypeId.name.trim() === "") {
-      errors.accountType = "Account Type is required";
+      errors.accountType = t("accountType") + " is required";
       form.setError("data.accountTypeId.name", {
         type: "validate",
-        message: "Account Type is required",
+        message: t("accountType") + " is required",
       });
     }
 
     // Validate Default Currency (required)
     const currencyId = formData.data?.currencyId as { currencyCode?: string } | undefined;
     if (!currencyId?.currencyCode || currencyId.currencyCode.trim() === "") {
-      errors.currency = "Default Currency is required";
+      errors.currency = t("defaultCurrency") + " is required";
       form.setError("data.currencyId.currencyCode", {
         type: "validate",
-        message: "Default Currency is required",
+        message: t("defaultCurrency") + " is required",
       });
     }
 
     // Validate SubIndustry (required)
     if (!formData.subIndustry || formData.subIndustry.trim() === "") {
-      errors.subIndustry = "SubIndustry is required";
+      errors.subIndustry = t("subIndustry") + " is required";
       form.setError("subIndustry", {
         type: "validate",
-        message: "SubIndustry is required",
+        message: t("subIndustry") + " is required",
       });
     }
 
@@ -370,7 +372,7 @@ const CompanyDetail = () => {
     setUploadedLogoUrl(null);
     // Clear validation errors
     setValidationErrors({});
-    toast.info("All changes cancelled", {
+    toast.info(t("allChangesCancelled"), {
       position: "top-right",
     });
   };
@@ -415,9 +417,9 @@ const CompanyDetail = () => {
         if (!found) {
           form.setError("subIndustry", {
             type: "validate",
-            message: "Please select a valid sub-industry.",
+            message: t("pleaseSelectValidSubIndustry"),
           });
-          toast.error("Please select a valid sub-industry.");
+          toast.error(t("pleaseSelectValidSubIndustry"));
           return;
         }
         selectedSubIndustry = found;
@@ -438,7 +440,7 @@ const CompanyDetail = () => {
         | undefined;
 
       if (!companyId) {
-        throw new Error("Missing company identifier");
+        throw new Error(t("missingCompanyIdentifier"));
       }
 
       const subIndustryIdValue =
@@ -518,9 +520,9 @@ const CompanyDetail = () => {
       setValidationErrors({});
       form.clearErrors();
 
-      toast.success("Changes saved successfully!");
+      toast.success(t("changesSavedSuccessfully"));
     } catch {
-      toast.error("Failed to save changes. Please try again.");
+      toast.error(t("failedToSaveChanges"));
     } finally {
       setIsSaving(false);
     }
@@ -528,7 +530,7 @@ const CompanyDetail = () => {
 
   return (
     <div>
-      <SectionCard title="Company Detail" className="py-2.5">
+      <SectionCard title={t("companyDetail")} className="py-2.5">
         <Form {...form}>
           <form className="grid grid-cols-1 md:grid-cols-4 gap-6 md:gap-6 lg:gap-8 items-start">
             {/* Image Upload Section */}
@@ -537,7 +539,7 @@ const CompanyDetail = () => {
                 <ImageUpload
                   currentImage={profileImage || null}
                   onImageChange={handleImageChange}
-                  alt="Company Logo"
+                  alt={t("companyLogo")}
                   size="lg"
                   shape="square"
                   className="w-full"
@@ -558,8 +560,8 @@ const CompanyDetail = () => {
                 <CompanyFormInput
                   control={form.control}
                   name="data.name"
-                  label={<LabelWithAsterisk label="Company Name" required />}
-                  placeholder="Company Name"
+                  label={<LabelWithAsterisk label={t("companyName")} required />}
+                  placeholder={t("companyName")}
                   loading={loading}
                 />
               </div>
@@ -569,8 +571,8 @@ const CompanyDetail = () => {
                 <CompanyFormInput
                   control={form.control}
                   name="data.website"
-                  label={<LabelWithAsterisk label="Website" />}
-                  placeholder="Website URL"
+                  label={<LabelWithAsterisk label={t("website")} />}
+                  placeholder={t("websiteUrl")}
                   loading={loading}
                 />
               </div>
@@ -580,8 +582,8 @@ const CompanyDetail = () => {
                 <CompanyFormInput
                   control={form.control}
                   name="data.taxDetailsId.pan"
-                  label={<LabelWithAsterisk label="Tax ID / GST#" />}
-                  placeholder="Tax ID or GST#"
+                  label={<LabelWithAsterisk label={t("taxIdGst")} />}
+                  placeholder={t("taxIdOrGst")}
                   loading={loading}
                 />
               </div>
@@ -591,8 +593,8 @@ const CompanyDetail = () => {
                 <CompanyFormInput
                   control={form.control}
                   name="data.businessTypeId.name"
-                  label={<LabelWithAsterisk label="Business Type" />}
-                  placeholder="Business Type"
+                  label={<LabelWithAsterisk label={t("businessType")} />}
+                  placeholder={t("businessType")}
                   loading={loading}
                 />
               </div>
@@ -602,8 +604,8 @@ const CompanyDetail = () => {
                 <CompanyFormInput
                   control={form.control}
                   name="data.accountTypeId.name"
-                  label={<LabelWithAsterisk label="Account Type" />}
-                  placeholder="Account Type"
+                  label={<LabelWithAsterisk label={t("accountType")} />}
+                  placeholder={t("accountType")}
                   loading={loading}
                 />
               </div>
@@ -613,8 +615,8 @@ const CompanyDetail = () => {
                 <CompanyFormInput
                   control={form.control}
                   name="data.currencyId.currencyCode"
-                  label={<LabelWithAsterisk label="Default Currency" />}
-                  placeholder="Default Currency"
+                  label={<LabelWithAsterisk label={t("defaultCurrency")} />}
+                  placeholder={t("defaultCurrency")}
                   loading={loading}
                 />
               </div>
@@ -627,7 +629,7 @@ const CompanyDetail = () => {
                 render={({ field }) => (
                   <FormItem className="space-y-1.5">
                     <FormLabel className="text-xs font-medium">
-                      <LabelWithAsterisk label="SubIndustry" required />
+                      <LabelWithAsterisk label={t("subIndustry")} required />
                     </FormLabel>
                     <FormControl>
                       <DropdownMenu onOpenChange={handleSubOpenChange}>
@@ -639,9 +641,9 @@ const CompanyDetail = () => {
                           >
                             <span className="truncate">
                               {loading
-                                ? "Loading company..."
+                                ? t("loadingCompany")
                                 : subLoading
-                                  ? "Loading..."
+                                  ? t("loadingSubIndustries")
                                   : field.value
                                     ? // First try to find from loaded options
                                       ((subIndustryOptions as any) ?? []).find(
@@ -651,7 +653,7 @@ const CompanyDetail = () => {
                                       // Fall back to initial value if options not loaded
                                       form.getValues("data.subIndustryId.name")
                                     : form.getValues("data.subIndustryId.name") ||
-                                      "Select SubIndustry"}
+                                      t("selectSubIndustry")}
                             </span>
                             <ChevronDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
                           </Button>
@@ -663,18 +665,18 @@ const CompanyDetail = () => {
                           >
                             {subLoading ? (
                               <div className="p-3 text-sm">
-                                Loading sub-industries...
+                                {t("loadingSubIndustries")}
                               </div>
                             ) : (subIndustryOptions ?? []).length === 0 ? (
                               <div className="p-3 text-sm text-muted-foreground">
-                                No sub-industry options
+                                {t("noSubIndustryOptions")}
                               </div>
                             ) : (
                               Object.entries(
                                 (subIndustryOptions ?? []).reduce(
                                   (acc: any, opt: any) => {
                                     const group =
-                                      opt.industryId?.name || "Other";
+                                      opt.industryId?.name || t("other");
                                     if (!acc[group]) acc[group] = [];
                                     acc[group].push(opt);
                                     return acc;
@@ -720,7 +722,7 @@ const CompanyDetail = () => {
               <div className="w-full min-w-0">
                 {/* prefer option data when loaded; otherwise fallback to prefilled form values */}
                 <FormLabel className="text-xs font-medium">
-                  Industry Description :{" "}
+                  {t("industryDescription")}{" "}
                   {form.watch("data.subIndustryId.id")
                     ? (
                         (subIndustryOptions ?? []).find(
@@ -741,8 +743,8 @@ const CompanyDetail = () => {
                         ) as any
                       )?.description ||
                       form.getValues("data.subIndustryId.description") ||
-                      "No description available"
-                    : "Select a sub-industry to view description"}
+                      t("noDescriptionAvailable")
+                    : t("selectSubIndustryToViewDescription")}
                 </p>
               </div>
             </div>
@@ -756,8 +758,8 @@ const CompanyDetail = () => {
           onSave={handleSave}
           onCancel={handleCancel}
           isLoading={isSaving}
-          saveText="Save Changes"
-          cancelText="Cancel"
+          saveText={t("saveChanges")}
+          cancelText={t("cancel")}
           className="bottom-4 left-0 right-0 md:bottom-auto md:top-[69px] md:left-0 lg:left-64 z-50"
         />
       )}

@@ -149,10 +149,10 @@ const CompanyBranchTable = () => {
         addressId: Number(id),
       });
 
-      toast.success("Branch deleted successfully");
+      toast.success(t("changesSavedSuccessfully"));
       reloadTable();
     } catch {
-      toast.error("Failed to delete branch. Please try again.");
+      toast.error(t("failedToSaveChanges"));
     } finally {
       setDeletingAddressId(null);
     }
@@ -222,7 +222,7 @@ const CompanyBranchTable = () => {
       },
       {
         accessorKey: "gst",
-        header: "Tax ID / GST",
+        header: t("taxIdGst"),
         cell: ({ row }) => {
           const gst = row.original.addressId?.gst;
           const gstValues = gst ? gst.split(",").map(s => s.trim()) : [];
@@ -247,7 +247,7 @@ const CompanyBranchTable = () => {
       },
       {
         accessorKey: "primaryContact",
-        header: "Contact Person",
+        header: t("contactPerson"),
         cell: ({ row }) => (
           <div className="text-xs sm:text-sm whitespace-nowrap">
             {row.original.addressId?.primaryContact || "-"}
@@ -256,7 +256,7 @@ const CompanyBranchTable = () => {
       },
       {
         accessorKey: "phone",
-        header: "Phone",
+        header: t("phone"),
         cell: ({ row }) => (
           <div className="text-xs sm:text-sm whitespace-nowrap">
             {row.original.addressId?.mobileNo || "-"}
@@ -274,7 +274,7 @@ const CompanyBranchTable = () => {
   return (
     <>
       <SectionCard
-        title="Branches"
+        title={t("companyBranches")}
         className="h-full flex flex-col py-2.5"
         contentClassName="p-0 flex-1 overflow-hidden"
         headerActions={
@@ -284,7 +284,7 @@ const CompanyBranchTable = () => {
             <div className="relative w-full sm:w-[250px]">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
               <Input
-                placeholder="Search branches..."
+                placeholder={t("searchBranches")}
                 className="pl-9 h-9 w-full"
                 value={searchQuery}
                 onChange={handleSearchChange}
@@ -302,7 +302,7 @@ const CompanyBranchTable = () => {
               }}
             >
               <Plus className="h-4 w-4 " />
-              Add Branch
+              {t("addBranch")}
             </Button>
           </div>
         }
@@ -314,8 +314,8 @@ const CompanyBranchTable = () => {
             isLoading={isLoading}
             emptyMessage={
               isError
-                ? "Failed to load branches. Please try again."
-                : "No branches found. Add a branch to get started."
+                ? t("failedToLoadBranches")
+                : t("noBranchesFound")
             }
             enableActions
             renderRowActions={row => (
@@ -343,7 +343,7 @@ const CompanyBranchTable = () => {
               </Button>
  </TooltipTrigger>
  <TooltipContent>
-        <p>Delete Branch</p>
+        <p>{t("deleteBranch")}</p>
       </TooltipContent>
             
               </Tooltip>
@@ -379,7 +379,7 @@ const CompanyBranchTable = () => {
           branchId={selectedBranch?.addressId?.id || selectedBranch?.id || null}
           onSuccess={() => {
             reloadTable();
-            toast.success("Branch saved successfully");
+            toast.success(t("changesSavedSuccessfully"));
           }}
         />
       
