@@ -11,9 +11,9 @@ import {
 import { CustomPagination } from "@/components/ui/custom-pagination";
 import { useSidebar } from "@/components/ui/sidebar";
 import { Skeleton } from "@/components/ui/skeleton";
+import { useCategoryProducts } from "@/hooks/ProductList/useProductListAPI";
 import { useProductStore } from "@/store/useProductStore";
-import { mockProducts } from "@/utils/ProductList/mockData";
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 
 interface ProductListClientProps {
   initialCategory?: string;
@@ -21,10 +21,11 @@ interface ProductListClientProps {
 
 /**
  * ProductListClient Component
- * Main client component composing all product listing pieces
+ * Main client component for product listing page
+ * Fetches products by category and manages display state
  */
 export default function ProductListClient({
-  initialCategory,
+  initialCategory = "all",
 }: ProductListClientProps) {
   const {
     setProducts,
@@ -36,29 +37,31 @@ export default function ProductListClient({
     viewMode,
   } = useProductStore();
   const { open: sidebarOpen } = useSidebar();
-  const [isLoading, setIsLoading] = useState(true);
 
-  // Load products and set initial category on mount
+  // Fetch products for the current category
+  const {
+    products: categoryProducts,
+    isLoading,
+    error: loadError,
+  } = useCategoryProducts({
+    categorySlug: initialCategory,
+  });
+
+  // Load products into store when data arrives
   useEffect(() => {
-    // Show loading state when category changes
-    setIsLoading(true);
-    
-    // Simulate async data loading
-    const loadData = async () => {
-      setProducts(mockProducts);
-      if (initialCategory && initialCategory !== "category") {
-        setSelectedCategory(initialCategory);
-      } else {
-        // Default to "all" if no valid category is provided
-        setSelectedCategory("all");
-      }
-      // Small delay to ensure smooth transition
-      await new Promise(resolve => setTimeout(resolve, 100));
-      setIsLoading(false);
-    };
-    
-    loadData();
-  }, [setProducts, initialCategory, setSelectedCategory]);
+    if (categoryProducts.length > 0) {
+      setProducts(categoryProducts);
+    }
+  }, [categoryProducts, setProducts]);
+
+  // Set initial category
+  useEffect(() => {
+    if (initialCategory && initialCategory !== "category") {
+      setSelectedCategory(initialCategory);
+    } else {
+      setSelectedCategory("all");
+    }
+  }, [initialCategory, setSelectedCategory]);
 
   // Scroll to top when page changes
   useEffect(() => {
@@ -117,22 +120,38 @@ export default function ProductListClient({
             </div>
           </div>
 
-          {/* Product Grid */}
-          {isLoading ? (
-            <ProductGridSkeleton viewMode={viewMode} count={12} />
-          ) : (
-            <ProductGrid />
-          )}
-
-          {/* Pagination */}
-          {filteredProducts.length > itemsPerPage && (
-            <div className="mt-8 flex justify-center">
-              <CustomPagination
-                currentPage={currentPage}
-                totalPages={Math.ceil(filteredProducts.length / itemsPerPage)}
-                onPageChange={setCurrentPage}
-              />
+          {/* Error State */}
+          {loadError ? (
+            <div className="w-full px-4 py-16 border rounded-lg bg-red-50/50">
+              <div className="text-center space-y-4">
+                <p className="text-lg font-semibold text-red-600">
+                  Failed to load products
+                </p>
+                <p className="text-sm text-muted-foreground">{loadError}</p>
+              </div>
             </div>
+          ) : (
+            <>
+              {/* Product Grid */}
+              {isLoading ? (
+                <ProductGridSkeleton viewMode={viewMode} count={12} />
+              ) : (
+                <ProductGrid />
+              )}
+
+              {/* Pagination */}
+              {filteredProducts.length > itemsPerPage && (
+                <div className="mt-8 flex justify-center">
+                  <CustomPagination
+                    currentPage={currentPage}
+                    totalPages={Math.ceil(
+                      filteredProducts.length / itemsPerPage
+                    )}
+                    onPageChange={setCurrentPage}
+                  />
+                </div>
+              )}
+            </>
           )}
         </main>
       </div>

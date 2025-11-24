@@ -231,11 +231,11 @@ export function FilterSection() {
                   {/* Price Display */}
                   <div className="flex items-center justify-between rounded-md bg-accent/30 px-3 py-2">
                     <span className="text-xs font-medium text-muted-foreground">
-                      ₹{(priceRange[0] / 100).toFixed(2)}
+                      ₹{priceRange[0]}
                     </span>
                     <span className="text-xs text-muted-foreground">—</span>
                     <span className="text-xs font-medium text-muted-foreground">
-                      ₹{(priceRange[1] / 100).toFixed(2)}
+                      ₹{priceRange[1]}
                     </span>
                   </div>
 
