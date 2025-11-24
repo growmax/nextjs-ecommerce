@@ -1,3 +1,5 @@
+import "@testing-library/jest-dom";
+
 // Mock Next.js modules first (before any imports)
 jest.mock("next/navigation", () => ({
   useRouter: () => ({
@@ -510,12 +512,12 @@ jest.mock("@/components/sales/CashDiscountCard", () => {
   };
 });
 
+import { OrdersService, QuotationDetailsService } from "@/lib/api";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { render, screen, waitFor } from "@testing-library/react";
 import React, { ReactNode } from "react";
-import EditQuotePage from "./page";
-import { QuotationDetailsService, OrdersService } from "@/lib/api";
 import { toast } from "sonner";
+import EditQuotePage from "./page";
 
 const mockFetchQuoteDetails =
   QuotationDetailsService.fetchQuotationDetails as jest.MockedFunction<

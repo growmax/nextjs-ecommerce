@@ -13,8 +13,8 @@ import { useState } from "react";
 import Logo from "./custom/logo";
 import SearchBox from "./custom/search";
 import NotificationButton from "./notifications";
-import ProfileButton from "./profile/ProfileButton";
 import AddCardButton from "./sample/add-card";
+import ProfileButton from "./SettingsProfile/ProfileButton/ProfileButton";
 
 export default function NavBar() {
   const [searchDrawerOpen, setSearchDrawerOpen] = useState(false);

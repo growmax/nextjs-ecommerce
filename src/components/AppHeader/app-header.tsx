@@ -40,7 +40,7 @@ export function AppHeader() {
   const tAuth = useTranslations("auth");
   const tSearch = useTranslations("search");
 
-  // Keyboard shortcut to open search (Cmd/Ctrl + K)
+  // Keyboard shortcut (Cmd/Ctrl + K)
   useEffect(() => {
     const down = (e: KeyboardEvent) => {
       if (e.key === "k" && (e.metaKey || e.ctrlKey)) {
@@ -48,7 +48,6 @@ export function AppHeader() {
         setOpen(true);
       }
     };
-
     document.addEventListener("keydown", down);
     return () => document.removeEventListener("keydown", down);
   }, []);
@@ -56,10 +55,8 @@ export function AppHeader() {
   const { state: sidebarState } = useSidebar();
   const isSidebarCollapsed = sidebarState === "collapsed";
 
-  // ---- Elastic Index ----
   const elasticIndex = "schwingstetterpgandproducts";
 
-  // ---- Command Suggestions ----
   const suggestionItems = useMemo(
     () => [
       {
@@ -89,6 +86,7 @@ export function AppHeader() {
 
   return (
     <>
+      {/* ---------- FIXED HEADER (FULLY RESPONSIVE) ---------- */}
       <header
         className={cn(
           "fixed top-0 z-[100] border-b bg-background/80 backdrop-blur-md supports-[backdrop-filter]:bg-background/80 transition-all duration-200",
@@ -150,9 +148,10 @@ export function AppHeader() {
             </div>
           </div>
 
-          {/* Right Side Icons */}
+          {/* ---------- RIGHT SIDE ICONS ---------- */}
           <div className="flex items-center gap-1 ml-auto">
-            {/* Desktop Right Side Icons */}
+
+            {/* Desktop */}
             <div className="hidden md:flex items-center gap-1">
               {/* Language Switcher */}
               <LanguageSwitcher />
@@ -173,7 +172,6 @@ export function AppHeader() {
                 </Button>
               )}
 
-              {/* Cart */}
               <Button
                 variant="ghost"
                 size="icon"
@@ -193,7 +191,6 @@ export function AppHeader() {
                 className="h-5 md:h-6 mx-0.5 md:mx-1"
               />
 
-              {/* Profile Dropdown with Real Data */}
               {isAuthenticated ? (
                 <AvatarCard
                   user={userProfile}
@@ -232,7 +229,7 @@ export function AppHeader() {
               )}
             </div>
 
-            {/* Mobile Right Side Icons (Condensed) */}
+            {/* ---------- Mobile Icons ---------- */}
             <div className="md:hidden flex items-center gap-1">
               {/* Language Switcher */}
               <LanguageSwitcher />
@@ -251,7 +248,6 @@ export function AppHeader() {
                 )}
               </Button>
 
-              {/* Profile Dropdown with Real Data */}
               {isAuthenticated ? (
                 <AvatarCard
                   user={userProfile}
@@ -292,10 +288,11 @@ export function AppHeader() {
           </div>
         </div>
 
-        {/* Bottom Separator */}
+        {/* Bottom Border */}
         <div className="h-px bg-border"></div>
       </header>
-      {/* ----- COMMAND DIALOG (moved to separate component) ----- */}
+
+      {/* ---------- SEARCH DIALOG ---------- */}
       <SearchDialogBox
         open={open}
         setOpen={setOpen}
@@ -307,3 +304,4 @@ export function AppHeader() {
     </>
   );
 }
+

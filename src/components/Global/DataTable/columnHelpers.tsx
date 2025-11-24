@@ -40,7 +40,10 @@ export function createSelectionColumn<TData>(): ColumnDef<TData> {
       </div>
     ),
     cell: ({ row }) => (
-      <div className="flex items-center justify-center">
+      <div
+        className="flex items-center justify-center"
+        onClick={e => e.stopPropagation()}
+      >
         <Checkbox
           checked={row.getIsSelected()}
           onCheckedChange={value => row.toggleSelected(!!value)}
@@ -63,7 +66,9 @@ export function createActionsColumn<TData>(
   return {
     id: "actions",
     header: () => null,
-    cell: ({ row }) => renderActions(row),
+    cell: ({ row }) => (
+      <div onClick={e => e.stopPropagation()}>{renderActions(row)}</div>
+    ),
     size: 40,
     enableSorting: false,
     enableHiding: false,

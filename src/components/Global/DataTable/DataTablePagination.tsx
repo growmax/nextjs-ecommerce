@@ -1,12 +1,12 @@
 "use client";
 
+import type { Table } from "@tanstack/react-table";
 import {
   ChevronLeft,
   ChevronRight,
   ChevronsLeft,
   ChevronsRight,
 } from "lucide-react";
-import type { Table } from "@tanstack/react-table";
 import * as React from "react";
 import { useTranslations } from "next-intl";
 

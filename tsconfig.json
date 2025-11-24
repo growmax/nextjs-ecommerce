@@ -38,13 +38,15 @@
     }
   },
   "include": [
-    "next-env.d.ts",
     "**/*.ts",
     "**/*.tsx",
-    ".next/types/**/*.ts",
+    "next-env.d.ts",
+    // Excluding Next.js generated types from global type-check to avoid
+    // false-positive errors referencing route files during local `tsc` runs.
     "src/app/check_out",
     "src/types/*.d.ts",
-    "types/*.d.ts"
+    "types/*.d.ts",
+    ".next/types/**/*.ts"
   ],
   "exclude": ["node_modules"]
 }

@@ -1,5 +1,5 @@
-import { authClient, createClientWithContext, RequestContext } from "../client";
 import { AnonymousTokenResponse } from "@/types/appconfig";
+import { authClient, createClientWithContext, RequestContext } from "../client";
 
 export interface LoginRequest {
   username: string;
@@ -26,7 +26,7 @@ export interface RefreshTokenResponse {
 export class AuthService {
   private static instance: AuthService;
 
-  private constructor() {}
+  private constructor() { }
 
   public static getInstance(): AuthService {
     if (!AuthService.instance) {
@@ -132,6 +132,22 @@ export class AuthService {
     const response = await client.post("/change-password", {
       currentPassword,
       newPassword,
+    });
+    return response.data;
+  }
+
+  /**
+   * Verify reset password with OTP
+   */
+  async verifyReset(params: {
+    UserName: string;
+    Otp: string;
+    Password: string;
+  }): Promise<unknown> {
+    const response = await authClient.post("/auth/verifyReset", {
+      UserName: params.UserName,
+      Otp: params.Otp,
+      Password: params.Password,
     });
     return response.data;
   }

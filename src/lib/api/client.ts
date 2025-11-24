@@ -24,6 +24,12 @@ const API_CONFIG = {
   OPENSEARCH_URL:
     process.env.OPENSEARCH_URL ||
     "https://api.myapptino.com/opensearch/invocations",
+  BASE_API_URL:
+    process.env.BASE_API_URL || "https://schwingstetter.myapptino.com/api/",
+  BUCKET_NAME: process.env.NEXT_PUBLIC_S3BUCKET || 'growmax-dev-app-assets',
+  ACCESS_KEY: process.env.AWS_S3_ACCESS_KEY,
+  SECRET_KEY: process.env.AWS_S3_SECRET_KEY,
+  REGION: process.env.AWS_S3_REGION || 'ap-northeast-1',
   ELASTIC_URL:
     process.env.ELASTIC_URL ||
     "https://api.myapptino.com/elasticsearch/invocations",
@@ -31,7 +37,7 @@ const API_CONFIG = {
 
 // Types
 export interface ApiClientConfig {
-  baseURL?: string;
+  baseURL?: string | undefined;
   timeout?: number;
   withCredentials?: boolean;
 }
@@ -113,7 +119,12 @@ function getTenantFromToken(token: string): string | null {
 
 // Create axios instance factory
 function createApiClient(config: ApiClientConfig = {}): AxiosInstance {
-  const instance = axios.create({
+  const axiosConfig: {
+    timeout: number;
+    withCredentials: boolean;
+    headers: { "Content-Type": string };
+    baseURL?: string;
+  } = {
     timeout: 30000,
     // Only use withCredentials for same-origin requests to avoid CORS conflicts
     // External APIs with wildcard CORS headers don't support credentials
@@ -121,8 +132,13 @@ function createApiClient(config: ApiClientConfig = {}): AxiosInstance {
     headers: {
       "Content-Type": "application/json",
     },
-    ...config,
-  });
+  };
+  
+  if (config.baseURL !== undefined) {
+    axiosConfig.baseURL = config.baseURL;
+  }
+  
+  const instance = axios.create(axiosConfig);
 
   // Request interceptor
   instance.interceptors.request.use(
@@ -258,6 +274,9 @@ function createApiClient(config: ApiClientConfig = {}): AxiosInstance {
 export const authClient = createApiClient({
   baseURL: API_CONFIG.AUTH_URL,
 });
+export const BasePageUrl = createApiClient({
+  baseURL: API_CONFIG.API_BASE_URL,
+});
 
 export const homePageClient = createApiClient({
   baseURL: API_CONFIG.HOME_PAGE_URL,
@@ -295,11 +314,26 @@ export const preferenceClient = createApiClient({
   baseURL: API_CONFIG.PREFERENCE_URL,
 });
 
+export const userPreferenceApiClient = createApiClient({
+  baseURL: API_CONFIG.BASE_API_URL,
+});
+
 // Local Next.js API client (for /api routes)
 export const localApiClient = createApiClient({
   baseURL: "", // Empty baseURL for relative paths to current domain
 });
-
+export const bucketName = createApiClient({
+  baseURL: API_CONFIG.BUCKET_NAME, // Empty baseURL for relative paths to current domain
+});
+export const accessKey = createApiClient({
+  baseURL: API_CONFIG.ACCESS_KEY, // Empty baseURL for relative paths to current domain
+});
+export const secretKey = createApiClient({
+  baseURL: API_CONFIG.SECRET_KEY, // Empty baseURL for relative paths to current domain
+});
+export const region = createApiClient({
+  baseURL: API_CONFIG.REGION, // Empty baseURL for relative paths to current domain
+});
 // Utility functions
 export const createClientWithContext = (
   baseClient: AxiosInstance,
