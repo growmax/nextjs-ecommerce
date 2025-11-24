@@ -8,7 +8,7 @@ import { Download } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
 import { toast } from "sonner";
 import { useTranslations } from "next-intl";
-import QuotesLandingTable from "../Components/QuotesLandingTable/QuotesLandingTable";
+import QuotesLandingTable from "../components/QuotesLandingTable/QuotesLandingTable";
 
 export default function QuotesLandingPageClient() {
   const { prefetch } = useRoutePrefetch();

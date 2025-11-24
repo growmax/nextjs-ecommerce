@@ -1,4 +1,4 @@
-import OpenElasticSearchService from "@/lib/api/services/ElacticQueryService/openElasticSearch/openElasticSearch";
+import OpenElasticSearchService from "@/lib/api/services/ElasticQueryService/openElasticSearch/openElasticSearch";
 import { NextResponse } from "next/server";
 
 export async function GET(req: Request) {

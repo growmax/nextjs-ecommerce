@@ -3,7 +3,7 @@ import { usePageScroll } from "@/hooks/usePageScroll";
 import dynamic from "next/dynamic";
 
 const QuotesLandingPageClient = dynamic(
-  () => import("./Components/QuotesLandingPageClient"),
+  () => import("./components/QuotesLandingPageClient"),
   {
     ssr: false,
   }
