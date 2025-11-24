@@ -9,7 +9,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { useRoutePrefetch } from "@/hooks/useRoutePrefetch";
+
 import { cn } from "@/lib/utils";
 import { getUserInitials } from "@/utils/General/general";
 import {
@@ -22,8 +22,8 @@ import {
   ShoppingCart,
   User,
 } from "lucide-react";
-import Link from "next/link";
 import { useTranslations } from "next-intl";
+import Link from "next/link";
 import { AvatarCardProps } from "./Avatarcard.types";
 
 export function AvatarCard({
@@ -37,7 +37,6 @@ export function AvatarCard({
   side,
   menuClassName,
 }: AvatarCardProps) {
-  const { prefetch } = useRoutePrefetch();
   const tNav = useTranslations("navigation");
   const tAuth = useTranslations("auth");
   const menuItems = [
@@ -193,7 +192,7 @@ export function AvatarCard({
           const Icon = item.icon;
           return (
             <DropdownMenuItem key={item.href} asChild>
-              <Link href={item.href} onMouseEnter={() => prefetch(item.href)}>
+              <Link href={item.href}>
                 <Icon className="h-4 w-4" />
                 <span>{item.label}</span>
               </Link>

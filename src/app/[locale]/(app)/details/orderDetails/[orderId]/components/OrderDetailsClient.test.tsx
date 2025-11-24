@@ -1,9 +1,27 @@
+// Mock @/i18n/navigation first to avoid ESM parsing issues
+jest.mock("@/i18n/navigation", () => {
+  const React = jest.requireActual<typeof import("react")>("react");
+  return {
+    Link: ({ children, href, ...props }: any) =>
+      React.createElement("a", { href, ...props }, children),
+    redirect: jest.fn(),
+    usePathname: () => "/",
+    useRouter: () => ({
+      push: jest.fn(),
+      replace: jest.fn(),
+      refresh: jest.fn(),
+      back: jest.fn(),
+      forward: jest.fn(),
+      prefetch: jest.fn(),
+    }),
+  };
+});
+
 // Mock Next.js modules first (before any imports)
 jest.mock("next/navigation", () => ({
   useRouter: () => ({
     push: jest.fn(),
     replace: jest.fn(),
-    prefetch: jest.fn(),
   }),
 }));
 
@@ -430,17 +448,18 @@ jest.mock("react", () => {
   };
 });
 
+import {
+  OrderDetailsService,
+  OrderNameService,
+  PaymentService,
+  RequestEditService,
+} from "@/lib/api";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { render, screen, waitFor } from "@testing-library/react";
 import React, { ReactNode } from "react";
-import OrderDetailsClient from "./OrderDetailsClient";
-import {
-  OrderDetailsService,
-  PaymentService,
-  OrderNameService,
-  RequestEditService,
-} from "@/lib/api";
 import { toast } from "sonner";
+import { LoadingProvider } from "@/hooks/useGlobalLoader";
+import OrderDetailsClient from "./OrderDetailsClient";
 
 const mockFetchOrderDetails =
   OrderDetailsService.fetchOrderDetails as jest.MockedFunction<
@@ -465,7 +484,7 @@ const _mockRequestEdit = RequestEditService.requestEdit as jest.MockedFunction<
 >;
 const mockToastError = toast.error as jest.MockedFunction<typeof toast.error>;
 
-// Helper to create a wrapper with QueryClient
+// Helper to create a wrapper with QueryClient and LoadingProvider
 function createWrapper() {
   const queryClient = new QueryClient({
     defaultOptions: {
@@ -476,8 +495,13 @@ function createWrapper() {
     },
   });
 
-  const Wrapper = ({ children }: { children: ReactNode }) =>
-    React.createElement(QueryClientProvider, { client: queryClient }, children);
+  const Wrapper = ({ children }: { children: ReactNode }) => {
+    return React.createElement(
+      QueryClientProvider,
+      { client: queryClient },
+      React.createElement(LoadingProvider, null, children)
+    );
+  };
   Wrapper.displayName = "QueryClientWrapper";
   return Wrapper;
 }
@@ -618,7 +642,10 @@ describe("OrderDetailsClient", () => {
 
   it("should handle error state", async () => {
     const errorMessage = "Failed to fetch order details";
-    mockFetchOrderDetails.mockRejectedValueOnce(new Error(errorMessage));
+    // Mock to reject multiple times since the component has retry: 1
+    mockFetchOrderDetails
+      .mockRejectedValueOnce(new Error(errorMessage))
+      .mockRejectedValueOnce(new Error(errorMessage));
 
     const params = Promise.resolve({ orderId: "order-123", locale: "en" });
 
@@ -626,8 +653,13 @@ describe("OrderDetailsClient", () => {
       wrapper: createWrapper(),
     });
 
-    await waitFor(() => {
-      expect(mockToastError).toHaveBeenCalledWith(errorMessage);
-    });
+    // Wait for the error to be processed by React Query and the useEffect to trigger
+    // The component has retry: 1, so it will retry once before showing the error
+    await waitFor(
+      () => {
+        expect(mockToastError).toHaveBeenCalledWith(errorMessage);
+      },
+      { timeout: 5000 }
+    );
   });
 });

@@ -2,10 +2,10 @@
 
 import { Toaster } from "@/components/ui/sonner";
 import { Layers } from "lucide-react";
+import { useTranslations } from "next-intl";
 import dynamic from "next/dynamic";
 import { Suspense, useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
-import { useTranslations } from "next-intl";
 
 import { EditOrderNameDialog } from "@/components/dialogs/EditOrderNameDialog";
 import {
@@ -23,7 +23,6 @@ import {
 import { useQuoteDetails } from "@/hooks/details/quotedetails/useQuoteDetails";
 import { useCurrentUser } from "@/hooks/useCurrentUser";
 import { useGetVersionDetails } from "@/hooks/useGetVersionDetails/useGetVersionDetails";
-import { useRoutePrefetch } from "@/hooks/useRoutePrefetch";
 import { useTenantData } from "@/hooks/useTenantData";
 import type { QuotationDetailsResponse } from "@/lib/api";
 import { QuotationDetailsService } from "@/lib/api";
@@ -33,6 +32,7 @@ import { exportProductsToCsv } from "@/lib/export-csv";
 import type { SelectedVersion } from "@/types/details/orderdetails/version.types";
 import { getStatusStyle } from "@/utils/details/orderdetails";
 import { decodeUnicode } from "@/utils/General/general";
+import { useRouter } from "next/navigation";
 
 // Dynamic imports for heavy components
 // No loading prop to avoid double loaders - main DetailsSkeleton handles all loading states
@@ -74,7 +74,7 @@ export default function QuoteDetailsClient({
 
   const { user } = useCurrentUser();
   const { tenantData } = useTenantData();
-  const { prefetch, prefetchAndNavigate } = useRoutePrefetch();
+  const router = useRouter();
 
   const lastFetchKeyRef = useRef<string | null>(null);
   const processedVersionRef = useRef<string | null>(null);
@@ -208,18 +208,6 @@ export default function QuoteDetailsClient({
     quoteDetails?.data?.quotationDetails?.[0]?.quotationIdentifier ||
     quoteIdentifier ||
     "...";
-  useEffect(() => {
-    if (quoteIdentifier && quoteDetails && !loading) {
-      prefetch(`/details/quoteDetails/${quoteIdentifier}/edit`);
-    }
-  }, [quoteIdentifier, quoteDetails, loading, prefetch]);
-
-  useEffect(() => {
-    prefetch("/landing/orderslanding");
-    prefetch("/landing/quoteslanding");
-    prefetch("/settings/profile");
-    prefetch("/settings/company");
-  }, [prefetch]);
 
   const handleEditQuote = () => {
     const updatedBuyerStatus =
@@ -240,7 +228,7 @@ export default function QuoteDetailsClient({
       updatedBuyerStatus === "QUOTE RECEIVED" ||
       updatedBuyerStatus === "OPEN"
     ) {
-      prefetchAndNavigate(`/details/quoteDetails/${quoteIdentifier}/edit`);
+      router.push(`/details/quoteDetails/${quoteIdentifier}/edit`);
       return;
     }
 
@@ -330,7 +318,7 @@ export default function QuoteDetailsClient({
   };
 
   const handleClose = () => {
-    prefetchAndNavigate("/landing/quoteslanding");
+    router.push("/landing/quoteslanding");
   };
 
   const handleClone = () => {
@@ -388,7 +376,7 @@ export default function QuoteDetailsClient({
       (reorder && validityTill && new Date() < new Date(validityTill)) ||
       updatedBuyerStatus === "QUOTE RECEIVED"
     ) {
-      prefetchAndNavigate(
+      router.push(
         `/details/quoteDetails/${quoteIdentifier}/edit?placeOrder=true`
       );
       return;
@@ -465,8 +453,6 @@ export default function QuoteDetailsClient({
       label: t("editQuoteButton"),
       variant: "outline" as const,
       onClick: handleEditQuote,
-      onMouseEnter: () =>
-        prefetch(`/details/quoteDetails/${quoteIdentifier}/edit`),
     },
     {
       label: t("placeOrderButton"),

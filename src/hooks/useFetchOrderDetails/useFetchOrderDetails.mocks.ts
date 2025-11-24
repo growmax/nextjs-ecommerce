@@ -13,12 +13,15 @@ export const mockTenantData = {
 export const mockQuoteSettings = {};
 
 export const mockOrderDetailsResponse = {
+  status: "success",
   data: {
-    orderDetails: {
-      id: "order-123",
-      status: "CONFIRMED",
-      items: [{ id: "item-1", name: "Product 1", quantity: 2 }],
-    },
+    orderDetails: [
+      {
+        id: "order-123",
+        status: "CONFIRMED",
+        items: [{ id: "item-1", name: "Product 1", quantity: 2 }],
+      },
+    ],
   },
 };
 

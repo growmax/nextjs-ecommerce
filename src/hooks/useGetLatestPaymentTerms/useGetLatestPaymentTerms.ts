@@ -1,7 +1,7 @@
-import axios from "axios";
 import { useCurrentUser } from "@/hooks/useCurrentUser";
-import useSWR from "swr/immutable";
 import type { PaymentTerm } from "@/lib/api";
+import { useQuery } from "@tanstack/react-query";
+import axios from "axios";
 
 /**
  * Hook to get latest payment terms with cash discount
@@ -25,38 +25,37 @@ export default function useGetLatestPaymentTerms(
   const userId = user?.userId;
   const companyId = user?.companyId;
 
-  const fetcher = async () => {
-    if (!userId) {
-      throw new Error("User ID is required");
-    }
+  const { data: paymentTerms, isLoading } = useQuery({
+    queryKey: ["paymentTerms", userId, companyId],
+    queryFn: async () => {
+      if (!userId) {
+        throw new Error("User ID is required");
+      }
 
-    const response = await axios({
-      url: "/api/sales/payments/getAllPaymentTerms",
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      data: { userId, companyId },
-    });
+      const response = await axios({
+        url: "/api/sales/payments/getAllPaymentTerms",
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        data: { userId, companyId },
+      });
 
-    // Filter for cash discount terms and return the first one
-    const dataterms = response?.data?.data?.filter(
-      (term: PaymentTerm) => term.cashdiscount === true
-    )?.[0];
+      // Filter for cash discount terms and return the first one
+      const dataterms = response?.data?.data?.filter(
+        (term: PaymentTerm) => term.cashdiscount === true
+      )?.[0];
 
-    return dataterms;
-  };
-
-  const { data: paymentTerms, error: paymentTermError } = useSWR(
-    userId && fetchLatestPaymentTerm ? ["fetchPaymentTerms", userId] : null,
-    fetcher,
-    {
-      revalidateOnFocus: true,
-    }
-  );
+      return dataterms;
+    },
+    enabled: !!userId && fetchLatestPaymentTerm,
+    staleTime: 30 * 60 * 1000, // 30 minutes - payment terms rarely change
+    gcTime: 60 * 60 * 1000, // 1 hour
+    refetchOnWindowFocus: false,
+  });
 
   return {
     latestPaymentTerms: paymentTerms,
-    latestPaymentTermsLoading: !paymentTerms && !paymentTermError,
+    latestPaymentTermsLoading: isLoading,
   };
 }

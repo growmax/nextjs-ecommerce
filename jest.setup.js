@@ -3,7 +3,7 @@ import "@testing-library/jest-dom";
 
 // Mock next-intl
 jest.mock("next-intl", () => ({
-  useTranslations: namespace => key => {
+  useTranslations: _namespace => key => {
     // Return the key as-is for testing (tests should expect keys, not translated text)
     return key;
   },
@@ -58,6 +58,26 @@ jest.mock("next/navigation", () => ({
     return "/";
   },
 }));
+
+// Mock @/i18n/navigation to avoid ESM parsing issues with next-intl/navigation
+jest.mock("@/i18n/navigation", () => {
+  const React = jest.requireActual("react");
+  return {
+    Link: ({ children, href, ...props }) => {
+      return React.createElement("a", { href, ...props }, children);
+    },
+    redirect: jest.fn(),
+    usePathname: () => "/",
+    useRouter: () => ({
+      push: jest.fn(),
+      replace: jest.fn(),
+      refresh: jest.fn(),
+      back: jest.fn(),
+      forward: jest.fn(),
+      prefetch: jest.fn(),
+    }),
+  };
+});
 
 // Mock window.matchMedia
 // Check if window exists before defining matchMedia

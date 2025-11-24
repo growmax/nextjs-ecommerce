@@ -34,7 +34,7 @@ describe("useLogout", () => {
     } as any);
     useRouterMock.mockReturnValue({
       push: mockPush,
-      prefetch: jest.fn(),
+
       back: jest.fn(),
       forward: jest.fn(),
       refresh: jest.fn(),
