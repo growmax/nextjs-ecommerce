@@ -5,15 +5,16 @@ import { Card, CardContent, CardFooter } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
 import Image from "next/image";
 import React from "react";
+import { useTranslations } from "next-intl";
 
 interface ProductTileProps {
   id: string;
   title: string;
   img: string;
   alt?: string;
-  sku?: string;
+  sku?: string | undefined;
   link?: string;
-  price?: number;
+  price?: number | undefined;
   currency?: string;
   inStock?: boolean;
   flashSale?: boolean;
@@ -49,6 +50,7 @@ const ProductTile: React.FC<ProductTileProps> = ({
   showFavorite = true,
   className = "",
 }) => {
+  const t = useTranslations("category");
   const [isFavorite, setIsFavorite] = React.useState(false);
   const [isCompared, setIsCompared] = React.useState(false);
 
@@ -58,7 +60,7 @@ const ProductTile: React.FC<ProductTileProps> = ({
         {/* Flash Sale Badge */}
         {flashSale && (
           <Badge className="absolute top-3 left-3 bg-yellow-400 text-black hover:bg-yellow-500 flex items-center gap-1 z-20">
-            <i className="fa-solid fa-bolt"></i> FLASH SALE
+            <i className="fa-solid fa-bolt"></i> {t("flashSale")}
           </Badge>
         )}
         {/* Favorite Button */}
@@ -66,7 +68,7 @@ const ProductTile: React.FC<ProductTileProps> = ({
           <button
             onClick={() => setIsFavorite(!isFavorite)}
             className="absolute top-2 right-2 text-gray-400 hover:text-red-500 transition-colors z-30"
-            aria-label="Add to Favorites"
+            aria-label={t("addToFavorites")}
           >
             <i
               className={`fa-${isFavorite ? "solid" : "regular"} fa-heart text-lg`}
@@ -95,7 +97,11 @@ const ProductTile: React.FC<ProductTileProps> = ({
           </a>
 
           {/* SKU */}
-          {sku && <p className="text-sm text-gray-500">SKU# {sku}</p>}
+          {sku && (
+            <p className="text-sm text-gray-500">
+              {t("sku")} {sku}
+            </p>
+          )}
 
           {/* Availability Badge */}
           <div>
@@ -104,14 +110,14 @@ const ProductTile: React.FC<ProductTileProps> = ({
                 variant="outline"
                 className="bg-green-50 text-green-700 border-green-200"
               >
-                <i className="fas fa-check fa-fw mr-1"></i> In Stock
+                <i className="fas fa-check fa-fw mr-1"></i> {t("inStock")}
               </Badge>
             ) : (
               <Badge
                 variant="outline"
                 className="bg-red-50 text-red-700 border-red-200"
               >
-                <i className="fas fa-ban fa-fw mr-1"></i> Out of Stock
+                <i className="fas fa-ban fa-fw mr-1"></i> {t("outOfStock")}
               </Badge>
             )}
           </div>
@@ -120,7 +126,7 @@ const ProductTile: React.FC<ProductTileProps> = ({
           {freeShipping && (
             <Badge variant="secondary" className="w-fit text-xs">
               <i className="fas fa-truck fa-fw mr-1"></i>
-              Free Shipping (Ground)
+              {t("freeShipping")}
             </Badge>
           )}
 
@@ -157,12 +163,12 @@ const ProductTile: React.FC<ProductTileProps> = ({
           {/* Promo Badge */}
           {promoCode && (
             <Badge variant="destructive" className="w-fit">
-              + {promoDiscount || "10%"} OFF
+              + {promoDiscount || "10%"} {t("off")}
             </Badge>
           )}
           {promoCode && (
             <p className="text-xs text-gray-600">
-              w/ code: <span className="font-semibold">{promoCode}</span>
+              {t("withCode")} <span className="font-semibold">{promoCode}</span>
             </p>
           )}
         </CardContent>
@@ -180,7 +186,7 @@ const ProductTile: React.FC<ProductTileProps> = ({
                 htmlFor={`compare-${id}`}
                 className="text-sm cursor-pointer"
               >
-                Compare
+                {t("compare")}
               </label>
             </div>
           )}
@@ -192,7 +198,7 @@ const ProductTile: React.FC<ProductTileProps> = ({
             className="flex-1"
             variant={inStock ? "default" : "outline"}
           >
-            {inStock ? "Add to Cart" : "Out of Stock"}
+            {inStock ? t("addToCart") : t("outOfStockButton")}
           </Button>
         </CardFooter>
       </Card>

@@ -13,12 +13,14 @@ import {
 import useLogout from "@/hooks/Auth/useLogout";
 import useUserProfile from "@/hooks/Profile/useUserProfile";
 import { getUserInitials } from "@/utils/General/general";
+import { useTranslations } from "next-intl";
 import { ReactNode } from "react";
 
 export function NavUser() {
   const { isMobile } = useSidebar();
   const { userProfile } = useUserProfile();
   const { isLoggingOut, handleLogout } = useLogout();
+  const t = useTranslations("auth");
 
   if (!userProfile) {
     return null;
@@ -33,7 +35,7 @@ export function NavUser() {
       <Avatar className="h-8 w-8 rounded-lg">
         <AvatarImage
           src={userProfile.picture || ""}
-          alt={userProfile.displayName || "User"}
+          alt={userProfile.displayName || t("user")}
         />
         <AvatarFallback className="rounded-lg">
           {getUserInitials(userProfile.displayName || "")}

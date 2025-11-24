@@ -2,6 +2,7 @@
 
 import { Button } from "@/components/ui/button";
 import React, { useMemo } from "react";
+import { useTranslations } from "next-intl";
 
 interface PaginationControlProps {
   currentPage: number;
@@ -18,6 +19,7 @@ const PaginationControl: React.FC<PaginationControlProps> = ({
   itemsPerPage = 12,
   onItemsPerPageChange,
 }) => {
+  const t = useTranslations("category");
   // Generate page numbers with ellipsis
   const pageNumbers = useMemo(() => {
     const delta = 2;
@@ -54,7 +56,7 @@ const PaginationControl: React.FC<PaginationControlProps> = ({
     <div className="flex items-center justify-between py-4 px-6 min-h-20">
       {/* View Selector */}
       <div className="flex items-center gap-4">
-        <span className="text-base font-medium">View:</span>
+        <span className="text-base font-medium">{t("view")}</span>
         <select
           value={itemsPerPage}
           onChange={e => onItemsPerPageChange?.(parseInt(e.target.value))}
@@ -70,7 +72,7 @@ const PaginationControl: React.FC<PaginationControlProps> = ({
       <div className="flex items-center justify-center gap-3">
         {/* Page Info */}
         <span className="text-base font-medium mr-6">
-          Page <span className="font-bold">{currentPage}</span> /{" "}
+          {t("page")} <span className="font-bold">{currentPage}</span> /{" "}
           <span className="font-bold">{totalPages}</span>
         </span>
 
@@ -81,7 +83,7 @@ const PaginationControl: React.FC<PaginationControlProps> = ({
           disabled={currentPage === 1}
           className="px-6 py-3"
         >
-          ‹ Previous Page
+          {t("previousPage")}
         </Button>
 
         {/* Page Numbers */}
@@ -111,7 +113,7 @@ const PaginationControl: React.FC<PaginationControlProps> = ({
           disabled={currentPage === totalPages}
           className="px-6 py-3"
         >
-          Next Page ›
+          {t("nextPage")}
         </Button>
       </div>
     </div>

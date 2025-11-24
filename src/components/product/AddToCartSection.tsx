@@ -3,8 +3,9 @@
 import { Button } from "@/components/ui/button";
 import { useCurrentUser } from "@/hooks/useCurrentUser";
 import { useTenantData } from "@/hooks/useTenantData";
-import { useRouter } from "@/i18n/navigation";
+import { usePathname, useRouter } from "@/i18n/navigation";
 import { CartService } from "@/lib/api/CartServices";
+import { cn } from "@/lib/utils";
 import { Minus, Plus, ShoppingCart, Trash2 } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
@@ -13,6 +14,7 @@ interface AddToCartSectionProps {
   productId: number;
   productTitle: string;
   isAvailable: boolean;
+  className?: string;
 }
 
 const CartServices = new CartService();
@@ -20,6 +22,7 @@ const CartServices = new CartService();
 export default function AddToCartSection({
   productId,
   isAvailable,
+  className,
 }: AddToCartSectionProps) {
   const [quantity, setQuantity] = useState(1);
   const [isAddingToCart, setIsAddingToCart] = useState(false);
@@ -127,20 +130,23 @@ export default function AddToCartSection({
       }
     }
   };
+  const pathname = usePathname();
+  const isProductPage = pathname?.startsWith("/products/");
+
   return (
-    <div className="hidden lg:block space-y-4">
+    <div className={cn("space-y-2", isProductPage && "hidden lg:block", className)}>
       {!showQuantity ? (
         <Button
           size="lg"
-          className="w-full h-11 text-sm font-semibold"
+          className="w-full h-9 text-xs font-semibold"
           onClick={() => handleQuantityChange("initial")}
           disabled={!isAvailable || isAddingToCart}
         >
-          <ShoppingCart className="mr-2 h-4 w-4" />
+          <ShoppingCart className="mr-2 h-3 w-3" />
           {isAddingToCart ? "ADDING..." : "ADD TO CART"}
         </Button>
       ) : (
-        <div className="flex items-center border rounded-lg h-11 w-full">
+        <div className="flex items-center border rounded-lg h-9 w-full">
           <Button
             variant="ghost"
             size="icon"
@@ -149,24 +155,24 @@ export default function AddToCartSection({
                 ? handleRemoveFromCart
                 : () => handleQuantityChange("decrement")
             }
-            className="rounded-r-none h-full w-14 flex items-center justify-center"
+            className="rounded-r-none h-full w-12 flex items-center justify-center"
           >
             {quantity === 1 ? (
-              <Trash2 className="h-4 w-4 text-red-500" />
+              <Trash2 className="h-3 w-3 text-red-500" />
             ) : (
-              <Minus className="h-4 w-4" />
+              <Minus className="h-3 w-3" />
             )}
           </Button>
-          <div className="flex-1 text-center font-semibold text-base border-x py-2 h-full flex items-center justify-center">
+          <div className="flex-1 text-center font-semibold text-sm border-x py-1 h-full flex items-center justify-center">
             {quantity}
           </div>
           <Button
             variant="ghost"
             size="icon"
             onClick={() => handleQuantityChange("increment")}
-            className="rounded-l-none h-full w-14 flex items-center justify-center"
+            className="rounded-l-none h-full w-12 flex items-center justify-center"
           >
-            <Plus className="h-4 w-4" />
+            <Plus className="h-3 w-3" />
           </Button>
         </div>
       )}

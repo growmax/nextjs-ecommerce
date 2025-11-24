@@ -7,10 +7,12 @@ import { useRoutePrefetch } from "@/hooks/useRoutePrefetch";
 import { Download } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
 import { toast } from "sonner";
+import { useTranslations } from "next-intl";
 import OrdersLandingTable from "./OrdersLandingTable/OrdersLandingTable";
 
 export default function OrdersLandingPageClient() {
   const { prefetch } = useRoutePrefetch();
+  const t = useTranslations("orders");
 
   useEffect(() => {
     prefetch("/landing/quoteslanding");
@@ -28,18 +30,18 @@ export default function OrdersLandingPageClient() {
     if (exportCallback) {
       exportCallback();
     } else {
-      toast.error("Export function not ready yet");
+      toast.error(t("exportNotReady"));
     }
-  }, [exportCallback]);
+  }, [exportCallback, t]);
 
   return (
     <LandingLayout>
       <PageLayout>
         <DashboardToolbar
-          title="Orders"
+          title={t("title")}
           primary={{
             condition: true,
-            value: "Export",
+            value: t("export"),
             handleClick: handleExport,
             startIcon: <Download />,
           }}

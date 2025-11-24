@@ -11,6 +11,11 @@ jest.mock("next/navigation", () => ({
 
 jest.mock("next-intl", () => ({
   useLocale: () => "en",
+  useTranslations: () => (key: string) => key,
+  useFormatter: () => ({
+    dateTime: (date: Date) => date.toISOString(),
+    number: (value: number) => value.toString(),
+  }),
 }));
 
 // Mock data

@@ -7,6 +7,7 @@ import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip
 import CompanyService from "@/lib/api/services/CompanyService";
 import type { ColumnDef } from "@tanstack/react-table";
 import { Loader2, Plus, Search, Trash2 } from "lucide-react";
+import { useTranslations } from "next-intl";
 import React, { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 import CompanyDialogBox from "../DialogBox/AddressDialogBox";
@@ -44,6 +45,7 @@ interface Branch {
 }
 
 const CompanyBranchTable = () => {
+  const t = useTranslations("companySettings");
   const [branches, setBranches] = useState<Branch[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isError, setIsError] = useState(false);
@@ -160,7 +162,7 @@ const CompanyBranchTable = () => {
     () => [
       {
         accessorKey: "name",
-        header: "Branch",
+        header: t("branch"),
         size: 120,
         minSize: 100,
         cell: ({ row }) => {
@@ -174,7 +176,7 @@ const CompanyBranchTable = () => {
       },
       {
         accessorKey: "address",
-        header: "Address",
+        header: t("address"),
         size: 120,
         minSize: 180,
         cell: ({ row }) => {
@@ -202,7 +204,7 @@ const CompanyBranchTable = () => {
                     variant="secondary"
                     className="text-xs font-medium px-2.5 py-0.5 bg-primary/10 text-primary"
                   >
-                    Billing
+                    {t("billing")}
                   </Badge>
                 )}
                 {branch.addressId?.isShipping && (
@@ -210,7 +212,7 @@ const CompanyBranchTable = () => {
                     variant="outline"
                     className="text-xs font-medium px-2.5 py-0.5"
                   >
-                    Shipping
+                    {t("shipping")}
                   </Badge>
                 )}
               </div>
@@ -262,7 +264,7 @@ const CompanyBranchTable = () => {
         ),
       },
     ],
-    []
+    [t]
   );
 
   const reloadTable = () => {

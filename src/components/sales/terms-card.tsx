@@ -2,6 +2,7 @@
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
+import { useTranslations } from "next-intl";
 
 interface OrderTerms {
   paymentTerms?: string;
@@ -69,13 +70,14 @@ const TermRow = ({
 };
 
 export default function OrderTermsCard({ orderTerms }: OrderTermsCardProps) {
+  const t = useTranslations("components");
   if (!orderTerms) return null;
 
   return (
     <Card className="shadow-sm pb-0">
       <CardHeader className="px-6 -my-5  bg-gray-50 rounded-t-lg items-end gap-0">
         <CardTitle className="text-xl font-semibold text-gray-900 m-0!">
-          Terms
+          {t("terms")}
         </CardTitle>
       </CardHeader>
       <Separator />
@@ -83,14 +85,14 @@ export default function OrderTermsCard({ orderTerms }: OrderTermsCardProps) {
         <div className="divide-y divide-gray-100 [&>div:last-child]:pb-4">
           {/* Delivery Place */}
           <TermRow
-            label="Delivery Place"
+            label={t("deliveryPlace")}
             value={orderTerms.deliveryTermsCode2}
             showEmpty={true}
           />
 
           {/* Payment Terms */}
           <TermRow
-            label="Payment Terms"
+            label={t("paymentTerms")}
             value={
               orderTerms.paymentTerms && orderTerms.paymentTermsCode
                 ? `${orderTerms.paymentTerms} - (${orderTerms.paymentTermsCode})`
@@ -101,7 +103,7 @@ export default function OrderTermsCard({ orderTerms }: OrderTermsCardProps) {
 
           {/* Packing & Forwarding */}
           <TermRow
-            label="Packing & Forwarding"
+            label={t("packingForwarding")}
             value={
               orderTerms.packageForwarding && orderTerms.packageForwardingCode
                 ? `${orderTerms.packageForwarding} - (${orderTerms.packageForwardingCode})`
@@ -112,7 +114,7 @@ export default function OrderTermsCard({ orderTerms }: OrderTermsCardProps) {
 
           {/* Mode of Dispatch */}
           <TermRow
-            label="Mode of Dispatch"
+            label={t("modeOfDispatch")}
             value={
               orderTerms.dispatchInstructions &&
               orderTerms.dispatchInstructionsCode
@@ -124,21 +126,21 @@ export default function OrderTermsCard({ orderTerms }: OrderTermsCardProps) {
 
           {/* Freight */}
           <TermRow
-            label="Freight"
+            label={t("freight")}
             value={orderTerms.freight}
             showEmpty={true}
           />
 
           {/* Insurance */}
           <TermRow
-            label="Insurance"
+            label={t("insurance")}
             value={orderTerms.insurance}
             showEmpty={true}
           />
 
           {/* Additional Terms */}
           <TermRow
-            label="Additional Terms"
+            label={t("additionalTerms")}
             value={orderTerms.additionalTerms}
             showEmpty={true}
           />

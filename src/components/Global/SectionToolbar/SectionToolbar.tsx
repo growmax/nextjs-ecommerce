@@ -11,6 +11,7 @@ import {
 } from "@/components/ui/tooltip";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { cn } from "@/lib/utils";
+import { useTranslations } from "next-intl";
 import type {
   SectionToolbarProps,
   SectionToolbarRef,
@@ -75,6 +76,7 @@ const SectionToolbar = forwardRef<SectionToolbarRef, SectionToolbarProps>(
   ) => {
     const isMobile = useIsMobile();
     const searchRef = useRef<HTMLInputElement>(null);
+    const t = useTranslations("toolbar");
     const refreshHandlerRef = useRef<() => void>(() => {});
 
     // Store refresh handler
@@ -148,7 +150,9 @@ const SectionToolbar = forwardRef<SectionToolbarRef, SectionToolbarProps>(
                       {link.value}
                     </Button>
                   </TooltipTrigger>
-                  <TooltipContent>Click to see your {link.text}</TooltipContent>
+                  <TooltipContent>
+                    {t("clickToSee", { text: link.text ?? "" })}
+                  </TooltipContent>
                 </Tooltip>
               )}
 
@@ -175,7 +179,7 @@ const SectionToolbar = forwardRef<SectionToolbarRef, SectionToolbarProps>(
                         </Badge>
                       )}
                     </div>
-                    {!isMobile && "Filters"}
+                    {!isMobile && t("filters")}
                   </Button>
                 </div>
               )}
@@ -189,7 +193,7 @@ const SectionToolbar = forwardRef<SectionToolbarRef, SectionToolbarProps>(
                   {customSearch || (
                     <SearchBox
                       ref={searchRef}
-                      placeholder={showSearch.placeholder || "Search..."}
+                      placeholder={showSearch.placeholder || t("search")}
                       defaultValue={showSearch.searchTextValue || ""}
                       onSearch={showSearch.handleSearch || (() => {})}
                       onChange={showSearch.handleSearch || (() => {})}

@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Loader2, ShoppingCart, FileText } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useTranslations } from "next-intl";
 
 interface SummaryActionsProps {
   isOrder?: boolean;
@@ -39,8 +40,10 @@ export default function SummaryActions({
   className,
   disabled = false,
 }: SummaryActionsProps) {
-  const defaultSubmitLabel = isOrder ? "Place Order" : "Request Quote";
-  const defaultCancelLabel = "Cancel";
+  const t = useTranslations(isOrder ? "orders" : "quotes");
+  const tCommon = useTranslations("buttons");
+  const defaultSubmitLabel = isOrder ? t("placeOrder") : t("requestQuote");
+  const defaultCancelLabel = tCommon("cancel");
 
   return (
     <Card className={cn("sticky bottom-0 z-50 shadow-lg border-t", className)}>
@@ -63,7 +66,7 @@ export default function SummaryActions({
             {isSubmitting ? (
               <>
                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                {isOrder ? "Placing Order..." : "Creating Quote..."}
+                {isOrder ? t("placingOrder") : t("creatingQuote")}
               </>
             ) : (
               <>

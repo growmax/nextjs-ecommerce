@@ -12,6 +12,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { ArrowLeft, Package } from "lucide-react";
 import type { CartItem } from "@/types/calculation/cart";
 import CartSkeleton from "../CartSkeleton";
+import { useTranslations } from "next-intl";
 interface CartProduct {
   productId: number;
   quantity: number;
@@ -121,6 +122,7 @@ export default function SellerCard({
   sellerCarts,
   sellerIds,
 }: SellerCardProps) {
+  const t = useTranslations("cart");
   // Show full skeleton only when cart is initially loading (not when pricing is updating)
   if (isLoading) {
     return <CartSkeleton />;
@@ -137,18 +139,16 @@ export default function SellerCard({
                 <Package className="h-16 w-16 text-gray-300" />
               </div>
               <h3 className="text-xl font-semibold text-gray-900">
-                Your cart is empty
+                {t("empty")}
               </h3>
-              <p className="text-sm text-gray-500">
-                Add products to your cart to get started
-              </p>
+              <p className="text-sm text-gray-500">{t("emptyDescription")}</p>
               <Button
                 variant="default"
                 className="mt-4"
                 onClick={() => window.history.back()}
               >
                 <ArrowLeft className="h-4 w-4 mr-2" />
-                Continue Shopping
+                {t("continueShopping")}
               </Button>
             </div>
           </CardContent>
@@ -163,15 +163,16 @@ export default function SellerCard({
       <div className="mb-6 flex items-center justify-between flex-wrap gap-4">
         <div>
           <h1 className="text-2xl md:text-3xl font-bold text-gray-900">
-            Shopping Cart
+            {t("title")}
           </h1>
           <p className="text-sm text-gray-500 mt-1">
-            {sellerIds.reduce(
-              (total, sellerId) =>
-                total + (sellerCarts[sellerId]?.items?.length || 0),
-              0
-            )}{" "}
-            items in your cart
+            {t("itemsInCart", {
+              count: sellerIds.reduce(
+                (total, sellerId) =>
+                  total + (sellerCarts[sellerId]?.items?.length || 0),
+                0
+              ),
+            })}
           </p>
         </div>
         <Button
@@ -180,7 +181,7 @@ export default function SellerCard({
           className="flex items-center gap-2"
         >
           <ArrowLeft className="h-4 w-4" />
-          Continue Shopping
+          {t("continueShopping")}
         </Button>
       </div>
 
@@ -193,7 +194,7 @@ export default function SellerCard({
         {sellerIds.map((sellerId: string) => {
           const sellerCart = sellerCarts[sellerId];
           const items = sellerCart?.items || [];
-          const sellerName = sellerCart?.seller?.name || "Unknown Seller";
+          const sellerName = sellerCart?.seller?.name || t("unknownSeller");
           const sellerLocation = String(
             items[0]?.sellerLocation || sellerCart?.seller?.location || ""
           );
@@ -218,11 +219,12 @@ export default function SellerCard({
                         variant="secondary"
                         className="whitespace-nowrap flex-shrink-0"
                       >
-                        {items.length} {items.length === 1 ? "item" : "items"}
+                        {items.length}{" "}
+                        {items.length === 1 ? t("item") : t("items")}
                       </Badge>
                     </div>
                     {sellerLocation &&
-                    sellerLocation !== "Location not specified" ? (
+                    sellerLocation !== t("locationNotSpecified") ? (
                       <span className="text-sm text-gray-500 ml-2">
                         {sellerLocation}
                       </span>
@@ -266,11 +268,11 @@ export default function SellerCard({
                             {/* Inventory Badge */}
                             {product?.inventoryResponse?.inStock !== false ? (
                               <Badge className="absolute top-2 left-2 z-10 bg-green-500 hover:bg-green-600 text-[8px] px-1.5 py-0.5">
-                                In Stock
+                                {t("inStock")}
                               </Badge>
                             ) : (
                               <Badge className="absolute top-2 left-2 z-10 bg-red-500 hover:bg-red-600 text-[8px] px-1.5 py-0.5">
-                                Out of Stock
+                                {t("outOfStock")}
                               </Badge>
                             )}
                             <CartProductCard
@@ -315,7 +317,7 @@ export default function SellerCard({
                           disabled={isPricingLoading}
                           aria-label="Proceed to create order"
                         >
-                          {isPricingLoading ? "Loading..." : "CREATE ORDER"}
+                          {isPricingLoading ? t("loading") : t("createOrder")}
                         </Button>
                         <Button
                           size="lg"
@@ -328,7 +330,7 @@ export default function SellerCard({
                           disabled={isPricingLoading}
                           aria-label="Request a quote"
                         >
-                          REQUEST QUOTE
+                          {t("requestQuoteButton")}
                         </Button>
                       </div>
                     </div>

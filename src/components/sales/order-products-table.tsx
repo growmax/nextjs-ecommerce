@@ -18,6 +18,7 @@ import useProductAssets from "@/hooks/useProductAssets";
 import { cn } from "@/lib/utils";
 import { Download } from "lucide-react";
 import { useState } from "react";
+import { useTranslations } from "next-intl";
 import type { ProductSearchResult } from "./ProductSearchInput";
 import ProductSearchInput from "./ProductSearchInput";
 
@@ -80,6 +81,7 @@ export default function OrderProductsTable({
   elasticIndex,
   showInvoicedQty = true,
 }: OrderProductsTableProps) {
+  const t = useTranslations("components");
   const [currentPage, setCurrentPage] = useState(1);
   const displayCount = totalCount || products.length;
   const totalPages = Math.ceil(displayCount / itemsPerPage);
@@ -137,14 +139,14 @@ export default function OrderProductsTable({
       <CardHeader className="pt-2 pb-2 px-4 gap-0 flex flex-row items-center justify-between">
         <div className="flex-1 flex items-center justify-between">
           <CardTitle className="text-base font-semibold py-0 my-0 leading-tight -mt-0.5">
-            Products ({displayCount})
+            {t("products")} ({displayCount})
           </CardTitle>
           {/* Show search input in edit mode, export button in view mode */}
           {onProductAdd ? (
             <div className="w-full max-w-[calc(28rem-120px)] ml-4">
               <ProductSearchInput
                 onProductSelect={onProductAdd}
-                placeholder="Search and add products..."
+                placeholder={t("searchAndAddProducts")}
                 elasticIndex={elasticIndex}
               />
             </div>
@@ -157,7 +159,7 @@ export default function OrderProductsTable({
                 className="h-7 px-3 text-xs font-medium"
               >
                 <Download className="h-3.5 w-3.5 mr-1.5" />
-                EXPORT
+                {t("export")}
               </Button>
             )
           )}
@@ -171,33 +173,33 @@ export default function OrderProductsTable({
             <TableHeader>
               <TableRow className="bg-muted/50">
                 <TableHead className="font-medium text-primary sticky left-0 bg-muted z-20 min-w-[150px] sm:min-w-[200px] shadow-[2px_0_4px_-2px_rgba(0,0,0,0.1)] py-3 before:absolute before:inset-0 before:bg-muted before:-z-10">
-                  <span className="relative z-10">ITEMS</span>
+                  <span className="relative z-10">{t("items")}</span>
                 </TableHead>
                 <TableHead className="font-medium text-primary text-right min-w-[140px] py-3">
-                  BASE PRICE(INR₹)
+                  {t("basePrice")}
                 </TableHead>
                 <TableHead className="font-medium text-primary text-right min-w-[120px] py-3">
-                  DISCOUNT(%)
+                  {t("discount")}
                 </TableHead>
                 <TableHead className="font-medium text-primary text-right min-w-[140px] py-3">
-                  UNIT PRICE(INR₹)
+                  {t("unitPrice")}
                 </TableHead>
                 <TableHead className="font-medium text-primary text-right min-w-[120px] py-3">
-                  USC(INR₹)
+                  {t("usc")}
                 </TableHead>
                 <TableHead className="font-medium text-primary text-center min-w-[100px] py-3">
-                  QUANTITY
+                  {t("quantity")}
                 </TableHead>
                 {showInvoicedQty && (
                   <TableHead className="font-medium text-primary text-center min-w-[140px] py-3">
-                    INVOICED QTY
+                    {t("invoicedQty")}
                   </TableHead>
                 )}
                 <TableHead className="font-medium text-primary text-right min-w-[150px] py-3">
-                  AMOUNT(INR₹)
+                  {t("amount")}
                 </TableHead>
                 <TableHead className="font-medium text-primary text-right min-w-[100px] py-3 pr-5">
-                  IGST(%)
+                  {t("igst")}
                 </TableHead>
               </TableRow>
             </TableHeader>
@@ -208,7 +210,7 @@ export default function OrderProductsTable({
                     colSpan={showInvoicedQty ? 9 : 8}
                     className="text-center py-8 text-muted-foreground"
                   >
-                    No products found
+                    {t("noProductsFound")}
                   </TableCell>
                 </TableRow>
               ) : (

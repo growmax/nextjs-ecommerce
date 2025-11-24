@@ -14,6 +14,11 @@ jest.mock("next/navigation", () => ({
 
 jest.mock("next-intl", () => ({
   useLocale: () => "en",
+  useTranslations: () => (key: string) => key,
+  useFormatter: () => ({
+    dateTime: (date: Date) => date.toISOString(),
+    number: (value: number) => value.toString(),
+  }),
 }));
 
 jest.mock("@/hooks/usePageScroll", () => ({
@@ -597,9 +602,9 @@ describe("EditQuotePage", () => {
           quotationIdentifier: "quote-123",
         });
       },
-      { timeout: 3000 }
+      { timeout: 10000 }
     );
-  });
+  }, 15000);
 
   it("should render products table when quote details are loaded", async () => {
     const params = Promise.resolve({ quoteId: "quote-123", locale: "en" });

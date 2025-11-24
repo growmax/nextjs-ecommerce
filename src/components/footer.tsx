@@ -15,7 +15,7 @@ export default function Footer() {
         <div className="flex flex-col gap-4">
           {/* Copyright section */}
           <div className="text-sm text-muted-foreground text-center">
-            © {currentYear} Your Company. All rights reserved.
+            {t("footer.copyright", { year: currentYear })}
           </div>
 
           {/* Links section - Responsive grid */}
@@ -86,7 +86,7 @@ export default function Footer() {
 
           {/* Made with love section */}
           <div className="text-sm text-muted-foreground text-center">
-            Made with ❤️
+            {t("footer.madeWith")} {t("footer.love")}
           </div>
         </div>
       </div>

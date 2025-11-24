@@ -3,6 +3,7 @@
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Sparkles } from "lucide-react";
+import { useTranslations } from "next-intl";
 import type { PaymentTerm } from "@/lib/api";
 
 interface CashDiscountCardProps {
@@ -38,6 +39,7 @@ export default function CashDiscountCard({
   isQuoteToOrder = false,
   cashdiscount: _cashdiscount,
 }: CashDiscountCardProps) {
+  const t = useTranslations("components");
   const isContentPage = !isEdit && !isSummaryPage;
 
   // Only show if there's a cash discount value or in edit/summary mode
@@ -52,22 +54,22 @@ export default function CashDiscountCard({
 
   const getTitle = () => {
     if (isContentPage) {
-      return "Congratulations! ";
+      return t("congratulations");
     }
     if (isCashDiscountApplied) {
-      return "Thank you!";
+      return t("thankYou");
     }
-    return "Pay Now & Save!";
+    return t("payNowAndSave");
   };
 
   const getMessage = () => {
     if (isContentPage) {
-      return `${cashDiscountValue}% cash discount has been applied`;
+      return t("cashDiscountApplied", { value: cashDiscountValue });
     }
     if (!isCashDiscountApplied) {
-      return `Get ${cashDiscountValue}% Cash Discount on Immediate Payment`;
+      return t("getCashDiscount", { value: cashDiscountValue });
     }
-    return `${cashDiscountValue}% cash discount has been applied.`;
+    return t("cashDiscountApplied", { value: cashDiscountValue });
   };
 
   return (
@@ -98,7 +100,7 @@ export default function CashDiscountCard({
                   }
                 >
                   <Sparkles className="h-3 w-3 mr-1" />
-                  {isCashDiscountApplied ? "Remove" : "Apply"}
+                  {isCashDiscountApplied ? t("remove") : t("apply")}
                 </Button>
               )}
             </div>

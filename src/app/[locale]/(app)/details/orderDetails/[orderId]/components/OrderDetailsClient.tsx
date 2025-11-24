@@ -5,6 +5,7 @@ import { Layers } from "lucide-react";
 import dynamic from "next/dynamic";
 import { Suspense, useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
+import { useTranslations } from "next-intl";
 
 import { EditOrderNameDialog } from "@/components/dialogs/EditOrderNameDialog";
 import { RequestEditDialog } from "@/components/dialogs/RequestEditDialog";
@@ -82,6 +83,8 @@ export default function OrderDetailsClient({ params }: OrderDetailsPageProps) {
   const [orderId, setOrderId] = useState<string>("");
   const [paramsLoaded, setParamsLoaded] = useState(false);
   const { prefetch, prefetchAndNavigate } = useRoutePrefetch();
+  const t = useTranslations("orders");
+  const tDetails = useTranslations("details");
 
   const [orderDetails, setOrderDetails] = useState<OrderDetailsResponse | null>(
     null
@@ -153,7 +156,7 @@ export default function OrderDetailsClient({ params }: OrderDetailsPageProps) {
         lastFetchKeyRef.current = fetchKey;
       } catch (err) {
         const errorMessage =
-          err instanceof Error ? err.message : "Failed to fetch order details";
+          err instanceof Error ? err.message : t("failedToFetchOrderDetails");
         setError(errorMessage);
         toast.error(errorMessage);
       } finally {
@@ -162,7 +165,7 @@ export default function OrderDetailsClient({ params }: OrderDetailsPageProps) {
     };
 
     fetchOrderDetails();
-  }, [paramsLoaded, orderId, userId, companyId, tenantCode]);
+  }, [paramsLoaded, orderId, userId, companyId, tenantCode, t]);
 
   useEffect(() => {
     const fetchPayments = async () => {
@@ -255,11 +258,19 @@ export default function OrderDetailsClient({ params }: OrderDetailsPageProps) {
         const versionName =
           orderVersions.find(
             (v: Version) => v.versionNumber === selectedVersion.versionNumber
-          )?.versionName || `Version ${selectedVersion.versionNumber}`;
-        toast.success(`Loaded ${versionName} details`);
+          )?.versionName ||
+          `${tDetails("version")} ${selectedVersion.versionNumber}`;
+        toast.success(t("loadedVersionDetails", { versionName }));
       }
     }
-  }, [versionData, versionLoading, selectedVersion, orderVersions]);
+  }, [
+    versionData,
+    versionLoading,
+    selectedVersion,
+    orderVersions,
+    t,
+    tDetails,
+  ]);
 
   const handleRefresh = async () => {
     if (!orderId || !user || !tenantData?.tenant) return;
@@ -413,11 +424,12 @@ export default function OrderDetailsClient({ params }: OrderDetailsPageProps) {
         orderSettings?.editOrder === "ORDER ACCEPTED")
     ) {
       toast.info(
-        `Order ${
-          orderSettings?.editOrder === "ORDER BOOKED"
-            ? "invoice"
-            : "booked or invoiced"
-        } already, edit is not possible`,
+        t("orderInvoiceBookedAlready", {
+          type:
+            orderSettings?.editOrder === "ORDER BOOKED"
+              ? "invoice"
+              : "booked or invoiced",
+        }),
         {
           style: {
             backgroundColor: "#22c55e", // green-500
@@ -429,7 +441,7 @@ export default function OrderDetailsClient({ params }: OrderDetailsPageProps) {
         }
       );
     } else if (status?.toUpperCase() === "REQUESTED EDIT") {
-      toast.info("Requested for edit already, wait for seller to respond", {
+      toast.info(t("requestedForEditAlready"), {
         style: {
           backgroundColor: "#ABE7B2", // green-500
           color: "#ffffff", // white
@@ -440,18 +452,15 @@ export default function OrderDetailsClient({ params }: OrderDetailsPageProps) {
       });
     } else {
       if (isSPRRequested) {
-        toast.info(
-          "Edit access is not possible for SPR orders, contact seller for any queries",
-          {
-            style: {
-              backgroundColor: "#22c55e", // green-500
-              color: "#ffffff", // white
-              fontSize: "0.875rem", // text-sm
-              padding: "0.5rem 0.75rem", // smaller padding
-            },
-            className: "text-sm px-3 py-2",
-          }
-        );
+        toast.info(t("editAccessNotPossibleSPR"), {
+          style: {
+            backgroundColor: "#22c55e", // green-500
+            color: "#ffffff", // white
+            fontSize: "0.875rem", // text-sm
+            padding: "0.5rem 0.75rem", // smaller padding
+          },
+          className: "text-sm px-3 py-2",
+        });
       } else {
         // Open the request edit dialog
         setRequestEditDialogOpen(true);
@@ -463,7 +472,7 @@ export default function OrderDetailsClient({ params }: OrderDetailsPageProps) {
   const handleRequestEdit = () => {
     // Check if order is cancelled using the utility function
     if (isOrderCancelled(status)) {
-      toast.info("Order was cancelled already", {
+      toast.info(t("orderCancelledAlready"), {
         style: {
           backgroundColor: "#22c55e", // green-500
           color: "#ffffff", // white
@@ -480,7 +489,7 @@ export default function OrderDetailsClient({ params }: OrderDetailsPageProps) {
 
   const handleConfirmRequestEdit = async () => {
     if (!user || !orderId) {
-      toast.error("Missing required information");
+      toast.error(t("missingRequiredInformation"));
       return;
     }
 
@@ -492,24 +501,22 @@ export default function OrderDetailsClient({ params }: OrderDetailsPageProps) {
         data: {}, // Empty data object as per API
       });
 
-      toast.success("Edit request submitted successfully");
+      toast.success(t("editRequestSubmitted"));
       await handleRefresh();
     } catch (error) {
       const errorMessage =
-        error instanceof Error
-          ? error.message
-          : "Failed to submit edit request";
+        error instanceof Error ? error.message : t("failedToSubmitEditRequest");
       toast.error(errorMessage);
       throw error;
     }
   };
 
   const handleClone = () => {
-    toast.info("Clone functionality coming soon");
+    toast.info(t("cloneFunctionalityComingSoon"));
   };
 
   const handleDownloadPDF = () => {
-    toast.info("Download PDF functionality coming soon");
+    toast.info(t("downloadPDFFunctionalityComingSoon"));
   };
 
   const handleVersionSelect = (version: Version) => {
@@ -552,7 +559,7 @@ export default function OrderDetailsClient({ params }: OrderDetailsPageProps) {
   const headerButtons = editInProgress
     ? [
         {
-          label: "EDIT ORDER",
+          label: t("editOrderButton"),
           variant: "outline" as const,
           onClick: handleEditQuote,
           onMouseEnter: () => prefetch(`/details/orderDetails/${orderId}/edit`),
@@ -560,7 +567,7 @@ export default function OrderDetailsClient({ params }: OrderDetailsPageProps) {
       ]
     : [
         {
-          label: "REQUEST EDIT",
+          label: t("requestEdit"),
           variant: "outline" as const,
           onClick: handleRequestEdit,
         },
@@ -573,7 +580,7 @@ export default function OrderDetailsClient({ params }: OrderDetailsPageProps) {
       {/* Sales Header - Fixed at top */}
       <div className="flex-shrink-0 sticky top-0 z-50 bg-gray-50">
         <SalesHeader
-          title={orderName ? decodeUnicode(orderName) : "Order Details"}
+          title={orderName ? decodeUnicode(orderName) : t("orderDetails")}
           identifier={orderId || "..."}
           {...(status && {
             status: {
@@ -586,11 +593,11 @@ export default function OrderDetailsClient({ params }: OrderDetailsPageProps) {
           onClose={handleClose}
           menuOptions={[
             {
-              label: "Clone",
+              label: tDetails("clone"),
               onClick: handleClone,
             },
             {
-              label: "Download PDF",
+              label: tDetails("downloadPDF"),
               onClick: handleDownloadPDF,
             },
           ]}
@@ -641,7 +648,7 @@ export default function OrderDetailsClient({ params }: OrderDetailsPageProps) {
                         {/* Right Section - Cancellation Reason */}
                         <div className="flex flex-col gap-1 sm:text-right">
                           <div className="text-xs sm:text-sm font-medium text-gray-700">
-                            Reason for cancellation
+                            {t("reasonForCancellation")}
                           </div>
                           <div className="text-sm sm:text-base font-medium text-red-600">
                             {cancelMsg || ""}

@@ -2,6 +2,7 @@
 
 import SearchDialogBox from "@/components/AppHeader/SearchDialogBox/SearchDialogBox";
 import { AvatarCard } from "@/components/AvatarCard/AvatarCard";
+import { LanguageSwitcher } from "@/components/LanguageSwitcher/LanguageSwitcher";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -20,6 +21,8 @@ import {
   Search,
   ShoppingCart,
 } from "lucide-react";
+import Link from "next/link";
+import { useTranslations } from "next-intl";
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useMemo, useState } from "react";
 
@@ -33,6 +36,9 @@ export function AppHeader() {
   const { prefetchAndNavigate } = useRoutePrefetch();
   const { cartCount } = useCart();
   const notificationsCount = 5;
+  const tNav = useTranslations("navigation");
+  const tAuth = useTranslations("auth");
+  const tSearch = useTranslations("search");
 
   // Keyboard shortcut (Cmd/Ctrl + K)
   useEffect(() => {
@@ -55,18 +61,18 @@ export function AppHeader() {
     () => [
       {
         key: "orders",
-        label: "Orders",
+        label: tNav("orders"),
         icon: <ShoppingCart />,
         href: "/landing/orderslanding",
       },
       {
         key: "dashboard",
-        label: "Dashboard",
+        label: tNav("dashboard"),
         icon: <CommandIcon />,
         href: "/dashboard",
       },
     ],
-    []
+    [tNav]
   );
 
   const handleSelect = useCallback(
@@ -83,42 +89,59 @@ export function AppHeader() {
       {/* ---------- FIXED HEADER (FULLY RESPONSIVE) ---------- */}
       <header
         className={cn(
-          "fixed top-0 z-[100] border-b bg-background/80 backdrop-blur-md supports-[backdrop-filter]:bg-background/80 transition-all duration-200 w-full left-0 md:w-auto md:right-0",
-          isSidebarCollapsed
-            ? "md:left-[var(--sidebar-width-icon)]"
-            : "md:left-[var(--sidebar-width)]"
+          "fixed top-0 z-[100] border-b bg-background/80 backdrop-blur-md supports-[backdrop-filter]:bg-background/80 transition-all duration-200",
+          // Mobile: Full width (sidebar is overlay)
+          "left-0 right-0",
+          // Desktop: Adjust for sidebar
+          "md:left-[var(--sidebar-width-icon)] md:right-0",
+          !isSidebarCollapsed && "md:left-[var(--sidebar-width)]"
         )}
       >
-        <div className="flex h-16 items-center gap-2 px-4 transition-[width,height] ease-linear group-has-data-[collapsible=icon]/sidebar-wrapper:h-12">
-
-          {/* Mobile Search Button */}
+        <div className="flex h-14 sm:h-16 items-center gap-1 sm:gap-2 px-2 sm:px-4 transition-[width,height] ease-linear group-has-data-[collapsible=icon]/sidebar-wrapper:h-12">
+          {/* Mobile Logo - Show when sidebar is not visible (Full Left Position) */}
           <div className="md:hidden">
+            <Link
+              href="/"
+              className="flex items-center gap-2 cursor-pointer mr-2"
+            >
+              <div className="bg-black text-white flex aspect-square size-7 sm:size-8 items-center justify-center rounded-lg">
+                <span className="text-sm sm:text-base font-bold">S</span>
+              </div>
+            </Link>
+          </div>
+
+          {/* Mobile & Small Tablet: Search icon */}
+          <div className="lg:hidden">
             <Button
               variant="ghost"
               size="icon"
               onClick={() => setOpen(true)}
-              className="h-8 w-8"
+              className="h-7 w-7 sm:h-8 sm:w-8"
             >
-              <Search className="h-4 w-4" />
+              <Search className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
             </Button>
           </div>
 
           <SidebarTrigger className="-ml-1" />
-          <Separator orientation="vertical" className="mr-2 data-[orientation=vertical]:h-4" />
 
-          {/* Desktop Search Input */}
-          <div className="hidden md:flex flex-1 max-w-sm">
+          <Separator
+            orientation="vertical"
+            className="mr-2 data-[orientation=vertical]:h-4"
+          />
+
+          {/* Tablet & Desktop Search Bar with Keyboard Shortcut */}
+          <div className="hidden md:flex lg:flex flex-1 max-w-xs lg:max-w-sm xl:max-w-md">
             <div className="relative w-full">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground h-4 w-4" />
+              <Search className="absolute left-2.5 lg:left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-3.5 w-3.5 lg:h-4 lg:w-4" />
               <Input
-                placeholder="Search products..."
+                placeholder={tSearch("placeholder")}
                 value={searchValue}
-                onChange={(e) => setSearchValue(e.target.value)}
-                className="pl-10 pr-16"
+                onChange={e => setSearchValue(e.target.value)}
+                className="pl-8 lg:pl-10 pr-12 lg:pr-16 text-sm h-8 lg:h-10"
                 onClick={() => setOpen(true)}
                 readOnly
               />
-              <div className="absolute right-3 top-1/2 -translate-y-1/2 flex items-center gap-1">
+              <div className="absolute right-2 lg:right-3 top-1/2 transform -translate-y-1/2 hidden lg:flex items-center gap-1">
                 <CommandIcon className="h-3 w-3 text-muted-foreground" />
                 <span className="text-xs text-muted-foreground">K</span>
               </div>
@@ -130,10 +153,17 @@ export function AppHeader() {
 
             {/* Desktop */}
             <div className="hidden md:flex items-center gap-1">
-              
+              {/* Language Switcher */}
+              <LanguageSwitcher />
+
+              {/* Notifications */}
               {isAuthenticated && (
-                <Button variant="ghost" size="icon" className="h-8 w-8 relative">
-                  <Bell className="h-4 w-4" />
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-7 w-7 md:h-8 md:w-8 relative"
+                >
+                  <Bell className="h-3.5 w-3.5 md:h-4 md:w-4" />
                   {notificationsCount > 0 && (
                     <span className="absolute -top-1 -right-1 h-4 w-4 rounded-full bg-red-500 text-xs text-white flex items-center justify-center">
                       {notificationsCount > 9 ? "9+" : notificationsCount}
@@ -145,18 +175,21 @@ export function AppHeader() {
               <Button
                 variant="ghost"
                 size="icon"
-                className="h-8 w-8 relative"
+                className="h-7 w-7 md:h-8 md:w-8 lg:h-8 lg:w-8 relative"
                 onClick={() => prefetchAndNavigate("/cart")}
               >
-                <ShoppingCart className="h-4 w-4" />
+                <ShoppingCart className="h-3.5 w-3.5 md:h-4 md:w-4" />
                 {cartCount > 0 && (
                   <span className="absolute -top-1 -right-1 h-4 w-4 rounded-full bg-blue-500 text-xs text-white flex items-center justify-center">
                     {cartCount > 9 ? "9+" : cartCount}
                   </span>
                 )}
               </Button>
-
-              <Separator orientation="vertical" className="h-6 mx-1" />
+              {/* Vertical Separator before Avatar */}
+              <Separator
+                orientation="vertical"
+                className="h-5 md:h-6 mx-0.5 md:mx-1"
+              />
 
               {isAuthenticated ? (
                 <AvatarCard
@@ -165,9 +198,15 @@ export function AppHeader() {
                   isLoggingOut={isLoggingOut}
                   align="end"
                   trigger={
-                    <Button variant="ghost" className="relative h-8 w-8 rounded-full">
-                      <Avatar className="h-8 w-8">
-                        <AvatarImage src={userProfile?.picture || ""} alt={userProfile?.displayName || "User"} />
+                    <Button
+                      variant="ghost"
+                      className="relative h-7 w-7 md:h-8 md:w-8 rounded-full"
+                    >
+                      <Avatar className="h-7 w-7 md:h-8 md:w-8">
+                        <AvatarImage
+                          src={userProfile?.picture || ""}
+                          alt={userProfile?.displayName || tAuth("user")}
+                        />
                         <AvatarFallback>
                           {getUserInitials(userProfile?.displayName || "")}
                         </AvatarFallback>
@@ -179,10 +218,12 @@ export function AppHeader() {
                 <Button
                   variant="ghost"
                   onClick={() => prefetchAndNavigate("/login")}
-                  className="h-8 p-0"
+                  className="h-7 md:h-8 p-0"
                 >
                   <div className="bg-sidebar-primary text-sidebar-primary-foreground flex items-center justify-center rounded-lg px-3 h-8">
-                    <span className="text-sm font-medium">Login</span>
+                    <span className="text-sm font-medium">
+                      {tAuth("login")}
+                    </span>
                   </div>
                 </Button>
               )}
@@ -190,8 +231,16 @@ export function AppHeader() {
 
             {/* ---------- Mobile Icons ---------- */}
             <div className="md:hidden flex items-center gap-1">
-              <Button variant="ghost" size="icon" className="h-8 w-8 relative">
-                <ShoppingCart className="h-4 w-4" />
+              {/* Language Switcher */}
+              <LanguageSwitcher />
+
+              {/* Cart Icon */}
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-7 w-7 sm:h-8 sm:w-8 relative"
+              >
+                <ShoppingCart className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
                 {cartCount > 0 && (
                   <span className="absolute -top-1 -right-1 h-3 w-3 rounded-full bg-blue-500 text-[10px] text-white flex items-center justify-center">
                     {cartCount > 9 ? "9+" : cartCount}
@@ -206,9 +255,15 @@ export function AppHeader() {
                   isLoggingOut={isLoggingOut}
                   align="end"
                   trigger={
-                    <Button variant="ghost" className="relative h-8 w-8 rounded-full">
-                      <Avatar className="h-8 w-8">
-                        <AvatarImage src={userProfile?.picture || ""} alt={userProfile?.displayName || "User"} />
+                    <Button
+                      variant="ghost"
+                      className="relative h-7 w-7 sm:h-8 sm:w-8 rounded-full"
+                    >
+                      <Avatar className="h-7 w-7 sm:h-8 sm:w-8">
+                        <AvatarImage
+                          src={userProfile?.picture || ""}
+                          alt={userProfile?.displayName || tAuth("user")}
+                        />
                         <AvatarFallback>
                           {getUserInitials(userProfile?.displayName || "")}
                         </AvatarFallback>
@@ -220,10 +275,12 @@ export function AppHeader() {
                 <Button
                   variant="ghost"
                   onClick={() => prefetchAndNavigate("/login")}
-                  className="h-8 p-0"
+                  className="h-7 sm:h-8 p-0"
                 >
                   <div className="bg-sidebar-primary text-sidebar-primary-foreground flex items-center justify-center rounded-lg px-3 h-8">
-                    <span className="text-sm font-medium">Login</span>
+                    <span className="text-sm font-medium">
+                      {tAuth("login")}
+                    </span>
                   </div>
                 </Button>
               )}

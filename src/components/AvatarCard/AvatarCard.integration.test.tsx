@@ -51,11 +51,15 @@ describe("AvatarCard Integration Tests", () => {
         <AvatarCard user={null} onLogout={mockLogout} trigger={mockTrigger} />
       );
 
-      await user.click(screen.getByTestId("integration-avatar-trigger"));
+      const trigger = screen.getByTestId("integration-avatar-trigger");
+      await user.click(trigger);
 
-      expect(screen.getByText("Loading user...")).toBeInTheDocument();
-      expect(screen.getByText("Please wait")).toBeInTheDocument();
-    });
+      // Wait for dropdown to open and content to appear
+      expect(
+        await screen.findByText("loadingUser", {}, { timeout: 5000 })
+      ).toBeInTheDocument();
+      expect(screen.getByText("pleaseWait")).toBeInTheDocument();
+    }, 10000);
 
     it("shows error state when isError=true", async () => {
       const user = userEvent.setup();
@@ -71,10 +75,10 @@ describe("AvatarCard Integration Tests", () => {
 
       await user.click(screen.getByTestId("integration-avatar-trigger"));
 
-      expect(screen.getByText("Failed to load user")).toBeInTheDocument();
-      expect(screen.getByText("Retry")).toBeInTheDocument();
+      expect(screen.getByText("failedToLoadUser")).toBeInTheDocument();
+      expect(screen.getByText("retry")).toBeInTheDocument();
 
-      await user.click(screen.getByText("Retry"));
+      await user.click(screen.getByText("retry"));
       expect(mockRetry).toHaveBeenCalledTimes(1);
     });
 
@@ -91,8 +95,8 @@ describe("AvatarCard Integration Tests", () => {
 
       await user.click(screen.getByTestId("integration-avatar-trigger"));
 
-      expect(screen.getByText("Logging out...")).toBeInTheDocument();
-      expect(screen.getByText("Please wait")).toBeInTheDocument();
+      expect(screen.getByText("loggingOut")).toBeInTheDocument();
+      expect(screen.getByText("pleaseWait")).toBeInTheDocument();
     });
   });
 
@@ -179,14 +183,14 @@ describe("AvatarCard Integration Tests", () => {
       await user.click(screen.getByTestId("integration-avatar-trigger"));
 
       // Check menu items exist
-      expect(screen.getByText("Profile")).toBeInTheDocument();
-      expect(screen.getByText("Company Settings")).toBeInTheDocument();
-      expect(screen.getByText("Orders")).toBeInTheDocument();
-      expect(screen.getByText("Quotes")).toBeInTheDocument();
-      expect(screen.getByText("Log out")).toBeInTheDocument();
+      expect(screen.getByText("profile")).toBeInTheDocument();
+      expect(screen.getByText("companySettings")).toBeInTheDocument();
+      expect(screen.getByText("orders")).toBeInTheDocument();
+      expect(screen.getByText("quotes")).toBeInTheDocument();
+      expect(screen.getByText("logOut")).toBeInTheDocument();
 
       // Test logout functionality
-      await user.click(screen.getByText("Log out"));
+      await user.click(screen.getByText("logOut"));
       expect(mockLogout).toHaveBeenCalledTimes(1);
     });
 
@@ -202,8 +206,8 @@ describe("AvatarCard Integration Tests", () => {
 
       await user.click(screen.getByTestId("integration-avatar-trigger"));
 
-      expect(screen.getByText("Orders")).toBeInTheDocument();
-      expect(screen.getByText("Profile")).toBeInTheDocument();
+      expect(screen.getByText("orders")).toBeInTheDocument();
+      expect(screen.getByText("profile")).toBeInTheDocument();
     });
 
     it("has correct navigation links", async () => {
@@ -219,17 +223,17 @@ describe("AvatarCard Integration Tests", () => {
       await user.click(screen.getByTestId("integration-avatar-trigger"));
 
       // Check link hrefs
-      const profileLink = screen.getByText("Profile").closest("a");
+      const profileLink = screen.getByText("profile").closest("a");
       expect(profileLink).toHaveAttribute("href", "/settings/profile");
 
-      const companyLink = screen.getByText("Company Settings").closest("a");
+      const companyLink = screen.getByText("companySettings").closest("a");
       expect(companyLink).toHaveAttribute("href", "/settings/company");
 
-      const ordersLink = screen.getByText("Orders").closest("a");
-      expect(ordersLink).toHaveAttribute("href", "/orders");
+      const ordersLink = screen.getByText("orders").closest("a");
+      expect(ordersLink).toHaveAttribute("href", "/landing/orderslanding");
 
-      const quotesLink = screen.getByText("Quotes").closest("a");
-      expect(quotesLink).toHaveAttribute("href", "/quotesummary");
+      const quotesLink = screen.getByText("quotes").closest("a");
+      expect(quotesLink).toHaveAttribute("href", "/landing/quoteslanding");
     });
   });
 

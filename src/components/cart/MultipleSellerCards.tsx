@@ -28,6 +28,7 @@ import CartProductCard from "./CartProductCard";
 import PricingFormat from "@/components/PricingFormat";
 import CartPriceDetails from "@/components/sales/CartPriceDetails";
 import CartProceedButton from "./CartProceedButton";
+import { useTranslations } from "next-intl";
 
 interface MultipleSellerCardsProps {
   onItemUpdate?: (item: CartItem, quantity: number) => void;
@@ -51,6 +52,7 @@ export default function MultipleSellerCards({
   const { cart, isLoading: cartLoading } = useCartContext();
   const { user } = useCurrentUser();
   const { emptyCartBySeller, isCartLoading } = useCart();
+  const t = useTranslations("cart");
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [selectedSellerId, setSelectedSellerId] = useState<
     string | number | null
@@ -168,11 +170,12 @@ export default function MultipleSellerCards({
                     <div className="flex flex-col items-start gap-2">
                       <div className="flex items-center gap-2 flex-wrap">
                         <span className="font-semibold text-lg">
-                          {sellerCart.seller?.name || `Seller ${sellerId}`}
+                          {sellerCart.seller?.name ||
+                            `${t("unknownSeller")} ${sellerId}`}
                         </span>
                         {sellerCart.seller?.location &&
                           sellerCart.seller.location !==
-                            "Location not specified" && (
+                            t("locationNotSpecified") && (
                             <span className="text-sm text-muted-foreground">
                               • {sellerCart.seller.location}
                             </span>
@@ -180,10 +183,10 @@ export default function MultipleSellerCards({
                       </div>
                       <div className="flex items-center gap-3 text-sm text-muted-foreground">
                         <span className="inline-flex items-center justify-center px-2.5 py-1 text-xs font-medium bg-muted text-muted-foreground rounded-full">
-                          {itemCount} {itemCount === 1 ? "item" : "items"}
+                          {itemCount} {itemCount === 1 ? t("item") : t("items")}
                         </span>
                         <span className="font-medium text-foreground">
-                          Total:{" "}
+                          {t("total")}:{" "}
                           {currency ? (
                             <PricingFormat
                               buyerCurrency={currency}
@@ -275,10 +278,10 @@ export default function MultipleSellerCards({
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2 text-base font-semibold">
               <Trash2 className="h-4 w-4 text-gray-700" />
-              Delete Cart Items
+              {t("deleteCartItems")}
             </DialogTitle>
             <DialogDescription className="pt-2">
-              Do you want to delete items in cart?
+              {t("deleteCartItemsConfirmation")}
             </DialogDescription>
           </DialogHeader>
 
@@ -290,7 +293,7 @@ export default function MultipleSellerCards({
               disabled={isDeleting || isCartLoading}
               className="text-primary hover:text-primary/90 hover:bg-primary/10"
             >
-              CANCEL
+              {t("cancel")}
             </Button>
             <Button
               type="button"
@@ -298,7 +301,7 @@ export default function MultipleSellerCards({
               onClick={handleDeleteConfirm}
               disabled={isDeleting || isCartLoading}
             >
-              {isDeleting || isCartLoading ? "Processing..." : "YES"}
+              {isDeleting || isCartLoading ? t("processing") : t("yes")}
             </Button>
           </DialogFooter>
         </DialogContent>

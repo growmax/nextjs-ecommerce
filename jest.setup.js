@@ -3,7 +3,10 @@ import "@testing-library/jest-dom";
 
 // Mock next-intl
 jest.mock("next-intl", () => ({
-  useTranslations: () => key => key,
+  useTranslations: namespace => key => {
+    // Return the key as-is for testing (tests should expect keys, not translated text)
+    return key;
+  },
   useLocale: () => "en",
   useFormatter: () => ({
     dateTime: date => date.toISOString(),

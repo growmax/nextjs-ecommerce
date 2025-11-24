@@ -27,6 +27,7 @@ import LocationService from "@/lib/api/services/LocationService/LocationService"
 import { AuthStorage } from "@/lib/auth";
 import { JWTService } from "@/lib/services/JWTService";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { useTranslations } from "next-intl";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
@@ -63,7 +64,7 @@ const addressFormSchema = z.object({
   contactNumber: z.string().optional(),
 });
 
-type AddressFormData = z.infer<typeof addressFormSchema>;
+type AddressFormData = z.infer<ReturnType<typeof createAddressFormSchema>>;
 
 export const LabelWithAsterisk = ({
   label,
@@ -86,6 +87,12 @@ const CompanyDialogBox = ({
   branchId = null,
   onSuccess,
 }: CompanyDialogBoxProps) => {
+  const t = useTranslations("companySettings");
+  const tValidation = useTranslations("validation");
+  const addressFormSchema = useMemo(
+    () => createAddressFormSchema(tValidation),
+    [tValidation]
+  );
   const emptyDefaults = useMemo<AddressFormData>(
     () => ({
       // Address Information
@@ -115,7 +122,9 @@ const CompanyDialogBox = ({
   const form = useForm<AddressFormData>({
     resolver: zodResolver(addressFormSchema),
     defaultValues:
-      mode === "create" ? emptyDefaults : initialData || emptyDefaults,
+      mode === "create"
+        ? emptyDefaults
+        : (initialData as AddressFormData) || emptyDefaults,
   });
 
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -371,9 +380,7 @@ const CompanyDialogBox = ({
 
         // If we couldn't resolve user/company ids locally, stop early to avoid sending a bad request
         if (resolvedUserId === undefined || resolvedCompanyId === undefined) {
-          throw new Error(
-            "Missing authentication (userId/companyId) - cannot create branch"
-          );
+          throw new Error(t("missingAuthCannotCreateBranch"));
         }
 
         // attach resolved ids to the payload explicitly
@@ -400,9 +407,7 @@ const CompanyDialogBox = ({
 
         if (!addrWithId.id) {
           setIsSubmitting(false);
-          throw new Error(
-            "Missing address id for update. Please re-open the branch or refresh the list and try again."
-          );
+          throw new Error(t("missingAddressIdForUpdate"));
         }
 
         const payload: UpdateBranchRequest = {
@@ -431,9 +436,7 @@ const CompanyDialogBox = ({
         };
 
         if (resolvedUserId === undefined || resolvedCompanyId === undefined) {
-          throw new Error(
-            "Missing authentication (userId/companyId) - cannot update branch"
-          );
+          throw new Error(t("missingAuthCannotUpdateBranch"));
         }
 
         // attach resolved ids to the payload explicitly
@@ -579,7 +582,7 @@ const CompanyDialogBox = ({
         <div className="px-4 sm:px-6 pt-6 pb-4 border-b shrink-0">
           <DialogHeader>
             <DialogTitle>
-              {mode === "create" ? "Create Address" : "Edit Address"}
+              {mode === "create" ? t("createAddress") : t("editAddress")}
             </DialogTitle>
           </DialogHeader>
         </div>
@@ -652,8 +655,8 @@ const CompanyDialogBox = ({
                   label={<LabelWithAsterisk label="District" />}
                   placeholder={
                     districtsLoading
-                      ? "Loading districts..."
-                      : "Select district"
+                      ? t("loadingDistricts")
+                      : t("selectDistrict")
                   }
                   options={districts.length > 0 ? districts : []}
                 />
@@ -694,7 +697,7 @@ const CompanyDialogBox = ({
 
               {/* Address Type Checkboxes */}
               <div className="space-y-3 py-2">
-                <p className="text-sm font-medium">Address for</p>
+                <p className="text-sm font-medium">{t("addressFor")}</p>
                 <div className="flex gap-6">
                   <FormField
                     control={form.control}
@@ -708,7 +711,7 @@ const CompanyDialogBox = ({
                           />
                         </FormControl>
                         <FormLabel className="!mt-0 cursor-pointer">
-                          Billing
+                          {t("billing")}
                         </FormLabel>
                       </FormItem>
                     )}
@@ -726,7 +729,7 @@ const CompanyDialogBox = ({
                           />
                         </FormControl>
                         <FormLabel className="!mt-0 cursor-pointer">
-                          Shipping
+                          {t("shipping")}
                         </FormLabel>
                       </FormItem>
                     )}
@@ -746,7 +749,7 @@ const CompanyDialogBox = ({
 
               {/* Contact Details Section */}
               <div className="space-y-4">
-                <p className="text-sm font-semibold">Contact Details</p>
+                <p className="text-sm font-semibold">{t("contactDetails")}</p>
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <FormInput
@@ -772,10 +775,10 @@ const CompanyDialogBox = ({
         <div className="px-4 sm:px-6 pt-4 pb-6 border-t shrink-0">
           <DialogFooter className="gap-2">
             <Button variant="outline" onClick={handleCancel} type="button">
-              Cancel
+              {t("cancel")}
             </Button>
             <Button type="submit" form="address-form" disabled={isSubmitting}>
-              {isSubmitting ? "Saving..." : "Save"}
+              {isSubmitting ? t("saving") : t("save")}
             </Button>
           </DialogFooter>
         </div>

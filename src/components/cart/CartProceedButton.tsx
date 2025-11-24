@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { useRouter } from "@/i18n/navigation";
 import { useCurrentUser } from "@/hooks/useCurrentUser";
 import { ShoppingCart } from "lucide-react";
+import { useTranslations } from "next-intl";
 
 interface CartProceedButtonProps {
   onRequestQuote?: () => void;
@@ -24,6 +25,7 @@ export default function CartProceedButton({
 }: CartProceedButtonProps) {
   const router = useRouter();
   const { user } = useCurrentUser();
+  const t = useTranslations("cart");
 
   const handleRequestQuote = () => {
     if (onRequestQuote) {
@@ -60,7 +62,7 @@ export default function CartProceedButton({
             onClick={handleEnquiry}
             disabled={disabled || isLoading}
           >
-            Create Lead
+            {t("createLead")}
           </Button>
         )}
         <Button
@@ -69,7 +71,7 @@ export default function CartProceedButton({
           onClick={() => router.push("/auth/login")}
           disabled={disabled || isLoading}
         >
-          Login to Continue
+          {t("loginToContinue")}
         </Button>
       </div>
     );
@@ -84,7 +86,7 @@ export default function CartProceedButton({
         onClick={handleRequestQuote}
         disabled={disabled || isLoading}
       >
-        Request Quote
+        {t("requestQuote")}
       </Button>
       <Button
         className="w-full"
@@ -93,7 +95,7 @@ export default function CartProceedButton({
         disabled={disabled || isLoading}
       >
         <ShoppingCart className="mr-2 h-5 w-5" />
-        Place Order
+        {t("placeOrder")}
       </Button>
     </div>
   );

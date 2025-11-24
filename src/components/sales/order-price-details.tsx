@@ -14,6 +14,7 @@ import {
 } from "@/utils/calculation/tax-breakdown";
 import { ChevronDown } from "lucide-react";
 import { useMemo, useState } from "react";
+import { useTranslations } from "next-intl";
 import PricingFormat from "../PricingFormat";
 
 interface TaxDetail {
@@ -53,6 +54,7 @@ export default function OrderPriceDetails({
   subTotal,
   taxableAmount,
 }: OrderPriceDetailsProps) {
+  const t = useTranslations("components");
   const [taxExpanded, setTaxExpanded] = useState(false);
 
   // Use calculated values from props if available, otherwise calculate
@@ -442,7 +444,7 @@ export default function OrderPriceDetails({
     <Card className="shadow-sm bg-white p-0 m-0 overflow-hidden gap-4 w-full">
       <CardHeader className="px-4 py-2 bg-green-100 rounded-t-lg m-0 p-0 space-y-0">
         <CardTitle className="text-lg font-semibold text-gray-800 py-2 px-4">
-          Price Details
+          {t("priceDetails")}
         </CardTitle>
       </CardHeader>
 
@@ -451,7 +453,7 @@ export default function OrderPriceDetails({
         {cartValue.totalItems > 0 && (
           <div className="flex justify-between items-center gap-4 min-w-0">
             <div className="flex-shrink-0">
-              <TypographyMuted>Total Items</TypographyMuted>
+              <TypographyMuted>{t("totalItems")}</TypographyMuted>
             </div>
             <div className="text-right flex-shrink-0">
               <TypographyMuted>{cartValue.totalItems}</TypographyMuted>
@@ -463,7 +465,7 @@ export default function OrderPriceDetails({
         {showListPrice && (
           <div className="flex justify-between items-center gap-4 min-w-0">
             <div className="flex-shrink-0">
-              <TypographyMuted>Total LP</TypographyMuted>
+              <TypographyMuted>{t("totalLP")}</TypographyMuted>
             </div>
             <div className="text-right flex-shrink-0 break-words">
               <TypographyMuted>
@@ -477,7 +479,9 @@ export default function OrderPriceDetails({
         {showDiscount && (
           <div className="flex justify-between items-center gap-4 min-w-0">
             <div className="flex-shrink-0">
-              <h5 className="text-sm font-normal text-green-600">Discount</h5>
+              <h5 className="text-sm font-normal text-green-600">
+                {t("discountLabel")}
+              </h5>
             </div>
             <div className="text-right flex-shrink-0 break-words">
               <h5 className="text-sm font-normal text-green-600">
@@ -490,7 +494,9 @@ export default function OrderPriceDetails({
         {/* Subtotal */}
         <div className="flex justify-between items-center gap-4 min-w-0">
           <div className="flex-shrink-0">
-            <h6 className="text-sm font-semibold text-gray-800">Subtotal</h6>
+            <h6 className="text-sm font-semibold text-gray-800">
+              {t("subtotal")}
+            </h6>
           </div>
           <div className="text-right flex-shrink-0 break-words">
             <h6 className="text-sm font-semibold text-gray-800">
@@ -503,7 +509,7 @@ export default function OrderPriceDetails({
         {showPfRate && (
           <div className="flex justify-between items-center gap-4 min-w-0">
             <div className="flex-shrink-0">
-              <TypographyMuted>P&F Rate</TypographyMuted>
+              <TypographyMuted>{t("pfRate")}</TypographyMuted>
             </div>
             <div className="text-right flex-shrink-0 break-words">
               <TypographyMuted>
@@ -519,7 +525,7 @@ export default function OrderPriceDetails({
         <div className="flex justify-between items-center gap-4 min-w-0">
           <div className="flex-shrink-0">
             <h6 className="text-sm font-semibold text-gray-800">
-              Taxable Amount
+              {t("taxableAmount")}
             </h6>
           </div>
           <div className="text-right flex-shrink-0 break-words">
@@ -533,7 +539,7 @@ export default function OrderPriceDetails({
         {finalTax !== undefined && finalTax !== null && (
           <div className="flex justify-between items-center gap-4 min-w-0">
             <div className="flex items-center gap-1 flex-shrink-0">
-              <TypographyMuted>Tax</TypographyMuted>
+              <TypographyMuted>{t("tax")}</TypographyMuted>
               {taxBreakup.length > 0 && (
                 <Button
                   variant="ghost"
@@ -613,7 +619,7 @@ export default function OrderPriceDetails({
         {/* Total */}
         <div className="flex justify-between items-center gap-4 min-w-0">
           <div className="flex-shrink-0">
-            <h4 className="text-lg font-bold text-gray-800">Total</h4>
+            <h4 className="text-lg font-bold text-gray-800">{t("total")}</h4>
           </div>
           <div className="text-right flex-shrink-0 break-words">
             <h4 className="text-lg font-bold text-gray-800">

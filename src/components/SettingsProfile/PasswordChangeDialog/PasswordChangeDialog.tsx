@@ -11,6 +11,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useFormValidation } from "@/hooks/Forms/useFormValidation";
+import { useTranslations } from "next-intl";
 import { Eye, EyeOff, Lock, Shield } from "lucide-react";
 import { useState } from "react";
 
@@ -32,6 +33,7 @@ export function PasswordChangeDialog({
   onSendOtp,
   userName: _userName,
 }: PasswordChangeDialogProps) {
+  const t = useTranslations("profileSettings");
   const [otp, setOtp] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
@@ -90,19 +92,16 @@ export function PasswordChangeDialog({
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <Shield className="h-5 w-5" />
-            Change Password
+            {t("changePasswordTitle")}
           </DialogTitle>
-          <DialogDescription>
-            Enter the OTP sent to your registered mobile number and set a new
-            password.
-          </DialogDescription>
+          <DialogDescription>{t("enterOtpAndSetPassword")}</DialogDescription>
         </DialogHeader>
 
         <div className="space-y-4">
           {/* OTP Section */}
           <div className="space-y-2">
             <div className="flex items-center justify-between">
-              <Label htmlFor="otp">Enter OTP *</Label>
+              <Label htmlFor="otp">{t("enterOtp")}</Label>
               {onSendOtp && (
                 <Button
                   variant="link"
@@ -111,7 +110,7 @@ export function PasswordChangeDialog({
                   disabled={isLoading}
                   className="h-auto p-0 text-xs"
                 >
-                  Send OTP
+                  {t("sendOtp")}
                 </Button>
               )}
             </div>
@@ -123,7 +122,7 @@ export function PasswordChangeDialog({
                 const value = e.target.value.replace(/\D/g, "").slice(0, 6);
                 setOtp(value);
               }}
-              placeholder="Enter 6-digit OTP"
+              placeholder={t("enter6DigitOtp")}
               maxLength={6}
               disabled={isLoading}
               autoFocus
@@ -132,7 +131,7 @@ export function PasswordChangeDialog({
 
           {/* New Password */}
           <div className="space-y-2">
-            <Label htmlFor="newPassword">New Password *</Label>
+            <Label htmlFor="newPassword">{t("newPassword")}</Label>
             <div className="relative">
               <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                 <Lock className="h-4 w-4 text-muted-foreground" />
@@ -142,7 +141,7 @@ export function PasswordChangeDialog({
                 type={showPassword ? "text" : "password"}
                 value={newPassword}
                 onChange={e => setNewPassword(e.target.value)}
-                placeholder="Enter new password"
+                placeholder={t("enterNewPassword")}
                 className="pl-10 pr-10"
                 disabled={isLoading}
               />
@@ -159,13 +158,13 @@ export function PasswordChangeDialog({
               </button>
             </div>
             <p className="text-xs text-muted-foreground">
-              Minimum 6 characters required
+              {t("minimum6CharactersRequired")}
             </p>
           </div>
 
           {/* Confirm Password */}
           <div className="space-y-2">
-            <Label htmlFor="confirmPassword">Confirm Password *</Label>
+            <Label htmlFor="confirmPassword">{t("confirmPassword")}</Label>
             <div className="relative">
               <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                 <Lock className="h-4 w-4 text-muted-foreground" />
@@ -175,7 +174,7 @@ export function PasswordChangeDialog({
                 type={showConfirmPassword ? "text" : "password"}
                 value={confirmPassword}
                 onChange={e => setConfirmPassword(e.target.value)}
-                placeholder="Confirm new password"
+                placeholder={t("confirmNewPassword")}
                 className="pl-10 pr-10"
                 disabled={isLoading}
               />
@@ -194,7 +193,9 @@ export function PasswordChangeDialog({
             {newPassword &&
               confirmPassword &&
               newPassword !== confirmPassword && (
-                <p className="text-xs text-red-500">Passwords do not match</p>
+                <p className="text-xs text-red-500">
+                  {t("passwordsDoNotMatch")}
+                </p>
               )}
           </div>
 
@@ -205,13 +206,13 @@ export function PasswordChangeDialog({
               onClick={handleClose}
               disabled={isLoading}
             >
-              Cancel
+              {t("cancel")}
             </Button>
             <Button
               onClick={handlePasswordChange}
               disabled={!isFormValid || isLoading}
             >
-              {isLoading ? "Changing..." : "Change Password"}
+              {isLoading ? t("changing") : t("changePasswordTitle")}
             </Button>
           </div>
         </div>

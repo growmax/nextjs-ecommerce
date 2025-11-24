@@ -24,11 +24,13 @@ import {
 import { ShoppingCart } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
+import { useTranslations } from "next-intl";
 
 export default function CartPageClient() {
   const { user, loading: userLoading } = useCurrentUser();
   const currency = user?.currency;
   const router = useRouter();
+  const t = useTranslations("cart");
   const { cart, cartCount, isLoading: isCartLoading } = useCartContext();
   const {
     changeQty,
@@ -192,12 +194,8 @@ export default function CartPageClient() {
         <Card>
           <CardContent className="p-8 text-center">
             <ShoppingCart className="h-12 w-12 mx-auto text-gray-400 mb-4" />
-            <h2 className="text-xl font-semibold mb-2">
-              Please log in to view your cart
-            </h2>
-            <p className="text-gray-600">
-              You need to be signed in to see your shopping cart items.
-            </p>
+            <h2 className="text-xl font-semibold mb-2">{t("pleaseLogin")}</h2>
+            <p className="text-gray-600">{t("pleaseLoginDescription")}</p>
           </CardContent>
         </Card>
       </div>
@@ -211,12 +209,10 @@ export default function CartPageClient() {
         <Card>
           <CardContent className="p-8 text-center">
             <ShoppingCart className="h-12 w-12 mx-auto text-gray-400 mb-4" />
-            <h2 className="text-xl font-semibold mb-2">Your cart is empty</h2>
-            <p className="text-gray-600 mb-4">
-              Start adding some products to your cart.
-            </p>
-            <Button onClick={() => (window.location.href = "/products")}>
-              Continue Shopping
+            <h2 className="text-xl font-semibold mb-2">{t("empty")}</h2>
+            <p className="text-gray-600 mb-4">{t("emptyDescription")}</p>
+            <Button onClick={() => router.push("/products")}>
+              {t("continueShopping")}
             </Button>
           </CardContent>
         </Card>
@@ -394,9 +390,9 @@ export default function CartPageClient() {
   return (
     <div className="container mx-auto px-4 py-6 max-w-7xl">
       <div className="mb-8">
-        <h1 className="text-3xl font-bold mb-2">Shopping Cart</h1>
+        <h1 className="text-3xl font-bold mb-2">{t("title")}</h1>
         <p className="text-muted-foreground text-sm">
-          {cartCount} {cartCount === 1 ? "item" : "items"} in your cart
+          {t("itemsInCart", { count: cartCount })}
         </p>
       </div>
 

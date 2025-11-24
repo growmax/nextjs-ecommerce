@@ -6,6 +6,7 @@ import { PhoneInput } from "@/components/forms/PhoneInput/PhoneInput";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
+import { useTranslations } from "next-intl";
 import { User } from "lucide-react";
 import { ReactNode } from "react";
 
@@ -39,13 +40,15 @@ export function ProfileCard({
   dataLoading = false,
   headerActions,
 }: ProfileCardProps) {
+  const t = useTranslations("profileSettings");
+
   if (dataLoading || !profile) {
     return (
       <Card className="w-full">
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <User className="h-5 w-5" />
-            Personal Information
+            {t("personalInformation")}
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-6">
@@ -86,7 +89,7 @@ export function ProfileCard({
       <CardHeader className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
         <CardTitle className="flex items-center gap-2">
           <User className="h-5 w-5" />
-          Personal Information
+          {t("personalInformation")}
         </CardTitle>
         {headerActions ? (
           <div className="flex items-center gap-2">{headerActions}</div>
@@ -97,7 +100,7 @@ export function ProfileCard({
         <ImageUpload
           currentImage={profile.avatar || null}
           onImageChange={onImageChange}
-          alt="Profile"
+          alt={t("profile")}
           size="md"
           shape="square"
           disabled={isLoading}
@@ -105,18 +108,18 @@ export function ProfileCard({
 
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           {/* Name */}
-          <FormField label="Name" required>
+          <FormField label={t("name")} required>
             <Input
               type="text"
               value={profile.name}
               onChange={e => onChange("name", e.target.value)}
-              placeholder="Enter your full name"
+              placeholder={t("enterFullName")}
               disabled={isLoading}
             />
           </FormField>
 
           {/* Email (Read-only) */}
-          <FormField label="Email" hint="Email cannot be changed">
+          <FormField label={t("email")} hint={t("emailCannotBeChanged")}>
             <Input
               type="email"
               value={profile.email}
@@ -127,7 +130,7 @@ export function ProfileCard({
 
           {/* Phone */}
           <PhoneInput
-            label="Mobile Number"
+            label={t("mobileNumber")}
             value={profile.phone}
             onChange={(value: string) => onChange("phone", value)}
             {...(onVerifyPhone && { onVerify: onVerifyPhone })}
@@ -138,7 +141,7 @@ export function ProfileCard({
 
           {/* Alt Phone */}
           <PhoneInput
-            label="Secondary Phone"
+            label={t("secondaryPhone")}
             value={profile.altPhone || ""}
             onChange={(value: string) => onChange("altPhone", value)}
             disabled={isLoading}
@@ -146,12 +149,12 @@ export function ProfileCard({
 
           {/* Alt Email */}
           <div className="sm:col-span-2">
-            <FormField label="Alternate Email">
+            <FormField label={t("alternateEmail")}>
               <Input
                 type="email"
                 value={profile.altEmail}
                 onChange={e => onChange("altEmail", e.target.value)}
-                placeholder="Enter alternate email address"
+                placeholder={t("enterAlternateEmail")}
                 disabled={isLoading}
               />
             </FormField>
