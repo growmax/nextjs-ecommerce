@@ -23,7 +23,7 @@ export const revalidate = 3600; // 1 hour
  * Server-side function to fetch homepage configuration
  * This matches the logic from useHomepageConfig hook but runs on the server
  */
-export async function getHomepageConfig(
+async function getHomepageConfig(
   domain: string,
   token?: string | null
 ): Promise<HomepageConfig | null> {

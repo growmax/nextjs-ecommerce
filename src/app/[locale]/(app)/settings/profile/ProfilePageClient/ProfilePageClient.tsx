@@ -18,8 +18,8 @@ import { AuthService, CompanyService } from "@/lib/api";
 import { AuthStorage } from "@/lib/auth";
 import { JWTService } from "@/lib/services/JWTService";
 import parsePhoneNumberFromString from "libphonenumber-js";
-import { useTranslations } from "next-intl";
 import { Shield } from "lucide-react";
+import { useTranslations } from "next-intl";
 export default function ProfilePageClient() {
   const t = useTranslations("profileSettings");
   const {
@@ -34,14 +34,14 @@ export default function ProfilePageClient() {
     loadProfile,
     loadPreferences,
   } = useProfileData();
-   const {user,sub1}=useCurrentUser();
-   const defaultCountryCallingCode = user?.defaultCountryCallingCode || "";
-   const userId = user?.userId;
+  const { user, sub1 } = useCurrentUser();
+  const defaultCountryCallingCode = user?.defaultCountryCallingCode || "";
+  const userId = user?.userId;
   const [isSaving, setIsSaving] = useState(false);
   const [showPasswordDialog, setShowPasswordDialog] = useState(false);
   const [showOTPDialog, setShowOTPDialog] = useState(false);
   const [phoneVerified, setPhoneVerified] = useState(false);
-  const [phoneNumber,setPhoneNumber] = useState<string | number>();
+  const [phoneNumber, setPhoneNumber] = useState<string | number>();
   const [otp, setOtp] = useState("");
   const defaultCountryCodeIso = user?.defaultCountryCodeIso || "";
   const tenantInfo = useTenantInfo();
@@ -68,7 +68,7 @@ export default function ProfilePageClient() {
   const [changedSections, setChangedSections] = useState<
     Set<"profile" | "preferences">
   >(new Set());
-  
+
   // Validation errors state
   const [validationErrors, setValidationErrors] = useState<{
     name?: string;
@@ -108,26 +108,28 @@ export default function ProfilePageClient() {
 
   const handleProfileChange = (field: string, value: string) => {
     if (!profile) return;
-    if(field === "phone"){
-      setPhoneNumber(`+${defaultCountryCallingCode}${value}`)
+    if (field === "phone") {
+      setPhoneNumber(`+${defaultCountryCallingCode}${value}`);
     }
-    
+
     // Clear validation error for this field when user types
     if (validationErrors[field as keyof typeof validationErrors]) {
-      setValidationErrors((prev) => {
+      setValidationErrors(prev => {
         const newErrors = { ...prev };
         delete newErrors[field as keyof typeof validationErrors];
         return newErrors;
       });
     }
-    
+
     const updatedProfile = { ...profile, [field]: value };
     setProfile(updatedProfile);
     updateChangedSections("profile");
   };
- 
+
   // Store the uploaded image URL separately for the picture parameter
-  const [uploadedPictureUrl, setUploadedPictureUrl] = useState<string | null>(null);
+  const [uploadedPictureUrl, setUploadedPictureUrl] = useState<string | null>(
+    null
+  );
 
   const handleImageChange = (image: string) => {
     if (!profile) return;
@@ -135,12 +137,12 @@ export default function ProfilePageClient() {
     // Update both avatar and picture fields for immediate preview
     const updatedProfile = { ...profile, avatar: image, picture: image };
     setProfile(updatedProfile);
-    
+
     // Store the merged URL if it's a full S3 URL (not a blob URL)
-    if (image && !image.startsWith('blob:')) {
+    if (image && !image.startsWith("blob:")) {
       setUploadedPictureUrl(image);
     }
-    
+
     updateChangedSections("profile");
   };
 
@@ -167,7 +169,7 @@ export default function ProfilePageClient() {
     setChangedSections(new Set());
     setHasChanges(false);
   };
- 
+
   // Email validation helper
   const isValidEmail = (email: string): boolean => {
     if (!email || email.trim() === "") return true; // Empty is allowed for optional fields
@@ -223,7 +225,7 @@ export default function ProfilePageClient() {
     if (!validation.isValid) {
       // Set validation errors for display (no toast notifications)
       const errors: typeof validationErrors = {};
-      validation.errors.forEach((error) => {
+      validation.errors.forEach(error => {
         if (error.includes("Name")) errors.name = error;
         if (error.includes("Mobile Number")) errors.phone = error;
         if (error.includes("Alternate Email")) errors.altEmail = error;
@@ -232,40 +234,57 @@ export default function ProfilePageClient() {
       setIsSaving(false);
       return;
     }
-    
+
     // Clear validation errors if validation passes
     setValidationErrors({});
 
     setIsSaving(true);
-    const phoneWithCountryCode = profile?.phone 
-      ? `+${defaultCountryCallingCode}${profile.phone}` 
+    const phoneWithCountryCode = profile?.phone
+      ? `+${defaultCountryCallingCode}${profile.phone}`
       : (profileDatas as any)?.phoneNumber || "";
 
     try {
       // Build body in the exact order expected by the API
       const profileData = (profileDatas as any) || {};
       const countryCode = (defaultCountryCodeIso || "IN") as any;
-      const parsedMobileNumber = parsePhoneNumberFromString(profile?.phone || "", countryCode);
-      
+      const parsedMobileNumber = parsePhoneNumberFromString(
+        profile?.phone || "",
+        countryCode
+      );
+
       const body: any = {
         id: String(profileData?.id || ""),
         tenantId: String(tenantId),
         displayName: String(profile?.name || ""),
         email: String(profile?.email || profileData?.email || ""),
-        secondaryEmail: String(profile?.altEmail || profileData?.secondaryEmail || ""),
+        secondaryEmail: String(
+          profile?.altEmail || profileData?.secondaryEmail || ""
+        ),
         emailVerified: Boolean(profileData?.emailVerified ?? true),
         hasPassword: Boolean(profileData?.hasPassword ?? true),
         status: String(profileData?.status || "CONFIRMED"),
         isSeller: Boolean(profileData?.isSeller ?? false),
-        callingCodes: String(parsedMobileNumber?.countryCallingCode || defaultCountryCallingCode || ""),
+        callingCodes: String(
+          parsedMobileNumber?.countryCallingCode ||
+            defaultCountryCallingCode ||
+            ""
+        ),
         callingCodesSecondary: String(defaultCountryCallingCode || ""),
-        countryCallingCode: String(parsedMobileNumber?.countryCallingCode || defaultCountryCallingCode || ""),
+        countryCallingCode: String(
+          parsedMobileNumber?.countryCallingCode ||
+            defaultCountryCallingCode ||
+            ""
+        ),
         countryCallingCodeSecondary: String(defaultCountryCallingCode || ""),
-        iso2: String(parsedMobileNumber?.country || defaultCountryCodeIso || ""),
+        iso2: String(
+          parsedMobileNumber?.country || defaultCountryCodeIso || ""
+        ),
         iso2Secondary: String(defaultCountryCodeIso || ""),
         phoneNumber: String(phoneWithCountryCode || ""),
         phoneNumberVerified: Boolean(profileData?.phoneNumberVerified ?? false),
-        nationalMobileNum: String(parsedMobileNumber?.nationalNumber || profile?.phone || ""),
+        nationalMobileNum: String(
+          parsedMobileNumber?.nationalNumber || profile?.phone || ""
+        ),
         nationalMobileNumSecondary: String(profile?.altPhone || ""),
         secondaryPhoneNumber: String(profile?.altPhone || ""),
       };
@@ -276,7 +295,7 @@ export default function ProfilePageClient() {
       }
 
       const promises: Promise<boolean>[] = [];
-      
+
       // Save profile if changed
       if (changedSections.has("profile")) {
         const userIdToUse = sub;
@@ -286,10 +305,12 @@ export default function ProfilePageClient() {
           return;
         }
         promises.push(
-          CompanyService.updateProfile(userIdToUse, body).then(() => true).catch((error) => {
-            console.error("Failed to update profile:", error);
-            return false;
-          })
+          CompanyService.updateProfile(userIdToUse, body)
+            .then(() => true)
+            .catch(error => {
+              console.error("Failed to update profile:", error);
+              return false;
+            })
         );
       }
 
@@ -340,10 +361,10 @@ export default function ProfilePageClient() {
   // Unified cancel handler
   const handleCancel = () => {
     resetAllChanges();
-      toast.info(t("allChangesCancelled"));
+    toast.info(t("allChangesCancelled"));
   };
 
-  const handleVerifyPhone = async(phone: string) => {
+  const handleVerifyPhone = async (phone: string) => {
     if (!phone) {
       toast.error(t("mobileNumber") + " is required");
       return;
@@ -352,14 +373,14 @@ export default function ProfilePageClient() {
     // Construct phone number with country code and store it
     const phoneWithCountryCode = `+${defaultCountryCallingCode}${phone}`;
     setPhoneNumber(phoneWithCountryCode);
-    
+
     const body = {
       phoneNumber: phoneWithCountryCode,
     };
-    
+
     try {
       const res = await CompanyService.verfiy({ body });
-      if(res){
+      if (res) {
         setShowOTPDialog(true);
       }
     } catch (error) {
@@ -487,7 +508,9 @@ export default function ProfilePageClient() {
               }}
               {...(userId && { userId })}
               {...(tenantId && { tenantId })}
-              {...((preferences as any)?.id && { preferenceId: parseInt((preferences as any).id) })}
+              {...((preferences as any)?.id && {
+                preferenceId: parseInt((preferences as any).id),
+              })}
             />
           </div>
         </div>
@@ -499,7 +522,7 @@ export default function ProfilePageClient() {
         onSave={handleSave}
         onCancel={handleCancel}
         isLoading={isSaving}
-        saveText={t("saveChanges")}
+        saveText="save"
         cancelText={t("cancel")}
         className="bottom-4 left-0 right-0 md:bottom-auto md:top-[69px] md:left-0 lg:left-64 z-50"
         anchorSelector="#profile-header"
@@ -507,8 +530,8 @@ export default function ProfilePageClient() {
 
       {/* Phone Verification Dialog */}
       <OTPDialog
-       otp={otp}
-       setOtp={setOtp}
+        otp={otp}
+        setOtp={setOtp}
         open={showOTPDialog}
         onOpenChange={setShowOTPDialog}
         onVerify={handleOTPVerify}
@@ -524,7 +547,6 @@ export default function ProfilePageClient() {
         onSendOtp={handleSendPasswordOtp}
         {...(profile?.email && { userName: profile.email })}
       />
-
     </div>
   );
 }
