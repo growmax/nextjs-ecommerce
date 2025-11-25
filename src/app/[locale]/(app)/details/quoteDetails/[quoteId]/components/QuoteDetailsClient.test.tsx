@@ -1,4 +1,21 @@
+// Mock i18n config FIRST to prevent next-intl/server ES module loading
+jest.mock("@/i18n/config", () => ({
+  locales: ["en", "es"],
+  defaultLocale: "en",
+}));
+
+// Mock navigation to prevent next-intl ES module loading
+jest.mock("@/i18n/navigation", () => ({
+  Link: "a",
+  useRouter: () => ({ push: jest.fn() }),
+  usePathname: () => "/",
+}));
+
 // Mock Next.js modules first (before any imports)
+jest.mock("@/components/ConditionalFooter", () => ({
+  ConditionalFooter: () => null,
+}));
+
 jest.mock("next/navigation", () => ({
   useRouter: () => ({
     push: jest.fn(),
@@ -124,15 +141,15 @@ const mockQuoteDetailsResponse = {
 };
 
 // Mock hooks
-jest.mock("@/hooks/useCurrentUser", () => ({
+jest.mock("@/hooks/useCurrentUser/useCurrentUser", () => ({
   useCurrentUser: () => ({ user: mockUser }),
 }));
 
-jest.mock("@/hooks/useTenantData", () => ({
+jest.mock("@/hooks/useTenantData/useTenantData", () => ({
   useTenantData: () => ({ tenantData: mockTenantData }),
 }));
 
-jest.mock("@/hooks/useModuleSettings", () => ({
+jest.mock("@/hooks/useModuleSettings/useModuleSettings", () => ({
   __esModule: true,
   default: () => ({
     quoteSettings: { editQuote: "QUOTE RECEIVED" },
@@ -274,7 +291,7 @@ jest.mock("@/components/dialogs/VersionsDialog", () => {
   };
 });
 
-jest.mock("@/components/sales", () => {
+jest.mock("@/components/sales/sales-header", () => {
   const React = jest.requireActual<typeof import("react")>("react");
   const MockSalesHeader = ({
     title,
@@ -290,7 +307,14 @@ jest.mock("@/components/sales", () => {
       React.createElement("span", null, identifier)
     );
   MockSalesHeader.displayName = "MockSalesHeader";
+  return {
+    __esModule: true,
+    default: MockSalesHeader,
+  };
+});
 
+jest.mock("@/components/sales/order-products-table", () => {
+  const React = jest.requireActual<typeof import("react")>("react");
   const MockOrderProductsTable = () =>
     React.createElement(
       "div",
@@ -298,7 +322,14 @@ jest.mock("@/components/sales", () => {
       "Products Table"
     );
   MockOrderProductsTable.displayName = "MockOrderProductsTable";
+  return {
+    __esModule: true,
+    default: MockOrderProductsTable,
+  };
+});
 
+jest.mock("@/components/sales/contactdetails", () => {
+  const React = jest.requireActual<typeof import("react")>("react");
   const MockOrderContactDetails = () =>
     React.createElement(
       "div",
@@ -306,7 +337,14 @@ jest.mock("@/components/sales", () => {
       "Contact Details"
     );
   MockOrderContactDetails.displayName = "MockOrderContactDetails";
+  return {
+    __esModule: true,
+    default: MockOrderContactDetails,
+  };
+});
 
+jest.mock("@/components/sales/terms-card", () => {
+  const React = jest.requireActual<typeof import("react")>("react");
   const MockOrderTermsCard = () =>
     React.createElement(
       "div",
@@ -314,7 +352,14 @@ jest.mock("@/components/sales", () => {
       "Terms Card"
     );
   MockOrderTermsCard.displayName = "MockOrderTermsCard";
+  return {
+    __esModule: true,
+    default: MockOrderTermsCard,
+  };
+});
 
+jest.mock("@/components/sales/order-price-details", () => {
+  const React = jest.requireActual<typeof import("react")>("react");
   const MockOrderPriceDetails = () =>
     React.createElement(
       "div",
@@ -322,7 +367,14 @@ jest.mock("@/components/sales", () => {
       "Price Details"
     );
   MockOrderPriceDetails.displayName = "MockOrderPriceDetails";
+  return {
+    __esModule: true,
+    default: MockOrderPriceDetails,
+  };
+});
 
+jest.mock("@/components/sales/customer-info-card", () => {
+  const React = jest.requireActual<typeof import("react")>("react");
   const MockCustomerInfoCard = () =>
     React.createElement(
       "div",
@@ -330,7 +382,14 @@ jest.mock("@/components/sales", () => {
       "Customer Info Card"
     );
   MockCustomerInfoCard.displayName = "MockCustomerInfoCard";
+  return {
+    __esModule: true,
+    default: MockCustomerInfoCard,
+  };
+});
 
+jest.mock("@/components/sales/DetailsSkeleton", () => {
+  const React = jest.requireActual<typeof import("react")>("react");
   const MockDetailsSkeleton = () =>
     React.createElement(
       "div",
@@ -338,15 +397,9 @@ jest.mock("@/components/sales", () => {
       "Details Skeleton"
     );
   MockDetailsSkeleton.displayName = "MockDetailsSkeleton";
-
   return {
-    SalesHeader: MockSalesHeader,
-    OrderProductsTable: MockOrderProductsTable,
-    OrderContactDetails: MockOrderContactDetails,
-    OrderTermsCard: MockOrderTermsCard,
-    OrderPriceDetails: MockOrderPriceDetails,
-    CustomerInfoCard: MockCustomerInfoCard,
-    DetailsSkeleton: MockDetailsSkeleton,
+    __esModule: true,
+    default: MockDetailsSkeleton,
   };
 });
 
@@ -405,12 +458,12 @@ jest.mock("@/utils/General/general", () => ({
   decodeUnicode: jest.fn(str => str),
 }));
 
+import QuoteDetailsClient from "@/app/[locale]/(app)/details/quoteDetails/[quoteId]/components/QuoteDetailsClient";
+import { QuotationDetailsService } from "@/lib/api";
+import QuotationNameService from "@/lib/api/services/QuotationNameService/QuotationNameService";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { render, screen, waitFor } from "@testing-library/react";
 import React, { ReactNode } from "react";
-import QuoteDetailsClient from "./QuoteDetailsClient";
-import { QuotationDetailsService } from "@/lib/api";
-import QuotationNameService from "@/lib/api/services/QuotationNameService/QuotationNameService";
 import { toast } from "sonner";
 
 const mockFetchQuoteDetails =

@@ -1,17 +1,20 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
-import { useHomepageConfig, HomepageConfig } from "@/hooks/useHomepageConfig";
-import find from "lodash/find";
-import { cn } from "@/lib/utils";
 import {
   Accordion,
   AccordionContent,
   AccordionItem,
   AccordionTrigger,
 } from "@/components/ui/accordion";
-import Image from "next/image";
+import {
+  HomepageConfig,
+  useHomepageConfig,
+} from "@/hooks/useHomepageConfig/useHomepageConfig";
+import { cn } from "@/lib/utils";
+import find from "lodash/find";
 import { ChevronUp } from "lucide-react";
+import Image from "next/image";
+import React, { useEffect, useState } from "react";
 
 interface BuyerFooterProps {
   initialConfig?: HomepageConfig | null;

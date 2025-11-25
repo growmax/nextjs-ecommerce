@@ -1,7 +1,7 @@
 import { PageLoader } from "@/components/Loaders/PageLoader/page-loader";
 import { Metadata } from "next";
 import { Suspense } from "react";
-import ProductListClient from "./[category]/ProductListClient";
+import ProductListClient from "@/app/[locale]/(app)/browse/[category]/ProductListClient";
 
 export const metadata: Metadata = {
   title: "Browse Products | E-Commerce",

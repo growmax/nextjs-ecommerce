@@ -1,12 +1,12 @@
-import { BaseService } from "../BaseService";
-import { OpenSearchService } from "./OpenSearchService";
+import { BaseService } from "@/lib/api/services/BaseService";
+import { OpenSearchService } from "@/lib/api/services/OpenSearchService/OpenSearchService";
 import {
   mockElasticIndex,
   mockElasticType,
   mockIdentifier,
   mockProductDetail,
   mockQueryType,
-} from "./OpenSearchService.mocks";
+} from "@/lib/api/services/OpenSearchService/OpenSearchService.mocks";
 
 // Mock the extractOpenSearchData utility
 jest.mock("@/utils/opensearch/response-parser", () => ({

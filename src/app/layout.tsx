@@ -1,7 +1,7 @@
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { QueryProvider } from "@/providers/QueryProvider";
 import type { Metadata } from "next";
-import "./globals.css";
+import "@/app/globals.css";
 
 // Metadata configuration
 export const metadata: Metadata = {

@@ -4,7 +4,7 @@
 import type {
   UpdateQuotationNameRequest,
   UpdateQuotationNameResponse,
-} from "./QuotationNameService";
+} from "@/lib/api/services/QuotationNameService/QuotationNameService";
 
 export const mockUpdateQuotationNameRequest: UpdateQuotationNameRequest = {
   userId: 123,

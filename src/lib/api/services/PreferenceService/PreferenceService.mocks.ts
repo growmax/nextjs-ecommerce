@@ -7,7 +7,7 @@ import type {
   OrderPreferencesResponse,
   PreferenceData,
   UserPreference,
-} from "./PreferenceService";
+} from "@/lib/api/services/PreferenceService/PreferenceService";
 
 export const mockUserPreference: UserPreference = {
   id: "pref-1",

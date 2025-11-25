@@ -1,5 +1,5 @@
-import { BaseService } from "../BaseService";
-import { DiscountService } from "./DiscountService";
+import { BaseService } from "@/lib/api/services/BaseService";
+import { DiscountService } from "@/lib/api/services/DiscountService/DiscountService";
 import {
   mockCheckVolumeDiscountEnabledResponse,
   mockDiscountApiResponse,
@@ -7,7 +7,7 @@ import {
   mockDiscountRequestWithContext,
   mockGetAllSellerPricesRequest,
   mockGetAllSellerPricesResponse,
-} from "./DiscountService.mocks";
+} from "@/lib/api/services/DiscountService/DiscountService.mocks";
 
 // Mock the client
 jest.mock("../../client", () => ({

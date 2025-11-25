@@ -13,59 +13,59 @@ export {
   type ApiClientConfig,
   type ApiError,
   type RequestContext,
-} from "./client";
+} from "@/lib/api/client";
 
 // Import services
-import AuthService from "./services/AuthService";
-import CartService from "./services/CartService/CartService";
-import CatalogService from "./services/CatalogService";
-import CompanyService from "./services/CompanyService";
-import DiscountService from "./services/DiscountService/DiscountService";
-import OpenSearchService from "./services/OpenSearchService/OpenSearchService";
-import StoreFrontService from "./services/StoreFrontService";
-import TenantService from "./services/TenantService";
-import UserService from "./services/UserService";
+import AuthService from "@/lib/api/services/AuthService";
+import CartService from "@/lib/api/services/CartService/CartService";
+import CatalogService from "@/lib/api/services/CatalogService";
+import CompanyService from "@/lib/api/services/CompanyService";
+import DiscountService from "@/lib/api/services/DiscountService/DiscountService";
+import OpenSearchService from "@/lib/api/services/OpenSearchService/OpenSearchService";
+import StoreFrontService from "@/lib/api/services/StoreFrontService";
+import TenantService from "@/lib/api/services/TenantService";
+import UserService from "@/lib/api/services/UserService";
 
 // Import SubIndustry service
-import SubIndustryService from "./services/SubIndustryService/SubIndustryService";
+import SubIndustryService from "@/lib/api/services/SubIndustryService/SubIndustryService";
 
 // Import Location service
-import LocationService from "./services/LocationService/LocationService";
+import LocationService from "@/lib/api/services/LocationService/LocationService";
 
 // Import token management services
-import { AuthTokenService } from "../services/AuthTokenService";
-import RequestQueueService from "../services/RequestQueueService";
-import TokenRefreshService from "../services/TokenRefreshService";
+import { AuthTokenService } from "@/lib/services/AuthTokenService";
+import RequestQueueService from "@/lib/services/RequestQueueService";
+import TokenRefreshService from "@/lib/services/TokenRefreshService";
 
 // Import dashboard services from the new location
-import DashboardService from "./services/DashboardService/DashboardService";
-import OrdersService from "./services/OrdersService/OrdersService";
-import OrderStatusService from "./services/OrderStatusService/OrderStatusService";
-import PreferenceService from "./services/PreferenceService/PreferenceService";
-import QuotesService from "./services/QuotesService/QuotesService";
-import QuoteStatusService from "./services/StatusService/StatusService";
+import DashboardService from "@/lib/api/services/DashboardService/DashboardService";
+import OrdersService from "@/lib/api/services/OrdersService/OrdersService";
+import OrderStatusService from "@/lib/api/services/OrderStatusService/OrderStatusService";
+import PreferenceService from "@/lib/api/services/PreferenceService/PreferenceService";
+import QuotesService from "@/lib/api/services/QuotesService/QuotesService";
+import QuoteStatusService from "@/lib/api/services/StatusService/StatusService";
 
 // Import additional services
-import AccountOwnerService from "./services/AccountOwnerService/AccountOwnerService";
-import BillingBranchService from "./services/BillingBranchService/BillingBranchService";
-import CurrencyService from "./services/CurrencyService/CurrencyService";
-import ManufacturerCompetitorService from "./services/ManufacturerCompetitorService/ManufacturerCompetitorService";
-import OrderDetailsService from "./services/OrderDetailsService/OrderDetailsService";
-import OrderNameService from "./services/OrderNameService/OrderNameService";
-import OrdersFilterService from "./services/OrdersFilterService/OrdersFilterService";
-import OrderVersionService from "./services/OrderVersionService/OrderVersionService";
-import PaymentService from "./services/PaymentService/PaymentService";
-import ProductAssetsService from "./services/ProductAssetsService/ProductAssetsService";
-import { ProductPageService } from "./services/ProductPageService";
-import QuotationDetailsService from "./services/QuotationDetailsService/QuotationDetailsService";
-import QuotationNameService from "./services/QuotationNameService/QuotationNameService";
-import QuotationVersionService from "./services/QuotationVersionService/QuotationVersionService";
-import QuoteSubmissionService from "./services/QuoteSubmissionService/QuoteSubmissionService";
-import RequestEditService from "./services/RequestEditService/RequestEditService";
-import SalesService from "./services/SalesService/SalesService";
-import SearchService from "./services/SearchService/SearchService";
-import SellerWarehouseService from "./services/SellerWarehouseService/SellerWarehouseService";
-import UploadService from "./services/UploadService/UploadService";
+import AccountOwnerService from "@/lib/api/services/AccountOwnerService/AccountOwnerService";
+import BillingBranchService from "@/lib/api/services/BillingBranchService/BillingBranchService";
+import CurrencyService from "@/lib/api/services/CurrencyService/CurrencyService";
+import ManufacturerCompetitorService from "@/lib/api/services/ManufacturerCompetitorService/ManufacturerCompetitorService";
+import OrderDetailsService from "@/lib/api/services/OrderDetailsService/OrderDetailsService";
+import OrderNameService from "@/lib/api/services/OrderNameService/OrderNameService";
+import OrdersFilterService from "@/lib/api/services/OrdersFilterService/OrdersFilterService";
+import OrderVersionService from "@/lib/api/services/OrderVersionService/OrderVersionService";
+import PaymentService from "@/lib/api/services/PaymentService/PaymentService";
+import ProductAssetsService from "@/lib/api/services/ProductAssetsService/ProductAssetsService";
+import { ProductPageService } from "@/lib/api/services/ProductPageService";
+import QuotationDetailsService from "@/lib/api/services/QuotationDetailsService/QuotationDetailsService";
+import QuotationNameService from "@/lib/api/services/QuotationNameService/QuotationNameService";
+import QuotationVersionService from "@/lib/api/services/QuotationVersionService/QuotationVersionService";
+import QuoteSubmissionService from "@/lib/api/services/QuoteSubmissionService/QuoteSubmissionService";
+import RequestEditService from "@/lib/api/services/RequestEditService/RequestEditService";
+import SalesService from "@/lib/api/services/SalesService/SalesService";
+import SearchService from "@/lib/api/services/SearchService/SearchService";
+import SellerWarehouseService from "@/lib/api/services/SellerWarehouseService/SellerWarehouseService";
+import UploadService from "@/lib/api/services/UploadService/UploadService";
 
 // Export services
 export {
@@ -116,33 +116,33 @@ export type {
   LoginRequest,
   LoginResponse,
   RefreshTokenResponse,
-} from "./services/AuthService";
+} from "@/lib/api/services/AuthService";
 
-export type { TenantInfo } from "./services/TenantService";
+export type { TenantInfo } from "@/lib/api/services/TenantService";
 
 export type {
   CompanyDetails,
   UserDetails,
   UserProfile,
-} from "./services/UserService";
+} from "@/lib/api/services/UserService";
 
 export type {
   CatalogSettings,
   Category,
   ProductSearchOptions,
-} from "./services/CatalogService";
+} from "@/lib/api/services/CatalogService";
 
 export type {
   GraphQLQuery,
   GraphQLResponse,
   StoreFrontConfig,
-} from "./services/StoreFrontService";
+} from "@/lib/api/services/StoreFrontService";
 
 export type {
   Cart,
   CartCount,
   CartParams,
-} from "./services/CartService/CartService";
+} from "@/lib/api/services/CartService/CartService";
 
 // Export dashboard service types
 export type {
@@ -155,24 +155,24 @@ export type {
   FilterColumn,
   OrderFilter,
   OrdersFilterParams,
-} from "./services/OrdersFilterService/OrdersFilterService";
-export type { OrdersParams } from "./services/OrdersService/OrdersService";
+} from "@/lib/api/services/OrdersFilterService/OrdersFilterService";
+export type { OrdersParams } from "@/lib/api/services/OrdersService/OrdersService";
 export type {
   ElasticSearchOptions,
   ElasticSearchQuery,
   FormattedProduct,
   SearchProductsResponse,
-} from "./services/SearchService/SearchService";
+} from "@/lib/api/services/SearchService/SearchService";
 
 export type {
   OrderStatusResponse,
   StatusOption,
-} from "./services/OrderStatusService/OrderStatusService";
+} from "@/lib/api/services/OrderStatusService/OrderStatusService";
 
 export type {
   PreferenceModule,
   UserPreference,
-} from "./services/PreferenceService/PreferenceService";
+} from "@/lib/api/services/PreferenceService/PreferenceService";
 
 export type {
   CheckVolumeDiscountEnabledResponse,
@@ -183,7 +183,7 @@ export type {
   VolumeDiscountRequest,
   VolumeDiscountRequestItem,
   VolumeDiscountResponse,
-} from "./services/DiscountService/DiscountService";
+} from "@/lib/api/services/DiscountService/DiscountService";
 
 // Export CompanyService types
 export type {
@@ -217,7 +217,7 @@ export type {
   Warehouse,
   Zone,
   ZoneInfo,
-} from "./services/CompanyService";
+} from "@/lib/api/services/CompanyService";
 
 // Export LocationService types
 export type {
@@ -225,7 +225,7 @@ export type {
   DistrictData as LocationDistrictData,
   LocationResponse,
   StateData as LocationStateData,
-} from "./services/LocationService/LocationService";
+} from "@/lib/api/services/LocationService/LocationService";
 
 export type {
   ApprovalGroup,
@@ -236,25 +236,25 @@ export type {
   QuotesRequestBody,
   QuotesResponseData,
   QuoteUser,
-} from "./services/QuotesService/QuotesService";
+} from "@/lib/api/services/QuotesService/QuotesService";
 
 export type {
   QuoteStatusApiResponse,
   QuoteStatusParams,
   QuoteStatusResponse,
-} from "./services/StatusService/StatusService";
+} from "@/lib/api/services/StatusService/StatusService";
 
 // Export BillingBranchService types
 export type {
   BillingAddress,
   BillingBranchResponse,
-} from "./services/BillingBranchService/BillingBranchService";
+} from "@/lib/api/services/BillingBranchService/BillingBranchService";
 
 // Export ProductAssetsService types
 export type {
   ProductAsset,
   ProductAssetsResponse,
-} from "./services/ProductAssetsService/ProductAssetsService";
+} from "@/lib/api/services/ProductAssetsService/ProductAssetsService";
 
 // Export OrderDetailsService types
 export type {
@@ -263,14 +263,14 @@ export type {
   OrderDetailItem,
   OrderDetailsData,
   OrderDetailsResponse,
-} from "./services/OrderDetailsService/OrderDetailsService";
+} from "@/lib/api/services/OrderDetailsService/OrderDetailsService";
 
 // Export ManufacturerCompetitorService types
 export type {
   CompetitorDetail,
   FetchCompetitorsRequest,
   FetchCompetitorsResponse,
-} from "./services/ManufacturerCompetitorService/ManufacturerCompetitorService";
+} from "@/lib/api/services/ManufacturerCompetitorService/ManufacturerCompetitorService";
 
 // Export PaymentService types
 export type {
@@ -282,25 +282,25 @@ export type {
   PaymentHistoryItem,
   PaymentTerm,
   PaymentTermsResponse,
-} from "./services/PaymentService/PaymentService";
+} from "@/lib/api/services/PaymentService/PaymentService";
 
 // Export OrderNameService types
 export type {
   UpdateOrderNameRequest,
   UpdateOrderNameResponse,
-} from "./services/OrderNameService/OrderNameService";
+} from "@/lib/api/services/OrderNameService/OrderNameService";
 
 // Export OrderVersionService types
 export type {
   CreateOrderVersionRequest,
   CreateOrderVersionResponse,
-} from "./services/OrderVersionService/OrderVersionService";
+} from "@/lib/api/services/OrderVersionService/OrderVersionService";
 
 // Export RequestEditService types
 export type {
   RequestEditParams,
   RequestEditResponse,
-} from "./services/RequestEditService/RequestEditService";
+} from "@/lib/api/services/RequestEditService/RequestEditService";
 
 // Export QuotationDetailsService types
 export type {
@@ -309,26 +309,26 @@ export type {
   QuotationDetail,
   QuotationDetailsResponse,
   QuotationProductDetail,
-} from "./services/QuotationDetailsService/QuotationDetailsService";
+} from "@/lib/api/services/QuotationDetailsService/QuotationDetailsService";
 
 // Export QuotationNameService types
 export type {
   UpdateQuotationNameRequest,
   UpdateQuotationNameResponse,
-} from "./services/QuotationNameService/QuotationNameService";
+} from "@/lib/api/services/QuotationNameService/QuotationNameService";
 
 // Export QuotationVersionService types
 export type {
   CreateQuotationVersionRequest,
   CreateQuotationVersionResponse,
-} from "./services/QuotationVersionService/QuotationVersionService";
+} from "@/lib/api/services/QuotationVersionService/QuotationVersionService";
 
 // Export QuoteSubmissionService types
 export type {
   QuoteSubmissionPayload,
   QuoteSubmissionRequest,
   QuoteSubmissionResponse,
-} from "./services/QuoteSubmissionService/QuoteSubmissionService";
+} from "@/lib/api/services/QuoteSubmissionService/QuoteSubmissionService";
 
 // Export SellerWarehouseService types
 export type {
@@ -336,31 +336,31 @@ export type {
   FindWarehouseRequest,
   SellerBranch,
   Warehouse as SellerWarehouse,
-} from "./services/SellerWarehouseService/SellerWarehouseService";
+} from "@/lib/api/services/SellerWarehouseService/SellerWarehouseService";
 
 // Export token management service types
 export type {
   QueuedRequest,
   RefreshTokenResult,
-} from "../services/TokenRefreshService";
+} from "@/lib/services/TokenRefreshService";
 
 export type {
   EnhancedQueuedRequest,
   QueuedRequestOptions,
-} from "../services/RequestQueueService";
+} from "@/lib/services/RequestQueueService";
 
 // Export utility functions
 export {
   getCommonApiHeaders,
   getOriginHeader,
   getTenantApiHeaders,
-} from "../utils/originUtils";
+} from "@/lib/utils/originUtils";
 
 export type {
   OrdersApiResponse,
   OrdersRequestParams,
   OrdersResponse,
-} from "./services/Dasboard/DashboardOrdersTable";
+} from "@/lib/api/services/Dasboard/DashboardOrdersTable";
 
 // Export order utility functions and types
 export {

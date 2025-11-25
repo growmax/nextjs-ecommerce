@@ -3,7 +3,7 @@
  * Use this if Axios interceptors are being overridden by Next.js
  */
 
-import { coreCommerceClient } from "./client";
+import { coreCommerceClient } from "@/lib/api/client";
 
 // Helper to get token from cookie
 function getTokenFromCookie(name: string): string | null {

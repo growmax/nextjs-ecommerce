@@ -1,9 +1,9 @@
-import { BaseService } from "../BaseService";
-import { OrderNameService } from "./OrderNameService";
+import { BaseService } from "@/lib/api/services/BaseService";
+import { OrderNameService } from "@/lib/api/services/OrderNameService/OrderNameService";
 import {
   mockUpdateOrderNameRequest,
   mockUpdateOrderNameResponse,
-} from "./OrderNameService.mocks";
+} from "@/lib/api/services/OrderNameService/OrderNameService.mocks";
 
 // Mock the client
 jest.mock("../../client", () => ({

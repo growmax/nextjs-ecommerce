@@ -1,11 +1,11 @@
-import { BaseService } from "../BaseService";
-import { ProfileService } from "./ProfileService";
+import { BaseService } from "@/lib/api/services/BaseService";
+import { ProfileService } from "@/lib/api/services/ProfileService/ProfileService";
 import {
   mockProfile,
   mockProfileResponse,
   mockProfileUpdateData,
   mockUpdatedProfileResponse,
-} from "./ProfileService.mocks";
+} from "@/lib/api/services/ProfileService/ProfileService.mocks";
 
 // Mock the client
 jest.mock("../../client", () => ({

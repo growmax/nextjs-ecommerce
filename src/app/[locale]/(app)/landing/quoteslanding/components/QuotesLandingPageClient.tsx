@@ -1,14 +1,14 @@
 "use client";
 
+import QuotesLandingTable from "@/app/[locale]/(app)/landing/quoteslanding/components/QuotesLandingTable/QuotesLandingTable";
+import { LandingLayout, PageLayout } from "@/components";
 import { DashboardToolbar } from "@/components/custom/dashboard-toolbar";
-import { LandingLayout, PageLayout } from "@/components/layout";
 import { Toaster } from "@/components/ui/sonner";
-import { useRoutePrefetch } from "@/hooks/useRoutePrefetch";
+import { useRoutePrefetch } from "@/hooks/useRoutePrefetch/useRoutePrefetch";
 import { Download } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { useCallback, useEffect, useState } from "react";
 import { toast } from "sonner";
-import { useTranslations } from "next-intl";
-import QuotesLandingTable from "../components/QuotesLandingTable/QuotesLandingTable";
 
 export default function QuotesLandingPageClient() {
   const { prefetch } = useRoutePrefetch();

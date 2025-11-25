@@ -4,7 +4,7 @@
 import type {
   CreateQuotationVersionRequest,
   CreateQuotationVersionResponse,
-} from "./QuotationVersionService";
+} from "@/lib/api/services/QuotationVersionService/QuotationVersionService";
 
 export const mockCreateQuotationVersionRequest: CreateQuotationVersionRequest =
   {

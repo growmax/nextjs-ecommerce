@@ -11,7 +11,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { ArrowLeft, Package } from "lucide-react";
 import type { CartItem } from "@/types/calculation/cart";
-import CartSkeleton from "../CartSkeleton";
+import CartSkeleton from "@/app/[locale]/(app)/cart/components/CartSkeleton";
 import { useTranslations } from "next-intl";
 interface CartProduct {
   productId: number;

@@ -4,7 +4,7 @@
 import type {
   RequestEditParams,
   RequestEditResponse,
-} from "./RequestEditService";
+} from "@/lib/api/services/RequestEditService/RequestEditService";
 
 export const mockRequestEditParams: RequestEditParams = {
   userId: 123,

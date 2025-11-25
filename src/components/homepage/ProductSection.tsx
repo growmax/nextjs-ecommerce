@@ -1,11 +1,11 @@
 "use client";
 
 import ProductCard from "@/app/[locale]/(app)/category/components/ProductCard";
-import useProductDiscounts from "@/hooks/useProductDiscounts";
-import { useProductsByIds } from "@/hooks/useProductsByIds";
+import useProductDiscounts from "@/hooks/useProductDiscounts/useProductDiscounts";
+import { useProductsByIds } from "@/hooks/useProductsByIds/useProductsByIds";
 import { cn } from "@/lib/utils";
 import { useMemo } from "react";
-import TitleComponent from "./TitleComponent";
+import TitleComponent from "@/components/homepage/TitleComponent";
 
 interface ProductSectionProps {
   data?: {

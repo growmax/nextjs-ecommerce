@@ -7,7 +7,7 @@ import { useFormValidation } from "@/hooks/Forms/useFormValidation";
 import { useTranslations } from "next-intl";
 import { Check } from "lucide-react";
 import { useState } from "react";
-import { FormField } from "./FormField";
+import { FormField } from "@/components/forms/FormField";
 
 interface PhoneInputProps {
   label: string;

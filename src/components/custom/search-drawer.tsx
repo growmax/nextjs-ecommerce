@@ -1,7 +1,7 @@
 "use client";
 
 import { Sheet, SheetContent, SheetTitle } from "@/components/ui/sheet";
-import SearchBox from "./search";
+import SearchBox from "@/components/custom/search";
 
 interface SearchDrawerProps {
   open: boolean;

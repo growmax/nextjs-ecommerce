@@ -9,14 +9,14 @@ import {
   mockTenantData,
   mockUpdatedProducts,
   mockUser,
-} from "./useLatestOrderProducts.mocks";
+} from "@/hooks/useLatestOrderProducts/useLatestOrderProducts.mocks";
 
 // Mock dependencies
-jest.mock("@/hooks/useCurrentUser", () => ({
+jest.mock("@/hooks/useCurrentUser/useCurrentUser", () => ({
   useCurrentUser: () => ({ user: mockUser }),
 }));
 
-jest.mock("@/hooks/useTenantData", () => ({
+jest.mock("@/hooks/useTenantData/useTenantData", () => ({
   useTenantData: () => ({ tenantData: mockTenantData }),
 }));
 
@@ -24,7 +24,7 @@ jest.mock("@/utils/order/getLatestTaxData/getLatestTaxData", () => ({
   getLatestTaxData: mockGetLatestTaxData,
 }));
 
-import { useLatestOrderProducts } from "./useLatestOrderProducts";
+import { useLatestOrderProducts } from "@/hooks/useLatestOrderProducts/useLatestOrderProducts";
 
 // Helper to create a wrapper with QueryClient
 function createWrapper() {

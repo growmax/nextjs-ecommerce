@@ -3,7 +3,7 @@ import type { ReactNode } from "react";
 
 import { Checkbox } from "@/components/ui/checkbox";
 
-import { DragHandle } from "./DragHandle";
+import { DragHandle } from "@/components/Global/DataTable/DragHandle";
 
 /**
  * Creates a drag handle column for drag and drop functionality

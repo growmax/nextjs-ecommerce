@@ -1,7 +1,7 @@
 "use client";
 
+import useUser from "@/hooks/useUser/useUser";
 import { useQuery } from "@tanstack/react-query";
-import useUser from "@/hooks/useUser";
 
 /**
  * Hook to fetch register address (sold-to, ship-to, bill-to)

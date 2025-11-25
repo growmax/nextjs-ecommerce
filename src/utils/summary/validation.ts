@@ -1,5 +1,5 @@
 import * as yup from "yup";
-import { containsXSS } from "../sanitization/sanitization.utils";
+import { containsXSS } from "@/utils/sanitization/sanitization.utils";
 
 /**
  * Buyer Quote Summary Validation Schema

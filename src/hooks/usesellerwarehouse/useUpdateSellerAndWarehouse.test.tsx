@@ -9,12 +9,12 @@ jest.mock("@/lib/api", () => ({
   },
 }));
 
-jest.mock("../useCurrentUser", () => ({
+jest.mock("@/hooks/useCurrentUser/useCurrentUser", () => ({
   useCurrentUser: () => ({ user: { userId: "123", companyId: "456" } }),
 }));
 
+import { useUpdateSellerAndWarehouse } from "@/hooks/usesellerwarehouse/useUpdateSellerAndWarehouse";
 import { SellerWarehouseService } from "@/lib/api";
-import { useUpdateSellerAndWarehouse } from "./useUpdateSellerAndWarehouse";
 
 describe("useUpdateSellerAndWarehouse", () => {
   // Minimal typings for the test harness

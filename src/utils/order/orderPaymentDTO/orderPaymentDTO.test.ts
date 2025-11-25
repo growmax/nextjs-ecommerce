@@ -1,4 +1,7 @@
-import { formBundleProductsPayload, orderPaymentDTO } from "./orderPaymentDTO";
+import {
+  formBundleProductsPayload,
+  orderPaymentDTO,
+} from "@/utils/order/orderPaymentDTO/orderPaymentDTO";
 import {
   mockAddressDetails,
   mockCartItem,
@@ -15,7 +18,7 @@ import {
   mockProductWithWarehouse,
   mockValues,
   mockVDDetails,
-} from "./orderPaymentDTO.mocks";
+} from "@/utils/order/orderPaymentDTO/orderPaymentDTO.mocks";
 
 // Note: window.location.origin is used in the function
 // In Jest with jsdom, it will use the actual test environment origin

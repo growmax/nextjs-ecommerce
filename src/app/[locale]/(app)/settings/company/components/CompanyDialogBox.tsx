@@ -30,9 +30,9 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
-import { FormDropdown } from "./FormDropdown";
-import FormInput from "./FormInput";
-import FormTextarea from "./FormTextarea";
+import { FormDropdown } from "@/app/[locale]/(app)/settings/company/components/FormDropdown";
+import FormInput from "@/app/[locale]/(app)/settings/company/components/FormInput";
+import FormTextarea from "@/app/[locale]/(app)/settings/company/components/FormTextarea";
 interface CompanyDialogBoxProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;

@@ -1,5 +1,5 @@
-import { coreCommerceClient } from "../../client";
-import { BaseService } from "../BaseService";
+import { coreCommerceClient } from "@/lib/api/client";
+import { BaseService } from "@/lib/api/services/BaseService";
 
 // Define the request parameters for updating quotation name
 export interface UpdateQuotationNameRequest {

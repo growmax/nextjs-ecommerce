@@ -11,7 +11,7 @@ import {
 } from "@/components/ui/sheet";
 import { Filter } from "lucide-react";
 import { useState } from "react";
-import { FilterSection } from "./FilterSection";
+import { FilterSection } from "@/components/ProductList/FilterSection";
 
 /**
  * MobileFilterSheet Component

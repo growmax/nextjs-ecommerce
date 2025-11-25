@@ -5,7 +5,7 @@ import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Subtitle, TypographyMuted } from "@/components/ui/typography";
-import { useCurrentUser } from "@/hooks/useCurrentUser";
+import { useCurrentUser } from "@/hooks/useCurrentUser/useCurrentUser";
 import { useTranslations } from "next-intl";
 
 interface SellerPricing {

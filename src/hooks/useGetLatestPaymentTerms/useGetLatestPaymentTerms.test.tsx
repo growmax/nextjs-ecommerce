@@ -6,7 +6,7 @@ import {
   mockAxiosResponseNoCashDiscount,
   mockCashDiscountTerm,
   mockUser,
-} from "./useGetLatestPaymentTerms.mocks";
+} from "@/hooks/useGetLatestPaymentTerms/useGetLatestPaymentTerms.mocks";
 
 // Mock axios
 jest.mock("axios", () => ({
@@ -21,11 +21,11 @@ jest.mock("swr/immutable", () => ({
 }));
 
 // Mock useCurrentUser
-jest.mock("@/hooks/useCurrentUser", () => ({
+jest.mock("@/hooks/useCurrentUser/useCurrentUser", () => ({
   useCurrentUser: () => ({ user: mockUser }),
 }));
 
-import useGetLatestPaymentTerms from "./useGetLatestPaymentTerms";
+import useGetLatestPaymentTerms from "@/hooks/useGetLatestPaymentTerms/useGetLatestPaymentTerms";
 import useSWRImmutable from "swr/immutable";
 
 const mockUseSWR = useSWRImmutable as jest.MockedFunction<

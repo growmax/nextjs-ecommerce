@@ -5,13 +5,13 @@ import type {
 } from "@/types/OpenElasticSearch/types";
 import type { ProductDetail } from "@/types/product/product-detail";
 import { extractOpenSearchData } from "@/utils/opensearch/response-parser";
-import { elasticClient, RequestContext } from "../../../client";
-import { BaseService } from "../../BaseService";
-import { buildProductSearchQuery } from "../query-builder/query-builder";
+import { elasticClient, RequestContext } from "@/lib/api/client";
+import { BaseService } from "@/lib/api/services/BaseService";
+import { buildProductSearchQuery } from "@/lib/api/services/ElasticQueryService/query-builder/query-builder";
 import {
   createErrorSearchResponse,
   formatProductSearchResponse,
-} from "../response-utils/response-utils";
+} from "@/lib/api/services/ElasticQueryService/response-utils/response-utils";
 
 export class OpenElasticSearchService extends BaseService<OpenElasticSearchService> {
   protected defaultClient = elasticClient;

@@ -1,7 +1,7 @@
 // Mocks for BillingBranchService
 // These mocks are for testing the service in isolation.
 
-import type { BillingAddress } from "./BillingBranchService";
+import type { BillingAddress } from "@/lib/api/services/BillingBranchService/BillingBranchService";
 
 export const mockBillingAddress: BillingAddress = {
   id: "1",

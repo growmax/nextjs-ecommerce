@@ -2,7 +2,7 @@
 
 import { Input } from "@/components/ui/input";
 import { useTenantInfo } from "@/contexts/TenantContext";
-import { useCurrentUser } from "@/hooks/useCurrentUser";
+import { useCurrentUser } from "@/hooks/useCurrentUser/useCurrentUser";
 import SearchService from "@/lib/api/services/SearchService/SearchService";
 import { serchquery } from "@/utils/elasticsearch/search-queries";
 // Use individual lodash imports for better tree-shaking

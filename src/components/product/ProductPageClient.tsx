@@ -1,9 +1,9 @@
 "use client";
 
 import { useCallback, useEffect } from "react";
-import { useProductVariants } from "@/hooks/useProductVariants";
-import VariantSelector from "./VariantSelector";
-import VariantDebugInfo from "./VariantDebugInfo";
+import { useProductVariants } from "@/hooks/useProductVariants/useProductVariants";
+import VariantSelector from "@/components/product/VariantSelector";
+import VariantDebugInfo from "@/components/product/VariantDebugInfo";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
 import { useProductVariantContext } from "@/contexts/ProductVariantContext";

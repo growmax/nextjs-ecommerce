@@ -8,7 +8,7 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
-import { useIsMobile } from "@/hooks/use-mobile";
+import { useIsMobile } from "@/hooks/use-mobile/use-mobile";
 import { cn } from "@/lib/utils";
 import type {
   DashboardToolbarProps,
@@ -25,8 +25,8 @@ import {
   X,
 } from "lucide-react";
 import { forwardRef, useImperativeHandle, useRef } from "react";
-import { LoadingButton } from "./loading-button";
-import SearchBox from "./search";
+import { LoadingButton } from "@/components/custom/loading-button";
+import SearchBox from "@/components/custom/search";
 const DashboardToolbar = forwardRef<DashboardToolbarRef, DashboardToolbarProps>(
   (
     {

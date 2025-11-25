@@ -1,7 +1,7 @@
-import { AuthStorage } from "../../auth";
-import { JWTService } from "../../services/JWTService";
-import { coreCommerceClient } from "../client";
-import { BaseService } from "./BaseService";
+import { AuthStorage } from "@/lib/auth";
+import { JWTService } from "@/lib/services/JWTService";
+import { coreCommerceClient } from "@/lib/api/client";
+import { BaseService } from "@/lib/api/services/BaseService";
 
 // Branch Address Interface
 export interface BranchAddress {

@@ -7,7 +7,7 @@ import useEmblaCarousel from "embla-carousel-react";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import Image from "next/image";
 import { useCallback, useEffect, useState } from "react";
-import TitleComponent from "./TitleComponent";
+import TitleComponent from "@/components/homepage/TitleComponent";
 
 interface CustomImageLinkItem {
   image?: string;

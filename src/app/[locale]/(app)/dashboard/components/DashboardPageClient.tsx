@@ -1,7 +1,7 @@
 "use client";
 
 import { Skeleton } from "@/components/ui/skeleton";
-import { useRoutePrefetch } from "@/hooks/useRoutePrefetch";
+import { useRoutePrefetch } from "@/hooks/useRoutePrefetch/useRoutePrefetch";
 import dynamic from "next/dynamic";
 import { Suspense, useEffect } from "react";
 

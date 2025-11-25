@@ -7,8 +7,8 @@ import {
   extractOpenSearchHits,
   extractOpenSearchData,
 } from "@/utils/opensearch/response-parser";
-import { openSearchClient, RequestContext } from "../client";
-import { BaseService } from "./BaseService";
+import { openSearchClient, RequestContext } from "@/lib/api/client";
+import { BaseService } from "@/lib/api/services/BaseService";
 
 export interface VariantData {
   product_id: number;

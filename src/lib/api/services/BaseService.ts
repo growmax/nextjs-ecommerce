@@ -1,5 +1,5 @@
 import { AxiosInstance } from "axios";
-import { createClientWithContext, RequestContext } from "../client";
+import { createClientWithContext, RequestContext } from "@/lib/api/client";
 
 /**
  * Abstract base service class that handles singleton pattern and common functionality

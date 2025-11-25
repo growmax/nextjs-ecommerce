@@ -1,4 +1,4 @@
-import { getRedisClient, isRedisEnabled } from "./redis-client";
+import { getRedisClient, isRedisEnabled } from "@/lib/cache/redis-client";
 
 export async function withRedisCache<T>(
   key: string,

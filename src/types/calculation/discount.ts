@@ -1,4 +1,4 @@
-import { CartItem, PricingSource } from "./cart";
+import { CartItem, PricingSource } from "@/types/calculation/cart";
 
 // Discount range structure
 export interface DiscountRange {

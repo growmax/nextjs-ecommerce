@@ -12,7 +12,7 @@ import { useCart } from "@/contexts/CartContext";
 import { useUserDetails } from "@/contexts/UserDetailsContext";
 import useLogout from "@/hooks/Auth/useLogout";
 import useUserProfile from "@/hooks/Profile/useUserProfile";
-import { useRoutePrefetch } from "@/hooks/useRoutePrefetch";
+import { useRoutePrefetch } from "@/hooks/useRoutePrefetch/useRoutePrefetch";
 import { cn } from "@/lib/utils";
 import { getUserInitials } from "@/utils/General/general";
 import {
@@ -21,8 +21,8 @@ import {
   Search,
   ShoppingCart,
 } from "lucide-react";
-import Link from "next/link";
 import { useTranslations } from "next-intl";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useMemo, useState } from "react";
 

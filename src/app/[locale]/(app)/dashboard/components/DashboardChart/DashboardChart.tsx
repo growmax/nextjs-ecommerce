@@ -1,10 +1,10 @@
 "use client";
 
 import PricingFormat from "@/components/PricingFormat";
-import { useDashboardChartData } from "@/hooks/useDashboardData";
+import { useDashboardChartData } from "@/hooks/useDashboardData/useDashboardData";
 import { TrendingDown, TrendingUp } from "lucide-react";
-import { Area, AreaChart, CartesianGrid, XAxis, YAxis } from "recharts";
 import { useTranslations } from "next-intl";
+import { Area, AreaChart, CartesianGrid, XAxis, YAxis } from "recharts";
 
 import {
   Card,

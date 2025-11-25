@@ -1,7 +1,7 @@
 import { MockUserDetailsProvider } from "@/contexts/__mocks__/UserDetailsContext";
 import { render, screen } from "@testing-library/react";
 import { FormProvider, useForm } from "react-hook-form";
-import SummaryPriceDetails from "./SummaryPriceDetails";
+import SummaryPriceDetails from "@/components/summary/SummaryPriceDetails";
 
 // Mock CartPriceDetails to avoid complex dependencies
 jest.mock("@/components/sales/CartPriceDetails", () => {

@@ -1,4 +1,8 @@
-import { authClient, createClientWithContext, RequestContext } from "../client";
+import {
+  authClient,
+  createClientWithContext,
+  RequestContext,
+} from "@/lib/api/client";
 import { AnonymousTokenResponse } from "@/types/appconfig";
 
 export interface LoginRequest {

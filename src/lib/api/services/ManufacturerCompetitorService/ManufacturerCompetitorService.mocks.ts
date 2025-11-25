@@ -4,7 +4,7 @@
 import type {
   CompetitorDetail,
   FetchCompetitorsResponse,
-} from "./ManufacturerCompetitorService";
+} from "@/lib/api/services/ManufacturerCompetitorService/ManufacturerCompetitorService";
 
 export const mockCompanyId = 123;
 

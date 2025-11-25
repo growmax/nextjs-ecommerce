@@ -15,7 +15,7 @@ import {
 import { ChevronDown } from "lucide-react";
 import { useMemo, useState } from "react";
 import { useTranslations } from "next-intl";
-import PricingFormat from "../PricingFormat";
+import PricingFormat from "@/components/PricingFormat";
 
 interface TaxDetail {
   name: string;

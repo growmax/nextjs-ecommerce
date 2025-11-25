@@ -1,6 +1,9 @@
 import { find, groupBy } from "lodash";
-import { cartCalculation, VolumeDiscountCalculation } from "../cartCalculation";
-import { processDiscountDetails } from "../product-utils";
+import {
+  cartCalculation,
+  VolumeDiscountCalculation,
+} from "@/utils/calculation/cartCalculation";
+import { processDiscountDetails } from "@/utils/calculation/product-utils";
 
 export const groupCartItemsBySeller = (cartItems: any, _debugMode = true) => {
   if (!cartItems || cartItems.length === 0) {

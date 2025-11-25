@@ -1,6 +1,6 @@
 "use client";
 
-import { useTenantData } from "@/hooks/useTenantData";
+import { useTenantData } from "@/hooks/useTenantData/useTenantData";
 
 /**
  * TenantDataProvider - Automatically fetches tenant data after login

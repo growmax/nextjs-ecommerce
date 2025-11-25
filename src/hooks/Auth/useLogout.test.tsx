@@ -2,7 +2,7 @@ import { useUserDetails } from "@/contexts/UserDetailsContext";
 import { redirectTo } from "@/lib/utils/navigation"; // Import the utility to mock it
 import { act, renderHook } from "@testing-library/react";
 import { useRouter } from "next/navigation";
-import useLogout from "./useLogout";
+import useLogout from "@/hooks/Auth/useLogout";
 
 // Mock the hooks and utility
 jest.mock("@/contexts/UserDetailsContext", () => ({

@@ -2,8 +2,8 @@ import {
   coreCommerceClient,
   discountClient,
   RequestContext,
-} from "../../client";
-import { BaseService } from "../BaseService";
+} from "@/lib/api/client";
+import { BaseService } from "@/lib/api/services/BaseService";
 
 export interface Discount {
   Value: number;

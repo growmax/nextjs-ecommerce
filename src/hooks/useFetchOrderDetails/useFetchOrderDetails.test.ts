@@ -5,14 +5,14 @@ import {
   mockQuoteSettings,
   mockTenantData,
   mockUser,
-} from "./useFetchOrderDetails.mocks";
-jest.mock("@/hooks/useCurrentUser", () => ({
+} from "@/hooks/useFetchOrderDetails/useFetchOrderDetails.mocks";
+jest.mock("@/hooks/useCurrentUser/useCurrentUser", () => ({
   useCurrentUser: () => ({ user: mockUser }),
 }));
-jest.mock("@/hooks/useTenantData", () => ({
+jest.mock("@/hooks/useTenantData/useTenantData", () => ({
   useTenantData: () => ({ tenantData: mockTenantData }),
 }));
-jest.mock("@/hooks/useModuleSettings", () => () => ({
+jest.mock("@/hooks/useModuleSettings/useModuleSettings", () => () => ({
   quoteSettings: mockQuoteSettings,
 }));
 jest.mock("@/lib/api", () => ({
@@ -22,7 +22,7 @@ jest.mock("@/lib/api", () => ({
 }));
 
 import { renderHook, waitFor } from "@testing-library/react";
-import useFetchOrderDetails from "./useFetchOrderDetails";
+import useFetchOrderDetails from "@/hooks/useFetchOrderDetails/useFetchOrderDetails";
 
 describe("useFetchOrderDetails", () => {
   it("fetches and returns order details", async () => {

@@ -3,7 +3,7 @@ import {
   dateLocalFormat,
   dateWithTimeFormat,
   zoneDateTimeCalculator,
-} from "./date-format";
+} from "@/utils/date-format/date-format";
 import {
   mockDateFormats,
   mockDateObjects,
@@ -15,7 +15,7 @@ import {
   mockValidDate,
   mockValidDateNumber,
   mockValidDateString,
-} from "./date-format.mocks";
+} from "@/utils/date-format/date-format.mocks";
 
 describe("date-format utilities", () => {
   describe("dateWithTimeFormat", () => {

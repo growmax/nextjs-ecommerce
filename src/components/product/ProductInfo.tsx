@@ -18,10 +18,10 @@ import {
   Truck,
   Weight,
 } from "lucide-react";
-import AddToCartSectionWrapper from "./AddToCartSectionWrapper";
-import SpecificationsTable from "./SpecificationsTable";
-import VariantInventoryUpdater from "./VariantInventoryUpdater";
-import VariantPriceUpdater from "./VariantPriceUpdater";
+import AddToCartSectionWrapper from "@/components/product/AddToCartSectionWrapper";
+import SpecificationsTable from "@/components/product/SpecificationsTable";
+import VariantInventoryUpdater from "@/components/product/VariantInventoryUpdater";
+import VariantPriceUpdater from "@/components/product/VariantPriceUpdater";
 
 interface ProductInfoProps {
   product: ProductDetail;

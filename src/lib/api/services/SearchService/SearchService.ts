@@ -1,5 +1,5 @@
 import axios, { AxiosInstance } from "axios";
-import { RequestContext } from "../../client";
+import { RequestContext } from "@/lib/api/client";
 
 // Elasticsearch query interfaces
 export interface ElasticSearchQuery {

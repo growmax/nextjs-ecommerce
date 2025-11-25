@@ -2,7 +2,7 @@ import "@testing-library/jest-dom";
 import { describe, expect, it, jest } from "@jest/globals";
 import { fireEvent, render, screen } from "@testing-library/react";
 import { FormProvider, useForm } from "react-hook-form";
-import SummaryActions from "./SummaryActions";
+import SummaryActions from "@/components/summary/SummaryActions";
 
 // Wrapper component to provide form context
 const FormWrapper = ({ children, defaultValues = {} }: any) => {

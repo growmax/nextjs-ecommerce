@@ -1,4 +1,4 @@
-import getProductIds from "./getProductIds";
+import getProductIds from "@/utils/getProductIds";
 
 describe("getProductIds", () => {
   it("returns empty array for undefined or non-array", () => {

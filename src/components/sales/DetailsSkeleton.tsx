@@ -1,6 +1,6 @@
 "use client";
 
-import { ApplicationLayout, PageLayout } from "@/components/layout";
+import { ApplicationLayout, PageLayout } from "@/components";
 import { useSidebar } from "@/components/ui/sidebar";
 import { Skeleton } from "@/components/ui/skeleton";
 

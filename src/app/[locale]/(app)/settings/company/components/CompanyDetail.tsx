@@ -27,7 +27,7 @@ import Image from "next/image";
 import React, { useEffect, useRef, useState } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
-import CompanyFormInput from "./FormInput";
+import CompanyFormInput from "@/app/[locale]/(app)/settings/company/components/FormInput";
 
 type SubIndustryOption = {
   id: string | number;

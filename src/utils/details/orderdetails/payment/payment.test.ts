@@ -1,4 +1,4 @@
-import { getLastDateToPay } from "./payment";
+import { getLastDateToPay } from "@/utils/details/orderdetails/payment/payment";
 import {
   mockPaymentDueDataEmpty,
   mockPaymentDueDataEmptyBreakup,
@@ -12,7 +12,7 @@ import {
   mockPaymentDueDataWithOrderDue,
   mockUserPreferences,
   mockUserPreferences24h,
-} from "./payment.mocks";
+} from "@/utils/details/orderdetails/payment/payment.mocks";
 
 // Mock zoneDateTimeCalculator
 jest.mock("@/utils/date-format/date-format", () => ({

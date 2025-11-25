@@ -1,7 +1,7 @@
 "use client";
 
-import { useRoutePrefetch } from "@/hooks/useRoutePrefetch";
 import { useUserDetails } from "@/contexts/UserDetailsContext";
+import { useRoutePrefetch } from "@/hooks/useRoutePrefetch/useRoutePrefetch";
 import { useEffect } from "react";
 
 /**

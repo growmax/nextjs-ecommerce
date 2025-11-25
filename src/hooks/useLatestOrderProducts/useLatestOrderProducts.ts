@@ -1,5 +1,5 @@
-import { useCurrentUser } from "@/hooks/useCurrentUser";
-import { useTenantData } from "@/hooks/useTenantData";
+import { useCurrentUser } from "@/hooks/useCurrentUser/useCurrentUser";
+import { useTenantData } from "@/hooks/useTenantData/useTenantData";
 import { getLatestTaxData } from "@/utils/order/getLatestTaxData/getLatestTaxData";
 import { useQuery, type UseQueryOptions } from "@tanstack/react-query";
 import { useMemo } from "react";

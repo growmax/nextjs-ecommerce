@@ -1,8 +1,8 @@
 // Server-side user data fetching service
 import { UserApiResponse } from "@/lib/interfaces/UserInterfaces";
-import { CookieService } from "./CookieService";
-import { SessionValidator } from "./SessionValidator";
-import { UserApiService } from "./UserApiService";
+import { CookieService } from "@/lib/services/CookieService";
+import { SessionValidator } from "@/lib/services/SessionValidator";
+import { UserApiService } from "@/lib/services/UserApiService";
 
 /**
  * ServerUserService - Handles server-side user data fetching

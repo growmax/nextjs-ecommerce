@@ -14,8 +14,8 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Skeleton } from "@/components/ui/skeleton";
-import { useCurrentUser } from "@/hooks/useCurrentUser";
-import { useRoutePrefetch } from "@/hooks/useRoutePrefetch";
+import { useCurrentUser } from "@/hooks/useCurrentUser/useCurrentUser";
+import { useRoutePrefetch } from "@/hooks/useRoutePrefetch/useRoutePrefetch";
 import PreferenceService, {
   FilterPreferenceResponse,
 } from "@/lib/api/services/PreferenceService/PreferenceService";
@@ -24,9 +24,9 @@ import QuotesService, {
 } from "@/lib/api/services/QuotesService/QuotesService";
 import { getAccounting } from "@/utils/calculation/salesCalculation/salesCalculation";
 import { ColumnDef } from "@tanstack/react-table";
+import { useTranslations } from "next-intl";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
-import { useTranslations } from "next-intl";
 
 interface QuotesLandingTableProps {
   refreshTrigger?: number;

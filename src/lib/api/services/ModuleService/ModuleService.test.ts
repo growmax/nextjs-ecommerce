@@ -1,9 +1,9 @@
-import { BaseService } from "../BaseService";
-import { ModuleService } from "./ModuleService";
+import { BaseService } from "@/lib/api/services/BaseService";
+import { ModuleService } from "@/lib/api/services/ModuleService/ModuleService";
 import {
   mockModuleParams,
   mockModuleParamsWithNumbers,
-} from "./ModuleService.mocks";
+} from "@/lib/api/services/ModuleService/ModuleService.mocks";
 
 // Mock the client
 jest.mock("../../client", () => ({

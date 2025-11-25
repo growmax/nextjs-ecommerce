@@ -8,7 +8,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { useRoutePrefetch } from "@/hooks/useRoutePrefetch";
+import { useRoutePrefetch } from "@/hooks/useRoutePrefetch/useRoutePrefetch";
 import { AlertCircle, Home, RefreshCw } from "lucide-react";
 import Link from "next/link";
 

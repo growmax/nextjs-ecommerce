@@ -1,5 +1,5 @@
-import { coreCommerceClient, discountClient } from "./client";
-import { BaseService } from "./services/BaseService";
+import { coreCommerceClient, discountClient } from "@/lib/api/client";
+import { BaseService } from "@/lib/api/services/BaseService";
 export interface cartBilling {
   userId: string | number;
   companyId: string | number;

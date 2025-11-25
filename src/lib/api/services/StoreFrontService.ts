@@ -2,7 +2,7 @@ import {
   storefrontClient,
   createClientWithContext,
   RequestContext,
-} from "../client";
+} from "@/lib/api/client";
 import { StoreFrontResponse } from "@/types/appconfig";
 
 export interface StoreFrontConfig {

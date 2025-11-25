@@ -18,13 +18,16 @@ jest.mock("axios", () => {
 });
 
 import axios from "axios";
-import { SearchService, ElasticSearchResponse } from "./SearchService";
+import {
+  SearchService,
+  ElasticSearchResponse,
+} from "@/lib/api/services/SearchService/SearchService";
 import {
   mockContext,
   mockElasticSearchOptions,
   mockElasticSearchResponse,
   mockFormattedProduct,
-} from "./SearchService.mocks";
+} from "@/lib/api/services/SearchService/SearchService.mocks";
 
 const mockedAxios = axios as jest.Mocked<typeof axios>;
 

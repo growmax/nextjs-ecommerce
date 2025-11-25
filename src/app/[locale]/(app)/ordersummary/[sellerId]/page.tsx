@@ -1,9 +1,9 @@
-import OrderSummaryContent from "../component/OrderSummaryContent";
+import OrderSummaryContent from "@/app/[locale]/(app)/ordersummary/component/OrderSummaryContent";
 
-export default function OrderSummary(){
-    return(
-        <div>
-            <OrderSummaryContent/>
-        </div>
-    )
+export default function OrderSummary() {
+  return (
+    <div>
+      <OrderSummaryContent />
+    </div>
+  );
 }

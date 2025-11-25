@@ -1,6 +1,6 @@
 "use client";
 
-import { usePageScroll } from "@/hooks/usePageScroll";
+import { usePageScroll } from "@/hooks/usePageScroll/usePageScroll";
 import type { OrderDetailsPageProps } from "@/types/details/orderdetails/index.types";
 import dynamic from "next/dynamic";
 import { Suspense } from "react";

@@ -1,5 +1,5 @@
-import { ServerAuth } from "@/lib/auth-server";
-import { AuthAwareNav } from "./AuthAwareNav";
+import { AuthAwareNav } from "@/components/auth/AuthAwareNav";
+import { ServerAuth } from "@/lib/auth-server.server";
 
 /**
  * Header component that detects authentication on server-side

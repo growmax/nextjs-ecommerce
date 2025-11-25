@@ -1,7 +1,7 @@
 // Auth Token Service class for managing authentication tokens
 import { JWTPayload } from "@/lib/interfaces/JWTInterfaces";
-import { JWTService } from "./JWTService";
-import TokenRefreshService from "./TokenRefreshService";
+import { JWTService } from "@/lib/services/JWTService";
+import TokenRefreshService from "@/lib/services/TokenRefreshService";
 
 export class AuthTokenService {
   private static instance: AuthTokenService;

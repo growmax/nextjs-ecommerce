@@ -8,7 +8,7 @@ import {
   QuoteFilterForm,
   QuoteFilterFormData,
   StatusOption,
-} from "./QuoteFilterForm";
+} from "@/components/sales/QuoteFilterForm";
 
 interface QuoteFilterDrawerProps {
   open: boolean;

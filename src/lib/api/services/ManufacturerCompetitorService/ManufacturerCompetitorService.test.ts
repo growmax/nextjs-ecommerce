@@ -1,10 +1,10 @@
-import { BaseService } from "../BaseService";
-import { ManufacturerCompetitorService } from "./ManufacturerCompetitorService";
+import { BaseService } from "@/lib/api/services/BaseService";
+import { ManufacturerCompetitorService } from "@/lib/api/services/ManufacturerCompetitorService/ManufacturerCompetitorService";
 import {
   mockCompanyId,
   mockFetchCompetitorsResponse,
   mockFetchCompetitorsResponseEmpty,
-} from "./ManufacturerCompetitorService.mocks";
+} from "@/lib/api/services/ManufacturerCompetitorService/ManufacturerCompetitorService.mocks";
 
 // Mock the client
 jest.mock("../../client", () => ({

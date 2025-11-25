@@ -1,7 +1,7 @@
 "use client";
 
-import { ServerUser } from "@/lib/auth-server";
-import { useHybridAuth } from "@/hooks/useHybridAuth";
+import { useHybridAuth } from "@/hooks/useHybridAuth/useHybridAuth";
+import type { ServerUser } from "@/lib/auth-types";
 
 interface AuthAwareContentProps {
   initialAuth?: boolean;

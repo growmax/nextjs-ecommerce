@@ -4,7 +4,7 @@ import {
   manipulateProductsElasticData,
   roundOf,
   setTaxDetails,
-} from "./salesCalculation";
+} from "@/utils/calculation/salesCalculation/salesCalculation";
 import {
   mockCurrencyOptions,
   mockCustomCurrencyOptions,
@@ -14,7 +14,7 @@ import {
   mockExistingProductWithHsn,
   mockProductDetail,
   mockProductDetailWithCompoundTax,
-} from "./salesCalculation.mocks";
+} from "@/utils/calculation/salesCalculation/salesCalculation.mocks";
 
 describe("salesCalculation utilities", () => {
   describe("getPriceInfo", () => {

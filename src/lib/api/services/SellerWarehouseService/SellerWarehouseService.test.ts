@@ -1,5 +1,5 @@
-import { BaseService } from "../BaseService";
-import { SellerWarehouseService } from "./SellerWarehouseService";
+import { BaseService } from "@/lib/api/services/BaseService";
+import { SellerWarehouseService } from "@/lib/api/services/SellerWarehouseService/SellerWarehouseService";
 import {
   mockCompanyId,
   mockFindSellerBranchRequest,
@@ -8,7 +8,7 @@ import {
   mockUserId,
   mockWarehouse,
   mockWarehouseResponse,
-} from "./SellerWarehouseService.mocks";
+} from "@/lib/api/services/SellerWarehouseService/SellerWarehouseService.mocks";
 
 // Mock the client
 jest.mock("../../client", () => ({

@@ -1,13 +1,16 @@
 "use client";
 
-import React, { useMemo, useEffect, useState } from "react";
-import { useHomepageConfig, HomepageConfig } from "@/hooks/useHomepageConfig";
-import BannerSlider from "./BannerSlider";
-import CollectionSlider from "./CollectionSlider";
-import ProductSection from "./ProductSection";
-import CustomImageLink from "./CustomImageLink";
-import Image from "next/image";
+import {
+  HomepageConfig,
+  useHomepageConfig,
+} from "@/hooks/useHomepageConfig/useHomepageConfig";
 import find from "lodash/find";
+import Image from "next/image";
+import { useEffect, useMemo, useState } from "react";
+import BannerSlider from "@/components/homepage/BannerSlider";
+import CollectionSlider from "@/components/homepage/CollectionSlider";
+import CustomImageLink from "@/components/homepage/CustomImageLink";
+import ProductSection from "@/components/homepage/ProductSection";
 
 interface HomepageClientProps {
   initialConfig?: HomepageConfig | null;

@@ -1,39 +1,39 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { FormProvider } from "react-hook-form";
-import { useRouter } from "next/navigation";
 import { words } from "lodash";
+import { useRouter } from "next/navigation";
+import { useEffect, useState } from "react";
+import { FormProvider } from "react-hook-form";
 import { toast } from "sonner";
 
 // Hooks
+import useCurrencyFactor from "@/hooks/summary/useCurrencyFactor";
+import useGetChannel from "@/hooks/summary/useGetChannel";
+import useGetDivision from "@/hooks/summary/useGetDivision";
 import useSummaryDefault from "@/hooks/summary/useSummaryDefault";
 import useSummaryForm from "@/hooks/summary/useSummaryForm";
 import useSummarySubmission from "@/hooks/summary/useSummarySubmission";
-import { useCurrentUser } from "@/hooks/useCurrentUser";
-import useModuleSettings from "@/hooks/useModuleSettings";
-import useCurrencyFactor from "@/hooks/summary/useCurrencyFactor";
-import useGetDivision from "@/hooks/summary/useGetDivision";
-import useGetChannel from "@/hooks/summary/useGetChannel";
-import { useCart } from "@/hooks/useCart";
+import { useCart } from "@/hooks/useCart/useCart";
+import { useCurrentUser } from "@/hooks/useCurrentUser/useCurrentUser";
+import useModuleSettings from "@/hooks/useModuleSettings/useModuleSettings";
 
 // Components
-import { SalesHeader } from "@/components/sales";
 import {
-  SummaryNameCard,
-  SummaryProductsTable,
-  SummaryAddressSection,
-  SummaryTermsSection,
-  SummaryAdditionalInfo,
-  SummaryPriceDetails,
+  SalesHeader,
   SummaryActions,
-} from "@/components/summary";
-import ApplyVolumeDiscountBtn from "@/components/summary/ApplyVolumeDiscountBtn";
+  SummaryAdditionalInfo,
+  SummaryAddressSection,
+  SummaryNameCard,
+  SummaryPriceDetails,
+  SummaryProductsTable,
+  SummaryTermsSection,
+} from "@/components";
 import CashDiscountCard from "@/components/sales/CashDiscountCard";
+import ApplyVolumeDiscountBtn from "@/components/summary/ApplyVolumeDiscountBtn";
+import { Card, CardContent } from "@/components/ui/card";
+import { Skeleton } from "@/components/ui/skeleton";
 import useCashDiscountHandlers from "@/hooks/useCashDiscountHandlers/useCashDiscountHandlers";
 import useGetLatestPaymentTerms from "@/hooks/useGetLatestPaymentTerms/useGetLatestPaymentTerms";
-import { Skeleton } from "@/components/ui/skeleton";
-import { Card, CardContent } from "@/components/ui/card";
 
 /**
  * Order Summary Page Component

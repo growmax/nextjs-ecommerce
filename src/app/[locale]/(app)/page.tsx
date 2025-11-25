@@ -1,13 +1,13 @@
-import type { Metadata } from "next";
-import { headers } from "next/headers";
-import { ServerAuth } from "@/lib/auth-server";
-import { StoreFrontService } from "@/lib/api/services/StoreFrontService";
-import HomepageClient from "@/components/homepage/HomepageClient";
 import BuyerFooter from "@/components/homepage/BuyerFooter";
+import HomepageClient from "@/components/homepage/HomepageClient";
 import type {
   HomepageConfig,
   HomepageSection,
-} from "@/hooks/useHomepageConfig";
+} from "@/hooks/useHomepageConfig/useHomepageConfig";
+import { StoreFrontService } from "@/lib/api/services/StoreFrontService";
+import { ServerAuth } from "@/lib/auth-server.server";
+import type { Metadata } from "next";
+import { headers } from "next/headers";
 
 export const metadata: Metadata = {
   title: "Home | E-Commerce",
@@ -23,7 +23,7 @@ export const revalidate = 3600; // 1 hour
  * Server-side function to fetch homepage configuration
  * This matches the logic from useHomepageConfig hook but runs on the server
  */
-export async function getHomepageConfig(
+async function getHomepageConfig(
   domain: string,
   token?: string | null
 ): Promise<HomepageConfig | null> {

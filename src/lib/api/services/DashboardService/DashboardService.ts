@@ -3,8 +3,8 @@ import type {
   DashboardFilterParams,
   DashboardQueryParams,
 } from "@/types/dashboard";
-import { coreCommerceClient } from "../../client";
-import { BaseService } from "../BaseService";
+import { coreCommerceClient } from "@/lib/api/client";
+import { BaseService } from "@/lib/api/services/BaseService";
 
 export class DashboardService extends BaseService<DashboardService> {
   protected defaultClient = coreCommerceClient;

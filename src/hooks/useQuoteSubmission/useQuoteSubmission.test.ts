@@ -14,12 +14,12 @@ jest.mock("sonner", () => ({
 }));
 
 import { act, renderHook } from "@testing-library/react";
-import { useQuoteSubmission } from "./useQuoteSubmission";
+import { useQuoteSubmission } from "@/hooks/useQuoteSubmission/useQuoteSubmission";
 import {
   mockFailureResponse,
   mockQuoteSubmissionRequest,
   mockSuccessResponse,
-} from "./useQuoteSubmission.mocks";
+} from "@/hooks/useQuoteSubmission/useQuoteSubmission.mocks";
 import { QuoteSubmissionService } from "@/lib/api";
 import { toast } from "sonner";
 

@@ -1,6 +1,6 @@
 "use client";
 
-import { LoadingButton, SearchBox } from "@/components/custom";
+import { LoadingButton, SearchBox } from "@/components";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -9,14 +9,13 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
-import { useIsMobile } from "@/hooks/use-mobile";
+import { Title } from "@/components/ui/typography";
+import { useIsMobile } from "@/hooks/use-mobile/use-mobile";
 import { cn } from "@/lib/utils";
-import { useTranslations } from "next-intl";
 import type {
   SectionToolbarProps,
   SectionToolbarRef,
 } from "@/types/section-toolbar";
-import { Title } from "@/components/ui/typography";
 import {
   Columns3,
   Filter,
@@ -27,6 +26,7 @@ import {
   Settings,
   X,
 } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { forwardRef, useImperativeHandle, useRef } from "react";
 
 /**

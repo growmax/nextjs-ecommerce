@@ -1,12 +1,12 @@
 // Mock dependencies before importing the service
-jest.mock("../../../client", () => ({
+jest.mock("@/lib/api/client", () => ({
   elasticClient: {
     callWith: jest.fn(),
     callWithSafe: jest.fn(),
   },
 }));
 
-jest.mock("../../BaseService", () => {
+jest.mock("@/lib/api/services/BaseService", () => {
   class MockBaseService {
     callWith = jest.fn();
     callWithSafe = jest.fn();
@@ -21,42 +21,48 @@ jest.mock("@/utils/opensearch/response-parser", () => ({
   extractOpenSearchData: jest.fn(),
 }));
 
-jest.mock("../query-builder/query-builder", () => ({
-  buildProductSearchQuery: jest.fn(),
-}));
+jest.mock(
+  "@/lib/api/services/ElasticQueryService/query-builder/query-builder",
+  () => ({
+    buildProductSearchQuery: jest.fn(),
+  })
+);
 
-jest.mock("../response-utils/response-utils", () => ({
-  createErrorSearchResponse: jest.fn(),
-  formatProductSearchResponse: jest.fn(),
-}));
+jest.mock(
+  "@/lib/api/services/ElasticQueryService/response-utils/response-utils",
+  () => ({
+    createErrorSearchResponse: jest.fn(),
+    formatProductSearchResponse: jest.fn(),
+  })
+);
 
 jest.mock("@/lib/cache", () => ({
   withRedisCache: jest.fn(),
 }));
 
-import { OpenElasticSearchService } from "./openElasticSearch";
-import { extractOpenSearchData } from "@/utils/opensearch/response-parser";
-import { buildProductSearchQuery } from "../query-builder/query-builder";
+import { OpenElasticSearchService } from "@/lib/api/services/ElasticQueryService/openElasticSearch/openElasticSearch";
+import { buildProductSearchQuery } from "@/lib/api/services/ElasticQueryService/query-builder/query-builder";
 import {
-  formatProductSearchResponse,
   createErrorSearchResponse,
-} from "../response-utils/response-utils";
-// import type { RequestContext } from '../../../client';
+  formatProductSearchResponse,
+} from "@/lib/api/services/ElasticQueryService/response-utils/response-utils";
+import { extractOpenSearchData } from "@/utils/opensearch/response-parser";
+// import type { RequestContext } from '@/lib/api/client';
 
 // Import mocks
 import {
-  mockIdentifier,
   mockElasticIndex,
   mockElasticType,
+  mockErrorResponse,
+  mockIdentifier,
+  mockOpenSearchResponse,
+  mockProductDetail,
+  mockProductSearchOptions,
+  mockProductSearchResponse,
   mockQueryType,
   mockRequestContext,
-  mockProductSearchOptions,
   mockSearchTerm,
-  mockProductDetail,
-  mockProductSearchResponse,
-  mockErrorResponse,
-  mockOpenSearchResponse,
-} from "./openElasticSearch.mocks";
+} from "@/lib/api/services/ElasticQueryService/openElasticSearch/openElasticSearch.mocks";
 
 describe("OpenElasticSearchService", () => {
   let service: OpenElasticSearchService;

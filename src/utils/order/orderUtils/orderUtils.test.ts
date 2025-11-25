@@ -4,7 +4,7 @@ import {
   orderPaymentDTO,
   quoteSubmitDTO,
   validatePlaceOrder,
-} from "./orderUtils";
+} from "@/utils/order/orderUtils/orderUtils";
 import {
   mockBundleProducts,
   mockCancelledQuoteData,
@@ -19,7 +19,7 @@ import {
   mockQuoteData,
   mockQuoteValues,
   mockReorderQuoteData,
-} from "./orderUtils.mocks";
+} from "@/utils/order/orderUtils/orderUtils.mocks";
 
 describe("orderUtils utilities", () => {
   describe("formBundleProductsPayload", () => {

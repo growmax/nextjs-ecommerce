@@ -10,7 +10,7 @@ import {
   DropdownMenuSubTrigger,
 } from "@/components/ui/dropdown-menu";
 import useLogout from "@/hooks/Auth/useLogout";
-import { useRoutePrefetch } from "@/hooks/useRoutePrefetch";
+import { useRoutePrefetch } from "@/hooks/useRoutePrefetch/useRoutePrefetch";
 import {
   Building2,
   FileText,
@@ -24,7 +24,7 @@ import {
   ShoppingCart,
 } from "lucide-react";
 import { useRouter } from "next/navigation";
-import useUserProfile from "../../hooks/Profile/useUserProfile";
+import useUserProfile from "@/hooks/Profile/useUserProfile";
 
 export default function ProfileMenu() {
   const router = useRouter();

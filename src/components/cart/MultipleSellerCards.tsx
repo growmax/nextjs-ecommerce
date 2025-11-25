@@ -1,14 +1,15 @@
 "use client";
 
+import PricingFormat from "@/components/PricingFormat";
+import CartPriceDetails from "@/components/sales/CartPriceDetails";
 import {
   Accordion,
   AccordionContent,
   AccordionItem,
   AccordionTrigger,
 } from "@/components/ui/accordion";
-import { Card } from "@/components/ui/card";
-import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
 import {
   Dialog,
   DialogContent,
@@ -17,18 +18,17 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { Skeleton } from "@/components/ui/skeleton";
 import { useCart as useCartContext } from "@/contexts/CartContext";
-import { useCurrentUser } from "@/hooks/useCurrentUser";
-import useMultipleSellerCart from "@/hooks/useMultipleSellerCart";
-import { useCart } from "@/hooks/useCart";
+import { useCart } from "@/hooks/useCart/useCart";
+import { useCurrentUser } from "@/hooks/useCurrentUser/useCurrentUser";
+import useMultipleSellerCart from "@/hooks/useMultipleSellerCart/useMultipleSellerCart";
 import type { CartItem } from "@/types/calculation/cart";
-import { useMemo, useState } from "react";
 import { Trash2 } from "lucide-react";
-import CartProductCard from "./CartProductCard";
-import PricingFormat from "@/components/PricingFormat";
-import CartPriceDetails from "@/components/sales/CartPriceDetails";
-import CartProceedButton from "./CartProceedButton";
 import { useTranslations } from "next-intl";
+import { useMemo, useState } from "react";
+import CartProceedButton from "@/components/cart/CartProceedButton";
+import CartProductCard from "@/components/cart/CartProductCard";
 
 interface MultipleSellerCardsProps {
   onItemUpdate?: (item: CartItem, quantity: number) => void;

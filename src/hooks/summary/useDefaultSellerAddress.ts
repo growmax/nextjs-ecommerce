@@ -1,9 +1,9 @@
 "use client";
 
+import useUser from "@/hooks/useUser/useUser";
+import SellerWarehouseService from "@/lib/api/services/SellerWarehouseService/SellerWarehouseService";
 import { useQuery } from "@tanstack/react-query";
 import { map } from "lodash";
-import useUser from "@/hooks/useUser";
-import SellerWarehouseService from "@/lib/api/services/SellerWarehouseService/SellerWarehouseService";
 
 /**
  * Hook to fetch default seller address/branch

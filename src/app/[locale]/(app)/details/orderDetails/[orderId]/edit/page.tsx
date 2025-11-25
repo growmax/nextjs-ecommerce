@@ -7,18 +7,19 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
 
 import {
-  VersionsDialog,
-  type Version,
-} from "@/components/dialogs/VersionsDialog";
-import { ApplicationLayout, PageLayout } from "@/components/layout";
-import {
+  ApplicationLayout,
   DetailsSkeleton,
   OrderContactDetails,
   OrderPriceDetails,
   OrderProductsTable,
   OrderTermsCard,
+  PageLayout,
   SalesHeader,
-} from "@/components/sales";
+} from "@/components";
+import {
+  VersionsDialog,
+  type Version,
+} from "@/components/dialogs/VersionsDialog";
 import CashDiscountCard from "@/components/sales/CashDiscountCard";
 import type { ProductSearchResult } from "@/components/sales/ProductSearchInput";
 import { Button } from "@/components/ui/button";
@@ -33,15 +34,15 @@ import {
 import { useOrderDetails } from "@/hooks/details/orderdetails/useOrderDetails";
 import useCashDiscountHandlers from "@/hooks/useCashDiscountHandlers/useCashDiscountHandlers";
 import useCheckVolumeDiscountEnabled from "@/hooks/useCheckVolumeDiscountEnabled/useCheckVolumeDiscountEnabled";
-import { useCurrentUser } from "@/hooks/useCurrentUser";
+import { useCurrentUser } from "@/hooks/useCurrentUser/useCurrentUser";
 import useFetchOrderDetails from "@/hooks/useFetchOrderDetails/useFetchOrderDetails";
 import useGetLatestPaymentTerms from "@/hooks/useGetLatestPaymentTerms/useGetLatestPaymentTerms";
 import { useGetVersionDetails } from "@/hooks/useGetVersionDetails/useGetVersionDetails";
 import { useLatestOrderProducts } from "@/hooks/useLatestOrderProducts/useLatestOrderProducts";
-import useModuleSettings from "@/hooks/useModuleSettings";
+import useModuleSettings from "@/hooks/useModuleSettings/useModuleSettings";
 import { useOrderCalculation } from "@/hooks/useOrderCalculation/useOrderCalculation";
-import { usePageScroll } from "@/hooks/usePageScroll";
-import { useTenantData } from "@/hooks/useTenantData";
+import { usePageScroll } from "@/hooks/usePageScroll/usePageScroll";
+import { useTenantData } from "@/hooks/useTenantData/useTenantData";
 import type { OrderDetailItem, OrderDetailsResponse } from "@/lib/api";
 import { OrderVersionService } from "@/lib/api";
 import {

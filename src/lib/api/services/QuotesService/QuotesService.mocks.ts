@@ -5,7 +5,7 @@ import type {
   QuotesApiResponse,
   QuotesQueryParams,
   QuotesRequestBody,
-} from "./QuotesService";
+} from "@/lib/api/services/QuotesService/QuotesService";
 
 export const mockQuotesQueryParams: QuotesQueryParams = {
   userId: 123,

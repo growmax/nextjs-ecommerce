@@ -7,10 +7,14 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import React, { useState } from "react";
-import CategoryCard from "./components/CategoryCard";
-import PaginationControl from "./components/PaginationControl";
-import ProductTile from "./components/ProductCard";
-import { bannerCategories, categories, sampleProducts } from "./mockData";
+import CategoryCard from "@/app/[locale]/(app)/category/components/CategoryCard";
+import PaginationControl from "@/app/[locale]/(app)/category/components/PaginationControl";
+import ProductTile from "@/app/[locale]/(app)/category/components/ProductCard";
+import {
+  bannerCategories,
+  categories,
+  sampleProducts,
+} from "@/app/[locale]/(app)/category/mockData";
 import { useTranslations } from "next-intl";
 
 const CategoryPageClient: React.FC = () => {

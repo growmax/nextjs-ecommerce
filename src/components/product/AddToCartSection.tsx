@@ -1,8 +1,8 @@
 "use client";
 
 import { Button } from "@/components/ui/button";
-import { useCurrentUser } from "@/hooks/useCurrentUser";
-import { useTenantData } from "@/hooks/useTenantData";
+import { useCurrentUser } from "@/hooks/useCurrentUser/useCurrentUser";
+import { useTenantData } from "@/hooks/useTenantData/useTenantData";
 import { usePathname, useRouter } from "@/i18n/navigation";
 import { CartService } from "@/lib/api/CartServices";
 import { cn } from "@/lib/utils";
@@ -134,7 +134,9 @@ export default function AddToCartSection({
   const isProductPage = pathname?.startsWith("/products/");
 
   return (
-    <div className={cn("space-y-2", isProductPage && "hidden lg:block", className)}>
+    <div
+      className={cn("space-y-2", isProductPage && "hidden lg:block", className)}
+    >
       {!showQuantity ? (
         <Button
           size="lg"

@@ -1,4 +1,4 @@
-import { getUserInitials } from "./general";
+import { getUserInitials } from "@/utils/General/general";
 
 describe("getUserInitials", () => {
   describe("Unit Tests", () => {

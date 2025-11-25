@@ -2,7 +2,7 @@ import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { PageLoader } from "@/components/Loaders/PageLoader/page-loader";
 import type { Metadata } from "next";
 import { Suspense } from "react";
-import DashboardPageClient from "./components/DashboardPageClient";
+import DashboardPageClient from "@/app/[locale]/(app)/dashboard/components/DashboardPageClient";
 
 export const metadata: Metadata = {
   title: "Dashboard | E-Commerce",

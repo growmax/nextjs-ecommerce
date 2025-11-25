@@ -14,13 +14,13 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import useProductAssets from "@/hooks/useProductAssets";
+import useProductAssets from "@/hooks/useProductAssets/useProductAssets";
 import { cn } from "@/lib/utils";
 import { Download } from "lucide-react";
 import { useState } from "react";
 import { useTranslations } from "next-intl";
-import type { ProductSearchResult } from "./ProductSearchInput";
-import ProductSearchInput from "./ProductSearchInput";
+import type { ProductSearchResult } from "@/components/sales/ProductSearchInput";
+import ProductSearchInput from "@/components/sales/ProductSearchInput";
 
 export interface ProductItem {
   itemNo?: number;

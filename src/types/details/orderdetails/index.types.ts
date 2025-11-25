@@ -1,7 +1,7 @@
 // Re-export types from other files
-export * from "./version.types";
+export * from "@/types/details/orderdetails/version.types";
 // Note: PaymentDueDataItem is exported from @/lib/api instead of here
-// export * from "./payment.types"; // Commented out - use PaymentDueDataItem from @/lib/api instead
+// export * from "@/types/details/orderdetails/payment.types"; // Commented out - use PaymentDueDataItem from @/lib/api instead
 
 // Import types for proper typing
 export interface AddressDetails {

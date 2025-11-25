@@ -5,7 +5,7 @@ import type {
   OverallPaymentsResponse,
   PaymentDueResponse,
   PaymentTermsResponse,
-} from "./PaymentService";
+} from "@/lib/api/services/PaymentService/PaymentService";
 
 export const mockOrderIdentifier = "ORD-001";
 

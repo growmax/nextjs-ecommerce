@@ -6,7 +6,7 @@ import type {
   DistrictData,
   LocationResponse,
   StateData,
-} from "./LocationService";
+} from "@/lib/api/services/LocationService/LocationService";
 
 export const mockCountriesResponse: LocationResponse<CountryData> = {
   data: [

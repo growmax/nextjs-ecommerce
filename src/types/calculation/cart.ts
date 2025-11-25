@@ -5,8 +5,8 @@ import type {
   PriceListDiscountData,
   VolumeDiscountDetails,
   VolumeDiscountData,
-} from "./discount";
-import type { HsnDetails, TaxBreakup, TaxReq } from "./tax";
+} from "@/types/calculation/discount";
+import type { HsnDetails, TaxBreakup, TaxReq } from "@/types/calculation/tax";
 
 // Re-export types that are commonly used with cart
 export type { VolumeDiscountDetails, VolumeDiscountData };

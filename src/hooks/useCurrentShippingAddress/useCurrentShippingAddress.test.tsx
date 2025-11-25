@@ -1,11 +1,11 @@
-import { act, renderHook, waitFor } from "@testing-library/react";
 import {
   mockShippingAddresses,
   mockStoredAddress,
   mockUseShipping,
   mockUseUserDetails,
   mockUserData,
-} from "./useCurrentShippingAddress.mocks";
+} from "@/hooks/useCurrentShippingAddress/useCurrentShippingAddress.mocks";
+import { act, renderHook, waitFor } from "@testing-library/react";
 
 // Mock localStorage
 const localStorageMock = (() => {
@@ -30,7 +30,7 @@ Object.defineProperty(window, "localStorage", {
 });
 
 // Mock useShipping
-jest.mock("../useShipping", () => ({
+jest.mock("@/hooks/useShipping/useShipping", () => ({
   __esModule: true,
   default: jest.fn(),
 }));
@@ -40,9 +40,9 @@ jest.mock("@/contexts/UserDetailsContext", () => ({
   useUserDetails: jest.fn(),
 }));
 
-import useCurrentShippingAddress from "./useCurrentShippingAddress";
-import useShipping from "../useShipping";
 import { useUserDetails } from "@/contexts/UserDetailsContext";
+import useCurrentShippingAddress from "@/hooks/useCurrentShippingAddress/useCurrentShippingAddress";
+import useShipping from "@/hooks/useShipping/useShipping";
 
 const mockUseShippingHook = useShipping as jest.MockedFunction<
   typeof useShipping

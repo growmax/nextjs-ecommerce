@@ -1,6 +1,6 @@
 import { renderHook } from "@testing-library/react";
-import useOrderCalculation from "./useOrderCalculation";
-import { mockOrderCalculationInput } from "./useOrderCalculation.mocks";
+import useOrderCalculation from "@/hooks/useOrderCalculation/useOrderCalculation";
+import { mockOrderCalculationInput } from "@/hooks/useOrderCalculation/useOrderCalculation.mocks";
 
 describe("useOrderCalculation", () => {
   it("calculates order data correctly for basic input", () => {

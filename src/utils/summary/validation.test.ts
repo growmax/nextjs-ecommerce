@@ -1,5 +1,5 @@
 import { describe, expect, it } from "@jest/globals";
-import { BuyerQuoteSummaryValidations } from "./validation";
+import { BuyerQuoteSummaryValidations } from "@/utils/summary/validation";
 
 describe("BuyerQuoteSummaryValidations", () => {
   describe("customerRequiredDate Validation", () => {

@@ -25,11 +25,11 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Separator } from "@/components/ui/separator";
 import { useSidebar } from "@/components/ui/sidebar";
-import { useUserDetails } from "@/contexts/UserDetailsContext";
 import { useCart } from "@/contexts/CartContext";
+import { useUserDetails } from "@/contexts/UserDetailsContext";
 import useLogout from "@/hooks/Auth/useLogout";
-import { useRoutePrefetch } from "@/hooks/useRoutePrefetch";
 import useUserProfile from "@/hooks/Profile/useUserProfile";
+import { useRoutePrefetch } from "@/hooks/useRoutePrefetch/useRoutePrefetch";
 import { useTranslations } from "next-intl";
 
 export function SiteHeader() {

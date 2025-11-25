@@ -1,8 +1,8 @@
 "use client";
 
-import { useCurrentUser } from "@/hooks/useCurrentUser";
-import useModuleSettings from "@/hooks/useModuleSettings";
-import { useTenantData } from "@/hooks/useTenantData";
+import { useCurrentUser } from "@/hooks/useCurrentUser/useCurrentUser";
+import useModuleSettings from "@/hooks/useModuleSettings/useModuleSettings";
+import { useTenantData } from "@/hooks/useTenantData/useTenantData";
 import { OrderDetailsService, type OrderDetailsResponse } from "@/lib/api";
 import useSWR from "swr";
 

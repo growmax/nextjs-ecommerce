@@ -1,9 +1,9 @@
 "use client";
 
-import React, { Fragment, memo } from "react";
-import * as Accounting from "accounting-js";
-import { useCurrentUser } from "@/hooks/useCurrentUser";
 import { useTenantCurrency } from "@/contexts/TenantContext";
+import { useCurrentUser } from "@/hooks/useCurrentUser/useCurrentUser";
+import * as Accounting from "accounting-js";
+import { Fragment, memo } from "react";
 
 interface PricingFormatProps {
   value: number | string;

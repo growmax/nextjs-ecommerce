@@ -3,7 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ArrowLeft, Search } from "lucide-react";
 import type { Metadata } from "next";
 import Link from "next/link";
-import SearchClient from "./SearchClient";
+import SearchClient from "@/app/[locale]/(app)/search/SearchClient";
 
 export const metadata: Metadata = {
   title: "Search Products | E-Commerce",

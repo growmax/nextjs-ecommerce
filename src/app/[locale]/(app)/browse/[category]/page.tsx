@@ -2,7 +2,7 @@ import { PageLoader } from "@/components/Loaders/PageLoader/page-loader";
 import { PageProps } from "@/types";
 import { Metadata } from "next";
 import { Suspense } from "react";
-import ProductListClient from "./ProductListClient";
+import ProductListClient from "@/app/[locale]/(app)/browse/[category]/ProductListClient";
 
 export async function generateMetadata({
   params,

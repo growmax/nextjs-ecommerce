@@ -19,7 +19,7 @@ jest.mock("next-intl", () => ({
   useLocale: () => "en",
 }));
 
-jest.mock("@/hooks/useCurrentUser", () => ({
+jest.mock("@/hooks/useCurrentUser/useCurrentUser", () => ({
   useCurrentUser: () => ({
     user: {
       userId: "123",

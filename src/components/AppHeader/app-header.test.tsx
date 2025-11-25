@@ -32,7 +32,7 @@ jest.mock("next/navigation", () => ({
   useRouter: () => ({ push: jest.fn() }),
 }));
 
-import { AppHeader } from "./app-header";
+import { AppHeader } from "@/components/AppHeader/app-header";
 
 jest.mock("@/components/ui/command", () => ({
   CommandDialog: ({ children, open }: any) =>
@@ -79,7 +79,7 @@ jest.mock("@/contexts/CartContext", () => ({
 }));
 
 jest.mock(
-  "@/lib/api/services/ElacticQueryService/query-builder/query-builder",
+  "@/lib/api/services/ElasticQueryService/query-builder/query-builder",
   () => ({
     buildProductSearchQuery: jest
       .fn()

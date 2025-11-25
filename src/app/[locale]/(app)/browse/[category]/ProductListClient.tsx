@@ -7,7 +7,7 @@ import {
   ProductGridSkeleton,
   SearchBar,
   ViewToggle,
-} from "@/components/ProductList";
+} from "@/components";
 import { CustomPagination } from "@/components/ui/custom-pagination";
 import { useSidebar } from "@/components/ui/sidebar";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -42,7 +42,7 @@ export default function ProductListClient({
   useEffect(() => {
     // Show loading state when category changes
     setIsLoading(true);
-    
+
     // Simulate async data loading
     const loadData = async () => {
       setProducts(mockProducts);
@@ -56,7 +56,7 @@ export default function ProductListClient({
       await new Promise(resolve => setTimeout(resolve, 100));
       setIsLoading(false);
     };
-    
+
     loadData();
   }, [setProducts, initialCategory, setSelectedCategory]);
 

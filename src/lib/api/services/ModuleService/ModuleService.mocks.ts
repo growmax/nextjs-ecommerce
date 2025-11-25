@@ -1,7 +1,7 @@
 // Mocks for ModuleService
 // These mocks are for testing the service in isolation.
 
-import type { Module } from "./ModuleService";
+import type { Module } from "@/lib/api/services/ModuleService/ModuleService";
 
 export const mockModuleParams: Module = {
   userId: "123",

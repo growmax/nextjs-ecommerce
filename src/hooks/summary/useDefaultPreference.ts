@@ -1,10 +1,10 @@
 "use client";
 
+import useGetLatestPaymentTerms from "@/hooks/useGetLatestPaymentTerms/useGetLatestPaymentTerms";
+import useUser from "@/hooks/useUser/useUser";
+import CompanyService from "@/lib/api/services/CompanyService";
 import { useQuery } from "@tanstack/react-query";
 import { isEmpty } from "lodash";
-import useUser from "@/hooks/useUser";
-import CompanyService from "@/lib/api/services/CompanyService";
-import useGetLatestPaymentTerms from "@/hooks/useGetLatestPaymentTerms/useGetLatestPaymentTerms";
 
 /**
  * Hook to fetch default company preferences for summary pages

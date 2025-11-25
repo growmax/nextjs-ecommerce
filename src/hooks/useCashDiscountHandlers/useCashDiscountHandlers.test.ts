@@ -1,11 +1,11 @@
 import { renderHook, act } from "@testing-library/react";
 import { toast } from "sonner";
-import useCashDiscountHandlers from "./useCashDiscountHandlers";
+import useCashDiscountHandlers from "@/hooks/useCashDiscountHandlers/useCashDiscountHandlers";
 import {
   mockProducts,
   mockPaymentTerms,
   mockSetProducts,
-} from "./useCashDiscountHandlers.mocks";
+} from "@/hooks/useCashDiscountHandlers/useCashDiscountHandlers.mocks";
 
 // Mock sonner toast
 jest.mock("sonner", () => ({

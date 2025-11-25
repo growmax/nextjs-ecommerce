@@ -1,5 +1,5 @@
 import axios from "axios";
-import { BaseService } from "../BaseService";
+import { BaseService } from "@/lib/api/services/BaseService";
 
 export interface PresignedUploadUrlRequest {
   foldername: string;

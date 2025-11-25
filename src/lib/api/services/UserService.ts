@@ -3,7 +3,7 @@ import {
   coreCommerceClient,
   createClientWithContext,
   RequestContext,
-} from "../client";
+} from "@/lib/api/client";
 
 export interface UserDetails {
   id: string;

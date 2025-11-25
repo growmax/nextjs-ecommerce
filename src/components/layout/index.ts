@@ -1,5 +1,10 @@
-export { LandingLayout } from "./LandingLayout";
-export { PageLayout } from "./PageLayout";
-export { ApplicationLayout } from "./ApplicationLayout";
-export { PageContent, FullWidthLayout, CenteredLayout } from "./PageContent";
-export type { LayoutType } from "./PageContent";
+// Layout Components
+export { ApplicationLayout } from "@/components/layout/ApplicationLayout";
+export { LandingLayout } from "@/components/layout/LandingLayout";
+export {
+  CenteredLayout,
+  FullWidthLayout,
+  PageContent,
+} from "@/components/layout/PageContent";
+export type { LayoutType } from "@/components/layout/PageContent";
+export { PageLayout } from "@/components/layout/PageLayout";

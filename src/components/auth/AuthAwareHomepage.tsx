@@ -1,5 +1,6 @@
-import { ServerAuth, ServerUser } from "@/lib/auth-server";
-import { AuthAwareContent } from "./AuthAwareContent";
+import { AuthAwareContent } from "@/components/auth/AuthAwareContent";
+import { ServerAuth } from "@/lib/auth-server.server";
+import type { ServerUser } from "@/lib/auth-types";
 import Link from "next/link";
 
 /**

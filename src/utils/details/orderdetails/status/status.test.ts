@@ -1,4 +1,8 @@
-import { getStatusStyle, isEditInProgress, isOrderCancelled } from "./status";
+import {
+  getStatusStyle,
+  isEditInProgress,
+  isOrderCancelled,
+} from "@/utils/details/orderdetails/status/status";
 import {
   mockStatusAcknowledged,
   mockStatusAcknowledgedShort,
@@ -15,7 +19,7 @@ import {
   mockStatusProcessing,
   mockStatusUndefined,
   mockStatusUnknown,
-} from "./status.mocks";
+} from "@/utils/details/orderdetails/status/status.mocks";
 
 describe("status utilities", () => {
   describe("getStatusStyle", () => {

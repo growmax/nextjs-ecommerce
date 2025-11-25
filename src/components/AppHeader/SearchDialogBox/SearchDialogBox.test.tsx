@@ -1,6 +1,6 @@
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
-import SearchDialogBox from "./SearchDialogBox";
-import * as mockData from "./SearchDialogBox.mocks";
+import SearchDialogBox from "@/components/AppHeader/SearchDialogBox/SearchDialogBox";
+import * as mockData from "@/components/AppHeader/SearchDialogBox/SearchDialogBox.mocks";
 
 // Polyfill scrollIntoView for jsdom (used by cmdk)
 Element.prototype.scrollIntoView = jest.fn();

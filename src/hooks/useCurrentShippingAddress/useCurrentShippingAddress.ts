@@ -2,7 +2,7 @@
 
 import { useUserDetails } from "@/contexts/UserDetailsContext";
 import { useEffect, useState } from "react";
-import useShipping from "../useShipping";
+import useShipping from "@/hooks/useShipping/useShipping";
 
 interface ShippingAddress {
   id?: string | number;

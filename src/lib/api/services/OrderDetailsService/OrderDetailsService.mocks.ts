@@ -4,7 +4,7 @@
 import type {
   FetchOrderDetailsParams,
   OrderDetailsResponse,
-} from "./OrderDetailsService";
+} from "@/lib/api/services/OrderDetailsService/OrderDetailsService";
 
 export const mockFetchOrderDetailsParams: FetchOrderDetailsParams = {
   userId: 123,

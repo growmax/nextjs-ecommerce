@@ -1,19 +1,19 @@
 "use client";
 
-import { CartProceedButton, MultipleSellerCards } from "@/components/cart";
+import { CartProceedButton, MultipleSellerCards } from "@/components";
 import CartProductCard from "@/components/cart/CartProductCard";
 import CartPriceDetails from "@/components/sales/CartPriceDetails";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useCart as useCartContext } from "@/contexts/CartContext";
-import useAccessControl from "@/hooks/useAccessControl";
-import { useCart } from "@/hooks/useCart";
-import useCartPrice from "@/hooks/useCartPrice";
-import { useCurrentUser } from "@/hooks/useCurrentUser";
+import useAccessControl from "@/hooks/useAccessControl/useAccessControl";
+import { useCart } from "@/hooks/useCart/useCart";
+import useCartPrice from "@/hooks/useCartPrice/useCartPrice";
+import { useCurrentUser } from "@/hooks/useCurrentUser/useCurrentUser";
 import useGetCurrencyModuleSettings from "@/hooks/useGetCurrencyModuleSettings/useGetCurrencyModuleSettings";
-import useModuleSettings from "@/hooks/useModuleSettings";
-import useSelectedSellerCart from "@/hooks/useSelectedSellerCart";
+import useModuleSettings from "@/hooks/useModuleSettings/useModuleSettings";
+import useSelectedSellerCart from "@/hooks/useSelectedSellerCart/useSelectedSellerCart";
 import { useRouter } from "@/i18n/navigation";
 import type { CartItem } from "@/types/calculation/cart";
 import { cartCalculation } from "@/utils/calculation/cartCalculation";
@@ -22,9 +22,9 @@ import {
   validateRequestQuote,
 } from "@/utils/cart/cartValidation";
 import { ShoppingCart } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { useState } from "react";
 import { toast } from "sonner";
-import { useTranslations } from "next-intl";
 
 export default function CartPageClient() {
   const { user, loading: userLoading } = useCurrentUser();

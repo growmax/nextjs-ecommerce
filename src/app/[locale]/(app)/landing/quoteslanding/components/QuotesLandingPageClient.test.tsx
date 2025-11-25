@@ -1,5 +1,20 @@
-import React from "react";
-import "@testing-library/jest-dom";
+// Mock i18n config FIRST to prevent next-intl/server ES module loading
+jest.mock("@/i18n/config", () => ({
+  locales: ["en", "es"],
+  defaultLocale: "en",
+}));
+
+// Mock navigation to prevent next-intl ES module loading
+jest.mock("@/i18n/navigation", () => ({
+  Link: "a",
+  useRouter: () => ({ push: jest.fn() }),
+  usePathname: () => "/",
+}));
+
+// Mock ConditionalFooter to avoid next-intl ES module errors
+jest.mock("@/components/ConditionalFooter", () => ({
+  ConditionalFooter: () => null,
+}));
 
 // Mock next-intl BEFORE any other imports
 jest.mock("next-intl", () => ({
@@ -10,6 +25,9 @@ jest.mock("next-intl", () => ({
     number: jest.fn(),
   }),
 }));
+
+import "@testing-library/jest-dom";
+import React from "react";
 
 // Mock DashboardToolbar to avoid next-intl dependency chain
 jest.mock("@/components/custom/dashboard-toolbar", () => {
@@ -63,9 +81,9 @@ jest.mock("./QuotesLandingTable/QuotesLandingTable", () => {
   };
 });
 
-import { render } from "@testing-library/react";
+import QuotesLandingPageClient from "@/app/[locale]/(app)/landing/quoteslanding/components/QuotesLandingPageClient";
 import { describe, it } from "@jest/globals";
-import QuotesLandingPageClient from "./QuotesLandingPageClient";
+import { render } from "@testing-library/react";
 
 describe("QuotesLandingPageClient", () => {
   it("should render DashboardToolbar with correct title", () => {

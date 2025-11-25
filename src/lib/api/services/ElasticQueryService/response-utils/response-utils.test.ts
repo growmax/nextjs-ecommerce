@@ -3,7 +3,7 @@ import {
   extractSearchTotal,
   formatProductSearchResponse,
   createErrorSearchResponse,
-} from "./response-utils";
+} from "@/lib/api/services/ElasticQueryService/response-utils/response-utils";
 
 import {
   mockValidSearchResponse,
@@ -12,7 +12,7 @@ import {
   mockMalformedResponse,
   mockExpectedFormattedResponse,
   mockErrorResponse,
-} from "./response-utils.mocks";
+} from "@/lib/api/services/ElasticQueryService/response-utils/response-utils.mocks";
 
 describe("OpenSearch Response Utilities", () => {
   describe("extractSearchHits", () => {

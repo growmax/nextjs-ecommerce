@@ -5,7 +5,7 @@ import type {
   FindSellerBranchRequest,
   SellerBranch,
   Warehouse,
-} from "./SellerWarehouseService";
+} from "@/lib/api/services/SellerWarehouseService/SellerWarehouseService";
 
 export const mockUserId = "123";
 export const mockCompanyId = "456";

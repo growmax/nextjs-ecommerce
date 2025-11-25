@@ -6,7 +6,7 @@ import ProductPricing from "@/components/product/ProductPricing";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
-import { useCart } from "@/hooks/useCart";
+import { useCart } from "@/hooks/useCart/useCart";
 import { AuthStorage } from "@/lib/auth";
 import { JWTService } from "@/lib/services/JWTService";
 import type { CartItem } from "@/types/calculation/cart";
@@ -14,8 +14,8 @@ import { getSuitableDiscountByQuantity } from "@/utils/calculation/discountCalcu
 import { BuildPricingCond } from "@/utils/pricing/buildPricingCond";
 import { getProductPricing } from "@/utils/pricing/getProductPricing";
 import { Minus, Plus, Trash2 } from "lucide-react";
-import { useMemo, useState } from "react";
 import { useTranslations } from "next-intl";
+import { useMemo, useState } from "react";
 
 interface CartProductCardProps {
   item: CartItem;

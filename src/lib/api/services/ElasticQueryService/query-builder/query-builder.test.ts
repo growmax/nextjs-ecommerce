@@ -2,7 +2,7 @@ import {
   buildProductSearchQuery,
   getProductSearchFields,
   getProductSourceFields,
-} from "./query-builder";
+} from "@/lib/api/services/ElasticQueryService/query-builder/query-builder";
 import {
   mockElasticIndex,
   mockExpectedSearchRequest,
@@ -10,7 +10,7 @@ import {
   mockProductSearchOptions,
   mockProductSourceFields,
   mockSearchTerm,
-} from "./query-builder.mocks";
+} from "@/lib/api/services/ElasticQueryService/query-builder/query-builder.mocks";
 
 describe("Query Builder", () => {
   describe("buildProductSearchQuery", () => {

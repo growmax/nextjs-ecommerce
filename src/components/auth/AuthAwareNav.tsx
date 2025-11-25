@@ -1,11 +1,11 @@
 "use client";
 
-import { ServerUser } from "@/lib/auth-server";
-import { useHybridAuth } from "@/hooks/useHybridAuth";
-import { useGlobalLoader } from "@/hooks/useGlobalLoader";
 import { useUserDetails } from "@/contexts/UserDetailsContext";
-import Link from "next/link";
+import { useGlobalLoader } from "@/hooks/useGlobalLoader/useGlobalLoader";
+import { useHybridAuth } from "@/hooks/useHybridAuth/useHybridAuth";
+import type { ServerUser } from "@/lib/auth-types";
 import Image from "next/image";
+import Link from "next/link";
 
 interface AuthAwareNavProps {
   isAuthenticated?: boolean;
@@ -46,7 +46,12 @@ export function AuthAwareNav({
   };
 
   if (auth.isAuthenticated && auth.user) {
-    return <AuthenticatedNav user={auth.user as ServerUser} onLogout={handleLogout} />;
+    return (
+      <AuthenticatedNav
+        user={auth.user as ServerUser}
+        onLogout={handleLogout}
+      />
+    );
   } else {
     return <PublicNav />;
   }

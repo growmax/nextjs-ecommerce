@@ -1,7 +1,10 @@
 // Mocks for OrdersFilterService
 // These mocks are for testing the service in isolation.
 
-import type { OrderFilter, OrdersFilterParams } from "./OrdersFilterService";
+import type {
+  OrderFilter,
+  OrdersFilterParams,
+} from "@/lib/api/services/OrdersFilterService/OrdersFilterService";
 
 export const mockOrderFilter: OrderFilter = {
   filter_index: 0,

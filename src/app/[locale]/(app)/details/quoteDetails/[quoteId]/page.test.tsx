@@ -11,7 +11,7 @@ jest.mock("next-intl", () => ({
   useLocale: () => "en",
 }));
 
-jest.mock("@/hooks/usePageScroll", () => ({
+jest.mock("@/hooks/usePageScroll/usePageScroll", () => ({
   usePageScroll: jest.fn(),
 }));
 
@@ -61,7 +61,7 @@ jest.mock("react", () => {
 
 import { render, screen } from "@testing-library/react";
 import React from "react";
-import QuoteDetailsPage from "./page";
+import QuoteDetailsPage from "@/app/[locale]/(app)/details/quoteDetails/[quoteId]/page";
 
 describe("QuoteDetailsPage", () => {
   it("should render the page with Suspense wrapper", async () => {

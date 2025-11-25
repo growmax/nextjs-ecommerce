@@ -1,7 +1,7 @@
 "use client";
 
 import { useProductVariantContext } from "@/contexts/ProductVariantContext";
-import AddToCartSection from "./AddToCartSection";
+import AddToCartSection from "@/components/product/AddToCartSection";
 
 interface AddToCartSectionWrapperProps {
   baseProductId: number;
@@ -27,4 +27,3 @@ export default function AddToCartSectionWrapper({
     />
   );
 }
-

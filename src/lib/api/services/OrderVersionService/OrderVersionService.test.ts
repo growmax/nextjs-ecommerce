@@ -1,9 +1,9 @@
-import { BaseService } from "../BaseService";
-import { OrderVersionService } from "./OrderVersionService";
+import { BaseService } from "@/lib/api/services/BaseService";
+import { OrderVersionService } from "@/lib/api/services/OrderVersionService/OrderVersionService";
 import {
   mockCreateOrderVersionRequest,
   mockCreateOrderVersionResponse,
-} from "./OrderVersionService.mocks";
+} from "@/lib/api/services/OrderVersionService/OrderVersionService.mocks";
 
 // Mock the client
 jest.mock("../../client", () => ({

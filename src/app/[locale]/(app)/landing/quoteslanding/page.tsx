@@ -1,5 +1,5 @@
 "use client";
-import { usePageScroll } from "@/hooks/usePageScroll";
+import { usePageScroll } from "@/hooks/usePageScroll/usePageScroll";
 import dynamic from "next/dynamic";
 
 const QuotesLandingPageClient = dynamic(

@@ -1,7 +1,7 @@
 import { AuthStorage } from "@/lib/auth";
 import { JWTService } from "@/lib/services/JWTService";
-import { preferenceClient } from "../../client";
-import { BaseService } from "../BaseService";
+import { preferenceClient } from "@/lib/api/client";
+import { BaseService } from "@/lib/api/services/BaseService";
 
 // Define preference data types
 export interface UserPreference {

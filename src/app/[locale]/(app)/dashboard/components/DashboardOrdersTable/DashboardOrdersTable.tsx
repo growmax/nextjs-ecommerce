@@ -18,8 +18,8 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { useDashboardOrders } from "@/hooks/useDashboardData";
-import { useRoutePrefetch } from "@/hooks/useRoutePrefetch";
+import { useDashboardOrders } from "@/hooks/useDashboardData/useDashboardData";
+import { useRoutePrefetch } from "@/hooks/useRoutePrefetch/useRoutePrefetch";
 import { Order } from "@/types/dashboard/DasbordOrderstable/DashboardOrdersTable";
 import { ArrowDownIcon, ArrowUpDown } from "lucide-react";
 import { useTranslations } from "next-intl";

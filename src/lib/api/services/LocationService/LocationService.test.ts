@@ -1,10 +1,10 @@
-import { BaseService } from "../BaseService";
-import { LocationService } from "./LocationService";
+import { BaseService } from "@/lib/api/services/BaseService";
+import { LocationService } from "@/lib/api/services/LocationService/LocationService";
 import {
   mockCountriesResponse,
   mockDistrictsResponse,
   mockStatesResponse,
-} from "./LocationService.mocks";
+} from "@/lib/api/services/LocationService/LocationService.mocks";
 
 // Mock the client
 jest.mock("../../client", () => ({

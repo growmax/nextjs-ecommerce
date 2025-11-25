@@ -4,7 +4,7 @@ import {
   sanitizeFormInput,
   stripHtmlTags,
   XSS_ERROR_MESSAGE,
-} from "./sanitization.utils";
+} from "@/utils/sanitization/sanitization.utils";
 
 describe("sanitization.utils", () => {
   describe("containsXSS", () => {

@@ -1,19 +1,19 @@
 "use client";
 
-import { useEffect, useMemo, useState, useRef } from "react";
-import { map, find, some } from "lodash";
-import { assign_pricelist_discounts_data_to_products } from "@/utils/functionalUtils";
+import { useCurrentUser } from "@/hooks/useCurrentUser/useCurrentUser";
+import useModuleSettings from "@/hooks/useModuleSettings/useModuleSettings";
+import useProductDiscounts from "@/hooks/useProductDiscounts/useProductDiscounts";
+import { useTenantData } from "@/hooks/useTenantData/useTenantData";
+import DiscountService from "@/lib/api/services/DiscountService/DiscountService";
 import {
   cartCalculation,
   discountDetails,
 } from "@/utils/calculation/cartCalculation";
-import useProductDiscounts from "@/hooks/useProductDiscounts";
-import useCurrencyFactor from "./useCurrencyFactor";
-import DiscountService from "@/lib/api/services/DiscountService/DiscountService";
-import { useCurrentUser } from "@/hooks/useCurrentUser";
-import { useTenantData } from "@/hooks/useTenantData";
+import { assign_pricelist_discounts_data_to_products } from "@/utils/functionalUtils";
 import { useQuery } from "@tanstack/react-query";
-import useModuleSettings from "@/hooks/useModuleSettings";
+import { find, map, some } from "lodash";
+import { useEffect, useMemo, useRef, useState } from "react";
+import useCurrencyFactor from "@/hooks/summary/useCurrencyFactor";
 
 /**
  * Simplified hook for fetching discounts and calculating cart values for summary pages

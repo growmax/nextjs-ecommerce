@@ -1,7 +1,7 @@
 // Mocks for ProductAssetsService
 // These mocks are for testing the service in isolation.
 
-import type { ProductAssetsResponse } from "./ProductAssetsService";
+import type { ProductAssetsResponse } from "@/lib/api/services/ProductAssetsService/ProductAssetsService";
 
 export const mockProductIds = [1, 2, 3];
 

@@ -1,7 +1,7 @@
 import { AuthStorage } from "@/lib/auth";
 import { JWTService } from "@/lib/services/JWTService";
-import { BaseService } from "../BaseService";
-import { PreferenceService } from "./PreferenceService";
+import { BaseService } from "@/lib/api/services/BaseService";
+import { PreferenceService } from "@/lib/api/services/PreferenceService/PreferenceService";
 import {
   mockAccessToken,
   mockContext,
@@ -11,7 +11,7 @@ import {
   mockOrderPreferencesResponse,
   mockPreferenceData,
   mockUserPreference,
-} from "./PreferenceService.mocks";
+} from "@/lib/api/services/PreferenceService/PreferenceService.mocks";
 
 // Mock AuthStorage
 jest.mock("@/lib/auth", () => ({

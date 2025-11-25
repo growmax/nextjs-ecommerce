@@ -1,7 +1,7 @@
 // Mocks for OrderStatusService
 // These mocks are for testing the service in isolation.
 
-import type { OrderStatusResponse } from "./OrderStatusService";
+import type { OrderStatusResponse } from "@/lib/api/services/OrderStatusService/OrderStatusService";
 
 export const mockOrderStatusParams = {
   userId: "123",

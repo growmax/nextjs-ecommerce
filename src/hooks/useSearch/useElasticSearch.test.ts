@@ -1,11 +1,11 @@
 import {
   PRODUCT_SEARCH_FIELDS,
   PRODUCT_SOURCE_FIELDS,
-} from "./useElasticSearch";
+} from "@/hooks/useSearch/useElasticSearch";
 import {
   mockProductSearchFields,
   mockProductSourceFields,
-} from "./useElasticSearch.mocks";
+} from "@/hooks/useSearch/useElasticSearch.mocks";
 
 describe("useElasticSearch", () => {
   describe("PRODUCT_SEARCH_FIELDS", () => {

@@ -5,7 +5,7 @@ import type {
   QuoteStatusApiResponse,
   QuoteStatusParams,
   QuoteStatusResponse,
-} from "./StatusService";
+} from "@/lib/api/services/StatusService/StatusService";
 
 export const mockQuoteStatusParams: QuoteStatusParams = {
   userId: 123,

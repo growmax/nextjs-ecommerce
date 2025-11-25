@@ -1,15 +1,10 @@
 "use client";
 
 import { Layers } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
-import { useTranslations } from "next-intl";
 
-import {
-  VersionsDialog,
-  type Version,
-} from "@/components/dialogs/VersionsDialog";
-import { ApplicationLayout, PageLayout } from "@/components/layout";
 import {
   DetailsSkeleton,
   OrderContactDetails,
@@ -18,7 +13,12 @@ import {
   OrderTermsCard,
   SalesHeader,
   SPRForm,
-} from "@/components/sales";
+} from "@/components";
+import {
+  VersionsDialog,
+  type Version,
+} from "@/components/dialogs/VersionsDialog";
+import { ApplicationLayout, PageLayout } from "@/components/layout";
 import CashDiscountCard from "@/components/sales/CashDiscountCard";
 import type { ProductSearchResult } from "@/components/sales/ProductSearchInput";
 import { Button } from "@/components/ui/button";
@@ -33,16 +33,16 @@ import {
 import { useQuoteDetails } from "@/hooks/details/quotedetails/useQuoteDetails";
 import useCashDiscountHandlers from "@/hooks/useCashDiscountHandlers/useCashDiscountHandlers";
 import useCheckVolumeDiscountEnabled from "@/hooks/useCheckVolumeDiscountEnabled/useCheckVolumeDiscountEnabled";
-import { useCurrentUser } from "@/hooks/useCurrentUser";
+import { useCurrentUser } from "@/hooks/useCurrentUser/useCurrentUser";
 import useGetLatestPaymentTerms from "@/hooks/useGetLatestPaymentTerms/useGetLatestPaymentTerms";
 import { useGetVersionDetails } from "@/hooks/useGetVersionDetails/useGetVersionDetails";
 import { useLatestOrderProducts } from "@/hooks/useLatestOrderProducts/useLatestOrderProducts";
-import useModuleSettings from "@/hooks/useModuleSettings";
+import useModuleSettings from "@/hooks/useModuleSettings/useModuleSettings";
 import { useOrderCalculation } from "@/hooks/useOrderCalculation/useOrderCalculation";
-import { usePageScroll } from "@/hooks/usePageScroll";
+import { usePageScroll } from "@/hooks/usePageScroll/usePageScroll";
 import { useQuoteSubmission } from "@/hooks/useQuoteSubmission/useQuoteSubmission";
-import { useRoutePrefetch } from "@/hooks/useRoutePrefetch";
-import { useTenantData } from "@/hooks/useTenantData";
+import { useRoutePrefetch } from "@/hooks/useRoutePrefetch/useRoutePrefetch";
+import { useTenantData } from "@/hooks/useTenantData/useTenantData";
 import type { QuotationDetailsResponse } from "@/lib/api";
 import {
   OrdersService,

@@ -1,7 +1,7 @@
 // Mocks for useOrderCalculation
 // You can extend these as needed for more complex test scenarios.
 
-import type { OrderCalculationInput } from "./useOrderCalculation";
+import type { OrderCalculationInput } from "@/hooks/useOrderCalculation/useOrderCalculation";
 
 export const mockOrderCalculationInput: OrderCalculationInput = {
   products: [

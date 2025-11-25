@@ -1,7 +1,7 @@
 "use client";
 
-import { useCurrentUser } from "@/hooks/useCurrentUser";
-import { useTenantData } from "@/hooks/useTenantData";
+import { useCurrentUser } from "@/hooks/useCurrentUser/useCurrentUser";
+import { useTenantData } from "@/hooks/useTenantData/useTenantData";
 import { OrderDetailsService, type OrderDetailsResponse } from "@/lib/api";
 import { useQuery } from "@tanstack/react-query";
 

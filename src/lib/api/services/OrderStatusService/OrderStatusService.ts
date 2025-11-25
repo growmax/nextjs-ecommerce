@@ -1,5 +1,5 @@
-import { RequestContext, coreCommerceClient } from "../../client";
-import { BaseService } from "../BaseService";
+import { RequestContext, coreCommerceClient } from "@/lib/api/client";
+import { BaseService } from "@/lib/api/services/BaseService";
 
 export interface OrderStatusResponse {
   data: string[];

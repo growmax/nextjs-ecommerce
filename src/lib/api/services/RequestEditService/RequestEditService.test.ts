@@ -1,10 +1,10 @@
-import { BaseService } from "../BaseService";
-import { RequestEditService } from "./RequestEditService";
+import { BaseService } from "@/lib/api/services/BaseService";
+import { RequestEditService } from "@/lib/api/services/RequestEditService/RequestEditService";
 import {
   mockRequestEditParams,
   mockRequestEditParamsWithoutData,
   mockRequestEditResponse,
-} from "./RequestEditService.mocks";
+} from "@/lib/api/services/RequestEditService/RequestEditService.mocks";
 
 // Mock the client
 jest.mock("../../client", () => ({

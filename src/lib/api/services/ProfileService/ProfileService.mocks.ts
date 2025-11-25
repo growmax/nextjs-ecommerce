@@ -1,7 +1,10 @@
 // Mocks for ProfileService
 // These mocks are for testing the service in isolation.
 
-import type { Profile, ProfileResponse } from "./ProfileService";
+import type {
+  Profile,
+  ProfileResponse,
+} from "@/lib/api/services/ProfileService/ProfileService";
 
 export const mockProfile: Profile = {
   id: "user-123",

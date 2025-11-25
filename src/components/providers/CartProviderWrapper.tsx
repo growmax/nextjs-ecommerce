@@ -1,7 +1,7 @@
 "use client";
 
 import { CartProvider } from "@/contexts/CartContext";
-import { useCurrentUser } from "@/hooks/useCurrentUser";
+import { useCurrentUser } from "@/hooks/useCurrentUser/useCurrentUser";
 
 export function CartProviderWrapper({
   children,

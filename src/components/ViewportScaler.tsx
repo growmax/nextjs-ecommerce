@@ -1,6 +1,6 @@
 "use client";
 
-import { useViewportScale } from "@/hooks/useViewportScale";
+import { useViewportScale } from "@/hooks/useViewportScale/useViewportScale";
 import { ReactNode } from "react";
 
 interface ViewportScalerProps {

@@ -4,7 +4,7 @@
 import type {
   UpdateOrderNameRequest,
   UpdateOrderNameResponse,
-} from "./OrderNameService";
+} from "@/lib/api/services/OrderNameService/OrderNameService";
 
 export const mockUpdateOrderNameRequest: UpdateOrderNameRequest = {
   userId: 123,

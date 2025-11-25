@@ -8,7 +8,7 @@ import type {
   DiscountRequestWithContext,
   GetAllSellerPricesRequest,
   GetAllSellerPricesResponse,
-} from "./DiscountService";
+} from "@/lib/api/services/DiscountService/DiscountService";
 
 export const mockDiscountRequestWithContext: DiscountRequestWithContext = {
   userId: 123,

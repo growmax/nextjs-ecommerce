@@ -3,7 +3,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import type { Metadata } from "next";
 import { Suspense } from "react";
-import CartPageClient from "./components/CartPageClient";
+import CartPageClient from "@/app/[locale]/(app)/cart/components/CartPageClient";
 
 export const metadata: Metadata = {
   title: "Shopping Cart | E-Commerce",

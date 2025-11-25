@@ -1,8 +1,8 @@
 "use client";
 
-import { useQuery } from "@tanstack/react-query";
-import useUser from "@/hooks/useUser";
+import useUser from "@/hooks/useUser/useUser";
 import CurrencyService from "@/lib/api/services/CurrencyService/CurrencyService";
+import { useQuery } from "@tanstack/react-query";
 
 /**
  * Hook to fetch currency factor for a company

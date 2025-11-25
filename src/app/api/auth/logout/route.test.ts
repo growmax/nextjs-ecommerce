@@ -2,7 +2,7 @@
  * @jest-environment node
  */
 import { NextRequest } from "next/server";
-import { POST } from "./route";
+import { POST } from "@/app/api/auth/logout/route";
 
 // Mock the global fetch function
 global.fetch = jest.fn();

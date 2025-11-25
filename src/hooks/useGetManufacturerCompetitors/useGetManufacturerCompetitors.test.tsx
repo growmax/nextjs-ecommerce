@@ -7,7 +7,7 @@ import {
   mockManufacturerCompetitorService,
   mockSellerCompanyId,
   mockSellerCompanyIdString,
-} from "./useGetManufacturerCompetitors.mocks";
+} from "@/hooks/useGetManufacturerCompetitors/useGetManufacturerCompetitors.mocks";
 
 // Mock SWR
 jest.mock("swr", () => ({
@@ -20,7 +20,7 @@ jest.mock("@/lib/api", () => ({
   ManufacturerCompetitorService: mockManufacturerCompetitorService,
 }));
 
-import useGetManufacturerCompetitors from "./useGetManufacturerCompetitors";
+import useGetManufacturerCompetitors from "@/hooks/useGetManufacturerCompetitors/useGetManufacturerCompetitors";
 import useSWR from "swr";
 
 const mockUseSWR = useSWR as jest.MockedFunction<typeof useSWR>;

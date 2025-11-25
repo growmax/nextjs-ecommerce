@@ -1,14 +1,14 @@
 "use client";
 
 import { Input } from "@/components/ui/input";
-import useSearch from "@/hooks/useSearch";
-import { useTenantData } from "@/hooks/useTenantData";
+import useSearch from "@/hooks/useSearch/useSearch";
+import { useTenantData } from "@/hooks/useTenantData/useTenantData";
 import { ProductAssetsService } from "@/lib/api";
 import { cn } from "@/lib/utils";
 import { useQuery } from "@tanstack/react-query";
 import { Loader2, Search } from "lucide-react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import ImageWithFallback from "../ImageWithFallback";
+import ImageWithFallback from "@/components/ImageWithFallback";
 
 export interface ProductSearchResult {
   productId: number;

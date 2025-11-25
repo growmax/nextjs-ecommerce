@@ -1,5 +1,5 @@
-import { coreCommerceClient } from "../../client";
-import { BaseService } from "../BaseService";
+import { coreCommerceClient } from "@/lib/api/client";
+import { BaseService } from "@/lib/api/services/BaseService";
 
 // Define shipping address data types (same shape as billing)
 export interface ShippingAddress {

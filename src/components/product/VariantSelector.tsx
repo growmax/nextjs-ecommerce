@@ -5,8 +5,8 @@ import { Separator } from "@/components/ui/separator";
 import { cn } from "@/lib/utils";
 import type { ElasticVariantAttributes } from "@/types/product/product-group";
 import { memo, useCallback, useMemo } from "react";
-import ColorVariantSelector from "./ColorVariantSelector";
-import SizeVariantSelector from "./SizeVariantSelector";
+import ColorVariantSelector from "@/components/product/ColorVariantSelector";
+import SizeVariantSelector from "@/components/product/SizeVariantSelector";
 
 interface AttributeOption {
   value: string;

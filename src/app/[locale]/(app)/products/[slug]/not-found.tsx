@@ -8,8 +8,8 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { useRoutePrefetch } from "@/hooks/useRoutePrefetch";
-import { PackageX, Home, Search } from "lucide-react";
+import { useRoutePrefetch } from "@/hooks/useRoutePrefetch/useRoutePrefetch";
+import { Home, PackageX, Search } from "lucide-react";
 import Link from "next/link";
 
 /**

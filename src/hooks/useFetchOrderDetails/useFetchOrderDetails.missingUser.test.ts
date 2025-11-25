@@ -1,13 +1,15 @@
 import { renderHook } from "@testing-library/react";
-import useFetchOrderDetails from "./useFetchOrderDetails";
+import useFetchOrderDetails from "@/hooks/useFetchOrderDetails/useFetchOrderDetails";
 // Mock useCurrentUser to return null user before importing the hook
-jest.mock("@/hooks/useCurrentUser", () => ({
+jest.mock("@/hooks/useCurrentUser/useCurrentUser", () => ({
   useCurrentUser: () => ({ user: null }),
 }));
-jest.mock("@/hooks/useTenantData", () => ({
+jest.mock("@/hooks/useTenantData/useTenantData", () => ({
   useTenantData: () => ({ tenantData: { tenant: { tenantCode: "tenant-1" } } }),
 }));
-jest.mock("@/hooks/useModuleSettings", () => () => ({ quoteSettings: {} }));
+jest.mock("@/hooks/useModuleSettings/useModuleSettings", () => () => ({
+  quoteSettings: {},
+}));
 jest.mock("@/lib/api", () => ({
   OrderDetailsService: { fetchOrderDetails: jest.fn() },
 }));

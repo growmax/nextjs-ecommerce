@@ -1,7 +1,7 @@
-import axios from "axios";
-import { useCurrentUser } from "@/hooks/useCurrentUser";
-import useSWR from "swr/immutable";
+import { useCurrentUser } from "@/hooks/useCurrentUser/useCurrentUser";
 import type { PaymentTerm } from "@/lib/api";
+import axios from "axios";
+import useSWR from "swr/immutable";
 
 /**
  * Hook to get latest payment terms with cash discount

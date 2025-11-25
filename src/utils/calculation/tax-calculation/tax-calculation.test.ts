@@ -1,4 +1,4 @@
-import { calculateItemTaxes } from "./tax-calculation";
+import { calculateItemTaxes } from "@/utils/calculation/tax-calculation/tax-calculation";
 import {
   mockCartItem,
   mockCartItemWithBothTaxes,
@@ -10,7 +10,7 @@ import {
   mockCartItemWithoutHsnDetails,
   mockCartItemWithoutPfRate,
   mockCartItemWithZeroTax,
-} from "./tax-calculation.mocks";
+} from "@/utils/calculation/tax-calculation/tax-calculation.mocks";
 
 describe("tax-calculation utilities", () => {
   describe("calculateItemTaxes", () => {

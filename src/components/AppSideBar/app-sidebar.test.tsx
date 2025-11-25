@@ -2,7 +2,7 @@ import { NavMain } from "@/components/nav-main";
 import { SidebarProvider, useSidebar } from "@/components/ui/sidebar";
 import * as UserDetailsContext from "@/contexts/UserDetailsContext";
 import { render, screen } from "@testing-library/react";
-import { AppSidebar } from "./app-sidebar";
+import { AppSidebar } from "@/components/AppSideBar/app-sidebar";
 
 // Mock the hooks and child components
 jest.mock("@/components/ui/sidebar", () => ({

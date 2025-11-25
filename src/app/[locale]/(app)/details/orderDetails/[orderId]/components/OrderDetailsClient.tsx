@@ -2,30 +2,31 @@
 
 import { Toaster } from "@/components/ui/sonner";
 import { Layers } from "lucide-react";
+import { useTranslations } from "next-intl";
 import dynamic from "next/dynamic";
 import { Suspense, useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
-import { useTranslations } from "next-intl";
 
+import {
+  ApplicationLayout,
+  DetailsSkeleton,
+  OrderContactDetails,
+  OrderTermsCard,
+  PageLayout,
+  SalesHeader,
+} from "@/components";
 import { EditOrderNameDialog } from "@/components/dialogs/EditOrderNameDialog";
 import { RequestEditDialog } from "@/components/dialogs/RequestEditDialog";
 import {
   VersionsDialog,
   type Version,
 } from "@/components/dialogs/VersionsDialog";
-import { ApplicationLayout, PageLayout } from "@/components/layout";
-import {
-  DetailsSkeleton,
-  OrderContactDetails,
-  OrderTermsCard,
-  SalesHeader,
-} from "@/components/sales";
 import { useOrderDetails } from "@/hooks/details/orderdetails/useOrderDetails";
-import { useCurrentUser } from "@/hooks/useCurrentUser";
+import { useCurrentUser } from "@/hooks/useCurrentUser/useCurrentUser";
 import { useGetVersionDetails } from "@/hooks/useGetVersionDetails/useGetVersionDetails";
-import useModuleSettings from "@/hooks/useModuleSettings";
-import { useRoutePrefetch } from "@/hooks/useRoutePrefetch";
-import { useTenantData } from "@/hooks/useTenantData";
+import useModuleSettings from "@/hooks/useModuleSettings/useModuleSettings";
+import { useRoutePrefetch } from "@/hooks/useRoutePrefetch/useRoutePrefetch";
+import { useTenantData } from "@/hooks/useTenantData/useTenantData";
 import type {
   OrderDetailsResponse,
   PaymentDueDataItem,
@@ -59,21 +60,21 @@ import { decodeUnicode } from "@/utils/General/general";
 // Import from index.ts which re-exports as named exports
 // No loading prop to avoid double loaders - main DetailsSkeleton handles all loading states
 const OrderProductsTable = dynamic(
-  () => import("@/components/sales").then(mod => mod.OrderProductsTable),
+  () => import("@/components").then(mod => mod.OrderProductsTable),
   {
     ssr: false,
   }
 );
 
 const OrderPriceDetails = dynamic(
-  () => import("@/components/sales").then(mod => mod.OrderPriceDetails),
+  () => import("@/components").then(mod => mod.OrderPriceDetails),
   {
     ssr: false,
   }
 );
 
 const OrderStatusTracker = dynamic(
-  () => import("@/components/sales").then(mod => mod.OrderStatusTracker),
+  () => import("@/components").then(mod => mod.OrderStatusTracker),
   {
     ssr: false,
   }

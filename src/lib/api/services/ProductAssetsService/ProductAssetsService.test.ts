@@ -1,10 +1,10 @@
-import { BaseService } from "../BaseService";
-import { ProductAssetsService } from "./ProductAssetsService";
+import { BaseService } from "@/lib/api/services/BaseService";
+import { ProductAssetsService } from "@/lib/api/services/ProductAssetsService/ProductAssetsService";
 import {
   mockProductAssetsResponse,
   mockProductAssetsResponseEmpty,
   mockProductIds,
-} from "./ProductAssetsService.mocks";
+} from "@/lib/api/services/ProductAssetsService/ProductAssetsService.mocks";
 
 // Mock the client
 jest.mock("../../client", () => ({

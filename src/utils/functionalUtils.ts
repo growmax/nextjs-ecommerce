@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { getSuitableDiscountByQuantity } from "./calculation/discountCalculation/discountCalculation";
+import { getSuitableDiscountByQuantity } from "@/utils/calculation/discountCalculation/discountCalculation";
 
 import type { CartItem } from "@/types/calculation/cart";
 import type {

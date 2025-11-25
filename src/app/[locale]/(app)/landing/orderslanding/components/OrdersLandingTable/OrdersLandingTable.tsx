@@ -1,9 +1,9 @@
 "use client";
 
 import { ColumnDef } from "@tanstack/react-table";
+import { useTranslations } from "next-intl";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
-import { useTranslations } from "next-intl";
 
 import PricingFormat from "@/components/PricingFormat";
 import DashboardTable from "@/components/custom/DashBoardTable";
@@ -20,14 +20,14 @@ import {
 import { Skeleton } from "@/components/ui/skeleton";
 
 import { statusColor } from "@/components/custom/statuscolors";
-import { useCurrentUser } from "@/hooks/useCurrentUser";
-import { useRoutePrefetch } from "@/hooks/useRoutePrefetch";
+import { useCurrentUser } from "@/hooks/useCurrentUser/useCurrentUser";
+import { useRoutePrefetch } from "@/hooks/useRoutePrefetch/useRoutePrefetch";
 import ordersFilterService, {
   OrderFilter,
 } from "@/lib/api/services/OrdersFilterService/OrdersFilterService";
 import { type Order } from "@/types/dashboard/DasbordOrderstable/DashboardOrdersTable";
 import { getAccounting } from "@/utils/calculation/salesCalculation/salesCalculation";
-import { OrdersLandingTableProps } from "../../types/ordertypes";
+import { OrdersLandingTableProps } from "@/app/[locale]/(app)/landing/orderslanding/types/ordertypes";
 
 // Helper functions
 const formatDate = (date: string | null | undefined): string =>

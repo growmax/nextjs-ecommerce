@@ -1,7 +1,7 @@
 // Mocks for ShippingBranchService
 // These mocks are for testing the service in isolation.
 
-import type { ShippingAddress } from "./ShippingBranchService";
+import type { ShippingAddress } from "@/lib/api/services/ShippingBranchService/ShippingBranchService";
 
 export const mockShippingAddress: ShippingAddress = {
   id: "1",

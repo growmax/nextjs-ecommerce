@@ -1,4 +1,4 @@
-import { getLatestTaxData } from "./getLatestTaxData";
+import { getLatestTaxData } from "@/utils/order/getLatestTaxData/getLatestTaxData";
 import {
   mockCalculateCartResult,
   mockCurrency,
@@ -13,7 +13,7 @@ import {
   mockSellerCurrency,
   mockTaxDetailsResult,
   mockUserCurrency,
-} from "./getLatestTaxData.mocks";
+} from "@/utils/order/getLatestTaxData/getLatestTaxData.mocks";
 
 // Mock all dependencies
 jest.mock("@/lib/api/services/DiscountService/DiscountService", () => ({

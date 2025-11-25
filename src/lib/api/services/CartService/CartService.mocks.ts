@@ -6,7 +6,7 @@ import type {
   CartCount,
   CartParams,
   ClearCartBySellerParams,
-} from "./CartService";
+} from "@/lib/api/services/CartService/CartService";
 
 export const mockCartParams: CartParams = {
   userId: "123",

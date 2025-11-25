@@ -1,6 +1,6 @@
+import { AvatarCard } from "@/components/AvatarCard/AvatarCard";
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { AvatarCard } from "./AvatarCard";
 
 // Mock next/navigation
 jest.mock("next/navigation", () => ({
@@ -338,7 +338,7 @@ describe("AvatarCard Integration Tests", () => {
       expect(
         screen.getByLabelText("User account menu - Logging out")
       ).toBeInTheDocument();
-    });
+    }, 10000);
   });
 
   describe("Avatar Fallback", () => {

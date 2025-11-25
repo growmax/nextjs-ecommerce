@@ -1,12 +1,12 @@
-import { BaseService } from "../BaseService";
-import { ShippingBranchService } from "./ShippingBranchService";
+import { BaseService } from "@/lib/api/services/BaseService";
+import { ShippingBranchService } from "@/lib/api/services/ShippingBranchService/ShippingBranchService";
 import {
   mockShippingAddressesArray,
   mockShippingAddressesResponseWithData,
   mockShippingAddressesResponseWithSuccess,
   mockCompanyId,
   mockUserId,
-} from "./ShippingBranchService.mocks";
+} from "@/lib/api/services/ShippingBranchService/ShippingBranchService.mocks";
 
 // Mock the client
 jest.mock("../../client", () => ({

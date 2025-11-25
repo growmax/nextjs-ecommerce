@@ -1,3 +1,10 @@
-export { withRedisCache, invalidateCache, invalidateCachePattern } from "./with-cache";
-export { getRedisClient, isRedisEnabled, disconnectRedis } from "./redis-client";
-
+export {
+  disconnectRedis,
+  getRedisClient,
+  isRedisEnabled,
+} from "@/lib/cache/redis-client";
+export {
+  invalidateCache,
+  invalidateCachePattern,
+  withRedisCache,
+} from "@/lib/cache/with-cache";

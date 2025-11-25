@@ -1,12 +1,12 @@
 "use client";
 
+import PricingFormat from "@/components/PricingFormat";
 import { Button } from "@/components/ui/button";
 import { useCart as useCartContext } from "@/contexts/CartContext";
+import { useCurrentUser } from "@/hooks/useCurrentUser/useCurrentUser";
 import { useRouter } from "@/i18n/navigation";
 import { cartCalculation } from "@/utils/calculation/cartCalculation";
 import { ShoppingCart } from "lucide-react";
-import PricingFormat from "@/components/PricingFormat";
-import { useCurrentUser } from "@/hooks/useCurrentUser";
 import { useTranslations } from "next-intl";
 
 interface CartSnackBarProps {

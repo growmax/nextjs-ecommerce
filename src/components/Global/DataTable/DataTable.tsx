@@ -62,10 +62,10 @@ import {
 } from "@/components/ui/table";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
-import { injectOptionalColumns } from "./columnHelpers";
-import { DataTablePagination } from "./DataTablePagination";
-import { DraggableRow } from "./DraggableRow";
-import type { DataTableProps } from "./types";
+import { injectOptionalColumns } from "@/components/Global/DataTable/columnHelpers";
+import { DataTablePagination } from "@/components/Global/DataTable/DataTablePagination";
+import { DraggableRow } from "@/components/Global/DataTable/DraggableRow";
+import type { DataTableProps } from "@/components/Global/DataTable/types";
 
 export function DataTable<TData>({
   data: initialData,
@@ -222,7 +222,7 @@ export function DataTable<TData>({
   );
 
   // Table instance
-   
+
   const tableOptions: any = {
     data,
     columns,

@@ -1,5 +1,5 @@
-import { homePageClient } from "../../client";
-import { BaseService } from "../BaseService";
+import { homePageClient } from "@/lib/api/client";
+import { BaseService } from "@/lib/api/services/BaseService";
 
 // Country Data Interface
 export interface CountryData {

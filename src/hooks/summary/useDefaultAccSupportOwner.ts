@@ -1,6 +1,6 @@
 "use client";
 
-import useUser from "@/hooks/useUser";
+import useUser from "@/hooks/useUser/useUser";
 import AccountOwnerService from "@/lib/api/services/AccountOwnerService/AccountOwnerService";
 import { useQuery } from "@tanstack/react-query";
 import { compact, filter } from "lodash";

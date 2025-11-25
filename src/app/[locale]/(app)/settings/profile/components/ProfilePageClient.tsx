@@ -2,7 +2,7 @@
 
 import HeaderBar from "@/components/Global/HeaderBar/HeaderBar";
 import { SaveCancelToolbar } from "@/components/custom/save-cancel-toolbar";
-import { useRoutePrefetch } from "@/hooks/useRoutePrefetch";
+import { useRoutePrefetch } from "@/hooks/useRoutePrefetch/useRoutePrefetch";
 import { useTranslations } from "next-intl";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";

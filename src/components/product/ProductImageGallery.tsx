@@ -1,6 +1,6 @@
 import { ProductAsset } from "@/types/product/product-detail";
 import Image from "next/image";
-import ProductImageGalleryClient from "./ProductImageGalleryClient";
+import ProductImageGalleryClient from "@/components/product/ProductImageGalleryClient";
 
 interface ProductImageGalleryProps {
   images: ProductAsset[];

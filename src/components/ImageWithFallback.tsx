@@ -2,9 +2,10 @@
 
 import Image, { ImageProps, StaticImageData } from "next/image";
 import { useState } from "react";
-import placeholderimg from "../../public/asset/default-placeholder.png";
+import placeholderimg from "@/../public/asset/default-placeholder.png";
 
-interface ImageWithFallbackProps extends Omit<ImageProps, 'src' | 'alt' | 'onError'> {
+interface ImageWithFallbackProps
+  extends Omit<ImageProps, "src" | "alt" | "onError"> {
   src: string | null | undefined;
   alt: string;
   fallbackSrc?: string;
@@ -13,7 +14,7 @@ interface ImageWithFallbackProps extends Omit<ImageProps, 'src' | 'alt' | 'onErr
 /**
  * Image component with automatic fallback to default placeholder
  * If src is invalid or fails to load, shows fallbackSrc or default placeholder
- * 
+ *
  * Supports both fixed dimensions (width/height) and fill layout
  */
 export default function ImageWithFallback({

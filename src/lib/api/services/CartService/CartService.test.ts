@@ -1,12 +1,12 @@
-import { BaseService } from "../BaseService";
-import { CartService } from "./CartService";
+import { BaseService } from "@/lib/api/services/BaseService";
+import { CartService } from "@/lib/api/services/CartService/CartService";
 import {
   mockCart,
   mockCartCount,
   mockCartParams,
   mockCartParamsWithPos,
   mockClearCartBySellerParams,
-} from "./CartService.mocks";
+} from "@/lib/api/services/CartService/CartService.mocks";
 
 // Mock the client
 jest.mock("../../client", () => ({

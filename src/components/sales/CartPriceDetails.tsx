@@ -7,7 +7,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 // cspell:ignore tabler
 import { IconChevronDown } from "@tabler/icons-react";
 import { useState } from "react";
-import PricingFormat from "../PricingFormat";
+import PricingFormat from "@/components/PricingFormat";
 import { useTranslations } from "next-intl";
 
 interface SellerPricing {

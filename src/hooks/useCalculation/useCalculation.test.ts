@@ -1,11 +1,11 @@
 import { renderHook } from "@testing-library/react";
-import { useCalculation } from "./useCalculation";
+import { useCalculation } from "@/hooks/useCalculation/useCalculation";
 import {
   mockCalculationParams,
   mockEmptyProducts,
   mockExpectedEmptyResult,
   mockProductWithoutHsn,
-} from "./useCalculation.mocks";
+} from "@/hooks/useCalculation/useCalculation.mocks";
 
 // Mock the calculation utilities
 jest.mock("@/utils/calculation/cartCalculation", () => ({

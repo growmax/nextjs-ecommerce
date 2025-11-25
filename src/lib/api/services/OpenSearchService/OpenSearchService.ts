@@ -1,6 +1,6 @@
 // Remove all interface definitions - they'll be imported from types
-import { openSearchClient, RequestContext } from "../../client";
-import { BaseService } from "../BaseService";
+import { openSearchClient, RequestContext } from "@/lib/api/client";
+import { BaseService } from "@/lib/api/services/BaseService";
 
 // Import types from new location
 import type { ProductDetail } from "@/types/product/product-detail";

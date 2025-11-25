@@ -15,7 +15,7 @@ import { cn } from "@/lib/utils";
 import { zoneDateTimeCalculator } from "@/utils/date-format/date-format";
 import { Info } from "lucide-react";
 import { useTranslations } from "next-intl";
-import PricingFormat from "../PricingFormat";
+import PricingFormat from "@/components/PricingFormat";
 
 export interface OrderStatusStep {
   key: string;

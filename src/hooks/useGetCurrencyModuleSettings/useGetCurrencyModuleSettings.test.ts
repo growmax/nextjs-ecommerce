@@ -2,13 +2,13 @@ import CartServices from "@/lib/api/CartServices";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { renderHook, waitFor } from "@testing-library/react";
 import React from "react";
-import useGetCurrencyModuleSettings from "./useGetCurrencyModuleSettings";
+import useGetCurrencyModuleSettings from "@/hooks/useGetCurrencyModuleSettings/useGetCurrencyModuleSettings";
 import {
   mockBuyerCurrency,
   mockCurrencyModuleResponse,
   mockEmptyCurrencyModuleResponse,
   mockUser,
-} from "./useGetCurrencyModuleSettings.mocks";
+} from "@/hooks/useGetCurrencyModuleSettings/useGetCurrencyModuleSettings.mocks";
 
 // Mock CartServices
 jest.mock("@/lib/api/CartServices", () => ({

@@ -9,7 +9,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { useRoutePrefetch } from "@/hooks/useRoutePrefetch";
+import { useRoutePrefetch } from "@/hooks/useRoutePrefetch/useRoutePrefetch";
 import { cn } from "@/lib/utils";
 import { getUserInitials } from "@/utils/General/general";
 import {
@@ -22,9 +22,9 @@ import {
   ShoppingCart,
   User,
 } from "lucide-react";
-import Link from "next/link";
 import { useTranslations } from "next-intl";
-import { AvatarCardProps } from "./Avatarcard.types";
+import Link from "next/link";
+import { AvatarCardProps } from "@/components/AvatarCard/Avatarcard.types";
 
 export function AvatarCard({
   user,

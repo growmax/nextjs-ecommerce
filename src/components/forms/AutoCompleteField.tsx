@@ -10,7 +10,7 @@ import {
 } from "@/components/ui/popover";
 import { Command, CommandGroup, CommandItem } from "@/components/ui/command";
 import { useTranslations } from "next-intl";
-import { FormField } from "./FormField";
+import { FormField } from "@/components/forms/FormField";
 
 interface AutoCompleteOption {
   value: string;

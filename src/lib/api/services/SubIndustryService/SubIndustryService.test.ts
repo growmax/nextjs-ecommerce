@@ -1,6 +1,6 @@
-import { BaseService } from "../BaseService";
-import { SubIndustryService } from "./SubIndustryService";
-import { mockSubIndustryResponse } from "./SubIndustryService.mocks";
+import { BaseService } from "@/lib/api/services/BaseService";
+import { SubIndustryService } from "@/lib/api/services/SubIndustryService/SubIndustryService";
+import { mockSubIndustryResponse } from "@/lib/api/services/SubIndustryService/SubIndustryService.mocks";
 
 // Mock the client
 jest.mock("../../client", () => ({

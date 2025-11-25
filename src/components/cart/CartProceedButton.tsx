@@ -1,8 +1,8 @@
 "use client";
 
 import { Button } from "@/components/ui/button";
+import { useCurrentUser } from "@/hooks/useCurrentUser/useCurrentUser";
 import { useRouter } from "@/i18n/navigation";
-import { useCurrentUser } from "@/hooks/useCurrentUser";
 import { ShoppingCart } from "lucide-react";
 import { useTranslations } from "next-intl";
 

@@ -1,4 +1,4 @@
-import { getSuitableDiscountByQuantity } from "./discountCalculation";
+import { getSuitableDiscountByQuantity } from "@/utils/calculation/discountCalculation/discountCalculation";
 import {
   mockDiscountRanges,
   mockDiscountRangesAscendingValue,
@@ -8,7 +8,7 @@ import {
   mockDiscountRangesWithGaps,
   mockDiscountRangesWithOverlap,
   mockEmptyDiscountRanges,
-} from "./discountCalculation.mocks";
+} from "@/utils/calculation/discountCalculation/discountCalculation.mocks";
 
 describe("discountCalculation utilities", () => {
   describe("getSuitableDiscountByQuantity", () => {

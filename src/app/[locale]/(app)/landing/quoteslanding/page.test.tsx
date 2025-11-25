@@ -11,7 +11,7 @@ jest.mock("next-intl", () => ({
   useLocale: () => "en",
 }));
 
-jest.mock("@/hooks/usePageScroll", () => ({
+jest.mock("@/hooks/usePageScroll/usePageScroll", () => ({
   usePageScroll: jest.fn(),
 }));
 
@@ -32,10 +32,9 @@ jest.mock("next/dynamic", () => {
   };
 });
 
+import { usePageScroll } from "@/hooks/usePageScroll/usePageScroll";
 import { render, screen } from "@testing-library/react";
-import React from "react";
-import { usePageScroll } from "@/hooks/usePageScroll";
-import QuotesLandingPage from "./page";
+import QuotesLandingPage from "@/app/[locale]/(app)/landing/quoteslanding/page";
 
 describe("QuotesLandingPage", () => {
   it("should render the page with dynamic client component", () => {

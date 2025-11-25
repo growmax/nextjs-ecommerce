@@ -1,10 +1,10 @@
-import { BaseService } from "../BaseService";
-import { DashboardService } from "./DashboardService";
+import { BaseService } from "@/lib/api/services/BaseService";
+import { DashboardService } from "@/lib/api/services/DashboardService/DashboardService";
 import {
   mockDashboardApiResponse,
   mockDashboardFilterParams,
   mockDashboardQueryParams,
-} from "./DashboardService.mocks";
+} from "@/lib/api/services/DashboardService/DashboardService.mocks";
 
 // Mock the client
 jest.mock("../../client", () => ({

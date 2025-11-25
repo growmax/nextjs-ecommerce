@@ -9,14 +9,14 @@ import {
   mockOrderVersion,
   mockTenantData,
   mockUser,
-} from "./useGetVersionDetails.mocks";
+} from "@/hooks/useGetVersionDetails/useGetVersionDetails.mocks";
 
 // Mock dependencies
-jest.mock("@/hooks/useCurrentUser", () => ({
+jest.mock("@/hooks/useCurrentUser/useCurrentUser", () => ({
   useCurrentUser: () => ({ user: mockUser }),
 }));
 
-jest.mock("@/hooks/useTenantData", () => ({
+jest.mock("@/hooks/useTenantData/useTenantData", () => ({
   useTenantData: () => ({ tenantData: mockTenantData }),
 }));
 
@@ -27,7 +27,7 @@ jest.mock("@/lib/api", () => ({
   },
 }));
 
-import { useGetVersionDetails } from "./useGetVersionDetails";
+import { useGetVersionDetails } from "@/hooks/useGetVersionDetails/useGetVersionDetails";
 
 // Helper to create a wrapper with QueryClient
 function createWrapper() {

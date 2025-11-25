@@ -9,7 +9,7 @@ import {
   groupCartItemsBySeller,
   isValidPricing,
   mergeSellerPricing,
-} from "./sellerCartUtils";
+} from "@/utils/calculation/sellerCartUtils/sellerCartUtils";
 import {
   mockCartItem,
   mockCartItemWithVendor,
@@ -24,7 +24,7 @@ import {
   mockSellerCartsWithPricingSource,
   mockSellerPricingData,
   mockVolumeDiscountData,
-} from "./sellerCartUtils.mocks";
+} from "@/utils/calculation/sellerCartUtils/sellerCartUtils.mocks";
 
 // Mock the dependencies
 jest.mock("../cartCalculation", () => ({

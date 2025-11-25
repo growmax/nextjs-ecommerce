@@ -6,7 +6,7 @@ import { Toaster } from "@/components/ui/sonner";
 import { TenantProvider } from "@/contexts/TenantContext";
 import { UserDetailsProvider } from "@/contexts/UserDetailsContext";
 import TenantService from "@/lib/api/services/TenantService";
-import { ServerAuth } from "@/lib/auth-server";
+import { ServerAuth } from "@/lib/auth-server.server";
 import { ServerUserService } from "@/lib/services/ServerUserService";
 import { NextIntlClientProvider } from "next-intl";
 import { getMessages } from "next-intl/server";

@@ -1,7 +1,7 @@
 import {
   calculateVolumeDiscount,
   calculateVolumeDiscountV2,
-} from "./volume-discount-calculation";
+} from "@/utils/calculation/volume-discount-calculation/volume-discount-calculation";
 import {
   mockCalculationSettings,
   mockCalculationSettingsWithItemWiseTax,
@@ -20,7 +20,7 @@ import {
   mockVolumeDiscountItemWithDiscChanged,
   mockVolumeDiscountItemWithInterTax,
   mockVolumeDiscountItemWithIntraTax,
-} from "./volume-discount-calculation.mocks";
+} from "@/utils/calculation/volume-discount-calculation/volume-discount-calculation.mocks";
 
 describe("volume-discount-calculation utilities", () => {
   describe("calculateVolumeDiscount", () => {

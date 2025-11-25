@@ -6,7 +6,7 @@ import type {
   ElasticSearchResponse,
   FormattedProduct,
   SearchProductsResponse,
-} from "./SearchService";
+} from "@/lib/api/services/SearchService/SearchService";
 
 export const mockFormattedProduct: FormattedProduct = {
   productId: 1,

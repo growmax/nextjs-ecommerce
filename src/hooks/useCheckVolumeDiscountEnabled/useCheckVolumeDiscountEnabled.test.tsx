@@ -6,7 +6,7 @@ import {
   mockAxiosResponseEnabled,
   mockCompanyId,
   mockCompanyIdString,
-} from "./useCheckVolumeDiscountEnabled.mocks";
+} from "@/hooks/useCheckVolumeDiscountEnabled/useCheckVolumeDiscountEnabled.mocks";
 
 // Mock axios
 jest.mock("axios", () => ({
@@ -20,7 +20,7 @@ jest.mock("swr/immutable", () => ({
   default: jest.fn(),
 }));
 
-import useCheckVolumeDiscountEnabled from "./useCheckVolumeDiscountEnabled";
+import useCheckVolumeDiscountEnabled from "@/hooks/useCheckVolumeDiscountEnabled/useCheckVolumeDiscountEnabled";
 import useSWRImmutable from "swr/immutable";
 
 const mockUseSWR = useSWRImmutable as jest.MockedFunction<

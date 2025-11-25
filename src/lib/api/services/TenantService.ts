@@ -1,7 +1,7 @@
 import { TenantConfigResponse } from "@/types/appconfig";
 import { TenantApiResponse } from "@/types/tenant";
-import { homePageClient, type RequestContext } from "../client";
-import { BaseService } from "./BaseService";
+import { homePageClient, type RequestContext } from "@/lib/api/client";
+import { BaseService } from "@/lib/api/services/BaseService";
 
 export interface TenantInfo {
   domainUrl: string;

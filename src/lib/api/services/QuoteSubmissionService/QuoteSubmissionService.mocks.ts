@@ -5,7 +5,7 @@ import type {
   QuoteSubmissionPayload,
   QuoteSubmissionRequest,
   QuoteSubmissionResponse,
-} from "./QuoteSubmissionService";
+} from "@/lib/api/services/QuoteSubmissionService/QuoteSubmissionService";
 
 export const mockQuoteSubmissionPayload: QuoteSubmissionPayload = {
   quoteName: "Test Quote",

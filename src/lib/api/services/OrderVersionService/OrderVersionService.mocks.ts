@@ -4,7 +4,7 @@
 import type {
   CreateOrderVersionRequest,
   CreateOrderVersionResponse,
-} from "./OrderVersionService";
+} from "@/lib/api/services/OrderVersionService/OrderVersionService";
 
 export const mockCreateOrderVersionRequest: CreateOrderVersionRequest = {
   orderIdentifier: "ORD-001",

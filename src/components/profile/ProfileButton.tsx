@@ -8,7 +8,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { User } from "lucide-react";
 import dynamic from "next/dynamic";
-import ProfileMenu from "./ProfileMenu";
+import ProfileMenu from "@/components/profile/ProfileMenu";
 
 function ProfileDropdown() {
   return (

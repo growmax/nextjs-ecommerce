@@ -1,10 +1,10 @@
-import { BaseService } from "../BaseService";
-import { QuotesService } from "./QuotesService";
+import { BaseService } from "@/lib/api/services/BaseService";
+import { QuotesService } from "@/lib/api/services/QuotesService/QuotesService";
 import {
   mockQuotesApiResponse,
   mockQuotesQueryParams,
   mockQuotesRequestBody,
-} from "./QuotesService.mocks";
+} from "@/lib/api/services/QuotesService/QuotesService.mocks";
 
 // Mock the client
 jest.mock("../../client", () => ({

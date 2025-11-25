@@ -3,7 +3,7 @@ import {
   catalogClient,
   createClientWithContext,
   RequestContext,
-} from "../client";
+} from "@/lib/api/client";
 import { CategoriesResponse, CatalogSettingsResponse } from "@/types/appconfig";
 
 export interface Category {
@@ -74,11 +74,11 @@ export class CatalogService {
 
   /**
    * Get categories with caching
-   * 
+   *
    * NOTE: For client-side caching, use React Query's useQuery hook with this method.
    * This method no longer uses localStorage to avoid server-side execution issues.
    * React Query will handle caching automatically on the client side.
-   * 
+   *
    * @deprecated Use getCategories() with React Query for caching instead
    */
   async getCategoriesWithCache(context?: RequestContext): Promise<Category[]> {

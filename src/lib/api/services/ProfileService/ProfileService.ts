@@ -1,5 +1,5 @@
-import { authClient } from "../../client";
-import { BaseService } from "../BaseService";
+import { authClient } from "@/lib/api/client";
+import { BaseService } from "@/lib/api/services/BaseService";
 
 export interface Profile {
   email: string;

@@ -10,11 +10,11 @@ import { SidebarTrigger } from "@/components/ui/sidebar";
 import { LogIn, Search } from "lucide-react";
 import Link from "next/link";
 import { useState } from "react";
-import Logo from "./custom/logo";
-import SearchBox from "./custom/search";
-import NotificationButton from "./notifications";
-import ProfileButton from "./profile/ProfileButton";
-import AddCardButton from "./sample/add-card";
+import Logo from "@/components/custom/logo";
+import SearchBox from "@/components/custom/search";
+import NotificationButton from "@/components/notifications";
+import ProfileButton from "@/components/profile/ProfileButton";
+import AddCardButton from "@/components/custom/add-card";
 
 export default function NavBar() {
   const [searchDrawerOpen, setSearchDrawerOpen] = useState(false);

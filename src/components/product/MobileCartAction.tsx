@@ -1,8 +1,8 @@
 "use client";
 
 import { Button } from "@/components/ui/button";
-import { useCurrentUser } from "@/hooks/useCurrentUser";
-import { useTenantData } from "@/hooks/useTenantData";
+import { useCurrentUser } from "@/hooks/useCurrentUser/useCurrentUser";
+import { useTenantData } from "@/hooks/useTenantData/useTenantData";
 import { useRouter } from "@/i18n/navigation";
 import { CartService } from "@/lib/api/CartServices";
 import { cn } from "@/lib/utils";

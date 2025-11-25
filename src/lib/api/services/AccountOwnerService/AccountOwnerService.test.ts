@@ -6,7 +6,7 @@ import {
   it,
   jest,
 } from "@jest/globals";
-import { AccountOwnerService } from "./AccountOwnerService";
+import { AccountOwnerService } from "@/lib/api/services/AccountOwnerService/AccountOwnerService";
 
 describe("AccountOwnerService", () => {
   let service: AccountOwnerService;

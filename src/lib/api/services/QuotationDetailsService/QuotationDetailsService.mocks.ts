@@ -5,7 +5,7 @@ import type {
   FetchQuotationDetailsRequest,
   QuotationData,
   QuotationDetailsResponse,
-} from "./QuotationDetailsService";
+} from "@/lib/api/services/QuotationDetailsService/QuotationDetailsService";
 
 export const mockFetchQuotationDetailsRequest: FetchQuotationDetailsRequest = {
   quotationIdentifier: "QUO-001",
