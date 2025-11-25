@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { ShoppingCart } from "lucide-react";
 import { useTranslations } from "next-intl";
-import Link from "next/link";
+import { Link } from "@/i18n/navigation";
 import { useCart } from "@/contexts/CartContext";
 
 export default function AddCardButton() {
@@ -20,7 +20,7 @@ export default function AddCardButton() {
       className="relative"
       asChild
     >
-      <Link href="/cart">
+      <Link href="/cart" prefetch={true}>
         <ShoppingCart className="h-5 w-5" />
         {cartCount > 0 && (
           <Badge

@@ -32,7 +32,7 @@ import { exportProductsToCsv } from "@/lib/export-csv";
 import type { SelectedVersion } from "@/types/details/orderdetails/version.types";
 import { getStatusStyle } from "@/utils/details/orderdetails";
 import { decodeUnicode } from "@/utils/General/general";
-import { useRouter } from "next/navigation";
+import { useNavigationWithLoader } from "@/hooks/useNavigationWithLoader";
 
 // Dynamic imports for heavy components
 // No loading prop to avoid double loaders - main DetailsSkeleton handles all loading states
@@ -74,7 +74,7 @@ export default function QuoteDetailsClient({
 
   const { user } = useCurrentUser();
   const { tenantData } = useTenantData();
-  const router = useRouter();
+  const { push } = useNavigationWithLoader();
 
   const lastFetchKeyRef = useRef<string | null>(null);
   const processedVersionRef = useRef<string | null>(null);
@@ -228,7 +228,10 @@ export default function QuoteDetailsClient({
       updatedBuyerStatus === "QUOTE RECEIVED" ||
       updatedBuyerStatus === "OPEN"
     ) {
-      router.push(`/details/quoteDetails/${quoteIdentifier}/edit`);
+      // Non-blocking navigation
+      if (quoteIdentifier) {
+        push(`/details/quoteDetails/${quoteIdentifier}/edit`);
+      }
       return;
     }
 
@@ -318,7 +321,7 @@ export default function QuoteDetailsClient({
   };
 
   const handleClose = () => {
-    router.push("/landing/quoteslanding");
+    push("/landing/quoteslanding");
   };
 
   const handleClone = () => {
@@ -376,9 +379,10 @@ export default function QuoteDetailsClient({
       (reorder && validityTill && new Date() < new Date(validityTill)) ||
       updatedBuyerStatus === "QUOTE RECEIVED"
     ) {
-      router.push(
-        `/details/quoteDetails/${quoteIdentifier}/edit?placeOrder=true`
-      );
+      // Non-blocking navigation
+      if (quoteIdentifier) {
+        push(`/details/quoteDetails/${quoteIdentifier}/edit?placeOrder=true`);
+      }
       return;
     }
 

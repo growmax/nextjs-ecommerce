@@ -1,6 +1,6 @@
 import { ServerAuth, ServerUser } from "@/lib/auth-server";
 import { AuthAwareContent } from "./AuthAwareContent";
-import Link from "next/link";
+import { Link } from "@/i18n/navigation";
 
 /**
  * Homepage component with server-side authentication detection
@@ -88,12 +88,14 @@ function PublicHomepage() {
         <div className="flex gap-4 justify-center">
           <Link
             href="/register"
+            prefetch={true}
             className="px-6 py-3 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90"
           >
             Get Started
           </Link>
           <Link
             href="/login"
+            prefetch={true}
             className="px-6 py-3 border rounded-lg hover:bg-accent"
           >
             Sign In
@@ -140,13 +142,14 @@ function QuickActionCard({
   description: string;
 }) {
   return (
-    <a
+    <Link
       href={href}
+      prefetch={true}
       className="block p-4 bg-card border rounded-lg hover:bg-accent transition-colors"
     >
       <h3 className="font-semibold mb-2">{title}</h3>
       <p className="text-sm text-muted-foreground">{description}</p>
-    </a>
+    </Link>
   );
 }
 

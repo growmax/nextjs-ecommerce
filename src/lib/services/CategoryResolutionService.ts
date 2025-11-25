@@ -59,7 +59,6 @@ export interface BreadcrumbItem {
 
 class CategoryResolutionService {
   private static instance: CategoryResolutionService;
-  private categoryTree?: CategoryNode[];
 
   private constructor() {}
 
@@ -97,7 +96,7 @@ class CategoryResolutionService {
     );
 
     // Build parent-child relationships using ancestorIds
-    sortedCategories.forEach((node) => {
+    sortedCategories.forEach(node => {
       // Find parent using the last ancestor ID
       if (node.ancestorIds.length > 0) {
         const parentId = node.ancestorIds[node.ancestorIds.length - 1];
@@ -115,14 +114,14 @@ class CategoryResolutionService {
 
     // Return root categories (categories with no ancestors or level 1)
     const rootCategories = sortedCategories.filter(
-      (node) => node.ancestorIds.length === 0 || node.categoryLevel === 1
+      node => node.ancestorIds.length === 0 || node.categoryLevel === 1
     );
 
     // If no root categories found by ancestorIds, try using categoryPath
     if (rootCategories.length === 0) {
       // Parse categoryPath to find root categories
       const pathMap = new Map<string, CategoryNode[]>();
-      sortedCategories.forEach((node) => {
+      sortedCategories.forEach(node => {
         if (node.categoryPath) {
           const pathParts = node.categoryPath.split(" > ");
           const rootName = pathParts[0];
@@ -142,7 +141,7 @@ class CategoryResolutionService {
       const rootNodes: CategoryNode[] = [];
       const processedNodes = new Set<number>();
 
-      sortedCategories.forEach((node) => {
+      sortedCategories.forEach(node => {
         if (processedNodes.has(node.categoryId)) {
           return;
         }
@@ -153,14 +152,14 @@ class CategoryResolutionService {
 
           pathParts.forEach((part, index) => {
             const matchingNode = sortedCategories.find(
-              (n) => n.name === part && !processedNodes.has(n.categoryId)
+              n => n.name === part && !processedNodes.has(n.categoryId)
             );
 
             if (matchingNode) {
               processedNodes.add(matchingNode.categoryId);
               if (index === 0) {
                 // Root level
-                if (!rootNodes.find((n) => n.id === matchingNode.id)) {
+                if (!rootNodes.find(n => n.id === matchingNode.id)) {
                   rootNodes.push(matchingNode);
                 }
                 currentParent = matchingNode;
@@ -170,7 +169,7 @@ class CategoryResolutionService {
                   currentParent.children = [];
                 }
                 if (
-                  !currentParent.children.find((n) => n.id === matchingNode.id)
+                  !currentParent.children.find(n => n.id === matchingNode.id)
                 ) {
                   currentParent.children.push(matchingNode);
                 }
@@ -194,8 +193,43 @@ class CategoryResolutionService {
 
   /**
    * Get category tree from OpenSearch using nested aggregations on product_categories
+   * With Redis caching for improved performance
    */
   async getCategoryTree(context?: RequestContext): Promise<CategoryNode[]> {
+    // Get elasticCode from context to build elastic index
+    const elasticCode = context?.elasticCode || "";
+    if (!elasticCode) {
+      console.warn("No elasticCode provided for category aggregation query");
+      return [];
+    }
+
+    const cacheKey = `category:tree:${elasticCode}`;
+
+    // Use cached version if available (server-side only)
+    if (typeof window === "undefined") {
+      try {
+        const { withRedisCache } = await import("@/lib/cache");
+        // Cache category tree for 1 hour (3600 seconds)
+        // Category tree structure changes infrequently
+        return withRedisCache(
+          cacheKey,
+          () => this.getCategoryTreeUncached(context),
+          3600 // 1 hour TTL
+        );
+      } catch {
+        // Fall through to non-cached version if cache import fails
+      }
+    }
+
+    return this.getCategoryTreeUncached(context);
+  }
+
+  /**
+   * Internal method - get category tree without caching
+   */
+  private async getCategoryTreeUncached(
+    context?: RequestContext
+  ): Promise<CategoryNode[]> {
     try {
       // Get elasticCode from context to build elastic index
       const elasticCode = context?.elasticCode || "";
@@ -205,7 +239,7 @@ class CategoryResolutionService {
       }
 
       const elasticIndex = `${elasticCode}pgandproducts`;
-      
+
       // Validate elasticIndex before making API call
       if (!elasticIndex || elasticIndex === "pgandproducts") {
         console.warn("Invalid elastic index for category tree:", elasticIndex);
@@ -304,10 +338,6 @@ class CategoryResolutionService {
 
       if (!result.success || !result.aggregations) {
         console.error("Failed to fetch categories from OpenSearch");
-        // Return cached data if available
-        if (this.categoryTree) {
-          return this.categoryTree;
-        }
         return [];
       }
 
@@ -321,18 +351,13 @@ class CategoryResolutionService {
       if (nestedAggs?.categories?.buckets) {
         nestedAggs.categories.buckets.forEach((bucket: any) => {
           const categoryId = bucket.key;
-          const categoryName =
-            bucket.category_name?.buckets?.[0]?.key || "";
-          const categorySlug =
-            bucket.category_slug?.buckets?.[0]?.key || "";
-          const categoryPath =
-            bucket.category_path?.buckets?.[0]?.key || "";
-          const categoryLevel =
-            bucket.category_level?.buckets?.[0]?.key || 1;
+          const categoryName = bucket.category_name?.buckets?.[0]?.key || "";
+          const categorySlug = bucket.category_slug?.buckets?.[0]?.key || "";
+          const categoryPath = bucket.category_path?.buckets?.[0]?.key || "";
+          const categoryLevel = bucket.category_level?.buckets?.[0]?.key || 1;
           const ancestorIds =
             bucket.ancestor_ids?.buckets?.map((b: any) => b.key) || [];
-          const isActive =
-            bucket.is_active?.buckets?.[0]?.key !== false;
+          const isActive = bucket.is_active?.buckets?.[0]?.key !== false;
 
           if (categoryId && categoryName && isActive) {
             const node: CategoryNode = {
@@ -358,10 +383,7 @@ class CategoryResolutionService {
 
       // Build tree using ancestorIds and categoryPath
       const tree = this.buildCategoryTree(categories, categoryMap);
-      
-      // Cache the tree for future use
-      this.categoryTree = tree;
-      
+
       return tree;
     } catch (error) {
       console.error("Error fetching categories from OpenSearch:", error);
@@ -491,7 +513,10 @@ class CategoryResolutionService {
 
       // Validate elasticIndex before making API call
       if (!elasticIndex || elasticIndex === "pgandproducts") {
-        console.warn("Invalid elastic index for category lookup:", elasticIndex);
+        console.warn(
+          "Invalid elastic index for category lookup:",
+          elasticIndex
+        );
         return null;
       }
 
@@ -507,8 +532,7 @@ class CategoryResolutionService {
 
       // Extract category from aggregation
       const categoryInfo = result.aggregations.category_info as any;
-      const bucket =
-        categoryInfo?.filtered?.category_id?.buckets?.[0];
+      const bucket = categoryInfo?.filtered?.category_id?.buckets?.[0];
 
       if (!bucket) {
         return null;
@@ -582,7 +606,7 @@ class CategoryResolutionService {
   }
 
   /**
-   * Resolve category slugs to category path
+   * Resolve category slugs to category path with Redis caching
    * Optimized to use direct queries instead of fetching all categories
    */
   async resolveCategories(
@@ -593,6 +617,36 @@ class CategoryResolutionService {
       return null;
     }
 
+    // Generate cache key
+    const elasticCode = context?.elasticCode || "";
+    const cacheKey = `category:resolve:${elasticCode}:${slugs.join("/")}`;
+
+    // Use cached version if available (server-side only)
+    if (typeof window === "undefined") {
+      try {
+        const { withRedisCache } = await import("@/lib/cache");
+        // Cache category resolution for 30 minutes (1800 seconds)
+        // Categories don't change frequently
+        return withRedisCache(
+          cacheKey,
+          () => this.resolveCategoriesUncached(slugs, context),
+          1800 // 30 minutes TTL
+        );
+      } catch {
+        // Fall through to non-cached version if cache import fails
+      }
+    }
+
+    return this.resolveCategoriesUncached(slugs, context);
+  }
+
+  /**
+   * Internal method - resolve categories without caching
+   */
+  private async resolveCategoriesUncached(
+    slugs: string[],
+    context?: RequestContext
+  ): Promise<CategoryPath | null> {
     const nodes: CategoryNode[] = [];
 
     // Use direct query for each slug instead of fetching all categories
@@ -611,7 +665,6 @@ class CategoryResolutionService {
         nodes.push(found);
       }
     }
-
 
     // Validate path hierarchy using ancestorIds
     // Ensure each category's parent matches the previous category in the path
@@ -633,10 +686,10 @@ class CategoryResolutionService {
 
     // Build full path string - always build from node names to ensure proper display
     // (database categoryPath may contain IDs like "/24/25/" instead of names)
-    const fullPath = nodes.map((n) => n.name).join(" > ");
+    const fullPath = nodes.map(n => n.name).join(" > ");
 
     // Extract category IDs array
-    const categoryIds = nodes.map((node) => node.categoryId);
+    const categoryIds = nodes.map(node => node.categoryId);
 
     return {
       nodes,
@@ -660,7 +713,7 @@ class CategoryResolutionService {
     ];
 
     let currentPath = "";
-    categoryPath.nodes.forEach((node) => {
+    categoryPath.nodes.forEach(node => {
       currentPath += `/${node.slug}`;
       breadcrumbs.push({
         label: node.name,
@@ -685,7 +738,7 @@ class CategoryResolutionService {
     }
     const title = `${lastNode.name} | ${categoryPath.fullPath}`;
     const description = `Browse ${categoryPath.fullPath.toLowerCase()} products. Find the best ${lastNode.name.toLowerCase()} at competitive prices.`;
-    const canonical = `${baseUrl}/${locale}${categoryPath.slugs.map((s) => `/${s}`).join("")}`;
+    const canonical = `${baseUrl}/${locale}${categoryPath.slugs.map(s => `/${s}`).join("")}`;
 
     const breadcrumbs = this.getCategoryBreadcrumbs(categoryPath, locale);
 
@@ -750,8 +803,6 @@ class CategoryResolutionService {
       },
     };
   }
-
 }
 
 export default CategoryResolutionService.getInstance();
-

@@ -17,13 +17,13 @@ import { useTenantData } from "@/hooks/useTenantData";
 import { cn } from "@/lib/utils";
 import { getUserInitials } from "@/utils/General/general";
 import {
-    Bell,
-    Command as CommandIcon,
-    Search,
-    ShoppingCart,
+  Bell,
+  Command as CommandIcon,
+  Search,
+  ShoppingCart,
 } from "lucide-react";
 import { useTranslations } from "next-intl";
-import Link from "next/link";
+import { Link } from "@/i18n/navigation";
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useMemo, useState } from "react";
 
@@ -116,6 +116,7 @@ export function AppHeader({
           <div className="md:hidden">
             <Link
               href="/"
+              prefetch={true}
               className="flex items-center gap-2 cursor-pointer mr-2"
             >
               <div className="bg-black text-white flex aspect-square size-7 sm:size-8 items-center justify-center rounded-lg">

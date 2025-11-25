@@ -1,5 +1,6 @@
 "use client";
 
+import { useRouteRequestTracking } from "@/hooks/useRouteRequestTracking";
 import { Skeleton } from "@/components/ui/skeleton";
 
 import dynamic from "next/dynamic";
@@ -34,6 +35,8 @@ const DashboardOrdersTable = dynamic(
 );
 
 export default function DashboardPageClient() {
+  useRouteRequestTracking(); // Track route to prevent duplicate RSC calls
+
   return (
     <div className="min-h-screen bg-background">
       <main className="container mx-auto px-4 py-6 sm:py-8">

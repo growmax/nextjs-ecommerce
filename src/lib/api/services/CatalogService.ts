@@ -61,9 +61,38 @@ export class CatalogService {
   }
 
   /**
-   * Get all categories and subcategories
+   * Get all categories and subcategories with Redis caching
    */
   async getCategories(context?: RequestContext): Promise<CategoriesResponse> {
+    // Get tenant code from context for cache key
+    const tenantCode = context?.tenantCode || "";
+    const cacheKey = `catalog:categories:${tenantCode || "default"}`;
+
+    // Use cached version if available (server-side only)
+    if (typeof window === "undefined" && tenantCode) {
+      try {
+        const { withRedisCache } = await import("@/lib/cache");
+        // Cache categories for 30 minutes (1800 seconds)
+        // Categories change infrequently
+        return withRedisCache(
+          cacheKey,
+          () => this.getCategoriesUncached(context),
+          1800 // 30 minutes TTL
+        );
+      } catch {
+        // Fall through to non-cached version if cache import fails
+      }
+    }
+
+    return this.getCategoriesUncached(context);
+  }
+
+  /**
+   * Internal method - get categories without caching
+   */
+  private async getCategoriesUncached(
+    context?: RequestContext
+  ): Promise<CategoriesResponse> {
     const client = context
       ? createClientWithContext(homePageClient, context)
       : homePageClient;
@@ -74,11 +103,11 @@ export class CatalogService {
 
   /**
    * Get categories with caching
-   * 
+   *
    * NOTE: For client-side caching, use React Query's useQuery hook with this method.
    * This method no longer uses localStorage to avoid server-side execution issues.
    * React Query will handle caching automatically on the client side.
-   * 
+   *
    * @deprecated Use getCategories() with React Query for caching instead
    */
   async getCategoriesWithCache(context?: RequestContext): Promise<Category[]> {

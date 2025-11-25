@@ -2,7 +2,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ArrowLeft, Search } from "lucide-react";
 import type { Metadata } from "next";
-import Link from "next/link";
+import { Link } from "@/i18n/navigation";
 import SearchClient from "./SearchClient";
 
 export const metadata: Metadata = {
@@ -31,7 +31,11 @@ export default async function SearchPage({ searchParams }: SearchPageProps) {
           <div className="flex items-center justify-between">
             <CardTitle>Search</CardTitle>
             <Button variant="ghost" size="sm" asChild>
-              <Link href="/" className="flex items-center gap-2">
+              <Link
+                href="/"
+                prefetch={true}
+                className="flex items-center gap-2"
+              >
                 <ArrowLeft className="h-4 w-4" />
                 Back
               </Link>

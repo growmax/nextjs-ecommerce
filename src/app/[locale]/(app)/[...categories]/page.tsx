@@ -13,6 +13,7 @@ import { buildCategoryQuery } from "@/utils/opensearch/browse-queries";
 import { Metadata } from "next";
 import { headers } from "next/headers";
 import { notFound } from "next/navigation";
+import { Suspense } from "react";
 import { CategoryPageInteractivity } from "./_components/CategoryPageInteractivity";
 
 interface PageProps {
@@ -51,7 +52,7 @@ export async function generateMetadata({
   const host = headersList.get("host") || "";
   const protocol = headersList.get("x-forwarded-proto") || "https";
   const baseUrl = `${protocol}://${host}`;
-  
+
   // Fetch tenant data to get elasticCode (uses cache, so it's fast)
   let elasticCode = "";
   let tenantCode = "";
@@ -106,13 +107,13 @@ export async function generateMetadata({
 
 /**
  * Pre-generate static params for top categories
- * 
+ *
  * IMPORTANT: This function runs at build time without tenant context.
  * Since CategoryResolutionService.getCategoryTree() requires elasticCode
  * (which comes from tenant headers at runtime), this will return an empty array.
- * 
+ *
  * The app relies on dynamicParams = true to handle category pages at runtime.
- * 
+ *
  * To enable static generation, you would need to:
  * 1. Provide tenant context via environment variables at build time
  * 2. Or pre-generate for specific known tenants
@@ -123,7 +124,7 @@ export async function generateStaticParams() {
     // Note: generateStaticParams runs at build time without request headers
     // getCategoryTree() requires RequestContext with elasticCode, which is only
     // available at runtime via headers. Without it, getCategoryTree() returns [].
-    // 
+    //
     // This is intentional - we rely on dynamicParams = true for runtime generation
     const categoryTree = await CategoryResolutionService.getCategoryTree();
 
@@ -136,13 +137,20 @@ export async function generateStaticParams() {
     const params: { categories: string[] }[] = [];
 
     // Recursively generate params for all category paths
-    const generateParams = (nodes: typeof categoryTree, path: string[] = []) => {
-      nodes.forEach((node) => {
+    const generateParams = (
+      nodes: typeof categoryTree,
+      path: string[] = []
+    ) => {
+      nodes.forEach(node => {
         const currentPath = [...path, node.slug];
         params.push({ categories: currentPath });
 
         // Recursively add children (limit depth to 5 levels for performance)
-        if (node.children && node.children.length > 0 && currentPath.length < 5) {
+        if (
+          node.children &&
+          node.children.length > 0 &&
+          currentPath.length < 5
+        ) {
           generateParams(node.children, currentPath);
         }
       });
@@ -182,7 +190,9 @@ export default async function CategoryPage({
     return (
       <div className="container mx-auto px-4 py-8">
         <h1 className="text-2xl font-bold">All Categories</h1>
-        <p className="text-gray-600">Please select a category to browse products.</p>
+        <p className="text-gray-600">
+          Please select a category to browse products.
+        </p>
       </div>
     );
   }
@@ -194,7 +204,7 @@ export default async function CategoryPage({
   const host = headersList.get("host") || "";
   const protocol = headersList.get("x-forwarded-proto") || "https";
   const baseUrl = `${protocol}://${host}`;
-  
+
   // Fetch tenant data to get elasticCode (uses cache, so it's fast)
   let elasticCode = "";
   let tenantCode = "";
@@ -252,14 +262,18 @@ export default async function CategoryPage({
         if (!productSpecifications[specKey]) {
           productSpecifications[specKey] = [];
         }
-        productSpecifications[specKey].push(...values.filter((v) => v && typeof v === "string"));
+        productSpecifications[specKey].push(
+          ...values.filter(v => v && typeof v === "string")
+        );
       } else {
         // Variant attribute
         const values = Array.isArray(value) ? value : [value];
         if (!variantAttributes[key]) {
           variantAttributes[key] = [];
         }
-        variantAttributes[key].push(...values.filter((v) => v && typeof v === "string"));
+        variantAttributes[key].push(
+          ...values.filter(v => v && typeof v === "string")
+        );
       }
     }
   });
@@ -269,8 +283,8 @@ export default async function CategoryPage({
     filters.in_stock === "true"
       ? true
       : filters.in_stock === "false"
-      ? false
-      : undefined;
+        ? false
+        : undefined;
 
   // Use the last category ID in the path (most specific) for filtering
   // If multiple IDs are provided, we can filter by all of them
@@ -280,7 +294,9 @@ export default async function CategoryPage({
   }
 
   // Build base query for aggregations
-  const { getBaseQuery, buildCategoryFilter } = await import("@/utils/opensearch/browse-queries");
+  const { getBaseQuery, buildCategoryFilter } = await import(
+    "@/utils/opensearch/browse-queries"
+  );
   const baseQuery = getBaseQuery();
   const categoryFilters = buildCategoryFilter(categoryIds);
   const baseQueryForAggs = {
@@ -297,10 +313,12 @@ export default async function CategoryPage({
     try {
       const filterState = {
         ...(Object.keys(variantAttributes).length > 0 && { variantAttributes }),
-        ...(Object.keys(productSpecifications).length > 0 && { productSpecifications }),
+        ...(Object.keys(productSpecifications).length > 0 && {
+          productSpecifications,
+        }),
         ...(inStock !== undefined && { inStock }),
       };
-      
+
       const aggregationResponse = await SearchService.getFilterAggregations(
         elasticIndex,
         baseQueryForAggs,
@@ -322,46 +340,44 @@ export default async function CategoryPage({
     pageSize: 20,
     sortBy: { sortBy },
     ...(Object.keys(variantAttributes).length > 0 && { variantAttributes }),
-    ...(Object.keys(productSpecifications).length > 0 && { productSpecifications }),
+    ...(Object.keys(productSpecifications).length > 0 && {
+      productSpecifications,
+    }),
     ...(inStock !== undefined && { inStock }),
   });
 
-  let initialProducts: { products: FormattedProduct[]; total: number } = {
-    products: [] as FormattedProduct[],
-    total: 0,
-  };
+  // Create products promise for streaming
+  const productsPromise = elasticIndex
+    ? (async () => {
+        try {
+          // Build query object ensuring sort is properly typed
+          const searchQuery: ElasticSearchQuery = {
+            query: queryResult.query.query,
+            size: queryResult.query.size,
+            from: queryResult.query.from,
+            _source: queryResult.query._source,
+            ...(queryResult.query.sort && { sort: queryResult.query.sort }),
+          };
 
-  if (elasticIndex) {
-    try {
-      // Build query object ensuring sort is properly typed
-      const searchQuery: ElasticSearchQuery = {
-        query: queryResult.query.query,
-        size: queryResult.query.size,
-        from: queryResult.query.from,
-        _source: queryResult.query._source,
-        ...(queryResult.query.sort && { sort: queryResult.query.sort }),
-      };
+          const result = await SearchService.searchProducts({
+            elasticIndex,
+            query: searchQuery,
+          });
 
-      const result = await SearchService.searchProducts({
-        elasticIndex,
-        query: searchQuery,
-      });
+          return {
+            products: result.data || [],
+            total: result.total || 0,
+          };
+        } catch (error) {
+          console.error("Error fetching initial products:", error);
+          return { products: [] as FormattedProduct[], total: 0 };
+        }
+      })()
+    : Promise.resolve({ products: [] as FormattedProduct[], total: 0 });
 
-      initialProducts = {
-        products: result.data || [],
-        total: result.total || 0,
-      };
-    } catch (error) {
-      console.error("Error fetching initial products:", error);
-      // Continue with empty products - client will handle retry
-    }
-  }
-
-  // Get breadcrumbs
-  const breadcrumbs =
-    CategoryResolutionService.getCategoryBreadcrumbs(categoryPath, locale);
-
-  const lastNode = categoryPath.nodes[categoryPath.nodes.length - 1];
+  // Await products for total count (needed for pagination)
+  // But render will stream via Suspense
+  const initialProducts = await productsPromise;
 
   // Generate structured data for SEO
   const structuredData = {
@@ -413,7 +429,10 @@ export default async function CategoryPage({
               <p className="text-gray-600 text-lg">No products found.</p>
             </div>
           ) : (
-            <ProductGridServer products={initialProducts.products} locale={locale} />
+            <ProductGridServer
+              products={initialProducts.products}
+              locale={locale}
+            />
           )}
         </div>
       </CategoryPageInteractivity>
@@ -421,3 +440,26 @@ export default async function CategoryPage({
   );
 }
 
+/**
+ * Product Grid Wrapper Component
+ * Handles async product fetching with proper error handling
+ */
+async function ProductGridWrapper({
+  productsPromise,
+  locale,
+}: {
+  productsPromise: Promise<{ products: FormattedProduct[]; total: number }>;
+  locale: string;
+}) {
+  const { products } = await productsPromise;
+
+  if (products.length === 0) {
+    return (
+      <div className="text-center py-12">
+        <p className="text-gray-600 text-lg">No products found.</p>
+      </div>
+    );
+  }
+
+  return <ProductGridServer products={products} locale={locale} />;
+}

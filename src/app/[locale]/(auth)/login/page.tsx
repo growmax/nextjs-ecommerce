@@ -24,7 +24,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { Edit, Eye, EyeOff, Home } from "lucide-react";
 
 import { useTranslations } from "next-intl";
-import Link from "next/link";
+import { Link } from "@/i18n/navigation";
 import { useEffect, useRef, useState } from "react";
 import { useForm } from "react-hook-form";
 import { toast, Toaster } from "sonner";
@@ -198,7 +198,8 @@ export default function LoginPage() {
                 : loginData;
               const userData = {
                 userId: Number(payload.id || payload.sub) || 0,
-                userCode: payload.userCode || `USER-${payload.id || payload.sub}`,
+                userCode:
+                  payload.userCode || `USER-${payload.id || payload.sub}`,
                 email: payload.email || currentUsername,
                 displayName: payload.displayName || payload.name || "",
                 picture: payload.picture || "",
@@ -397,7 +398,7 @@ export default function LoginPage() {
                       ? t("auth.signIn")
                       : t("buttons.continue")}
                 </Button>
-                <Link href="/" className="w-full">
+                <Link href="/" prefetch={true} className="w-full">
                   <Button
                     type="button"
                     variant="outline"

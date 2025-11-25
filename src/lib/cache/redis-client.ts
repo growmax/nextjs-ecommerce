@@ -5,6 +5,9 @@ import type Redis from "ioredis";
 let redisClient: Redis | null = null;
 let connectionPromise: Promise<void> | null = null;
 let isConnecting = false;
+let lastErrorTime = 0;
+let errorSuppressed = false;
+const ERROR_SUPPRESSION_WINDOW = 30000; // Suppress errors for 30 seconds after first error
 
 export function getRedisClient(): Redis | null {
   if (typeof window !== "undefined") {
@@ -21,11 +24,30 @@ export function getRedisClient(): Redis | null {
       return redisClient;
     }
     // If connecting, return client (it will handle the connection)
-    if (redisClient.status === "connecting" || redisClient.status === "connect") {
+    if (
+      redisClient.status === "connecting" ||
+      redisClient.status === "connect"
+    ) {
       return redisClient;
     }
-    // If disconnected, reset and reconnect
-    redisClient = null;
+    // If disconnected or in error state, reset and reconnect
+    if (
+      redisClient.status === "end" ||
+      redisClient.status === "close" ||
+      redisClient.status === "error"
+    ) {
+      if (process.env.NODE_ENV === "development") {
+        console.warn("⚠️  Redis client disconnected, resetting connection", {
+          status: redisClient.status,
+        });
+      }
+      try {
+        redisClient.disconnect();
+      } catch {
+        // Ignore disconnect errors
+      }
+      redisClient = null;
+    }
   }
 
   try {
@@ -40,26 +62,72 @@ export function getRedisClient(): Redis | null {
     // eslint-disable-next-line @typescript-eslint/ban-ts-comment
     // @ts-ignore - runtime constructor from require
     redisClient = new RedisCtor(redisUrl, {
-      maxRetriesPerRequest: 3,
+      connectTimeout: 10000, // 10 second connection timeout
+      commandTimeout: 5000, // 5 second command timeout
+      lazyConnect: true, // Only connect when needed (prevents immediate connection attempts)
+      enableReadyCheck: true,
+      enableOfflineQueue: true, // Queue commands if disconnected (allows graceful handling)
+      keepAlive: 30000, // Keep connection alive
+      maxRetriesPerRequest: null, // Disable automatic retries to prevent error spam
       retryStrategy: (times: number) => {
+        // Stop retrying after 3 attempts to prevent infinite reconnection loops
         if (times > 3) {
-          return null;
+          return null; // Stop retrying
         }
+        // Exponential backoff: 200ms, 400ms, 800ms
         return Math.min(times * 200, 1000);
       },
-      connectTimeout: 5000, // 5 second connection timeout
-      commandTimeout: 1000, // 1 second command timeout
-      lazyConnect: false, // Connect immediately
-      enableReadyCheck: true,
-      enableOfflineQueue: false, // Don't queue commands if disconnected
+      reconnectOnError: (err: Error) => {
+        // Don't auto-reconnect on connection errors to prevent error spam
+        const targetError = "READONLY";
+        if (err.message.includes(targetError)) {
+          return false; // Don't reconnect on READONLY errors
+        }
+        // Only reconnect on specific recoverable errors
+        const recoverableErrors = ["ECONNRESET", "EPIPE"];
+        return recoverableErrors.some(e => err.message.includes(e));
+      },
     });
 
     const client = redisClient as any;
     if (client) {
       client.on("error", (err: Error) => {
-        if (process.env.NODE_ENV === "development") {
-          console.error("❌ Redis connection error:", err.message);
+        const now = Date.now();
+        const timeSinceLastError = now - lastErrorTime;
+
+        // Only log errors if:
+        // 1. It's been more than ERROR_SUPPRESSION_WINDOW since last error, OR
+        // 2. This is the first error
+        if (
+          timeSinceLastError > ERROR_SUPPRESSION_WINDOW ||
+          lastErrorTime === 0
+        ) {
+          if (process.env.NODE_ENV === "development") {
+            const errorCode = (err as any).code || "UNKNOWN";
+            console.error(
+              `❌ Redis connection error: ${errorCode} - ${err.message}`
+            );
+            if (
+              timeSinceLastError > ERROR_SUPPRESSION_WINDOW &&
+              lastErrorTime > 0
+            ) {
+              console.warn(
+                "⚠️  Redis errors were suppressed for the last 30 seconds. If Redis is not needed, set REDIS_ENABLED=false in .env.local"
+              );
+            }
+          }
+          lastErrorTime = now;
+          errorSuppressed = false;
+        } else if (!errorSuppressed) {
+          // Log suppression message once
+          if (process.env.NODE_ENV === "development") {
+            console.warn(
+              "⚠️  Redis connection errors will be suppressed for 30 seconds. If Redis is not needed, set REDIS_ENABLED=false in .env.local"
+            );
+            errorSuppressed = true;
+          }
         }
+
         // Reset client on error so it can reconnect
         redisClient = null;
         connectionPromise = null;
@@ -72,6 +140,11 @@ export function getRedisClient(): Redis | null {
 
       client.on("ready", () => {
         isConnecting = false;
+        lastErrorTime = 0; // Reset error tracking on successful connection
+        errorSuppressed = false;
+        if (process.env.NODE_ENV === "development") {
+          console.log("✅ Redis connected successfully");
+        }
       });
 
       client.on("close", () => {
@@ -130,6 +203,22 @@ export async function ensureRedisConnection(): Promise<boolean> {
   // Wait for connection to be ready (with timeout)
   try {
     isConnecting = true;
+
+    // Connect if not already connecting/connected
+    if (
+      client.status === "end" ||
+      client.status === "close" ||
+      client.status === "wait"
+    ) {
+      try {
+        await client.connect();
+      } catch {
+        // Connection failed, will be handled by error handler
+        isConnecting = false;
+        return false;
+      }
+    }
+
     connectionPromise = new Promise<void>((resolve, reject) => {
       const timeout = setTimeout(() => {
         reject(new Error("Redis connection timeout"));
@@ -160,12 +249,10 @@ export async function ensureRedisConnection(): Promise<boolean> {
     await connectionPromise;
     isConnecting = false;
     return true;
-  } catch (error) {
+  } catch {
     isConnecting = false;
     connectionPromise = null;
-    if (process.env.NODE_ENV === "development") {
-      console.error("❌ Redis connection failed:", error);
-    }
+    // Don't log here - error handler will log it
     return false;
   }
 }

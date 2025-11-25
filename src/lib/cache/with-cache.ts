@@ -5,25 +5,13 @@ export async function withRedisCache<T>(
   fn: () => Promise<T>,
   ttl?: number
 ): Promise<T> {
-  const startTime = Date.now();
-  
   if (!isRedisEnabled()) {
-    if (process.env.NODE_ENV === "development") {
-      console.warn("⚠️  Redis Cache DISABLED - Request will bypass cache", {
-        key,
-      });
-    }
     return fn();
   }
 
   const redis = getRedisClient();
 
   if (!redis) {
-    if (process.env.NODE_ENV === "development") {
-      console.warn("⚠️  Redis Client NOT AVAILABLE - Request will bypass cache", {
-        key,
-      });
-    }
     return fn();
   }
 
@@ -31,66 +19,51 @@ export async function withRedisCache<T>(
     // Ensure Redis is connected before making requests
     const { ensureRedisConnection } = await import("./redis-client");
     const isConnected = await ensureRedisConnection();
-    
+
     if (!isConnected) {
-      if (process.env.NODE_ENV === "development") {
-        console.warn("⚠️  Redis NOT CONNECTED - Request will bypass cache", {
-          key,
-        });
-      }
       return fn();
     }
 
-    const cacheLookupStart = Date.now();
+    // Double-check that the client is actually ready before using it
+    if (redis.status !== "ready") {
+      return fn();
+    }
+
     const cached = await redis.get(key);
-    const cacheLookupTime = Date.now() - cacheLookupStart;
 
     if (cached) {
-      if (process.env.NODE_ENV === "development") {
-        console.log("✅ Redis Cache HIT", {
-          key,
-          lookupTime: `${cacheLookupTime}ms`,
-          totalTime: `${Date.now() - startTime}ms`,
-        });
-      }
       return JSON.parse(cached) as T;
     }
 
-    if (process.env.NODE_ENV === "development") {
-      console.log("❌ Redis Cache MISS", {
-        key,
-        lookupTime: `${cacheLookupTime}ms`,
-      });
-    }
-    
     const result = await fn();
-    const apiTime = Date.now() - startTime - cacheLookupTime;
+
+    // Check again before writing (connection might have dropped)
+    if (redis.status !== "ready") {
+      return result; // Return result without caching
+    }
 
     const defaultTtl = parseInt(process.env.REDIS_DEFAULT_TTL || "3600", 10);
     const finalTtl = ttl || defaultTtl;
 
-    const setStart = Date.now();
     await redis.setex(key, finalTtl, JSON.stringify(result));
-    const setTime = Date.now() - setStart;
-
-    if (process.env.NODE_ENV === "development") {
-      console.log("💾 Redis Cache SET", {
-        key,
-        apiTime: `${apiTime}ms`,
-        setTime: `${setTime}ms`,
-        totalTime: `${Date.now() - startTime}ms`,
-      });
-    }
 
     return result;
   } catch (error) {
-    if (process.env.NODE_ENV === "development") {
+    // Handle specific "Stream isn't writeable" error gracefully
+    const errorMessage = error instanceof Error ? error.message : String(error);
+    const isStreamError =
+      errorMessage.includes("Stream isn't writeable") ||
+      errorMessage.includes("enableOfflineQueue");
+
+    if (process.env.NODE_ENV === "development" && !isStreamError) {
       console.error("❌ Redis Cache ERROR", {
         key,
-        error: error instanceof Error ? error.message : String(error),
-        totalTime: `${Date.now() - startTime}ms`,
+        error: errorMessage,
       });
     }
+
+    // For stream errors, just fallback to function execution (silent)
+    // For other errors, also fallback but log them
     return fn();
   }
 }

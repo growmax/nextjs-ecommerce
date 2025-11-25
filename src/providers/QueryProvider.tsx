@@ -18,6 +18,10 @@ export function QueryProvider({ children }: QueryProviderProps) {
             staleTime: 5 * 60 * 1000,
             // Garbage collection time: Data is removed from cache after 10 minutes
             gcTime: 10 * 60 * 1000,
+            // Prevent duplicate calls on mount - use cached data if available
+            refetchOnMount: false,
+            // Don't refetch on window focus to prevent duplicate calls
+            refetchOnWindowFocus: false,
             // Retry configuration
             retry: (failureCount, error) => {
               // Don't retry on 4xx errors (client errors)
@@ -47,8 +51,6 @@ export function QueryProvider({ children }: QueryProviderProps) {
   );
 
   return (
-    <QueryClientProvider client={queryClient}>
-      {children}
-    </QueryClientProvider>
+    <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
   );
 }
