@@ -151,88 +151,92 @@ export function SearchDialogBox({
   }, [searchTerm, elasticIndex]);
 
   return (
-    <CommandDialog
-      open={open}
-      onOpenChange={setOpen}
-      className="p-0 overflow-hidden"
-      showCloseButton={false}
-    >
-      <CommandInput
-        placeholder="Type a command or search..."
-        onValueChange={(value: string) => {
-          setSearchTerm(value);
-        }}
-      />
-      <CommandList>
-        <CommandEmpty>
-          {isLoading ? "Searching..." : "No results found."}
-        </CommandEmpty>
+    <>
+      <CommandDialog
+        open={open}
+        onOpenChange={setOpen}
+        className="p-0 overflow-hidden z-50"
+        showCloseButton={false}
+      >
+        <CommandInput
+          placeholder="Type a command or search..."
+          onValueChange={(value: string) => {
+            setSearchTerm(value);
+          }}
+        />
+        <CommandList>
+          <CommandEmpty>
+            {isLoading ? "Searching..." : "No results found."}
+          </CommandEmpty>
 
-        {searchResults.length > 0 && (
-          <CommandGroup heading={`Results (${searchResults.length})`}>
-            {searchResults.map(product => {
-              const defaultImage = product.productAssetss?.find(
-                asset => asset.isDefault === 1
-              );
-              const imageUrl =
-                defaultImage?.source || product.productAssetss?.[0]?.source;
+          {searchResults.length > 0 && (
+            <CommandGroup heading={`Results (${searchResults.length})`}>
+              {searchResults.map(product => {
+                const defaultImage = product.productAssetss?.find(
+                  asset => asset.isDefault === 1
+                );
+                const imageUrl =
+                  defaultImage?.source || product.productAssetss?.[0]?.source;
 
-              return (
-                <CommandItem
-                  key={product.productIndexName}
-                  onSelect={() => {
-                    // Navigate to product page or handle product selection
-                    handleSelect(`/product/${product.productIndexName}`);
-                    setSearchValue("");
-                    setOpen(false);
-                  }}
-                  className="gap-3"
-                >
-                  <div className="relative size-12 shrink-0 overflow-hidden rounded border">
-                    <ImageWithFallback
-                      src={imageUrl || "/asset/default-placeholder.png"}
-                      alt={product.productShortDescription || "product image"}
-                      className="object-cover"
-                      width={48}
-                      height={48}
-                      fallbackSrc="/asset/default-placeholder.png"
-                      unoptimized
-                    />
-                  </div>
-                  <div className="flex flex-1 flex-col gap-0.5 overflow-hidden">
-                    <span className="truncate font-medium text-sm">
-                      {product.productShortDescription}
-                    </span>
-                    <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                      <span className="truncate">{product.brandsName}</span>
-                      <span>•</span>
-                      <span className="truncate">{product.brandProductId}</span>
+                return (
+                  <CommandItem
+                    key={product.productIndexName}
+                    onSelect={() => {
+                      // Navigate to product page or handle product selection
+                      handleSelect(`/product/${product.productIndexName}`);
+                      setSearchValue("");
+                      setOpen(false);
+                    }}
+                    className="gap-3"
+                  >
+                    <div className="relative size-12 shrink-0 overflow-hidden rounded border">
+                      <ImageWithFallback
+                        src={imageUrl || "/asset/default-placeholder.png"}
+                        alt={product.productShortDescription || "product image"}
+                        className="object-cover"
+                        width={48}
+                        height={48}
+                        fallbackSrc="/asset/default-placeholder.png"
+                        unoptimized
+                      />
                     </div>
-                  </div>
-                </CommandItem>
-              );
-            })}
-          </CommandGroup>
-        )}
+                    <div className="flex flex-1 flex-col gap-0.5 overflow-hidden">
+                      <span className="truncate font-medium text-sm">
+                        {product.productShortDescription}
+                      </span>
+                      <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                        <span className="truncate">{product.brandsName}</span>
+                        <span>•</span>
+                        <span className="truncate">
+                          {product.brandProductId}
+                        </span>
+                      </div>
+                    </div>
+                  </CommandItem>
+                );
+              })}
+            </CommandGroup>
+          )}
 
-        {!searchTerm && suggestionItems.length > 0 && (
-          <CommandGroup heading="Suggestions">
-            {suggestionItems.map(item => (
-              <CommandItem
-                key={item.key}
-                onSelect={() => {
-                  handleSelect(item.href);
-                  setSearchValue("");
-                }}
-              >
-                {item.icon}
-                <span>{item.label}</span>
-              </CommandItem>
-            ))}
-          </CommandGroup>
-        )}
-      </CommandList>
-    </CommandDialog>
+          {!searchTerm && suggestionItems.length > 0 && (
+            <CommandGroup heading="Suggestions">
+              {suggestionItems.map(item => (
+                <CommandItem
+                  key={item.key}
+                  onSelect={() => {
+                    handleSelect(item.href);
+                    setSearchValue("");
+                  }}
+                >
+                  {item.icon}
+                  <span>{item.label}</span>
+                </CommandItem>
+              ))}
+            </CommandGroup>
+          )}
+        </CommandList>
+      </CommandDialog>
+    </>
   );
 }
 

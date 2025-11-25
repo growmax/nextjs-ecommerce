@@ -27,8 +27,16 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useMemo, useState } from "react";
 
-export function AppHeader() {
-  const [open, setOpen] = useState(false);
+export function AppHeader({
+  open: externalOpen,
+  setOpen: externalSetOpen,
+}: {
+  open?: boolean;
+  setOpen?: (v: boolean) => void;
+} = {}) {
+  const [internalOpen, setInternalOpen] = useState(false);
+  const open = externalOpen ?? internalOpen;
+  const setOpen = externalSetOpen ?? setInternalOpen;
   const [searchValue, setSearchValue] = useState("");
   const { userProfile } = useUserProfile();
   const { isLoggingOut, handleLogout } = useLogout();
@@ -95,7 +103,7 @@ export function AppHeader() {
     <>
       <header
         className={cn(
-          "fixed top-0 z-[100] border-b bg-background/80 backdrop-blur-md supports-[backdrop-filter]:bg-background/80 transition-all duration-200",
+          "fixed top-0 z-[10] border-b bg-background/80 backdrop-blur-md supports-[backdrop-filter]:bg-background/80 transition-all duration-200",
           // Mobile: Full width (sidebar is overlay)
           "left-0 right-0",
           // Desktop: Adjust for sidebar
