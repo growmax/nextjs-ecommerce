@@ -7,38 +7,13 @@
 import type { CategoryFilterState } from "@/types/category-filters";
 
 /**
- * Base query structure for aggregations
- */
-interface BaseAggregationQuery {
-  filter: {
-    bool: {
-      must: Array<Record<string, unknown>>;
-      must_not: Array<Record<string, unknown>>;
-    };
-  };
-  aggs: {
-    data: {
-      terms: {
-        field: string;
-        size: number;
-      };
-    };
-    count: {
-      cardinality: {
-        field: string;
-      };
-    };
-  };
-}
-
-/**
  * Options for building aggregation queries
  */
 export interface AggregationQueryOptions {
   /** Category IDs for filtering */
   categoryIds?: number[];
   /** Current filter state (to exclude from aggregations) */
-  currentFilters?: CategoryFilterState;
+  currentFilters?: CategoryFilterState | undefined;
   /** Base query must clauses */
   baseMust?: Array<Record<string, unknown>>;
   /** Base query must_not clauses */
@@ -332,7 +307,6 @@ export function buildVariantAttributesAggregation(
     baseMust = [],
     baseMustNot = [],
     currentFilters,
-    bucketSize = 50,
   } = options;
 
   // First, get all unique variant attribute names
@@ -399,7 +373,6 @@ export function buildProductSpecificationsAggregation(
     baseMust = [],
     baseMustNot = [],
     currentFilters,
-    bucketSize = 50,
   } = options;
 
   return {

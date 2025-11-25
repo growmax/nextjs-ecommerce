@@ -1,7 +1,7 @@
 "use client";
 
-import React from "react";
 import { useTranslations } from "next-intl";
+import React from "react";
 
 import {
   Cell,
@@ -113,7 +113,7 @@ const DashboardTable = <T,>({
           </div>
         )}
         <Table className="min-w-full table-auto">
-          <TableHeader className="bg-gray-100 sticky top-0 z-30 rounded-t-lg">
+          <TableHeader className="bg-muted sticky top-0 z-30 rounded-t-lg">
             {table.getHeaderGroups().map((headerGroup: HeaderGroup<T>) => (
               <TableRow key={headerGroup.id}>
                 {headerGroup.headers.map((header: Header<T, unknown>) => {
@@ -130,14 +130,14 @@ const DashboardTable = <T,>({
                     <TableHead
                       key={header.id}
                       className={cn(
-                        "px-1 py-0.5 bg-gray-100 border-b relative align-middle",
+                        "px-1 py-0.5 bg-muted border-b relative align-middle",
                         alignCenter
                           ? "text-center"
                           : alignRight
                             ? "text-right"
                             : "text-left",
                         isSticky &&
-                          "sticky left-0 z-[31] bg-gray-100 border-r border-gray-300"
+                          "sticky left-0 z-[31] bg-muted border-r border-border"
                       )}
                       style={{
                         width: header.getSize(),
@@ -174,7 +174,7 @@ const DashboardTable = <T,>({
               table.getRowModel().rows.map((row: Row<T>, _index: number) => (
                 <TableRow
                   key={row.id}
-                  className="group hover:bg-gray-100 cursor-pointer"
+                  className="group hover:bg-muted cursor-pointer"
                   onClick={() => onRowClick?.(row.original)}
                   onMouseEnter={() => onRowHover?.(row.original)}
                 >
@@ -199,7 +199,7 @@ const DashboardTable = <T,>({
                               ? "text-right"
                               : "text-left",
                           isSticky &&
-                            "sticky left-0 z-20 bg-white border-r border-gray-300 group-hover:bg-gray-100"
+                            "sticky left-0 z-20 bg-muted border-r border-border group-hover:bg-muted"
                         )}
                         style={{
                           width: cell.column.getSize(),

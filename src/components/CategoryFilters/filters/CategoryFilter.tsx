@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import type { CategoryFilterOption } from "@/types/category-filters";
 import { FolderTree } from "lucide-react";
-import { usePathname, useRouter } from "next/navigation";
+import { useRouter } from "next/navigation";
 
 interface CategoryFilterProps {
   childCategories: CategoryFilterOption[];
@@ -24,7 +24,6 @@ export function CategoryFilter({
   isLoading,
 }: CategoryFilterProps) {
   const router = useRouter();
-  const pathname = usePathname();
 
   const handleCategoryClick = (category: CategoryFilterOption) => {
     if (category.isChild) {

@@ -18,12 +18,12 @@ jest.mock("axios", () => {
 });
 
 import axios from "axios";
-import { SearchService, ElasticSearchResponse } from "./SearchService";
+import { ElasticSearchResponse, SearchService } from "./SearchService";
 import {
-  mockContext,
-  mockElasticSearchOptions,
-  mockElasticSearchResponse,
-  mockFormattedProduct,
+    mockContext,
+    mockElasticSearchOptions,
+    mockElasticSearchResponse,
+    mockFormattedProduct,
 } from "./SearchService.mocks";
 
 const mockedAxios = axios as jest.Mocked<typeof axios>;
@@ -147,18 +147,20 @@ describe("SearchService", () => {
 
     it("should use fallback fields", () => {
       const response: ElasticSearchResponse = {
-        hits: {
-          hits: [
-            {
-              _id: "1",
-              _source: {
-                productId: 1,
-                productShortDescription: "Short",
-                brandsName: "Brand",
-              } as any,
-            },
-          ],
-          total: { value: 1, relation: "eq" },
+        body: {
+          hits: {
+            hits: [
+              {
+                _id: "1",
+                _source: {
+                  productId: 1,
+                  productShortDescription: "Short",
+                  brandsName: "Brand",
+                } as any,
+              },
+            ],
+            total: { value: 1, relation: "eq" },
+          },
         },
       };
 

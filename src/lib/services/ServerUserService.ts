@@ -42,18 +42,15 @@ export class ServerUserService {
       }
 
       const cacheKey = `user:${sub}:${tenantCode}`;
-      const apiCallStart = Date.now();
       
       try {
-        const { withRedisCache, isRedisEnabled } = await import("@/lib/cache");
-        const redisEnabled = isRedisEnabled();
+        const { withRedisCache } = await import("@/lib/cache");
         
    
 
         const result = await withRedisCache(
           cacheKey,
           async () => {
-            const apiStart = Date.now();
             const data = await userApiService.fetchUserDetailsServerSide(
               sub,
               tenantCode,
@@ -70,7 +67,6 @@ export class ServerUserService {
       } catch (error) {
         console.error("Error fetching user details:", error);
         // Fallback to direct call if Redis unavailable
-        const fallbackStart = Date.now();
         const result = await userApiService.fetchUserDetailsServerSide(
           sub,
           tenantCode,

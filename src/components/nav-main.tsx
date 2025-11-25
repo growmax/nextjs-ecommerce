@@ -1,31 +1,31 @@
 "use client";
 
-import { ChevronRight, type LucideIcon } from "lucide-react";
 import { Link, usePathname } from "@/i18n/navigation";
+import { ChevronRight, type LucideIcon } from "lucide-react";
 import { useState } from "react";
 
 import { useTranslations } from "next-intl";
 
 import {
-  Collapsible,
-  CollapsibleContent,
-  CollapsibleTrigger,
+    Collapsible,
+    CollapsibleContent,
+    CollapsibleTrigger,
 } from "@/components/ui/collapsible";
 import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
+    Popover,
+    PopoverContent,
+    PopoverTrigger,
 } from "@/components/ui/popover";
 import {
-  SidebarGroup,
-  SidebarGroupLabel,
-  SidebarMenu,
-  SidebarMenuButton,
-  SidebarMenuItem,
-  SidebarMenuSub,
-  SidebarMenuSubButton,
-  SidebarMenuSubItem,
-  useSidebar,
+    SidebarGroup,
+    SidebarGroupLabel,
+    SidebarMenu,
+    SidebarMenuButton,
+    SidebarMenuItem,
+    SidebarMenuSub,
+    SidebarMenuSubButton,
+    SidebarMenuSubItem,
+    useSidebar,
 } from "@/components/ui/sidebar";
 import { cn } from "@/lib/utils";
 
@@ -54,7 +54,7 @@ function CollapsedMenuItem({
       <Popover open={isOpen} onOpenChange={setIsOpen}>
         <PopoverTrigger asChild>
           <SidebarMenuButton
-            tooltip={item.title}
+            tooltip={{ children: item.title, className: "z-[101]" }}
             isActive={hasActiveSub}
             className="justify-center w-full"
           >
@@ -143,7 +143,7 @@ export function NavMain({
               <SidebarMenuItem key={item.title}>
                 <SidebarMenuButton
                   asChild
-                  tooltip={item.title}
+                  tooltip={{ children: item.title, className: "z-[101]" }}
                   isActive={isActive(item.url)}
                   className={cn(isCollapsed ? "justify-center" : "")}
                 >
@@ -191,7 +191,7 @@ export function NavMain({
                   className="w-full [&[data-state=closed]>button]:h-8 [&[data-state=open]>button]:h-8"
                 >
                   <SidebarMenuButton
-                    tooltip={item.title}
+                    tooltip={{ children: item.title, className: "z-[101]" }}
                     isActive={hasActiveSub}
                     className="gap-2"
                   >

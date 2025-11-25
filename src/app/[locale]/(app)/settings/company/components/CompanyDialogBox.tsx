@@ -2,12 +2,13 @@
 
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
-import { useTranslations } from "next-intl";
 import {
   Dialog,
   DialogContent,
   DialogFooter,
   DialogHeader,
+  DialogOverlay,
+  DialogPortal,
   DialogTitle,
 } from "@/components/ui/dialog";
 import {
@@ -27,6 +28,7 @@ import LocationService from "@/lib/api/services/LocationService/LocationService"
 import { AuthStorage } from "@/lib/auth";
 import { JWTService } from "@/lib/services/JWTService";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { useTranslations } from "next-intl";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
@@ -463,15 +465,17 @@ const CompanyDialogBox = ({
 
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
-      <DialogContent className="w-full h-full sm:max-w-2xl sm:max-h-[90vh] sm:rounded-lg p-0 flex flex-col">
-        {/* Fixed Header */}
-        <div className="px-4 sm:px-6 pt-6 pb-4 border-b shrink-0">
-          <DialogHeader>
-            <DialogTitle>
-              {mode === "create" ? t("createAddress") : t("editAddress")}
-            </DialogTitle>
-          </DialogHeader>
-        </div>
+      <DialogPortal>
+        <DialogOverlay className="!z-[150]" />
+        <DialogContent hideOverlay className="w-full h-full sm:max-w-2xl sm:max-h-[90vh] sm:rounded-lg p-0 flex flex-col !z-[150]">
+          {/* Fixed Header */}
+          <div className="px-4 sm:px-6 pt-6 pb-4 border-b shrink-0">
+            <DialogHeader>
+              <DialogTitle>
+                {mode === "create" ? t("createAddress") : t("editAddress")}
+              </DialogTitle>
+            </DialogHeader>
+          </div>
 
         {/* Scrollable Content */}
         <div className="flex-1 overflow-y-auto px-4 sm:px-6 py-4">
@@ -668,6 +672,7 @@ const CompanyDialogBox = ({
           </DialogFooter>
         </div>
       </DialogContent>
+      </DialogPortal>
     </Dialog>
   );
 };

@@ -10,17 +10,6 @@ import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useCallback, useMemo, useTransition } from "react";
 
 /**
- * Parse filter values from URL search params
- */
-function parseFilterFromURL(
-  searchParams: URLSearchParams,
-  key: string
-): string[] {
-  const values = searchParams.getAll(key);
-  return values.filter((v) => v.trim() !== "");
-}
-
-/**
  * Parse variant attributes from URL
  * Format: ?color=Red&color=Blue&size=Large
  */
@@ -146,7 +135,7 @@ export function useCategoryFilters() {
     return {
       variantAttributes,
       productSpecifications,
-      inStock,
+      inStock: inStock as boolean | undefined,
     };
   }, [searchParams]);
 
@@ -199,7 +188,7 @@ export function useCategoryFilters() {
       updateFilters({
         variantAttributes: {
           ...currentFilters.variantAttributes,
-          [attributeName]: newValues.length > 0 ? newValues : undefined,
+          ...(newValues.length > 0 ? { [attributeName]: newValues } : {}),
         },
       });
     },
@@ -220,7 +209,7 @@ export function useCategoryFilters() {
       updateFilters({
         productSpecifications: {
           ...currentFilters.productSpecifications,
-          [specKey]: newValues.length > 0 ? newValues : undefined,
+          ...(newValues.length > 0 ? { [specKey]: newValues } : {}),
         },
       });
     },
@@ -232,7 +221,7 @@ export function useCategoryFilters() {
    */
   const setStockFilter = useCallback(
     (inStock: boolean | undefined) => {
-      updateFilters({ inStock });
+      updateFilters({ inStock: inStock as boolean | undefined });
     },
     [updateFilters]
   );

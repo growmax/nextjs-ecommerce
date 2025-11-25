@@ -5,10 +5,10 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
 import { useCategoryFilters } from "@/hooks/useCategoryFilters";
 import type {
-  BrandFilterOption,
-  CategoryFilterOption,
-  ProductSpecificationGroup,
-  VariantAttributeGroup,
+    BrandFilterOption,
+    CategoryFilterOption,
+    ProductSpecificationGroup,
+    VariantAttributeGroup,
 } from "@/types/category-filters";
 import { Filter } from "lucide-react";
 import { ActiveFilters } from "./ActiveFilters";

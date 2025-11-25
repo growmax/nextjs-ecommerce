@@ -46,9 +46,9 @@ const convertDateToString = (
 const TableSkeleton = ({ rows = 10 }: { rows?: number }) => {
   const t = useTranslations("orders");
   return (
-    <div className="rounded-md border shadow-sm overflow-hidden flex flex-col">
-      <div className="border-b border-gray-200 bg-gray-50 flex-shrink-0">
-        <div className="flex font-medium text-sm text-gray-700">
+    <div className="border shadow overflow-hidden flex flex-col bg-background">
+      <div className="border-b border-border bg-muted flex-shrink-0">
+        <div className="flex font-medium text-sm text-foreground">
           <div className="px-2 py-3 w-[150px]">{t("orderId")}</div>
           <div className="px-2 py-3 w-[200px]">{t("orderName")}</div>
           <div className="px-2 py-3 w-[150px]">{t("orderDate")}</div>
@@ -66,20 +66,20 @@ const TableSkeleton = ({ rows = 10 }: { rows?: number }) => {
         {Array.from({ length: rows }).map((_, rowIndex) => (
           <div
             key={`row-${rowIndex}`}
-            className="border-b border-gray-100 flex "
+            className="border-b border-border flex "
           >
             {Array.from({ length: 11 }).map((_, colIndex) => (
               <div
                 key={`cell-${rowIndex}-${colIndex}`}
                 className="px-2 py-3 w-[150px] flex items-center"
               >
-                <Skeleton className="h-4 w-full bg-gray-200" />
+                <Skeleton className="h-4 w-full bg-muted" />
               </div>
             ))}
           </div>
         ))}
       </div>
-      <div className="flex items-center justify-end gap-4 px-4 py-2 border-t bg-gray-50/50 flex-shrink-0">
+      <div className="flex items-center justify-end gap-4 px-4 py-2 border-t border-border bg-muted/50 flex-shrink-0">
         <Skeleton className="h-3 w-16" />
         <Skeleton className="h-6 w-12" />
         <Skeleton className="h-3 w-20" />
@@ -257,7 +257,7 @@ function OrdersLandingTable({
         cell: ({ row }) => {
           const status = row.original.updatedBuyerStatus;
           if (!status)
-            return <span className="text-gray-400 pl-[30px]">-</span>;
+            return <span className="text-muted-foreground pl-[30px]">-</span>;
           const color = statusColor(status.toUpperCase());
           const titleCaseStatus = status
             .split(" ")
@@ -268,7 +268,7 @@ function OrdersLandingTable({
           return (
             <div className="pl-[30px]">
               <span
-                className="px-2 py-0.5 rounded-full text-xs font-medium text-white whitespace-nowrap"
+                className="px-2 py-1 rounded text-xs font-medium text-primary-foreground whitespace-nowrap border border-border/30"
                 style={{ backgroundColor: color }}
               >
                 {titleCaseStatus}
@@ -639,7 +639,7 @@ function OrdersLandingTable({
         title={t("addNewOrder")}
       >
         <div className="space-y-4">
-          <p className="text-gray-600">{t("addNewOrderDescription")}</p>
+          <p className="text-muted-foreground">{t("addNewOrderDescription")}</p>
         </div>
       </SideDrawer>
 
@@ -649,7 +649,7 @@ function OrdersLandingTable({
             {initialLoad && loading ? (
               <TableSkeleton rows={rowPerPage} />
             ) : !initialLoad && orders.length === 0 ? (
-              <div className="flex items-center justify-center text-gray-500 py-8">
+              <div className="flex items-center justify-center text-muted-foreground py-8">
                 {t("noOrders")}
               </div>
             ) : (
@@ -698,7 +698,7 @@ function OrdersLandingTable({
             </DialogDescription>
           </DialogHeader>
           <div className="py-4">
-            <div className="text-center text-gray-500 py-8">
+            <div className="text-center text-muted-foreground py-8">
               {t("noItemsToDisplay")}
             </div>
           </div>

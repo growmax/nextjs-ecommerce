@@ -83,7 +83,7 @@ export function BrandFilter({ brands, isLoading }: BrandFilterProps) {
               >
                 <Checkbox
                   id={`brand-${brand.value}`}
-                  checked={brand.selected}
+                  checked={brand.selected ?? false}
                   onCheckedChange={() => handleBrandClick(brand)}
                   onClick={(e) => e.stopPropagation()}
                   className="shrink-0"

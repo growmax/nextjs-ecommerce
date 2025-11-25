@@ -1,3 +1,4 @@
+import type { CategoryFilterState } from "@/types/category-filters";
 import { RequestContext, openSearchClient } from "../../client";
 import { BaseService } from "../BaseService";
 
@@ -452,9 +453,9 @@ export class SearchService extends BaseService<SearchService> {
       must_not: Array<Record<string, unknown>>;
     },
     currentFilters?: {
-      variantAttributes?: Record<string, string[]> | undefined;
-      productSpecifications?: Record<string, string[]> | undefined;
-      inStock?: boolean | undefined;
+      variantAttributes?: Record<string, string[]>;
+      productSpecifications?: Record<string, string[]>;
+      inStock?: boolean;
     },
     context?: RequestContext
   ): Promise<AggregationsResponse> {
@@ -477,7 +478,7 @@ export class SearchService extends BaseService<SearchService> {
       aggs: buildAllAggregations({
         baseMust: baseQuery.must,
         baseMustNot: baseQuery.must_not,
-        currentFilters,
+        currentFilters: currentFilters as CategoryFilterState | undefined,
       }),
     };
 
@@ -512,7 +513,7 @@ export class SearchService extends BaseService<SearchService> {
             [attrName]: buildVariantAttributeValueAggregation(attrName, {
               baseMust: baseQuery.must,
               baseMustNot: baseQuery.must_not,
-              currentFilters,
+              currentFilters: currentFilters as CategoryFilterState | undefined,
             }),
           },
         };
@@ -524,7 +525,7 @@ export class SearchService extends BaseService<SearchService> {
       }
 
       // Replace the attribute names aggregation with the actual attribute aggregations
-      result.aggregations.variantAttributes = variantAggs as Record<string, AggregationResult>;
+      result.aggregations.variantAttributes = variantAggs as unknown as AggregationResult;
     }
 
     // If we have product specification keys, fetch values for each
@@ -551,7 +552,7 @@ export class SearchService extends BaseService<SearchService> {
             [specKey]: buildProductSpecificationValueAggregation(specKey, {
               baseMust: baseQuery.must,
               baseMustNot: baseQuery.must_not,
-              currentFilters,
+              currentFilters: currentFilters as CategoryFilterState | undefined,
             }),
           },
         };
@@ -563,7 +564,7 @@ export class SearchService extends BaseService<SearchService> {
       }
 
       // Replace the spec keys aggregation with the actual spec aggregations
-      result.aggregations.productSpecifications = specAggs as Record<string, AggregationResult>;
+      result.aggregations.productSpecifications = specAggs as unknown as AggregationResult;
     }
 
     return result;

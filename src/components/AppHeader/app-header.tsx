@@ -17,10 +17,10 @@ import { useTenantData } from "@/hooks/useTenantData";
 import { cn } from "@/lib/utils";
 import { getUserInitials } from "@/utils/General/general";
 import {
-  Bell,
-  Command as CommandIcon,
-  Search,
-  ShoppingCart,
+    Bell,
+    Command as CommandIcon,
+    Search,
+    ShoppingCart,
 } from "lucide-react";
 import { useTranslations } from "next-intl";
 import Link from "next/link";
@@ -63,7 +63,7 @@ export function AppHeader({
 
     document.addEventListener("keydown", down);
     return () => document.removeEventListener("keydown", down);
-  }, []);
+  }, [setOpen]);
 
   const { state: sidebarState } = useSidebar();
   const isSidebarCollapsed = sidebarState === "collapsed";
@@ -96,7 +96,7 @@ export function AppHeader({
       setOpen(false);
       setSearchValue("");
     },
-    [router]
+    [router, setOpen]
   );
 
   return (

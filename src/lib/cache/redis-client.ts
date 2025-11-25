@@ -102,7 +102,7 @@ export async function ensureRedisConnection(): Promise<boolean> {
   }
 
   // If already connected, return immediately
-  if (client.status === "ready") {
+  if ((client.status as string) === "ready") {
     return true;
   }
 

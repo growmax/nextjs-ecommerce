@@ -48,6 +48,9 @@ export interface AggregationResult {
   buckets: AggregationBucket[];
   doc_count?: number;
   value?: number; // For stats aggregations
+  data?: {
+    buckets: AggregationBucket[];
+  };
 }
 
 /**

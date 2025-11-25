@@ -1,8 +1,7 @@
 import { FormattedProduct } from "@/lib/api/services/SearchService/SearchService";
-import { ProductCard } from "@/components/ProductList/ProductCard";
 import { ProductListItem } from "@/types/product-listing";
-import Link from "next/link";
 import Image from "next/image";
+import Link from "next/link";
 
 /**
  * Transform FormattedProduct to ProductListItem

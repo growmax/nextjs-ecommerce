@@ -21,7 +21,7 @@ interface CategoryPageInteractivityProps {
   aggregations: FilterAggregations | null;
   currentCategoryPath: string[];
   children?: React.ReactNode; // Product grid will be passed as children
-  onProductsUpdate?: (products: unknown[]) => void;
+  _onProductsUpdate?: (products: unknown[]) => void;
 }
 
 /**
@@ -40,7 +40,6 @@ export function CategoryPageInteractivity({
   aggregations,
   currentCategoryPath,
   children,
-  onProductsUpdate,
 }: CategoryPageInteractivityProps) {
   const router = useRouter();
   const pathname = usePathname();

@@ -10,10 +10,10 @@
 
 import { buildProductSearchQuery } from "@/utils/elasticsearch/search-queries";
 import {
-    buildBrandQuery,
-    buildCategoryQuery,
-    buildMajorCategoryQuery,
-    buildSubCategoryQuery,
+  buildBrandQuery,
+  buildCategoryQuery,
+  buildMajorCategoryQuery,
+  buildSubCategoryQuery,
 } from "@/utils/opensearch/browse-queries";
 
 // Mock the clients to prevent actual API calls
@@ -91,7 +91,7 @@ describe("OpenSearch Query Verification", () => {
   describe("Browse Category Query Structure", () => {
     it("should build valid category query", () => {
       const categoryId = 123;
-      const { query } = buildCategoryQuery({ categoryId }, {
+      const { query } = buildCategoryQuery([categoryId], {
         page: 1,
         pageSize: 20,
       });
@@ -109,7 +109,7 @@ describe("OpenSearch Query Verification", () => {
     });
 
     it("should include pagination in category query", () => {
-      const { query } = buildCategoryQuery({ categoryId: 123 }, {
+      const { query } = buildCategoryQuery([123], {
         page: 2,
         pageSize: 10,
       });
@@ -119,7 +119,7 @@ describe("OpenSearch Query Verification", () => {
     });
 
     it("should include sort configuration when provided", () => {
-      const { query } = buildCategoryQuery({ categoryId: 123 }, {
+      const { query } = buildCategoryQuery([123], {
         page: 1,
         pageSize: 20,
         sortBy: {
@@ -195,7 +195,7 @@ describe("OpenSearch Query Verification", () => {
     });
 
     it("should format browse query request correctly", () => {
-      const { query } = buildCategoryQuery({ categoryId: 123 });
+      const { query } = buildCategoryQuery([123]);
 
       const request = {
         Elasticindex: mockElasticIndex,
@@ -230,7 +230,7 @@ describe("OpenSearch Query Verification", () => {
 
   describe("Filter Integration", () => {
     it("should include catalog codes in browse query", () => {
-      const { query } = buildCategoryQuery({ categoryId: 123 }, {
+      const { query } = buildCategoryQuery([123], {
         catalogCodes: ["CAT001", "CAT002"],
       });
 
@@ -243,7 +243,7 @@ describe("OpenSearch Query Verification", () => {
     });
 
     it("should include equipment codes in browse query", () => {
-      const { query } = buildCategoryQuery({ categoryId: 123 }, {
+      const { query } = buildCategoryQuery([123], {
         equipmentCodes: ["EQ001"],
       });
 
@@ -256,7 +256,7 @@ describe("OpenSearch Query Verification", () => {
     });
 
     it("should include additional filters in browse query", () => {
-      const { query } = buildCategoryQuery({ categoryId: 123 }, {
+      const { query } = buildCategoryQuery([123], {
         filters: {
           brands: ["DEWALT", "Milwaukee"],
         },
@@ -269,7 +269,7 @@ describe("OpenSearch Query Verification", () => {
 
   describe("Error Handling", () => {
     it("should handle invalid category ID gracefully", () => {
-      const { query } = buildCategoryQuery({ categoryId: 0 });
+      const { query } = buildCategoryQuery([0]);
       expect(query).toBeDefined();
       expect(query.query.bool.must).toBeDefined();
     });
@@ -283,7 +283,7 @@ describe("OpenSearch Query Verification", () => {
 
   describe("Query Compatibility", () => {
     it("should produce queries compatible with SearchService", () => {
-      const { query } = buildCategoryQuery({ categoryId: 123 }, {
+      const { query } = buildCategoryQuery([123], {
         page: 1,
         pageSize: 20,
       });

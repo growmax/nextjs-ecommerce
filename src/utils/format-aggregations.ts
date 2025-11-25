@@ -6,12 +6,12 @@
 
 import type { CategoryPath } from "@/lib/services/CategoryResolutionService";
 import type {
-  AggregationResult,
-  BrandFilterOption,
-  CategoryFilterOption,
-  FilterAggregations,
-  ProductSpecificationGroup,
-  VariantAttributeGroup,
+    AggregationResult,
+    BrandFilterOption,
+    CategoryFilterOption,
+    FilterAggregations,
+    ProductSpecificationGroup,
+    VariantAttributeGroup,
 } from "@/types/category-filters";
 
 /**
@@ -19,7 +19,7 @@ import type {
  */
 export function formatBrandsAggregation(
   aggregation: AggregationResult | undefined,
-  currentCategoryPath: string[]
+  _currentCategoryPath: string[]
 ): BrandFilterOption[] {
   if (!aggregation?.data?.buckets) {
     return [];
@@ -100,7 +100,7 @@ export function formatCategoriesAggregation(
     let isSibling = false;
 
     // Child category: categoryLevel is currentLevel + 1 AND currentCategoryId is in ancestorIds
-    if (categoryLevel === currentCategoryLevel + 1 && ancestorIds.includes(currentCategoryId)) {
+    if (categoryLevel === currentCategoryLevel + 1 && currentCategoryId !== undefined && ancestorIds.includes(currentCategoryId)) {
       isChild = true;
     }
     // Sibling category: same level, different parent, not current category

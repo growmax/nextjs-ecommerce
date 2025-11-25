@@ -1,11 +1,11 @@
 "use client";
 
-import { Package } from "lucide-react";
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { Package } from "lucide-react";
 
 interface StockFilterProps {
-  inStock?: boolean;
+  inStock?: boolean | undefined;
   onChange: (inStock: boolean | undefined) => void;
   isLoading?: boolean;
 }

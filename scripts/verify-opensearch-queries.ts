@@ -15,13 +15,13 @@
  */
 
 import axios from "axios";
-import {
-  buildCategoryQuery,
-  buildSubCategoryQuery,
-  buildMajorCategoryQuery,
-  buildBrandQuery,
-} from "../src/utils/opensearch/browse-queries";
 import { buildProductSearchQuery } from "../src/utils/elasticsearch/search-queries";
+import {
+  buildBrandQuery,
+  buildCategoryQuery,
+  buildMajorCategoryQuery,
+  buildSubCategoryQuery,
+} from "../src/utils/opensearch/browse-queries";
 
 interface VerificationResult {
   testName: string;
@@ -116,7 +116,7 @@ async function verifyProductSearch(): Promise<VerificationResult> {
 async function verifyCategoryBrowse(): Promise<VerificationResult> {
   try {
     const categoryId = 1; // Example category ID
-    const { query } = buildCategoryQuery({ categoryId }, {
+    const { query } = buildCategoryQuery([categoryId], {
       page: 1,
       pageSize: 10,
     });
@@ -427,13 +427,7 @@ if (require.main === module) {
 }
 
 export {
-  runVerification,
-  verifyProductSearch,
-  verifyCategoryBrowse,
-  verifySubCategoryBrowse,
-  verifyMajorCategoryBrowse,
-  verifyBrandBrowse,
-  verifyProductDetailById,
-  verifyProductDetailByIndexName,
+  runVerification, verifyBrandBrowse, verifyCategoryBrowse, verifyMajorCategoryBrowse, verifyProductDetailById,
+  verifyProductDetailByIndexName, verifyProductSearch, verifySubCategoryBrowse
 };
 
