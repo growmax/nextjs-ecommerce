@@ -15,6 +15,9 @@ export interface BrowseQueryOptions {
   filters?: Record<string, string[]>; // Additional filters
   catalogCodes?: string[]; // Catalog codes for filtering
   equipmentCodes?: string[]; // Equipment codes for filtering
+  variantAttributes?: Record<string, string[]>; // Variant attribute filters { "Color": ["Red", "Blue"] }
+  productSpecifications?: Record<string, string[]>; // Product specification filters { "specKey": ["value1", "value2"] }
+  inStock?: boolean; // Stock/inventory status filter
 }
 
 export interface BrowseQueryResult {
@@ -57,7 +60,7 @@ const PRODUCT_SOURCE_FIELDS = [
 /**
  * Base query structure with required filters
  */
-function getBaseQuery(): {
+export function getBaseQuery(): {
   must: Array<Record<string, unknown>>;
   must_not: Array<Record<string, unknown>>;
 } {
@@ -122,7 +125,7 @@ function buildSort(
  * Build category filter using nested query on product_categories
  * Accepts array of category IDs for N-level category support
  */
-function buildCategoryFilter(categoryIds: number[]): Array<Record<string, unknown>> {
+export function buildCategoryFilter(categoryIds: number[]): Array<Record<string, unknown>> {
   if (!categoryIds || categoryIds.length === 0) {
     return [];
   }
@@ -203,6 +206,107 @@ function buildAdditionalFilters(
 }
 
 /**
+ * Build variant attribute filters
+ */
+function buildVariantAttributeFilters(
+  variantAttributes?: Record<string, string[]>
+): Array<Record<string, unknown>> {
+  if (!variantAttributes || Object.keys(variantAttributes).length === 0) {
+    return [];
+  }
+
+  const filterClauses: Array<Record<string, unknown>> = [];
+
+  Object.entries(variantAttributes).forEach(([attributeName, values]) => {
+    if (values.length === 1) {
+      // Single value - use term
+      filterClauses.push({
+        term: {
+          [`productAttributes.${attributeName}.keyword`]: values[0],
+        },
+      });
+    } else if (values.length > 1) {
+      // Multiple values - use terms (OR)
+      filterClauses.push({
+        terms: {
+          [`productAttributes.${attributeName}.keyword`]: values,
+        },
+      });
+    }
+  });
+
+  return filterClauses;
+}
+
+/**
+ * Build product specification filters
+ */
+function buildProductSpecificationFilters(
+  productSpecifications?: Record<string, string[]>
+): Array<Record<string, unknown>> {
+  if (!productSpecifications || Object.keys(productSpecifications).length === 0) {
+    return [];
+  }
+
+  const filterClauses: Array<Record<string, unknown>> = [];
+
+  Object.entries(productSpecifications).forEach(([specKey, values]) => {
+    if (values.length === 1) {
+      // Single value - use nested term
+      filterClauses.push({
+        nested: {
+          path: "productSpecifications",
+          query: {
+            bool: {
+              must: [
+                { term: { "productSpecifications.key.keyword": specKey } },
+                { term: { "productSpecifications.value.keyword": values[0] } },
+              ],
+            },
+          },
+        },
+      });
+    } else if (values.length > 1) {
+      // Multiple values - use nested terms (OR)
+      filterClauses.push({
+        nested: {
+          path: "productSpecifications",
+          query: {
+            bool: {
+              must: [
+                { term: { "productSpecifications.key.keyword": specKey } },
+                { terms: { "productSpecifications.value.keyword": values } },
+              ],
+            },
+          },
+        },
+      });
+    }
+  });
+
+  return filterClauses;
+}
+
+/**
+ * Build stock/inventory status filter
+ */
+function buildStockFilter(inStock?: boolean): Array<Record<string, unknown>> {
+  if (inStock === undefined) {
+    return [];
+  }
+
+  // Assuming there's an inventory_status or similar field
+  // Adjust field name based on actual OpenSearch schema
+  return [
+    {
+      term: {
+        inventory_status: inStock ? "in_stock" : "out_of_stock",
+      },
+    },
+  ];
+}
+
+/**
  * Build catalog/equipment code filters
  */
 function buildCatalogFilters(
@@ -249,6 +353,13 @@ export function buildCategoryQuery(
     options.catalogCodes,
     options.equipmentCodes
   );
+  const variantAttributeFilters = buildVariantAttributeFilters(
+    options.variantAttributes
+  );
+  const productSpecificationFilters = buildProductSpecificationFilters(
+    options.productSpecifications
+  );
+  const stockFilters = buildStockFilter(options.inStock);
 
   return {
     query: {
@@ -262,6 +373,9 @@ export function buildCategoryQuery(
             ...categoryFilters,
             ...additionalFilters,
             ...catalogFilters,
+            ...variantAttributeFilters,
+            ...productSpecificationFilters,
+            ...stockFilters,
           ],
           must_not: baseQuery.must_not,
         },

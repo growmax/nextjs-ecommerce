@@ -8,6 +8,7 @@ import SearchService, {
 } from "@/lib/api/services/SearchService/SearchService";
 import TenantService from "@/lib/api/services/TenantService";
 import CategoryResolutionService from "@/lib/services/CategoryResolutionService";
+import type { FilterAggregations } from "@/types/category-filters";
 import { buildCategoryQuery } from "@/utils/opensearch/browse-queries";
 import { Metadata } from "next";
 import { headers } from "next/headers";
@@ -22,6 +23,8 @@ interface PageProps {
   searchParams: Promise<{
     page?: string;
     sort?: string;
+    in_stock?: string;
+    [key: string]: string | string[] | undefined; // For variant attributes and specs
   }>;
 }
 
@@ -231,9 +234,43 @@ export default async function CategoryPage({
     notFound();
   }
 
-  // Fetch initial products server-side for SEO
+  // Parse filters from searchParams
   const page = parseInt(filters.page || "1", 10);
   const sortBy = parseInt(filters.sort || "1", 10);
+
+  // Parse variant attributes from URL (any key that's not a known filter key)
+  const variantAttributes: Record<string, string[]> = {};
+  const productSpecifications: Record<string, string[]> = {};
+  const knownKeys = new Set(["page", "sort", "in_stock"]);
+
+  Object.entries(filters).forEach(([key, value]) => {
+    if (!knownKeys.has(key) && value) {
+      if (key.startsWith("spec_")) {
+        // Product specification
+        const specKey = key.replace("spec_", "");
+        const values = Array.isArray(value) ? value : [value];
+        if (!productSpecifications[specKey]) {
+          productSpecifications[specKey] = [];
+        }
+        productSpecifications[specKey].push(...values.filter((v) => v && typeof v === "string"));
+      } else {
+        // Variant attribute
+        const values = Array.isArray(value) ? value : [value];
+        if (!variantAttributes[key]) {
+          variantAttributes[key] = [];
+        }
+        variantAttributes[key].push(...values.filter((v) => v && typeof v === "string"));
+      }
+    }
+  });
+
+  // Parse stock filter
+  const inStock =
+    filters.in_stock === "true"
+      ? true
+      : filters.in_stock === "false"
+      ? false
+      : undefined;
 
   // Use the last category ID in the path (most specific) for filtering
   // If multiple IDs are provided, we can filter by all of them
@@ -242,14 +279,52 @@ export default async function CategoryPage({
     notFound();
   }
 
+  // Build base query for aggregations
+  const { getBaseQuery, buildCategoryFilter } = await import("@/utils/opensearch/browse-queries");
+  const baseQuery = getBaseQuery();
+  const categoryFilters = buildCategoryFilter(categoryIds);
+  const baseQueryForAggs = {
+    must: [...baseQuery.must, ...categoryFilters],
+    must_not: baseQuery.must_not,
+  };
+
+  // Get elastic index from elasticCode
+  const elasticIndex = elasticCode ? `${elasticCode}pgandproducts` : "";
+
+  // Fetch aggregations server-side
+  let aggregations: FilterAggregations | null = null;
+  if (elasticIndex) {
+    try {
+      const filterState = {
+        ...(Object.keys(variantAttributes).length > 0 && { variantAttributes }),
+        ...(Object.keys(productSpecifications).length > 0 && { productSpecifications }),
+        ...(inStock !== undefined && { inStock }),
+      };
+      
+      const aggregationResponse = await SearchService.getFilterAggregations(
+        elasticIndex,
+        baseQueryForAggs,
+        Object.keys(filterState).length > 0 ? filterState : undefined,
+        context
+      );
+
+      if (aggregationResponse.success) {
+        aggregations = aggregationResponse.aggregations as FilterAggregations;
+      }
+    } catch (error) {
+      console.error("Error fetching aggregations:", error);
+      // Continue without aggregations - client will handle
+    }
+  }
+
   const queryResult = buildCategoryQuery(categoryIds, {
     page,
     pageSize: 20,
     sortBy: { sortBy },
+    ...(Object.keys(variantAttributes).length > 0 && { variantAttributes }),
+    ...(Object.keys(productSpecifications).length > 0 && { productSpecifications }),
+    ...(inStock !== undefined && { inStock }),
   });
-
-  // Get elastic index from elasticCode
-  const elasticIndex = elasticCode ? `${elasticCode}pgandproducts` : "";
 
   let initialProducts: { products: FormattedProduct[]; total: number } = {
     products: [] as FormattedProduct[],
@@ -320,25 +395,28 @@ export default async function CategoryPage({
         </h1>
       </div>
 
-      {/* Interactivity Controls - Client component for pagination/sorting */}
+      {/* Interactivity Controls - Client component for pagination/sorting/filters */}
       <CategoryPageInteractivity
         initialFilters={{
           page,
           sort: sortBy,
         }}
         total={initialProducts.total}
-      />
-
-      {/* Product Grid - Server-rendered for SEO */}
-      <div className="relative">
-        {initialProducts.products.length === 0 ? (
-          <div className="text-center py-12">
-            <p className="text-gray-600 text-lg">No products found.</p>
-          </div>
-        ) : (
-          <ProductGridServer products={initialProducts.products} locale={locale} />
-        )}
-      </div>
+        categoryPath={categoryPath}
+        aggregations={aggregations}
+        currentCategoryPath={categories}
+      >
+        {/* Product Grid - Server-rendered for SEO */}
+        <div className="relative mt-6">
+          {initialProducts.products.length === 0 ? (
+            <div className="text-center py-12">
+              <p className="text-gray-600 text-lg">No products found.</p>
+            </div>
+          ) : (
+            <ProductGridServer products={initialProducts.products} locale={locale} />
+          )}
+        </div>
+      </CategoryPageInteractivity>
     </div>
   );
 }

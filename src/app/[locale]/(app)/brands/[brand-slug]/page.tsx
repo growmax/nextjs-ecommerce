@@ -1,7 +1,9 @@
 import { CategoryBreadcrumbServer } from "@/components/Breadcrumb/CategoryBreadcrumbServer";
 import { ProductGridServer } from "@/components/ProductGrid/ProductGridServer";
 import { StructuredDataServer } from "@/components/seo/StructuredDataServer";
+import type { RequestContext } from "@/lib/api/client";
 import SearchService, { ElasticSearchQuery, FormattedProduct } from "@/lib/api/services/SearchService/SearchService";
+import TenantService from "@/lib/api/services/TenantService";
 import BrandResolutionService from "@/lib/services/BrandResolutionService";
 import { buildBrandQuery } from "@/utils/opensearch/browse-queries";
 import { Metadata } from "next";
@@ -28,17 +30,46 @@ export async function generateMetadata({
 }: PageProps): Promise<Metadata> {
   const { locale, "brand-slug": brandSlug } = await params;
 
-  // Get tenant context
+  // Get tenant data from API (cached, same as LayoutDataLoader)
   const headersList = await headers();
-  const tenantCode = headersList.get("x-tenant-code") || "";
+  const tenantDomain = headersList.get("x-tenant-domain") || "";
+  const tenantOrigin = headersList.get("x-tenant-origin") || "";
   const host = headersList.get("host") || "";
   const protocol = headersList.get("x-forwarded-proto") || "https";
   const baseUrl = `${protocol}://${host}`;
+  
+  // Fetch tenant data to get elasticCode (uses cache, so it's fast)
+  let elasticCode = "";
+  let tenantCode = "";
+  if (tenantDomain && tenantOrigin) {
+    try {
+      const tenantData = await TenantService.getTenantDataCached(
+        tenantDomain,
+        tenantOrigin
+      );
+      elasticCode = tenantData?.data?.tenant?.elasticCode || "";
+      tenantCode = tenantData?.data?.tenant?.tenantCode || "";
+    } catch (error) {
+      console.error("Error fetching tenant data in generateMetadata:", error);
+    }
+  }
 
-  // Resolve brand with tenant context using direct OpenSearch query
-  const brand = await BrandResolutionService.getBrandBySlugDirect(brandSlug, {
+  // If no elasticCode, cannot resolve brand - return not found
+  if (!elasticCode) {
+    return {
+      title: "Brand Not Found | E-Commerce",
+    };
+  }
+
+  // Build RequestContext for service calls
+  const context: RequestContext = {
+    elasticCode,
     tenantCode,
-  });
+    ...(tenantOrigin && { origin: tenantOrigin }),
+  };
+
+  // Resolve brand with proper RequestContext using direct OpenSearch query
+  const brand = await BrandResolutionService.getBrandBySlugDirect(brandSlug, context);
 
   if (!brand) {
     return {
@@ -93,20 +124,47 @@ export default async function BrandPage({
   const { locale, "brand-slug": brandSlug } = await params;
   const filters = await searchParams;
 
-  // Get tenant context for API calls
+  // Get tenant data from API (cached, same as LayoutDataLoader)
   const headersList = await headers();
-  const tenantCode = headersList.get("x-tenant-code") || "";
+  const tenantDomain = headersList.get("x-tenant-domain") || "";
+  const tenantOrigin = headersList.get("x-tenant-origin") || "";
   const host = headersList.get("host") || "";
   const protocol = headersList.get("x-forwarded-proto") || "https";
   const baseUrl = `${protocol}://${host}`;
+  
+  // Fetch tenant data to get elasticCode (uses cache, so it's fast)
+  let elasticCode = "";
+  let tenantCode = "";
+  if (tenantDomain && tenantOrigin) {
+    try {
+      const tenantData = await TenantService.getTenantDataCached(
+        tenantDomain,
+        tenantOrigin
+      );
+      elasticCode = tenantData?.data?.tenant?.elasticCode || "";
+      tenantCode = tenantData?.data?.tenant?.tenantCode || "";
+    } catch (error) {
+      console.error("Error fetching tenant data:", error);
+    }
+  }
 
-  // Resolve brand with tenant context using direct OpenSearch query
-  const brand = await BrandResolutionService.getBrandBySlugDirect(brandSlug, {
+  // If no elasticCode, cannot resolve brand - return 404
+  if (!elasticCode) {
+    notFound();
+  }
+
+  // Build RequestContext for service calls
+  const context: RequestContext = {
+    elasticCode,
     tenantCode,
-  });
+    ...(tenantOrigin && { origin: tenantOrigin }),
+  };
+
+  // Resolve brand with proper RequestContext using direct OpenSearch query
+  const brand = await BrandResolutionService.getBrandBySlugDirect(brandSlug, context);
 
   if (!brand) {
-    console.error(`[BrandPage] Brand not found for slug: "${brandSlug}" with tenant: "${tenantCode}"`);
+    console.error(`[BrandPage] Brand not found for slug: "${brandSlug}" with elasticCode: "${elasticCode}"`);
     notFound();
   }
 
@@ -121,8 +179,8 @@ export default async function BrandPage({
     sortBy: { sortBy },
   });
 
-  // Get elastic index from tenant code
-  const elasticIndex = tenantCode ? `${tenantCode}pgandproducts` : "";
+  // Get elastic index from elasticCode
+  const elasticIndex = elasticCode ? `${elasticCode}pgandproducts` : "";
 
   let initialProducts: { products: FormattedProduct[]; total: number } = { 
     products: [] as FormattedProduct[], 
@@ -181,6 +239,8 @@ export default async function BrandPage({
       })),
     },
   };
+
+
 
   return (
     <div className="container mx-auto px-4 py-8">

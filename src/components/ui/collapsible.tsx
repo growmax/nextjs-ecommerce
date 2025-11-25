@@ -62,5 +62,6 @@ export {
   Collapsible,
   CollapsibleContent,
   CollapsibleSection,
-  CollapsibleTrigger,
+  CollapsibleTrigger
 };
+

@@ -1,10 +1,15 @@
 "use client";
 
-import { useRouter, useSearchParams, usePathname } from "next/navigation";
-import { useTransition, useCallback, useMemo } from "react";
+import { CategoryFilters } from "@/components/CategoryFilters/CategoryFilters";
+import { CategoryFiltersDrawer } from "@/components/CategoryFilters/CategoryFiltersDrawer";
 import { CategoryPagination } from "@/components/Pagination/CategoryPagination";
 import { SortDropdown } from "@/components/Sort/SortDropdown";
 import { Skeleton } from "@/components/ui/skeleton";
+import type { CategoryPath } from "@/lib/services/CategoryResolutionService";
+import type { FilterAggregations } from "@/types/category-filters";
+import { formatAllAggregations } from "@/utils/format-aggregations";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
+import { useCallback, useMemo, useTransition } from "react";
 
 interface CategoryPageInteractivityProps {
   initialFilters: {
@@ -12,6 +17,10 @@ interface CategoryPageInteractivityProps {
     sort: number;
   };
   total: number;
+  categoryPath: CategoryPath;
+  aggregations: FilterAggregations | null;
+  currentCategoryPath: string[];
+  children?: React.ReactNode; // Product grid will be passed as children
   onProductsUpdate?: (products: unknown[]) => void;
 }
 
@@ -27,12 +36,23 @@ interface CategoryPageInteractivityProps {
 export function CategoryPageInteractivity({
   initialFilters,
   total,
+  categoryPath,
+  aggregations,
+  currentCategoryPath,
+  children,
   onProductsUpdate,
 }: CategoryPageInteractivityProps) {
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const [isPending, startTransition] = useTransition();
+
+  // Format aggregations for filter components
+  const formattedFilters = useMemo(
+    () =>
+      formatAllAggregations(aggregations, categoryPath, currentCategoryPath),
+    [aggregations, categoryPath, currentCategoryPath]
+  );
 
   // Parse current filters from URL
   const currentFilters = useMemo(
@@ -101,39 +121,71 @@ export function CategoryPageInteractivity({
   const totalPages = Math.ceil(total / 20);
 
   return (
-    <>
-      {/* Controls Bar */}
-      <div className="mb-6 flex items-center justify-between gap-4">
-        <div className="text-sm text-gray-600 dark:text-gray-400">
-          {isLoading ? (
-            <Skeleton className="h-4 w-32" />
-          ) : (
-            <>
-              Showing {((currentFilters.page - 1) * 20) + 1} -{" "}
-              {Math.min(currentFilters.page * 20, total)} of {total} products
-            </>
-          )}
+    <div className="flex gap-6">
+      {/* Filters Sidebar - Desktop */}
+      <aside className="hidden lg:block w-64 shrink-0">
+        <CategoryFilters
+          brands={formattedFilters.brands}
+          childCategories={formattedFilters.childCategories}
+          siblingCategories={formattedFilters.siblingCategories}
+          currentCategoryPath={currentCategoryPath}
+          variantAttributeGroups={formattedFilters.variantAttributeGroups}
+          productSpecificationGroups={formattedFilters.productSpecificationGroups}
+          isLoading={!aggregations}
+        />
+      </aside>
+
+      {/* Main Content */}
+      <div className="flex-1 min-w-0">
+        {/* Mobile Filter Drawer */}
+        <div className="lg:hidden mb-4">
+          <CategoryFiltersDrawer
+            brands={formattedFilters.brands}
+            childCategories={formattedFilters.childCategories}
+            siblingCategories={formattedFilters.siblingCategories}
+            currentCategoryPath={currentCategoryPath}
+            variantAttributeGroups={formattedFilters.variantAttributeGroups}
+            productSpecificationGroups={formattedFilters.productSpecificationGroups}
+            isLoading={!aggregations}
+          />
         </div>
 
-        <SortDropdown
-          value={currentFilters.sort}
-          onChange={handleSortChange}
-          disabled={isLoading}
-        />
-      </div>
+        {/* Controls Bar */}
+        <div className="mb-6 flex items-center justify-between gap-4">
+          <div className="text-sm text-gray-600 dark:text-gray-400">
+            {isLoading ? (
+              <Skeleton className="h-4 w-32" />
+            ) : (
+              <>
+                Showing {((currentFilters.page - 1) * 20) + 1} -{" "}
+                {Math.min(currentFilters.page * 20, total)} of {total} products
+              </>
+            )}
+          </div>
 
-      {/* Pagination */}
-      {totalPages > 1 && (
-        <div className="mt-8 flex justify-center">
-          <CategoryPagination
-            currentPage={currentFilters.page}
-            totalPages={totalPages}
-            onPageChange={handlePageChange}
+          <SortDropdown
+            value={currentFilters.sort}
+            onChange={handleSortChange}
             disabled={isLoading}
           />
         </div>
-      )}
-    </>
+
+        {/* Product Grid - Passed as children */}
+        {children}
+
+        {/* Pagination */}
+        {totalPages > 1 && (
+          <div className="mt-8 flex justify-center">
+            <CategoryPagination
+              currentPage={currentFilters.page}
+              totalPages={totalPages}
+              onPageChange={handlePageChange}
+              disabled={isLoading}
+            />
+          </div>
+        )}
+      </div>
+    </div>
   );
 }
 

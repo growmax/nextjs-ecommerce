@@ -1,0 +1,346 @@
+/**
+ * useCategoryFilters Hook
+ * 
+ * Manages filter state for category page filters
+ * Handles URL synchronization and filter updates
+ */
+
+import type { CategoryFilterState } from "@/types/category-filters";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
+import { useCallback, useMemo, useTransition } from "react";
+
+/**
+ * Parse filter values from URL search params
+ */
+function parseFilterFromURL(
+  searchParams: URLSearchParams,
+  key: string
+): string[] {
+  const values = searchParams.getAll(key);
+  return values.filter((v) => v.trim() !== "");
+}
+
+/**
+ * Parse variant attributes from URL
+ * Format: ?color=Red&color=Blue&size=Large
+ */
+function parseVariantAttributesFromURL(
+  searchParams: URLSearchParams
+): Record<string, string[]> {
+  const variantAttrs: Record<string, string[]> = {};
+
+  // Get all keys that might be variant attributes
+  // We'll need to determine this based on known attributes or pass them as a prop
+  // For now, we'll parse any key that's not a known filter key
+  const knownKeys = new Set([
+    "page",
+    "sort",
+    "in_stock",
+    // Add other known filter keys here
+  ]);
+
+  searchParams.forEach((value, key) => {
+    if (!knownKeys.has(key)) {
+      // Assume this is a variant attribute or product specification
+      if (!variantAttrs[key]) {
+        variantAttrs[key] = [];
+      }
+      variantAttrs[key].push(value);
+    }
+  });
+
+  return variantAttrs;
+}
+
+/**
+ * Parse product specifications from URL
+ * Format: ?spec_key=value1&spec_key=value2
+ * We'll use a prefix to distinguish specs from variant attributes
+ */
+function parseProductSpecificationsFromURL(
+  searchParams: URLSearchParams
+): Record<string, string[]> {
+  const specs: Record<string, string[]> = {};
+
+  searchParams.forEach((value, key) => {
+    if (key.startsWith("spec_")) {
+      const specKey = key.replace("spec_", "");
+      if (!specs[specKey]) {
+        specs[specKey] = [];
+      }
+      specs[specKey].push(value);
+    }
+  });
+
+  return specs;
+}
+
+/**
+ * Build URL search params from filter state
+ */
+function buildURLParams(
+  filters: CategoryFilterState,
+  existingParams: URLSearchParams
+): URLSearchParams {
+  const params = new URLSearchParams(existingParams);
+
+  // Remove existing filter params
+  const keysToRemove: string[] = [];
+  params.forEach((_, key) => {
+    if (
+      key !== "page" &&
+      key !== "sort" &&
+      !key.startsWith("spec_") &&
+      key !== "in_stock"
+    ) {
+      keysToRemove.push(key);
+    }
+  });
+  keysToRemove.forEach((key) => params.delete(key));
+
+  // Add variant attributes
+  Object.entries(filters.variantAttributes).forEach(([attrName, values]) => {
+    values.forEach((value) => {
+      params.append(attrName, value);
+    });
+  });
+
+  // Add product specifications
+  Object.entries(filters.productSpecifications).forEach(([specKey, values]) => {
+    values.forEach((value) => {
+      params.append(`spec_${specKey}`, value);
+    });
+  });
+
+  // Add stock filter
+  if (filters.inStock !== undefined) {
+    params.set("in_stock", String(filters.inStock));
+  } else {
+    params.delete("in_stock");
+  }
+
+  return params;
+}
+
+/**
+ * Hook to manage category filters
+ */
+export function useCategoryFilters() {
+  const router = useRouter();
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
+  const [isPending, startTransition] = useTransition();
+
+  // Parse current filters from URL
+  const currentFilters = useMemo<CategoryFilterState>(() => {
+    const variantAttributes = parseVariantAttributesFromURL(searchParams);
+    const productSpecifications = parseProductSpecificationsFromURL(searchParams);
+    const inStockParam = searchParams.get("in_stock");
+    const inStock =
+      inStockParam === "true"
+        ? true
+        : inStockParam === "false"
+        ? false
+        : undefined;
+
+    return {
+      variantAttributes,
+      productSpecifications,
+      inStock,
+    };
+  }, [searchParams]);
+
+  /**
+   * Update filters in URL
+   */
+  const updateFilters = useCallback(
+    (newFilters: Partial<CategoryFilterState>) => {
+      const updatedFilters: CategoryFilterState = {
+        ...currentFilters,
+        ...newFilters,
+      };
+
+      // Merge variant attributes
+      if (newFilters.variantAttributes !== undefined) {
+        updatedFilters.variantAttributes = newFilters.variantAttributes;
+      }
+
+      // Merge product specifications
+      if (newFilters.productSpecifications !== undefined) {
+        updatedFilters.productSpecifications = newFilters.productSpecifications;
+      }
+
+      const params = buildURLParams(updatedFilters, searchParams);
+
+      // Reset page to 1 when filters change
+      params.delete("page");
+
+      const newURL = params.toString()
+        ? `${pathname}?${params.toString()}`
+        : pathname;
+
+      startTransition(() => {
+        router.replace(newURL, { scroll: false });
+      });
+    },
+    [pathname, router, searchParams, currentFilters]
+  );
+
+  /**
+   * Toggle variant attribute value
+   */
+  const toggleVariantAttribute = useCallback(
+    (attributeName: string, value: string) => {
+      const currentValues = currentFilters.variantAttributes[attributeName] || [];
+      const newValues = currentValues.includes(value)
+        ? currentValues.filter((v) => v !== value)
+        : [...currentValues, value];
+
+      updateFilters({
+        variantAttributes: {
+          ...currentFilters.variantAttributes,
+          [attributeName]: newValues.length > 0 ? newValues : undefined,
+        },
+      });
+    },
+    [currentFilters.variantAttributes, updateFilters]
+  );
+
+  /**
+   * Toggle product specification value
+   */
+  const toggleProductSpecification = useCallback(
+    (specKey: string, value: string) => {
+      const currentValues =
+        currentFilters.productSpecifications[specKey] || [];
+      const newValues = currentValues.includes(value)
+        ? currentValues.filter((v) => v !== value)
+        : [...currentValues, value];
+
+      updateFilters({
+        productSpecifications: {
+          ...currentFilters.productSpecifications,
+          [specKey]: newValues.length > 0 ? newValues : undefined,
+        },
+      });
+    },
+    [currentFilters.productSpecifications, updateFilters]
+  );
+
+  /**
+   * Set stock filter
+   */
+  const setStockFilter = useCallback(
+    (inStock: boolean | undefined) => {
+      updateFilters({ inStock });
+    },
+    [updateFilters]
+  );
+
+  /**
+   * Clear all filters
+   */
+  const clearAllFilters = useCallback(() => {
+    const params = new URLSearchParams(searchParams);
+    
+    // Remove all filter params except page and sort
+    const keysToRemove: string[] = [];
+    params.forEach((_, key) => {
+      if (key !== "page" && key !== "sort") {
+        keysToRemove.push(key);
+      }
+    });
+    keysToRemove.forEach((key) => params.delete(key));
+
+    const newURL = params.toString()
+      ? `${pathname}?${params.toString()}`
+      : pathname;
+
+    startTransition(() => {
+      router.replace(newURL, { scroll: false });
+    });
+  }, [pathname, router, searchParams]);
+
+  /**
+   * Remove a specific variant attribute filter
+   */
+  const removeVariantAttribute = useCallback(
+    (attributeName: string, value: string) => {
+      const currentValues = currentFilters.variantAttributes[attributeName] || [];
+      const newValues = currentValues.filter((v) => v !== value);
+
+      const newVariantAttrs = { ...currentFilters.variantAttributes };
+      if (newValues.length > 0) {
+        newVariantAttrs[attributeName] = newValues;
+      } else {
+        delete newVariantAttrs[attributeName];
+      }
+
+      updateFilters({
+        variantAttributes: newVariantAttrs,
+      });
+    },
+    [currentFilters.variantAttributes, updateFilters]
+  );
+
+  /**
+   * Remove a specific product specification filter
+   */
+  const removeProductSpecification = useCallback(
+    (specKey: string, value: string) => {
+      const currentValues =
+        currentFilters.productSpecifications[specKey] || [];
+      const newValues = currentValues.filter((v) => v !== value);
+
+      const newSpecs = { ...currentFilters.productSpecifications };
+      if (newValues.length > 0) {
+        newSpecs[specKey] = newValues;
+      } else {
+        delete newSpecs[specKey];
+      }
+
+      updateFilters({
+        productSpecifications: newSpecs,
+      });
+    },
+    [currentFilters.productSpecifications, updateFilters]
+  );
+
+  /**
+   * Get count of active filters
+   */
+  const activeFilterCount = useMemo(() => {
+    let count = 0;
+
+    // Count variant attributes
+    Object.values(currentFilters.variantAttributes).forEach((values) => {
+      count += values.length;
+    });
+
+    // Count product specifications
+    Object.values(currentFilters.productSpecifications).forEach((values) => {
+      count += values.length;
+    });
+
+    // Count stock filter
+    if (currentFilters.inStock !== undefined) {
+      count += 1;
+    }
+
+    return count;
+  }, [currentFilters]);
+
+  return {
+    filters: currentFilters,
+    updateFilters,
+    toggleVariantAttribute,
+    toggleProductSpecification,
+    setStockFilter,
+    clearAllFilters,
+    removeVariantAttribute,
+    removeProductSpecification,
+    activeFilterCount,
+    isPending,
+  };
+}
+

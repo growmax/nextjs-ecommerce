@@ -86,58 +86,26 @@ class BrandResolutionService {
     return Math.abs(hash);
   }
 
-  /**
-   * Convert slug to potential brand name patterns
-   * Tries common capitalization patterns to match brand names in OpenSearch
-   */
-  private convertSlugToBrandPatterns(slug: string): string[] {
-    // Convert slug back to potential brand name patterns
-    // e.g., "milwaukee" -> ["Milwaukee", "MILWAUKEE", "milwaukee"]
-    
-    const patterns: string[] = [];
-    
-    // Pattern 1: Capitalize first letter of each word
-    const capitalized = slug
-      .split("-")
-      .map((word) => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
-      .join(" ");
-    patterns.push(capitalized);
-    
-    // Pattern 2: All uppercase
-    const uppercase = slug.replace(/-/g, " ").toUpperCase();
-    if (uppercase !== capitalized.toUpperCase()) {
-      patterns.push(uppercase);
-    }
-    
-    // Pattern 3: All lowercase (for exact match)
-    const lowercase = slug.replace(/-/g, " ");
-    if (lowercase !== capitalized.toLowerCase()) {
-      patterns.push(lowercase);
-    }
-    
-    // Pattern 4: Prefix pattern (for keyword field prefix matching)
-    // Use the capitalized version as prefix
-    const firstWord = capitalized.split(" ")[0];
-    if (firstWord) {
-      patterns.push(firstWord); // First word as prefix
-    }
-    
-    return patterns;
-  }
 
   /**
    * Fetch all brands from OpenSearch using aggregation query
    */
   async getAllBrands(context?: RequestContext): Promise<Brand[]> {
     try {
-      // Get tenant code from context to build elastic index
-      const tenantCode = context?.tenantCode || "";
-      if (!tenantCode) {
-        console.warn("No tenant code provided for brand aggregation query");
+      // Get elasticCode from context to build elastic index
+      const elasticCode = context?.elasticCode || "";
+      if (!elasticCode) {
+        console.warn("No elasticCode provided for brand aggregation query");
         return [];
       }
 
-      const elasticIndex = `${tenantCode}pgandproducts`;
+      const elasticIndex = `${elasticCode}pgandproducts`;
+      
+      // Validate elasticIndex before making API call
+      if (!elasticIndex || elasticIndex === "pgandproducts") {
+        console.warn("Invalid elastic index for brand aggregation:", elasticIndex);
+        return [];
+      }
 
       // Build OpenSearch aggregation query
       const query = {
@@ -211,172 +179,111 @@ class BrandResolutionService {
 
   /**
    * Get brand by slug using direct OpenSearch query
-   * Optimized to query only the specific brand instead of fetching all brands
+   * Uses case-insensitive match query on brandsName field
+   * Since brand names are unique, we can use a simple match query instead of pattern matching
    */
   async getBrandBySlugDirect(
     slug: string,
     context?: RequestContext
   ): Promise<Brand | null> {
     try {
-      // Get tenant code from context to build elastic index
-      const tenantCode = context?.tenantCode || "";
-      if (!tenantCode) {
-        console.warn("No tenant code provided for brand resolution query");
+      // Normalize slug to lowercase for case-insensitive matching
+      // Since generateSlug() always produces lowercase slugs, we need to normalize the input
+      const normalizedSlug = slug.toLowerCase();
+      
+      // Get elasticCode from context to build elastic index
+      const elasticCode = context?.elasticCode || "";
+      if (!elasticCode) {
+        console.warn("No elasticCode provided for brand resolution query");
         return null;
       }
 
-      const elasticIndex = `${tenantCode}pgandproducts`;
+      const elasticIndex = `${elasticCode}pgandproducts`;
 
-      // Get potential brand name patterns from slug
-      const patterns = this.convertSlugToBrandPatterns(slug);
+      // Validate elasticIndex before making API call
+      if (!elasticIndex || elasticIndex === "pgandproducts") {
+        console.warn("Invalid elastic index for brand lookup:", elasticIndex);
+        return null;
+      }
 
-      // Try each pattern until we find a match
-      for (let i = 0; i < patterns.length; i++) {
-        const pattern = patterns[i];
-        const isPrefixPattern = i === patterns.length - 1; // Last pattern is prefix
-        
-        let query: any;
-        
-        if (isPrefixPattern) {
-          // Use prefix query for keyword field (last pattern)
-          query = {
-            size: 0,
-            query: {
-              bool: {
-                must: [
-                  {
-                    term: {
-                      is_published: 1,
-                    },
-                  },
-                  {
-                    prefix: {
-                      "brands_name.keyword": pattern,
-                    },
-                  },
-                ],
-                must_not: [
-                  {
-                    match: {
-                      pg_index_name: {
-                        query: "PrdGrp0*",
-                      },
-                    },
-                  },
-                  {
-                    term: {
-                      is_internal: true,
-                    },
-                  },
-                ],
-              },
-            },
-            aggs: {
-              brands: {
-                terms: {
-                  field: "brands_name.keyword",
-                  size: 10, // Only need first match
+      const brandNamePattern = normalizedSlug.replace(/-/g, " ");
+
+      // The analyzed field uses the analyzer which handles case-insensitivity
+      const query = {
+        size: 0,
+        query: {
+          bool: {
+            must: [
+              {
+                term: {
+                  is_published: 1,
                 },
               },
-            },
-          };
-        } else {
-          // Use exact term match for specific patterns
-          query = {
-            size: 0,
-            query: {
-              bool: {
-                must: [
-                  {
-                    term: {
-                      is_published: 1,
-                    },
-                  },
-                  {
-                    term: {
-                      "brands_name.keyword": pattern,
-                    },
-                  },
-                ],
-                must_not: [
-                  {
-                    match: {
-                      pg_index_name: {
-                        query: "PrdGrp0*",
-                      },
-                    },
-                  },
-                  {
-                    term: {
-                      is_internal: true,
-                    },
-                  },
-                ],
-              },
-            },
-            aggs: {
-              brands: {
-                terms: {
-                  field: "brands_name.keyword",
-                  size: 10, // Only need first match
+              {
+                match: {
+                  brands_name: brandNamePattern, // Case-insensitive match using analyzer
                 },
               },
+            ],
+            must_not: [
+              {
+                match: {
+                  pg_index_name: {
+                    query: "PrdGrp0*",
+                  },
+                },
+              },
+              {
+                term: {
+                  is_internal: true,
+                },
+              },
+            ],
+          },
+        },
+        aggs: {
+          brands: {
+            terms: {
+              field: "brands_name.keyword",
+              size: 1, // Only need first match since brand names are unique
             },
+          },
+        },
+      };
+
+      // Query OpenSearch for brand aggregation
+      const result = await SearchService.getAggregations(
+        elasticIndex,
+        query,
+        context
+      );
+
+      if (result.success && result.aggregations.brands) {
+        const buckets = result.aggregations.brands.buckets || [];
+        
+        // Since brand names are unique, take the first match
+        if (buckets.length > 0 && buckets[0]?.key) {
+          const brandName = buckets[0].key;
+          const brand: Brand = {
+            id: this.generateBrandId(brandName),
+            name: brandName,
+            slug: this.generateSlug(brandName),
+            isActive: true,
           };
-        }
-
-        // Query OpenSearch for brand aggregation
-        const result = await SearchService.getAggregations(
-          elasticIndex,
-          query,
-          context
-        );
-
-
-        if (result.success && result.aggregations.brands) {
-          const buckets = result.aggregations.brands.buckets || [];
           
-          // Check all buckets to find the best match
-          for (const bucket of buckets) {
-            if (!bucket || !bucket.key) continue;
-            
-            const brandName = bucket.key;
-            const brand: Brand = {
-              id: this.generateBrandId(brandName),
-              name: brandName,
-              slug: this.generateSlug(brandName),
-              isActive: true,
-            };
-            
-            
-            // If exact slug match, return immediately (best match)
-            if (brand.slug === slug) {
-              return brand;
-            }
+          // Validate slug matches as a safety check (both are lowercase now)
+          if (brand.slug === normalizedSlug) {
+            return brand;
           }
-          
-     
         }
       }
 
-      // No match found after trying all patterns
+      // No match found
       return null;
     } catch (error) {
       console.error("Error fetching brand by slug from OpenSearch:", error);
       return null;
     }
-  }
-
-  /**
-   * Get brand by slug
-   * @deprecated Use getBrandBySlugDirect() for better performance
-   */
-  async getBrandBySlug(
-    slug: string,
-    context?: RequestContext
-  ): Promise<Brand | null> {
-    const brands = await this.getAllBrands(context);
-    return brands.find((brand) => brand.slug === slug) || null;
   }
 
   /**
