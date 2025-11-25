@@ -2,7 +2,7 @@
 
 import { ColumnDef } from "@tanstack/react-table";
 import { useTranslations } from "next-intl";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
 
 import PricingFormat from "@/components/PricingFormat";
@@ -21,6 +21,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 
 import { statusColor } from "@/components/custom/statuscolors";
 import { useCurrentUser } from "@/hooks/useCurrentUser";
+import { useRequestDeduplication } from "@/hooks/useRequestDeduplication";
 import ordersFilterService, {
   OrderFilter,
 } from "@/lib/api/services/OrdersFilterService/OrdersFilterService";
@@ -64,10 +65,7 @@ const TableSkeleton = ({ rows = 10 }: { rows?: number }) => {
       </div>
       <div className="flex-1 overflow-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
         {Array.from({ length: rows }).map((_, rowIndex) => (
-          <div
-            key={`row-${rowIndex}`}
-            className="border-b border-border flex "
-          >
+          <div key={`row-${rowIndex}`} className="border-b border-border flex ">
             {Array.from({ length: 11 }).map((_, colIndex) => (
               <div
                 key={`cell-${rowIndex}-${colIndex}`}
@@ -97,6 +95,12 @@ function OrdersLandingTable({
   const { user } = useCurrentUser();
   const router = useRouter();
   const t = useTranslations("orders");
+  const { deduplicate } = useRequestDeduplication();
+
+  // Refs to prevent duplicate API calls
+  const isFetchingRef = useRef(false);
+  const lastFetchParamsRef = useRef<string>("");
+  const abortControllerRef = useRef<AbortController | null>(null);
 
   // State
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
@@ -378,100 +382,143 @@ function OrdersLandingTable({
       return;
     }
 
-    setLoading(true);
+    // Create a unique key for this fetch request
+    const fetchKey = `orders-${JSON.stringify({
+      page,
+      rowPerPage,
+      userId: user.userId,
+      companyId: user.companyId,
+      filterData,
+    })}`;
 
-    const calculatedOffset = page;
-    const userId = parseInt(user.userId.toString());
-    const companyId = parseInt(user.companyId.toString());
-
-    try {
-      let response;
-
-      if (filterData) {
-        const isSimpleStatusFilter =
-          filterData.status &&
-          filterData.status.length === 1 &&
-          !filterData.quoteId &&
-          !filterData.quoteName &&
-          !filterData.quotedDateStart &&
-          !filterData.quotedDateEnd &&
-          !filterData.lastUpdatedDateStart &&
-          !filterData.lastUpdatedDateEnd &&
-          !filterData.subtotalStart &&
-          !filterData.subtotalEnd &&
-          !filterData.taxableStart &&
-          !filterData.taxableEnd &&
-          !filterData.totalStart &&
-          !filterData.totalEnd;
-
-        if (isSimpleStatusFilter) {
-          const status = filterData.status?.[0];
-          if (status) {
-            response = await ordersFilterService.getOrdersByStatus(
-              userId,
-              companyId,
-              status,
-              calculatedOffset,
-              rowPerPage
-            );
-          } else {
-            throw new Error("Status is undefined");
-          }
-        } else {
-          const filter = createFilterFromData(filterData, calculatedOffset);
-          response = await ordersFilterService.getOrdersWithCustomFilters(
-            userId,
-            companyId,
-            filter
-          );
-        }
-      } else {
-        response = await ordersFilterService.getAllOrders(
-          userId,
-          companyId,
-          calculatedOffset,
-          rowPerPage
-        );
+    // Use deduplication to prevent concurrent duplicate requests
+    return deduplicate(async () => {
+      // Prevent duplicate calls with same parameters
+      if (isFetchingRef.current && lastFetchParamsRef.current === fetchKey) {
+        return;
       }
 
-      const apiResponse = response as {
-        data?: {
+      // Cancel any in-flight request
+      if (abortControllerRef.current) {
+        abortControllerRef.current.abort();
+      }
+
+      // Create new abort controller for this request
+      abortControllerRef.current = new AbortController();
+      const signal = abortControllerRef.current.signal;
+
+      // Mark as fetching and store params
+      isFetchingRef.current = true;
+      lastFetchParamsRef.current = fetchKey;
+
+      setLoading(true);
+
+      const calculatedOffset = page;
+      const userId = parseInt(user.userId.toString());
+      const companyId = parseInt(user.companyId.toString());
+
+      try {
+        let response;
+
+        if (filterData) {
+          const isSimpleStatusFilter =
+            filterData.status &&
+            filterData.status.length === 1 &&
+            !filterData.quoteId &&
+            !filterData.quoteName &&
+            !filterData.quotedDateStart &&
+            !filterData.quotedDateEnd &&
+            !filterData.lastUpdatedDateStart &&
+            !filterData.lastUpdatedDateEnd &&
+            !filterData.subtotalStart &&
+            !filterData.subtotalEnd &&
+            !filterData.taxableStart &&
+            !filterData.taxableEnd &&
+            !filterData.totalStart &&
+            !filterData.totalEnd;
+
+          if (isSimpleStatusFilter) {
+            const status = filterData.status?.[0];
+            if (status) {
+              response = await ordersFilterService.getOrdersByStatus(
+                userId,
+                companyId,
+                status,
+                calculatedOffset,
+                rowPerPage
+              );
+            } else {
+              throw new Error("Status is undefined");
+            }
+          } else {
+            const filter = createFilterFromData(filterData, calculatedOffset);
+            response = await ordersFilterService.getOrdersWithCustomFilters(
+              userId,
+              companyId,
+              filter
+            );
+          }
+        } else {
+          response = await ordersFilterService.getAllOrders(
+            userId,
+            companyId,
+            calculatedOffset,
+            rowPerPage
+          );
+        }
+
+        const apiResponse = response as {
+          data?: {
+            ordersResponse?: Order[];
+            orders?: Order[];
+            totalOrderCount?: number;
+            totalCount?: number;
+          };
           ordersResponse?: Order[];
           orders?: Order[];
           totalOrderCount?: number;
           totalCount?: number;
         };
-        ordersResponse?: Order[];
-        orders?: Order[];
-        totalOrderCount?: number;
-        totalCount?: number;
-      };
 
-      const ordersData =
-        apiResponse.data?.ordersResponse ||
-        apiResponse.data?.orders ||
-        apiResponse.ordersResponse ||
-        apiResponse.orders ||
-        [];
-      const totalCountData =
-        apiResponse.data?.totalOrderCount ||
-        apiResponse.data?.totalCount ||
-        apiResponse.totalOrderCount ||
-        apiResponse.totalCount ||
-        0;
+        const ordersData =
+          apiResponse.data?.ordersResponse ||
+          apiResponse.data?.orders ||
+          apiResponse.ordersResponse ||
+          apiResponse.orders ||
+          [];
+        const totalCountData =
+          apiResponse.data?.totalOrderCount ||
+          apiResponse.data?.totalCount ||
+          apiResponse.totalOrderCount ||
+          apiResponse.totalCount ||
+          0;
 
-      setOrders(ordersData);
-      setTotalCount(totalCountData);
-    } catch {
-      toast.error(t("failedToFetch"));
-      setOrders([]);
-      setTotalCount(0);
-    } finally {
-      setLoading(false);
-      if (initialLoad) {
-        setInitialLoad(false);
+        // Only update state if request wasn't aborted
+        if (!signal.aborted) {
+          setOrders(ordersData);
+          setTotalCount(totalCountData);
+        }
+      } catch (error: any) {
+        // Don't show error if request was aborted
+        if (error?.name === "AbortError" || signal.aborted) {
+          return;
+        }
+        toast.error(t("failedToFetch"));
+        if (!signal.aborted) {
+          setOrders([]);
+          setTotalCount(0);
+        }
+      } finally {
+        // Only update loading state if request wasn't aborted
+        if (!signal.aborted) {
+          setLoading(false);
+          if (initialLoad) {
+            setInitialLoad(false);
+          }
+          isFetchingRef.current = false;
+        }
       }
-    }
+    }, fetchKey); // Close deduplicate call
   }, [
     user?.userId,
     user?.companyId,
@@ -481,6 +528,7 @@ function OrdersLandingTable({
     createFilterFromData,
     initialLoad,
     t,
+    deduplicate,
   ]);
 
   // Export functionality
@@ -599,6 +647,15 @@ function OrdersLandingTable({
       toast.success(t("ordersRefreshed"));
     }
   }, [refreshTrigger, fetchOrders, t]);
+
+  // Cleanup: abort any in-flight requests on unmount
+  useEffect(() => {
+    return () => {
+      if (abortControllerRef.current) {
+        abortControllerRef.current.abort();
+      }
+    };
+  }, []);
   const handlePrevious = () => {
     setPage(prev => prev - 1);
   };

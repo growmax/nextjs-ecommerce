@@ -8,7 +8,7 @@ import SearchDrawer from "@/components/custom/search-drawer";
 import { Button } from "@/components/ui/button";
 import { SidebarTrigger } from "@/components/ui/sidebar";
 import { LogIn, Search } from "lucide-react";
-import Link from "next/link";
+import { Link } from "@/i18n/navigation";
 import { useState } from "react";
 import Logo from "./custom/logo";
 import SearchBox from "./custom/search";
@@ -53,7 +53,7 @@ export default function NavBar() {
               {/* Unauthenticated Actions */}
               <UnauthenticatedOnly>
                 <Button variant="ghost" size="icon" asChild>
-                  <Link href="/login">
+                  <Link href="/login" prefetch={true}>
                     <LogIn className="h-5 w-5" />
                   </Link>
                 </Button>
@@ -87,7 +87,7 @@ export default function NavBar() {
             {/* Unauthenticated Actions */}
             <UnauthenticatedOnly>
               <Button variant="ghost" size="icon" asChild>
-                <Link href="/login">
+                <Link href="/login" prefetch={true}>
                   <LogIn className="h-5 w-5" />
                 </Link>
               </Button>
@@ -120,7 +120,7 @@ export default function NavBar() {
             {/* Unauthenticated Actions */}
             <UnauthenticatedOnly>
               <Button variant="default" asChild>
-                <Link href="/login">
+                <Link href="/login" prefetch={true}>
                   <LogIn className="mr-2 h-4 w-4" />
                   Login
                 </Link>

@@ -15,8 +15,21 @@ const bundleAnalyzer = withBundleAnalyzer({
 
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  // Enable React.StrictMode for better performance warnings and debugging
-  reactStrictMode: true,
+  // Disable React.StrictMode in development to prevent duplicate RSC calls
+  // Keep enabled in production via environment variable if needed
+  reactStrictMode: process.env.NODE_ENV === "production",
+  // Allow cross-origin requests in development (prevents warnings)
+  // Format: full URLs with protocol or host:port
+  allowedDevOrigins: process.env.NODE_ENV === "development" 
+    ? [
+        "http://192.168.1.8:3000",
+        "http://localhost:3000",
+        "http://127.0.0.1:3000",
+        "192.168.1.8:3000",
+        "localhost:3000",
+        "127.0.0.1:3000"
+      ]
+    : undefined,
   typescript: {
     // Allow production builds to succeed even when there are TypeScript errors
     ignoreBuildErrors: false,

@@ -1,7 +1,7 @@
 "use client";
 
 import React from "react";
-import Link from "next/link";
+import { Link } from "@/i18n/navigation";
 import { Home } from "lucide-react";
 import { BreadcrumbItem } from "@/lib/services/CategoryResolutionService";
 import {
@@ -42,7 +42,7 @@ export function CategoryBreadcrumb({ breadcrumbs }: CategoryBreadcrumbProps) {
               ) : (
                 <BreadcrumbItemComponent>
                   <BreadcrumbLink asChild>
-                    <Link href={crumb.href}>
+                    <Link href={crumb.href} prefetch={true}>
                       {index === 0 && <Home className="h-4 w-4 mr-1 inline" />}
                       {crumb.label}
                     </Link>
@@ -56,4 +56,3 @@ export function CategoryBreadcrumb({ breadcrumbs }: CategoryBreadcrumbProps) {
     </Breadcrumb>
   );
 }
-

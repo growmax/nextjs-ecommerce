@@ -7,8 +7,7 @@ import {
   Trash2,
   type LucideIcon,
 } from "lucide-react";
-import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { Link, usePathname } from "@/i18n/navigation";
 
 import {
   DropdownMenu,
@@ -50,7 +49,7 @@ export function NavProjects({
         {projects.map(item => (
           <SidebarMenuItem key={item.name}>
             <SidebarMenuButton asChild isActive={isActive(item.url)}>
-              <Link href={item.url}>
+              <Link href={item.url} prefetch={true}>
                 <item.icon />
                 <span>{item.name}</span>
               </Link>

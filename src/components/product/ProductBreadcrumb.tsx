@@ -96,7 +96,9 @@ export default async function ProductBreadcrumb({
             <BreadcrumbItem>
               {node.href ? (
                 <BreadcrumbLink asChild>
-                  <Link href={node.href}>{node.label}</Link>
+                  <Link href={node.href} prefetch={true}>
+                    {node.label}
+                  </Link>
                 </BreadcrumbLink>
               ) : (
                 <BreadcrumbPage>{node.label}</BreadcrumbPage>

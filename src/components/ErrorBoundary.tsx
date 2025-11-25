@@ -9,7 +9,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { AlertTriangle, Home, RefreshCw } from "lucide-react";
-import Link from "next/link";
+import { Link } from "@/i18n/navigation";
 import React, { Component, type ReactNode } from "react";
 
 interface ErrorBoundaryProps {
@@ -99,7 +99,7 @@ export class ErrorBoundary extends Component<
                   Try Again
                 </Button>
                 <Button asChild variant="outline" className="flex-1">
-                  <Link href="/">
+                  <Link href="/" prefetch={true}>
                     <Home className="mr-2 h-4 w-4" />
                     Go Home
                   </Link>

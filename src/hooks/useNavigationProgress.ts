@@ -36,6 +36,9 @@ interface UseNavigationProgressOptions {
  *
  * This hook integrates with Next.js App Router navigation events and your existing
  * LoadingContext to automatically show/hide a progress bar during navigation.
+ *
+ * The loader shows immediately on navigation clicks and hides only after navigation completes.
+ * It is separate from API loading states.
  */
 export function useNavigationProgress({
   autoDetect = true,
@@ -44,13 +47,16 @@ export function useNavigationProgress({
   timeoutMs = 30000,
 }: UseNavigationProgressOptions = {}) {
   const pathname = usePathname();
-  const { isLoading: globalLoading, showLoading, hideLoading } = useLoading();
+  const { showLoading, hideLoading } = useLoading();
 
   const loadingId = "navigation";
   const timeoutRef = useRef<NodeJS.Timeout | null>(null);
   const startTimeRef = useRef<number | null>(null);
   const isNavigatingRef = useRef(false);
   const mountedRef = useRef(false);
+  const pendingPathnameRef = useRef<string | null>(null);
+  const lastClickTimeRef = useRef<number>(0);
+  const lastClickPathRef = useRef<string | null>(null);
 
   // Check if user prefers reduced motion
   const prefersReducedMotion =
@@ -140,7 +146,95 @@ export function useNavigationProgress({
   // Track previous pathname to detect navigation
   const prevPathnameRef = useRef<string | null>(null);
 
-  // Handle route changes - detect navigation start and end
+  // Global click handler to detect navigation clicks early
+  useEffect(() => {
+    if (!autoDetect || !mountedRef.current) return;
+
+    const handleClick = (e: MouseEvent) => {
+      // Debounce: prevent duplicate triggers within 200ms
+      const now = Date.now();
+      if (now - lastClickTimeRef.current < 200) {
+        return;
+      }
+
+      // Find the closest anchor element
+      const target = e.target as HTMLElement;
+      const anchor = target.closest("a");
+
+      if (!anchor) return;
+
+      const href = anchor.getAttribute("href");
+      if (!href) return;
+
+      // Skip external links, mailto, tel, etc.
+      if (
+        href.startsWith("http") ||
+        href.startsWith("//") ||
+        href.startsWith("mailto:") ||
+        href.startsWith("tel:") ||
+        href.startsWith("#")
+      ) {
+        return;
+      }
+
+      // Skip if already navigating to avoid duplicate triggers
+      if (isNavigatingRef.current) {
+        return;
+      }
+
+      // Skip if it's the same path (no navigation)
+      const currentPath = window.location.pathname;
+      const targetPath = href.startsWith("/")
+        ? href
+        : new URL(href, window.location.origin).pathname;
+
+      // Remove locale prefix for comparison
+      const getPathWithoutLocale = (path: string): string => {
+        return path.replace(/^\/([a-z]{2}(-[A-Z]{2})?)(?=\/|$)/, "") || "/";
+      };
+
+      const currentPathWithoutLocale = getPathWithoutLocale(currentPath);
+      const targetPathWithoutLocale = getPathWithoutLocale(targetPath);
+
+      if (currentPathWithoutLocale === targetPathWithoutLocale) {
+        return;
+      }
+
+      // Prevent duplicate clicks to the same path
+      if (lastClickPathRef.current === targetPathWithoutLocale) {
+        return;
+      }
+
+      // Check if this is a Next.js Link (has data attributes or is within a Link component)
+      // Next.js Link components typically have specific attributes
+      const isNextLink =
+        anchor.hasAttribute("data-nextjs-link") ||
+        anchor.closest("[data-nextjs-link]") !== null;
+
+      // Only handle Next.js Link clicks or internal navigation links
+      if (isNextLink || (href.startsWith("/") && !href.startsWith("//"))) {
+        // Mark this click to prevent duplicates
+        lastClickTimeRef.current = now;
+        lastClickPathRef.current = targetPathWithoutLocale;
+        pendingPathnameRef.current = targetPathWithoutLocale;
+
+        // Start navigation loader immediately on click, before pathname changes
+        // Note: We don't prevent default - let Next.js handle the actual navigation
+        startNavigation("Loading page...");
+      }
+    };
+
+    // Use capture phase to catch clicks early, but don't prevent default
+    document.addEventListener("click", handleClick, true);
+
+    return () => {
+      document.removeEventListener("click", handleClick, true);
+    };
+  }, [autoDetect, startNavigation]);
+
+  // Handle route changes - detect navigation completion
+  const pathnameChangeTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+
   useEffect(() => {
     if (!mountedRef.current) {
       // Initialize on first mount
@@ -152,57 +246,57 @@ export function useNavigationProgress({
 
     if (!pathname) return undefined;
 
-    const currentPathname = pathname;
+    // Clear any pending pathname change timeout
+    if (pathnameChangeTimeoutRef.current) {
+      clearTimeout(pathnameChangeTimeoutRef.current);
+      pathnameChangeTimeoutRef.current = null;
+    }
 
-    // If pathname changed, navigation is happening
+    // Remove locale prefix for comparison
+    const getPathWithoutLocale = (path: string): string => {
+      return path.replace(/^\/([a-z]{2}(-[A-Z]{2})?)(?=\/|$)/, "") || "/";
+    };
+
+    const currentPathname = getPathWithoutLocale(pathname);
+
+    // If pathname changed, navigation has completed
     if (
       prevPathnameRef.current !== null &&
       prevPathnameRef.current !== currentPathname
     ) {
-      // Start navigation loading immediately when pathname changes
-      if (!isNavigatingRef.current) {
-        startNavigation("Loading page...");
+      // If we were navigating, end navigation after ensuring full completion
+      // Wait 600ms to cover the full navigation cycle (~500ms navigation + buffer)
+      if (isNavigatingRef.current) {
+        pathnameChangeTimeoutRef.current = setTimeout(() => {
+          if (mountedRef.current && isNavigatingRef.current) {
+            endNavigation("route_change");
+          }
+          pathnameChangeTimeoutRef.current = null;
+        }, 600) as any;
+
+        // Update previous pathname immediately to prevent duplicate processing
+        prevPathnameRef.current = currentPathname;
+        pendingPathnameRef.current = null;
+        lastClickPathRef.current = null;
+
+        return () => {
+          if (pathnameChangeTimeoutRef.current) {
+            clearTimeout(pathnameChangeTimeoutRef.current);
+            pathnameChangeTimeoutRef.current = null;
+          }
+        };
+      } else {
+        // Navigation completed but we weren't tracking it (e.g., browser back/forward)
+        prevPathnameRef.current = currentPathname;
+        pendingPathnameRef.current = null;
+        lastClickPathRef.current = null;
       }
-
-      // End navigation after page has had time to render
-      // Use a delay to ensure the page content starts loading
-      const timeoutId = setTimeout(() => {
-        if (mountedRef.current && isNavigatingRef.current) {
-          endNavigation("route_change");
-        }
-      }, 300);
-
-      // Update previous pathname immediately
-      prevPathnameRef.current = currentPathname;
-
-      return () => {
-        clearTimeout(timeoutId);
-      };
     } else if (prevPathnameRef.current === null) {
       // Initialize on first mount
       prevPathnameRef.current = currentPathname;
     }
     return undefined;
-  }, [pathname, startNavigation, endNavigation]);
-
-  // Note: For Next.js App Router, we rely on pathname changes to detect navigation
-  // rather than intercepting clicks, as Next.js Link handles navigation internally
-  // and click interception can interfere with the navigation flow
-
-  // Handle global loading state changes
-  useEffect(() => {
-    if (!autoDetect || !mountedRef.current) return;
-
-    // If global loading starts and we're not already navigating, start navigation
-    if (globalLoading && !isNavigatingRef.current) {
-      startNavigation();
-    }
-
-    // If global loading ends and we were navigating, end navigation
-    if (!globalLoading && isNavigatingRef.current) {
-      endNavigation("global_loading_end");
-    }
-  }, [globalLoading, autoDetect, startNavigation, endNavigation]);
+  }, [pathname, endNavigation]);
 
   // Additional safety: monitor for potential stuck states
   useEffect(() => {

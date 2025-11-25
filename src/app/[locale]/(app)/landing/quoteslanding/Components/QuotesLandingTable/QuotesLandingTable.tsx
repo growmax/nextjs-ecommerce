@@ -15,6 +15,7 @@ import {
 } from "@/components/ui/dialog";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useCurrentUser } from "@/hooks/useCurrentUser";
+import { useRequestDeduplication } from "@/hooks/useRequestDeduplication";
 import PreferenceService, {
   FilterPreferenceResponse,
 } from "@/lib/api/services/PreferenceService/PreferenceService";
@@ -25,7 +26,7 @@ import { getAccounting } from "@/utils/calculation/salesCalculation/salesCalcula
 import { ColumnDef } from "@tanstack/react-table";
 import { useTranslations } from "next-intl";
 import { useRouter } from "next/navigation";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
 
 interface QuotesLandingTableProps {
@@ -40,6 +41,7 @@ function QuotesLandingTable({
   const { user } = useCurrentUser();
   const router = useRouter();
   const t = useTranslations("quotes");
+  const { deduplicate } = useRequestDeduplication();
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const [quotes, setQuotes] = useState<QuoteItem[]>([]);
   const [loading, setLoading] = useState(true);
@@ -57,6 +59,12 @@ function QuotesLandingTable({
   const [isItemsDialogOpen, setIsItemsDialogOpen] = useState(false);
   const [selectedQuoteItems, setSelectedQuoteItems] =
     useState<QuoteItem | null>(null);
+
+  // Refs to prevent duplicate API calls
+  const isFetchingRef = useRef(false);
+  const lastFetchParamsRef = useRef<string>("");
+  const abortControllerRef = useRef<AbortController | null>(null);
+  const isLoadingPreferencesRef = useRef(false);
 
   const TableSkeleton = ({ rows = 10 }: { rows?: number }) => (
     <div className="border shadow overflow-hidden flex flex-col bg-background">
@@ -314,20 +322,34 @@ function QuotesLandingTable({
 
   // Load filter preferences
   const loadFilterPreferences = useCallback(async () => {
+    // Prevent duplicate calls
+    if (isLoadingPreferencesRef.current) {
+      return null;
+    }
+
     try {
+      if (!user?.userId) {
+        return null;
+      }
+
+      isLoadingPreferencesRef.current = true;
       const preferences =
         await PreferenceService.findFilterPreferences("quote");
       setFilterPreferences(preferences);
       return preferences;
     } catch {
       return null;
+    } finally {
+      isLoadingPreferencesRef.current = false;
     }
-  }, []);
+  }, [user?.userId]);
 
   // Load preferences on component mount
   useEffect(() => {
-    loadFilterPreferences();
-  }, [loadFilterPreferences]);
+    if (user?.userId) {
+      loadFilterPreferences();
+    }
+  }, [loadFilterPreferences, user?.userId]);
 
   const fetchQuotes = useCallback(async () => {
     // Don't fetch if we don't have user info yet
@@ -336,320 +358,388 @@ function QuotesLandingTable({
       return;
     }
 
-    setLoading(true);
-    try {
-      // 0-based offset: Calculate proper starting record number
-      const calculatedOffset = page;
+    // Create a unique key for this fetch request
+    const fetchKey = `quotes-${JSON.stringify({
+      page,
+      rowPerPage,
+      userId: user.userId,
+      companyId: user.companyId,
+      filterData,
+      filterPreferences: filterPreferences?.preference?.selected,
+    })}`;
 
-      const queryParams = {
-        userId: user.userId,
-        companyId: user.companyId,
-        offset: calculatedOffset,
-        limit: rowPerPage,
-      };
-
-      // Always build a complete filter request - the API requires it
-      let filterRequest = {
-        filter_index: 0,
-        filter_name: "",
-        endCreatedDate: "",
-        endDate: "",
-        endValue: "",
-        endTaxableAmount: "",
-        endGrandTotal: "",
-        identifier: "",
-        limit: rowPerPage,
-        offset: calculatedOffset,
-        name: "",
-        pageNumber: page + 1,
-        startDate: "",
-        startCreatedDate: "",
-        startValue: "",
-        startTaxableAmount: "",
-        startGrandTotal: "",
-        status: [] as string[],
-        selectedColumns: [],
-        columnWidth: [],
-        columnPosition: "",
-        userDisplayName: "",
-        userStatus: [],
-        accountId: [],
-        branchId: [],
-      };
-
-      // Check if we have any filters to apply
-      const hasActiveFilters =
-        filterData ||
-        (filterPreferences?.preference?.filters &&
-          filterPreferences.preference.filters.length > 0 &&
-          typeof filterPreferences.preference.selected === "number" &&
-          filterPreferences.preference.filters[
-            filterPreferences.preference.selected
-          ]);
-
-      // Only modify the filter request if there are active filters
-      if (hasActiveFilters) {
-        // Update filter_index and filter_name when filters are active
-        filterRequest.filter_index = 1;
-        filterRequest.filter_name = "Quote Filter";
-
-        // Apply saved filter preferences first
-        if (filterPreferences?.preference?.filters) {
-          const activeFilter =
-            filterPreferences.preference.filters[
-              filterPreferences.preference.selected
-            ];
-          if (activeFilter) {
-            // Handle status array - use full array
-            if (
-              activeFilter.status &&
-              Array.isArray(activeFilter.status) &&
-              activeFilter.status.length > 0
-            ) {
-              filterRequest.status = activeFilter.status.filter(
-                s => s !== null && s !== undefined
-              );
-            }
-
-            // Handle date fields - ensure proper format
-            if (
-              activeFilter.startDate &&
-              typeof activeFilter.startDate === "string"
-            ) {
-              // If it's already in YYYY-MM-DD format, use it; otherwise format it
-              const dateValue = activeFilter.startDate.includes("T")
-                ? activeFilter.startDate.split("T")[0] || activeFilter.startDate
-                : activeFilter.startDate;
-              filterRequest.startDate = dateValue;
-            }
-            if (
-              activeFilter.endDate &&
-              typeof activeFilter.endDate === "string"
-            ) {
-              const dateValue = activeFilter.endDate.includes("T")
-                ? activeFilter.endDate.split("T")[0] || activeFilter.endDate
-                : activeFilter.endDate;
-              filterRequest.endDate = dateValue;
-            }
-            if (
-              activeFilter.startCreatedDate &&
-              typeof activeFilter.startCreatedDate === "string"
-            ) {
-              const dateValue = activeFilter.startCreatedDate.includes("T")
-                ? activeFilter.startCreatedDate.split("T")[0] ||
-                  activeFilter.startCreatedDate
-                : activeFilter.startCreatedDate;
-              filterRequest.startCreatedDate = dateValue;
-            }
-            if (
-              activeFilter.endCreatedDate &&
-              typeof activeFilter.endCreatedDate === "string"
-            ) {
-              const dateValue = activeFilter.endCreatedDate.includes("T")
-                ? activeFilter.endCreatedDate.split("T")[0] ||
-                  activeFilter.endCreatedDate
-                : activeFilter.endCreatedDate;
-              filterRequest.endCreatedDate = dateValue;
-            }
-
-            // Handle amount fields - ensure they're valid numbers
-            if (
-              activeFilter.startValue !== null &&
-              activeFilter.startValue !== undefined
-            ) {
-              const parsed = parseFloat(activeFilter.startValue.toString());
-              filterRequest.startValue = isNaN(parsed) ? "" : parsed.toString();
-            }
-            if (
-              activeFilter.endValue !== null &&
-              activeFilter.endValue !== undefined
-            ) {
-              const parsed = parseFloat(activeFilter.endValue.toString());
-              filterRequest.endValue = isNaN(parsed) ? "" : parsed.toString();
-            }
-            if (
-              activeFilter.startTaxableAmount !== null &&
-              activeFilter.startTaxableAmount !== undefined
-            ) {
-              const parsed = parseFloat(
-                activeFilter.startTaxableAmount.toString()
-              );
-              filterRequest.startTaxableAmount = isNaN(parsed)
-                ? ""
-                : parsed.toString();
-            }
-            if (
-              activeFilter.endTaxableAmount !== null &&
-              activeFilter.endTaxableAmount !== undefined
-            ) {
-              const parsed = parseFloat(
-                activeFilter.endTaxableAmount.toString()
-              );
-              filterRequest.endTaxableAmount = isNaN(parsed)
-                ? ""
-                : parsed.toString();
-            }
-            if (
-              activeFilter.startGrandTotal !== null &&
-              activeFilter.startGrandTotal !== undefined
-            ) {
-              const parsed = parseFloat(
-                activeFilter.startGrandTotal.toString()
-              );
-              filterRequest.startGrandTotal = isNaN(parsed)
-                ? ""
-                : parsed.toString();
-            }
-            if (
-              activeFilter.endGrandTotal !== null &&
-              activeFilter.endGrandTotal !== undefined
-            ) {
-              const parsed = parseFloat(activeFilter.endGrandTotal.toString());
-              filterRequest.endGrandTotal = isNaN(parsed)
-                ? ""
-                : parsed.toString();
-            }
-
-            // Handle quote identifier and name
-            if (activeFilter.identifier)
-              filterRequest.identifier = activeFilter.identifier;
-            if (activeFilter.name) filterRequest.name = activeFilter.name;
-          }
-        }
-
-        // Apply current filter data (overrides saved preferences)
-        if (filterData) {
-          // Helper function to format dates properly for API
-          const formatDateForAPI = (date: Date | undefined): string => {
-            if (!date) return "";
-            // Convert to YYYY-MM-DD format (date only, no time)
-            return date.toISOString().split("T")[0] || "";
-          };
-
-          // Helper function to parse and validate numeric values
-          const parseNumericValue = (value: string | undefined): string => {
-            if (!value || value.trim() === "") return "";
-            const parsed = parseFloat(value);
-            return isNaN(parsed) ? "" : parsed.toString();
-          };
-
-          filterRequest = {
-            ...filterRequest,
-            // Fix date formatting - use date only, no time
-            endCreatedDate: formatDateForAPI(filterData?.quotedDateEnd),
-            endDate: formatDateForAPI(filterData?.lastUpdatedDateEnd),
-            startDate: formatDateForAPI(filterData?.lastUpdatedDateStart),
-            startCreatedDate: formatDateForAPI(filterData?.quotedDateStart),
-
-            // Fix numeric values - ensure they're valid numbers
-            endValue: parseNumericValue(filterData?.subtotalEnd),
-            endTaxableAmount: parseNumericValue(filterData?.taxableEnd),
-            endGrandTotal: parseNumericValue(filterData?.totalEnd),
-            startValue: parseNumericValue(filterData?.subtotalStart),
-            startTaxableAmount: parseNumericValue(filterData?.taxableStart),
-            startGrandTotal: parseNumericValue(filterData?.totalStart),
-
-            // String fields
-            identifier: filterData?.quoteId?.trim() || filterRequest.identifier,
-            name: filterData?.quoteName?.trim() || filterRequest.name,
-
-            // Status array
-            status: filterData?.status
-              ? Array.isArray(filterData.status)
-                ? filterData.status
-                : [filterData.status]
-              : filterRequest.status,
-          };
-        }
+    // Use deduplication to prevent concurrent duplicate requests
+    return deduplicate(async () => {
+      // Prevent duplicate calls with same parameters
+      if (isFetchingRef.current && lastFetchParamsRef.current === fetchKey) {
+        return;
       }
 
-      // Final validation before sending request
-      const validateFilterRequest = (request: typeof filterRequest) => {
-        // Validate date ranges
-        if (
-          request.startDate &&
-          request.endDate &&
-          request.startDate > request.endDate
-        ) {
-          request.endDate = request.startDate;
-        }
-        if (
-          request.startCreatedDate &&
-          request.endCreatedDate &&
-          request.startCreatedDate > request.endCreatedDate
-        ) {
-          request.endCreatedDate = request.startCreatedDate;
-        }
+      // Cancel any in-flight request
+      if (abortControllerRef.current) {
+        abortControllerRef.current.abort();
+      }
 
-        // Validate numeric ranges
-        const validateNumericRange = (
-          start: string,
-          end: string,
-          _fieldName: string
-        ) => {
-          if (start && end) {
-            const startNum = parseFloat(start);
-            const endNum = parseFloat(end);
-            if (!isNaN(startNum) && !isNaN(endNum) && startNum > endNum) {
-              return {
-                start: Math.min(startNum, endNum).toString(),
-                end: Math.max(startNum, endNum).toString(),
-              };
-            }
-          }
-          return { start, end };
+      // Create new abort controller for this request
+      abortControllerRef.current = new AbortController();
+      const signal = abortControllerRef.current.signal;
+
+      // Mark as fetching and store params
+      isFetchingRef.current = true;
+      lastFetchParamsRef.current = fetchKey;
+
+      setLoading(true);
+      try {
+        // 0-based offset: Calculate proper starting record number
+        const calculatedOffset = page;
+
+        const queryParams = {
+          userId: user.userId,
+          companyId: user.companyId,
+          offset: calculatedOffset,
+          limit: rowPerPage,
         };
 
-        const valueRange = validateNumericRange(
-          request.startValue,
-          request.endValue,
-          "value"
+        // Always build a complete filter request - the API requires it
+        let filterRequest = {
+          filter_index: 0,
+          filter_name: "",
+          endCreatedDate: "",
+          endDate: "",
+          endValue: "",
+          endTaxableAmount: "",
+          endGrandTotal: "",
+          identifier: "",
+          limit: rowPerPage,
+          offset: calculatedOffset,
+          name: "",
+          pageNumber: page + 1,
+          startDate: "",
+          startCreatedDate: "",
+          startValue: "",
+          startTaxableAmount: "",
+          startGrandTotal: "",
+          status: [] as string[],
+          selectedColumns: [],
+          columnWidth: [],
+          columnPosition: "",
+          userDisplayName: "",
+          userStatus: [],
+          accountId: [],
+          branchId: [],
+        };
+
+        // Check if we have any filters to apply
+        const hasActiveFilters =
+          filterData ||
+          (filterPreferences?.preference?.filters &&
+            filterPreferences.preference.filters.length > 0 &&
+            typeof filterPreferences.preference.selected === "number" &&
+            filterPreferences.preference.filters[
+              filterPreferences.preference.selected
+            ]);
+
+        // Only modify the filter request if there are active filters
+        if (hasActiveFilters) {
+          // Update filter_index and filter_name when filters are active
+          filterRequest.filter_index = 1;
+          filterRequest.filter_name = "Quote Filter";
+
+          // Apply saved filter preferences first
+          if (filterPreferences?.preference?.filters) {
+            const activeFilter =
+              filterPreferences.preference.filters[
+                filterPreferences.preference.selected
+              ];
+            if (activeFilter) {
+              // Handle status array - use full array
+              if (
+                activeFilter.status &&
+                Array.isArray(activeFilter.status) &&
+                activeFilter.status.length > 0
+              ) {
+                filterRequest.status = activeFilter.status.filter(
+                  s => s !== null && s !== undefined
+                );
+              }
+
+              // Handle date fields - ensure proper format
+              if (
+                activeFilter.startDate &&
+                typeof activeFilter.startDate === "string"
+              ) {
+                // If it's already in YYYY-MM-DD format, use it; otherwise format it
+                const dateValue = activeFilter.startDate.includes("T")
+                  ? activeFilter.startDate.split("T")[0] ||
+                    activeFilter.startDate
+                  : activeFilter.startDate;
+                filterRequest.startDate = dateValue;
+              }
+              if (
+                activeFilter.endDate &&
+                typeof activeFilter.endDate === "string"
+              ) {
+                const dateValue = activeFilter.endDate.includes("T")
+                  ? activeFilter.endDate.split("T")[0] || activeFilter.endDate
+                  : activeFilter.endDate;
+                filterRequest.endDate = dateValue;
+              }
+              if (
+                activeFilter.startCreatedDate &&
+                typeof activeFilter.startCreatedDate === "string"
+              ) {
+                const dateValue = activeFilter.startCreatedDate.includes("T")
+                  ? activeFilter.startCreatedDate.split("T")[0] ||
+                    activeFilter.startCreatedDate
+                  : activeFilter.startCreatedDate;
+                filterRequest.startCreatedDate = dateValue;
+              }
+              if (
+                activeFilter.endCreatedDate &&
+                typeof activeFilter.endCreatedDate === "string"
+              ) {
+                const dateValue = activeFilter.endCreatedDate.includes("T")
+                  ? activeFilter.endCreatedDate.split("T")[0] ||
+                    activeFilter.endCreatedDate
+                  : activeFilter.endCreatedDate;
+                filterRequest.endCreatedDate = dateValue;
+              }
+
+              // Handle amount fields - ensure they're valid numbers
+              if (
+                activeFilter.startValue !== null &&
+                activeFilter.startValue !== undefined
+              ) {
+                const parsed = parseFloat(activeFilter.startValue.toString());
+                filterRequest.startValue = isNaN(parsed)
+                  ? ""
+                  : parsed.toString();
+              }
+              if (
+                activeFilter.endValue !== null &&
+                activeFilter.endValue !== undefined
+              ) {
+                const parsed = parseFloat(activeFilter.endValue.toString());
+                filterRequest.endValue = isNaN(parsed) ? "" : parsed.toString();
+              }
+              if (
+                activeFilter.startTaxableAmount !== null &&
+                activeFilter.startTaxableAmount !== undefined
+              ) {
+                const parsed = parseFloat(
+                  activeFilter.startTaxableAmount.toString()
+                );
+                filterRequest.startTaxableAmount = isNaN(parsed)
+                  ? ""
+                  : parsed.toString();
+              }
+              if (
+                activeFilter.endTaxableAmount !== null &&
+                activeFilter.endTaxableAmount !== undefined
+              ) {
+                const parsed = parseFloat(
+                  activeFilter.endTaxableAmount.toString()
+                );
+                filterRequest.endTaxableAmount = isNaN(parsed)
+                  ? ""
+                  : parsed.toString();
+              }
+              if (
+                activeFilter.startGrandTotal !== null &&
+                activeFilter.startGrandTotal !== undefined
+              ) {
+                const parsed = parseFloat(
+                  activeFilter.startGrandTotal.toString()
+                );
+                filterRequest.startGrandTotal = isNaN(parsed)
+                  ? ""
+                  : parsed.toString();
+              }
+              if (
+                activeFilter.endGrandTotal !== null &&
+                activeFilter.endGrandTotal !== undefined
+              ) {
+                const parsed = parseFloat(
+                  activeFilter.endGrandTotal.toString()
+                );
+                filterRequest.endGrandTotal = isNaN(parsed)
+                  ? ""
+                  : parsed.toString();
+              }
+
+              // Handle quote identifier and name
+              if (activeFilter.identifier)
+                filterRequest.identifier = activeFilter.identifier;
+              if (activeFilter.name) filterRequest.name = activeFilter.name;
+            }
+          }
+
+          // Apply current filter data (overrides saved preferences)
+          if (filterData) {
+            // Helper function to format dates properly for API
+            const formatDateForAPI = (date: Date | undefined): string => {
+              if (!date) return "";
+              // Convert to YYYY-MM-DD format (date only, no time)
+              return date.toISOString().split("T")[0] || "";
+            };
+
+            // Helper function to parse and validate numeric values
+            const parseNumericValue = (value: string | undefined): string => {
+              if (!value || value.trim() === "") return "";
+              const parsed = parseFloat(value);
+              return isNaN(parsed) ? "" : parsed.toString();
+            };
+
+            filterRequest = {
+              ...filterRequest,
+              // Fix date formatting - use date only, no time
+              endCreatedDate: formatDateForAPI(filterData?.quotedDateEnd),
+              endDate: formatDateForAPI(filterData?.lastUpdatedDateEnd),
+              startDate: formatDateForAPI(filterData?.lastUpdatedDateStart),
+              startCreatedDate: formatDateForAPI(filterData?.quotedDateStart),
+
+              // Fix numeric values - ensure they're valid numbers
+              endValue: parseNumericValue(filterData?.subtotalEnd),
+              endTaxableAmount: parseNumericValue(filterData?.taxableEnd),
+              endGrandTotal: parseNumericValue(filterData?.totalEnd),
+              startValue: parseNumericValue(filterData?.subtotalStart),
+              startTaxableAmount: parseNumericValue(filterData?.taxableStart),
+              startGrandTotal: parseNumericValue(filterData?.totalStart),
+
+              // String fields
+              identifier:
+                filterData?.quoteId?.trim() || filterRequest.identifier,
+              name: filterData?.quoteName?.trim() || filterRequest.name,
+
+              // Status array
+              status: filterData?.status
+                ? Array.isArray(filterData.status)
+                  ? filterData.status
+                  : [filterData.status]
+                : filterRequest.status,
+            };
+          }
+        }
+
+        // Final validation before sending request
+        const validateFilterRequest = (request: typeof filterRequest) => {
+          // Validate date ranges
+          if (
+            request.startDate &&
+            request.endDate &&
+            request.startDate > request.endDate
+          ) {
+            request.endDate = request.startDate;
+          }
+          if (
+            request.startCreatedDate &&
+            request.endCreatedDate &&
+            request.startCreatedDate > request.endCreatedDate
+          ) {
+            request.endCreatedDate = request.startCreatedDate;
+          }
+
+          // Validate numeric ranges
+          const validateNumericRange = (
+            start: string,
+            end: string,
+            _fieldName: string
+          ) => {
+            if (start && end) {
+              const startNum = parseFloat(start);
+              const endNum = parseFloat(end);
+              if (!isNaN(startNum) && !isNaN(endNum) && startNum > endNum) {
+                return {
+                  start: Math.min(startNum, endNum).toString(),
+                  end: Math.max(startNum, endNum).toString(),
+                };
+              }
+            }
+            return { start, end };
+          };
+
+          const valueRange = validateNumericRange(
+            request.startValue,
+            request.endValue,
+            "value"
+          );
+          request.startValue = valueRange.start;
+          request.endValue = valueRange.end;
+
+          const taxableRange = validateNumericRange(
+            request.startTaxableAmount,
+            request.endTaxableAmount,
+            "taxable amount"
+          );
+          request.startTaxableAmount = taxableRange.start;
+          request.endTaxableAmount = taxableRange.end;
+
+          const totalRange = validateNumericRange(
+            request.startGrandTotal,
+            request.endGrandTotal,
+            "grand total"
+          );
+          request.startGrandTotal = totalRange.start;
+          request.endGrandTotal = totalRange.end;
+
+          return request;
+        };
+
+        const validatedFilterRequest = validateFilterRequest(filterRequest);
+
+        const response = await QuotesService.getQuotes(
+          queryParams,
+          validatedFilterRequest
         );
-        request.startValue = valueRange.start;
-        request.endValue = valueRange.end;
 
-        const taxableRange = validateNumericRange(
-          request.startTaxableAmount,
-          request.endTaxableAmount,
-          "taxable amount"
-        );
-        request.startTaxableAmount = taxableRange.start;
-        request.endTaxableAmount = taxableRange.end;
-
-        const totalRange = validateNumericRange(
-          request.startGrandTotal,
-          request.endGrandTotal,
-          "grand total"
-        );
-        request.startGrandTotal = totalRange.start;
-        request.endGrandTotal = totalRange.end;
-
-        return request;
-      };
-
-      const validatedFilterRequest = validateFilterRequest(filterRequest);
-
-      const response = await QuotesService.getQuotes(
-        queryParams,
-        validatedFilterRequest
-      );
-
-      setQuotes(response.data.quotesResponse || []);
-      setTotalCount(response.data.totalQuoteCount || 0);
-    } catch {
-      toast.error(t("failedToFetch"));
-      setQuotes([]);
-    } finally {
-      setLoading(false);
-      if (initialLoad) {
-        setInitialLoad(false);
+        // Only update state if request wasn't aborted
+        if (!signal.aborted) {
+          setQuotes(response.data.quotesResponse || []);
+          setTotalCount(response.data.totalQuoteCount || 0);
+        }
+      } catch (error: any) {
+        // Don't show error if request was aborted
+        if (error?.name === "AbortError" || signal.aborted) {
+          return;
+        }
+        toast.error(t("failedToFetch"));
+        if (!signal.aborted) {
+          setQuotes([]);
+        }
+      } finally {
+        // Only update loading state if request wasn't aborted
+        if (!signal.aborted) {
+          setLoading(false);
+          if (initialLoad) {
+            setInitialLoad(false);
+          }
+          isFetchingRef.current = false;
+        }
       }
-    }
-  }, [page, rowPerPage, user, filterPreferences, filterData, initialLoad, t]);
+    }, fetchKey); // Close deduplicate call
+  }, [
+    page,
+    rowPerPage,
+    user,
+    filterPreferences,
+    filterData,
+    initialLoad,
+    t,
+    deduplicate,
+  ]);
 
   useEffect(() => {
     fetchQuotes();
   }, [fetchQuotes, refreshTrigger]);
+
+  // Cleanup: abort any in-flight requests on unmount
+  useEffect(() => {
+    return () => {
+      if (abortControllerRef.current) {
+        abortControllerRef.current.abort();
+      }
+    };
+  }, []);
 
   const handleExport = useCallback(async () => {
     try {

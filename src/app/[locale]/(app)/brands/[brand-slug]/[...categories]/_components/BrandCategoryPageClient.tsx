@@ -1,14 +1,25 @@
 "use client";
 
-import { useEffect, useState, useTransition, useCallback, useMemo } from "react";
+import {
+  useEffect,
+  useState,
+  useTransition,
+  useCallback,
+  useMemo,
+} from "react";
 import { useRouter, useSearchParams, usePathname } from "next/navigation";
 import { Brand } from "@/lib/services/BrandResolutionService";
 import {
   CategoryPath,
   BreadcrumbItem,
 } from "@/lib/services/CategoryResolutionService";
-import { buildBrandQuery, buildCategoryBrandQuery } from "@/utils/opensearch/browse-queries";
-import SearchService, { ElasticSearchQuery } from "@/lib/api/services/SearchService/SearchService";
+import {
+  buildBrandQuery,
+  buildCategoryBrandQuery,
+} from "@/utils/opensearch/browse-queries";
+import SearchService, {
+  ElasticSearchQuery,
+} from "@/lib/api/services/SearchService/SearchService";
 import { FormattedProduct } from "@/lib/api/services/SearchService/SearchService";
 import { ProductGrid } from "@/components/ProductGrid/ProductGrid";
 import { CategoryBreadcrumb } from "@/components/Breadcrumb/CategoryBreadcrumb";
@@ -16,7 +27,7 @@ import { CategoryPagination } from "@/components/Pagination/CategoryPagination";
 import { SortDropdown } from "@/components/Sort/SortDropdown";
 import { Skeleton } from "@/components/ui/skeleton";
 import { StructuredData } from "@/components/seo/StructuredData";
-import Link from "next/link";
+import { Link } from "@/i18n/navigation";
 
 interface BrandCategoryPageClientProps {
   brand: Brand;
@@ -56,16 +67,19 @@ export default function BrandCategoryPageClient({
   const [isClientFetching, setIsClientFetching] = useState(false);
 
   // Parse current filters from URL
-  const currentFilters = useMemo(() => ({
-    page: parseInt(
-      searchParams.get("page") || String(initialFilters.page),
-      10
-    ),
-    sort: parseInt(
-      searchParams.get("sort") || String(initialFilters.sort),
-      10
-    ),
-  }), [searchParams, initialFilters.page, initialFilters.sort]);
+  const currentFilters = useMemo(
+    () => ({
+      page: parseInt(
+        searchParams.get("page") || String(initialFilters.page),
+        10
+      ),
+      sort: parseInt(
+        searchParams.get("sort") || String(initialFilters.sort),
+        10
+      ),
+    }),
+    [searchParams, initialFilters.page, initialFilters.sort]
+  );
 
   /**
    * Update URL without page reload
@@ -196,9 +210,10 @@ export default function BrandCategoryPageClient({
   };
 
   const isLoading = isPending || isClientFetching;
-  const categoryName = categoryPath && categoryPath.nodes.length > 0
-    ? categoryPath.nodes[categoryPath.nodes.length - 1]?.name || null
-    : null;
+  const categoryName =
+    categoryPath && categoryPath.nodes.length > 0
+      ? categoryPath.nodes[categoryPath.nodes.length - 1]?.name || null
+      : null;
   const totalPages = Math.ceil(total / 20);
 
   // Build category URL for "View all brands" link
@@ -222,7 +237,10 @@ export default function BrandCategoryPageClient({
         "@type": "ListItem",
         position: index + 1,
         name: crumb.label,
-        item: typeof window !== "undefined" ? window.location.origin + crumb.href : crumb.href,
+        item:
+          typeof window !== "undefined"
+            ? window.location.origin + crumb.href
+            : crumb.href,
       })),
     },
   };
@@ -258,6 +276,7 @@ export default function BrandCategoryPageClient({
         {categoryUrl && (
           <Link
             href={categoryUrl}
+            prefetch={true}
             className="text-sm text-blue-600 hover:underline mt-2 inline-block"
           >
             View all brands in this category →
@@ -272,7 +291,7 @@ export default function BrandCategoryPageClient({
             <Skeleton className="h-4 w-32" />
           ) : (
             <>
-              Showing {((currentFilters.page - 1) * 20) + 1} -{" "}
+              Showing {(currentFilters.page - 1) * 20 + 1} -{" "}
               {Math.min(currentFilters.page * 20, total)} of {total} products
             </>
           )}
@@ -319,4 +338,3 @@ export default function BrandCategoryPageClient({
     </div>
   );
 }
-

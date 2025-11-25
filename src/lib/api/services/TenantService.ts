@@ -115,8 +115,15 @@ export class TenantService extends BaseService<TenantService> {
 
     try {
       const { withRedisCache } = await import("@/lib/cache");
-      return withRedisCache(`tenant:${domainUrl}`, () =>
-        this.getTenantDataServerSide(domainUrl, origin)
+      // Include origin in cache key for better cache isolation
+      // Tenant data rarely changes, so use longer TTL (2 hours = 7200 seconds)
+      const cacheKey = origin
+        ? `tenant:${domainUrl}:${origin}`
+        : `tenant:${domainUrl}`;
+      return withRedisCache(
+        cacheKey,
+        () => this.getTenantDataServerSide(domainUrl, origin),
+        7200 // 2 hours TTL - tenant data changes infrequently
       );
     } catch {
       return this.getTenantDataServerSide(domainUrl, origin);

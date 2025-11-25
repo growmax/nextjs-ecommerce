@@ -1,4 +1,5 @@
 "use client";
+import { useRouteRequestTracking } from "@/hooks/useRouteRequestTracking";
 import { PageLoader } from "@/components/Loaders/PageLoader/page-loader";
 import dynamic from "next/dynamic";
 
@@ -10,4 +11,7 @@ const ProfilePageClient = dynamic(
   }
 );
 
-export default ProfilePageClient;
+export default function ProfilePage() {
+  useRouteRequestTracking(); // Track route to prevent duplicate RSC calls
+  return <ProfilePageClient />;
+}

@@ -1,4 +1,4 @@
-import Link from "next/link";
+import { Link } from "@/i18n/navigation";
 import { Home } from "lucide-react";
 import { BreadcrumbItem } from "@/lib/services/CategoryResolutionService";
 
@@ -10,7 +10,9 @@ interface CategoryBreadcrumbServerProps {
  * CategoryBreadcrumbServer Component
  * Server-side rendered breadcrumb navigation for SEO
  */
-export function CategoryBreadcrumbServer({ breadcrumbs }: CategoryBreadcrumbServerProps) {
+export function CategoryBreadcrumbServer({
+  breadcrumbs,
+}: CategoryBreadcrumbServerProps) {
   if (!breadcrumbs || breadcrumbs.length === 0) {
     return null;
   }
@@ -23,14 +25,20 @@ export function CategoryBreadcrumbServer({ breadcrumbs }: CategoryBreadcrumbServ
 
           return (
             <li key={crumb.href} className="flex items-center">
-              {index > 0 && <span className="mx-2 text-muted-foreground">/</span>}
+              {index > 0 && (
+                <span className="mx-2 text-muted-foreground">/</span>
+              )}
               {isLast ? (
-                <span className="text-foreground font-medium" aria-current="page">
+                <span
+                  className="text-foreground font-medium"
+                  aria-current="page"
+                >
                   {crumb.label}
                 </span>
               ) : (
                 <Link
                   href={crumb.href}
+                  prefetch={true}
                   className="text-muted-foreground hover:text-foreground transition-colors"
                 >
                   {index === 0 && <Home className="h-4 w-4 mr-1 inline" />}
@@ -44,4 +52,3 @@ export function CategoryBreadcrumbServer({ breadcrumbs }: CategoryBreadcrumbServ
     </nav>
   );
 }
-

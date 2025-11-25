@@ -10,7 +10,7 @@ import {
 } from "@/components/ui/card";
 
 import { AlertCircle, Home, RefreshCw } from "lucide-react";
-import Link from "next/link";
+import { Link } from "@/i18n/navigation";
 
 /**
  * Error boundary for product detail page
@@ -60,7 +60,7 @@ export default function ProductError({
             Try Again
           </Button>
 
-          <Link href="/" className="flex-1">
+          <Link href="/" prefetch={true} className="flex-1">
             <Button variant="outline" className="w-full">
               <Home className="mr-2 h-4 w-4" />
               Go Home

@@ -53,17 +53,17 @@ export interface FormattedProduct {
 
 export interface ElasticSearchResponse {
   body: {
-  hits: {
-    hits: Array<{
-      _source: FormattedProduct;
-      _id: string;
-    }>;
-    total: {
-      value: number;
-      relation: string;
+    hits: {
+      hits: Array<{
+        _source: FormattedProduct;
+        _id: string;
+      }>;
+      total: {
+        value: number;
+        relation: string;
+      };
     };
   };
-}
 }
 
 export interface SearchProductsResponse {
@@ -107,7 +107,7 @@ export class SearchService extends BaseService<SearchService> {
   private formatElasticResults(
     response: ElasticSearchResponse
   ): FormattedProduct[] {
-    console.log(response?.body?.hits?.hits,"response")
+    console.log(response?.body?.hits?.hits, "response");
     if (!response?.body?.hits?.hits) {
       return [];
     }
@@ -115,52 +115,138 @@ export class SearchService extends BaseService<SearchService> {
     return response.body.hits.hits.map((hit: any) => {
       const source = hit._source;
       // Map snake_case fields from OpenSearch response to camelCase for compatibility
-      const productIdValue = 
+      const productIdValue =
         (typeof source.product_id === "number" ? source.product_id : null) ||
         (typeof source.productId === "number" ? source.productId : null) ||
         parseInt(hit._id, 10);
-      
+
       return {
         ...source,
         id: hit._id,
         // Map snake_case to camelCase (OpenSearch returns snake_case, we use camelCase internally)
         productId: productIdValue,
-        brandProductId: (typeof source.brand_product_id === "string" ? source.brand_product_id : source.brandProductId) as string | undefined,
-        productShortDescription: (typeof source.product_short_description === "string" ? source.product_short_description : source.productShortDescription) as string | undefined,
-        productName: (typeof source.product_name === "string" ? source.product_name : source.productName) as string | undefined,
-        shortDescription: (
-          (typeof source.shortDescription === "string" ? source.shortDescription : null) ||
-          (typeof source.product_short_description === "string" ? source.product_short_description : null) ||
-          (typeof source.productShortDescription === "string" ? source.productShortDescription : null)
-        ) as string | undefined,
-        brandsName: (typeof source.brands_name === "string" ? source.brands_name : source.brandsName) as string | undefined,
-        brandName: (
-          (typeof source.brand_name === "string" ? source.brand_name : null) ||
+        brandProductId: (typeof source.brand_product_id === "string"
+          ? source.brand_product_id
+          : source.brandProductId) as string | undefined,
+        productShortDescription: (typeof source.product_short_description ===
+        "string"
+          ? source.product_short_description
+          : source.productShortDescription) as string | undefined,
+        productName: (typeof source.product_name === "string"
+          ? source.product_name
+          : source.productName) as string | undefined,
+        shortDescription: ((typeof source.shortDescription === "string"
+          ? source.shortDescription
+          : null) ||
+          (typeof source.product_short_description === "string"
+            ? source.product_short_description
+            : null) ||
+          (typeof source.productShortDescription === "string"
+            ? source.productShortDescription
+            : null)) as string | undefined,
+        brandsName: (typeof source.brands_name === "string"
+          ? source.brands_name
+          : source.brandsName) as string | undefined,
+        brandName: ((typeof source.brand_name === "string"
+          ? source.brand_name
+          : null) ||
           (typeof source.brandName === "string" ? source.brandName : null) ||
-          (typeof source.brands_name === "string" ? source.brands_name : null) ||
-          (typeof source.brandsName === "string" ? source.brandsName : null)
-        ) as string | undefined,
+          (typeof source.brands_name === "string"
+            ? source.brands_name
+            : null) ||
+          (typeof source.brandsName === "string"
+            ? source.brandsName
+            : null)) as string | undefined,
         productAssetss: source.product_assetss || source.productAssetss,
-        productIndexName: (typeof source.product_index_name === "string" ? source.product_index_name : source.productIndexName) as string | undefined,
-        unitListPrice: (typeof source.unit_list_price === "number" ? source.unit_list_price : source.unitListPrice) as number | undefined,
-        b2CUnitListPrice: (typeof source.b2c_unit_list_price === "number" ? source.b2c_unit_list_price : source.b2CUnitListPrice) as number | undefined,
-        b2CDiscountPrice: (typeof source.b2c_discount_price === "number" ? source.b2c_discount_price : source.b2CDiscountPrice) as number | undefined,
+        productIndexName: (typeof source.product_index_name === "string"
+          ? source.product_index_name
+          : source.productIndexName) as string | undefined,
+        unitListPrice: (typeof source.unit_list_price === "number"
+          ? source.unit_list_price
+          : source.unitListPrice) as number | undefined,
+        b2CUnitListPrice: (typeof source.b2c_unit_list_price === "number"
+          ? source.b2c_unit_list_price
+          : source.b2CUnitListPrice) as number | undefined,
+        b2CDiscountPrice: (typeof source.b2c_discount_price === "number"
+          ? source.b2c_discount_price
+          : source.b2CDiscountPrice) as number | undefined,
         // Keep original fields for backward compatibility
         ...(source.product_id ? { product_id: source.product_id } : {}),
-        ...(source.brand_product_id ? { brand_product_id: source.brand_product_id } : {}),
-        ...(source.product_short_description ? { product_short_description: source.product_short_description } : {}),
+        ...(source.brand_product_id
+          ? { brand_product_id: source.brand_product_id }
+          : {}),
+        ...(source.product_short_description
+          ? { product_short_description: source.product_short_description }
+          : {}),
         ...(source.brands_name ? { brands_name: source.brands_name } : {}),
       } as unknown as FormattedProduct;
     });
   }
 
   /**
-   * Search products using Elasticsearch
+   * Search products using Elasticsearch with Redis caching
    *
    * @param options - Search options including index, query, and filters
    * @returns Formatted search results with products array and total count
    */
   async searchProducts(
+    options: ElasticSearchOptions
+  ): Promise<SearchProductsResponse> {
+    // Generate cache key from query and options (server-side only)
+    if (typeof window === "undefined") {
+      try {
+        const cacheKey = this.generateSearchCacheKey(options);
+        const { withRedisCache } = await import("@/lib/cache");
+        // Cache search results for 5 minutes (300 seconds)
+        // Category/product listings change frequently, so shorter TTL
+        return withRedisCache(
+          cacheKey,
+          () => this.searchProductsServerSide(options),
+          300 // 5 minutes TTL
+        );
+      } catch {
+        // Fall through to non-cached version if cache import fails
+      }
+    }
+
+    return this.searchProductsServerSide(options);
+  }
+
+  /**
+   * Generate cache key for search queries
+   * Creates a deterministic key from query parameters
+   */
+  private generateSearchCacheKey(options: ElasticSearchOptions): string {
+    const { elasticIndex, query, catalogCodes, equipmentCodes } = options;
+
+    // Create a stable hash of the query
+    const queryStr = JSON.stringify({
+      index: elasticIndex,
+      query: query.query,
+      size: query.size,
+      from: query.from,
+      sort: query.sort,
+      catalogCodes: catalogCodes?.sort().join(","),
+      equipmentCodes: equipmentCodes?.sort().join(","),
+    });
+
+    // Simple hash function for cache key
+    let hash = 0;
+    for (let i = 0; i < queryStr.length; i++) {
+      const char = queryStr.charCodeAt(i);
+      hash = (hash << 5) - hash + char;
+      hash = hash & hash; // Convert to 32-bit integer
+    }
+
+    return `search:${elasticIndex}:${Math.abs(hash).toString(36)}`;
+  }
+
+  /**
+   * Server-safe version of searchProducts
+   * Returns empty results on error instead of throwing
+   * This is the actual implementation that does the search
+   */
+  async searchProductsServerSide(
     options: ElasticSearchOptions
   ): Promise<SearchProductsResponse> {
     try {
@@ -183,7 +269,7 @@ export class SearchService extends BaseService<SearchService> {
           elasticRequest.ElasticBody.query.bool.must = [];
         }
 
-        console.log(codes,"codes")
+        console.log(codes, "codes");
 
         elasticRequest.ElasticBody.query.bool.must.push({
           terms: {
@@ -193,14 +279,10 @@ export class SearchService extends BaseService<SearchService> {
       }
 
       // Use BaseService callWith method for automatic context handling
-      const response = (await this.callWith(
-        "",
-        elasticRequest,
-        {
-          method: "POST",
-          ...(context && { context }),
-        }
-      )) as ElasticSearchResponse;
+      const response = (await this.callWith("", elasticRequest, {
+        method: "POST",
+        ...(context && { context }),
+      })) as ElasticSearchResponse;
 
       // Format and return results
       const formattedData = this.formatElasticResults(response);
@@ -213,7 +295,7 @@ export class SearchService extends BaseService<SearchService> {
       };
     } catch (error: any) {
       // Return empty results on error rather than throwing
-      console.log(error,"error")
+      console.log(error, "error");
       return {
         success: false,
         data: [],
@@ -225,6 +307,7 @@ export class SearchService extends BaseService<SearchService> {
   /**
    * Server-safe version of searchProducts
    * Returns empty results on error instead of throwing
+   * This is the actual implementation that does the search
    */
   async searchProductsServerSide(
     options: ElasticSearchOptions
@@ -257,14 +340,10 @@ export class SearchService extends BaseService<SearchService> {
       }
 
       // Use BaseService callWithSafe method for server-side safety
-      const response = (await this.callWithSafe(
-        "",
-        elasticRequest,
-        {
-          method: "POST",
-          ...(context && { context }),
-        }
-      )) as ElasticSearchResponse | null;
+      const response = (await this.callWithSafe("", elasticRequest, {
+        method: "POST",
+        ...(context && { context }),
+      })) as ElasticSearchResponse | null;
 
       if (!response) {
         return {
@@ -483,7 +562,11 @@ export class SearchService extends BaseService<SearchService> {
     };
 
     // Fetch aggregations
-    const result = await this.getAggregationsServerSide(elasticIndex, query, context);
+    const result = await this.getAggregationsServerSide(
+      elasticIndex,
+      query,
+      context
+    );
 
     if (!result.success) {
       return result;
@@ -495,7 +578,7 @@ export class SearchService extends BaseService<SearchService> {
     };
     if (variantAttrsAgg?.attribute_names?.buckets) {
       const attributeNames = variantAttrsAgg.attribute_names.buckets.map(
-        (bucket) => bucket.key
+        bucket => bucket.key
       );
 
       // Build aggregations for each variant attribute
@@ -518,14 +601,21 @@ export class SearchService extends BaseService<SearchService> {
           },
         };
 
-        const attrResult = await this.getAggregationsServerSide(elasticIndex, attrQuery, context);
+        const attrResult = await this.getAggregationsServerSide(
+          elasticIndex,
+          attrQuery,
+          context
+        );
         if (attrResult.success && attrResult.aggregations[attrName]) {
-          variantAggs[attrName] = attrResult.aggregations[attrName] as AggregationResult;
+          variantAggs[attrName] = attrResult.aggregations[
+            attrName
+          ] as AggregationResult;
         }
       }
 
       // Replace the attribute names aggregation with the actual attribute aggregations
-      result.aggregations.variantAttributes = variantAggs as unknown as AggregationResult;
+      result.aggregations.variantAttributes =
+        variantAggs as unknown as AggregationResult;
     }
 
     // If we have product specification keys, fetch values for each
@@ -535,7 +625,9 @@ export class SearchService extends BaseService<SearchService> {
       };
     };
     if (productSpecsAgg?.spec_keys?.keys?.buckets) {
-      const specKeys = productSpecsAgg.spec_keys.keys.buckets.map((bucket) => bucket.key);
+      const specKeys = productSpecsAgg.spec_keys.keys.buckets.map(
+        bucket => bucket.key
+      );
 
       // Build aggregations for each specification
       const specAggs: Record<string, unknown> = {};
@@ -557,14 +649,21 @@ export class SearchService extends BaseService<SearchService> {
           },
         };
 
-        const specResult = await this.getAggregationsServerSide(elasticIndex, specQuery, context);
+        const specResult = await this.getAggregationsServerSide(
+          elasticIndex,
+          specQuery,
+          context
+        );
         if (specResult.success && specResult.aggregations[specKey]) {
-          specAggs[specKey] = specResult.aggregations[specKey] as AggregationResult;
+          specAggs[specKey] = specResult.aggregations[
+            specKey
+          ] as AggregationResult;
         }
       }
 
       // Replace the spec keys aggregation with the actual spec aggregations
-      result.aggregations.productSpecifications = specAggs as unknown as AggregationResult;
+      result.aggregations.productSpecifications =
+        specAggs as unknown as AggregationResult;
     }
 
     return result;
@@ -579,6 +678,34 @@ export class SearchService extends BaseService<SearchService> {
    * @returns Aggregation results
    */
   async getAggregations(
+    elasticIndex: string,
+    query: ElasticSearchQuery,
+    context?: RequestContext
+  ): Promise<AggregationsResponse> {
+    // Use cached version if available (server-side only)
+    if (typeof window === "undefined") {
+      try {
+        const cacheKey = this.generateAggregationCacheKey(elasticIndex, query);
+        const { withRedisCache } = await import("@/lib/cache");
+        // Cache aggregations for 30 minutes (1800 seconds)
+        // Aggregations change infrequently, so longer TTL is appropriate
+        return withRedisCache(
+          cacheKey,
+          () => this.getAggregationsUncached(elasticIndex, query, context),
+          1800 // 30 minutes TTL
+        );
+      } catch {
+        // Fall through to non-cached version if cache import fails
+      }
+    }
+
+    return this.getAggregationsUncached(elasticIndex, query, context);
+  }
+
+  /**
+   * Internal method - get aggregations without caching
+   */
+  private async getAggregationsUncached(
     elasticIndex: string,
     query: ElasticSearchQuery,
     context?: RequestContext
@@ -603,7 +730,6 @@ export class SearchService extends BaseService<SearchService> {
           [key: string]: unknown;
         };
       };
-
 
       // Parse aggregations from response
       // Response structure: response.body.aggregations
@@ -635,54 +761,15 @@ export class SearchService extends BaseService<SearchService> {
   /**
    * Server-safe version of getAggregations
    * Returns empty aggregations on error instead of throwing
+   * Uses uncached version for direct server-side calls
    */
   async getAggregationsServerSide(
     elasticIndex: string,
     query: ElasticSearchQuery,
     context?: RequestContext
   ): Promise<AggregationsResponse> {
-    const elasticRequest: ElasticSearchRequest = {
-      Elasticindex: elasticIndex,
-      queryType: "search",
-      ElasticType: "pgproduct",
-      ElasticBody: query,
-    };
-
-    try {
-      // Use BaseService callWithSafe method for server-side safety
-      const response = (await this.callWithSafe("", elasticRequest, {
-        method: "POST",
-        ...(context && { context }),
-      })) as {
-        body: {
-          aggregations?: Record<string, AggregationResult>;
-          hits?: unknown;
-          [key: string]: unknown;
-        };
-      } | null;
-
-      if (!response) {
-        return {
-          success: false,
-          aggregations: {},
-        };
-      }
-
-      // Parse aggregations from response
-      const aggregations = response?.body?.aggregations || {};
-
-      return {
-        success: true,
-        aggregations,
-      };
-    } catch (error: any) {
-      console.error("Error fetching aggregations:", error);
-      // Return empty aggregations on error
-      return {
-        success: false,
-        aggregations: {},
-      };
-    }
+    // Use uncached version for server-side safety
+    return this.getAggregationsUncached(elasticIndex, query, context);
   }
 
   /**
@@ -728,13 +815,13 @@ export class SearchService extends BaseService<SearchService> {
       mustClauses.push({
         multi_match: {
           query: searchText,
-              fields: [
-                "brand_product_id^3",
-                "product_name^2",
-                "product_short_description",
-                "product_description",
-                "brands_name",
-              ],
+          fields: [
+            "brand_product_id^3",
+            "product_name^2",
+            "product_short_description",
+            "product_description",
+            "brands_name",
+          ],
           type: "best_fields",
           fuzziness: "AUTO",
         },

@@ -62,7 +62,7 @@ export class VariantService extends BaseService<VariantService> {
   protected defaultClient = openSearchClient;
 
   /**
-   * Fetch Product Group document by ID
+   * Fetch Product Group document by ID with Redis caching
    * Product Group contains variantAttributeses which define the variant structure
    *
    * @param productGroupId - Product Group ID number
@@ -71,6 +71,47 @@ export class VariantService extends BaseService<VariantService> {
    * @param context - Optional request context
    */
   async getProductGroup(
+    productGroupId: number,
+    elasticIndex: string,
+    pgIndexName?: string,
+    context?: RequestContext
+  ): Promise<ProductGroup | null> {
+    const cacheKey = `variant:group:${elasticIndex}:${productGroupId}`;
+
+    // Use cached version if available (server-side only)
+    if (typeof window === "undefined") {
+      try {
+        const { withRedisCache } = await import("@/lib/cache");
+        // Cache product group for 30 minutes (1800 seconds)
+        // Product group structure changes infrequently
+        return withRedisCache(
+          cacheKey,
+          () =>
+            this.getProductGroupUncached(
+              productGroupId,
+              elasticIndex,
+              pgIndexName,
+              context
+            ),
+          1800 // 30 minutes TTL
+        );
+      } catch {
+        // Fall through to non-cached version if cache import fails
+      }
+    }
+
+    return this.getProductGroupUncached(
+      productGroupId,
+      elasticIndex,
+      pgIndexName,
+      context
+    );
+  }
+
+  /**
+   * Internal method - fetch product group without caching
+   */
+  private async getProductGroupUncached(
     productGroupId: number,
     elasticIndex: string,
     pgIndexName?: string,
@@ -152,10 +193,48 @@ export class VariantService extends BaseService<VariantService> {
   }
 
   /**
-   * Fetch all variants for a product group
+   * Fetch all variants for a product group with Redis caching
    * Returns both Product Group structure and variant products
    */
   async getVariantsByGroup(
+    productGroupId: number,
+    elasticIndex: string,
+    context?: RequestContext
+  ): Promise<VariantData[]> {
+    const cacheKey = `variant:list:${elasticIndex}:${productGroupId}`;
+
+    // Use cached version if available (server-side only)
+    if (typeof window === "undefined") {
+      try {
+        const { withRedisCache } = await import("@/lib/cache");
+        // Cache variants for 15 minutes (900 seconds)
+        // Variants may change more frequently than product groups
+        return withRedisCache(
+          cacheKey,
+          () =>
+            this.getVariantsByGroupUncached(
+              productGroupId,
+              elasticIndex,
+              context
+            ),
+          900 // 15 minutes TTL
+        );
+      } catch {
+        // Fall through to non-cached version if cache import fails
+      }
+    }
+
+    return this.getVariantsByGroupUncached(
+      productGroupId,
+      elasticIndex,
+      context
+    );
+  }
+
+  /**
+   * Internal method - fetch variants without caching
+   */
+  private async getVariantsByGroupUncached(
     productGroupId: number,
     elasticIndex: string,
     context?: RequestContext
@@ -371,7 +450,7 @@ export class VariantService extends BaseService<VariantService> {
   }
 
   /**
-   * Fetch Product Group and all variants together
+   * Fetch Product Group and all variants together with Redis caching
    * Returns complete variant data including Product Group structure
    *
    * @param productGroupId - Product Group ID number
@@ -385,8 +464,50 @@ export class VariantService extends BaseService<VariantService> {
     pgIndexName?: string,
     context?: RequestContext
   ): Promise<VariantGroupData> {
+    const cacheKey = `variant:full:${elasticIndex}:${productGroupId}`;
+
+    // Use cached version if available (server-side only)
+    if (typeof window === "undefined") {
+      try {
+        const { withRedisCache } = await import("@/lib/cache");
+        // Cache full variant data for 15 minutes (900 seconds)
+        // Variants may change more frequently than product groups
+        return withRedisCache(
+          cacheKey,
+          () =>
+            this.getVariantsWithGroupUncached(
+              productGroupId,
+              elasticIndex,
+              pgIndexName,
+              context
+            ),
+          900 // 15 minutes TTL
+        );
+      } catch {
+        // Fall through to non-cached version if cache import fails
+      }
+    }
+
+    return this.getVariantsWithGroupUncached(
+      productGroupId,
+      elasticIndex,
+      pgIndexName,
+      context
+    );
+  }
+
+  /**
+   * Internal method - fetch variants with group without caching
+   */
+  private async getVariantsWithGroupUncached(
+    productGroupId: number,
+    elasticIndex: string,
+    pgIndexName?: string,
+    context?: RequestContext
+  ): Promise<VariantGroupData> {
     try {
       // First fetch Product Group to get variantAttributeses
+      // This will use cached version if available
       const productGroup = await this.getProductGroup(
         productGroupId,
         elasticIndex,
@@ -395,6 +516,7 @@ export class VariantService extends BaseService<VariantService> {
       );
 
       // Then fetch all products in the group
+      // This will use cached version if available
       const variants = await this.getVariantsByGroup(
         productGroupId,
         elasticIndex,
@@ -484,13 +606,14 @@ export class VariantService extends BaseService<VariantService> {
 
   /**
    * Server-side cacheable version
+   * @deprecated Use getVariantsByGroup() directly - it now includes Redis caching
    */
   async getVariantsByGroupCached(
     productGroupId: number,
     elasticIndex: string,
     context?: RequestContext
   ): Promise<VariantData[]> {
-    // This would integrate with your caching strategy
+    // getVariantsByGroup now includes Redis caching automatically
     return this.getVariantsByGroup(productGroupId, elasticIndex, context);
   }
 }

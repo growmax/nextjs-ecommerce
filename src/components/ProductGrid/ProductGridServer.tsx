@@ -7,32 +7,33 @@ import Link from "next/link";
  * Transform FormattedProduct to ProductListItem
  */
 function transformProduct(product: FormattedProduct): ProductListItem {
-  const productId =
-    product.productId ||
-    parseInt(product.id || "0", 10) ||
-    0;
+  const productId = product.productId || parseInt(product.id || "0", 10) || 0;
   const productName =
     product.productName ||
     product.productShortDescription ||
     product.shortDescription ||
     "Product";
   const productImage =
-    (product.productAssetss && Array.isArray(product.productAssetss) && product.productAssetss[0]?.source) ||
-    (product.productAssets && Array.isArray(product.productAssets) && product.productAssets[0]?.source) ||
+    (product.productAssetss &&
+      Array.isArray(product.productAssetss) &&
+      product.productAssetss[0]?.source) ||
+    (product.productAssets &&
+      Array.isArray(product.productAssets) &&
+      product.productAssets[0]?.source) ||
     "/placeholder-product.jpg";
   const productPrice: number =
     (typeof product.unitListPrice === "number" ? product.unitListPrice : 0) ||
     (typeof product.unitPrice === "number" ? product.unitPrice : 0) ||
-    (typeof product.b2CUnitListPrice === "number" ? product.b2CUnitListPrice : 0) ||
-    (typeof product.b2CDiscountPrice === "number" ? product.b2CDiscountPrice : 0) ||
+    (typeof product.b2CUnitListPrice === "number"
+      ? product.b2CUnitListPrice
+      : 0) ||
+    (typeof product.b2CDiscountPrice === "number"
+      ? product.b2CDiscountPrice
+      : 0) ||
     0;
-  const brandName =
-    product.brandName || product.brandsName || "";
+  const brandName = product.brandName || product.brandsName || "";
   const sku =
-    product.brandProductId ||
-    product.productIndexName ||
-    product.id ||
-    "";
+    product.brandProductId || product.productIndexName || product.id || "";
 
   return {
     id: productId,
@@ -41,7 +42,7 @@ function transformProduct(product: FormattedProduct): ProductListItem {
     brand: brandName,
     price: productPrice,
     image: productImage,
-    images: product.productAssetss?.map((asset) => asset.source) || [],
+    images: product.productAssetss?.map(asset => asset.source) || [],
     isNew: false,
     inStock: true,
     category: "",
@@ -58,20 +59,21 @@ interface ProductGridServerProps {
  * Server-side rendered product grid for SEO
  * Renders product HTML directly in server component
  */
-export function ProductGridServer({ products, locale = "en" }: ProductGridServerProps) {
+export function ProductGridServer({
+  products,
+  locale = "en",
+}: ProductGridServerProps) {
   if (products.length === 0) {
     return (
       <div className="py-12 text-center rounded-lg">
-        <p className="text-lg text-muted-foreground">
-          No products found.
-        </p>
+        <p className="text-lg text-muted-foreground">No products found.</p>
       </div>
     );
   }
 
   return (
     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 md:gap-6">
-      {products.map((product) => {
+      {products.map(product => {
         const productListItem = transformProduct(product);
         const productSlug = product.productIndexName || product.id || "";
         const productUrl = `/${locale}/products/${productSlug}`;
@@ -84,7 +86,7 @@ export function ProductGridServer({ products, locale = "en" }: ProductGridServer
             <div className="p-0 flex flex-col h-full">
               {/* Product Image */}
               <div className="relative w-full aspect-[16/10]">
-                <Link href={productUrl}>
+                <Link href={productUrl} prefetch={true}>
                   <Image
                     src={productListItem.image}
                     alt={productListItem.title}
@@ -103,7 +105,7 @@ export function ProductGridServer({ products, locale = "en" }: ProductGridServer
               {/* Product Info */}
               <div className="flex-1 p-2 md:p-5 flex flex-col justify-between">
                 <div className="space-y-3">
-                  <Link href={productUrl}>
+                  <Link href={productUrl} prefetch={true}>
                     <h3 className="line-clamp-2 text-base font-medium leading-tight hover:text-blue-600">
                       {productListItem.title}
                     </h3>
@@ -119,7 +121,9 @@ export function ProductGridServer({ products, locale = "en" }: ProductGridServer
                   <p className="text-sm text-muted-foreground">
                     Brand: {productListItem.brand}
                   </p>
-                  <p className="text-sm text-muted-foreground">SKU: {productListItem.sku}</p>
+                  <p className="text-sm text-muted-foreground">
+                    SKU: {productListItem.sku}
+                  </p>
 
                   {/* Stock Status */}
                   {!productListItem.inStock && (
@@ -130,7 +134,10 @@ export function ProductGridServer({ products, locale = "en" }: ProductGridServer
                 </div>
 
                 {/* Add to Cart Button - Will be hydrated client-side */}
-                <div className="pt-5 mt-auto" data-product-id={productListItem.id}>
+                <div
+                  className="pt-5 mt-auto"
+                  data-product-id={productListItem.id}
+                >
                   {/* This will be hydrated by client component */}
                 </div>
               </div>
@@ -141,4 +148,3 @@ export function ProductGridServer({ products, locale = "en" }: ProductGridServer
     </div>
   );
 }
-

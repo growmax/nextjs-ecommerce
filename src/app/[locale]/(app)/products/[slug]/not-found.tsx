@@ -10,7 +10,7 @@ import {
 } from "@/components/ui/card";
 
 import { Home, PackageX, Search } from "lucide-react";
-import Link from "next/link";
+import { Link } from "@/i18n/navigation";
 
 /**
  * Not Found page for product detail
@@ -49,14 +49,14 @@ export default function ProductNotFound() {
         </CardContent>
 
         <CardFooter className="flex flex-col sm:flex-row gap-3">
-          <Link href="/search" className="flex-1">
+          <Link href="/search" prefetch={true} className="flex-1">
             <Button variant="default" className="w-full">
               <Search className="mr-2 h-4 w-4" />
               Search Products
             </Button>
           </Link>
 
-          <Link href="/" className="flex-1">
+          <Link href="/" prefetch={true} className="flex-1">
             <Button variant="outline" className="w-full">
               <Home className="mr-2 h-4 w-4" />
               Go Home

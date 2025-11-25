@@ -7,7 +7,7 @@ import { UserApiService } from "./UserApiService";
 /**
  * ServerUserService - Handles server-side user data fetching
  * Consistent with TenantService pattern using static methods
- * 
+ *
  * Uses Redis caching to prevent duplicate API calls across requests
  */
 export class ServerUserService {
@@ -42,11 +42,9 @@ export class ServerUserService {
       }
 
       const cacheKey = `user:${sub}:${tenantCode}`;
-      
+
       try {
         const { withRedisCache } = await import("@/lib/cache");
-        
-   
 
         const result = await withRedisCache(
           cacheKey,
@@ -56,13 +54,12 @@ export class ServerUserService {
               tenantCode,
               token
             );
-    
+
             return data;
           },
-          600 // 10 minutes TTL
+          1800 // 30 minutes TTL - user data changes infrequently, longer cache improves performance
         );
-        
-        
+
         return result;
       } catch (error) {
         console.error("Error fetching user details:", error);

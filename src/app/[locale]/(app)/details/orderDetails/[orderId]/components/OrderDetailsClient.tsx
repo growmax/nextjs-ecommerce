@@ -49,7 +49,7 @@ import {
 } from "@/utils/details/orderdetails";
 import { decodeUnicode } from "@/utils/General/general";
 import { useQuery } from "@tanstack/react-query";
-import { useRouter } from "@/i18n/navigation";
+import { useNavigationWithLoader } from "@/hooks/useNavigationWithLoader";
 // Import from index.ts which re-exports as named exports
 // No loading prop to avoid double loaders - main DetailsSkeleton handles all loading states
 const OrderProductsTable = dynamic(
@@ -76,7 +76,7 @@ const OrderStatusTracker = dynamic(
 export default function OrderDetailsClient({ params }: OrderDetailsPageProps) {
   const [orderId, setOrderId] = useState<string>("");
   const [paramsLoaded, setParamsLoaded] = useState(false);
-  const router = useRouter();
+  const { push } = useNavigationWithLoader();
   const t = useTranslations("orders");
   const tDetails = useTranslations("details");
 
@@ -308,14 +308,24 @@ export default function OrderDetailsClient({ params }: OrderDetailsPageProps) {
   };
 
   const handleClose = () => {
-    router.push("/landing/orderslanding");
+    push("/landing/orderslanding");
   };
 
   const handleEditQuote = () => {
-    router.push(`/details/orderDetails/${orderId}/edit`);
+    if (orderId) {
+      push(`/details/orderDetails/${orderId}/edit`);
+    }
   };
 
   const handleEditOrder = () => {
+    // Navigate to edit page when edit icon is clicked - non-blocking
+    if (orderId) {
+      push(`/details/orderDetails/${orderId}/edit`);
+    }
+  };
+
+  const _handleEditOrderName = () => {
+    // Open dialog to edit order name
     setEditDialogOpen(true);
   };
 

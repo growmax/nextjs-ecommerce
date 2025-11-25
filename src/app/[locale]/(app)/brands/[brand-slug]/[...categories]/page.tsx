@@ -2,14 +2,21 @@ import { CategoryBreadcrumbServer } from "@/components/Breadcrumb/CategoryBreadc
 import { ProductGridServer } from "@/components/ProductGrid/ProductGridServer";
 import { StructuredDataServer } from "@/components/seo/StructuredDataServer";
 import type { RequestContext } from "@/lib/api/client";
-import SearchService, { ElasticSearchQuery, FormattedProduct } from "@/lib/api/services/SearchService/SearchService";
+import SearchService, {
+  ElasticSearchQuery,
+  FormattedProduct,
+} from "@/lib/api/services/SearchService/SearchService";
 import TenantService from "@/lib/api/services/TenantService";
 import BrandResolutionService from "@/lib/services/BrandResolutionService";
 import CategoryResolutionService from "@/lib/services/CategoryResolutionService";
-import { buildBrandQuery, buildCategoryBrandQuery } from "@/utils/opensearch/browse-queries";
+import {
+  buildBrandQuery,
+  buildCategoryBrandQuery,
+} from "@/utils/opensearch/browse-queries";
 import { Metadata } from "next";
 import { headers } from "next/headers";
-import Link from "next/link";
+import { Suspense } from "react";
+import { Link } from "@/i18n/navigation";
 import { notFound } from "next/navigation";
 import { BrandCategoryPageInteractivity } from "./_components/BrandCategoryPageInteractivity";
 
@@ -40,7 +47,7 @@ export async function generateMetadata({
   const host = headersList.get("host") || "";
   const protocol = headersList.get("x-forwarded-proto") || "https";
   const baseUrl = `${protocol}://${host}`;
-  
+
   // Fetch tenant data to get elasticCode (uses cache, so it's fast)
   let elasticCode = "";
   let tenantCode = "";
@@ -72,7 +79,10 @@ export async function generateMetadata({
   };
 
   // Resolve brand with proper RequestContext using direct OpenSearch query
-  const brand = await BrandResolutionService.getBrandBySlugDirect(brandSlug, context);
+  const brand = await BrandResolutionService.getBrandBySlugDirect(
+    brandSlug,
+    context
+  );
 
   if (!brand) {
     return {
@@ -108,8 +118,8 @@ export async function generateStaticParams() {
     }[] = [];
 
     // Add brand + top-level category combinations
-    brands.slice(0, 50).forEach((brand) => {
-      categoryTree.slice(0, 5).forEach((majorCategory) => {
+    brands.slice(0, 50).forEach(brand => {
+      categoryTree.slice(0, 5).forEach(majorCategory => {
         params.push({
           "brand-slug": brand.slug,
           categories: [majorCategory.slug],
@@ -149,7 +159,7 @@ export default async function BrandCategoryPage({
   const host = headersList.get("host") || "";
   const protocol = headersList.get("x-forwarded-proto") || "https";
   const baseUrl = `${protocol}://${host}`;
-  
+
   // Fetch tenant data to get elasticCode (uses cache, so it's fast)
   let elasticCode = "";
   let tenantCode = "";
@@ -179,13 +189,17 @@ export default async function BrandCategoryPage({
   };
 
   // Resolve brand with proper RequestContext using direct OpenSearch query
-  const brand = await BrandResolutionService.getBrandBySlugDirect(brandSlug, context);
+  const brand = await BrandResolutionService.getBrandBySlugDirect(
+    brandSlug,
+    context
+  );
 
   if (!brand) {
-    console.error(`[BrandCategoryPage] Brand not found for slug: "${brandSlug}" with elasticCode: "${elasticCode}"`);
+    console.error(
+      `[BrandCategoryPage] Brand not found for slug: "${brandSlug}" with elasticCode: "${elasticCode}"`
+    );
     notFound();
   }
-
 
   // Resolve category path if provided with proper RequestContext
   const categoryPath =
@@ -222,37 +236,40 @@ export default async function BrandCategoryPage({
   // Get elastic index from elasticCode
   const elasticIndex = elasticCode ? `${elasticCode}pgandproducts` : "";
 
-  let initialProducts: { products: FormattedProduct[]; total: number } = { 
-    products: [] as FormattedProduct[], 
-    total: 0 
-  };
+  // Fetch products - will be streamed via Suspense
+  const productsPromise = elasticIndex
+    ? (async () => {
+        try {
+          // Build query object ensuring sort is properly typed
+          const searchQuery: ElasticSearchQuery = {
+            query: queryResult.query.query,
+            size: queryResult.query.size,
+            from: queryResult.query.from,
+            _source: queryResult.query._source,
+            ...(queryResult.query.sort && { sort: queryResult.query.sort }),
+          };
 
-  if (elasticIndex) {
-    try {
-      // Build query object ensuring sort is properly typed
-      const searchQuery: ElasticSearchQuery = {
-        query: queryResult.query.query,
-        size: queryResult.query.size,
-        from: queryResult.query.from,
-        _source: queryResult.query._source,
-        ...(queryResult.query.sort && { sort: queryResult.query.sort }),
-      };
+          const result = await SearchService.searchProducts({
+            elasticIndex,
+            query: searchQuery,
+          });
 
-      const result = await SearchService.searchProducts({
-        elasticIndex,
-        query: searchQuery,
-      });
+          return {
+            products: result.data || [],
+            total: result.total || 0,
+          };
+        } catch (error) {
+          console.error(
+            `[BrandCategoryPage] Error fetching products for brand "${brand.name}":`,
+            error
+          );
+          return { products: [] as FormattedProduct[], total: 0 };
+        }
+      })()
+    : Promise.resolve({ products: [] as FormattedProduct[], total: 0 });
 
-      initialProducts = {
-        products: result.data || [],
-        total: result.total || 0,
-      };
-
-    } catch (error) {
-      console.error(`[BrandCategoryPage] Error fetching products for brand "${brand.name}":`, error);
-      // Continue with empty products - client will handle retry
-    }
-  }
+  // Await products for total count (needed for pagination)
+  const initialProducts = await productsPromise;
 
   // Get breadcrumbs
   const breadcrumbs = BrandResolutionService.getBrandBreadcrumbs(
@@ -261,9 +278,10 @@ export default async function BrandCategoryPage({
     locale
   );
 
-  const categoryName = categoryPath && categoryPath.nodes.length > 0
-    ? categoryPath.nodes[categoryPath.nodes.length - 1]?.name || null
-    : null;
+  const categoryName =
+    categoryPath && categoryPath.nodes.length > 0
+      ? categoryPath.nodes[categoryPath.nodes.length - 1]?.name || null
+      : null;
 
   // Build category URL for "View all brands" link
   const categoryUrl = categoryPath
@@ -322,6 +340,7 @@ export default async function BrandCategoryPage({
         {categoryUrl && (
           <Link
             href={categoryUrl}
+            prefetch={true}
             className="text-sm text-blue-600 hover:underline mt-2 inline-block"
           >
             View all brands in this category →
@@ -338,20 +357,59 @@ export default async function BrandCategoryPage({
         total={initialProducts.total}
       />
 
-      {/* Product Grid - Server-rendered for SEO */}
+      {/* Product Grid - Server-rendered for SEO with Suspense for streaming */}
       <div className="relative">
-        {initialProducts.products.length === 0 ? (
-          <div className="text-center py-12">
-            <p className="text-gray-600 text-lg">
-              No {brand.name} products found
-              {categoryName ? ` in ${categoryName}` : ""}.
-            </p>
-          </div>
-        ) : (
-          <ProductGridServer products={initialProducts.products} locale={locale} />
-        )}
+        <Suspense
+          fallback={
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 md:gap-6">
+              {Array.from({ length: 8 }).map((_, i) => (
+                <div
+                  key={i}
+                  className="h-[380px] bg-muted animate-pulse rounded-lg"
+                />
+              ))}
+            </div>
+          }
+        >
+          <BrandProductGridWrapper
+            productsPromise={productsPromise}
+            brandName={brand.name}
+            categoryName={categoryName}
+            locale={locale}
+          />
+        </Suspense>
       </div>
     </div>
   );
 }
 
+/**
+ * Brand Product Grid Wrapper Component
+ * Handles async product fetching with proper error handling
+ */
+async function BrandProductGridWrapper({
+  productsPromise,
+  brandName,
+  categoryName,
+  locale,
+}: {
+  productsPromise: Promise<{ products: FormattedProduct[]; total: number }>;
+  brandName: string;
+  categoryName: string | null;
+  locale: string;
+}) {
+  const { products } = await productsPromise;
+
+  if (products.length === 0) {
+    return (
+      <div className="text-center py-12">
+        <p className="text-gray-600 text-lg">
+          No {brandName} products found
+          {categoryName ? ` in ${categoryName}` : ""}.
+        </p>
+      </div>
+    );
+  }
+
+  return <ProductGridServer products={products} locale={locale} />;
+}

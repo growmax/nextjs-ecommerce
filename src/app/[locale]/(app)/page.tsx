@@ -15,6 +15,10 @@ export const metadata: Metadata = {
 // while still being updated periodically
 export const revalidate = 3600; // 1 hour
 
+// Force dynamic rendering to see Redis cache in action during development
+// Remove this line in production to re-enable ISR for better performance
+export const dynamic = "force-dynamic";
+
 export default async function HomePage() {
   // Get domain from headers
   const headersList = await headers();

@@ -7,7 +7,7 @@ import { cn } from "@/lib/utils";
 import useEmblaCarousel from "embla-carousel-react";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import Image from "next/image";
-import Link from "next/link";
+import { Link } from "@/i18n/navigation";
 import { useCallback, useEffect, useState } from "react";
 import TitleComponent from "./TitleComponent";
 
@@ -267,6 +267,7 @@ export default function CollectionSlider({
                       >
                         <Link
                           href={href}
+                          prefetch={true}
                           target={isOpenNewTabCond ? "_blank" : "_self"}
                           className="block w-full no-underline text-inherit rounded-lg"
                           style={{

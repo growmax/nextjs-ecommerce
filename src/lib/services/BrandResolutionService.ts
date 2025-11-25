@@ -86,11 +86,45 @@ class BrandResolutionService {
     return Math.abs(hash);
   }
 
-
   /**
-   * Fetch all brands from OpenSearch using aggregation query
+   * Fetch all brands from OpenSearch using aggregation query with Redis caching
    */
   async getAllBrands(context?: RequestContext): Promise<Brand[]> {
+    // Get tenant code from context to build elastic index
+    const tenantCode = context?.tenantCode || "";
+    if (!tenantCode) {
+      console.warn("No tenant code provided for brand aggregation query");
+      return [];
+    }
+
+    const elasticCode = context?.elasticCode || tenantCode;
+    const cacheKey = `brands:all:${elasticCode}`;
+
+    // Use cached version if available (server-side only)
+    if (typeof window === "undefined") {
+      try {
+        const { withRedisCache } = await import("@/lib/cache");
+        // Cache all brands for 1 hour (3600 seconds)
+        // Brand list changes very rarely
+        return withRedisCache(
+          cacheKey,
+          () => this.getAllBrandsUncached(context),
+          3600 // 1 hour TTL
+        );
+      } catch {
+        // Fall through to non-cached version if cache import fails
+      }
+    }
+
+    return this.getAllBrandsUncached(context);
+  }
+
+  /**
+   * Internal method - fetch all brands without caching
+   */
+  private async getAllBrandsUncached(
+    context?: RequestContext
+  ): Promise<Brand[]> {
     try {
       // Get elasticCode from context to build elastic index
       const elasticCode = context?.elasticCode || "";
@@ -100,10 +134,13 @@ class BrandResolutionService {
       }
 
       const elasticIndex = `${elasticCode}pgandproducts`;
-      
+
       // Validate elasticIndex before making API call
       if (!elasticIndex || elasticIndex === "pgandproducts") {
-        console.warn("Invalid elastic index for brand aggregation:", elasticIndex);
+        console.warn(
+          "Invalid elastic index for brand aggregation:",
+          elasticIndex
+        );
         return [];
       }
 
@@ -159,7 +196,7 @@ class BrandResolutionService {
 
       // Transform aggregation buckets to Brand format
       const buckets = result.aggregations.brands.buckets || [];
-      const brands: Brand[] = buckets.map((bucket) => {
+      const brands: Brand[] = buckets.map(bucket => {
         const brandName = bucket.key;
         return {
           id: this.generateBrandId(brandName),
@@ -178,11 +215,46 @@ class BrandResolutionService {
   }
 
   /**
-   * Get brand by slug using direct OpenSearch query
-   * Uses case-insensitive match query on brandsName field
-   * Since brand names are unique, we can use a simple match query instead of pattern matching
+   * Get brand by slug using direct OpenSearch query with Redis caching
+   * Optimized to query only the specific brand instead of fetching all brands
    */
   async getBrandBySlugDirect(
+    slug: string,
+    context?: RequestContext
+  ): Promise<Brand | null> {
+    // Get tenant code from context to build elastic index
+    const tenantCode = context?.tenantCode || "";
+    if (!tenantCode) {
+      console.warn("No tenant code provided for brand resolution query");
+      return null;
+    }
+
+    const elasticCode = context?.elasticCode || tenantCode;
+    const cacheKey = `brand:slug:${elasticCode}:${slug}`;
+
+    // Use cached version if available (server-side only)
+    if (typeof window === "undefined") {
+      try {
+        const { withRedisCache } = await import("@/lib/cache");
+        // Cache brand by slug for 30 minutes (1800 seconds)
+        // Brands rarely change, so longer TTL is appropriate
+        return withRedisCache(
+          cacheKey,
+          () => this.getBrandBySlugDirectUncached(slug, context),
+          1800 // 30 minutes TTL
+        );
+      } catch {
+        // Fall through to non-cached version if cache import fails
+      }
+    }
+
+    return this.getBrandBySlugDirectUncached(slug, context);
+  }
+
+  /**
+   * Internal method - get brand by slug without caching
+   */
+  private async getBrandBySlugDirectUncached(
     slug: string,
     context?: RequestContext
   ): Promise<Brand | null> {
@@ -190,7 +262,7 @@ class BrandResolutionService {
       // Normalize slug to lowercase for case-insensitive matching
       // Since generateSlug() always produces lowercase slugs, we need to normalize the input
       const normalizedSlug = slug.toLowerCase();
-      
+
       // Get elasticCode from context to build elastic index
       const elasticCode = context?.elasticCode || "";
       if (!elasticCode) {
@@ -260,7 +332,7 @@ class BrandResolutionService {
 
       if (result.success && result.aggregations.brands) {
         const buckets = result.aggregations.brands.buckets || [];
-        
+
         // Since brand names are unique, take the first match
         if (buckets.length > 0 && buckets[0]?.key) {
           const brandName = buckets[0].key;
@@ -270,7 +342,7 @@ class BrandResolutionService {
             slug: this.generateSlug(brandName),
             isActive: true,
           };
-          
+
           // Validate slug matches as a safety check (both are lowercase now)
           if (brand.slug === normalizedSlug) {
             return brand;
@@ -294,7 +366,7 @@ class BrandResolutionService {
     context?: RequestContext
   ): Promise<Brand | null> {
     const brands = await this.getAllBrands(context);
-    return brands.find((brand) => brand.id === id) || null;
+    return brands.find(brand => brand.id === id) || null;
   }
 
   /**
@@ -314,12 +386,12 @@ class BrandResolutionService {
     // Add category path if provided
     if (categoryPath && categoryPath.length > 0) {
       let currentPath = `/${locale}/brands/${brand.slug}`;
-      categoryPath.forEach((slug) => {
+      categoryPath.forEach(slug => {
         currentPath += `/${slug}`;
         breadcrumbs.push({
           label: slug
             .split("-")
-            .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
+            .map(w => w.charAt(0).toUpperCase() + w.slice(1))
             .join(" "),
           href: currentPath,
         });
@@ -341,10 +413,10 @@ class BrandResolutionService {
     const categorySuffix =
       categoryPath && categoryPath.length > 0
         ? ` ${categoryPath
-            .map((s) =>
+            .map(s =>
               s
                 .split("-")
-                .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
+                .map(w => w.charAt(0).toUpperCase() + w.slice(1))
                 .join(" ")
             )
             .join(" > ")}`
@@ -353,18 +425,20 @@ class BrandResolutionService {
     const title = `${brand.name}${categorySuffix} | Products`;
     const description = categoryPath
       ? `Shop ${brand.name} ${categoryPath
-          .map((s) =>
+          .map(s =>
             s
               .split("-")
-              .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
+              .map(w => w.charAt(0).toUpperCase() + w.slice(1))
               .join(" ")
           )
-          .join(" ")} products. Find the best ${brand.name} products at competitive prices.`
+          .join(
+            " "
+          )} products. Find the best ${brand.name} products at competitive prices.`
       : `Shop ${brand.name} products. Find the best ${brand.name} products at competitive prices.`;
 
     const pathSegments = [`/${locale}/brands/${brand.slug}`];
     if (categoryPath && categoryPath.length > 0) {
-      pathSegments.push(...categoryPath.map((s) => `/${s}`));
+      pathSegments.push(...categoryPath.map(s => `/${s}`));
     }
     const canonical = `${baseUrl}${pathSegments.join("")}`;
 
@@ -436,7 +510,6 @@ class BrandResolutionService {
       },
     };
   }
-
 }
 
 export default BrandResolutionService.getInstance();
