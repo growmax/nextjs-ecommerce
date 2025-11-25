@@ -7,9 +7,16 @@ import { UserApiService } from "./UserApiService";
 /**
  * ServerUserService - Handles server-side user data fetching
  * Consistent with TenantService pattern using static methods
+ * 
+ * Uses Redis caching to prevent duplicate API calls across requests
  */
 export class ServerUserService {
   public static async fetchUserDataServerSide(): Promise<UserApiResponse | null> {
+    // Prevent client-side execution
+    if (typeof window !== "undefined") {
+      return null;
+    }
+
     try {
       // Get services from singletons (consistent with other services)
       const cookieService = CookieService.getInstance();
@@ -34,14 +41,43 @@ export class ServerUserService {
         return null;
       }
 
-      // Fetch user data from API
-      const userData = await userApiService.fetchUserDetailsServerSide(
-        sub,
-        tenantCode,
-        token
-      );
+      const cacheKey = `user:${sub}:${tenantCode}`;
+      const apiCallStart = Date.now();
+      
+      try {
+        const { withRedisCache, isRedisEnabled } = await import("@/lib/cache");
+        const redisEnabled = isRedisEnabled();
+        
+   
 
-      return userData;
+        const result = await withRedisCache(
+          cacheKey,
+          async () => {
+            const apiStart = Date.now();
+            const data = await userApiService.fetchUserDetailsServerSide(
+              sub,
+              tenantCode,
+              token
+            );
+    
+            return data;
+          },
+          600 // 10 minutes TTL
+        );
+        
+        
+        return result;
+      } catch (error) {
+        console.error("Error fetching user details:", error);
+        // Fallback to direct call if Redis unavailable
+        const fallbackStart = Date.now();
+        const result = await userApiService.fetchUserDetailsServerSide(
+          sub,
+          tenantCode,
+          token
+        );
+        return result;
+      }
     } catch {
       return null;
     }

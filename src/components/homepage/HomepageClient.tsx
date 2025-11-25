@@ -1,13 +1,13 @@
 "use client";
 
-import React, { useMemo, useEffect, useState } from "react";
-import { useHomepageConfig, HomepageConfig } from "@/hooks/useHomepageConfig";
+import { HomepageConfig, useHomepageConfig } from "@/hooks/useHomepageConfig";
+import find from "lodash/find";
+import Image from "next/image";
+import { useEffect, useMemo, useState } from "react";
 import BannerSlider from "./BannerSlider";
 import CollectionSlider from "./CollectionSlider";
-import ProductSection from "./ProductSection";
 import CustomImageLink from "./CustomImageLink";
-import Image from "next/image";
-import find from "lodash/find";
+import ProductSection from "./ProductSection";
 
 interface HomepageClientProps {
   initialConfig?: HomepageConfig | null;
@@ -142,16 +142,6 @@ export default function HomepageClient({
     <div className="w-full">
       {visibleSections.map((section, index) => {
         const sectionData = getSectionData(section.storeFrontProperty);
-
-        // Debug logging
-        if (process.env.NODE_ENV === "development") {
-          console.log(`Rendering section ${index}:`, {
-            componentName: section.componentName,
-            sectionType: section.sectionType,
-            storeFrontProperty: section.storeFrontProperty,
-            sectionDataKeys: Object.keys(sectionData),
-          });
-        }
 
         // BannerSliderSectionCard
         if (section.componentName === "BannerSliderSectionCard") {

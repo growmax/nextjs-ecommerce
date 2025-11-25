@@ -145,7 +145,6 @@ export async function middleware(request: NextRequest) {
 
   // Add tenant information to headers
   response.headers.set("x-tenant-domain", domain);
-  response.headers.set("x-tenant-code", domain); // You might want to extract this differently
 
   // Use development origin in dev mode, actual origin in production
   const tenantOrigin =
@@ -153,6 +152,9 @@ export async function middleware(request: NextRequest) {
       ? process.env.DEFAULT_ORIGIN || request.nextUrl.origin
       : request.nextUrl.origin;
   response.headers.set("x-tenant-origin", tenantOrigin);
+  
+  // Note: x-tenant-code is NOT set here - it will be fetched from API in LayoutDataLoader
+  // Server components should fetch tenant data using TenantService.getTenantDataCached()
 
   // Anonymous token is now handled client-side via /api/auth/anonymous route
   // This prevents blocking middleware requests and improves initial page load performance

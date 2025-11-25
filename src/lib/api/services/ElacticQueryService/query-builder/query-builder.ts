@@ -39,7 +39,7 @@ export function buildProductSearchQuery(
         must: [
           {
             term: {
-              isPublished: 1,
+              is_published: 1,
             },
           },
           {

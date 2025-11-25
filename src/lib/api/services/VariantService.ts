@@ -1,11 +1,11 @@
 import type { ProductDetail } from "@/types/product/product-detail";
 import type {
-  ProductGroup,
   ElasticVariantAttributes,
+  ProductGroup,
 } from "@/types/product/product-group";
 import {
-  extractOpenSearchHits,
   extractOpenSearchData,
+  extractOpenSearchHits,
 } from "@/utils/opensearch/response-parser";
 import { openSearchClient, RequestContext } from "../client";
 import { BaseService } from "./BaseService";

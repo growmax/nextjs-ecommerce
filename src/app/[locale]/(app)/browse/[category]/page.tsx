@@ -1,39 +1,23 @@
-import { PageLoader } from "@/components/Loaders/PageLoader/page-loader";
+import { redirect } from "next/navigation";
 import { PageProps } from "@/types";
-import { Metadata } from "next";
-import { Suspense } from "react";
-import ProductListClient from "./ProductListClient";
 
-export async function generateMetadata({
-  params,
-}: PageProps): Promise<Metadata> {
-  const { category } = await params;
-  const categoryToUse = category || "all";
-  const categoryName =
-    categoryToUse === "all"
-      ? "All Products"
-      : categoryToUse
-          .replace(/-/g, " ")
-          .replace(/\b\w/g, (l: string) => l.toUpperCase());
+/**
+ * Legacy Browse Route - Redirects to new category structure
+ * 
+ * Old: /browse/[category]
+ * New: /[...categories]
+ * 
+ * This maintains backward compatibility during migration
+ */
+export default async function LegacyBrowsePage({ params }: PageProps) {
+  const { category, locale } = await params;
+  
+  // Redirect to new category structure
+  // If category is "all", redirect to home or categories list
+  if (category === "all" || !category) {
+    redirect(`/${locale}`);
+  }
 
-  return {
-    title: `${categoryName} | Browse Products | E-Commerce`,
-    description: `Browse ${categoryName.toLowerCase()} in our catalog`,
-  };
-}
-
-// Enable ISR for category pages - revalidate every 30 minutes
-export const revalidate = 1800; // 30 minutes
-
-export default async function BrowseCategoryPage({ params }: PageProps) {
-  const { category } = await params;
-
-  // Handle "all" category or fallback to "all" for any invalid category
-  const categoryToUse = category === "all" || !category ? "all" : category;
-
-  return (
-    <Suspense fallback={<PageLoader message="Loading products..." />}>
-      <ProductListClient initialCategory={categoryToUse} />
-    </Suspense>
-  );
+  // Redirect to new category route
+  redirect(`/${locale}/${category}`);
 }
