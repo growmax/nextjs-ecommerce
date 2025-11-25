@@ -1,6 +1,7 @@
 "use client";
 
 import { AppHeader } from "@/components/AppHeader/app-header";
+import { PageContent } from "@/components/layout/PageContent";
 import { PropsWithChildren, useState } from "react";
 
 export default function LayoutWithHeader({ children }: PropsWithChildren) {
@@ -14,7 +15,9 @@ export default function LayoutWithHeader({ children }: PropsWithChildren) {
           isSearchOpen ? "blur-sm" : ""
         }`}
       >
-        {children}
+        <PageContent layout="full-width">
+          {children}
+        </PageContent>
       </main>
     </>
   );

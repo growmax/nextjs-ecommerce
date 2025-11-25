@@ -17,9 +17,9 @@ export function PageContent({
   className,
 }: PageContentProps) {
   const layoutClasses = {
-    auto: "container mx-auto px-4 py-4 relative",
-    "full-width": "w-full px-4 py-4 relative", 
-    centered: "container mx-auto px-4 py-4 max-w-4xl relative",
+    auto: "container mx-auto px-2 sm:px-3 lg:px-4 py-6 sm:py-8 max-w-[80%] relative",
+    "full-width": "w-full px-2 sm:px-3 lg:px-4 py-6 sm:py-8 relative", 
+    centered: "container mx-auto px-2 sm:px-3 lg:px-4 py-6 sm:py-8 max-w-4xl relative",
   };
 
   return (

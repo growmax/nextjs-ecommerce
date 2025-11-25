@@ -180,10 +180,10 @@ export default async function CategoryPage({
     // You can redirect to home or show all products
     // For now, we'll show a message
     return (
-      <div className="container mx-auto px-4 py-8">
+      <>
         <h1 className="text-2xl font-bold">All Categories</h1>
         <p className="text-gray-600">Please select a category to browse products.</p>
-      </div>
+      </>
     );
   }
 
@@ -381,7 +381,7 @@ export default async function CategoryPage({
   };
 
   return (
-    <div className="container mx-auto px-4 py-8">
+    <>
       {/* Structured Data for SEO - Server-rendered */}
       <StructuredDataServer data={structuredData} />
 
@@ -417,7 +417,7 @@ export default async function CategoryPage({
           )}
         </div>
       </CategoryPageInteractivity>
-    </div>
+    </>
   );
 }
 

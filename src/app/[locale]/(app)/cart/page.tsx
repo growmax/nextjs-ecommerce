@@ -12,7 +12,7 @@ export const metadata: Metadata = {
 
 function CartPageSkeleton() {
   return (
-    <div className="container mx-auto px-4 py-6 max-w-7xl">
+    <>
       <div className="mb-8">
         <Skeleton className="h-9 w-48 mb-2" />
         <Skeleton className="h-5 w-32" />
@@ -94,7 +94,7 @@ function CartPageSkeleton() {
           </div>
         </div>
       </div>
-    </div>
+    </>
   );
 }
 

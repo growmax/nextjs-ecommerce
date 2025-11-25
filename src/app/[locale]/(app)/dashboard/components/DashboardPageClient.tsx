@@ -36,8 +36,7 @@ const DashboardOrdersTable = dynamic(
 export default function DashboardPageClient() {
   return (
     <div className="min-h-screen bg-background">
-      <main className="container mx-auto px-4 py-6 sm:py-8">
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 items-start">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 items-start">
           <div className="w-full">
             <Suspense
               fallback={
@@ -63,7 +62,6 @@ export default function DashboardPageClient() {
             </Suspense>
           </div>
         </div>
-      </main>
     </div>
   );
 }

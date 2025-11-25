@@ -243,7 +243,7 @@ export default async function BrandPage({
 
 
   return (
-    <div className="container mx-auto px-4 py-8">
+    <>
       {/* Structured Data for SEO - Server-rendered */}
       <StructuredDataServer data={structuredData} />
 
@@ -287,7 +287,7 @@ export default async function BrandPage({
           <ProductGridServer products={initialProducts.products} locale={locale} />
         )}
       </div>
-    </div>
+    </>
   );
 }
 
