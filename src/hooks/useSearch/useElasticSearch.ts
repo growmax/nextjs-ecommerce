@@ -2,10 +2,10 @@
  * Fields to search in for product search
  */
 const PRODUCT_SEARCH_FIELDS = [
-  "product_short_description",
-  "brands_name",
-  "products_sub_categories.subCategoryName",
-  "product_index_name",
+  "productShortDescription",
+  "brandsName",
+  "productsSubCategories.subCategoryName",
+  "productIndexName",
   "keywords",
 ] as const;
 
@@ -13,16 +13,16 @@ const PRODUCT_SEARCH_FIELDS = [
  * Fields to return in search results
  */
 const PRODUCT_SOURCE_FIELDS = [
-  "brand_product_id",
-  "product_short_description",
-  "product_assetss",
-  "brands_name",
-  "products_sub_categories.subCategoryName",
-  "product_id",
-  "product_index_name",
+  "brandProductId",
+  "productShortDescription",
+  "productAssetss",
+  "brandsName",
+  "productsSubCategories.subCategoryName",
+  "productId",
+  "productIndexName",
   "ean",
   "keywords",
-  "b2c_unit_list_price",
+  "b2CUnitListPrice",
 ] as const;
 
 export { PRODUCT_SEARCH_FIELDS, PRODUCT_SOURCE_FIELDS };

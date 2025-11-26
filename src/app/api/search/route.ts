@@ -13,7 +13,12 @@ export async function GET(req: Request) {
 
     const result = await OpenElasticSearchService.searchProductsServerSide(
       term,
-      index
+      index,
+      undefined,
+      {
+        tenantCode:
+          process.env.NEXT_PUBLIC_DEFAULT_TENANT || "schwingstetterdemo",
+      }
     );
     return NextResponse.json(result);
   } catch {
