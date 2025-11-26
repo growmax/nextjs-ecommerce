@@ -181,6 +181,9 @@ export default function OrderProductsTable({
                 <TableHead className="font-medium text-primary text-right min-w-[120px] py-3">
                   {t("discount")}
                 </TableHead>
+                <TableHead className="font-medium text-primary text-right min-w-[120px] py-3">
+                  {t("cashDiscount")}
+                </TableHead>
                 <TableHead className="font-medium text-primary text-right min-w-[140px] py-3">
                   {t("unitPrice")}
                 </TableHead>
@@ -207,7 +210,7 @@ export default function OrderProductsTable({
               {currentPageProducts.length === 0 ? (
                 <TableRow>
                   <TableCell
-                    colSpan={showInvoicedQty ? 9 : 8}
+                    colSpan={showInvoicedQty ? 10 : 9}
                     className="text-center py-8 text-muted-foreground"
                   >
                     {t("noProductsFound")}
@@ -229,6 +232,9 @@ export default function OrderProductsTable({
                       "";
                     const discountValue =
                       product.discount ?? product.discountPercentage ?? 0;
+                    // Get cash discount value from product
+                    const cashDiscountValue =
+                      product.cashdiscountValue ?? product.cashDiscountValue ?? 0;
                     // Use unitListPrice as primary source for base price, fallback to other fields
                     const basePrice =
                       product.unitListPrice ??
@@ -347,6 +353,9 @@ export default function OrderProductsTable({
                         <TableCell className="text-right min-w-[120px] py-3 font-normal text-sm text-gray-700">
                           {`${discountValue}%`}
                         </TableCell>
+                        <TableCell className="text-right min-w-[120px] py-3 font-normal text-sm text-gray-700">
+                          {cashDiscountValue > 0 ? `${cashDiscountValue}%` : "-"}
+                        </TableCell>
                         <TableCell className="text-right min-w-[140px] py-3 font-normal text-sm text-gray-700">
                           <PricingFormat value={product.unitPrice ?? 0} />
                         </TableCell>
@@ -441,6 +450,9 @@ export default function OrderProductsTable({
                         <div className="h-6"></div>
                       </TableCell>
                       <TableCell className="min-w-[140px] py-3">
+                        <div className="h-6"></div>
+                      </TableCell>
+                      <TableCell className="min-w-[120px] py-3">
                         <div className="h-6"></div>
                       </TableCell>
                       <TableCell className="min-w-[120px] py-3">

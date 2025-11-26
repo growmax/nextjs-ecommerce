@@ -127,14 +127,22 @@ export default function OrderTermsCard({ orderTerms }: OrderTermsCardProps) {
           {/* Freight */}
           <TermRow
             label={t("freight")}
-            value={orderTerms.freight}
+            value={
+              orderTerms.freight && orderTerms.freightCode
+                ? `${orderTerms.freight} - (${orderTerms.freightCode})`
+                : orderTerms.freight
+            }
             showEmpty={true}
           />
 
           {/* Insurance */}
           <TermRow
             label={t("insurance")}
-            value={orderTerms.insurance}
+            value={
+              orderTerms.insurance && orderTerms.insuranceCode
+                ? `${orderTerms.insurance} - (${orderTerms.insuranceCode})`
+                : orderTerms.insurance
+            }
             showEmpty={true}
           />
 

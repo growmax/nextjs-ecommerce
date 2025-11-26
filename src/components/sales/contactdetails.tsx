@@ -2,7 +2,6 @@
 
 import { AddressDetailsDialog } from "@/components/dialogs/AddressDetailsDialog";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { useTranslations } from "next-intl";
 import {
   HoverCard,
   HoverCardContent,
@@ -17,6 +16,7 @@ import SellerWarehouseService, {
 } from "@/lib/api/services/SellerWarehouseService/SellerWarehouseService";
 import { zoneDateTimeCalculator } from "@/utils/date-format/date-format";
 import { Pencil } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { useMemo, useState } from "react";
 import { toast } from "sonner";
 
@@ -484,8 +484,24 @@ export default function OrderContactDetails({
   const preferences = getUserPreferences();
 
   const handleBillingAddressSelect = (address: BillingAddress) => {
-    // Convert BillingAddress to AddressDetails format
-    const updatedBillingAddress: AddressDetails = {
+    // Extract branch ID from address
+    let branchId: number | undefined = undefined;
+    if (address.id) {
+      const parsedId = parseInt(address.id.toString(), 10);
+      if (!isNaN(parsedId)) {
+        branchId = parsedId;
+      }
+    }
+    if (!branchId && address.addressId?.id) {
+      const addressIdValue = address.addressId.id;
+      branchId =
+        typeof addressIdValue === "number"
+          ? addressIdValue
+          : parseInt(String(addressIdValue), 10);
+    }
+
+    // Convert BillingAddress to AddressDetails format, including id field
+    const updatedBillingAddress: AddressDetails & { id?: number } = {
       branchName: address.addressId.branchName,
       addressLine: address.addressId.addressLine || undefined,
       city: address.addressId.city || undefined,
@@ -497,6 +513,7 @@ export default function OrderContactDetails({
       mobileNo: address.addressId.mobileNo || undefined,
       phone: address.addressId.phone || undefined,
       email: address.addressId.email || undefined,
+      ...(branchId && { id: branchId }),
     };
 
     // Update UI immediately
@@ -598,8 +615,24 @@ export default function OrderContactDetails({
   };
 
   const handleShippingAddressSelect = (address: BillingAddress) => {
-    // Convert BillingAddress to AddressDetails format
-    const updatedShippingAddress: AddressDetails = {
+    // Extract branch ID from address (for shipping, this might be shipToCode related)
+    let branchId: number | undefined = undefined;
+    if (address.id) {
+      const parsedId = parseInt(address.id.toString(), 10);
+      if (!isNaN(parsedId)) {
+        branchId = parsedId;
+      }
+    }
+    if (!branchId && address.addressId?.id) {
+      const addressIdValue = address.addressId.id;
+      branchId =
+        typeof addressIdValue === "number"
+          ? addressIdValue
+          : parseInt(String(addressIdValue), 10);
+    }
+
+    // Convert BillingAddress to AddressDetails format, including id field
+    const updatedShippingAddress: AddressDetails & { id?: number } = {
       branchName: address.addressId.branchName,
       addressLine: address.addressId.addressLine || undefined,
       city: address.addressId.city || undefined,
@@ -611,6 +644,7 @@ export default function OrderContactDetails({
       mobileNo: address.addressId.mobileNo || undefined,
       phone: address.addressId.phone || undefined,
       email: address.addressId.email || undefined,
+      ...(branchId && { id: branchId }),
     };
 
     // Update UI immediately

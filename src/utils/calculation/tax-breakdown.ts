@@ -119,16 +119,49 @@ export function calculateShippingTax(
     tempCartValue[`${tax.taxName}Total`] = 0;
   });
 
+  // Initialize shippingTax outside the product loop
+  let totalShippingTax = 0;
+
   tempProducts.forEach((data, index) => {
-    let shippingTax = 0;
     let intraTotalTax = 0;
     let shippingCompound = 0;
 
     if (data.showPrice !== false) {
       if (breakup?.length > 0) {
         each(breakup, taxBreakup => {
+          // Get tax percentage - try multiple sources to ensure we have it
+          // 1. From product (set by calculateItemTaxes)
+          // 2. From product's taxBreakup (interTaxBreakup or intraTaxBreakup)
+          // 3. From taxBreakup.rate (from setTaxBreakup)
+          let taxPercentage = data[taxBreakup?.taxName] || 0;
+          
+          // If not on product, try to get from product's taxBreakup
+          if (!taxPercentage && data.hsnDetails) {
+            const taxBreakupList = isInter 
+              ? data.hsnDetails?.interTax?.taxReqLs 
+              : data.hsnDetails?.intraTax?.taxReqLs;
+            if (taxBreakupList) {
+              const matchingTax = taxBreakupList.find(
+                (t: any) => t.taxName === taxBreakup.taxName
+              );
+              if (matchingTax) {
+                taxPercentage = matchingTax.rate || 0;
+              }
+            }
+          }
+          
+          // If still not found, try from taxBreakup.rate (from setTaxBreakup result)
+          if (!taxPercentage && (taxBreakup as any).rate) {
+            taxPercentage = (taxBreakup as any).rate;
+          }
+          
+          // Set the tax percentage on the product if it wasn't set
+          if (!data[taxBreakup.taxName] && taxPercentage > 0) {
+            data[taxBreakup.taxName] = taxPercentage;
+          }
+          
           const percentage = itemWiseShippingTax
-            ? data[taxBreakup?.taxName] || 0
+            ? taxPercentage
             : 0;
 
           if (index === 0) {
@@ -147,38 +180,49 @@ export function calculateShippingTax(
           }
 
           // Calculate tax for each breakup
+          // CRITICAL: Always use discounted totalPrice (after cash discount) for tax calculation
+          // This ensures tax is calculated on subtotal (5,565.42) not original (5,679.00)
+          // Reference: getBreakupTax uses item.totalPrice which should have cash discount applied (line 643, 679)
+          let taxableBase = data.totalPrice + data.pfRate;
+
+          // If cash discount is applied, ensure we use the discounted price
+          // The totalPrice should already be discounted from cartCalculation, but verify
+          if (data.cashdiscountValue && data.cashdiscountValue > 0) {
+            // Calculate discounted total from discounted unitPrice
+            // This ensures we use the correct base: quantity * discounted unitPrice
+            const quantity = data.quantity || data.askedQuantity || 1;
+            const discountedTotal = quantity * data.unitPrice;
+            // Use discounted total for tax calculation (this is the subtotal after cash discount)
+            taxableBase = discountedTotal + data.pfRate;
+          }
+
           if (!taxBreakup.compound) {
-            data[`${taxBreakup.taxName}Value`] = data[taxBreakup.taxName]
+            data[`${taxBreakup.taxName}Value`] = taxPercentage
               ? parseFloat(
                   (
-                    ((data.totalPrice + data.pfRate) *
-                      data[taxBreakup.taxName]) /
-                    100
+                    (taxableBase * taxPercentage) / 100
                   ).toFixed(roundOff)
                 )
               : 0;
             intraTotalTax += data[`${taxBreakup.taxName}Value`];
           } else {
-            data[`${taxBreakup.taxName}Value`] = data[taxBreakup.taxName]
+            data[`${taxBreakup.taxName}Value`] = taxPercentage
               ? parseFloat(
-                  ((intraTotalTax * data[taxBreakup.taxName]) / 100).toFixed(
+                  ((intraTotalTax * taxPercentage) / 100).toFixed(
                     roundOff
                   )
                 )
               : 0;
           }
 
+          // Accumulate tax totals per tax type across all products
+          // Reference: buyer-fe getBreakupTax line 665, 701 - cartValue[`${taxName}Total`] += item[`${taxName}Value`]
+          tempCartValue[`${taxBreakup.taxName}Total`] +=
+            data[`${taxBreakup.taxName}Value`];
+
           if (!itemWiseShippingTax) {
-            tempCartValue[`${taxBreakup.taxName}Total`] +=
-              data[`${taxBreakup.taxName}Value`];
-            shippingTax += tempCartValue[`${taxBreakup.taxName}Total`];
-            tempCartValue.shippingTax = isBeforeTax
-              ? parseFloat(
-                  (totalShipping * (percentage / 100)).toFixed(roundOff)
-                )
-              : 0;
-            totalTaxIncShipping = tempCartValue.shippingTax + shippingTax;
-            tempCartValue.totalTax = totalTaxIncShipping;
+            // Calculate shipping tax only once after all products are processed
+            // Don't accumulate here - we'll do it after the loop
           } else {
             if (!taxBreakup.compound) {
               data.shippingTax = isBeforeTax
@@ -189,11 +233,7 @@ export function calculateShippingTax(
                     ).toFixed(roundOff)
                   )
                 : 0;
-              tempCartValue[`${taxBreakup.taxName}Total`] +=
-                data[`${taxBreakup.taxName}Value`] + data.shippingTax;
-              shippingTax += tempCartValue[`${taxBreakup.taxName}Total`];
-              tempCartValue.totalTax = shippingTax;
-              totalTaxIncShipping = shippingTax;
+              tempCartValue[`${taxBreakup.taxName}Total`] += data.shippingTax;
               shippingCompound += data.shippingTax;
             } else {
               data.shippingTax = isBeforeTax
@@ -201,28 +241,71 @@ export function calculateShippingTax(
                     ((shippingCompound * percentage) / 100).toFixed(roundOff)
                   )
                 : 0;
-              tempCartValue[`${taxBreakup.taxName}Total`] +=
-                data[`${taxBreakup.taxName}Value`] + data.shippingTax;
-              shippingTax += tempCartValue[`${taxBreakup.taxName}Total`];
-              tempCartValue.totalTax = shippingTax;
-              totalTaxIncShipping = shippingTax;
+              tempCartValue[`${taxBreakup.taxName}Total`] += data.shippingTax;
             }
           }
         });
       } else {
         tempCartValue.shippingTax = 0;
-        totalTaxIncShipping = shippingTax;
-        tempCartValue.totalTax = totalTaxIncShipping;
       }
-    } else {
-      tempCartValue.shippingTax = shippingTax;
     }
+  });
+
+  // After all products are processed, calculate shipping tax and sum all tax totals
+  // Reference: buyer-fe useCalculation.js lines 391-394
+  if (breakup?.length > 0 && !itemWiseShippingTax) {
+    // Calculate shipping tax based on total shipping and tax percentage
+    // Use the first tax percentage as representative (or calculate average)
+    const firstTax = breakup[0];
+    const taxPercentage = firstTax?.rate || 0;
+    tempCartValue.shippingTax = isBeforeTax
+      ? parseFloat(
+          (totalShipping * (taxPercentage / 100)).toFixed(roundOff)
+        )
+      : 0;
+  }
+
+  // Sum all tax totals to get totalTax
+  // Reference: buyer-fe useCalculation.js line 391 - tempCartValue.totalTax = totalTaxIncShipping || 0
+  totalTaxIncShipping = tempCartValue.shippingTax || 0;
+  each(breakup, taxBreakup => {
+    totalTaxIncShipping += tempCartValue[`${taxBreakup.taxName}Total`] || 0;
   });
 
   tempCartValue.totalTax = totalTaxIncShipping || 0;
   tempCartValue.taxableAmount = isBeforeTax
     ? tempCartValue.totalValue + tempCartValue.pfRate + totalShipping
     : tempCartValue.totalValue + tempCartValue.pfRate;
+
+  // Recalculate calculatedTotal after updating totalTax
+  // Reference: buyer-fe useCalculation.js lines 395-407
+  // This ensures calculatedTotal uses the correct totalTax value (not the old one from calculateCart)
+  const totalBeforeInsurance =
+    tempCartValue.totalValue +
+    (totalTaxIncShipping || 0) +
+    tempCartValue.pfRate +
+    totalShipping;
+
+  // Preserve insuranceCharges from input cartValue (already calculated in calculateCart)
+  const insuranceCharges = tempCartValue.insuranceCharges || 0;
+
+  const grandTotal = totalBeforeInsurance + insuranceCharges;
+  tempCartValue.calculatedTotal = grandTotal;
+
+  // Preserve rounding adjustment settings if they exist
+  const roundingAdjustment = tempCartValue.roundingAdjustment !== undefined 
+    ? tempCartValue.roundingAdjustment 
+    : 0;
+  
+  // Only recalculate grandTotal if roundingAdjustment is enabled
+  // Otherwise, grandTotal should equal calculatedTotal
+  if (roundingAdjustment !== 0) {
+    tempCartValue.grandTotal = Math.round(grandTotal);
+    tempCartValue.roundingAdjustment = tempCartValue.grandTotal - grandTotal;
+  } else {
+    tempCartValue.grandTotal = grandTotal;
+    tempCartValue.roundingAdjustment = 0;
+  }
 
   return {
     cartValue: tempCartValue,

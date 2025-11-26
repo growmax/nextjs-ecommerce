@@ -54,7 +54,7 @@ export class SellerWarehouseService extends BaseService<SellerWarehouseService> 
     companyId: string,
     request: FindSellerBranchRequest
   ): Promise<SellerBranch[]> {
-    const url = `/branches/findsellerBranch/${userId}?companyId=${companyId}`;
+    const url = `/branches/findsellerBranch/${userId}?companyId=${request.sellerCompanyId}`;
 
     const response = await this.call(url, request, "POST");
 
