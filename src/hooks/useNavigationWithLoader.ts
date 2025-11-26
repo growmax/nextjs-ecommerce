@@ -73,21 +73,6 @@ export function useNavigationWithLoader() {
       setTimeout(() => {
         activeNavigationRef.current = null;
       }, 1000);
-
-      // Fallback: if navigation doesn't complete, force hard navigation
-      setTimeout(() => {
-        const currentPathAfter =
-          window.location.pathname.replace(
-            /^\/([a-z]{2}(-[A-Z]{2})?)(?=\/|$)/,
-            ""
-          ) || "/";
-        if (
-          (!currentPathAfter.startsWith(targetPath) && targetPath !== "/") ||
-          (targetPath === "/" && currentPathAfter !== "/")
-        ) {
-          window.location.href = href;
-        }
-      }, 500);
     },
     [router, startNavigation]
   );
@@ -137,18 +122,6 @@ export function useNavigationWithLoader() {
       setTimeout(() => {
         activeNavigationRef.current = null;
       }, 1000);
-
-      // Fallback: if navigation doesn't complete, force hard navigation
-      setTimeout(() => {
-        const currentPathAfter =
-          window.location.pathname.replace(
-            /^\/([a-z]{2}(-[A-Z]{2})?)(?=\/|$)/,
-            ""
-          ) || "/";
-        if (currentPathAfter !== targetPath) {
-          window.location.href = href;
-        }
-      }, 500);
     },
     [router, startNavigation]
   );

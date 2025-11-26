@@ -120,6 +120,39 @@ class BrandResolutionService {
   }
 
   /**
+   * Fetch all brands from OpenSearch using aggregation query with Redis caching
+   */
+  async getAllBrands(context?: RequestContext): Promise<Brand[]> {
+    // Get tenant code from context to build elastic index
+    const tenantCode = context?.tenantCode || "";
+    if (!tenantCode) {
+      console.warn("No tenant code provided for brand aggregation query");
+      return [];
+    }
+
+    const elasticCode = context?.elasticCode || tenantCode;
+    const cacheKey = `brands:all:${elasticCode}`;
+
+    // Use cached version if available (server-side only)
+    if (typeof window === "undefined") {
+      try {
+        const { withRedisCache } = await import("@/lib/cache");
+        // Cache all brands for 1 hour (3600 seconds)
+        // Brand list changes very rarely
+        return withRedisCache(
+          cacheKey,
+          () => this.getAllBrandsUncached(context),
+          3600 // 1 hour TTL
+        );
+      } catch {
+        // Fall through to non-cached version if cache import fails
+      }
+    }
+
+    return this.getAllBrandsUncached(context);
+  }
+
+  /**
    * Internal method - fetch all brands without caching
    */
   private async getAllBrandsUncached(
@@ -375,7 +408,7 @@ class BrandResolutionService {
   getBrandBreadcrumbs(
     brand: Brand,
     categoryPath?: string[],
-    locale: string = "en"
+    _locale: string = "en"
   ): BreadcrumbItem[] {
     // Note: hrefs don't include locale prefix because Link from @/i18n/navigation auto-adds it
     const breadcrumbs: BreadcrumbItem[] = [

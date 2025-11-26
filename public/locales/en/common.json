@@ -279,7 +279,10 @@
     "submit": "Submit",
     "submitButton": "Submit",
     "productAddedSuccessfullyToQuote": "Product added successfully",
-    "failedToAddProductToQuote": "Failed to add product to quote"
+    "failedToAddProductToQuote": "Failed to add product to quote",
+    "newVersionCreatedNote": "Note: New version will be created for this quotation",
+    "cancel": "Cancel",
+    "yes": "Yes"
   },
   "products": {
     "title": "Products",

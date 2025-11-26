@@ -22,6 +22,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { statusColor } from "@/components/custom/statuscolors";
 import { useCurrentUser } from "@/hooks/useCurrentUser";
 import { useRequestDeduplication } from "@/hooks/useRequestDeduplication";
+import { usePostNavigationFetch } from "@/hooks/usePostNavigationFetch";
 import ordersFilterService, {
   OrderFilter,
 } from "@/lib/api/services/OrdersFilterService/OrdersFilterService";
@@ -637,7 +638,8 @@ function OrdersLandingTable({
     setExportCallback?.(() => handleExport);
   }, [handleExport, setExportCallback]);
 
-  useEffect(() => {
+  // Fetch orders after navigation completes - ensures instant navigation
+  usePostNavigationFetch(() => {
     fetchOrders();
   }, [fetchOrders]);
 

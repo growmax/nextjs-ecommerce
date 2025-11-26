@@ -1,4 +1,3 @@
-import type { CategoryFilterState } from "@/types/category-filters";
 import { RequestContext, openSearchClient } from "../../client";
 import { BaseService } from "../BaseService";
 
@@ -516,161 +515,31 @@ export class SearchService extends BaseService<SearchService> {
   }
 
   /**
-   * Get filter aggregations for category page
-   * Fetches aggregations for all filter types (brands, categories, variant attributes, etc.)
-   *
-   * @param elasticIndex - Elasticsearch index name
-   * @param baseQuery - Base query with category filters
-   * @param currentFilters - Current active filters (to exclude from aggregations)
-   * @param context - Request context
-   * @returns Filter aggregations formatted for UI
+   * Generate cache key for aggregation queries
+   * Creates a deterministic key from query parameters
    */
-  async getFilterAggregations(
+  private generateAggregationCacheKey(
     elasticIndex: string,
-    baseQuery: {
-      must: Array<Record<string, unknown>>;
-      must_not: Array<Record<string, unknown>>;
-    },
-    currentFilters?: {
-      variantAttributes?: Record<string, string[]>;
-      productSpecifications?: Record<string, string[]>;
-      inStock?: boolean;
-    },
-    context?: RequestContext
-  ): Promise<AggregationsResponse> {
-    // Import aggregation builders
-    const {
-      buildAllAggregations,
-      buildVariantAttributeValueAggregation,
-      buildProductSpecificationValueAggregation,
-    } = await import("@/utils/opensearch/aggregation-queries");
-
-    // Build base query with aggregations
-    const query: ElasticSearchQuery = {
-      size: 0, // We only need aggregations, not products
-      query: {
-        bool: {
-          must: baseQuery.must,
-          must_not: baseQuery.must_not,
-        },
-      },
-      aggs: buildAllAggregations({
-        baseMust: baseQuery.must,
-        baseMustNot: baseQuery.must_not,
-        currentFilters: currentFilters as CategoryFilterState | undefined,
-      }),
-    };
-
-    // Fetch aggregations
-    const result = await this.getAggregationsServerSide(
-      elasticIndex,
-      query,
-      context
-    );
-
-    if (!result.success) {
-      return result;
+    query: ElasticSearchQuery
+  ): string {
+    // Create a stable hash of the query
+    const queryStr = JSON.stringify({
+      index: elasticIndex,
+      query: query.query,
+      aggs: query.aggs,
+      size: query.size,
+    });
+    let hash = 0;
+    for (let i = 0; i < queryStr.length; i++) {
+      const char = queryStr.charCodeAt(i);
+      hash = (hash << 5) - hash + char;
+      hash = hash & hash; // Convert to 32-bit integer
     }
-
-    // If we have variant attribute names, fetch values for each
-    const variantAttrsAgg = result.aggregations.variantAttributes as {
-      attribute_names?: { buckets?: Array<{ key: string }> };
-    };
-    if (variantAttrsAgg?.attribute_names?.buckets) {
-      const attributeNames = variantAttrsAgg.attribute_names.buckets.map(
-        bucket => bucket.key
-      );
-
-      // Build aggregations for each variant attribute
-      const variantAggs: Record<string, unknown> = {};
-      for (const attrName of attributeNames) {
-        const attrQuery: ElasticSearchQuery = {
-          size: 0,
-          query: {
-            bool: {
-              must: baseQuery.must,
-              must_not: baseQuery.must_not,
-            },
-          },
-          aggs: {
-            [attrName]: buildVariantAttributeValueAggregation(attrName, {
-              baseMust: baseQuery.must,
-              baseMustNot: baseQuery.must_not,
-              currentFilters: currentFilters as CategoryFilterState | undefined,
-            }),
-          },
-        };
-
-        const attrResult = await this.getAggregationsServerSide(
-          elasticIndex,
-          attrQuery,
-          context
-        );
-        if (attrResult.success && attrResult.aggregations[attrName]) {
-          variantAggs[attrName] = attrResult.aggregations[
-            attrName
-          ] as AggregationResult;
-        }
-      }
-
-      // Replace the attribute names aggregation with the actual attribute aggregations
-      result.aggregations.variantAttributes =
-        variantAggs as unknown as AggregationResult;
-    }
-
-    // If we have product specification keys, fetch values for each
-    const productSpecsAgg = result.aggregations.productSpecifications as {
-      spec_keys?: {
-        keys?: { buckets?: Array<{ key: string }> };
-      };
-    };
-    if (productSpecsAgg?.spec_keys?.keys?.buckets) {
-      const specKeys = productSpecsAgg.spec_keys.keys.buckets.map(
-        bucket => bucket.key
-      );
-
-      // Build aggregations for each specification
-      const specAggs: Record<string, unknown> = {};
-      for (const specKey of specKeys) {
-        const specQuery: ElasticSearchQuery = {
-          size: 0,
-          query: {
-            bool: {
-              must: baseQuery.must,
-              must_not: baseQuery.must_not,
-            },
-          },
-          aggs: {
-            [specKey]: buildProductSpecificationValueAggregation(specKey, {
-              baseMust: baseQuery.must,
-              baseMustNot: baseQuery.must_not,
-              currentFilters: currentFilters as CategoryFilterState | undefined,
-            }),
-          },
-        };
-
-        const specResult = await this.getAggregationsServerSide(
-          elasticIndex,
-          specQuery,
-          context
-        );
-        if (specResult.success && specResult.aggregations[specKey]) {
-          specAggs[specKey] = specResult.aggregations[
-            specKey
-          ] as AggregationResult;
-        }
-      }
-
-      // Replace the spec keys aggregation with the actual spec aggregations
-      result.aggregations.productSpecifications =
-        specAggs as unknown as AggregationResult;
-    }
-
-    return result;
+    return `agg:${elasticIndex}:${Math.abs(hash).toString(36)}`;
   }
 
   /**
-   * Get aggregations from OpenSearch
+   * Get aggregations from OpenSearch with Redis caching
    *
    * @param elasticIndex - Elasticsearch index name
    * @param query - Elasticsearch query with aggregations

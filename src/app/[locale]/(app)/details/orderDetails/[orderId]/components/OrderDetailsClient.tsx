@@ -1,3 +1,4 @@
+"use client";
 import { Toaster } from "@/components/ui/sonner";
 import { Layers } from "lucide-react";
 import { useTranslations } from "next-intl";
@@ -19,10 +20,12 @@ import {
   SalesHeader,
 } from "@/components/sales";
 import { useOrderDetails } from "@/hooks/details/orderdetails/useOrderDetails";
-import { useLoading } from "@/hooks/useGlobalLoader";
 import { useCurrentUser } from "@/hooks/useCurrentUser";
 import { useGetVersionDetails } from "@/hooks/useGetVersionDetails/useGetVersionDetails";
+import { useLoading } from "@/hooks/useGlobalLoader";
 import useModuleSettings from "@/hooks/useModuleSettings";
+import { useNavigationWithLoader } from "@/hooks/useNavigationWithLoader";
+import { usePageScroll } from "@/hooks/usePageScroll";
 import { useTenantData } from "@/hooks/useTenantData";
 import type { PaymentDueDataItem } from "@/lib/api";
 import {
@@ -73,9 +76,14 @@ const OrderStatusTracker = dynamic(
   }
 );
 
-export default function OrderDetailsClient({ params }: OrderDetailsPageProps) {
+export default function OrderDetailsClient({
+  params,
+  initialOrderDetails,
+}: OrderDetailsPageProps & { initialOrderDetails?: any }) {
+  usePageScroll();
   const [orderId, setOrderId] = useState<string>("");
   const [paramsLoaded, setParamsLoaded] = useState(false);
+  const { push } = useNavigationWithLoader();
   const { push } = useNavigationWithLoader();
   const t = useTranslations("orders");
   const tDetails = useTranslations("details");
@@ -129,6 +137,7 @@ export default function OrderDetailsClient({ params }: OrderDetailsPageProps) {
     },
     enabled:
       paramsLoaded && !!orderId && !!userId && !!tenantCode && !!companyId,
+    initialData: initialOrderDetails,
     staleTime: 5 * 60 * 1000, // 5 minutes - order details may change
     gcTime: 10 * 60 * 1000, // 10 minutes
     refetchOnWindowFocus: false,
@@ -309,9 +318,13 @@ export default function OrderDetailsClient({ params }: OrderDetailsPageProps) {
 
   const handleClose = () => {
     push("/landing/orderslanding");
+    push("/landing/orderslanding");
   };
 
   const handleEditQuote = () => {
+    if (orderId) {
+      push(`/details/orderDetails/${orderId}/edit`);
+    }
     if (orderId) {
       push(`/details/orderDetails/${orderId}/edit`);
     }

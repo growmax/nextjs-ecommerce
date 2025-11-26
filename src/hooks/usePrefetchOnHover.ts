@@ -24,18 +24,17 @@ export function usePrefetchOnHover() {
         clearTimeout(prefetchTimeoutRef.current);
       }
 
-      // Debounce prefetch by 100ms to avoid excessive requests
-      prefetchTimeoutRef.current = setTimeout(() => {
-        try {
-          router.prefetch(href);
-          prefetchedRoutes.current.add(href);
-        } catch (error) {
-          // Silently fail - prefetching is optional
-          if (process.env.NODE_ENV === "development") {
-            console.warn("Failed to prefetch route:", href, error);
-          }
+      // Prefetch immediately (no debounce) for faster navigation
+      // Next.js handles deduplication internally
+      try {
+        router.prefetch(href);
+        prefetchedRoutes.current.add(href);
+      } catch (error) {
+        // Silently fail - prefetching is optional
+        if (process.env.NODE_ENV === "development") {
+          console.warn("Failed to prefetch route:", href, error);
         }
-      }, 100);
+      }
     },
     [router]
   );

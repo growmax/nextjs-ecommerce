@@ -1,7 +1,8 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { toast } from "sonner";
+import { usePostNavigationFetch } from "@/hooks/usePostNavigationFetch";
 
 interface Profile {
   name: string;
@@ -202,8 +203,8 @@ export function useProfileData() {
     }
   };
 
-  // Initialize data on mount
-  useEffect(() => {
+  // Initialize data after navigation completes - ensures instant navigation
+  usePostNavigationFetch(() => {
     loadProfile();
     loadPreferences();
   }, []);

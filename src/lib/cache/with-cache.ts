@@ -61,7 +61,6 @@ export async function withRedisCache<T>(
         error: errorMessage,
       });
     }
-
     // For stream errors, just fallback to function execution (silent)
     // For other errors, also fallback but log them
     return fn();

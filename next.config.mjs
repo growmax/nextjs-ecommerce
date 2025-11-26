@@ -49,6 +49,16 @@ const nextConfig = {
       "react-hook-form",
       "@hookform/resolvers",
     ],
+    // Optimize server components compilation
+    serverComponentsExternalPackages: ["ioredis"],
+    // Enable faster refresh in development
+    // optimizeCss: true, // Disabled - requires 'critters' package
+    // Enable output file tracing for faster builds
+    outputFileTracingRoot: undefined,
+    // Optimize CSS loading
+    optimisticClientCache: true,
+    // Enable parallel route compilation
+    webpackBuildWorker: true,
   },
   poweredByHeader: false,
   compress: true,
@@ -62,6 +72,87 @@ const nextConfig = {
       };
       config.infrastructureLogging = {
         level: "error",
+      };
+      // Enable webpack caching for faster rebuilds
+      config.cache = {
+        type: "filesystem",
+        buildDependencies: {
+          config: [__filename],
+        },
+        cacheDirectory: ".next/cache/webpack",
+      };
+      // Optimize module resolution
+      config.resolve.symlinks = false;
+      // Optimize for faster development builds
+      config.optimization = {
+        ...config.optimization,
+        removeAvailableModules: false,
+        removeEmptyChunks: false,
+        // Enable split chunks for better caching
+        splitChunks: {
+          chunks: 'all',
+          cacheGroups: {
+            default: false,
+            vendors: false,
+            // Framework chunk (React, Next.js)
+            framework: {
+              name: 'framework',
+              chunks: 'all',
+              test: /[\\/]node_modules[\\/](react|react-dom|scheduler|next)[\\/]/,
+              priority: 40,
+              enforce: true,
+            },
+            // UI libraries chunk
+            ui: {
+              name: 'ui',
+              chunks: 'all',
+              test: /[\\/]node_modules[\\/](@radix-ui|lucide-react)[\\/]/,
+              priority: 30,
+            },
+            // Common libraries chunk
+            lib: {
+              name: 'lib',
+              chunks: 'all',
+              test: /[\\/]node_modules[\\/]/,
+              priority: 20,
+              minChunks: 2,
+            },
+          },
+        },
+        // Enable module concatenation for smaller bundles
+        concatenateModules: true,
+      };
+    } else {
+      // Production optimizations
+      config.optimization = {
+        ...config.optimization,
+        splitChunks: {
+          chunks: 'all',
+          cacheGroups: {
+            default: false,
+            vendors: false,
+            framework: {
+              name: 'framework',
+              chunks: 'all',
+              test: /[\\/]node_modules[\\/](react|react-dom|scheduler|next)[\\/]/,
+              priority: 40,
+              enforce: true,
+            },
+            ui: {
+              name: 'ui',
+              chunks: 'all',
+              test: /[\\/]node_modules[\\/](@radix-ui|lucide-react)[\\/]/,
+              priority: 30,
+            },
+            lib: {
+              name: 'lib',
+              chunks: 'all',
+              test: /[\\/]node_modules[\\/]/,
+              priority: 20,
+              minChunks: 2,
+            },
+          },
+        },
       };
     }
 
@@ -84,6 +175,8 @@ const nextConfig = {
 
     return config;
   },
+  // Enable SWC minification even in dev for faster compilation
+  swcMinify: true,
   images: {
     formats: ["image/avif", "image/webp"],
     deviceSizes: [640, 750, 828, 1080, 1200, 1920, 2048, 3840],

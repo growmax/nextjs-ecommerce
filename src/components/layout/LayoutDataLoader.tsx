@@ -22,61 +22,39 @@ const getCachedUserData = cache(async () => {
 /**
  * LayoutDataLoader - Server component that fetches layout data
  * Wrapped in Suspense for streaming
+ * Optimized for minimal blocking - all data fetching is parallelized
  */
 async function LayoutDataContent({ children }: { children: ReactNode }) {
-  const timings: Record<string, number> = {};
-
-  // Get headers
-  const headersStart = Date.now();
+  // Get headers (cached per request)
   const headersList = await getCachedHeaders();
-  timings.headers = Date.now() - headersStart;
-
   const tenantDomain = headersList.get("x-tenant-domain");
   const tenantOrigin = headersList.get("x-tenant-origin");
 
-  // Parallel fetch
-  const parallelStart = Date.now();
+  // Parallel fetch access token and tenant data
+  // Both are cached, so subsequent calls in the same request are instant
   const [accessToken, tenantData] = await Promise.all([
-    (async () => {
-      const start = Date.now();
-      const result = await getCachedAccessToken();
-      timings.getAccessToken = Date.now() - start;
-      return result;
-    })(),
-    (async () => {
-      const start = Date.now();
-      if (!tenantDomain || !tenantOrigin) {
-        timings.getTenantData = Date.now() - start;
-        return null;
-      }
-      try {
-        const result = await TenantService.getTenantDataCached(
-          tenantDomain,
-          tenantOrigin
-        );
-        timings.getTenantData = Date.now() - start;
-        return result;
-      } catch (error) {
-        timings.getTenantData = Date.now() - start;
-        console.error("TenantService error:", error);
-        return null;
-      }
-    })(),
+    getCachedAccessToken(),
+    tenantDomain && tenantOrigin
+      ? TenantService.getTenantDataCached(tenantDomain, tenantOrigin).catch(
+          error => {
+            // Silently fail - tenant data is optional for initial render
+            console.error("TenantService error:", error);
+            return null;
+          }
+        )
+      : Promise.resolve(null),
   ]);
-  timings.parallelTotal = Date.now() - parallelStart;
 
   const isAuthenticated = !!accessToken;
 
-  // Fetch user data if authenticated
+  // Fetch user data if authenticated (only after we know auth state)
+  // This is still fast because getCachedUserData uses React cache()
   let userData = null;
   if (isAuthenticated) {
     try {
-      const userDataStart = Date.now();
       userData = await getCachedUserData();
-      timings.getUserData = Date.now() - userDataStart;
     } catch (error) {
-      const userDataStart = Date.now();
-      timings.getUserData = Date.now() - userDataStart;
+      // Silently fail - user data is optional for initial render
       console.error("UserData fetch error:", error);
       userData = null;
     }
@@ -96,12 +74,20 @@ async function LayoutDataContent({ children }: { children: ReactNode }) {
 
 /**
  * LayoutDataLoader - Wraps data fetching in Suspense for streaming
- * This allows the page to render while data loads
+ * This allows the page to render immediately while data loads in the background
+ * The fallback renders children immediately with optimistic defaults, ensuring
+ * navigation is never blocked by layout data fetching
+ *
+ * For first request optimization: The fallback renders immediately, and data
+ * streams in asynchronously. This ensures the first paint happens instantly.
  */
 export function LayoutDataLoader({ children }: { children: ReactNode }) {
   return (
     <Suspense
       fallback={
+        // CRITICAL: Render children immediately with optimistic defaults
+        // This ensures first request is instant - no waiting for data
+        // Data will stream in and update the UI seamlessly
         <TenantProvider initialData={null}>
           <UserDetailsProvider initialAuthState={false} initialUserData={null}>
             {children}
@@ -113,4 +99,3 @@ export function LayoutDataLoader({ children }: { children: ReactNode }) {
     </Suspense>
   );
 }
-

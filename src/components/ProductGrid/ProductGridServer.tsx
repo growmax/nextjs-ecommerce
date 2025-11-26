@@ -2,6 +2,7 @@ import { ProductPrice } from "@/components/product/ProductPrice";
 import { DiscountItem } from "@/lib/api/services/DiscountService/DiscountService";
 import { FormattedProduct } from "@/lib/api/services/SearchService/SearchService";
 import { ProductListItem } from "@/types/product-listing";
+import { Link } from "@/i18n/navigation";
 import Image from "next/image";
 import Link from "next/link";
 import AddToCartButton from "./AddToCartButton";
@@ -39,11 +40,19 @@ function transformProduct(product: FormattedProduct): ProductListItem {
     product.brandProductId || product.productIndexName || product.id || "";
 
   // Extract stock status from inventory array
-  const inventory = (product.inventory as Array<{ availableQuantity?: number; inStock?: boolean }>) || [];
-  const totalAvailable = inventory.reduce((sum, inv) => sum + (inv.availableQuantity || 0), 0);
-  const inStock = inventory.length > 0 
-    ? (inventory.some(inv => inv.inStock === true) || totalAvailable > 0)
-    : true; // Default to true if no inventory data
+  const inventory =
+    (product.inventory as Array<{
+      availableQuantity?: number;
+      inStock?: boolean;
+    }>) || [];
+  const totalAvailable = inventory.reduce(
+    (sum, inv) => sum + (inv.availableQuantity || 0),
+    0
+  );
+  const inStock =
+    inventory.length > 0
+      ? inventory.some(inv => inv.inStock === true) || totalAvailable > 0
+      : true; // Default to true if no inventory data
 
   return {
     id: productId,
@@ -160,13 +169,34 @@ export function ProductGridServer({
                     {...(discountData && { discountData })}
                     {...(discountLoading !== undefined && { discountLoading })}
                     {...(discountError && { discountError })}
-                    {...(typeof (product as any).packaging_qty === "number" && { packagingQty: (product as any).packaging_qty })}
-                    {...(typeof (product as any).min_order_quantity === "string" && { minOrderQuantity: parseFloat((product as any).min_order_quantity) })}
-                    {...(typeof (product as any).min_order_quantity === "number" && { minOrderQuantity: (product as any).min_order_quantity })}
-                    {...(product.unitListPrice !== undefined && { unitListPrice: product.unitListPrice })}
-                    {...(product.productAssetss && { productAssetss: product.productAssetss })}
-                    {...((product.brandsName || product.brandName) && { brandsName: product.brandsName || product.brandName })}
-                    {...((product.productShortDescription || product.shortDescription) && { productShortDescription: product.productShortDescription || product.shortDescription })}
+                    {...(typeof (product as any).packaging_qty === "number" && {
+                      packagingQty: (product as any).packaging_qty,
+                    })}
+                    {...(typeof (product as any).min_order_quantity ===
+                      "string" && {
+                      minOrderQuantity: parseFloat(
+                        (product as any).min_order_quantity
+                      ),
+                    })}
+                    {...(typeof (product as any).min_order_quantity ===
+                      "number" && {
+                      minOrderQuantity: (product as any).min_order_quantity,
+                    })}
+                    {...(product.unitListPrice !== undefined && {
+                      unitListPrice: product.unitListPrice,
+                    })}
+                    {...(product.productAssetss && {
+                      productAssetss: product.productAssetss,
+                    })}
+                    {...((product.brandsName || product.brandName) && {
+                      brandsName: product.brandsName || product.brandName,
+                    })}
+                    {...((product.productShortDescription ||
+                      product.shortDescription) && {
+                      productShortDescription:
+                        product.productShortDescription ||
+                        product.shortDescription,
+                    })}
                   />
                 </div>
               </div>

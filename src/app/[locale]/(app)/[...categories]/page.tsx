@@ -1,5 +1,5 @@
 import { CategoryBreadcrumbServer } from "@/components/Breadcrumb/CategoryBreadcrumbServer";
-import { ProductViewSwitcher } from "@/components/ProductGrid/ProductViewSwitcher";
+import { ProductGridServer } from "@/components/ProductGrid/ProductGridServer";
 import { StructuredDataServer } from "@/components/seo/StructuredDataServer";
 import type { RequestContext } from "@/lib/api/client";
 import SearchService, {
@@ -8,11 +8,10 @@ import SearchService, {
 } from "@/lib/api/services/SearchService/SearchService";
 import TenantService from "@/lib/api/services/TenantService";
 import CategoryResolutionService from "@/lib/services/CategoryResolutionService";
-import type { FilterAggregations } from "@/types/category-filters";
-import { buildCategoryQuery } from "@/utils/opensearch/browse-queries";
 import { Metadata } from "next";
 import { headers } from "next/headers";
 import { notFound } from "next/navigation";
+import { Suspense } from "react";
 import { CategoryPageInteractivity } from "./_components/CategoryPageInteractivity";
 
 interface PageProps {
@@ -189,7 +188,9 @@ export default async function CategoryPage({
     return (
       <>
         <h1 className="text-2xl font-bold">All Categories</h1>
-        <p className="text-gray-600">Please select a category to browse products.</p>
+        <p className="text-gray-600">
+          Please select a category to browse products.
+        </p>
       </>
     );
   }
@@ -299,63 +300,29 @@ export default async function CategoryPage({
     notFound();
   }
 
-  // Build base query for aggregations
-  const { getBaseQuery, buildCategoryFilter } = await import(
+  // Build category query
+  const { buildCategoryQuery } = await import(
     "@/utils/opensearch/browse-queries"
   );
-  const baseQuery = getBaseQuery();
-  const categoryFilters = buildCategoryFilter(categoryIds);
-  const baseQueryForAggs = {
-    must: [...baseQuery.must, ...categoryFilters],
-    must_not: baseQuery.must_not,
-  };
 
   // Get elastic index from elasticCode
   const elasticIndex = elasticCode ? `${elasticCode}pgandproducts` : "";
 
-  // Fetch aggregations server-side
-  let aggregations: FilterAggregations | null = null;
-  if (elasticIndex) {
-    try {
-      const filterState = {
-        ...(Object.keys(variantAttributes).length > 0 && { variantAttributes }),
-        ...(Object.keys(productSpecifications).length > 0 && {
-          productSpecifications,
-        }),
-        ...(inStock !== undefined && { inStock }),
-      };
-
-      const aggregationResponse = await SearchService.getFilterAggregations(
-        elasticIndex,
-        baseQueryForAggs,
-        Object.keys(filterState).length > 0 ? filterState : undefined,
-        context
-      );
-
-      if (aggregationResponse.success) {
-        aggregations = aggregationResponse.aggregations as FilterAggregations;
-      }
-    } catch (error) {
-      console.error("Error fetching aggregations:", error);
-      // Continue without aggregations - client will handle
-    }
-  }
-
-  const queryResult = buildCategoryQuery(categoryIds, {
-    page,
-    pageSize: 20,
-    sortBy: { sortBy },
-    ...(Object.keys(variantAttributes).length > 0 && { variantAttributes }),
-    ...(Object.keys(productSpecifications).length > 0 && {
-      productSpecifications,
-    }),
-    ...(inStock !== undefined && { inStock }),
-  });
-
-  // Create products promise for streaming
+  // Fetch products - will be streamed via Suspense
+  // Start the fetch immediately but don't await it
   const productsPromise = elasticIndex
     ? (async () => {
         try {
+          // Build query using buildCategoryQuery
+          const queryResult = buildCategoryQuery(categoryIds, {
+            page,
+            pageSize: 20,
+            sortBy,
+            inStock,
+            variantAttributes,
+            productSpecifications,
+          });
+
           // Build query object ensuring sort is properly typed
           const searchQuery: ElasticSearchQuery = {
             query: queryResult.query.query,
@@ -443,24 +410,28 @@ export default async function CategoryPage({
           sort: sortBy,
         }}
         total={initialProducts.total}
-        categoryPath={categoryPath}
-        aggregations={aggregations}
-        currentCategoryPath={categories}
-      >
-        {/* Product Grid - Server-rendered for SEO with client-side view switching */}
-        <div className="relative mt-6">
-          {initialProducts.products.length === 0 ? (
-            <div className="text-center py-12">
-              <p className="text-gray-600 text-lg">No products found.</p>
+      />
+
+      {/* Product Grid - Server-rendered for SEO with Suspense for streaming */}
+      <div className="relative">
+        <Suspense
+          fallback={
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 md:gap-6">
+              {Array.from({ length: 8 }).map((_, i) => (
+                <div
+                  key={i}
+                  className="h-[380px] bg-muted animate-pulse rounded-lg"
+                />
+              ))}
             </div>
-          ) : (
-            <ProductViewSwitcher
-              products={initialProducts.products}
-              locale={locale}
-            />
-          )}
-        </div>
-      </CategoryPageInteractivity>
+          }
+        >
+          <ProductGridWrapper
+            productsPromise={productsPromise}
+            locale={locale}
+          />
+        </Suspense>
+      </div>
     </>
   );
 }

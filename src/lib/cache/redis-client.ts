@@ -218,7 +218,6 @@ export async function ensureRedisConnection(): Promise<boolean> {
         return false;
       }
     }
-
     connectionPromise = new Promise<void>((resolve, reject) => {
       const timeout = setTimeout(() => {
         reject(new Error("Redis connection timeout"));
