@@ -1,8 +1,8 @@
-import { StoreFrontService } from "@/lib/api/services/StoreFrontService";
 import type {
   HomepageConfig,
   HomepageSection,
 } from "@/hooks/useHomepageConfig";
+import { StoreFrontService } from "@/lib/api/services/StoreFrontService";
 import { withRedisCache } from "@/lib/cache";
 
 /**
@@ -23,10 +23,7 @@ function normalizeDomainForCache(domain: string): string {
  * Generate cache key for homepage configuration
  * Format: homepage:config:${normalizedDomain}:${tenantCode || 'no-tenant'}
  */
-function getHomepageCacheKey(
-  domain: string,
-  tenantCode?: string
-): string {
+function getHomepageCacheKey(domain: string, tenantCode?: string): string {
   const normalizedDomain = normalizeDomainForCache(domain);
   const tenant = tenantCode || "no-tenant";
   // Sanitize tenant code to avoid special characters in cache key
@@ -63,8 +60,12 @@ export async function getHomepageConfig(
       }
     }
 
-    // Use tenant code if available, otherwise use domain
-    const queryDomain = tenantCode || domain;
+    // Use tenant code if available, otherwise use default tenant or domain
+    const defaultTenant =
+      process.env.NEXT_PUBLIC_DEFAULT_TENANT || "schwingstetterdemo";
+    const queryDomain = tenantCode || defaultTenant || domain;
+
+    // Only create context if we have a token
     const context = token
       ? { accessToken: token, ...(tenantCode && { tenantCode }) }
       : undefined;
@@ -169,4 +170,3 @@ export async function getHomepageConfig(
     return null;
   }
 }
-

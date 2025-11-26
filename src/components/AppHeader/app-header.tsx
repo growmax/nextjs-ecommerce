@@ -14,6 +14,7 @@ import useLogout from "@/hooks/Auth/useLogout";
 import useUserProfile from "@/hooks/Profile/useUserProfile";
 import { useTenantData } from "@/hooks/useTenantData";
 
+import { Link } from "@/i18n/navigation";
 import { cn } from "@/lib/utils";
 import { getUserInitials } from "@/utils/General/general";
 import {
@@ -23,7 +24,6 @@ import {
   ShoppingCart,
 } from "lucide-react";
 import { useTranslations } from "next-intl";
-import { Link } from "@/i18n/navigation";
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useMemo, useState } from "react";
 
@@ -72,8 +72,10 @@ export function AppHeader({
   const elasticIndex = "schwingstetterpgandproducts";
 
   // ---- Command Suggestions ----
-  const suggestionItems = useMemo(
-    () => [
+  const suggestionItems = useMemo(() => {
+    if (!isAuthenticated) return [];
+
+    return [
       {
         key: "orders",
         label: tNav("orders"),
@@ -86,9 +88,8 @@ export function AppHeader({
         icon: <CommandIcon />,
         href: "/dashboard",
       },
-    ],
-    [tNav]
-  );
+    ];
+  }, [tNav, isAuthenticated]);
 
   const handleSelect = useCallback(
     (href: string) => {

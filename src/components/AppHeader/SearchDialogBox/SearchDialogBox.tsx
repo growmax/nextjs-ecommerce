@@ -155,7 +155,7 @@ export function SearchDialogBox({
       <CommandDialog
         open={open}
         onOpenChange={setOpen}
-        className="p-0 overflow-hidden z-50"
+        className="p-0 overflow-hidden z-50 border border-border/40"
         showCloseButton={false}
       >
         <CommandInput
@@ -166,7 +166,16 @@ export function SearchDialogBox({
         />
         <CommandList>
           <CommandEmpty>
-            {isLoading ? "Searching..." : "No results found."}
+            {isLoading ? (
+              "Searching..."
+            ) : searchTerm ? (
+              "No results found."
+            ) : (
+              <p className="py-4 text-center text-sm text-muted-foreground">
+                Try searching for products, orders (ORD-), quotes (QUO-), or
+                categories...
+              </p>
+            )}
           </CommandEmpty>
 
           {searchResults.length > 0 && (
