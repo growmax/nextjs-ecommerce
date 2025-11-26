@@ -26,6 +26,7 @@ interface CategoryFiltersProps {
   variantAttributeGroups: VariantAttributeGroup[];
   productSpecificationGroups: ProductSpecificationGroup[];
   isLoading?: boolean;
+  hideBrandFilter?: boolean;
 }
 
 /**
@@ -40,6 +41,7 @@ export function CategoryFilters({
   variantAttributeGroups,
   productSpecificationGroups,
   isLoading = false,
+  hideBrandFilter = false,
 }: CategoryFiltersProps) {
   const {
     filters,
@@ -57,14 +59,14 @@ export function CategoryFilters({
   };
 
   return (
-    <div className="flex h-full flex-col border-r bg-background">
-      {/* Header */}
-      <div className="flex items-center justify-between border-b p-4">
+    <div className="flex h-full flex-col bg-background shadow-sm">
+      {/* Sticky Header */}
+      <div className="sticky top-0 z-10 flex items-center justify-between border-b border-border/50 bg-background/95 backdrop-blur-sm p-3">
         <div className="flex items-center gap-2">
-          <Filter className="h-5 w-5 text-primary" />
-          <h2 className="text-lg font-bold tracking-tight">Filters</h2>
+          <Filter className="h-4 w-4 text-primary" />
+          <h2 className="text-base font-semibold tracking-tight">Filters</h2>
           {activeFilterCount > 0 && (
-            <span className="inline-flex items-center justify-center rounded-full bg-primary px-2 py-0.5 text-xs font-medium text-primary-foreground">
+            <span className="inline-flex items-center justify-center rounded-full bg-primary px-1.5 py-0.5 text-xs font-medium text-primary-foreground">
               {activeFilterCount}
             </span>
           )}
@@ -73,7 +75,7 @@ export function CategoryFilters({
 
       {/* Scrollable Filter Content */}
       <ScrollArea className="flex-1">
-        <div className="space-y-4 p-4">
+        <div className="space-y-3 p-3">
           {/* Active Filters */}
           <ActiveFilters
             filters={filters}
@@ -83,10 +85,10 @@ export function CategoryFilters({
             onClearAll={clearAllFilters}
           />
 
-          {activeFilterCount > 0 && <Separator />}
+          {activeFilterCount > 0 && <Separator className="my-3" />}
 
           {/* Brands */}
-          {brands.length > 0 && (
+          {!hideBrandFilter && brands.length > 0 && (
             <CollapsibleSection
               title="Brands"
               defaultOpen={true}

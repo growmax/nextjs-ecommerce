@@ -17,6 +17,7 @@ export {
 
 // Import services
 import AuthService from "./services/AuthService";
+import BrandsService from "./services/BrandsService";
 import CartService from "./services/CartService/CartService";
 import CatalogService from "./services/CatalogService";
 import CompanyService from "./services/CompanyService";
@@ -74,6 +75,7 @@ export {
     AuthService,
     AuthTokenService,
     BillingBranchService,
+    BrandsService,
     CartService,
     CatalogService,
     CompanyService,
@@ -133,6 +135,11 @@ export type {
     Category,
     ProductSearchOptions
 } from "./services/CatalogService";
+
+export type {
+    Brand,
+    BrandsResponse
+} from "./services/BrandsService";
 
 export type {
     GraphQLQuery,
@@ -378,6 +385,7 @@ export {
 export const API = {
   AccountOwner: AccountOwnerService,
   Auth: AuthService,
+  Brands: BrandsService,
   Cart: CartService,
   Catalog: CatalogService,
   Company: CompanyService,

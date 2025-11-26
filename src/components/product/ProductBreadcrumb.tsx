@@ -12,6 +12,7 @@ import React from "react";
 
 type ProductBreadcrumbProps = {
   product: ProductDetail;
+  locale?: string;
 };
 
 interface BreadcrumbNode {
@@ -20,12 +21,31 @@ interface BreadcrumbNode {
 }
 
 function generateBreadcrumbNodes(
-  productCategories: ProductCategory[]
+  productCategories: ProductCategory[],
+  brandName?: string,
+  locale: string = "en"
 ): BreadcrumbNode[] {
   const nodes: BreadcrumbNode[] = [];
 
-  nodes.push({ label: "Home", href: "/" });
-  nodes.push({ label: "Products", href: "/products" });
+  nodes.push({ label: "Home", href: `/${locale}` });
+  
+  // Add Brands link if product has a brand
+  if (brandName) {
+    nodes.push({ label: "Brands", href: `/${locale}/brands/All` });
+    
+    // Generate brand slug from brand name
+    const brandSlug = brandName
+      .toLowerCase()
+      .trim()
+      .replace(/[^\w\s-]/g, "") // Remove special characters
+      .replace(/\s+/g, "-") // Replace spaces with hyphens
+      .replace(/-+/g, "-") // Replace multiple hyphens with single
+      .replace(/^-+|-+$/g, ""); // Remove leading/trailing hyphens
+    
+    nodes.push({ label: brandName, href: `/${locale}/brands/${brandSlug}` });
+  }
+  
+  nodes.push({ label: "Products", href: `/${locale}/products` });
 
   // First try to find a primary category
   let categoryToUse = productCategories.find(cat => cat.isPrimary);
@@ -85,8 +105,14 @@ function generateBreadcrumbNodes(
 
 export default async function ProductBreadcrumb({
   product,
+  locale = "en",
 }: ProductBreadcrumbProps): Promise<React.JSX.Element> {
-  const breadcrumbNodes = generateBreadcrumbNodes(product.product_categories);
+  const brandName = product.brands_name || product.brand_name;
+  const breadcrumbNodes = generateBreadcrumbNodes(
+    product.product_categories,
+    brandName,
+    locale
+  );
 
   return (
     <Breadcrumb>

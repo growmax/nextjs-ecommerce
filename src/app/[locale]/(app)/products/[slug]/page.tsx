@@ -241,7 +241,7 @@ export async function generateMetadata({
 }
 
 export default async function ProductPage({ params }: ProductPageProps) {
-  const { slug } = await params;
+  const { slug, locale } = await params;
   const { tenantData, origin } =
     await ProductPageService.getProductPageContext();
   if (!tenantData?.data?.tenant?.elasticCode) {
@@ -305,7 +305,7 @@ export default async function ProductPage({ params }: ProductPageProps) {
       <MobileNavigation product={product} />
 
       <div className="py-3">
-        <ProductBreadcrumb product={product} />
+        <ProductBreadcrumb product={product} locale={locale} />
       </div>
 
       {/* Two-Column Layout: Image Gallery (Left) + Product Details (Right) */}

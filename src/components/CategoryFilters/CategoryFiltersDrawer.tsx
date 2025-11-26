@@ -20,6 +20,7 @@ interface CategoryFiltersDrawerProps {
   variantAttributeGroups: VariantAttributeGroup[];
   productSpecificationGroups: ProductSpecificationGroup[];
   isLoading?: boolean;
+  hideBrandFilter?: boolean;
   trigger?: React.ReactNode;
 }
 
@@ -35,6 +36,7 @@ export function CategoryFiltersDrawer({
   variantAttributeGroups,
   productSpecificationGroups,
   isLoading = false,
+  hideBrandFilter = false,
   trigger,
 }: CategoryFiltersDrawerProps) {
   const [open, setOpen] = useState(false);
@@ -61,6 +63,7 @@ export function CategoryFiltersDrawer({
             variantAttributeGroups={variantAttributeGroups}
             productSpecificationGroups={productSpecificationGroups}
             isLoading={isLoading}
+            hideBrandFilter={hideBrandFilter}
           />
         </div>
       </SheetContent>

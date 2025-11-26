@@ -46,7 +46,7 @@ export interface ColorOption {
 }
 
 // View mode type
-export type ViewMode = "grid" | "list";
+export type ViewMode = "grid" | "list" | "table";
 
 // Sort options
 export type SortOption =

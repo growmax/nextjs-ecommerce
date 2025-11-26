@@ -164,7 +164,7 @@ export function buildCategoryFilter(categoryIds: number[]): Array<Record<string,
 /**
  * Build brand filter
  */
-function buildBrandFilter(brandName: string): Record<string, unknown> {
+export function buildBrandFilter(brandName: string): Record<string, unknown> {
   return {
     term: {
       "brands_name.keyword": brandName,

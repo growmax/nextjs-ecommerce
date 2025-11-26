@@ -3,12 +3,14 @@
 import { CategoryFilters } from "@/components/CategoryFilters/CategoryFilters";
 import { CategoryFiltersDrawer } from "@/components/CategoryFilters/CategoryFiltersDrawer";
 import { CategoryPagination } from "@/components/Pagination/CategoryPagination";
+import { ViewToggle } from "@/components/ProductList/ViewToggle";
 import { SortDropdown } from "@/components/Sort/SortDropdown";
 import { Skeleton } from "@/components/ui/skeleton";
 import type { CategoryPath } from "@/lib/services/CategoryResolutionService";
 import type { FilterAggregations } from "@/types/category-filters";
 import { formatAllAggregations } from "@/utils/format-aggregations";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
+import { useLocale } from "next-intl";
 import { useCallback, useMemo, useTransition } from "react";
 
 interface CategoryPageInteractivityProps {
@@ -44,13 +46,14 @@ export function CategoryPageInteractivity({
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
+  const locale = useLocale();
   const [isPending, startTransition] = useTransition();
 
   // Format aggregations for filter components
   const formattedFilters = useMemo(
     () =>
-      formatAllAggregations(aggregations, categoryPath, currentCategoryPath),
-    [aggregations, categoryPath, currentCategoryPath]
+      formatAllAggregations(aggregations, categoryPath, currentCategoryPath, locale),
+    [aggregations, categoryPath, currentCategoryPath, locale]
   );
 
   // Parse current filters from URL
@@ -162,11 +165,14 @@ export function CategoryPageInteractivity({
             )}
           </div>
 
-          <SortDropdown
-            value={currentFilters.sort}
-            onChange={handleSortChange}
-            disabled={isLoading}
-          />
+          <div className="flex items-center gap-3">
+            <ViewToggle />
+            <SortDropdown
+              value={currentFilters.sort}
+              onChange={handleSortChange}
+              disabled={isLoading}
+            />
+          </div>
         </div>
 
         {/* Product Grid - Passed as children */}

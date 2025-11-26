@@ -74,27 +74,27 @@ export function ActiveFilters({
             variant="ghost"
             size="sm"
             onClick={onClearAll}
-            className="h-7 text-xs"
+            className="h-6 text-xs text-muted-foreground hover:text-foreground"
           >
             Clear All
           </Button>
         )}
       </div>
-      <div className="flex flex-wrap gap-2">
+      <div className="flex flex-wrap gap-1.5">
         {activeFilters.map((filter) => (
           <Badge
             key={filter.id}
             variant="secondary"
-            className="flex items-center gap-1 pr-1"
+            className="flex items-center gap-1 px-2 py-0.5 text-xs"
           >
             <span className="text-xs">{filter.label}</span>
             <Button
               variant="ghost"
               size="sm"
               onClick={filter.onRemove}
-              className="h-4 w-4 p-0 hover:bg-transparent"
+              className="h-3 w-3 p-0 hover:bg-transparent -mr-1"
             >
-              <X className="h-3 w-3" />
+              <X className="h-2.5 w-2.5" />
             </Button>
           </Badge>
         ))}

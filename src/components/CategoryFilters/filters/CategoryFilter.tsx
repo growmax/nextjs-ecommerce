@@ -48,11 +48,11 @@ export function CategoryFilter({
 
   if (isLoading) {
     return (
-      <div className="space-y-4">
-        <div className="h-6 bg-muted animate-pulse rounded" />
-        <div className="space-y-2">
+      <div className="space-y-3">
+        <div className="h-5 bg-muted animate-pulse rounded" />
+        <div className="space-y-1.5">
           {[1, 2, 3].map((i) => (
-            <div key={i} className="h-5 bg-muted animate-pulse rounded" />
+            <div key={i} className="h-4 bg-muted animate-pulse rounded" />
           ))}
         </div>
       </div>
@@ -64,28 +64,28 @@ export function CategoryFilter({
 
   if (!hasChildCategories && !hasSiblingCategories) {
     return (
-      <div className="text-sm text-muted-foreground py-4">
+      <div className="text-sm text-muted-foreground py-2">
         No categories available
       </div>
     );
   }
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-3">
       {/* Child Categories */}
       {hasChildCategories && (
         <div className="space-y-2">
-          <h4 className="text-sm font-semibold text-muted-foreground flex items-center gap-2">
-            <FolderTree className="h-4 w-4" />
+          <h4 className="text-xs font-semibold text-muted-foreground flex items-center gap-1.5">
+            <FolderTree className="h-3.5 w-3.5" />
             Child Categories
           </h4>
-          <ScrollArea className="h-[150px]">
-            <div className="space-y-1 pr-4">
+          <ScrollArea className="h-[140px]">
+            <div className="space-y-0.5 pr-4">
               {childCategories.map((category) => (
                 <Button
                   key={category.categoryId}
                   variant="ghost"
-                  className="w-full justify-start text-left font-normal h-auto py-2 px-3"
+                  className="w-full justify-start text-left font-normal h-auto py-1.5 px-2 text-sm"
                   onClick={() => handleCategoryClick(category)}
                 >
                   <span className="flex-1">{category.label}</span>
@@ -104,17 +104,17 @@ export function CategoryFilter({
       {/* Sibling Categories */}
       {hasSiblingCategories && (
         <div className="space-y-2">
-          <h4 className="text-sm font-semibold text-muted-foreground flex items-center gap-2">
-            <FolderTree className="h-4 w-4" />
+          <h4 className="text-xs font-semibold text-muted-foreground flex items-center gap-1.5">
+            <FolderTree className="h-3.5 w-3.5" />
             Related Categories
           </h4>
-          <ScrollArea className="h-[150px]">
-            <div className="space-y-1 pr-4">
+          <ScrollArea className="h-[140px]">
+            <div className="space-y-0.5 pr-4">
               {siblingCategories.map((category) => (
                 <Button
                   key={category.categoryId}
                   variant="ghost"
-                  className="w-full justify-start text-left font-normal h-auto py-2 px-3"
+                  className="w-full justify-start text-left font-normal h-auto py-1.5 px-2 text-sm"
                   onClick={() => handleCategoryClick(category)}
                 >
                   <span className="flex-1">{category.label}</span>

@@ -1,26 +1,30 @@
 "use client";
 
 import { useCart as useCartContext } from "@/contexts/CartContext";
-import { useTenantId } from "@/contexts/TenantContext";
+import { useTenant } from "@/contexts/TenantContext";
 import { useUserId } from "@/contexts/UserDetailsContext";
+import { useRouter } from "@/i18n/navigation";
 import CartServices, {
   type AddMultipleItemsRequest,
   type AddToCartRequest,
   type DeleteCartRequest,
 } from "@/lib/api/CartServices";
+import DiscountService from "@/lib/api/services/DiscountService/DiscountService";
 import { AuthStorage } from "@/lib/auth";
+import {
+  batchCacheSellerInfo,
+  batchGetSellerInfoFromCache,
+  type SellerInfo,
+} from "@/lib/cache/sellerInfoCache";
 import { JWTService } from "@/lib/services/JWTService";
+import { useTenantStore } from "@/store/useTenantStore";
 import type { CartItem } from "@/types/calculation/cart";
 import { getIsInCart } from "@/utils/cart/cartHelpers";
 import { ValidateQuantity } from "@/utils/cart/validateQuantity";
 import find from "lodash/find";
-import map from "lodash/map";
 import { useCallback, useMemo, useState } from "react";
 import { toast } from "sonner";
-
-// Local storage keys
-const GUEST_CART_KEY = "CapacitorStorage.CartInfo";
-const GUEST_CART_KEY_ALT = "_cap_CartInfo";
+import { useCurrentUser } from "./useCurrentUser";
 
 interface AddItemToCartData {
   productId: number;
@@ -39,7 +43,6 @@ interface AddItemToCartData {
   sellerName?: string;
   sellerLocation?: string;
   unitListPrice?: number;
-  bundleProducts?: unknown[];
   [key: string]: unknown;
 }
 
@@ -65,7 +68,11 @@ export function useCart() {
   } = useCartContext();
 
   const userIdFromContext = useUserId();
-  const tenantIdNum = useTenantId();
+  const { tenant } = useTenant();
+  const router = useRouter();
+  const { user } = useCurrentUser();
+  const { tenantData } = useTenantStore();
+  const sellerCurrency = tenantData?.sellerCurrency;
 
   // Fallback: Try to get userId from JWT token if context doesn't have it
   // This ensures we can still make API calls even if UserDetailsContext hasn't loaded yet
@@ -97,18 +104,208 @@ export function useCart() {
   // Use userId from context if available, otherwise fallback to JWT token
   const userId = userIdFromContext || userIdFromToken;
 
-  // Convert tenantId to string (backend expects string)
-  const tenantId = tenantIdNum ? String(tenantIdNum) : null;
+  // Get tenantCode (string) - API expects tenantCode, not tenantId
+  const tenantCode = tenant?.tenantCode || null;
   const [isCartLoading, setIsCartLoading] = useState(false);
   const [showCartCard, setShowCartCard] = useState(false);
 
-  // Helper to set cart in localStorage for guest users
-  const cartSetLocalItem = useCallback((data: CartItem[]) => {
-    if (typeof window === "undefined") return;
-    const cartData = { data };
-    localStorage.setItem(GUEST_CART_KEY, JSON.stringify(cartData));
-    localStorage.setItem(GUEST_CART_KEY_ALT, JSON.stringify(cartData));
-  }, []);
+  // Helper to check if user is logged in and prompt login if not
+  const requireLogin = useCallback((): boolean => {
+    if (!userId || !tenantCode) {
+      toast.info("Please login to add products to cart");
+      router.push("/auth/login");
+      return false;
+    }
+    return true;
+  }, [userId, tenantCode, router]);
+
+  /**
+   * Extract seller info from discount data
+   * Used when discount data is already available (from batched fetch)
+   * @param productIds - Array of product IDs to extract seller info for
+   * @param discountData - Discount data from batched fetch
+   * @returns Map of productId -> {sellerId, sellerName}
+   */
+  const _extractSellerInfoFromDiscountData = useCallback(
+    (
+      productIds: number[],
+      discountData: Array<{
+        ProductVariantId: number;
+        sellerId?: string;
+        sellerName?: string;
+      }>
+    ): Map<number, { sellerId: string | number; sellerName: string }> => {
+      const result = new Map<
+        number,
+        { sellerId: string | number; sellerName: string }
+      >();
+
+      productIds.forEach(productId => {
+        const discountItem = discountData.find(
+          item => item.ProductVariantId === productId
+        );
+        if (discountItem?.sellerId && discountItem?.sellerName) {
+          result.set(productId, {
+            sellerId: discountItem.sellerId,
+            sellerName: discountItem.sellerName,
+          });
+        }
+      });
+
+      return result;
+    },
+    []
+  );
+
+  /**
+   * Batch fetch seller info for multiple products
+   * Priority: 1. Cart items, 2. Redis cache, 3. Discount API
+   * Used as fallback when discount data is not available (e.g., single product page)
+   * @param productIds - Array of product IDs to fetch seller info for
+   * @param cartItems - Optional cart items to check first before API calls
+   * @returns Map of productId -> {sellerId, sellerName}
+   */
+  const fetchSellerInfoForProducts = useCallback(
+    async (
+      productIds: number[],
+      cartItems?: CartItem[]
+    ): Promise<Map<number, { sellerId: string | number; sellerName: string }>> => {
+      const result = new Map<number, { sellerId: string | number; sellerName: string }>();
+
+      if (!userId || !tenantCode || !user?.companyId) {
+        return result;
+      }
+
+      const companyId = user.companyId;
+      const currencyId = user.currency?.id || sellerCurrency?.id || 0;
+
+      if (!currencyId) {
+        return result;
+      }
+
+      // Step 1: Check cart items first (if provided) - highest priority
+      if (cartItems && cartItems.length > 0) {
+        productIds.forEach(productId => {
+          // Find the product in cart (may have multiple entries with different sellerIds)
+          // Use the first match found
+          const cartItem = cartItems.find(item => 
+            item.productId == productId && 
+            (item.sellerId || item.vendorId || item.partnerId)
+          );
+          
+          if (cartItem) {
+            const sellerId = cartItem.sellerId || cartItem.vendorId || cartItem.partnerId;
+            const sellerName = cartItem.sellerName || cartItem.vendorName || cartItem.partnerName;
+            
+            if (sellerId && sellerName) {
+              result.set(productId, {
+                sellerId,
+                sellerName,
+              });
+            }
+          }
+        });
+      }
+
+      // Step 2: Find products that still need seller info (not found in cart)
+      const productsNeedingSellerInfo = productIds.filter(
+        productId => !result.has(productId)
+      );
+
+      if (productsNeedingSellerInfo.length === 0) {
+        return result;
+      }
+
+      // Step 3: Check Redis cache for remaining products
+      const cacheProducts = productsNeedingSellerInfo.map(productId => ({
+        productId,
+        companyId,
+        currencyId,
+      }));
+
+      const cachedSellerInfo = await batchGetSellerInfoFromCache(cacheProducts);
+
+      // Add cached results to result map
+      cachedSellerInfo.forEach((sellerInfo, productId) => {
+        result.set(productId, sellerInfo);
+      });
+
+      // Step 4: Find products that are not cached
+      const uncachedProductIds = productsNeedingSellerInfo.filter(
+        productId => !cachedSellerInfo.has(productId)
+      );
+
+      if (uncachedProductIds.length === 0) {
+        return result;
+      }
+
+      // Step 3: Fetch uncached products from discount API in batch
+      try {
+        const discountResult = await DiscountService.getDiscount({
+          userId,
+          tenantId: tenantCode,
+          body: {
+            Productid: uncachedProductIds,
+            CurrencyId: currencyId,
+            BaseCurrencyId: sellerCurrency?.id || 0,
+            companyId,
+            ...(user.currency?.currencyCode || sellerCurrency?.currencyCode
+              ? {
+                  currencyCode:
+                    user.currency?.currencyCode ||
+                    sellerCurrency?.currencyCode ||
+                    "",
+                }
+              : {}),
+          },
+        });
+
+        // Step 4: Process discount response and cache results
+        const sellerInfoToCache = new Map<
+          number,
+          {
+            sellerId: string | number;
+            sellerName: string;
+            companyId: number;
+            currencyId: number;
+          }
+        >();
+
+        discountResult.data?.forEach(discountItem => {
+          if (
+            discountItem.ProductVariantId &&
+            discountItem.sellerId &&
+            discountItem.sellerName
+          ) {
+            const sellerInfo: SellerInfo = {
+              sellerId: discountItem.sellerId,
+              sellerName: discountItem.sellerName,
+            };
+
+            result.set(discountItem.ProductVariantId, sellerInfo);
+
+            // Prepare for caching
+            sellerInfoToCache.set(discountItem.ProductVariantId, {
+              ...sellerInfo,
+              companyId,
+              currencyId,
+            });
+          }
+        });
+
+        // Step 5: Cache all fetched seller info in Redis
+        if (sellerInfoToCache.size > 0) {
+          await batchCacheSellerInfo(sellerInfoToCache);
+        }
+      } catch (error) {
+        console.error("Error fetching seller info from discount API:", error);
+        // Don't throw - return partial results
+      }
+
+      return result;
+    },
+    [userId, tenantCode, user, sellerCurrency]
+  );
 
   /**
    * Check if product is in cart
@@ -163,7 +360,7 @@ export function useCart() {
       cartData = res.cartItems;
     }
 
-    // Process bundle products and seller information (same as getCart)
+    // Process seller information
     return cartData.map(item => {
       const processedItem = { ...item };
       // Preserve seller information
@@ -182,22 +379,6 @@ export function useCart() {
         if (sellerLocation !== undefined) {
           processedItem.sellerLocation = sellerLocation;
         }
-      }
-      // Process bundle products
-      if (
-        item.bundleProducts &&
-        Array.isArray(item.bundleProducts) &&
-        item.bundleProducts.length > 0
-      ) {
-        processedItem.bundleProducts = item.bundleProducts.map(bp => {
-          const bundleSelected = bp.bundleSelected ?? bp.isBundleSelected_fe;
-          return {
-            ...bp,
-            ...(bundleSelected !== undefined
-              ? { isBundleSelected_fe: bundleSelected }
-              : {}),
-          };
-        });
       }
       return processedItem;
     });
@@ -227,7 +408,7 @@ export function useCart() {
 
       setIsCartLoading(true);
       const isInCart = getIsInCartItem(productId, itemNo, sellerId);
-
+      
       // Get product image
       const productImage =
         productAssetss && Array.isArray(productAssetss)
@@ -243,10 +424,9 @@ export function useCart() {
             )?.source
           : img || "";
 
-      // Prepare cart item data - exclude bundleProducts if it's not the right type
-      const { bundleProducts: _, ...dataWithoutBundle } = data;
+      // Prepare cart item data
       const cartItemData: Partial<CartItem> = {
-        ...dataWithoutBundle,
+        ...data,
         ...(productImage && { img: productImage }),
         ...(productShortDescription && {
           shortDescription: productShortDescription,
@@ -321,90 +501,101 @@ export function useCart() {
         setErrorMessage(false);
       }
 
-      if (userId && tenantId) {
-        // Logged-in user: call API
-        try {
-          const requestBody: AddToCartRequest["body"] = {
-            productsId: productId,
-            productId: productId,
-            quantity: cartItemData.quantity || 1,
-            pos: 0,
-            addBundle: true,
-            ...(isInCart?.itemNo !== undefined
-              ? { itemNo: Number(isInCart.itemNo) }
-              : itemNo !== undefined
-                ? { itemNo: Number(itemNo) }
-                : {}),
-            ...(sellerId && {
-              sellerId: Number(sellerId),
-              sellerName: sellerName || "",
-              sellerLocation: sellerLocation || "",
-              price: unitListPrice || data.unitListPrice || 0,
-            }),
-          };
+      // Require login before proceeding
+      if (!requireLogin()) {
+        setIsCartLoading(false);
+        return;
+      }
 
-          const response = await CartServices.postCart({
-            userId: Number(userId),
-            tenantId: String(tenantId),
-            useMultiSellerCart: Boolean(sellerId),
-            body: requestBody,
-            method: isUpdate ? "PUT" : "POST",
-          });
+      // Fetch seller info if not provided
+      let finalSellerId = sellerId;
+      let finalSellerName = sellerName;
+      let finalSellerLocation = sellerLocation;
+      let finalUnitListPrice = unitListPrice || data.unitListPrice;
 
-          // Parse and update cart with backend response (contains calculated prices, taxes, etc.)
-          const updatedCartData = parseCartResponse(response);
-          if (updatedCartData.length > 0) {
-            setCart(updatedCartData);
-          } else {
-            // Fallback to refresh if response is empty
-            await refreshCart();
+      // Optimize: Use seller info from cart if product is already in cart
+      if (!finalSellerId && isInCart) {
+        const cartSellerId = isInCart.sellerId || isInCart.vendorId || isInCart.partnerId;
+        const cartSellerName = isInCart.sellerName || isInCart.vendorName || isInCart.partnerName;
+        const cartSellerLocation = isInCart.sellerLocation || isInCart.vendorLocation;
+        
+        if (cartSellerId && cartSellerName) {
+          finalSellerId = cartSellerId;
+          finalSellerName = cartSellerName;
+          if (cartSellerLocation) {
+            finalSellerLocation = cartSellerLocation;
           }
+          if (isInCart.unitListPrice !== undefined) {
+            finalUnitListPrice = isInCart.unitListPrice;
+          }
+        }
+      }
 
-          // Clear validation error if API call succeeds
-          setErrorMessage(false);
-          toast.success("Item added to cart");
+      // Only fetch from API if seller info is still missing
+      if (!finalSellerId && userId && tenantCode && user?.companyId) {
+        try {
+          // Pass cart items to optimize - will check cart first before API calls
+          const sellerInfoMap = await fetchSellerInfoForProducts([productId], cart);
+          const sellerInfo = sellerInfoMap.get(productId);
+          if (sellerInfo) {
+            finalSellerId = sellerInfo.sellerId;
+            finalSellerName = sellerInfo.sellerName;
+          }
         } catch (error) {
-          console.error("Error adding to cart:", error);
-          // Show backend error message if available
-          const errorMessage =
-            error instanceof Error
-              ? error.message
-              : "Failed to add item to cart";
-          toast.error(errorMessage);
-          setErrorMessage(errorMessage);
+          console.error("Error fetching seller info:", error);
+          // Continue without seller info if fetch fails
         }
-      } else {
-        // Guest user: update localStorage
-        if (isInCart) {
-          const updatedCart = cart.map(item => {
-            const newQuantity = cartItemData.quantity ?? item.quantity;
-            if (
-              sellerId &&
-              item.productId === isInCart.productId &&
-              item.sellerId == sellerId
-            ) {
-              return { ...item, quantity: newQuantity };
-            } else if (!sellerId && item.productId === isInCart.productId) {
-              return { ...item, quantity: newQuantity };
-            }
-            return item;
-          });
-          cartSetLocalItem(updatedCart);
-          setCart(updatedCart);
+      }
+
+      // Logged-in user: call API
+      try {
+        const requestBody: AddToCartRequest["body"] = {
+          productsId: productId,
+          productId: productId,
+          quantity: cartItemData.quantity || 1,
+          pos: 0,
+          ...(isInCart?.itemNo !== undefined
+            ? { itemNo: Number(isInCart.itemNo) }
+            : itemNo !== undefined
+              ? { itemNo: Number(itemNo) }
+              : {}),
+          ...(finalSellerId && {
+            sellerId: Number(finalSellerId),
+            sellerName: finalSellerName || "",
+            sellerLocation: finalSellerLocation || "",
+            price: finalUnitListPrice || 0,
+          }),
+        };
+
+        const response = await CartServices.postCart({
+          userId: Number(userId),
+          tenantId: String(tenantCode),
+          useMultiSellerCart: Boolean(finalSellerId),
+          body: requestBody,
+          method: isUpdate ? "PUT" : "POST",
+        });
+
+        // Parse and update cart with backend response (contains calculated prices, taxes, etc.)
+        const updatedCartData = parseCartResponse(response);
+        if (updatedCartData.length > 0) {
+          setCart(updatedCartData);
         } else {
-          // Ensure quantity is defined before adding to cart
-          const newItem: CartItem = {
-            ...cartItemData,
-            quantity: cartItemData.quantity ?? 1,
-            unitPrice: cartItemData.unitPrice ?? 0,
-            totalPrice:
-              (cartItemData.quantity ?? 1) * (cartItemData.unitPrice ?? 0),
-          } as CartItem;
-          const newCart = [newItem, ...cart];
-          cartSetLocalItem(newCart);
-          setCart(newCart);
+          // Fallback to refresh if response is empty
+          await refreshCart();
         }
+
+        // Clear validation error if API call succeeds
+        setErrorMessage(false);
         toast.success("Item added to cart");
+      } catch (error) {
+        console.error("Error adding to cart:", error);
+        // Show backend error message if available
+        const errorMessage =
+          error instanceof Error
+            ? error.message
+            : "Failed to add item to cart";
+        toast.error(errorMessage);
+        setErrorMessage(errorMessage);
       }
 
       setIsCartLoading(false);
@@ -412,13 +603,15 @@ export function useCart() {
     },
     [
       cart,
-      userId,
-      tenantId,
       getIsInCartItem,
       refreshCart,
       setCart,
-      cartSetLocalItem,
       parseCartResponse,
+      requireLogin,
+      userId,
+      tenantCode,
+      user,
+      fetchSellerInfoForProducts,
     ]
   );
 
@@ -432,18 +625,6 @@ export function useCart() {
       quantity: number,
       setErrorMessage: (error: string | false) => void
     ) => {
-      console.log("🔵 [changeQty] Called with:", {
-        productId: data.productId,
-        quantity,
-        itemNo: data.itemNo,
-        sellerId: data.sellerId,
-        userId,
-        userIdFromContext,
-        userIdFromToken,
-        tenantId,
-        hasUserId: !!userId,
-        hasTenantId: !!tenantId,
-      });
 
       setErrorMessage(false);
       const {
@@ -478,10 +659,9 @@ export function useCart() {
             )?.source
           : img || "";
 
-      // Prepare cart item data - exclude bundleProducts if it's not the right type
-      const { bundleProducts: _, ...dataWithoutBundle } = data;
+      // Prepare cart item data
       const cartItemData: Partial<CartItem> = {
-        ...dataWithoutBundle,
+        ...data,
         quantity: quantity,
         ...(productImage && { img: productImage }),
         ...(productShortDescription && {
@@ -523,129 +703,72 @@ export function useCart() {
         setErrorMessage(false);
       }
 
-      if (userId && tenantId) {
-        // Logged-in user: call API
-        console.log("✅ [changeQty] User is logged in, calling API update", {
-          userId,
-          tenantId,
-          productId,
-          quantity,
-          itemNo: isInCart?.itemNo || itemNo,
+      // Require login before proceeding
+      if (!requireLogin()) {
+        setIsCartLoading(false);
+        return;
+      }
+
+      // Logged-in user: call API
+      try {
+        const requestBody: AddToCartRequest["body"] = {
+          productsId: productId,
+          productId: productId,
+          quantity: quantity,
+          pos: 0,
+          ...(isInCart?.itemNo !== undefined
+            ? { itemNo: Number(isInCart.itemNo) }
+            : itemNo !== undefined
+              ? { itemNo: Number(itemNo) }
+              : {}),
+          ...(sellerId && {
+            sellerId: Number(sellerId),
+            sellerName: sellerName || "",
+            sellerLocation: sellerLocation || "",
+            price: unitListPrice || data.unitListPrice || 0,
+          }),
+        };
+
+        const response = await CartServices.postCart({
+          userId: Number(userId),
+          tenantId: String(tenantCode),
+          useMultiSellerCart: Boolean(sellerId),
+          body: requestBody,
+          method: "PUT",
         });
-        try {
-          const requestBody: AddToCartRequest["body"] = {
-            productsId: productId,
-            productId: productId,
-            quantity: quantity,
-            pos: 0,
-            addBundle: true,
-            ...(isInCart?.itemNo !== undefined
-              ? { itemNo: Number(isInCart.itemNo) }
-              : itemNo !== undefined
-                ? { itemNo: Number(itemNo) }
-                : {}),
-            ...(sellerId && {
-              sellerId: Number(sellerId),
-              sellerName: sellerName || "",
-              sellerLocation: sellerLocation || "",
-              price: unitListPrice || data.unitListPrice || 0,
-            }),
-          };
 
-          console.log("📤 [changeQty] Calling CartServices.postCart with:", {
-            userId: Number(userId),
-            tenantId: String(tenantId),
-            method: "PUT",
-            body: requestBody,
-          });
-
-          const response = await CartServices.postCart({
-            userId: Number(userId),
-            tenantId: String(tenantId),
-            useMultiSellerCart: Boolean(sellerId),
-            body: requestBody,
-            method: "PUT",
-          });
-
-          console.log(
-            "✅ [changeQty] API call successful, response:",
-            response
-          );
-
-          // Parse and update cart with backend response (contains calculated prices, taxes, etc.)
-          // This uses the backend-calculated values instead of making another API call
-          const updatedCartData = parseCartResponse(response);
-          if (updatedCartData.length > 0) {
-            setCart(updatedCartData);
-          } else {
-            // Fallback to refresh if response is empty
-            await refreshCart();
-          }
-
-          // Clear validation error if API call succeeds
-          setErrorMessage(false);
-        } catch (error) {
-          console.error("❌ [changeQty] Error updating cart:", error);
-          // Show backend error message if available
-          const errorMessage =
-            error instanceof Error ? error.message : "Failed to update cart";
-          toast.error(errorMessage);
-          setErrorMessage(errorMessage);
-        }
-      } else {
-        // Guest user: update localStorage
-        console.warn(
-          "⚠️ [changeQty] Skipping API call - missing userId or tenantId",
-          {
-            userId,
-            tenantId,
-            hasUserId: !!userId,
-            hasTenantId: !!tenantId,
-          }
-        );
-        if (isInCart) {
-          const updatedCart = cart.map(item => {
-            if (
-              sellerId &&
-              item.productId === isInCart.productId &&
-              item.sellerId == sellerId
-            ) {
-              return { ...item, quantity: quantity };
-            } else if (!sellerId && item.productId === isInCart.productId) {
-              return { ...item, quantity: quantity };
-            }
-            return item;
-          });
-          cartSetLocalItem(updatedCart);
-          setCart(updatedCart);
+        // Parse and update cart with backend response (contains calculated prices, taxes, etc.)
+        // This uses the backend-calculated values instead of making another API call
+        const updatedCartData = parseCartResponse(response);
+        if (updatedCartData.length > 0) {
+          setCart(updatedCartData);
         } else {
-          // Ensure quantity is defined before adding to cart
-          const newItem: CartItem = {
-            ...cartItemData,
-            quantity: cartItemData.quantity ?? quantity,
-            unitPrice: cartItemData.unitPrice ?? 0,
-            totalPrice: quantity * (cartItemData.unitPrice ?? 0),
-          } as CartItem;
-          const newCart = [newItem, ...cart];
-          cartSetLocalItem(newCart);
-          setCart(newCart);
+          // Fallback to refresh if response is empty
+          await refreshCart();
         }
+
+        // Clear validation error if API call succeeds
+        setErrorMessage(false);
+      } catch (error) {
+        console.error("❌ [changeQty] Error updating cart:", error);
+        // Show backend error message if available
+        const errorMessage =
+          error instanceof Error ? error.message : "Failed to update cart";
+        toast.error(errorMessage);
+        setErrorMessage(errorMessage);
       }
 
       setIsCartLoading(false);
       setShowCartCard(true);
     },
     [
-      cart,
-      userId,
-      userIdFromContext,
-      userIdFromToken,
-      tenantId,
       getIsInCartItem,
       refreshCart,
       setCart,
-      cartSetLocalItem,
       parseCartResponse,
+      requireLogin,
+      userId,
+      tenantCode,
     ]
   );
 
@@ -659,20 +782,8 @@ export function useCart() {
       itemNo: number | string,
       sellerId?: number | string | null
     ) => {
-      if (!userId || !tenantId) {
-        // Guest user: remove from localStorage
-        const newCart = cart.filter(item => {
-          if (sellerId) {
-            // Multi-seller cart: match by productId and sellerId
-            return !(item.productId == productId && item.sellerId == sellerId);
-          } else {
-            // Legacy behavior: match by productId and itemNo
-            return !(item.productId == productId && item.itemNo == itemNo);
-          }
-        });
-        cartSetLocalItem(newCart);
-        setCart(newCart);
-        toast.success("Item removed from cart");
+      // Require login before proceeding
+      if (!requireLogin()) {
         return;
       }
 
@@ -680,7 +791,7 @@ export function useCart() {
       try {
         const deleteParams: DeleteCartRequest = {
           userId: Number(userId),
-          tenantId: String(tenantId),
+          tenantId: String(tenantCode),
           productId: productId,
           itemNo: Number(itemNo),
           pos: 0,
@@ -690,7 +801,7 @@ export function useCart() {
         }
         await CartServices.deleteCart(deleteParams);
 
-        // Update local state
+        // Update local state optimistically for instant UI update
         const newCart = cart.filter(item => {
           if (sellerId) {
             return !(item.productId == productId && item.sellerId == sellerId);
@@ -703,8 +814,17 @@ export function useCart() {
         });
 
         setCart(newCart);
-        await refreshCart();
+        // Set loading to false immediately after local state update for instant UI
+        setIsCartLoading(false);
+        setShowCartCard(false);
         toast.success("Item removed from cart");
+
+        // Refresh cart in background without blocking UI
+        // Don't await - let it happen in the background
+        refreshCart().catch(error => {
+          console.error("Error refreshing cart after delete:", error);
+          // Don't show error to user - delete already succeeded
+        });
       } catch (error) {
         console.error("Error deleting from cart:", error);
         // Show backend error message if available
@@ -713,12 +833,11 @@ export function useCart() {
             ? error.message
             : "Failed to remove item from cart";
         toast.error(errorMessage);
-      } finally {
         setIsCartLoading(false);
         setShowCartCard(false);
       }
     },
-    [cart, userId, tenantId, setCart, refreshCart, cartSetLocalItem]
+    [cart, userId, tenantCode, setCart, refreshCart, requireLogin]
   );
 
   /**
@@ -726,24 +845,24 @@ export function useCart() {
    * Migrated from buyer-fe/src/hooks/useCart.js emptyCart
    */
   const emptyCart = useCallback(async () => {
+    // Require login before proceeding
+    if (!requireLogin()) {
+      return;
+    }
+
     setIsCartLoading(true);
     try {
-      if (userId) {
-        await CartServices.emptyCart({ userId: Number(userId) });
-        setCart([]);
-        await refreshCart();
-        toast.success("Cart cleared");
-      } else {
-        clearGuestCart();
-        toast.success("Cart cleared");
-      }
+      await CartServices.emptyCart({ userId: Number(userId!) });
+      setCart([]);
+      await refreshCart();
+      toast.success("Cart cleared");
     } catch (error) {
       console.error("Error emptying cart:", error);
       toast.error("Failed to clear cart");
     } finally {
       setIsCartLoading(false);
     }
-  }, [userId, setCart, refreshCart, clearGuestCart]);
+  }, [userId, setCart, refreshCart, requireLogin]);
 
   /**
    * Empty cart by seller
@@ -756,38 +875,29 @@ export function useCart() {
         return;
       }
 
+      // Require login before proceeding
+      if (!requireLogin()) {
+        return;
+      }
+
       setIsCartLoading(true);
       try {
-        if (userId && tenantId) {
-          // Logged-in user: call API
-          await CartServices.clearCartBySeller({
-            userId: Number(userId),
-            sellerId: Number(sellerId),
-            tenantId: String(tenantId),
-          });
+        await CartServices.clearCartBySeller({
+          userId: Number(userId!),
+          sellerId: Number(sellerId),
+          tenantId: String(tenantCode!),
+        });
 
-          // Remove items from local state
-          const updatedCart = cart.filter(item => {
-            const itemSellerId =
-              item.sellerId || item.vendorId || item.partnerId;
-            return String(itemSellerId) !== String(sellerId);
-          });
+        // Remove items from local state
+        const updatedCart = cart.filter(item => {
+          const itemSellerId =
+            item.sellerId || item.vendorId || item.partnerId;
+          return String(itemSellerId) !== String(sellerId);
+        });
 
-          setCart(updatedCart);
-          await refreshCart();
-          toast.success("Seller items removed from cart");
-        } else {
-          // Guest user: filter from localStorage
-          const updatedCart = cart.filter(item => {
-            const itemSellerId =
-              item.sellerId || item.vendorId || item.partnerId;
-            return String(itemSellerId) !== String(sellerId);
-          });
-
-          cartSetLocalItem(updatedCart);
-          setCart(updatedCart);
-          toast.success("Seller items removed from cart");
-        }
+        setCart(updatedCart);
+        await refreshCart();
+        toast.success("Seller items removed from cart");
       } catch (error) {
         console.error("Error clearing cart by seller:", error);
         toast.error("Failed to clear seller items from cart");
@@ -795,7 +905,7 @@ export function useCart() {
         setIsCartLoading(false);
       }
     },
-    [cart, userId, tenantId, setCart, refreshCart, cartSetLocalItem]
+    [cart, userId, tenantCode, setCart, refreshCart, requireLogin]
   );
 
   /**
@@ -808,69 +918,61 @@ export function useCart() {
         productsId: number;
         productId: number;
         quantity: number;
-        addBundle: boolean;
         sellerId?: number;
         sellerName?: string;
         sellerLocation?: string;
         price?: number;
         itemNo?: number;
         pos?: number;
-      }>,
-      fbtWithCart?: CartItem[]
+      }>
     ) => {
+      // Require login before proceeding
+      if (!requireLogin()) {
+        return;
+      }
+
       setIsCartLoading(true);
       try {
-        if (userId && tenantId) {
-          // Logged-in user: call API
-          const request: AddMultipleItemsRequest = {
-            userId: Number(userId),
-            tenantId: String(tenantId),
-            body: items,
-          };
+        // Fetch seller info for products that don't have it
+        const productIdsNeedingSellerInfo = items
+          .filter(item => !item.sellerId)
+          .map(item => item.productId);
 
-          await CartServices.addMultipleItems(request);
-          await refreshCart();
-          toast.success("Items added to cart");
-        } else {
-          // Guest user: update localStorage
-          if (fbtWithCart) {
-            const res = map(fbtWithCart, prd => {
-              const isInCart = getIsInCartItem(prd.productId);
-              if (isInCart) {
-                return { ...prd, quantity: isInCart.quantity || prd.quantity };
-              }
-              return prd;
-            });
-            cartSetLocalItem(res);
-            setCart(res);
-          } else {
-            // Convert items to CartItem format with required fields
-            const cartItems: CartItem[] = items.map(item => {
-              const cartItem: CartItem = {
-                productId: item.productId,
-                quantity: item.quantity,
-                unitPrice: item.price ?? 0,
-                totalPrice: item.quantity * (item.price ?? 0),
-              };
-              if (item.itemNo !== undefined) {
-                cartItem.itemNo = item.itemNo;
-              }
-              if (item.sellerId !== undefined) {
-                cartItem.sellerId = item.sellerId;
-              }
-              if (item.sellerName !== undefined) {
-                cartItem.sellerName = item.sellerName;
-              }
-              if (item.sellerLocation !== undefined) {
-                cartItem.sellerLocation = item.sellerLocation;
-              }
-              return cartItem;
-            });
-            cartSetLocalItem([...cartItems, ...cart]);
-            setCart([...cartItems, ...cart]);
-          }
-          toast.success("Items added to cart");
+        let sellerInfoMap = new Map<
+          number,
+          { sellerId: string | number; sellerName: string }
+        >();
+
+        // Optimize: Check cart first, then fetch from API if needed
+        if (productIdsNeedingSellerInfo.length > 0) {
+          sellerInfoMap = await fetchSellerInfoForProducts(
+            productIdsNeedingSellerInfo,
+            cart // Pass cart items to check first before API calls
+          );
         }
+
+        // Merge seller info into items
+        const itemsWithSellerInfo = items.map(item => {
+          if (!item.sellerId && sellerInfoMap.has(item.productId)) {
+            const sellerInfo = sellerInfoMap.get(item.productId)!;
+            return {
+              ...item,
+              sellerId: Number(sellerInfo.sellerId),
+              sellerName: sellerInfo.sellerName,
+            };
+          }
+          return item;
+        });
+
+        const request: AddMultipleItemsRequest = {
+          userId: Number(userId!),
+          tenantId: String(tenantCode!),
+          body: itemsWithSellerInfo,
+        };
+
+        await CartServices.addMultipleItems(request);
+        await refreshCart();
+        toast.success("Items added to cart");
       } catch (error) {
         console.error("Error adding multiple items:", error);
         toast.error("Failed to add items to cart");
@@ -881,11 +983,10 @@ export function useCart() {
     [
       cart,
       userId,
-      tenantId,
-      getIsInCartItem,
+      tenantCode,
       refreshCart,
-      setCart,
-      cartSetLocalItem,
+      requireLogin,
+      fetchSellerInfoForProducts,
     ]
   );
 

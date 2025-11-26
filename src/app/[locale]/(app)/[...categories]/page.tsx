@@ -1,5 +1,5 @@
 import { CategoryBreadcrumbServer } from "@/components/Breadcrumb/CategoryBreadcrumbServer";
-import { ProductGridServer } from "@/components/ProductGrid/ProductGridServer";
+import { ProductViewSwitcher } from "@/components/ProductGrid/ProductViewSwitcher";
 import { StructuredDataServer } from "@/components/seo/StructuredDataServer";
 import type { RequestContext } from "@/lib/api/client";
 import SearchService, {
@@ -241,6 +241,15 @@ export default async function CategoryPage({
     notFound();
   }
 
+  // Get the last node from the category path for display purposes
+  const lastNode = categoryPath.nodes[categoryPath.nodes.length - 1];
+
+  // Generate breadcrumbs for the category path
+  const breadcrumbs = CategoryResolutionService.getCategoryBreadcrumbs(
+    categoryPath,
+    locale
+  );
+
   // Parse filters from searchParams
   const page = parseInt(filters.page || "1", 10);
   const sortBy = parseInt(filters.sort || "1", 10);
@@ -395,6 +404,25 @@ export default async function CategoryPage({
 
   return (
     <>
+      {/* Script to sync viewMode from localStorage before React hydrates */}
+      <script
+        dangerouslySetInnerHTML={{
+          __html: `
+            (function() {
+              try {
+                const saved = localStorage.getItem('product-view-mode');
+                if (saved === 'grid' || saved === 'list' || saved === 'table') {
+                  window.__PRODUCT_VIEW_MODE__ = saved;
+                } else {
+                  window.__PRODUCT_VIEW_MODE__ = 'grid';
+                }
+              } catch (e) {
+                window.__PRODUCT_VIEW_MODE__ = 'grid';
+              }
+            })();
+          `,
+        }}
+      />
       {/* Structured Data for SEO - Server-rendered */}
       <StructuredDataServer data={structuredData} />
 
@@ -419,14 +447,14 @@ export default async function CategoryPage({
         aggregations={aggregations}
         currentCategoryPath={categories}
       >
-        {/* Product Grid - Server-rendered for SEO */}
+        {/* Product Grid - Server-rendered for SEO with client-side view switching */}
         <div className="relative mt-6">
           {initialProducts.products.length === 0 ? (
             <div className="text-center py-12">
               <p className="text-gray-600 text-lg">No products found.</p>
             </div>
           ) : (
-            <ProductGridServer
+            <ProductViewSwitcher
               products={initialProducts.products}
               locale={locale}
             />

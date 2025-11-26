@@ -708,8 +708,9 @@ class CategoryResolutionService {
     categoryPath: CategoryPath,
     locale: string = "en"
   ): BreadcrumbItem[] {
+    // Note: hrefs don't include locale prefix because Link from @/i18n/navigation auto-adds it
     const breadcrumbs: BreadcrumbItem[] = [
-      { label: "Home", href: `/${locale}` },
+      { label: "Home", href: `/` },
     ];
 
     let currentPath = "";
@@ -717,7 +718,7 @@ class CategoryResolutionService {
       currentPath += `/${node.slug}`;
       breadcrumbs.push({
         label: node.name,
-        href: `/${locale}${currentPath}`,
+        href: currentPath,
       });
     });
 

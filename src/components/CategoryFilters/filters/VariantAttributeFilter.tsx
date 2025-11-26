@@ -38,13 +38,13 @@ export function VariantAttributeFilter({
 
   if (isLoading) {
     return (
-      <div className="space-y-4">
+      <div className="space-y-3">
         {[1, 2].map((i) => (
           <div key={i} className="space-y-2">
-            <div className="h-5 bg-muted animate-pulse rounded" />
+            <div className="h-4 bg-muted animate-pulse rounded" />
             <div className="space-y-1">
               {[1, 2, 3].map((j) => (
-                <div key={j} className="h-4 bg-muted animate-pulse rounded" />
+                <div key={j} className="h-3.5 bg-muted animate-pulse rounded" />
               ))}
             </div>
           </div>
@@ -55,14 +55,14 @@ export function VariantAttributeFilter({
 
   if (attributeGroups.length === 0) {
     return (
-      <div className="text-sm text-muted-foreground py-4">
+      <div className="text-sm text-muted-foreground py-2">
         No variant attributes available
       </div>
     );
   }
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-3">
       {attributeGroups.map((group) => {
         const searchQuery =
           searchQueries[group.attributeName]?.toLowerCase() || "";
@@ -72,8 +72,8 @@ export function VariantAttributeFilter({
 
         return (
           <div key={group.attributeName} className="space-y-2">
-            <h4 className="text-sm font-semibold flex items-center gap-2">
-              <Palette className="h-4 w-4" />
+            <h4 className="text-xs font-semibold flex items-center gap-1.5">
+              <Palette className="h-3.5 w-3.5" />
               {group.attributeName}
             </h4>
 
@@ -92,8 +92,8 @@ export function VariantAttributeFilter({
             </div>
 
             {/* Options */}
-            <ScrollArea className="h-[120px]">
-              <div className="space-y-1.5 pr-4">
+            <ScrollArea className="h-[110px]">
+              <div className="space-y-1 pr-4">
                 {filteredOptions.length === 0 ? (
                   <div className="text-xs text-muted-foreground py-2">
                     No options found
@@ -108,7 +108,7 @@ export function VariantAttributeFilter({
                     return (
                       <div
                         key={option.value}
-                        className="flex items-center space-x-2 rounded-md p-1.5 transition-colors hover:bg-accent/50"
+                        className="flex items-center space-x-2 rounded-md p-1 transition-colors hover:bg-accent/50"
                       >
                         <Checkbox
                           id={`${group.attributeName}-${option.value}`}

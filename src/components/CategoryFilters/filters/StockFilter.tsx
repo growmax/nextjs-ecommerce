@@ -21,18 +21,18 @@ export function StockFilter({
 }: StockFilterProps) {
   if (isLoading) {
     return (
-      <div className="space-y-2">
+      <div className="space-y-1.5">
         {[1, 2, 3].map((i) => (
-          <div key={i} className="h-5 bg-muted animate-pulse rounded" />
+          <div key={i} className="h-4 bg-muted animate-pulse rounded" />
         ))}
       </div>
     );
   }
 
   return (
-    <div className="space-y-3">
-      <h4 className="text-sm font-semibold flex items-center gap-2">
-        <Package className="h-4 w-4" />
+    <div className="space-y-2">
+      <h4 className="text-xs font-semibold flex items-center gap-1.5">
+        <Package className="h-3.5 w-3.5" />
         Stock Status
       </h4>
 
@@ -54,20 +54,20 @@ export function StockFilter({
           }
         }}
       >
-        <div className="space-y-2">
-          <div className="flex items-center space-x-2 rounded-md p-2 transition-colors hover:bg-accent/50">
+        <div className="space-y-1">
+          <div className="flex items-center space-x-2 rounded-md p-1.5 transition-colors hover:bg-accent/50">
             <RadioGroupItem value="all" id="stock-all" />
             <Label htmlFor="stock-all" className="flex-1 cursor-pointer text-sm font-normal">
               All Products
             </Label>
           </div>
-          <div className="flex items-center space-x-2 rounded-md p-2 transition-colors hover:bg-accent/50">
+          <div className="flex items-center space-x-2 rounded-md p-1.5 transition-colors hover:bg-accent/50">
             <RadioGroupItem value="in_stock" id="stock-in" />
             <Label htmlFor="stock-in" className="flex-1 cursor-pointer text-sm font-normal">
               In Stock
             </Label>
           </div>
-          <div className="flex items-center space-x-2 rounded-md p-2 transition-colors hover:bg-accent/50">
+          <div className="flex items-center space-x-2 rounded-md p-1.5 transition-colors hover:bg-accent/50">
             <RadioGroupItem value="out_of_stock" id="stock-out" />
             <Label htmlFor="stock-out" className="flex-1 cursor-pointer text-sm font-normal">
               Out of Stock

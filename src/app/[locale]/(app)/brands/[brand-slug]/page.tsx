@@ -1,5 +1,5 @@
 import { CategoryBreadcrumbServer } from "@/components/Breadcrumb/CategoryBreadcrumbServer";
-import { ProductGridServer } from "@/components/ProductGrid/ProductGridServer";
+import { ProductViewSwitcher } from "@/components/ProductGrid/ProductViewSwitcher";
 import { StructuredDataServer } from "@/components/seo/StructuredDataServer";
 import type { RequestContext } from "@/lib/api/client";
 import SearchService, {
@@ -8,7 +8,8 @@ import SearchService, {
 } from "@/lib/api/services/SearchService/SearchService";
 import TenantService from "@/lib/api/services/TenantService";
 import BrandResolutionService from "@/lib/services/BrandResolutionService";
-import { buildBrandQuery } from "@/utils/opensearch/browse-queries";
+import type { FilterAggregations } from "@/types/category-filters";
+import { buildBrandQuery, buildBrandFilter, getBaseQuery } from "@/utils/opensearch/browse-queries";
 import { Metadata } from "next";
 import { headers } from "next/headers";
 import { notFound } from "next/navigation";
@@ -225,6 +226,34 @@ export default async function BrandPage({ params, searchParams }: PageProps) {
   // Await products for total count (needed for pagination)
   const initialProducts = await productsPromise;
 
+  // Build base query for aggregations (with brand filter)
+  const baseQuery = getBaseQuery();
+  const brandFilter = buildBrandFilter(brand.name);
+  const baseQueryForAggs = {
+    must: [...baseQuery.must, brandFilter],
+    must_not: baseQuery.must_not,
+  };
+
+  // Fetch aggregations server-side for filters
+  let aggregations: FilterAggregations | null = null;
+  if (elasticIndex) {
+    try {
+      const aggregationResponse = await SearchService.getFilterAggregations(
+        elasticIndex,
+        baseQueryForAggs,
+        undefined, // No current filters on brand landing page
+        context
+      );
+
+      if (aggregationResponse.success) {
+        aggregations = aggregationResponse.aggregations as FilterAggregations;
+      }
+    } catch (error) {
+      console.error("Error fetching aggregations for brand page:", error);
+      // Continue without aggregations - filters will show loading state
+    }
+  }
+
   // Get breadcrumbs
   const breadcrumbs = BrandResolutionService.getBrandBreadcrumbs(
     brand,
@@ -253,6 +282,25 @@ export default async function BrandPage({ params, searchParams }: PageProps) {
 
   return (
     <>
+      {/* Script to sync viewMode from localStorage before React hydrates */}
+      <script
+        dangerouslySetInnerHTML={{
+          __html: `
+            (function() {
+              try {
+                const saved = localStorage.getItem('product-view-mode');
+                if (saved === 'grid' || saved === 'list' || saved === 'table') {
+                  window.__PRODUCT_VIEW_MODE__ = saved;
+                } else {
+                  window.__PRODUCT_VIEW_MODE__ = 'grid';
+                }
+              } catch (e) {
+                window.__PRODUCT_VIEW_MODE__ = 'grid';
+              }
+            })();
+          `,
+        }}
+      />
       {/* Structured Data for SEO - Server-rendered */}
       <StructuredDataServer data={structuredData} />
 
@@ -275,36 +323,40 @@ export default async function BrandPage({ params, searchParams }: PageProps) {
         </div>
       </div>
 
-      {/* Interactivity Controls - Client component for pagination/sorting */}
+      {/* Interactivity Controls - Client component for pagination/sorting/filters */}
       <BrandCategoryPageInteractivity
         initialFilters={{
           page,
           sort: sortBy,
         }}
         total={initialProducts.total}
-      />
-
-      {/* Product Grid - Server-rendered for SEO with Suspense for streaming */}
-      <div className="relative">
-        <Suspense
-          fallback={
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 md:gap-6">
-              {Array.from({ length: 8 }).map((_, i) => (
-                <div
-                  key={i}
-                  className="h-[380px] bg-muted animate-pulse rounded-lg"
-                />
-              ))}
-            </div>
-          }
-        >
-          <BrandProductGridWrapper
-            productsPromise={productsPromise}
-            brandName={brand.name}
-            locale={locale}
-          />
-        </Suspense>
-      </div>
+        aggregations={aggregations}
+        brandName={brand.name}
+        locale={locale}
+        currentCategoryPath={[]}
+      >
+        {/* Product Grid - Server-rendered for SEO with Suspense for streaming */}
+        <div className="relative">
+          <Suspense
+            fallback={
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4 md:gap-6">
+                {Array.from({ length: 8 }).map((_, i) => (
+                  <div
+                    key={i}
+                    className="h-[380px] bg-muted animate-pulse rounded-lg"
+                  />
+                ))}
+              </div>
+            }
+          >
+            <BrandProductGridWrapper
+              productsPromise={productsPromise}
+              brandName={brand.name}
+              locale={locale}
+            />
+          </Suspense>
+        </div>
+      </BrandCategoryPageInteractivity>
     </>
   );
 }
@@ -332,5 +384,5 @@ async function BrandProductGridWrapper({
     );
   }
 
-  return <ProductGridServer products={products} locale={locale} />;
+  return <ProductViewSwitcher products={products} locale={locale} />;
 }

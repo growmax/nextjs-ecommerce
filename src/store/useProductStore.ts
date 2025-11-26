@@ -114,6 +114,33 @@ function filterProducts(
 }
 
 /**
+ * Load viewMode from localStorage or global variable (set by script tag)
+ */
+function getInitialViewMode(): ViewMode {
+  if (typeof window === "undefined") return "grid";
+  
+  // Check if script tag has already set the viewMode
+  if ((window as any).__PRODUCT_VIEW_MODE__) {
+    const saved = (window as any).__PRODUCT_VIEW_MODE__;
+    if (saved === "grid" || saved === "list" || saved === "table") {
+      return saved;
+    }
+  }
+  
+  // Fallback to localStorage
+  try {
+    const saved = localStorage.getItem("product-view-mode");
+    if (saved === "grid" || saved === "list" || saved === "table") {
+      return saved;
+    }
+  } catch (e) {
+    // localStorage might not be available
+  }
+  
+  return "grid";
+}
+
+/**
  * Zustand Store for Product Listing
  * Follows the same pattern as useTenantStore
  */
@@ -126,7 +153,7 @@ export const useProductStore = create<ProductStoreState>((set, get) => ({
   selectedColors: [],
   priceRange: [0, 5000000], // ₹0 to ₹50,000 (in paise)
   searchQuery: "",
-  viewMode: "grid",
+  viewMode: getInitialViewMode(),
   loading: false,
   error: null,
 
@@ -187,6 +214,10 @@ export const useProductStore = create<ProductStoreState>((set, get) => ({
   // View Actions
   setViewMode: (mode) => {
     set({ viewMode: mode });
+    // Save to localStorage
+    if (typeof window !== "undefined") {
+      localStorage.setItem("product-view-mode", mode);
+    }
   },
 
   // Pagination Actions

@@ -377,15 +377,16 @@ class BrandResolutionService {
     categoryPath?: string[],
     locale: string = "en"
   ): BreadcrumbItem[] {
+    // Note: hrefs don't include locale prefix because Link from @/i18n/navigation auto-adds it
     const breadcrumbs: BreadcrumbItem[] = [
-      { label: "Home", href: `/${locale}` },
-      { label: "Brands", href: `/${locale}/brands` },
-      { label: brand.name, href: `/${locale}/brands/${brand.slug}` },
+      { label: "Home", href: `/` },
+      { label: "Brands", href: `/brands/All` },
+      { label: brand.name, href: `/brands/${brand.slug}` },
     ];
 
     // Add category path if provided
     if (categoryPath && categoryPath.length > 0) {
-      let currentPath = `/${locale}/brands/${brand.slug}`;
+      let currentPath = `/brands/${brand.slug}`;
       categoryPath.forEach(slug => {
         currentPath += `/${slug}`;
         breadcrumbs.push({

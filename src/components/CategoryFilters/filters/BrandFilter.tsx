@@ -6,7 +6,8 @@ import { Label } from "@/components/ui/label";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import type { BrandFilterOption } from "@/types/category-filters";
 import { Search } from "lucide-react";
-import { useRouter } from "next/navigation";
+import { useRouter } from "@/i18n/navigation";
+import { useNavigationWithLoader } from "@/hooks/useNavigationWithLoader";
 import { useState } from "react";
 
 interface BrandFilterProps {
@@ -19,7 +20,7 @@ interface BrandFilterProps {
  * Shows brands with navigation to brand pages when clicked
  */
 export function BrandFilter({ brands, isLoading }: BrandFilterProps) {
-  const router = useRouter();
+  const { push } = useNavigationWithLoader();
   const [searchQuery, setSearchQuery] = useState("");
 
   // Filter brands based on search
@@ -28,17 +29,18 @@ export function BrandFilter({ brands, isLoading }: BrandFilterProps) {
   );
 
   const handleBrandClick = (brand: BrandFilterOption) => {
-    // Navigate to brand page: /brands/{brandName}/category
-    router.push(brand.navigationPath);
+    // Navigate to brand page with loading state
+    // The navigationPath already includes locale prefix from formatBrandsAggregation
+    push(brand.navigationPath);
   };
 
   if (isLoading) {
     return (
-      <div className="space-y-3">
-        <div className="h-10 bg-muted animate-pulse rounded" />
-        <div className="space-y-2">
+      <div className="space-y-2">
+        <div className="h-8 bg-muted animate-pulse rounded" />
+        <div className="space-y-1.5">
           {[1, 2, 3, 4].map((i) => (
-            <div key={i} className="h-6 bg-muted animate-pulse rounded" />
+            <div key={i} className="h-5 bg-muted animate-pulse rounded" />
           ))}
         </div>
       </div>
@@ -47,29 +49,29 @@ export function BrandFilter({ brands, isLoading }: BrandFilterProps) {
 
   if (brands.length === 0) {
     return (
-      <div className="text-sm text-muted-foreground py-4">
+      <div className="text-sm text-muted-foreground py-2">
         No brands available
       </div>
     );
   }
 
   return (
-    <div className="space-y-3">
+    <div className="space-y-2">
       {/* Search */}
       <div className="relative">
-        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+        <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
         <Input
           type="text"
           placeholder="Search brands..."
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
-          className="pl-9 h-9"
+          className="pl-8 h-8 text-sm"
         />
       </div>
 
       {/* Brand List */}
-      <ScrollArea className="h-[200px]">
-        <div className="space-y-2 pr-4">
+      <ScrollArea className="h-[180px]">
+        <div className="space-y-1.5 pr-4">
           {filteredBrands.length === 0 ? (
             <div className="text-sm text-muted-foreground py-2">
               No brands found
@@ -78,7 +80,7 @@ export function BrandFilter({ brands, isLoading }: BrandFilterProps) {
             filteredBrands.map((brand) => (
               <div
                 key={brand.value}
-                className="flex items-center space-x-2 rounded-md p-2 transition-colors hover:bg-accent/50 cursor-pointer"
+                className="flex items-center space-x-2 rounded-md p-1.5 transition-colors hover:bg-accent/50 cursor-pointer"
                 onClick={() => handleBrandClick(brand)}
               >
                 <Checkbox
