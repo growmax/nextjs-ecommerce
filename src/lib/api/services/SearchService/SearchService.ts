@@ -1,4 +1,3 @@
-import type { CategoryFilterState } from "@/types/category-filters";
 import { RequestContext, openSearchClient } from "../../client";
 import { BaseService } from "../BaseService";
 
@@ -516,16 +515,10 @@ export class SearchService extends BaseService<SearchService> {
   }
 
   /**
-   * Get filter aggregations for category page
-   * Fetches aggregations for all filter types (brands, categories, variant attributes, etc.)
-   *
-   * @param elasticIndex - Elasticsearch index name
-   * @param baseQuery - Base query with category filters
-   * @param currentFilters - Current active filters (to exclude from aggregations)
-   * @param context - Request context
-   * @returns Filter aggregations formatted for UI
+   * Generate cache key for aggregation queries
+   * Creates a deterministic key from query parameters
    */
-  async getFilterAggregations(
+  private generateAggregationCacheKey(
     elasticIndex: string,
     baseQuery: {
       must: Array<Record<string, unknown>>;
@@ -765,7 +758,7 @@ export class SearchService extends BaseService<SearchService> {
   }
 
   /**
-   * Get aggregations from OpenSearch
+   * Get aggregations from OpenSearch with Redis caching
    *
    * @param elasticIndex - Elasticsearch index name
    * @param query - Elasticsearch query with aggregations

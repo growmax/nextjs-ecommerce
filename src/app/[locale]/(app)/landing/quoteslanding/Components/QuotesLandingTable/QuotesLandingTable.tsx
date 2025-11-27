@@ -16,6 +16,7 @@ import {
 import { Skeleton } from "@/components/ui/skeleton";
 import { useCurrentUser } from "@/hooks/useCurrentUser";
 import { useRequestDeduplication } from "@/hooks/useRequestDeduplication";
+import { usePostNavigationFetch } from "@/hooks/usePostNavigationFetch";
 import PreferenceService, {
   FilterPreferenceResponse,
 } from "@/lib/api/services/PreferenceService/PreferenceService";
@@ -728,7 +729,8 @@ function QuotesLandingTable({
     deduplicate,
   ]);
 
-  useEffect(() => {
+  // Fetch quotes after navigation completes - ensures instant navigation
+  usePostNavigationFetch(() => {
     fetchQuotes();
   }, [fetchQuotes, refreshTrigger]);
 

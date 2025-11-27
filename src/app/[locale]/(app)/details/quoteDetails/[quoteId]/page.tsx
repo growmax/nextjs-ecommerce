@@ -1,17 +1,8 @@
 "use client";
 
 import { usePageScroll } from "@/hooks/usePageScroll";
-import dynamic from "next/dynamic";
 import { Suspense } from "react";
-
-// Dynamic import of client component - no loading state to avoid double loader
-// The component itself handles loading state for API calls
-const QuoteDetailsClient = dynamic(
-  () => import("./components/QuoteDetailsClient"),
-  {
-    ssr: false,
-  }
-);
+import QuoteDetailsClient from "./components/QuoteDetailsClient";
 
 export default function QuoteDetailsPage({
   params,
@@ -21,7 +12,16 @@ export default function QuoteDetailsPage({
   usePageScroll();
 
   return (
-    <Suspense fallback={null}>
+    <Suspense
+      fallback={
+        <div className="min-h-screen bg-background p-6">
+          <div className="space-y-4">
+            <div className="h-12 w-64 bg-muted animate-pulse rounded" />
+            <div className="h-96 w-full bg-muted animate-pulse rounded" />
+          </div>
+        </div>
+      }
+    >
       <QuoteDetailsClient params={params} />
     </Suspense>
   );

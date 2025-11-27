@@ -39,10 +39,13 @@ interface UseNavigationProgressOptions {
  *
  * The loader shows immediately on navigation clicks and hides only after navigation completes.
  * It is separate from API loading states.
+ *
+ * The loader shows immediately on navigation clicks and hides only after navigation completes.
+ * It is separate from API loading states.
  */
 export function useNavigationProgress({
   autoDetect = true,
-  delayMs = 100,
+  delayMs: _delayMs = 100,
   respectReducedMotion = true,
   timeoutMs = 30000,
 }: UseNavigationProgressOptions = {}) {
@@ -81,7 +84,7 @@ export function useNavigationProgress({
     }
   }, []);
 
-  // End navigation loading
+  // End navigation loading - hide immediately when GET request completes
   const endNavigation = useCallback(
     (_reason?: string) => {
       if (!isNavigatingRef.current || !mountedRef.current) return undefined;
@@ -89,29 +92,13 @@ export function useNavigationProgress({
       isNavigatingRef.current = false;
       clearNavigationTimeout();
 
-      // Calculate minimum time to show progress (for better UX)
-      const elapsed = startTimeRef.current
-        ? Date.now() - startTimeRef.current
-        : 0;
-      const minimumDelay = prefersReducedMotion ? 0 : delayMs;
-
-      const completeProgress = () => {
-        hideLoading(loadingId);
-      };
-
-      if (elapsed < minimumDelay) {
-        setTimeout(() => {
-          if (mountedRef.current) {
-            completeProgress();
-          }
-        }, minimumDelay - elapsed);
-      } else {
-        completeProgress();
-      }
+      // Hide progress bar immediately when GET request completes
+      // No delay - we want it to hide as soon as GET is done
+      hideLoading(loadingId);
 
       return undefined;
     },
-    [clearNavigationTimeout, prefersReducedMotion, delayMs, hideLoading]
+    [clearNavigationTimeout, hideLoading]
   );
 
   // Start navigation loading
@@ -232,7 +219,7 @@ export function useNavigationProgress({
     };
   }, [autoDetect, startNavigation]);
 
-  // Handle route changes - detect navigation completion
+  // Handle route changes - detect GET request completion
   const pathnameChangeTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   useEffect(() => {
@@ -246,7 +233,7 @@ export function useNavigationProgress({
 
     if (!pathname) return undefined;
 
-    // Clear any pending pathname change timeout
+    // Clear any pending timeout
     if (pathnameChangeTimeoutRef.current) {
       clearTimeout(pathnameChangeTimeoutRef.current);
       pathnameChangeTimeoutRef.current = null;
@@ -259,20 +246,26 @@ export function useNavigationProgress({
 
     const currentPathname = getPathWithoutLocale(pathname);
 
-    // If pathname changed, navigation has completed
+    // If pathname changed, check if GET request has completed
     if (
       prevPathnameRef.current !== null &&
       prevPathnameRef.current !== currentPathname
     ) {
-      // If we were navigating, end navigation after ensuring full completion
-      // Wait 600ms to cover the full navigation cycle (~500ms navigation + buffer)
+      // If we were navigating, wait for GET request completion
       if (isNavigatingRef.current) {
+        // For Next.js App Router: pathname change means route navigation started
+        // We wait a small amount (50-100ms) to ensure GET response is fully received
+        // This accounts for the time between route fetch and response processing
+        const getCompletionDelay = 50; // Small delay to ensure GET response is received
+
         pathnameChangeTimeoutRef.current = setTimeout(() => {
           if (mountedRef.current && isNavigatingRef.current) {
-            endNavigation("route_change");
+            // GET request should be complete by now
+            // Hide progress bar immediately
+            endNavigation("get_request_complete");
           }
           pathnameChangeTimeoutRef.current = null;
-        }, 600) as any;
+        }, getCompletionDelay) as any;
 
         // Update previous pathname immediately to prevent duplicate processing
         prevPathnameRef.current = currentPathname;

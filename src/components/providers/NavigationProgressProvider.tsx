@@ -14,9 +14,10 @@ export function NavigationProgressProvider({
   children: React.ReactNode;
 }) {
   // Automatically track navigation progress
+  // delayMs set to 0 for instant feedback - skeleton should show immediately on click
   useNavigationProgress({
     autoDetect: true,
-    delayMs: 100,
+    delayMs: 0, // Instant feedback - no delay
     respectReducedMotion: true,
     timeoutMs: 30000,
   });

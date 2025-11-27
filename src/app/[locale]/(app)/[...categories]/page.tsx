@@ -1,5 +1,5 @@
 import { CategoryBreadcrumbServer } from "@/components/Breadcrumb/CategoryBreadcrumbServer";
-import { ProductViewSwitcher } from "@/components/ProductGrid/ProductViewSwitcher";
+import { ProductGridServer } from "@/components/ProductGrid/ProductGridServer";
 import { StructuredDataServer } from "@/components/seo/StructuredDataServer";
 import type { RequestContext } from "@/lib/api/client";
 import SearchService, {
@@ -8,11 +8,11 @@ import SearchService, {
 } from "@/lib/api/services/SearchService/SearchService";
 import TenantService from "@/lib/api/services/TenantService";
 import CategoryResolutionService from "@/lib/services/CategoryResolutionService";
-import type { FilterAggregations } from "@/types/category-filters";
-import { buildCategoryQuery } from "@/utils/opensearch/browse-queries";
+import { FilterAggregations } from "@/types/category-filters";
 import { Metadata } from "next";
 import { headers } from "next/headers";
 import { notFound } from "next/navigation";
+import { Suspense } from "react";
 import CategoryNotFound from "./_components/CategoryNotFound";
 import { CategoryPageInteractivity } from "./_components/CategoryPageInteractivity";
 
@@ -194,7 +194,9 @@ export default async function CategoryPage({
     return (
       <>
         <h1 className="text-2xl font-bold">All Categories</h1>
-        <p className="text-gray-600">Please select a category to browse products.</p>
+        <p className="text-gray-600">
+          Please select a category to browse products.
+        </p>
       </>
     );
   }
@@ -329,16 +331,10 @@ export default async function CategoryPage({
     return <CategoryNotFound attemptedSlugs={categories} locale={locale} />;
   }
 
-  // Build base query for aggregations
-  const { getBaseQuery, buildCategoryFilter } = await import(
+  // Build category query
+  const { buildCategoryQuery } = await import(
     "@/utils/opensearch/browse-queries"
   );
-  const baseQuery = getBaseQuery();
-  const categoryFilters = buildCategoryFilter(categoryIds);
-  const baseQueryForAggs = {
-    must: [...baseQuery.must, ...categoryFilters],
-    must_not: baseQuery.must_not,
-  };
 
   // Get elastic index from elasticCode
   const elasticIndex = elasticCode ? `${elasticCode}pgandproducts` : "";
@@ -410,6 +406,16 @@ export default async function CategoryPage({
   const productsPromise = elasticIndex
     ? (async () => {
         try {
+          // Build query using buildCategoryQuery
+          const queryResult = buildCategoryQuery(categoryIds, {
+            page,
+            pageSize: 20,
+            sortBy,
+            inStock,
+            variantAttributes,
+            productSpecifications,
+          });
+
           // Build query object ensuring sort is properly typed
           const searchQuery: ElasticSearchQuery = {
             query: queryResult.query.query,
@@ -497,24 +503,28 @@ export default async function CategoryPage({
           sort: sortBy,
         }}
         total={initialProducts.total}
-        categoryPath={categoryPath}
-        aggregations={aggregations}
-        currentCategoryPath={categories}
-      >
-        {/* Product Grid - Server-rendered for SEO with client-side view switching */}
-        <div className="relative mt-6">
-          {initialProducts.products.length === 0 ? (
-            <div className="text-center py-12">
-              <p className="text-gray-600 text-lg">No products found.</p>
+      />
+
+      {/* Product Grid - Server-rendered for SEO with Suspense for streaming */}
+      <div className="relative">
+        <Suspense
+          fallback={
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 md:gap-6">
+              {Array.from({ length: 8 }).map((_, i) => (
+                <div
+                  key={i}
+                  className="h-[380px] bg-muted animate-pulse rounded-lg"
+                />
+              ))}
             </div>
-          ) : (
-            <ProductViewSwitcher
-              products={initialProducts.products}
-              locale={locale}
-            />
-          )}
-        </div>
-      </CategoryPageInteractivity>
+          }
+        >
+          <ProductGridWrapper
+            productsPromise={productsPromise}
+            locale={locale}
+          />
+        </Suspense>
+      </div>
     </>
   );
 }

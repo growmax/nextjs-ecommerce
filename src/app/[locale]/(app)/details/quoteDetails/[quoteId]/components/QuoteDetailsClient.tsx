@@ -33,6 +33,7 @@ import type { SelectedVersion } from "@/types/details/orderdetails/version.types
 import { getStatusStyle } from "@/utils/details/orderdetails";
 import { decodeUnicode } from "@/utils/General/general";
 import { useNavigationWithLoader } from "@/hooks/useNavigationWithLoader";
+import { usePostNavigationFetch } from "@/hooks/usePostNavigationFetch";
 
 // Dynamic imports for heavy components
 // No loading prop to avoid double loaders - main DetailsSkeleton handles all loading states
@@ -75,6 +76,7 @@ export default function QuoteDetailsClient({
   const { user } = useCurrentUser();
   const { tenantData } = useTenantData();
   const { push } = useNavigationWithLoader();
+  const { push } = useNavigationWithLoader();
 
   const lastFetchKeyRef = useRef<string | null>(null);
   const processedVersionRef = useRef<string | null>(null);
@@ -92,7 +94,8 @@ export default function QuoteDetailsClient({
     loadParams();
   }, [params]);
 
-  useEffect(() => {
+  // Fetch quote details after navigation completes - ensures instant navigation
+  usePostNavigationFetch(() => {
     const fetchQuoteDetails = async () => {
       // Wait for params, user and tenant data to be available
       if (
@@ -232,6 +235,10 @@ export default function QuoteDetailsClient({
       if (quoteIdentifier) {
         push(`/details/quoteDetails/${quoteIdentifier}/edit`);
       }
+      // Non-blocking navigation
+      if (quoteIdentifier) {
+        push(`/details/quoteDetails/${quoteIdentifier}/edit`);
+      }
       return;
     }
 
@@ -322,6 +329,7 @@ export default function QuoteDetailsClient({
 
   const handleClose = () => {
     push("/landing/quoteslanding");
+    push("/landing/quoteslanding");
   };
 
   const handleClone = () => {
@@ -379,6 +387,10 @@ export default function QuoteDetailsClient({
       (reorder && validityTill && new Date() < new Date(validityTill)) ||
       updatedBuyerStatus === "QUOTE RECEIVED"
     ) {
+      // Non-blocking navigation
+      if (quoteIdentifier) {
+        push(`/details/quoteDetails/${quoteIdentifier}/edit?placeOrder=true`);
+      }
       // Non-blocking navigation
       if (quoteIdentifier) {
         push(`/details/quoteDetails/${quoteIdentifier}/edit?placeOrder=true`);

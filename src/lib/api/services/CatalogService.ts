@@ -316,15 +316,17 @@ export class CatalogService {
    * @param context - Request context with elasticCode and tenantCode
    * @returns List of all categories
    */
-  async getAllCategories(context?: RequestContext): Promise<Array<{
-    id: number | string;
-    name: string;
-    imageSource?: string;
-    iconSource?: string;
-    description?: string;
-    slug?: string;
-    [key: string]: unknown;
-  }>> {
+  async getAllCategories(context?: RequestContext): Promise<
+    Array<{
+      id: number | string;
+      name: string;
+      imageSource?: string;
+      iconSource?: string;
+      description?: string;
+      slug?: string;
+      [key: string]: unknown;
+    }>
+  > {
     const { SearchService } = await import("./SearchService/SearchService");
 
     try {
@@ -339,7 +341,10 @@ export class CatalogService {
 
       // Validate elasticIndex before making API call
       if (!elasticIndex || elasticIndex === "pgandproducts") {
-        console.warn("Invalid elastic index for category aggregation:", elasticIndex);
+        console.warn(
+          "Invalid elastic index for category aggregation:",
+          elasticIndex
+        );
         return [];
       }
 
@@ -416,25 +421,33 @@ export class CatalogService {
       );
 
       if (!result.success || !result.aggregations) {
-        console.error("Failed to fetch categories from OpenSearch - no aggregations");
+        console.error(
+          "Failed to fetch categories from OpenSearch - no aggregations"
+        );
         return [];
       }
 
       // Transform aggregation results to Category format
-      const categoryMap = new Map<number, {
-        id: number;
-        name: string;
-        imageSource?: string;
-        slug?: string;
-      }>();
+      const categoryMap = new Map<
+        number,
+        {
+          id: number;
+          name: string;
+          imageSource?: string;
+          slug?: string;
+        }
+      >();
 
       // Process nested aggregation results
       // Structure: aggregations.product_categories.categories.buckets
       const nestedAggs = result.aggregations.product_categories as any;
-      
+
       // Debug: log aggregation keys to understand structure
       if (!nestedAggs) {
-        console.error("No product_categories in aggregations. Available keys:", Object.keys(result.aggregations));
+        console.error(
+          "No product_categories in aggregations. Available keys:",
+          Object.keys(result.aggregations)
+        );
         return [];
       }
 
@@ -460,13 +473,21 @@ export class CatalogService {
         });
       } else {
         // Debug: log the actual structure if it doesn't match
-        console.error("Categories aggregation structure mismatch. Nested aggs:", JSON.stringify(nestedAggs, null, 2));
-        console.error("Available keys in nestedAggs:", nestedAggs ? Object.keys(nestedAggs) : "null");
+        console.error(
+          "Categories aggregation structure mismatch. Nested aggs:",
+          JSON.stringify(nestedAggs, null, 2)
+        );
+        console.error(
+          "Available keys in nestedAggs:",
+          nestedAggs ? Object.keys(nestedAggs) : "null"
+        );
       }
 
       // Convert map to array
       const categoriesArray = Array.from(categoryMap.values());
-      console.log(`Fetched ${categoriesArray.length} categories from OpenSearch`);
+      console.log(
+        `Fetched ${categoriesArray.length} categories from OpenSearch`
+      );
       return categoriesArray;
     } catch (error) {
       console.error("Error fetching categories from OpenSearch:", error);

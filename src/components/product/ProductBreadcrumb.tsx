@@ -28,11 +28,11 @@ function generateBreadcrumbNodes(
   const nodes: BreadcrumbNode[] = [];
 
   nodes.push({ label: "Home", href: `/${locale}` });
-  
+
   // Add Brands link if product has a brand
   if (brandName) {
     nodes.push({ label: "Brands", href: `/${locale}/brands/All` });
-    
+
     // Generate brand slug from brand name
     const brandSlug = brandName
       .toLowerCase()
@@ -41,10 +41,10 @@ function generateBreadcrumbNodes(
       .replace(/\s+/g, "-") // Replace spaces with hyphens
       .replace(/-+/g, "-") // Replace multiple hyphens with single
       .replace(/^-+|-+$/g, ""); // Remove leading/trailing hyphens
-    
+
     nodes.push({ label: brandName, href: `/${locale}/brands/${brandSlug}` });
   }
-  
+
   nodes.push({ label: "Products", href: `/${locale}/products` });
 
   // First try to find a primary category

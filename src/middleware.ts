@@ -40,8 +40,17 @@ const intlMiddleware = createIntlMiddleware({
 });
 
 export async function middleware(request: NextRequest) {
-  const domain = getDomain(request.headers.get("host") || "localhost:3000");
   const pathname = request.nextUrl.pathname;
+
+  // Early returns for static assets and Next.js internals (fast path)
+  // Check these BEFORE any expensive operations
+  if (
+    pathname.startsWith("/_next") ||
+    pathname.startsWith("/api") ||
+    pathname === "/favicon.ico"
+  ) {
+    return NextResponse.next();
+  }
 
   // If the request targets a public/static asset (possibly with a locale prefix)
   // rewrite locale-prefixed asset requests to the non-prefixed path so Next.js
@@ -58,14 +67,8 @@ export async function middleware(request: NextRequest) {
     return NextResponse.rewrite(targetUrl);
   }
 
-  // For Next internals, API and favicon, just pass through
-  if (
-    pathWithoutLocale.startsWith("/_next") ||
-    pathWithoutLocale.startsWith("/api") ||
-    pathname === "/favicon.ico"
-  ) {
-    return NextResponse.next();
-  }
+  // Only compute domain after we know we need it (for non-static routes)
+  const domain = getDomain(request.headers.get("host") || "localhost:3000");
   const isAuthenticated = hasAccessToken(request);
 
   // Bypass middleware for static files
@@ -152,7 +155,7 @@ export async function middleware(request: NextRequest) {
       ? process.env.DEFAULT_ORIGIN || request.nextUrl.origin
       : request.nextUrl.origin;
   response.headers.set("x-tenant-origin", tenantOrigin);
-  
+
   // Note: x-tenant-code is NOT set here - it will be fetched from API in LayoutDataLoader
   // Server components should fetch tenant data using TenantService.getTenantDataCached()
 

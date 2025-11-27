@@ -383,7 +383,6 @@ class CategoryResolutionService {
 
       // Build tree using ancestorIds and categoryPath
       const tree = this.buildCategoryTree(categories, categoryMap);
-
       return tree;
     } catch (error) {
       console.error("Error fetching categories from OpenSearch:", error);
@@ -620,7 +619,6 @@ class CategoryResolutionService {
     // Generate cache key
     const elasticCode = context?.elasticCode || "";
     const cacheKey = `category:resolve:${elasticCode}:${slugs.join("/")}`;
-
     // Use cached version if available (server-side only)
     if (typeof window === "undefined") {
       try {
@@ -636,7 +634,6 @@ class CategoryResolutionService {
         // Fall through to non-cached version if cache import fails
       }
     }
-
     return this.resolveCategoriesUncached(slugs, context);
   }
 
@@ -706,12 +703,10 @@ class CategoryResolutionService {
    */
   getCategoryBreadcrumbs(
     categoryPath: CategoryPath,
-    locale: string = "en"
+    _locale: string = "en"
   ): BreadcrumbItem[] {
     // Note: hrefs don't include locale prefix because Link from @/i18n/navigation auto-adds it
-    const breadcrumbs: BreadcrumbItem[] = [
-      { label: "Home", href: `/` },
-    ];
+    const breadcrumbs: BreadcrumbItem[] = [{ label: "Home", href: `/` }];
 
     let currentPath = "";
     categoryPath.nodes.forEach(node => {
