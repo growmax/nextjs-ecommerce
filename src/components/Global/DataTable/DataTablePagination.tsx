@@ -1,23 +1,23 @@
 "use client";
 
-import {
-  ChevronLeft,
-  ChevronRight,
-  ChevronsLeft,
-  ChevronsRight,
-} from "lucide-react";
 import type { Table } from "@tanstack/react-table";
-import * as React from "react";
+import {
+    ChevronLeft,
+    ChevronRight,
+    ChevronsLeft,
+    ChevronsRight,
+} from "lucide-react";
 import { useTranslations } from "next-intl";
+import * as React from "react";
 
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
 } from "@/components/ui/select";
 
 interface DataTablePaginationProps<TData> {
@@ -38,7 +38,7 @@ function DataTablePaginationComponent<TData>({
   const totalCount = table.getFilteredRowModel().rows.length;
 
   return (
-    <div className="flex items-center justify-between px-4 py-3">
+    <div className="flex items-center justify-center px-4 py-4">
       <div className="text-muted-foreground hidden flex-1 text-sm lg:flex">
         {selectedCount} {t("of")} {totalCount} {t("rows")} {t("selected")}.
       </div>

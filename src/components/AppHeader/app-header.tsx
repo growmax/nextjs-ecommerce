@@ -14,18 +14,17 @@ import useLogout from "@/hooks/Auth/useLogout";
 import useUserProfile from "@/hooks/Profile/useUserProfile";
 import { useTenantData } from "@/hooks/useTenantData";
 
+import { useNavigationWithLoader } from "@/hooks/useNavigationWithLoader";
 import { Link } from "@/i18n/navigation";
 import { cn } from "@/lib/utils";
 import { getUserInitials } from "@/utils/General/general";
 import {
-  Bell,
-  Command as CommandIcon,
-  Search,
-  ShoppingCart,
+    Bell,
+    Command as CommandIcon,
+    Search,
+    ShoppingCart,
 } from "lucide-react";
 import { useTranslations } from "next-intl";
-import { Link } from "@/i18n/navigation";
-import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useMemo, useState } from "react";
 
 export function AppHeader({
@@ -41,7 +40,7 @@ export function AppHeader({
   const [searchValue, setSearchValue] = useState("");
   const { userProfile } = useUserProfile();
   const { isLoggingOut, handleLogout } = useLogout();
-  const router = useRouter();
+  const router = useNavigationWithLoader();
   const { isAuthenticated } = useUserDetails();
 
   // Sync tenant data from context to Zustand store (early initialization)

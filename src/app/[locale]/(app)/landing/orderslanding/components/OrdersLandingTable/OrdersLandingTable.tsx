@@ -21,6 +21,8 @@ import { Skeleton } from "@/components/ui/skeleton";
 
 import { statusColor } from "@/components/custom/statuscolors";
 import { useCurrentUser } from "@/hooks/useCurrentUser";
+import { useNavigationWithLoader } from "@/hooks/useNavigationWithLoader";
+import { usePageLoader } from "@/hooks/usePageLoader";
 import { useRequestDeduplication } from "@/hooks/useRequestDeduplication";
 import { usePostNavigationFetch } from "@/hooks/usePostNavigationFetch";
 import ordersFilterService, {
@@ -28,7 +30,6 @@ import ordersFilterService, {
 } from "@/lib/api/services/OrdersFilterService/OrdersFilterService";
 import { type Order } from "@/types/dashboard/DasbordOrderstable/DashboardOrdersTable";
 import { getAccounting } from "@/utils/calculation/salesCalculation/salesCalculation";
-import { useRouter } from "next/navigation";
 import { OrdersLandingTableProps } from "../../types/ordertypes";
 
 // Helper functions
@@ -48,7 +49,7 @@ const convertDateToString = (
 const TableSkeleton = ({ rows = 10 }: { rows?: number }) => {
   const t = useTranslations("orders");
   return (
-    <div className="border shadow overflow-hidden flex flex-col bg-background">
+    <div className="border shadow overflow-hidden flex flex-col bg-background rounded-lg">
       <div className="border-b border-border bg-muted flex-shrink-0">
         <div className="flex font-medium text-sm text-foreground">
           <div className="px-2 py-3 w-[150px]">{t("orderId")}</div>
@@ -93,8 +94,11 @@ function OrdersLandingTable({
   refreshTrigger,
   setExportCallback,
 }: OrdersLandingTableProps) {
+  // Use the page loader hook to ensure navigation spinner is hidden immediately
+  usePageLoader();
+
   const { user } = useCurrentUser();
-  const router = useRouter();
+  const router = useNavigationWithLoader();
   const t = useTranslations("orders");
   const { deduplicate } = useRequestDeduplication();
 
@@ -102,6 +106,9 @@ function OrdersLandingTable({
   const isFetchingRef = useRef(false);
   const lastFetchParamsRef = useRef<string>("");
   const abortControllerRef = useRef<AbortController | null>(null);
+  
+  // Ref for scrollable container to reset scroll position
+  const scrollContainerRef = useRef<HTMLDivElement | null>(null);
 
   // State
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
@@ -660,10 +667,22 @@ function OrdersLandingTable({
   }, []);
   const handlePrevious = () => {
     setPage(prev => prev - 1);
+    // Reset scroll to top and left with smooth behavior
+    if (scrollContainerRef.current) {
+      scrollContainerRef.current.scrollTo({ top: 0, left: 0, behavior: 'smooth' });
+    }
+    // Also reset window scroll
+    window.scrollTo({ top: 0, left: 0, behavior: 'smooth' });
   };
 
   const handleNext = () => {
     setPage(prev => prev + 1);
+    // Reset scroll to top and left with smooth behavior
+    if (scrollContainerRef.current) {
+      scrollContainerRef.current.scrollTo({ top: 0, left: 0, behavior: 'smooth' });
+    }
+    // Also reset window scroll
+    window.scrollTo({ top: 0, left: 0, behavior: 'smooth' });
   };
 
   return (
@@ -704,7 +723,10 @@ function OrdersLandingTable({
 
       <div className="flex flex-col">
         <div className="w-full overflow-x-hidden">
-          <div className="w-full overflow-x-auto scrollbar-thin-horizontal">
+          <div 
+            ref={scrollContainerRef}
+            className="w-full overflow-x-auto scrollbar-thin-horizontal"
+          >
             {initialLoad && loading ? (
               <TableSkeleton rows={rowPerPage} />
             ) : !initialLoad && orders.length === 0 ? (

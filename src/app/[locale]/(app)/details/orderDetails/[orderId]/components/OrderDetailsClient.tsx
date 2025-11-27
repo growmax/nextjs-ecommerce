@@ -9,15 +9,15 @@ import { toast } from "sonner";
 import { EditOrderNameDialog } from "@/components/dialogs/EditOrderNameDialog";
 import { RequestEditDialog } from "@/components/dialogs/RequestEditDialog";
 import {
-  VersionsDialog,
-  type Version,
+    VersionsDialog,
+    type Version,
 } from "@/components/dialogs/VersionsDialog";
 import { ApplicationLayout, PageLayout } from "@/components/layout";
 import {
-  DetailsSkeleton,
-  OrderContactDetails,
-  OrderTermsCard,
-  SalesHeader,
+    DetailsSkeleton,
+    OrderContactDetails,
+    OrderTermsCard,
+    SalesHeader,
 } from "@/components/sales";
 import { useOrderDetails } from "@/hooks/details/orderdetails/useOrderDetails";
 import { useCurrentUser } from "@/hooks/useCurrentUser";
@@ -25,34 +25,33 @@ import { useGetVersionDetails } from "@/hooks/useGetVersionDetails/useGetVersion
 import { useLoading } from "@/hooks/useGlobalLoader";
 import useModuleSettings from "@/hooks/useModuleSettings";
 import { useNavigationWithLoader } from "@/hooks/useNavigationWithLoader";
-import { usePageScroll } from "@/hooks/usePageScroll";
+import { usePageLoader } from "@/hooks/usePageLoader";
 import { useTenantData } from "@/hooks/useTenantData";
 import type { PaymentDueDataItem } from "@/lib/api";
 import {
-  OrderDetailsService,
-  OrderNameService,
-  PaymentService,
-  RequestEditService,
+    OrderDetailsService,
+    OrderNameService,
+    PaymentService,
+    RequestEditService,
 } from "@/lib/api";
 import type { ProductCsvRow } from "@/lib/export-csv";
 import { exportProductsToCsv } from "@/lib/export-csv";
 import type {
-  AddressDetails,
-  OrderDetailsPageProps,
-  OrderTerms,
-  SelectedVersion,
+    AddressDetails,
+    OrderDetailsPageProps,
+    OrderTerms,
+    SelectedVersion,
 } from "@/types/details/orderdetails/index.types";
 import { zoneDateTimeCalculator } from "@/utils/date-format/date-format";
 import {
-  getLastDateToPay,
-  getStatusStyle,
-  getUserPreferences,
-  isEditInProgress,
-  isOrderCancelled,
+    getLastDateToPay,
+    getStatusStyle,
+    getUserPreferences,
+    isEditInProgress,
+    isOrderCancelled,
 } from "@/utils/details/orderdetails";
 import { decodeUnicode } from "@/utils/General/general";
 import { useQuery } from "@tanstack/react-query";
-import { useNavigationWithLoader } from "@/hooks/useNavigationWithLoader";
 // Import from index.ts which re-exports as named exports
 // No loading prop to avoid double loaders - main DetailsSkeleton handles all loading states
 const OrderProductsTable = dynamic(
@@ -76,14 +75,12 @@ const OrderStatusTracker = dynamic(
   }
 );
 
-export default function OrderDetailsClient({
-  params,
-  initialOrderDetails,
-}: OrderDetailsPageProps & { initialOrderDetails?: any }) {
-  usePageScroll();
+export default function OrderDetailsClient({ params }: OrderDetailsPageProps) {
+  // Use the page loader hook to ensure navigation spinner is hidden immediately
+  usePageLoader();
+
   const [orderId, setOrderId] = useState<string>("");
   const [paramsLoaded, setParamsLoaded] = useState(false);
-  const { push } = useNavigationWithLoader();
   const { push } = useNavigationWithLoader();
   const t = useTranslations("orders");
   const tDetails = useTranslations("details");
@@ -244,27 +241,16 @@ export default function OrderDetailsClient({
   );
 
   // Consolidated loading state - only show one loader at a time
+  // We REMOVE the check for initial orderLoading. The initial load will be handled
+  // by the Skeleton UI in the JSX. We ONLY show global spinner for background actions.
   useEffect(() => {
-    // Priority: version loading > order loading
     if (versionLoading && triggerVersionCall) {
       showLoading("Loading version details...", "order-details-page");
-    } else if (orderLoading && paramsLoaded) {
-      showLoading("Loading order details...", "order-details-page");
-    } else if (
-      paramsLoaded &&
-      !orderLoading &&
-      (!versionLoading || !triggerVersionCall)
-    ) {
+    } else {
+      // Ensure page-specific global loader is hidden
       hideLoading("order-details-page");
     }
-  }, [
-    orderLoading,
-    versionLoading,
-    triggerVersionCall,
-    paramsLoaded,
-    showLoading,
-    hideLoading,
-  ]);
+  }, [versionLoading, triggerVersionCall, showLoading, hideLoading]);
 
   const processedVersionRef = useRef<string | null>(null);
 
@@ -598,9 +584,9 @@ export default function OrderDetailsClient({
   const lastDateToPay = getLastDateToPay(paymentDueData, preferences);
 
   return (
-    <ApplicationLayout>
-      {/* Sales Header - Fixed at top */}
-      <div className="flex-shrink-0 sticky top-0 z-50 bg-gray-50">
+    <ApplicationLayout className="bg-background">
+      {/* Sales Header */}
+      <div className="flex-shrink-0">
         <SalesHeader
           title={orderName ? decodeUnicode(orderName) : t("orderDetails")}
           identifier={orderId || "..."}
@@ -647,7 +633,7 @@ export default function OrderDetailsClient({
                   cancelMsg &&
                   !orderLoading &&
                   (orderDetails || displayOrderDetails) && (
-                    <div className="mt-[80px] bg-gray-50 rounded-lg p-3 sm:p-4 border border-gray-200 shadow-sm">
+                    <div className="mt-4 bg-gray-50 rounded-lg p-3 sm:p-4 border border-gray-200 shadow-sm">
                       <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
                         {/* Left Section - Order Identifier and Date */}
                         <div className="flex flex-col gap-1">
@@ -684,7 +670,7 @@ export default function OrderDetailsClient({
                   !orderError &&
                   (orderDetails || displayOrderDetails) &&
                   !cancelled && (
-                    <div className="mt-[80px]">
+                    <div className="mt-4">
                       <Suspense
                         fallback={
                           <div
@@ -775,7 +761,7 @@ export default function OrderDetailsClient({
                 {!orderLoading &&
                   !orderError &&
                   (orderDetails || displayOrderDetails) && (
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-2 sm:gap-3 mt-4">
+                    <div className="grid grid-cols-1 md:grid-cols-2 details-card-gap details-section-margin">
                       {/* Contact Details Card */}
                       <OrderContactDetails
                         billingAddress={
@@ -902,7 +888,7 @@ export default function OrderDetailsClient({
               {!orderLoading &&
                 !orderError &&
                 (orderDetails || displayOrderDetails) && (
-                  <div className="w-full lg:w-[33%] mt-[80px]">
+                  <div className="w-full lg:w-[33%] mt-4">
                     <Suspense fallback={null}>
                       <OrderPriceDetails
                         products={

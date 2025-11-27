@@ -19,7 +19,9 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
+import { TopProgressBar } from "@/components/ui/top-progress-bar";
 import { useUserDetails } from "@/contexts/UserDetailsContext";
+import { useGlobalLoader } from "@/hooks/useGlobalLoader";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Edit, Eye, EyeOff, Home } from "lucide-react";
 
@@ -61,7 +63,7 @@ interface UserInfo {
 
 export default function LoginPage() {
   const t = useTranslations();
-  const [isLoading, setIsLoading] = useState(false);
+  const { isLoading, showLoading, hideLoading } = useGlobalLoader();
   const [showPassword, setShowPassword] = useState(false);
   const [showPasswordField, setShowPasswordField] = useState(false);
   const [_userInfo, setUserInfo] = useState<UserInfo | null>(null);
@@ -112,7 +114,7 @@ export default function LoginPage() {
   }, [showPasswordField]);
 
   const onSubmit = async (data: LoginFormData) => {
-    setIsLoading(true);
+    showLoading();
 
     // Validate password if password field is shown
     if (showPasswordField && !data.password) {
@@ -120,7 +122,7 @@ export default function LoginPage() {
         type: "manual",
         message: t("auth.passwordRequired"),
       });
-      setIsLoading(false);
+      hideLoading();
       return;
     }
 
@@ -248,8 +250,11 @@ export default function LoginPage() {
               );
 
               // Use window.location for faster redirect
+              // DON'T call hideLoading() - let it stay visible during page navigation
               const redirectUrl = from || "/dashboard";
               window.location.href = redirectUrl;
+              // Return to prevent hideLoading() in finally block
+              return;
             } else {
               toast.error(t("auth.authError"), {
                 description: t("auth.tokenError"),
@@ -278,7 +283,7 @@ export default function LoginPage() {
         duration: 4000,
       });
     } finally {
-      setIsLoading(false);
+      hideLoading();
     }
   };
 
@@ -292,6 +297,7 @@ export default function LoginPage() {
 
   return (
     <CenteredLayout>
+      <TopProgressBar />
       <div className="flex min-h-screen items-center justify-center bg-background">
         <Toaster richColors position="top-right" />
 

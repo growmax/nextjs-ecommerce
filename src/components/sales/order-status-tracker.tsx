@@ -2,14 +2,14 @@
 
 import { Card } from "@/components/ui/card";
 import {
-  HoverCard,
-  HoverCardContent,
-  HoverCardTrigger,
+    HoverCard,
+    HoverCardContent,
+    HoverCardTrigger,
 } from "@/components/ui/hover-card";
 import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
+    Popover,
+    PopoverContent,
+    PopoverTrigger,
 } from "@/components/ui/popover";
 import { cn } from "@/lib/utils";
 import { zoneDateTimeCalculator } from "@/utils/date-format/date-format";
@@ -151,7 +151,7 @@ export default function OrderStatusTracker({
   const preferences = getUserPreferences();
 
   return (
-    <Card className={cn("p-3 sm:p-4 mt-14", className)}>
+    <Card className={cn("p-3 sm:p-4", className)}>
       {/* Order ID and Date at top left, Financial Summary at top right */}
       <div className="flex flex-col sm:flex-row justify-between items-start gap-3 mb-3">
         {(orderId || createdDate) && (

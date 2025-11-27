@@ -3,20 +3,20 @@
 import { statusColor } from "@/components/custom/statuscolors";
 import { Button } from "@/components/ui/button";
 import {
-  Card,
-  CardContent,
-  CardFooter,
-  CardHeader,
-  CardTitle,
+    Card,
+    CardContent,
+    CardFooter,
+    CardHeader,
+    CardTitle,
 } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
+    Table,
+    TableBody,
+    TableCell,
+    TableHead,
+    TableHeader,
+    TableRow,
 } from "@/components/ui/table";
 import { useDashboardOrders } from "@/hooks/useDashboardData";
 import { Order } from "@/types/dashboard/DasbordOrderstable/DashboardOrdersTable";
@@ -130,7 +130,7 @@ export default function DashboardOrdersTable() {
 
   return h(
     "div",
-    { className: "p-3" },
+    { className: "" },
     loading || isRefreshing
       ? h(
           Card,
@@ -240,7 +240,7 @@ export default function DashboardOrdersTable() {
                         TableHead,
                         {
                           className:
-                            "text-xs font-medium text-muted-foreground px-3 py-1 text-left",
+                            "text-xs font-medium text-foreground px-3 py-1 text-left",
                           scope: "col",
                         },
                         h(
@@ -260,13 +260,13 @@ export default function DashboardOrdersTable() {
                         TableHead,
                         {
                           className:
-                            "text-xs font-medium text-muted-foreground px-3 py-1 text-left",
+                            "text-xs font-medium text-foreground px-3 py-1 text-left",
                           scope: "col",
                         },
                         h(
                           "span",
                           {
-                            className: `inline-flex items-center cursor-pointer hover:text-foreground ${sortConfig.key === "orderName" ? "text-foreground" : ""}`,
+                            className: "inline-flex items-center cursor-pointer hover:text-foreground",
                             onClick: () => handleSort("orderName"),
                             role: "button",
                             tabIndex: 0,
@@ -279,7 +279,7 @@ export default function DashboardOrdersTable() {
                         TableHead,
                         {
                           className:
-                            "text-xs font-medium text-muted-foreground px-3 py-1 text-left",
+                            "text-xs font-medium text-foreground px-3 py-1 text-left",
                           scope: "col",
                         },
                         h(
@@ -299,7 +299,7 @@ export default function DashboardOrdersTable() {
                         TableHead,
                         {
                           className:
-                            "text-xs font-medium text-muted-foreground px-3 py-1 text-right",
+                            "text-xs font-medium text-foreground px-3 py-1 text-right",
                           scope: "col",
                         },
                         h(

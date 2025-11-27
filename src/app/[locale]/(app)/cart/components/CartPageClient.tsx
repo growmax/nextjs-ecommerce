@@ -13,23 +13,23 @@ import useCartPrice from "@/hooks/useCartPrice";
 import { useCurrentUser } from "@/hooks/useCurrentUser";
 import useGetCurrencyModuleSettings from "@/hooks/useGetCurrencyModuleSettings/useGetCurrencyModuleSettings";
 import useModuleSettings from "@/hooks/useModuleSettings";
+import { useNavigationWithLoader } from "@/hooks/useNavigationWithLoader";
 import useSelectedSellerCart from "@/hooks/useSelectedSellerCart";
-import { useRouter } from "@/i18n/navigation";
 import type { CartItem } from "@/types/calculation/cart";
 import { cartCalculation } from "@/utils/calculation/cartCalculation";
 import {
-  validateCreateOrder,
-  validateRequestQuote,
+    validateCreateOrder,
+    validateRequestQuote,
 } from "@/utils/cart/cartValidation";
 import { ShoppingCart } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { useState } from "react";
 import { toast } from "sonner";
-import { useTranslations } from "next-intl";
 
 export default function CartPageClient() {
   const { user, loading: userLoading } = useCurrentUser();
   const currency = user?.currency;
-  const router = useRouter();
+  const router = useNavigationWithLoader();
   const t = useTranslations("cart");
   const { cart, cartCount, isLoading: isCartLoading } = useCartContext();
   const {

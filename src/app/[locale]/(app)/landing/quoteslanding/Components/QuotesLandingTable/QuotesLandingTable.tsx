@@ -15,6 +15,7 @@ import {
 } from "@/components/ui/dialog";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useCurrentUser } from "@/hooks/useCurrentUser";
+import { useNavigationWithLoader } from "@/hooks/useNavigationWithLoader";
 import { useRequestDeduplication } from "@/hooks/useRequestDeduplication";
 import { usePostNavigationFetch } from "@/hooks/usePostNavigationFetch";
 import PreferenceService, {
@@ -26,7 +27,6 @@ import QuotesService, {
 import { getAccounting } from "@/utils/calculation/salesCalculation/salesCalculation";
 import { ColumnDef } from "@tanstack/react-table";
 import { useTranslations } from "next-intl";
-import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
 
@@ -40,7 +40,7 @@ function QuotesLandingTable({
   setExportCallback,
 }: QuotesLandingTableProps) {
   const { user } = useCurrentUser();
-  const router = useRouter();
+  const router = useNavigationWithLoader();
   const t = useTranslations("quotes");
   const { deduplicate } = useRequestDeduplication();
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
@@ -68,7 +68,7 @@ function QuotesLandingTable({
   const isLoadingPreferencesRef = useRef(false);
 
   const TableSkeleton = ({ rows = 10 }: { rows?: number }) => (
-    <div className="border shadow overflow-hidden flex flex-col bg-background">
+    <div className="border shadow overflow-hidden flex flex-col bg-background rounded-lg">
       <div className="border-b border-border bg-muted flex-shrink-0">
         <div className="flex font-medium text-sm text-foreground">
           <div className="px-2 py-3 w-[150px] pl-2">{t("quoteId")}</div>

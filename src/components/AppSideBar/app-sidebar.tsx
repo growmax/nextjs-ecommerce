@@ -1,23 +1,23 @@
 "use client";
 
 import { useUserDetails } from "@/contexts/UserDetailsContext";
-import { Map, PieChart, Settings2, SquareTerminal } from "lucide-react";
 import { Link, useRouter } from "@/i18n/navigation";
-import * as React from "react";
+import { Map, PieChart, Settings2, SquareTerminal } from "lucide-react";
 import { useTranslations } from "next-intl";
+import * as React from "react";
 
 import { NavMain } from "@/components/nav-main";
 import { NavUser } from "@/components/nav-user";
 import {
-  Sidebar,
-  SidebarContent,
-  SidebarFooter,
-  SidebarHeader,
-  SidebarMenu,
-  SidebarMenuButton,
-  SidebarMenuItem,
-  SidebarRail,
-  useSidebar,
+    Sidebar,
+    SidebarContent,
+    SidebarFooter,
+    SidebarHeader,
+    SidebarMenu,
+    SidebarMenuButton,
+    SidebarMenuItem,
+    SidebarRail,
+    useSidebar,
 } from "@/components/ui/sidebar";
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
