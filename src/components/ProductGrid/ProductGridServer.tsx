@@ -1,10 +1,9 @@
 import { ProductPrice } from "@/components/product/ProductPrice";
+import { Link } from "@/i18n/navigation";
 import { DiscountItem } from "@/lib/api/services/DiscountService/DiscountService";
 import { FormattedProduct } from "@/lib/api/services/SearchService/SearchService";
 import { ProductListItem } from "@/types/product-listing";
-import { Link } from "@/i18n/navigation";
 import Image from "next/image";
-import Link from "next/link";
 import AddToCartButton from "./AddToCartButton";
 
 /**
