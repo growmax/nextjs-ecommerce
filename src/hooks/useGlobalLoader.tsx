@@ -1,6 +1,6 @@
 "use client";
 
-import { createContext, useContext, useState, ReactNode } from "react";
+import { createContext, ReactNode, useCallback, useContext, useState } from "react";
 
 interface LoadingState {
   isLoading: boolean;
@@ -26,16 +26,16 @@ export function LoadingProvider({ children }: { children: ReactNode }) {
     loadingIds: new Set(),
   });
 
-  const showLoading = (message = "Loading...", loadingId = "default") => {
+  const showLoading = useCallback((message = "Loading...", loadingId = "default") => {
     setState(prev => ({
       ...prev,
       isLoading: true,
       message,
       loadingIds: new Set([...prev.loadingIds, loadingId]),
     }));
-  };
+  }, []);
 
-  const hideLoading = (loadingId = "default") => {
+  const hideLoading = useCallback((loadingId = "default") => {
     setState(prev => {
       const newLoadingIds = new Set(prev.loadingIds);
       newLoadingIds.delete(loadingId);
@@ -48,23 +48,23 @@ export function LoadingProvider({ children }: { children: ReactNode }) {
         message: newLoadingIds.size > 0 ? prev.message : "",
       };
     });
-  };
+  }, []);
 
-  const updateMessage = (message: string) => {
+  const updateMessage = useCallback((message: string) => {
     setState(prev => ({ ...prev, message }));
-  };
+  }, []);
 
-  const showLogoutLoader = () => {
+  const showLogoutLoader = useCallback(() => {
     showLoading("Logging out...", "logout");
-  };
+  }, [showLoading]);
 
-  const showProcessingLoader = () => {
+  const showProcessingLoader = useCallback(() => {
     showLoading("Processing...", "processing");
-  };
+  }, [showLoading]);
 
-  const showSubmittingLoader = () => {
+  const showSubmittingLoader = useCallback(() => {
     showLoading("Submitting...", "submission");
-  };
+  }, [showLoading]);
 
   return (
     <LoadingContext.Provider

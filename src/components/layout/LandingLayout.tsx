@@ -1,7 +1,7 @@
 "use client";
 
-import React from "react";
 import { cn } from "@/lib/utils";
+import React from "react";
 
 interface LandingLayoutProps {
   children: React.ReactNode;
@@ -16,7 +16,7 @@ export function LandingLayout({ children, className }: LandingLayoutProps) {
   return (
     <div
       className={cn(
-        "landing-page flex flex-col w-full overflow-x-hidden",
+        "landing-page flex flex-col w-full overflow-x-hidden z-0",
         className
       )}
     >

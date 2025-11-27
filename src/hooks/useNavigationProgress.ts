@@ -265,7 +265,7 @@ export function useNavigationProgress({
             endNavigation("get_request_complete");
           }
           pathnameChangeTimeoutRef.current = null;
-        }, getCompletionDelay) as any;
+        }, 200) as any; // Reduced from 600ms to 200ms for faster handoff to loading.tsx
 
         // Update previous pathname immediately to prevent duplicate processing
         prevPathnameRef.current = currentPathname;
@@ -307,12 +307,14 @@ export function useNavigationProgress({
   // Cleanup on unmount
   useEffect(() => {
     return () => {
-      if (mountedRef.current) {
-        clearNavigationTimeout();
-        endNavigation("unmount");
-      }
+      // DON'T call endNavigation on unmount!
+      // The loader should persist across page transitions.
+      // It will be hidden by the pathname change detection or timeout.
+      clearNavigationTimeout();
+      // Note: We intentionally don't call endNavigation here
+      // because we want the loader to stay visible during page transitions
     };
-  }, [clearNavigationTimeout, endNavigation]);
+  }, [clearNavigationTimeout]);
 
   return {
     // State

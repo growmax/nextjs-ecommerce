@@ -1,7 +1,10 @@
 "use client";
 
 import { useRouteRequestTracking } from "@/hooks/useRouteRequestTracking";
-import { Skeleton } from "@/components/ui/skeleton";
+import {
+    DashboardChartSkeleton,
+    DashboardOrdersTableSkeleton,
+} from "./DashboardSkeletons";
 
 import dynamic from "next/dynamic";
 import { Suspense } from "react";
@@ -11,12 +14,7 @@ const DashboardChart = dynamic(
   () =>
     import("./DashboardChart/DashboardChart").then(mod => mod.DashboardChart),
   {
-    loading: () => (
-      <div className="space-y-4">
-        <Skeleton className="h-8 w-48" />
-        <Skeleton className="h-64 w-full" />
-      </div>
-    ),
+    loading: () => <DashboardChartSkeleton />,
     ssr: false,
   }
 );
@@ -24,12 +22,7 @@ const DashboardChart = dynamic(
 const DashboardOrdersTable = dynamic(
   () => import("./DashboardOrdersTable/DashboardOrdersTable"),
   {
-    loading: () => (
-      <div className="space-y-4">
-        <Skeleton className="h-8 w-48" />
-        <Skeleton className="h-64 w-full" />
-      </div>
-    ),
+    loading: () => <DashboardOrdersTableSkeleton />,
     ssr: false,
   }
 );
@@ -42,24 +35,14 @@ export default function DashboardPageClient() {
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 items-start">
           <div className="w-full">
             <Suspense
-              fallback={
-                <div className="space-y-4">
-                  <Skeleton className="h-8 w-48" />
-                  <Skeleton className="h-64 w-full" />
-                </div>
-              }
+              fallback={<DashboardChartSkeleton />}
             >
               <DashboardChart />
             </Suspense>
           </div>
           <div className="w-full">
             <Suspense
-              fallback={
-                <div className="space-y-4">
-                  <Skeleton className="h-8 w-48" />
-                  <Skeleton className="h-64 w-full" />
-                </div>
-              }
+              fallback={<DashboardOrdersTableSkeleton />}
             >
               <DashboardOrdersTable />
             </Suspense>

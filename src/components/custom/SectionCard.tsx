@@ -31,7 +31,7 @@ export default function SectionCard({
             <div className="flex items-center gap-2">{headerActions}</div>
           )}
         </div>
-        {showSeparator && <Separator className="mt-2" />}
+        {showSeparator && <Separator className="mt-2 -mx-6" />}
       </CardHeader>
 
       <CardContent className={contentClassName}>{children}</CardContent>

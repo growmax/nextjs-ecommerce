@@ -72,8 +72,8 @@ export default function CustomerInfoCard({
       : "-";
 
   return (
-    <Card className="shadow-sm">
-      <CardHeader className="px-6 -my-5 bg-gray-50 rounded-t-lg items-end">
+    <Card className="shadow-sm py-0 gap-0">
+      <CardHeader className="px-6 py-2 bg-muted rounded-t-lg items-end">
         <CardTitle className="text-xl font-semibold text-gray-900 m-0!">
           {t("customerInformation")}
         </CardTitle>

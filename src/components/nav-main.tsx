@@ -1,32 +1,32 @@
 "use client";
 
-import { ChevronRight, type LucideIcon } from "lucide-react";
-import { Link, usePathname } from "@/i18n/navigation";
-import { useState } from "react";
 import { usePrefetchOnHover } from "@/hooks/usePrefetchOnHover";
+import { Link, usePathname } from "@/i18n/navigation";
+import { ChevronRight, type LucideIcon } from "lucide-react";
+import { useState } from "react";
 
 import { useTranslations } from "next-intl";
 
 import {
-  Collapsible,
-  CollapsibleContent,
-  CollapsibleTrigger,
+    Collapsible,
+    CollapsibleContent,
+    CollapsibleTrigger,
 } from "@/components/ui/collapsible";
 import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
+    Popover,
+    PopoverContent,
+    PopoverTrigger,
 } from "@/components/ui/popover";
 import {
-  SidebarGroup,
-  SidebarGroupLabel,
-  SidebarMenu,
-  SidebarMenuButton,
-  SidebarMenuItem,
-  SidebarMenuSub,
-  SidebarMenuSubButton,
-  SidebarMenuSubItem,
-  useSidebar,
+    SidebarGroup,
+    SidebarGroupLabel,
+    SidebarMenu,
+    SidebarMenuButton,
+    SidebarMenuItem,
+    SidebarMenuSub,
+    SidebarMenuSubButton,
+    SidebarMenuSubItem,
+    useSidebar,
 } from "@/components/ui/sidebar";
 import { cn } from "@/lib/utils";
 

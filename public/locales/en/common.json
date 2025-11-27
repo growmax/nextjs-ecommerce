@@ -419,7 +419,12 @@
     "min": "Minimum value is {min}",
     "max": "Maximum value is {max}",
     "number": "Please enter a valid number",
-    "positive": "Please enter a positive number"
+    "positive": "Please enter a positive number",
+    "branchNameRequired": "Branch name is required",
+    "addressLineRequired": "Address is required",
+    "countryRequired": "Country is required",
+    "stateRequired": "State/Province is required",
+    "pinCodeRequired": "Postal code is required"
   },
   "errors": {
     "404": "404",
@@ -678,13 +683,6 @@
     "missingAuthCannotUpdateBranch": "Missing authentication (userId/companyId) - cannot update branch",
     "companyLogo": "Company Logo",
     "selectAnOption": "Select an option"
-  },
-  "validation": {
-    "branchNameRequired": "Branch name is required",
-    "addressLineRequired": "Address is required",
-    "countryRequired": "Country is required",
-    "stateRequired": "State/Province is required",
-    "pinCodeRequired": "Postal code is required"
   },
   "profileSettings": {
     "profileSettings": "Profile Settings",

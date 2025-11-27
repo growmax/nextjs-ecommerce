@@ -1,6 +1,6 @@
+import tailwindcssContainerQueries from "@tailwindcss/container-queries";
 import type { Config } from "tailwindcss";
 import tailwindcssAnimate from "tailwindcss-animate";
-import tailwindcssContainerQueries from "@tailwindcss/container-queries";
 
 const config: Config = {
   darkMode: ["class"],
@@ -66,6 +66,15 @@ const config: Config = {
           border: "hsl(var(--sidebar-border))",
           ring: "hsl(var(--sidebar-ring))",
         },
+      },
+      height: {
+        "dashboard-chart-area": "17.5rem",
+        "dashboard-chart-sm": "8.5rem",
+        "dashboard-chart-md": "10.5rem",
+        "dashboard-chart-lg": "12.5rem",
+        "dashboard-chart-xl": "14rem",
+        "main-content": "var(--main-content-height)",
+        "main-content-desktop": "var(--main-content-height-desktop)",
       },
       borderRadius: {
         lg: "var(--radius)",
