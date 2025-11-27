@@ -215,6 +215,69 @@ export default async function BrandCategoryPage({
   const page = parseInt(filters.page || "1", 10);
   const sortBy = parseInt(filters.sort || "1", 10);
 
+  // Parse filters from URL (same as categories page)
+  const variantAttributes: Record<string, string[]> = {};
+  const productSpecifications: Record<string, string[]> = {};
+  const knownKeys = new Set(["page", "sort", "in_stock", "min_price", "max_price", "catalog_code", "equipment_code"]);
+
+  Object.entries(filters).forEach(([key, value]) => {
+    if (!knownKeys.has(key) && value) {
+      if (key.startsWith("spec_")) {
+        // Product specification
+        const specKey = key.replace("spec_", "");
+        const values = Array.isArray(value) ? value : [value];
+        if (!productSpecifications[specKey]) {
+          productSpecifications[specKey] = [];
+        }
+        productSpecifications[specKey].push(
+          ...values.filter(v => v && typeof v === "string")
+        );
+      } else {
+        // Variant attribute
+        const values = Array.isArray(value) ? value : [value];
+        if (!variantAttributes[key]) {
+          variantAttributes[key] = [];
+        }
+        variantAttributes[key].push(
+          ...values.filter(v => v && typeof v === "string")
+        );
+      }
+    }
+  });
+
+  // Parse stock filter
+  const inStock =
+    filters.in_stock === "true"
+      ? true
+      : filters.in_stock === "false"
+        ? false
+        : undefined;
+
+  // Parse price range filter
+  const minPrice = filters.min_price ? parseFloat(filters.min_price as string) : undefined;
+  const maxPrice = filters.max_price ? parseFloat(filters.max_price as string) : undefined;
+  const priceRange =
+    minPrice !== undefined || maxPrice !== undefined
+      ? {
+          min: minPrice !== undefined && !isNaN(minPrice) ? minPrice : undefined,
+          max: maxPrice !== undefined && !isNaN(maxPrice) ? maxPrice : undefined,
+        }
+      : undefined;
+
+  // Parse catalog codes
+  const catalogCodes = filters.catalog_code
+    ? (Array.isArray(filters.catalog_code)
+        ? filters.catalog_code
+        : [filters.catalog_code]).filter((v): v is string => typeof v === "string")
+    : undefined;
+
+  // Parse equipment codes
+  const equipmentCodes = filters.equipment_code
+    ? (Array.isArray(filters.equipment_code)
+        ? filters.equipment_code
+        : [filters.equipment_code]).filter((v): v is string => typeof v === "string")
+    : undefined;
+
   let queryResult;
 
   if (categoryPath && categoryPath.ids.categoryIds.length > 0) {
@@ -226,6 +289,14 @@ export default async function BrandCategoryPage({
         page,
         pageSize: 20,
         sortBy: { sortBy },
+        ...(Object.keys(variantAttributes).length > 0 && { variantAttributes }),
+        ...(Object.keys(productSpecifications).length > 0 && {
+          productSpecifications,
+        }),
+        ...(inStock !== undefined && { inStock }),
+        ...(priceRange && { priceRange }),
+        ...(catalogCodes && catalogCodes.length > 0 && { catalogCodes }),
+        ...(equipmentCodes && equipmentCodes.length > 0 && { equipmentCodes }),
       }
     );
   } else {
@@ -234,6 +305,14 @@ export default async function BrandCategoryPage({
       page,
       pageSize: 20,
       sortBy: { sortBy },
+      ...(Object.keys(variantAttributes).length > 0 && { variantAttributes }),
+      ...(Object.keys(productSpecifications).length > 0 && {
+        productSpecifications,
+      }),
+      ...(inStock !== undefined && { inStock }),
+      ...(priceRange && { priceRange }),
+      ...(catalogCodes && catalogCodes.length > 0 && { catalogCodes }),
+      ...(equipmentCodes && equipmentCodes.length > 0 && { equipmentCodes }),
     });
   }
 
@@ -290,10 +369,21 @@ export default async function BrandCategoryPage({
   let aggregations: FilterAggregations | null = null;
   if (elasticIndex) {
     try {
+      const filterState = {
+        ...(Object.keys(variantAttributes).length > 0 && { variantAttributes }),
+        ...(Object.keys(productSpecifications).length > 0 && {
+          productSpecifications,
+        }),
+        ...(inStock !== undefined && { inStock }),
+        ...(priceRange && { priceRange }),
+        ...(catalogCodes && catalogCodes.length > 0 && { catalogCodes }),
+        ...(equipmentCodes && equipmentCodes.length > 0 && { equipmentCodes }),
+      };
+
       const aggregationResponse = await SearchService.getFilterAggregations(
         elasticIndex,
         baseQueryForAggs,
-        undefined, // No current filters
+        Object.keys(filterState).length > 0 ? filterState : undefined,
         context
       );
 

@@ -56,6 +56,19 @@ export function CategoryPageInteractivity({
     [aggregations, categoryPath, currentCategoryPath, locale]
   );
 
+  if (process.env.NODE_ENV === 'development') {
+    console.log('[CategoryPageInteractivity] Formatted filters:', {
+      brandsCount: formattedFilters.brands.length,
+      childCategoriesCount: formattedFilters.childCategories.length,
+      siblingCategoriesCount: formattedFilters.siblingCategories.length,
+      variantAttributeGroupsCount: formattedFilters.variantAttributeGroups.length,
+      productSpecificationGroupsCount: formattedFilters.productSpecificationGroups.length,
+      catalogCodesCount: formattedFilters.catalogCodes.length,
+      equipmentCodesCount: formattedFilters.equipmentCodes.length,
+      hasPriceStats: !!formattedFilters.priceStats,
+    });
+  }
+
   // Parse current filters from URL
   const currentFilters = useMemo(
     () => ({
@@ -133,6 +146,9 @@ export function CategoryPageInteractivity({
           currentCategoryPath={currentCategoryPath}
           variantAttributeGroups={formattedFilters.variantAttributeGroups}
           productSpecificationGroups={formattedFilters.productSpecificationGroups}
+          catalogCodes={formattedFilters.catalogCodes}
+          equipmentCodes={formattedFilters.equipmentCodes}
+          priceStats={formattedFilters.priceStats}
           isLoading={!aggregations}
         />
       </aside>
@@ -148,6 +164,9 @@ export function CategoryPageInteractivity({
             currentCategoryPath={currentCategoryPath}
             variantAttributeGroups={formattedFilters.variantAttributeGroups}
             productSpecificationGroups={formattedFilters.productSpecificationGroups}
+            catalogCodes={formattedFilters.catalogCodes}
+            equipmentCodes={formattedFilters.equipmentCodes}
+            priceStats={formattedFilters.priceStats}
             isLoading={!aggregations}
           />
         </div>

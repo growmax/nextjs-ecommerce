@@ -319,6 +319,87 @@ export function formatProductSpecificationsAggregation(
 }
 
 /**
+ * Format catalog codes aggregation
+ */
+export function formatCatalogCodesAggregation(
+  aggregation: AggregationResult | undefined
+): FilterOption[] {
+  if (!aggregation?.data?.buckets) {
+    return [];
+  }
+
+  return aggregation.data.buckets.map((bucket) => ({
+    label: bucket.key,
+    value: bucket.key,
+    count: bucket.doc_count,
+    selected: false,
+  }));
+}
+
+/**
+ * Format equipment codes aggregation
+ */
+export function formatEquipmentCodesAggregation(
+  aggregation: AggregationResult | undefined
+): FilterOption[] {
+  if (!aggregation?.data?.buckets) {
+    return [];
+  }
+
+  return aggregation.data.buckets.map((bucket) => ({
+    label: bucket.key,
+    value: bucket.key,
+    count: bucket.doc_count,
+    selected: false,
+  }));
+}
+
+/**
+ * Format price stats aggregation
+ * Structure: filter.price_stats.{ min, max, ... }
+ */
+export function formatPriceStatsAggregation(
+  aggregation: AggregationResult | undefined
+): { min?: number; max?: number } | undefined {
+  if (!aggregation) {
+    return undefined;
+  }
+
+  // Price stats aggregation returns nested structure:
+  // filter.price_stats.{ min, max, avg, sum, count }
+  const stats = aggregation as {
+    filter?: {
+      price_stats?: {
+        min?: number;
+        max?: number;
+        avg?: number;
+        sum?: number;
+        count?: number;
+      };
+    };
+    // Also check direct price_stats (for backwards compatibility)
+    price_stats?: {
+      min?: number;
+      max?: number;
+      avg?: number;
+      sum?: number;
+      count?: number;
+    };
+  };
+
+  const priceStats = stats.filter?.price_stats || stats.price_stats;
+
+  if (priceStats) {
+    return {
+      min: priceStats.min,
+      max: priceStats.max,
+    };
+  }
+
+  return undefined;
+}
+
+/**
  * Format all aggregations for filter components
  */
 export function formatAllAggregations(
@@ -332,6 +413,9 @@ export function formatAllAggregations(
   siblingCategories: CategoryFilterOption[];
   variantAttributeGroups: VariantAttributeGroup[];
   productSpecificationGroups: ProductSpecificationGroup[];
+  catalogCodes: FilterOption[];
+  equipmentCodes: FilterOption[];
+  priceStats: { min?: number; max?: number } | undefined;
 } {
   if (!aggregations) {
     if (process.env.NODE_ENV === 'development') {
@@ -343,6 +427,9 @@ export function formatAllAggregations(
       siblingCategories: [],
       variantAttributeGroups: [],
       productSpecificationGroups: [],
+      catalogCodes: [],
+      equipmentCodes: [],
+      priceStats: undefined,
     };
   }
 
@@ -367,6 +454,10 @@ export function formatAllAggregations(
       aggregations.productSpecifications as Record<string, AggregationResult> | undefined
     );
 
+    const catalogCodes = formatCatalogCodesAggregation(aggregations.catalogCodes);
+    const equipmentCodes = formatEquipmentCodesAggregation(aggregations.equipmentCodes);
+    const priceStats = formatPriceStatsAggregation(aggregations.priceStats as AggregationResult | undefined);
+
     if (process.env.NODE_ENV === 'development') {
       console.log('[formatAllAggregations] Formatted filters:', {
         brandsCount: brands.length,
@@ -374,6 +465,9 @@ export function formatAllAggregations(
         siblingCategoriesCount: siblingCategories.length,
         variantAttributeGroupsCount: variantAttributeGroups.length,
         productSpecificationGroupsCount: productSpecificationGroups.length,
+        catalogCodesCount: catalogCodes.length,
+        equipmentCodesCount: equipmentCodes.length,
+        hasPriceStats: !!priceStats,
         hasCategoriesAggregation: !!aggregations.categories,
       });
     }
@@ -384,6 +478,9 @@ export function formatAllAggregations(
       siblingCategories,
       variantAttributeGroups,
       productSpecificationGroups,
+      catalogCodes,
+      equipmentCodes,
+      priceStats,
     };
   } catch (error) {
     console.error('[formatAllAggregations] Error formatting aggregations:', error);
@@ -394,6 +491,9 @@ export function formatAllAggregations(
       siblingCategories: [],
       variantAttributeGroups: [],
       productSpecificationGroups: [],
+      catalogCodes: [],
+      equipmentCodes: [],
+      priceStats: undefined,
     };
   }
 }

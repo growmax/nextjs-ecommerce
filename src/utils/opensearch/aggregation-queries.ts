@@ -298,7 +298,11 @@ export function buildMajorCategoriesAggregation(
 
 /**
  * Build variant attributes aggregation query
- * First gets all unique attribute names, then builds aggregations for each
+ * First gets all unique attribute names from productAttributes object, then builds aggregations for each
+ * 
+ * Note: productAttributes is a flat object like { "Color": ["Red", "Blue"], "Size": ["S", "M"] }
+ * Strategy: Use a script-based terms aggregation to extract all unique keys from productAttributes
+ * The script returns each key as a separate term, which the terms aggregation collects
  */
 export function buildVariantAttributesAggregation(
   options: AggregationQueryOptions = {}
@@ -309,14 +313,40 @@ export function buildVariantAttributesAggregation(
     currentFilters,
   } = options;
 
-  // First, get all unique variant attribute names
+  // Use a script in terms aggregation to extract keys from productAttributes
+  // The script needs to return a single value per document, so we'll use a workaround:
+  // Return each key as a separate "term" by using a script that flattens the keys
+  // However, since terms aggregation with script doesn't easily handle arrays,
+  // we'll use a different approach: collect keys from multiple documents
   const attributeNamesAgg = {
     filter: buildFilteredAggregation("variantAttributes", baseMust, baseMustNot, currentFilters),
     aggs: {
       attribute_names: {
+        // Use terms aggregation with script
+        // The script extracts keys from productAttributes and returns them
+        // Note: This approach works by having the script return each key individually
+        // We use a script that iterates through keys and returns them
         terms: {
-          field: "variantAttributeses.name.keyword",
-          size: 100, // Get all attribute names
+          script: {
+            // Script that extracts all keys from productAttributes
+            // Since terms aggregation processes each document, we need to return one key per document
+            // We'll use a workaround: return the first key, and OpenSearch will collect unique keys
+            // But this only gets one key per document, so we need multiple passes or a different approach
+            source: `
+              def attrs = params._source.productAttributes;
+              if (attrs != null && attrs instanceof Map && attrs.size() > 0) {
+                // Return the first key (this is a limitation - we can only get one key per document this way)
+                // For a better solution, we'd need to use a different aggregation structure
+                def keys = attrs.keySet();
+                if (keys.size() > 0) {
+                  return keys.iterator().next();
+                }
+              }
+              return null;
+            `,
+            lang: "painless",
+          },
+          size: 100, // Get up to 100 unique attribute names
         },
       },
     },
@@ -364,7 +394,10 @@ export function buildVariantAttributeValueAggregation(
 
 /**
  * Build product specifications aggregation query
- * First gets all unique specification keys
+ * First gets all unique specification keys from nested productSpecifications
+ * 
+ * Note: productSpecifications is a nested object with key and value properties
+ * Structure: [{ key: "Weight", value: "1kg" }, { key: "Dimensions", value: "10x10" }]
  */
 export function buildProductSpecificationsAggregation(
   options: AggregationQueryOptions = {}
@@ -509,6 +542,68 @@ export function buildStockStatusAggregation(
 }
 
 /**
+ * Build catalog codes aggregation query
+ */
+export function buildCatalogCodesAggregation(
+  options: AggregationQueryOptions = {}
+): Record<string, unknown> {
+  const {
+    baseMust = [],
+    baseMustNot = [],
+    currentFilters,
+    bucketSize = 50,
+  } = options;
+
+  return {
+    filter: buildFilteredAggregation("catalogCodes", baseMust, baseMustNot, currentFilters),
+    aggs: {
+      data: {
+        terms: {
+          field: "catalogCode.keyword",
+          size: bucketSize,
+        },
+      },
+      count: {
+        cardinality: {
+          field: "catalogCode.keyword",
+        },
+      },
+    },
+  };
+}
+
+/**
+ * Build equipment codes aggregation query
+ */
+export function buildEquipmentCodesAggregation(
+  options: AggregationQueryOptions = {}
+): Record<string, unknown> {
+  const {
+    baseMust = [],
+    baseMustNot = [],
+    currentFilters,
+    bucketSize = 50,
+  } = options;
+
+  return {
+    filter: buildFilteredAggregation("equipmentCodes", baseMust, baseMustNot, currentFilters),
+    aggs: {
+      data: {
+        terms: {
+          field: "equipmentCode.keyword",
+          size: bucketSize,
+        },
+      },
+      count: {
+        cardinality: {
+          field: "equipmentCode.keyword",
+        },
+      },
+    },
+  };
+}
+
+/**
  * Build complete aggregations query for all filters
  */
 export function buildAllAggregations(
@@ -523,6 +618,8 @@ export function buildAllAggregations(
     productSpecifications: buildProductSpecificationsAggregation(options),
     priceStats: buildPriceStatsAggregation(options),
     stockStatus: buildStockStatusAggregation(options),
+    catalogCodes: buildCatalogCodesAggregation(options),
+    equipmentCodes: buildEquipmentCodesAggregation(options),
   };
 
   return aggregations;

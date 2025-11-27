@@ -13,6 +13,7 @@ import { buildCategoryQuery } from "@/utils/opensearch/browse-queries";
 import { Metadata } from "next";
 import { headers } from "next/headers";
 import { notFound } from "next/navigation";
+import CategoryNotFound from "./_components/CategoryNotFound";
 import { CategoryPageInteractivity } from "./_components/CategoryPageInteractivity";
 
 interface PageProps {
@@ -24,6 +25,10 @@ interface PageProps {
     page?: string;
     sort?: string;
     in_stock?: string;
+    min_price?: string;
+    max_price?: string;
+    catalog_code?: string | string[];
+    equipment_code?: string | string[];
     [key: string]: string | string[] | undefined; // For variant attributes and specs
   }>;
 }
@@ -236,9 +241,9 @@ export default async function CategoryPage({
     context
   );
 
-  // If category path is invalid, return 404
+  // If category path is invalid, show custom not found page
   if (!categoryPath) {
-    notFound();
+    return <CategoryNotFound attemptedSlugs={categories} locale={locale} />;
   }
 
   // Get the last node from the category path for display purposes
@@ -257,7 +262,7 @@ export default async function CategoryPage({
   // Parse variant attributes from URL (any key that's not a known filter key)
   const variantAttributes: Record<string, string[]> = {};
   const productSpecifications: Record<string, string[]> = {};
-  const knownKeys = new Set(["page", "sort", "in_stock"]);
+  const knownKeys = new Set(["page", "sort", "in_stock", "min_price", "max_price", "catalog_code", "equipment_code"]);
 
   Object.entries(filters).forEach(([key, value]) => {
     if (!knownKeys.has(key) && value) {
@@ -292,11 +297,36 @@ export default async function CategoryPage({
         ? false
         : undefined;
 
+  // Parse price range filter
+  const minPrice = filters.min_price ? parseFloat(filters.min_price as string) : undefined;
+  const maxPrice = filters.max_price ? parseFloat(filters.max_price as string) : undefined;
+  const priceRange: { min?: number; max?: number } | undefined =
+    (minPrice !== undefined && !isNaN(minPrice)) || (maxPrice !== undefined && !isNaN(maxPrice))
+      ? {
+          ...(minPrice !== undefined && !isNaN(minPrice) ? { min: minPrice } : {}),
+          ...(maxPrice !== undefined && !isNaN(maxPrice) ? { max: maxPrice } : {}),
+        }
+      : undefined;
+
+  // Parse catalog codes
+  const catalogCodes = filters.catalog_code
+    ? (Array.isArray(filters.catalog_code)
+        ? filters.catalog_code
+        : [filters.catalog_code]).filter((v): v is string => typeof v === "string")
+    : undefined;
+
+  // Parse equipment codes
+  const equipmentCodes = filters.equipment_code
+    ? (Array.isArray(filters.equipment_code)
+        ? filters.equipment_code
+        : [filters.equipment_code]).filter((v): v is string => typeof v === "string")
+    : undefined;
+
   // Use the last category ID in the path (most specific) for filtering
   // If multiple IDs are provided, we can filter by all of them
   const categoryIds = categoryPath.ids.categoryIds;
   if (!categoryIds || categoryIds.length === 0) {
-    notFound();
+    return <CategoryNotFound attemptedSlugs={categories} locale={locale} />;
   }
 
   // Build base query for aggregations
@@ -323,6 +353,9 @@ export default async function CategoryPage({
           productSpecifications,
         }),
         ...(inStock !== undefined && { inStock }),
+        ...(priceRange && { priceRange }),
+        ...(catalogCodes && catalogCodes.length > 0 && { catalogCodes }),
+        ...(equipmentCodes && equipmentCodes.length > 0 && { equipmentCodes }),
       };
 
       const aggregationResponse = await SearchService.getFilterAggregations(
@@ -334,6 +367,24 @@ export default async function CategoryPage({
 
       if (aggregationResponse.success) {
         aggregations = aggregationResponse.aggregations as FilterAggregations;
+        
+        // Debug logging in development
+        if (process.env.NODE_ENV === 'development') {
+          console.log('[CategoryPage] Aggregations received:', {
+            hasBrands: !!aggregations.brands,
+            hasCategories: !!aggregations.categories,
+            hasVariantAttributes: !!aggregations.variantAttributes,
+            variantAttributesKeys: aggregations.variantAttributes ? Object.keys(aggregations.variantAttributes) : [],
+            hasProductSpecifications: !!aggregations.productSpecifications,
+            productSpecificationsKeys: aggregations.productSpecifications ? Object.keys(aggregations.productSpecifications) : [],
+            hasPriceStats: !!aggregations.priceStats,
+            rawAggregations: aggregations,
+          });
+        }
+      } else {
+        if (process.env.NODE_ENV === 'development') {
+          console.warn('[CategoryPage] Aggregation fetch failed:', aggregationResponse);
+        }
       }
     } catch (error) {
       console.error("Error fetching aggregations:", error);
@@ -350,6 +401,9 @@ export default async function CategoryPage({
       productSpecifications,
     }),
     ...(inStock !== undefined && { inStock }),
+    ...(priceRange && { priceRange }),
+    ...(catalogCodes && catalogCodes.length > 0 && { catalogCodes }),
+    ...(equipmentCodes && equipmentCodes.length > 0 && { equipmentCodes }),
   });
 
   // Create products promise for streaming

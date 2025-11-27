@@ -18,6 +18,7 @@ export interface BrowseQueryOptions {
   variantAttributes?: Record<string, string[]>; // Variant attribute filters { "Color": ["Red", "Blue"] }
   productSpecifications?: Record<string, string[]>; // Product specification filters { "specKey": ["value1", "value2"] }
   inStock?: boolean; // Stock/inventory status filter
+  priceRange?: { min?: number; max?: number }; // Price range filter
 }
 
 export interface BrowseQueryResult {
@@ -307,6 +308,31 @@ function buildStockFilter(inStock?: boolean): Array<Record<string, unknown>> {
 }
 
 /**
+ * Build price range filter
+ */
+function buildPriceRangeFilter(priceRange?: { min?: number; max?: number }): Array<Record<string, unknown>> {
+  if (!priceRange || (priceRange.min === undefined && priceRange.max === undefined)) {
+    return [];
+  }
+
+  const rangeFilter: Record<string, unknown> = {};
+  if (priceRange.min !== undefined) {
+    rangeFilter.gte = priceRange.min;
+  }
+  if (priceRange.max !== undefined) {
+    rangeFilter.lte = priceRange.max;
+  }
+
+  return [
+    {
+      range: {
+        unit_list_price: rangeFilter,
+      },
+    },
+  ];
+}
+
+/**
  * Build catalog/equipment code filters
  */
 function buildCatalogFilters(
@@ -360,6 +386,7 @@ export function buildCategoryQuery(
     options.productSpecifications
   );
   const stockFilters = buildStockFilter(options.inStock);
+  const priceRangeFilters = buildPriceRangeFilter(options.priceRange);
 
   return {
     query: {
@@ -376,6 +403,7 @@ export function buildCategoryQuery(
             ...variantAttributeFilters,
             ...productSpecificationFilters,
             ...stockFilters,
+            ...priceRangeFilters,
           ],
           must_not: baseQuery.must_not,
         },
@@ -403,6 +431,14 @@ export function buildBrandQuery(
     options.catalogCodes,
     options.equipmentCodes
   );
+  const variantAttributeFilters = buildVariantAttributeFilters(
+    options.variantAttributes
+  );
+  const productSpecificationFilters = buildProductSpecificationFilters(
+    options.productSpecifications
+  );
+  const stockFilters = buildStockFilter(options.inStock);
+  const priceRangeFilters = buildPriceRangeFilter(options.priceRange);
 
   return {
     query: {
@@ -416,6 +452,10 @@ export function buildBrandQuery(
             brandFilter,
             ...additionalFilters,
             ...catalogFilters,
+            ...variantAttributeFilters,
+            ...productSpecificationFilters,
+            ...stockFilters,
+            ...priceRangeFilters,
           ],
           must_not: baseQuery.must_not,
         },
@@ -446,6 +486,14 @@ export function buildCategoryBrandQuery(
     options.catalogCodes,
     options.equipmentCodes
   );
+  const variantAttributeFilters = buildVariantAttributeFilters(
+    options.variantAttributes
+  );
+  const productSpecificationFilters = buildProductSpecificationFilters(
+    options.productSpecifications
+  );
+  const stockFilters = buildStockFilter(options.inStock);
+  const priceRangeFilters = buildPriceRangeFilter(options.priceRange);
 
   return {
     query: {
@@ -460,6 +508,10 @@ export function buildCategoryBrandQuery(
             brandFilter,
             ...additionalFilters,
             ...catalogFilters,
+            ...variantAttributeFilters,
+            ...productSpecificationFilters,
+            ...stockFilters,
+            ...priceRangeFilters,
           ],
           must_not: baseQuery.must_not,
         },

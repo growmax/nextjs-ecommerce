@@ -22,6 +22,14 @@ export type VariantAttributeFilters = Record<string, string[]>;
 export type ProductSpecificationFilters = Record<string, string[]>;
 
 /**
+ * Price range filter
+ */
+export interface PriceRangeFilter {
+  min?: number;
+  max?: number;
+}
+
+/**
  * Category filter state
  */
 export interface CategoryFilterState {
@@ -31,6 +39,12 @@ export interface CategoryFilterState {
   productSpecifications: ProductSpecificationFilters;
   /** Stock/Inventory status filter */
   inStock?: boolean | undefined;
+  /** Price range filter */
+  priceRange?: PriceRangeFilter;
+  /** Catalog codes filter */
+  catalogCodes?: string[];
+  /** Equipment codes filter */
+  equipmentCodes?: string[];
 }
 
 /**
@@ -51,6 +65,22 @@ export interface AggregationResult {
   data?: {
     buckets: AggregationBucket[];
   };
+}
+
+/**
+ * Catalog code filter option
+ */
+export interface CatalogCodeFilterOption extends FilterOption {
+  /** Catalog code value */
+  code: string;
+}
+
+/**
+ * Equipment code filter option
+ */
+export interface EquipmentCodeFilterOption extends FilterOption {
+  /** Equipment code value */
+  code: string;
 }
 
 /**
@@ -76,6 +106,10 @@ export interface FilterAggregations {
   };
   /** Stock/inventory aggregation */
   stockStatus?: AggregationResult;
+  /** Catalog codes aggregation */
+  catalogCodes?: AggregationResult;
+  /** Equipment codes aggregation */
+  equipmentCodes?: AggregationResult;
 }
 
 /**

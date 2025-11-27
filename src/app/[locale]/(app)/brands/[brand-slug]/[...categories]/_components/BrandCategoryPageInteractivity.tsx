@@ -148,6 +148,9 @@ export function BrandCategoryPageInteractivity({
           currentCategoryPath={currentCategoryPath}
           variantAttributeGroups={formattedFilters.variantAttributeGroups}
           productSpecificationGroups={formattedFilters.productSpecificationGroups}
+          catalogCodes={formattedFilters.catalogCodes}
+          equipmentCodes={formattedFilters.equipmentCodes}
+          priceStats={formattedFilters.priceStats}
           isLoading={!aggregations}
           hideBrandFilter={true}
         />
@@ -164,6 +167,9 @@ export function BrandCategoryPageInteractivity({
             currentCategoryPath={currentCategoryPath}
             variantAttributeGroups={formattedFilters.variantAttributeGroups}
             productSpecificationGroups={formattedFilters.productSpecificationGroups}
+            catalogCodes={formattedFilters.catalogCodes}
+            equipmentCodes={formattedFilters.equipmentCodes}
+            priceStats={formattedFilters.priceStats}
             isLoading={!aggregations}
             hideBrandFilter={true}
           />

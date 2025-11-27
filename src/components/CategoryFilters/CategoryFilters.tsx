@@ -17,6 +17,10 @@ import { CategoryFilter } from "./filters/CategoryFilter";
 import { ProductSpecificationFilter } from "./filters/ProductSpecificationFilter";
 import { StockFilter } from "./filters/StockFilter";
 import { VariantAttributeFilter } from "./filters/VariantAttributeFilter";
+import { PriceFilter } from "./filters/PriceFilter";
+import { CatalogCodeFilter } from "./filters/CatalogCodeFilter";
+import { EquipmentCodeFilter } from "./filters/EquipmentCodeFilter";
+import type { FilterOption } from "@/types/category-filters";
 
 interface CategoryFiltersProps {
   brands: BrandFilterOption[];
@@ -25,6 +29,9 @@ interface CategoryFiltersProps {
   currentCategoryPath: string[];
   variantAttributeGroups: VariantAttributeGroup[];
   productSpecificationGroups: ProductSpecificationGroup[];
+  catalogCodes?: FilterOption[];
+  equipmentCodes?: FilterOption[];
+  priceStats?: { min?: number; max?: number };
   isLoading?: boolean;
   hideBrandFilter?: boolean;
 }
@@ -40,6 +47,9 @@ export function CategoryFilters({
   currentCategoryPath,
   variantAttributeGroups,
   productSpecificationGroups,
+  catalogCodes = [],
+  equipmentCodes = [],
+  priceStats,
   isLoading = false,
   hideBrandFilter = false,
 }: CategoryFiltersProps) {
@@ -48,6 +58,9 @@ export function CategoryFilters({
     toggleVariantAttribute,
     toggleProductSpecification,
     setStockFilter,
+    setPriceRange,
+    toggleCatalogCode,
+    toggleEquipmentCode,
     removeVariantAttribute,
     removeProductSpecification,
     clearAllFilters,
@@ -141,6 +154,51 @@ export function CategoryFilters({
                 specificationGroups={productSpecificationGroups}
                 selectedSpecifications={filters.productSpecifications}
                 onToggle={toggleProductSpecification}
+                isLoading={isLoading}
+              />
+            </CollapsibleSection>
+          )}
+
+          {/* Price Range */}
+          {priceStats && (
+            <CollapsibleSection title="Price Range" defaultOpen={false}>
+              <PriceFilter
+                minPrice={filters.priceRange?.min}
+                maxPrice={filters.priceRange?.max}
+                priceStats={priceStats}
+                onChange={setPriceRange}
+                isLoading={isLoading}
+              />
+            </CollapsibleSection>
+          )}
+
+          {/* Catalog Codes */}
+          {catalogCodes.length > 0 && (
+            <CollapsibleSection
+              title="Catalog Codes"
+              defaultOpen={false}
+              badge={catalogCodes.length}
+            >
+              <CatalogCodeFilter
+                options={catalogCodes}
+                selectedCodes={filters.catalogCodes || []}
+                onToggle={toggleCatalogCode}
+                isLoading={isLoading}
+              />
+            </CollapsibleSection>
+          )}
+
+          {/* Equipment Codes */}
+          {equipmentCodes.length > 0 && (
+            <CollapsibleSection
+              title="Equipment Codes"
+              defaultOpen={false}
+              badge={equipmentCodes.length}
+            >
+              <EquipmentCodeFilter
+                options={equipmentCodes}
+                selectedCodes={filters.equipmentCodes || []}
+                onToggle={toggleEquipmentCode}
                 isLoading={isLoading}
               />
             </CollapsibleSection>

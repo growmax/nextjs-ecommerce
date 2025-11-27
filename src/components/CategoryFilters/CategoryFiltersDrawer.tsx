@@ -7,6 +7,7 @@ import type {
   CategoryFilterOption,
   ProductSpecificationGroup,
   VariantAttributeGroup,
+  FilterOption,
 } from "@/types/category-filters";
 import { Filter } from "lucide-react";
 import { useState } from "react";
@@ -19,6 +20,9 @@ interface CategoryFiltersDrawerProps {
   currentCategoryPath: string[];
   variantAttributeGroups: VariantAttributeGroup[];
   productSpecificationGroups: ProductSpecificationGroup[];
+  catalogCodes?: FilterOption[];
+  equipmentCodes?: FilterOption[];
+  priceStats?: { min?: number; max?: number };
   isLoading?: boolean;
   hideBrandFilter?: boolean;
   trigger?: React.ReactNode;
@@ -35,6 +39,9 @@ export function CategoryFiltersDrawer({
   currentCategoryPath,
   variantAttributeGroups,
   productSpecificationGroups,
+  catalogCodes = [],
+  equipmentCodes = [],
+  priceStats,
   isLoading = false,
   hideBrandFilter = false,
   trigger,
@@ -62,6 +69,9 @@ export function CategoryFiltersDrawer({
             currentCategoryPath={currentCategoryPath}
             variantAttributeGroups={variantAttributeGroups}
             productSpecificationGroups={productSpecificationGroups}
+            catalogCodes={catalogCodes}
+            equipmentCodes={equipmentCodes}
+            priceStats={priceStats}
             isLoading={isLoading}
             hideBrandFilter={hideBrandFilter}
           />

@@ -25,6 +25,10 @@ function parseVariantAttributesFromURL(
     "page",
     "sort",
     "in_stock",
+    "min_price",
+    "max_price",
+    "catalog_code",
+    "equipment_code",
     // Add other known filter keys here
   ]);
 
@@ -80,7 +84,11 @@ function buildURLParams(
       key !== "page" &&
       key !== "sort" &&
       !key.startsWith("spec_") &&
-      key !== "in_stock"
+      key !== "in_stock" &&
+      key !== "min_price" &&
+      key !== "max_price" &&
+      key !== "catalog_code" &&
+      key !== "equipment_code"
     ) {
       keysToRemove.push(key);
     }
@@ -108,6 +116,40 @@ function buildURLParams(
     params.delete("in_stock");
   }
 
+  // Add price range filter
+  if (filters.priceRange?.min !== undefined) {
+    params.set("min_price", String(filters.priceRange.min));
+  } else {
+    params.delete("min_price");
+  }
+  if (filters.priceRange?.max !== undefined) {
+    params.set("max_price", String(filters.priceRange.max));
+  } else {
+    params.delete("max_price");
+  }
+
+  // Add catalog codes
+  if (filters.catalogCodes && filters.catalogCodes.length > 0) {
+    // Remove existing catalog_code params
+    params.delete("catalog_code");
+    filters.catalogCodes.forEach((code) => {
+      params.append("catalog_code", code);
+    });
+  } else {
+    params.delete("catalog_code");
+  }
+
+  // Add equipment codes
+  if (filters.equipmentCodes && filters.equipmentCodes.length > 0) {
+    // Remove existing equipment_code params
+    params.delete("equipment_code");
+    filters.equipmentCodes.forEach((code) => {
+      params.append("equipment_code", code);
+    });
+  } else {
+    params.delete("equipment_code");
+  }
+
   return params;
 }
 
@@ -132,10 +174,30 @@ export function useCategoryFilters() {
         ? false
         : undefined;
 
+    // Parse price range
+    const minPriceParam = searchParams.get("min_price");
+    const maxPriceParam = searchParams.get("max_price");
+    const priceRange =
+      minPriceParam || maxPriceParam
+        ? {
+            min: minPriceParam ? parseFloat(minPriceParam) : undefined,
+            max: maxPriceParam ? parseFloat(maxPriceParam) : undefined,
+          }
+        : undefined;
+
+    // Parse catalog codes
+    const catalogCodes = searchParams.getAll("catalog_code").filter(Boolean);
+
+    // Parse equipment codes
+    const equipmentCodes = searchParams.getAll("equipment_code").filter(Boolean);
+
     return {
       variantAttributes,
       productSpecifications,
       inStock: inStock as boolean | undefined,
+      priceRange,
+      catalogCodes: catalogCodes.length > 0 ? catalogCodes : undefined,
+      equipmentCodes: equipmentCodes.length > 0 ? equipmentCodes : undefined,
     };
   }, [searchParams]);
 
@@ -224,6 +286,50 @@ export function useCategoryFilters() {
       updateFilters({ inStock: inStock as boolean | undefined });
     },
     [updateFilters]
+  );
+
+  /**
+   * Set price range filter
+   */
+  const setPriceRange = useCallback(
+    (priceRange: { min?: number; max?: number } | undefined) => {
+      updateFilters({ priceRange });
+    },
+    [updateFilters]
+  );
+
+  /**
+   * Toggle catalog code
+   */
+  const toggleCatalogCode = useCallback(
+    (code: string) => {
+      const currentCodes = currentFilters.catalogCodes || [];
+      const newCodes = currentCodes.includes(code)
+        ? currentCodes.filter((c) => c !== code)
+        : [...currentCodes, code];
+
+      updateFilters({
+        catalogCodes: newCodes.length > 0 ? newCodes : undefined,
+      });
+    },
+    [currentFilters.catalogCodes, updateFilters]
+  );
+
+  /**
+   * Toggle equipment code
+   */
+  const toggleEquipmentCode = useCallback(
+    (code: string) => {
+      const currentCodes = currentFilters.equipmentCodes || [];
+      const newCodes = currentCodes.includes(code)
+        ? currentCodes.filter((c) => c !== code)
+        : [...currentCodes, code];
+
+      updateFilters({
+        equipmentCodes: newCodes.length > 0 ? newCodes : undefined,
+      });
+    },
+    [currentFilters.equipmentCodes, updateFilters]
   );
 
   /**
@@ -316,6 +422,21 @@ export function useCategoryFilters() {
       count += 1;
     }
 
+    // Count price range filter
+    if (currentFilters.priceRange?.min !== undefined || currentFilters.priceRange?.max !== undefined) {
+      count += 1;
+    }
+
+    // Count catalog codes
+    if (currentFilters.catalogCodes && currentFilters.catalogCodes.length > 0) {
+      count += currentFilters.catalogCodes.length;
+    }
+
+    // Count equipment codes
+    if (currentFilters.equipmentCodes && currentFilters.equipmentCodes.length > 0) {
+      count += currentFilters.equipmentCodes.length;
+    }
+
     return count;
   }, [currentFilters]);
 
@@ -325,6 +446,9 @@ export function useCategoryFilters() {
     toggleVariantAttribute,
     toggleProductSpecification,
     setStockFilter,
+    setPriceRange,
+    toggleCatalogCode,
+    toggleEquipmentCode,
     clearAllFilters,
     removeVariantAttribute,
     removeProductSpecification,

@@ -535,6 +535,9 @@ export class SearchService extends BaseService<SearchService> {
       variantAttributes?: Record<string, string[]>;
       productSpecifications?: Record<string, string[]>;
       inStock?: boolean;
+      priceRange?: { min?: number; max?: number };
+      catalogCodes?: string[];
+      equipmentCodes?: string[];
     },
     context?: RequestContext
   ): Promise<AggregationsResponse> {
@@ -574,96 +577,188 @@ export class SearchService extends BaseService<SearchService> {
 
     // If we have variant attribute names, fetch values for each
     const variantAttrsAgg = result.aggregations.variantAttributes as {
-      attribute_names?: { buckets?: Array<{ key: string }> };
+      attribute_names?: { buckets?: Array<{ key: string; doc_count: number }> };
     };
-    if (variantAttrsAgg?.attribute_names?.buckets) {
-      const attributeNames = variantAttrsAgg.attribute_names.buckets.map(
-        bucket => bucket.key
-      );
+    
+    if (process.env.NODE_ENV === 'development') {
+      console.log('[SearchService] Variant attributes aggregation structure:', {
+        hasVariantAttributes: !!result.aggregations.variantAttributes,
+        variantAttrsAgg,
+        attributeNamesBuckets: variantAttrsAgg?.attribute_names?.buckets,
+      });
+    }
+    
+    if (variantAttrsAgg?.attribute_names?.buckets && variantAttrsAgg.attribute_names.buckets.length > 0) {
+      const attributeNames = variantAttrsAgg.attribute_names.buckets
+        .map(bucket => bucket.key)
+        .filter(key => key && key !== 'null' && key.trim().length > 0);
 
-      // Build aggregations for each variant attribute
-      const variantAggs: Record<string, unknown> = {};
-      for (const attrName of attributeNames) {
-        const attrQuery: ElasticSearchQuery = {
-          size: 0,
-          query: {
-            bool: {
-              must: baseQuery.must,
-              must_not: baseQuery.must_not,
-            },
-          },
-          aggs: {
-            [attrName]: buildVariantAttributeValueAggregation(attrName, {
-              baseMust: baseQuery.must,
-              baseMustNot: baseQuery.must_not,
-              currentFilters: currentFilters as CategoryFilterState | undefined,
-            }),
-          },
-        };
-
-        const attrResult = await this.getAggregationsServerSide(
-          elasticIndex,
-          attrQuery,
-          context
-        );
-        if (attrResult.success && attrResult.aggregations[attrName]) {
-          variantAggs[attrName] = attrResult.aggregations[
-            attrName
-          ] as AggregationResult;
-        }
+      if (process.env.NODE_ENV === 'development') {
+        console.log('[SearchService] Extracted attribute names:', attributeNames);
       }
 
-      // Replace the attribute names aggregation with the actual attribute aggregations
-      result.aggregations.variantAttributes =
-        variantAggs as unknown as AggregationResult;
+      if (attributeNames.length > 0) {
+        // Build aggregations for each variant attribute
+        const variantAggs: Record<string, unknown> = {};
+        for (const attrName of attributeNames) {
+          try {
+            const attrQuery: ElasticSearchQuery = {
+              size: 0,
+              query: {
+                bool: {
+                  must: baseQuery.must,
+                  must_not: baseQuery.must_not,
+                },
+              },
+              aggs: {
+                [attrName]: buildVariantAttributeValueAggregation(attrName, {
+                  baseMust: baseQuery.must,
+                  baseMustNot: baseQuery.must_not,
+                  currentFilters: currentFilters as CategoryFilterState | undefined,
+                }),
+              },
+            };
+
+            const attrResult = await this.getAggregationsServerSide(
+              elasticIndex,
+              attrQuery,
+              context
+            );
+            if (attrResult.success && attrResult.aggregations[attrName]) {
+              variantAggs[attrName] = attrResult.aggregations[
+                attrName
+              ] as AggregationResult;
+            } else if (process.env.NODE_ENV === 'development') {
+              console.warn(`[SearchService] Failed to get values for attribute "${attrName}":`, attrResult);
+            }
+          } catch (error) {
+            if (process.env.NODE_ENV === 'development') {
+              console.error(`[SearchService] Error fetching values for attribute "${attrName}":`, error);
+            }
+          }
+        }
+
+        // Replace the attribute names aggregation with the actual attribute aggregations
+        if (Object.keys(variantAggs).length > 0) {
+          result.aggregations.variantAttributes =
+            variantAggs as unknown as AggregationResult;
+          
+          if (process.env.NODE_ENV === 'development') {
+            console.log('[SearchService] Final variant attributes aggregations:', Object.keys(variantAggs));
+          }
+        } else {
+          if (process.env.NODE_ENV === 'development') {
+            console.warn('[SearchService] No variant attribute values could be fetched');
+          }
+          // Set to empty object so formatter knows there are no attributes
+          result.aggregations.variantAttributes = {} as unknown as AggregationResult;
+        }
+      } else {
+        if (process.env.NODE_ENV === 'development') {
+          console.warn('[SearchService] No valid attribute names found in buckets');
+        }
+        result.aggregations.variantAttributes = {} as unknown as AggregationResult;
+      }
+    } else {
+      if (process.env.NODE_ENV === 'development') {
+        console.warn('[SearchService] No variant attribute names aggregation found or empty buckets');
+      }
+      // Set to empty object so formatter knows there are no attributes
+      result.aggregations.variantAttributes = {} as unknown as AggregationResult;
     }
 
     // If we have product specification keys, fetch values for each
     const productSpecsAgg = result.aggregations.productSpecifications as {
       spec_keys?: {
-        keys?: { buckets?: Array<{ key: string }> };
+        keys?: { buckets?: Array<{ key: string; doc_count: number }> };
       };
     };
-    if (productSpecsAgg?.spec_keys?.keys?.buckets) {
-      const specKeys = productSpecsAgg.spec_keys.keys.buckets.map(
-        bucket => bucket.key
-      );
+    
+    if (process.env.NODE_ENV === 'development') {
+      console.log('[SearchService] Product specifications aggregation structure:', {
+        hasProductSpecifications: !!result.aggregations.productSpecifications,
+        productSpecsAgg,
+        specKeysBuckets: productSpecsAgg?.spec_keys?.keys?.buckets,
+      });
+    }
+    
+    if (productSpecsAgg?.spec_keys?.keys?.buckets && productSpecsAgg.spec_keys.keys.buckets.length > 0) {
+      const specKeys = productSpecsAgg.spec_keys.keys.buckets
+        .map(bucket => bucket.key)
+        .filter(key => key && key.trim().length > 0);
 
-      // Build aggregations for each specification
-      const specAggs: Record<string, unknown> = {};
-      for (const specKey of specKeys) {
-        const specQuery: ElasticSearchQuery = {
-          size: 0,
-          query: {
-            bool: {
-              must: baseQuery.must,
-              must_not: baseQuery.must_not,
-            },
-          },
-          aggs: {
-            [specKey]: buildProductSpecificationValueAggregation(specKey, {
-              baseMust: baseQuery.must,
-              baseMustNot: baseQuery.must_not,
-              currentFilters: currentFilters as CategoryFilterState | undefined,
-            }),
-          },
-        };
-
-        const specResult = await this.getAggregationsServerSide(
-          elasticIndex,
-          specQuery,
-          context
-        );
-        if (specResult.success && specResult.aggregations[specKey]) {
-          specAggs[specKey] = specResult.aggregations[
-            specKey
-          ] as AggregationResult;
-        }
+      if (process.env.NODE_ENV === 'development') {
+        console.log('[SearchService] Extracted specification keys:', specKeys);
       }
 
-      // Replace the spec keys aggregation with the actual spec aggregations
-      result.aggregations.productSpecifications =
-        specAggs as unknown as AggregationResult;
+      if (specKeys.length > 0) {
+        // Build aggregations for each specification
+        const specAggs: Record<string, unknown> = {};
+        for (const specKey of specKeys) {
+          try {
+            const specQuery: ElasticSearchQuery = {
+              size: 0,
+              query: {
+                bool: {
+                  must: baseQuery.must,
+                  must_not: baseQuery.must_not,
+                },
+              },
+              aggs: {
+                [specKey]: buildProductSpecificationValueAggregation(specKey, {
+                  baseMust: baseQuery.must,
+                  baseMustNot: baseQuery.must_not,
+                  currentFilters: currentFilters as CategoryFilterState | undefined,
+                }),
+              },
+            };
+
+            const specResult = await this.getAggregationsServerSide(
+              elasticIndex,
+              specQuery,
+              context
+            );
+            if (specResult.success && specResult.aggregations[specKey]) {
+              specAggs[specKey] = specResult.aggregations[
+                specKey
+              ] as AggregationResult;
+            } else if (process.env.NODE_ENV === 'development') {
+              console.warn(`[SearchService] Failed to get values for specification "${specKey}":`, specResult);
+            }
+          } catch (error) {
+            if (process.env.NODE_ENV === 'development') {
+              console.error(`[SearchService] Error fetching values for specification "${specKey}":`, error);
+            }
+          }
+        }
+
+        // Replace the spec keys aggregation with the actual spec aggregations
+        if (Object.keys(specAggs).length > 0) {
+          result.aggregations.productSpecifications =
+            specAggs as unknown as AggregationResult;
+          
+          if (process.env.NODE_ENV === 'development') {
+            console.log('[SearchService] Final product specifications aggregations:', Object.keys(specAggs));
+          }
+        } else {
+          if (process.env.NODE_ENV === 'development') {
+            console.warn('[SearchService] No product specification values could be fetched');
+          }
+          // Set to empty object so formatter knows there are no specifications
+          result.aggregations.productSpecifications = {} as unknown as AggregationResult;
+        }
+      } else {
+        if (process.env.NODE_ENV === 'development') {
+          console.warn('[SearchService] No valid specification keys found in buckets');
+        }
+        result.aggregations.productSpecifications = {} as unknown as AggregationResult;
+      }
+    } else {
+      if (process.env.NODE_ENV === 'development') {
+        console.warn('[SearchService] No product specification keys aggregation found or empty buckets');
+      }
+      // Set to empty object so formatter knows there are no specifications
+      result.aggregations.productSpecifications = {} as unknown as AggregationResult;
     }
 
     return result;
