@@ -1,11 +1,11 @@
 "use client";
 
 import { Toaster } from "@/components/ui/sonner";
-import { Layers } from "lucide-react";
+import { FileText, Layers } from "lucide-react";
+import { useTranslations } from "next-intl";
 import dynamic from "next/dynamic";
 import { Suspense, useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
-import { useTranslations } from "next-intl";
 
 import { EditOrderNameDialog } from "@/components/dialogs/EditOrderNameDialog";
 import {
@@ -13,6 +13,7 @@ import {
   type Version,
 } from "@/components/dialogs/VersionsDialog";
 import { ApplicationLayout, PageLayout } from "@/components/layout";
+import PricingFormat from "@/components/PricingFormat";
 import {
   CustomerInfoCard,
   DetailsSkeleton,
@@ -20,6 +21,7 @@ import {
   OrderTermsCard,
   SalesHeader,
 } from "@/components/sales";
+import { Label } from "@/components/ui/label";
 import { useQuoteDetails } from "@/hooks/details/quotedetails/useQuoteDetails";
 import { useCurrentUser } from "@/hooks/useCurrentUser";
 import { useGetVersionDetails } from "@/hooks/useGetVersionDetails/useGetVersionDetails";
@@ -474,7 +476,7 @@ export default function QuoteDetailsClient({
       onClick: handleConvertToOrder,
     },
   ];
-
+  console.log(displayQuoteDetails);
   return (
     <ApplicationLayout>
       {/* Sales Header - Fixed at top */}
@@ -715,6 +717,48 @@ export default function QuoteDetailsClient({
                     />
                   </Suspense>
 
+                  {/* Target Discount Card - Display only on detail page */}
+                  {quoteDetailData?.sprDetails && (
+                    (quoteDetailData.sprDetails as any)?.targetPrice > 0 ||
+                    (quoteDetailData.sprDetails as any)?.sprRequestedDiscount > 0
+                  ) && (
+                    <div className="mt-4">
+                      <Suspense fallback={null}>
+                        <div className="bg-white rounded-lg border border-gray-200 shadow-sm">
+                          <div className="px-6 py-4 bg-gray-50 rounded-t-lg border-b">
+                            <h3 className="text-xl font-semibold text-gray-900">
+                              Target Discount
+                            </h3>
+                          </div>
+                          <div className="px-6 py-4">
+                            <div className="space-y-4">
+                              {/* Target Discount Display */}
+                              <div className="flex justify-between items-center py-2">
+                                <Label className="text-sm font-normal text-gray-900 w-1/2">
+                                  Total Discount
+                                </Label>
+                                <div className="text-sm font-semibold text-gray-900 w-1/2 text-right">
+                                  {((quoteDetailData.sprDetails as any)?.sprRequestedDiscount || 0).toFixed(2)}%
+                                </div>
+                              </div>
+                              {/* Target Price Display */}
+                              <div className="flex justify-between items-center py-2">
+                                <Label className="text-sm font-normal text-gray-900 w-1/2">
+                                  Target Price (Excl. taxes)
+                                </Label>
+                                <div className="text-sm font-semibold text-gray-900 w-1/2 text-right">
+                                  <PricingFormat
+                                    value={(quoteDetailData.sprDetails as any)?.targetPrice || 0}
+                                  />
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      </Suspense>
+                    </div>
+                  )}
+
                   {/* Customer Information Card */}
                   <div className="mt-4">
                     <Suspense fallback={null}>
@@ -765,6 +809,84 @@ export default function QuoteDetailsClient({
                       />
                     </Suspense>
                   </div>
+
+                  {/* Attachments Card */}
+                  {displayQuoteDetails?.uploadedDocumentDetails &&
+                    Array.isArray(displayQuoteDetails.uploadedDocumentDetails) &&
+                    displayQuoteDetails.uploadedDocumentDetails.length > 0 && (
+                      <div className="mt-4">
+                        <Suspense fallback={null}>
+                          <div className="bg-white rounded-lg border border-gray-200 shadow-sm">
+                            <div className="px-6 py-4 bg-gray-50 rounded-t-lg border-b">
+                              <h3 className="text-xl font-semibold text-gray-900">
+                                Attachments
+                              </h3>
+                            </div>
+                            <div className="px-6 py-4">
+                              <div className="space-y-2">
+                                {displayQuoteDetails.uploadedDocumentDetails.map(
+                                  (
+                                    attachment: any,
+                                    index: number
+                                  ) => {
+                                    const fileUrl =
+                                      attachment.source ||
+                                      attachment.filePath ||
+                                      attachment.attachment;
+                                    const fileName =
+                                      attachment.name ||
+                                      `File ${index + 1}`;
+                                    const attachedBy =
+                                      attachment.width?.split(",")[0] ||
+                                      "Unknown";
+                                    const attachedDate = attachment.width
+                                      ?.split(",")[1]
+                                      ? new Date(
+                                          attachment.width.split(",")[1]
+                                        ).toLocaleString("en-IN", {
+                                          day: "2-digit",
+                                          month: "2-digit",
+                                          year: "numeric",
+                                          hour: "2-digit",
+                                          minute: "2-digit",
+                                          hour12: true,
+                                        })
+                                      : null;
+
+                                    return (
+                                      <div
+                                        key={index}
+                                        className="flex items-center justify-between p-3 border rounded-md bg-gray-50 hover:bg-gray-100 transition-colors cursor-pointer"
+                                        onClick={() => {
+                                          if (fileUrl) {
+                                            window.open(fileUrl, "_blank");
+                                          }
+                                        }}
+                                      >
+                                        <div className="flex items-center gap-3 flex-1 min-w-0">
+                                          <FileText className="h-5 w-5 text-muted-foreground flex-shrink-0" />
+                                          <div className="flex-1 min-w-0">
+                                            <p className="text-sm font-medium text-gray-900 truncate">
+                                              {fileName}
+                                            </p>
+                                            {attachedBy && attachedDate && (
+                                              <p className="text-xs text-muted-foreground">
+                                                Attached By {attachedBy}{" "}
+                                                {attachedDate}
+                                              </p>
+                                            )}
+                                          </div>
+                                        </div>
+                                      </div>
+                                    );
+                                  }
+                                )}
+                              </div>
+                            </div>
+                          </div>
+                        </Suspense>
+                      </div>
+                    )}
                 </div>
               )}
             </div>

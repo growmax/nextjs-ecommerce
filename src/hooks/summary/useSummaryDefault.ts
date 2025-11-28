@@ -113,7 +113,7 @@ export default function useSummaryDefault(
 
   const { defaultWarehouseAddress, defaultWarehouseAddressLoading } =
     useDefaultWarehouse((defaultSellerAddress[0]?.id as number) || null);
-
+  
   const { quoteSettings } = useModuleSettings(
     userId && companyId ? { userId, companyId } : null
   );

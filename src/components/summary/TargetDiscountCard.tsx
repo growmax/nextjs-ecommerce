@@ -6,8 +6,9 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import useModuleSettings from "@/hooks/useModuleSettings";
 import useUser from "@/hooks/useUser";
-import { useEffect, useMemo } from "react";
+import { useEffect, useMemo, useRef } from "react";
 import { useFormContext } from "react-hook-form";
+import isNaN from "lodash/isNaN";
 
 interface TargetDiscountCardProps {
   isContentPage?: boolean;
@@ -36,6 +37,12 @@ export default function TargetDiscountCard({
   const sprRequestedDiscount = (watch("sprDetails.sprRequestedDiscount" as any) as number) || 0;
   const cartValue = (watch("cartValue" as any) as any) || {};
   const products = (watch("products") as any[]) || [];
+  
+  // Watch totalValue directly to ensure useEffect triggers when it changes
+  const totalValue = (watch("cartValue.totalValue" as any) as number) || 0;
+  
+  // Ref to track previous totalValue to detect changes
+  const prevTotalValueRef = useRef<number>(0);
 
   // Check if should show the card
   // Reference: buyer-fe line 227 - shows if isSummaryPage OR (targetPrice > 0 || sprRequestedDiscount > 0)
@@ -100,48 +107,79 @@ export default function TargetDiscountCard({
 
   /**
    * Auto-update targetPrice when cartValue.totalValue changes (e.g., after cash discount is applied)
-   * Reference: buyer-fe doesn't have explicit useEffect, but handleTargetDiscountChange always uses
-   * current cartValue.totalValue from getValues(), so it automatically uses updated values.
-   * However, we need to auto-update targetPrice when totalValue changes if there's an existing discount.
+   * Reference: buyer-fe implementation - when cash discount is applied, targetPrice should update
+   * to reflect the new discounted totalValue, and calculate target discount based on original totalValue
    * 
    * This ensures that when cash discount is applied and totalValue changes:
-   * - If sprRequestedDiscount > 0: Recalculate targetPrice based on new totalValue and existing discount %
-   * - If sprRequestedDiscount = 0: Set targetPrice to new totalValue (no discount)
+   * - Update targetPrice to match new totalValue (after cash discount)
+   * - Calculate target discount percentage based on original totalValue (before cash discount)
    */
   useEffect(() => {
-    const totalValue = cartValue?.totalValue || 0;
     const currentTargetPrice = targetPrice || 0;
     const currentDiscount = sprRequestedDiscount || 0;
+    const cashdiscount = (watch("cashdiscount" as any) as boolean) || false;
+    const cashDiscountValue = cartValue?.cashDiscountValue || 0;
 
     // Skip if totalValue is not available yet
     if (totalValue <= 0) {
+      prevTotalValueRef.current = totalValue;
       return;
     }
 
-    // If there's an existing discount percentage, recalculate targetPrice based on new totalValue
-    if (currentDiscount > 0) {
-      const calculatedTargetPrice = parseFloat(
-        (totalValue - (totalValue * currentDiscount) / 100).toFixed(roundOff)
-      );
+    // Check if totalValue actually changed (with tolerance for floating point)
+    const hasChanged = Math.abs(totalValue - prevTotalValueRef.current) > 0.01;
 
-      // Only update if the calculated value is different (with small tolerance for rounding)
-      // This prevents infinite loops and unnecessary updates
-      if (Math.abs(calculatedTargetPrice - currentTargetPrice) > 0.01) {
-        setValue("sprDetails.targetPrice" as any, calculatedTargetPrice, { shouldDirty: false });
-        // Update products with revised values based on new targetPrice
-        updateProductsWithRevisedValues(calculatedTargetPrice, totalValue);
-        // Update SPR flags
-        updateSPRFlags(calculatedTargetPrice, totalValue);
+    // Only process if totalValue changed
+    if (hasChanged) {
+      // Calculate original totalValue (before cash discount) if cash discount is applied
+      // Formula: originalTotalValue = currentTotalValue / (1 - cashDiscountPercentage/100)
+      let originalTotalValue = totalValue;
+      if (cashdiscount && cashDiscountValue > 0) {
+        originalTotalValue = parseFloat(
+          (totalValue / (1 - cashDiscountValue / 100)).toFixed(roundOff)
+        );
       }
-    } else {
-      // If discount is 0, target price should equal totalValue (the discounted subtotal)
-      // This matches the behavior where targetPrice reflects the current subtotal after cash discount
-      if (currentTargetPrice === 0 || Math.abs(totalValue - currentTargetPrice) > 0.01) {
-        setValue("sprDetails.targetPrice" as any, totalValue, { shouldDirty: false });
+
+      // If there's an existing discount percentage, recalculate targetPrice based on new totalValue
+      if (currentDiscount > 0) {
+        const calculatedTargetPrice = parseFloat(
+          (totalValue - (totalValue * currentDiscount) / 100).toFixed(roundOff)
+        );
+
+        // Only update if the calculated value is different (with small tolerance for rounding)
+        // This prevents infinite loops and unnecessary updates
+        if (Math.abs(calculatedTargetPrice - currentTargetPrice) > 0.01) {
+          setValue("sprDetails.targetPrice" as any, calculatedTargetPrice, { shouldDirty: false });
+          // Update products with revised values based on new targetPrice
+          updateProductsWithRevisedValues(calculatedTargetPrice, totalValue);
+          // Update SPR flags
+          updateSPRFlags(calculatedTargetPrice, totalValue);
+        }
+      } else {
+        // If discount is 0, target price should equal totalValue (the discounted subtotal)
+        // Then calculate what discount percentage that represents from original totalValue
+        if (currentTargetPrice === 0 || Math.abs(totalValue - currentTargetPrice) > 0.01) {
+          setValue("sprDetails.targetPrice" as any, totalValue, { shouldDirty: false });
+          
+          // Calculate target discount based on original totalValue (before cash discount)
+          // This shows the discount percentage from the original price
+          if (cashdiscount && cashDiscountValue > 0 && originalTotalValue > totalValue) {
+            const calculatedDiscount = parseFloat(
+              ((originalTotalValue - totalValue) / originalTotalValue * 100).toFixed(roundOff)
+            );
+            // Only update if discount is valid (0-100%)
+            if (calculatedDiscount >= 0 && calculatedDiscount <= 100) {
+              setValue("sprDetails.sprRequestedDiscount" as any, calculatedDiscount, { shouldDirty: false });
+            }
+          }
+        }
       }
+      
+      // Update ref to track the new value
+      prevTotalValueRef.current = totalValue;
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [cartValue?.totalValue, sprRequestedDiscount, roundOff, setValue]);
+  }, [totalValue, sprRequestedDiscount, roundOff, cartValue?.cashDiscountValue]);
 
   /**
    * Handle target discount change
@@ -152,7 +190,7 @@ export default function TargetDiscountCard({
     setValue("sprDetails.sprRequestedDiscount" as any, val);
 
     // Calculate target price from discount
-    const totalValue = cartValue?.totalValue || 0;
+    // Use watched totalValue which is always fresh
     const calculatedTargetPrice = parseFloat(
       (totalValue - (totalValue * val) / 100).toFixed(roundOff)
     );
@@ -174,7 +212,7 @@ export default function TargetDiscountCard({
     setValue("sprDetails.targetPrice" as any, val);
 
     // Calculate discount from target price
-    const totalValue = cartValue?.totalValue || 0;
+    // Use watched totalValue which is always fresh
     let calculatedDiscount = parseFloat(
       (100 - (val / totalValue) * 100).toFixed(roundOff)
     );
@@ -190,50 +228,6 @@ export default function TargetDiscountCard({
     updateSPRFlags(val, totalValue);
   };
 
-  /**
-   * Auto-update targetPrice when cartValue.totalValue changes (e.g., after cash discount is applied)
-   * Reference: buyer-fe doesn't have explicit useEffect, but handleTargetDiscountChange always uses
-   * current cartValue.totalValue from getValues(), so it automatically uses updated values.
-   * However, we need to auto-update targetPrice when totalValue changes if there's an existing discount.
-   * 
-   * This ensures that when cash discount is applied and totalValue changes:
-   * - If sprRequestedDiscount > 0: Recalculate targetPrice based on new totalValue and existing discount %
-   * - If sprRequestedDiscount = 0: Set targetPrice to new totalValue (no discount)
-   */
-  useEffect(() => {
-    const totalValue = cartValue?.totalValue || 0;
-    const currentTargetPrice = targetPrice || 0;
-    const currentDiscount = sprRequestedDiscount || 0;
-
-    // Skip if totalValue is not available yet
-    if (totalValue <= 0) {
-      return;
-    }
-
-    // If there's an existing discount percentage, recalculate targetPrice based on new totalValue
-    if (currentDiscount > 0) {
-      const calculatedTargetPrice = parseFloat(
-        (totalValue - (totalValue * currentDiscount) / 100).toFixed(roundOff)
-      );
-
-      // Only update if the calculated value is different (with small tolerance for rounding)
-      // This prevents infinite loops and unnecessary updates
-      if (Math.abs(calculatedTargetPrice - currentTargetPrice) > 0.01) {
-        setValue("sprDetails.targetPrice" as any, calculatedTargetPrice, { shouldDirty: false });
-        // Update products with revised values based on new targetPrice
-        updateProductsWithRevisedValues(calculatedTargetPrice, totalValue);
-        // Update SPR flags
-        updateSPRFlags(calculatedTargetPrice, totalValue);
-      }
-    } else {
-      // If discount is 0, target price should equal totalValue (the discounted subtotal)
-      // This matches the behavior where targetPrice reflects the current subtotal after cash discount
-      if (currentTargetPrice === 0 || Math.abs(totalValue - currentTargetPrice) > 0.01) {
-        setValue("sprDetails.targetPrice" as any, totalValue, { shouldDirty: false });
-      }
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [cartValue?.totalValue, sprRequestedDiscount, roundOff, setValue]);
 
   if (!shouldShow) {
     return null;

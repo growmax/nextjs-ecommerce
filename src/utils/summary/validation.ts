@@ -141,3 +141,84 @@ export const BuyerQuoteSummaryValidations = yup.object().shape({
 export type BuyerQuoteSummaryFormData = yup.InferType<
   typeof BuyerQuoteSummaryValidations
 >;
+
+/**
+ * Buyer Order Summary Validation Schema
+ * Similar to BuyerQuoteSummaryValidations but without SPR validation
+ * 
+ * Validates:
+ * - customerRequiredDate (conditional based on isCustomerDateRequired)
+ * - buyerReferenceNumber (XSS validation, max 35 chars)
+ * - comment (XSS validation, max 2000 chars)
+ * - products (quantity validation, MOQ, packaging multiples)
+ */
+export const BuyerOrderSummaryValidations = yup.object().shape({
+  customerRequiredDate: yup.date().when("isCustomerDateRequired", {
+    is: true,
+    then: (schema: any) =>
+      schema
+        .typeError("Provide required delivery date")
+        .required("Provide required delivery date")
+        .nullable(),
+    otherwise: (schema: any) => schema.notRequired().nullable(),
+  }),
+  buyerReferenceNumber: yup
+    .string()
+    .nullable()
+    .max(35, "Invalid content")
+    .test(
+      "validation",
+      "Invalid content",
+      (value: any) => !value || !containsXSS(value)
+    ),
+  comment: yup
+    .string()
+    .nullable()
+    .max(2000, "Invalid content")
+    .test(
+      "validation",
+      "Invalid content",
+      (value: any) => !value || !containsXSS(value)
+    ),
+  products: yup.array().of(
+    yup.lazy((value: any) => {
+      const productValue = value as {
+        askedQuantity?: number;
+        packagingQuantity?: number;
+        minOrderQuantity?: number;
+        stepCheck?: boolean;
+      };
+
+      const packagingQuantity = parseFloat(
+        String(productValue.packagingQuantity || 1)
+      );
+      const minOrderQuantity = productValue.minOrderQuantity
+        ? parseFloat(String(productValue.minOrderQuantity))
+        : packagingQuantity;
+
+      productValue.stepCheck =
+        (productValue.askedQuantity || 0) % packagingQuantity === 0;
+
+      return yup.object().shape({
+        askedQuantity: yup
+          .number()
+          .required("Quantity is required")
+          .min(minOrderQuantity, `MOQ is ${minOrderQuantity}`)
+          .max(9999999, "Quantity must be less than 9999999")
+          .test(
+            "is-multiple-of-packaging",
+            `Enter in multiples of ${packagingQuantity}`,
+            (val: any) => {
+              if (val === undefined || val === null) return false;
+              const tolerance = 0.001;
+              return Math.abs((val / packagingQuantity) % 1) <= tolerance;
+            }
+          ),
+      });
+    })
+  ),
+});
+
+export type BuyerOrderSummaryFormData = yup.InferType<
+  typeof BuyerOrderSummaryValidations
+>;

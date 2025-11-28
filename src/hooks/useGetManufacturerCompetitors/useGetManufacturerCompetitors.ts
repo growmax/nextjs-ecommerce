@@ -11,6 +11,7 @@ export default function useGetManufacturerCompetitors(
   sellerCompanyId?: number | string,
   cond = true
 ) {
+  console.log(sellerCompanyId);
   const fetcher = async () => {
     if (!sellerCompanyId) {
       return { data: { competitorDetails: [] } };
@@ -28,7 +29,7 @@ export default function useGetManufacturerCompetitors(
       revalidateOnReconnect: false,
     }
   );
-
+   console.log(data);
   return {
     competitors: data?.data?.competitorDetails || [],
     competitorsLoading: isLoading,

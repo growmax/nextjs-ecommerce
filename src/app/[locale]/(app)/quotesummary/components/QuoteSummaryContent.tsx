@@ -30,11 +30,11 @@ import {
   OrderProductsTable,
   OrderTermsCard,
   SalesHeader,
-  SPRForm,
 } from "@/components/sales";
 import CashDiscountCard from "@/components/sales/CashDiscountCard";
 import ApplyVolumeDiscountBtn from "@/components/summary/ApplyVolumeDiscountBtn";
-import SummaryAdditionalInfo from "@/components/summary/SummaryAdditionalInfo";
+import Attachments from "@/components/summary/Attachments";
+import SPRForm from "@/components/summary/SPRForm";
 import SummaryNameCard from "@/components/summary/SummaryNameCard";
 import TargetDiscountCard from "@/components/summary/TargetDiscountCard";
 import { Button } from "@/components/ui/button";
@@ -640,8 +640,24 @@ export default function QuoteSummaryContent() {
         }
       }
       const setSellerAddress = (getValues("setSellerAddress" as any) as any);
-      body.sellerCompanyId = sellerCompanyId;
-      body.sellerCompanyName = setSellerAddress?.companyId?.name || null;
+      
+      // Extract sellerCompanyId and sellerCompanyName from setSellerAddress
+      // Matching buyer-fe QuoteSummary.js and summaryReqDTO structure
+      // Reference: summaryReqDTO.ts lines 371-372
+      const sellerCompanyIdValue = 
+        (setSellerAddress?.companyId?.id) || 
+        (typeof setSellerAddress?.companyId === "object" && setSellerAddress?.companyId?.id) ||
+        (typeof setSellerAddress?.companyId === "number" ? setSellerAddress?.companyId : null) ||
+        sellerCompanyId || // Fallback to component-level value
+        null;
+      
+      const sellerCompanyNameValue = 
+        (setSellerAddress?.companyId?.name) ||
+        (setSellerAddress?.companyId?.companyName) ||
+        null;
+      
+      body.sellerCompanyId = sellerCompanyIdValue;
+      body.sellerCompanyName = sellerCompanyNameValue;
       body.buyerCurrencyFactor = currencyFactorValue;
       body.currencyFactor = currencyFactorValue;
       body.overallShipping = (getValues("overallShipping" as any) as number) || 0;
@@ -1052,9 +1068,8 @@ export default function QuoteSummaryContent() {
     router.push("/cart");
   };
 
-  const sprDetails = watch("sprDetails") || {};
   const setSellerAddress = watch("setSellerAddress");
-  const sellerCompanyId = (setSellerAddress as any)?.companyId;
+  const sellerCompanyId = (setSellerAddress as any)?.companyId?.id;
 
   // Watch form values for pricing context (these are reactive and will trigger re-renders)
   const cartValue = (watch("cartValue" as any) as any) || {};
@@ -1210,11 +1225,20 @@ export default function QuoteSummaryContent() {
                         onSellerBranchChange={(sellerBranch: any) => {
                           if (sellerBranch) {
                             // Update seller address with the seller branch data
+                            // Ensure companyId is an object with id and name (matching summaryReqDTO structure)
+                            // Reference: summaryReqDTO.ts expects setSellerAddress.companyId.id and setSellerAddress.companyId.name
+                            const companyIdObj = sellerBranch.companyId 
+                              ? (typeof sellerBranch.companyId === "object" 
+                                  ? sellerBranch.companyId 
+                                  : { id: sellerBranch.companyId, name: sellerBranch.companyName || sellerBranch.companyId?.name || null })
+                              : null;
+                            
                             setValue("setSellerAddress" as any, {
                               id: sellerBranch.id,
                               name: sellerBranch.name,
                               branchId: sellerBranch.branchId,
-                              companyId: sellerBranch.companyId,
+                              companyId: companyIdObj,
+                              salesBranchCode: sellerBranch.salesBranchCode || null,
                             });
                           }
                         }}
@@ -1267,79 +1291,20 @@ export default function QuoteSummaryContent() {
                     </div>
                   )}
 
-                  {/* Additional Info */}
-                  {!isLoading && (
-                    <SummaryAdditionalInfo
+                  {/* End Customer Info - Required Date and Buyer Reference Number */}
+                  {/* {!isLoading && (
+                    <EndCustomerInfo
+                      isSummaryPage={true}
                       isOrder={false}
-                      showCustomerInfo={true}
-                      showComments={true}
-                      showAttachments={true}
-                      isCustomerDateRequired={
-                        quoteSettings?.isCustomerDateRequired
-                      }
-                      requiredIncDate={quoteSettings?.requiredIncDate || 0}
+                      showHeader={true}
+                      isEdit={true}
+                      isLoading={isLoading}
                     />
-                  )}
+                  )} */}
 
-                  {/* SPR Form Section */}
-                  {!isLoading && quoteSettings?.showSpr && (
-                    <div className="mt-4 space-y-4" id="sprDetails">
-                      <div className="flex items-center space-x-2">
-                        <Checkbox
-                          id="spr-toggle"
-                          checked={sprEnabled || false}
-                          onCheckedChange={checked => {
-                            setValue("sprDetails.spr", checked === true);
-                            trigger("sprDetails");
-                          }}
-                        />
-                        <Label
-                          htmlFor="spr-toggle"
-                          className="text-sm font-medium cursor-pointer"
-                        >
-                          Request Special Price (SPR)
-                        </Label>
-                      </div>
-
-                      {sprEnabled && (
-                        <SPRForm
-                          sellerCompanyId={sellerCompanyId}
-                          customerName={sprDetails?.companyName || ""}
-                          projectName={sprDetails?.projectName || ""}
-                          competitors={
-                            Array.isArray(sprDetails?.competitorNames)
-                              ? (sprDetails.competitorNames as string[])
-                              : []
-                          }
-                          priceJustification={
-                            sprDetails?.priceJustification || ""
-                          }
-                          onCustomerNameChange={(value: string) => {
-                            setValue("sprDetails.companyName" as any, value);
-                            trigger("sprDetails");
-                          }}
-                          onProjectNameChange={(value: string) => {
-                            setValue("sprDetails.projectName" as any, value);
-                            trigger("sprDetails");
-                          }}
-                          onCompetitorsChange={(value: string[]) => {
-                            setValue("sprDetails.competitorNames" as any, value);
-                            trigger("sprDetails");
-                          }}
-                          onPriceJustificationChange={(value: string) => {
-                            setValue(
-                              "sprDetails.priceJustification" as any,
-                              value
-                            );
-                            trigger("sprDetails");
-                          }}
-                        />
-                      )}
-                    </div>
-                  )}
                 </div>
 
-                {/* Right Side - Price Details - 33% */}
+                {/* Right Side - Price Details, Customer Information, and Attachments - 33% */}
                 {!isLoading && (
                   <div className="w-full lg:w-[33%] mt-[80px]">
                     <div className="space-y-4">
@@ -1409,6 +1374,45 @@ export default function QuoteSummaryContent() {
                           />
                         </div>
                       )}
+
+                      {/* SPR Form Section - Customer Information (End Customer Name, Project Name, Competitors, Price Justification) */}
+                      <div className="mt-4 space-y-4" id="sprDetails">
+                        <div className="flex items-center space-x-2">
+                          <Checkbox
+                            id="spr-toggle"
+                            checked={sprEnabled || false}
+                            onCheckedChange={checked => {
+                              setValue("sprDetails.spr", checked === true);
+                              trigger("sprDetails");
+                            }}
+                          />
+                          <Label
+                            htmlFor="spr-toggle"
+                            className="text-sm font-medium cursor-pointer"
+                          >
+                            Request Special Price (SPR)
+                          </Label>
+                        </div>
+
+                        <SPRForm
+                          isContentPage={false}
+                          isSummaryPage={true}
+                        />
+                      </div>
+
+                      {/* Attachments - Comments and File Uploads */}
+                      <Attachments
+                        showHeader={true}
+                        showAttachments={true}
+                        editAttachments={true}
+                        showComments={true}
+                        editComments={true}
+                        fieldName="uploadedDocumentDetails"
+                        folderName="Quote"
+                        isContentPage={false}
+                        isOrder={false}
+                        readOnly={false}
+                      />
                     </div>
                   </div>
                 )}
