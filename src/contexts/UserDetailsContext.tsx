@@ -93,7 +93,13 @@ export function UserDetailsProvider({
     }
     return AuthStorage.isAuthenticated();
   });
-  const [isLoading] = useState(false);
+  // Loading state: true during hydration, false after mount
+  const [isLoading, setIsLoading] = useState(true);
+
+  // Set loading to false after hydration
+  React.useEffect(() => {
+    setIsLoading(false);
+  }, []);
 
   const login = useCallback(
     (

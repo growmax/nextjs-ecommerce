@@ -12,6 +12,7 @@ import { useCart } from "@/contexts/CartContext";
 import { useUserDetails } from "@/contexts/UserDetailsContext";
 import useLogout from "@/hooks/Auth/useLogout";
 import useUserProfile from "@/hooks/Profile/useUserProfile";
+import { Skeleton } from "@/components/ui/skeleton";
 import { useTenantData } from "@/hooks/useTenantData";
 
 import { useNavigationWithLoader } from "@/hooks/useNavigationWithLoader";
@@ -19,13 +20,12 @@ import { Link } from "@/i18n/navigation";
 import { cn } from "@/lib/utils";
 import { getUserInitials } from "@/utils/General/general";
 import {
-    Bell,
-    Command as CommandIcon,
-    Search,
-    ShoppingCart,
+  Bell,
+  Command as CommandIcon,
+  Search,
+  ShoppingCart,
 } from "lucide-react";
 import { useTranslations } from "next-intl";
-import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useMemo, useState } from "react";
 
 export function AppHeader({
@@ -42,7 +42,7 @@ export function AppHeader({
   const { userProfile } = useUserProfile();
   const { isLoggingOut, handleLogout } = useLogout();
   const router = useNavigationWithLoader();
-  const { isAuthenticated } = useUserDetails();
+  const { isAuthenticated, isLoading: isAuthLoading } = useUserDetails();
 
   // Sync tenant data from context to Zustand store (early initialization)
   useTenantData();
@@ -52,6 +52,10 @@ export function AppHeader({
   const tNav = useTranslations("navigation");
   const tAuth = useTranslations("auth");
   const tSearch = useTranslations("search");
+
+  // Don't render auth-dependent UI until authentication state is determined
+  // This prevents flickering between login/logout states
+  const showAuthUI = !isAuthLoading;
 
   // Keyboard shortcut to open search (Cmd/Ctrl + K)
   useEffect(() => {
@@ -74,7 +78,8 @@ export function AppHeader({
 
   // ---- Command Suggestions ----
   const suggestionItems = useMemo(() => {
-    if (!isAuthenticated) return [];
+    // Don't show suggestions until auth state is determined
+    if (!showAuthUI || !isAuthenticated) return [];
 
     return [
       {
@@ -90,7 +95,7 @@ export function AppHeader({
         href: "/dashboard",
       },
     ];
-  }, [tNav, isAuthenticated]);
+  }, [tNav, showAuthUI, isAuthenticated]);
 
   const handleSelect = useCallback(
     (href: string) => {
@@ -173,19 +178,23 @@ export function AppHeader({
               <LanguageSwitcher />
 
               {/* Notifications */}
-              {isAuthenticated && (
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="h-7 w-7 md:h-8 md:w-8 relative"
-                >
-                  <Bell className="h-3.5 w-3.5 md:h-4 md:w-4" />
-                  {notificationsCount > 0 && (
-                    <span className="absolute -top-1 -right-1 h-4 w-4 rounded-full bg-red-500 text-xs text-white flex items-center justify-center">
-                      {notificationsCount > 9 ? "9+" : notificationsCount}
-                    </span>
-                  )}
-                </Button>
+              {!showAuthUI ? (
+                <Skeleton className="h-7 w-7 md:h-8 md:w-8 rounded-md" />
+              ) : (
+                isAuthenticated && (
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-7 w-7 md:h-8 md:w-8 relative"
+                  >
+                    <Bell className="h-3.5 w-3.5 md:h-4 md:w-4" />
+                    {notificationsCount > 0 && (
+                      <span className="absolute -top-1 -right-1 h-4 w-4 rounded-full bg-red-500 text-xs text-white flex items-center justify-center">
+                        {notificationsCount > 9 ? "9+" : notificationsCount}
+                      </span>
+                    )}
+                  </Button>
+                )
               )}
 
               {/* Cart */}
@@ -209,7 +218,9 @@ export function AppHeader({
               />
 
               {/* Profile Dropdown with Real Data */}
-              {isAuthenticated ? (
+              {!showAuthUI ? (
+                <Skeleton className="h-7 w-7 md:h-8 md:w-8 rounded-full" />
+              ) : isAuthenticated ? (
                 <AvatarCard
                   user={userProfile}
                   onLogout={handleLogout}
@@ -267,7 +278,9 @@ export function AppHeader({
               </Button>
 
               {/* Profile Dropdown with Real Data */}
-              {isAuthenticated ? (
+              {!showAuthUI ? (
+                <Skeleton className="h-7 w-7 sm:h-8 sm:w-8 rounded-full" />
+              ) : isAuthenticated ? (
                 <AvatarCard
                   user={userProfile}
                   onLogout={handleLogout}
