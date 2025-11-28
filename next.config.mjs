@@ -79,7 +79,7 @@ const nextConfig = {
         buildDependencies: {
           config: [__filename],
         },
-        cacheDirectory: ".next/cache/webpack",
+        cacheDirectory: `${__dirname}/.next/cache/webpack`,
       };
       // Optimize module resolution
       config.resolve.symlinks = false;

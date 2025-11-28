@@ -9,6 +9,8 @@ import {
   CommandItem,
   CommandList,
 } from "@/components/ui/command";
+import OpenElasticSearchService from "@/lib/api/services/ElacticQueryService/openElasticSearch/openElasticSearch";
+import { SimpleProductSearchResult } from "@/types/OpenElasticSearch/types";
 import React, { useEffect, useRef, useState } from "react";
 
 type SuggestionItem = {
@@ -16,30 +18,6 @@ type SuggestionItem = {
   label: string;
   icon: React.ReactNode;
   href: string;
-};
-
-type ProductAsset = {
-  isDefault: number;
-  width: string;
-  source: string;
-  type: string;
-  height: string;
-};
-
-type ProductResult = {
-  productId: number;
-  productShortDescription: string;
-  brandProductId: string;
-  brandsName: string;
-  productIndexName: string;
-  productAssetss?: ProductAsset[];
-  b2CUnitListPrice?: number | null;
-};
-
-type SearchResponse = {
-  success: boolean;
-  data: ProductResult[];
-  total: number;
 };
 
 type Props = {
@@ -61,7 +39,9 @@ export function SearchDialogBox({
 }: Props) {
   const debounceRef = useRef<number | null>(null);
   const abortRef = useRef<AbortController | null>(null);
-  const [searchResults, setSearchResults] = useState<ProductResult[]>([]);
+  const [searchResults, setSearchResults] = useState<
+    SimpleProductSearchResult[]
+  >([]);
   const [isLoading, setIsLoading] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
 
@@ -112,19 +92,12 @@ export function SearchDialogBox({
 
       (async () => {
         try {
-          const url = `/api/search?term=${encodeURIComponent(term)}&index=${encodeURIComponent(
+          const data = await OpenElasticSearchService.searchProducts(
+            term,
             elasticIndex
-          )}`;
-          const res = await fetch(url, {
-            cache: "no-store",
-            credentials: "include",
-            signal: controller.signal,
-          });
-          if (!res.ok) {
-            throw new Error(`Search request failed: ${res.status}`);
-          }
-          const data: SearchResponse = await res.json();
-          setSearchResults(data.data || []);
+          );
+          console.log(data);
+          setSearchResults((data.data || []) as SimpleProductSearchResult[]);
         } catch (err: any) {
           if (err?.name === "AbortError") return;
           setSearchResults([]);

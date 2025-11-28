@@ -98,14 +98,17 @@ const DashboardTable = <T,>({
       {/* Scrollable Table Container - Header and Body together */}
       <div
         className={cn(
-          "overflow-x-auto overflow-y-visible relative scrollbar-thin-horizontal",
+          "overflow-x-auto overflow-y-auto relative scrollbar-thin-horizontal",
           tableHeight ? "flex-1" : ""
         )}
       >
         {/* Loading overlay - covers table content for both initial load and filter changes */}
         {loading && (
           <div className="absolute inset-0 bg-background/80 backdrop-blur-sm z-30 flex items-center justify-center">
-            <div className="bg-background border shadow-lg p-6 flex flex-col items-center gap-4" style={{ borderRadius: "var(--radius)" }}>
+            <div
+              className="bg-background border shadow-lg p-6 flex flex-col items-center gap-4"
+              style={{ borderRadius: "var(--radius)" }}
+            >
               <div className="flex gap-1">
                 <div className="w-2 h-2 bg-primary rounded-full animate-bounce [animation-delay:-0.3s]"></div>
                 <div className="w-2 h-2 bg-primary rounded-full animate-bounce [animation-delay:-0.15s]"></div>
@@ -116,7 +119,13 @@ const DashboardTable = <T,>({
           </div>
         )}
         <Table className="min-w-full table-auto">
-          <TableHeader className="bg-muted sticky top-0 z-20" style={{ borderTopLeftRadius: "var(--radius)", borderTopRightRadius: "var(--radius)" }}>
+          <TableHeader
+            className="bg-muted sticky top-0 z-20"
+            style={{
+              borderTopLeftRadius: "var(--radius)",
+              borderTopRightRadius: "var(--radius)",
+            }}
+          >
             {table.getHeaderGroups().map((headerGroup: HeaderGroup<T>) => (
               <TableRow key={headerGroup.id}>
                 {headerGroup.headers.map((header: Header<T, unknown>) => {

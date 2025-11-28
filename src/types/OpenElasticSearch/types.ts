@@ -2,15 +2,21 @@
  * Simple product search result from OpenSearch
  */
 export interface SimpleProductSearchResult {
-  product_id: number;
-  product_index_name: string;
-  brand_product_id: string;
-  product_short_description: string;
-  brand_name: string;
-  product_assetss?: Array<{
+  productId: number;
+  productIndexName: string;
+  brandProductId: string;
+  productShortDescription: string;
+  brandsName: string;
+  productAssetss?: Array<{
     type: string;
     source: string;
     isDefault?: number | boolean;
+  }>;
+  ean?: string;
+  keywords?: string | null;
+  b2CUnitListPrice?: number | null;
+  productsSubCategories?: Array<{
+    subCategoryName: string;
   }>;
 }
 

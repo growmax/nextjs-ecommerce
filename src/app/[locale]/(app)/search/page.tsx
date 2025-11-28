@@ -3,7 +3,6 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Link } from "@/i18n/navigation";
 import { ArrowLeft, Search } from "lucide-react";
 import type { Metadata } from "next";
-import { Link } from "@/i18n/navigation";
 import SearchClient from "./SearchClient";
 
 export const metadata: Metadata = {

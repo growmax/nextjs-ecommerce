@@ -41,10 +41,6 @@ const getCachedMessages = cache(async () => {
   return await getMessages();
 });
 
-const getCachedHeaders = cache(async () => {
-  return await headers();
-});
-
 /**
  * Layout Fallback - Renders immediately with messages loading in Suspense
  * This allows children (pages) to render while async operations complete
@@ -120,7 +116,7 @@ async function LayoutMessagesProvider({ children }: { children: ReactNode }) {
  * Separated to allow streaming
  */
 async function LayoutStructure({ children }: { children: ReactNode }) {
-  const headersList = await getCachedHeaders();
+  const headersList = await headers();
   const cookieHeader = headersList.get("cookie") || "";
   const initialSidebarOpen = parseSidebarStateCookie(cookieHeader);
 

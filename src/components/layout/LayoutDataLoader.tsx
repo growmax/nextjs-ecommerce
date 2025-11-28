@@ -81,7 +81,13 @@ async function LayoutDataContent({ children }: { children: ReactNode }) {
  * For first request optimization: The fallback renders immediately, and data
  * streams in asynchronously. This ensures the first paint happens instantly.
  */
-export function LayoutDataLoader({ children }: { children: ReactNode }) {
+export function LayoutDataLoader({
+  children,
+  initialAuth = false,
+}: {
+  children: ReactNode;
+  initialAuth?: boolean;
+}) {
   return (
     <Suspense
       fallback={
@@ -89,7 +95,10 @@ export function LayoutDataLoader({ children }: { children: ReactNode }) {
         // This ensures first request is instant - no waiting for data
         // Data will stream in and update the UI seamlessly
         <TenantProvider initialData={null}>
-          <UserDetailsProvider initialAuthState={false} initialUserData={null}>
+          <UserDetailsProvider
+            initialAuthState={initialAuth}
+            initialUserData={null}
+          >
             {children}
           </UserDetailsProvider>
         </TenantProvider>

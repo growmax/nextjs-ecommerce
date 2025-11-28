@@ -49,7 +49,7 @@ function QuotesLandingTable({
   const [initialLoad, setInitialLoad] = useState(true);
   const [totalCount, setTotalCount] = useState(0);
   const [page, setPage] = useState(0);
-  const [rowPerPage, setRowPerPage] = useState(20);
+  const [rowPerPage, setRowPerPage] = useState(16);
   const [pagination, setPagination] = useState({ pageIndex: 0, pageSize: 20 });
   const [filterData, setFilterData] = useState<QuoteFilterFormData | null>(
     null
@@ -934,7 +934,6 @@ function QuotesLandingTable({
                     router.push(`/details/quoteDetails/${quoteId}`);
                   }
                 }}
-                tableHeight=""
               />
             )}
           </div>

@@ -106,7 +106,7 @@ function OrdersLandingTable({
   const isFetchingRef = useRef(false);
   const lastFetchParamsRef = useRef<string>("");
   const abortControllerRef = useRef<AbortController | null>(null);
-  
+
   // Ref for scrollable container to reset scroll position
   const scrollContainerRef = useRef<HTMLDivElement | null>(null);
 
@@ -117,7 +117,7 @@ function OrdersLandingTable({
   const [initialLoad, setInitialLoad] = useState(true);
   const [totalCount, setTotalCount] = useState(0);
   const [page, setPage] = useState(0);
-  const [rowPerPage, setRowPerPage] = useState(20);
+  const [rowPerPage, setRowPerPage] = useState(16);
   const [pagination, setPagination] = useState({ pageIndex: 0, pageSize: 20 });
   const [filterData, setFilterData] = useState<QuoteFilterFormData | null>(
     null
@@ -669,20 +669,28 @@ function OrdersLandingTable({
     setPage(prev => prev - 1);
     // Reset scroll to top and left with smooth behavior
     if (scrollContainerRef.current) {
-      scrollContainerRef.current.scrollTo({ top: 0, left: 0, behavior: 'smooth' });
+      scrollContainerRef.current.scrollTo({
+        top: 0,
+        left: 0,
+        behavior: "smooth",
+      });
     }
     // Also reset window scroll
-    window.scrollTo({ top: 0, left: 0, behavior: 'smooth' });
+    window.scrollTo({ top: 0, left: 0, behavior: "smooth" });
   };
 
   const handleNext = () => {
     setPage(prev => prev + 1);
     // Reset scroll to top and left with smooth behavior
     if (scrollContainerRef.current) {
-      scrollContainerRef.current.scrollTo({ top: 0, left: 0, behavior: 'smooth' });
+      scrollContainerRef.current.scrollTo({
+        top: 0,
+        left: 0,
+        behavior: "smooth",
+      });
     }
     // Also reset window scroll
-    window.scrollTo({ top: 0, left: 0, behavior: 'smooth' });
+    window.scrollTo({ top: 0, left: 0, behavior: "smooth" });
   };
 
   return (
@@ -723,7 +731,7 @@ function OrdersLandingTable({
 
       <div className="flex flex-col">
         <div className="w-full overflow-x-hidden">
-          <div 
+          <div
             ref={scrollContainerRef}
             className="w-full overflow-x-auto scrollbar-thin-horizontal"
           >
@@ -759,7 +767,6 @@ function OrdersLandingTable({
                     router.push(`/details/orderDetails/${orderId}`);
                   }
                 }}
-                tableHeight=""
               />
             )}
           </div>
