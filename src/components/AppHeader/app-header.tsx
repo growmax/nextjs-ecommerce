@@ -8,12 +8,13 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Separator } from "@/components/ui/separator";
 import { SidebarTrigger, useSidebar } from "@/components/ui/sidebar";
+import { Skeleton } from "@/components/ui/skeleton";
 import { useCart } from "@/contexts/CartContext";
 import { useUserDetails } from "@/contexts/UserDetailsContext";
 import useLogout from "@/hooks/Auth/useLogout";
 import useUserProfile from "@/hooks/Profile/useUserProfile";
-import { Skeleton } from "@/components/ui/skeleton";
 import { useTenantData } from "@/hooks/useTenantData";
+
 
 import { useNavigationWithLoader } from "@/hooks/useNavigationWithLoader";
 import { Link } from "@/i18n/navigation";
@@ -25,7 +26,7 @@ import {
   Search,
   ShoppingCart,
 } from "lucide-react";
-import { useTranslations } from "next-intl";
+import { useLocale, useTranslations } from "next-intl";
 import { useCallback, useEffect, useMemo, useState } from "react";
 
 export function AppHeader({
@@ -48,6 +49,7 @@ export function AppHeader({
   useTenantData();
 
   const { cartCount } = useCart();
+  const locale = useLocale();
   const notificationsCount = 5;
   const tNav = useTranslations("navigation");
   const tAuth = useTranslations("auth");
@@ -331,6 +333,7 @@ export function AppHeader({
         suggestionItems={suggestionItems}
         handleSelect={handleSelect}
         setSearchValue={setSearchValue}
+        locale={locale}
       />
     </>
   );

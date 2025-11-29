@@ -1,8 +1,8 @@
 "use client";
 
+import { usePostNavigationFetch } from "@/hooks/usePostNavigationFetch";
 import { useState } from "react";
 import { toast } from "sonner";
-import { usePostNavigationFetch } from "@/hooks/usePostNavigationFetch";
 
 interface Profile {
   name: string;

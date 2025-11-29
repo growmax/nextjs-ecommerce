@@ -283,6 +283,7 @@ export default async function ProductPage({ params }: ProductPageProps) {
     tenantCode,
     origin
   );
+  
   if (!productData) {
     const { notFound } = await import("next/navigation");
     return notFound();

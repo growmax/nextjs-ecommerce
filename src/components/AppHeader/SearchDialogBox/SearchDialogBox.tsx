@@ -11,6 +11,7 @@ import {
 } from "@/components/ui/command";
 import OpenElasticSearchService from "@/lib/api/services/ElacticQueryService/openElasticSearch/openElasticSearch";
 import { SimpleProductSearchResult } from "@/types/OpenElasticSearch/types";
+import { generateProductUrl } from "@/utils/product/slug-generator";
 import React, { useEffect, useRef, useState } from "react";
 
 type SuggestionItem = {
@@ -27,6 +28,7 @@ type Props = {
   suggestionItems: SuggestionItem[];
   handleSelect: (href: string) => void;
   setSearchValue: (v: string) => void;
+  locale?: string;
 };
 
 export function SearchDialogBox({
@@ -36,6 +38,7 @@ export function SearchDialogBox({
   suggestionItems,
   handleSelect,
   setSearchValue,
+  locale = "en",
 }: Props) {
   const debounceRef = useRef<number | null>(null);
   const abortRef = useRef<AbortController | null>(null);
@@ -164,8 +167,18 @@ export function SearchDialogBox({
                   <CommandItem
                     key={product.productIndexName}
                     onSelect={() => {
-                      // Navigate to product page or handle product selection
-                      handleSelect(`/product/${product.productIndexName}`);
+                      // Generate proper product URL with locale and slug
+                      const productUrl = generateProductUrl(
+                        {
+                          brand_name: product.brandsName,
+                          brands_name: product.brandsName,
+                          title: product.productShortDescription,
+                          product_index_name: product.productIndexName,
+                          product_id: product.productId,
+                        },
+                        locale
+                      );
+                      handleSelect(productUrl);
                       setSearchValue("");
                       setOpen(false);
                     }}

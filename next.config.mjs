@@ -34,6 +34,8 @@ const nextConfig = {
     // Allow production builds to succeed even when there are TypeScript errors
     ignoreBuildErrors: false,
   },
+  // Moved from experimental in Next.js 15
+  serverExternalPackages: ["ioredis"],
   experimental: {
     optimizePackageImports: [
       "lucide-react",
@@ -49,12 +51,6 @@ const nextConfig = {
       "react-hook-form",
       "@hookform/resolvers",
     ],
-    // Optimize server components compilation
-    serverComponentsExternalPackages: ["ioredis"],
-    // Enable faster refresh in development
-    // optimizeCss: true, // Disabled - requires 'critters' package
-    // Enable output file tracing for faster builds
-    outputFileTracingRoot: undefined,
     // Optimize CSS loading
     optimisticClientCache: true,
     // Enable parallel route compilation
@@ -175,8 +171,7 @@ const nextConfig = {
 
     return config;
   },
-  // Enable SWC minification even in dev for faster compilation
-  swcMinify: true,
+  // SWC minification is now enabled by default in Next.js 15
   images: {
     formats: ["image/avif", "image/webp"],
     deviceSizes: [640, 750, 828, 1080, 1200, 1920, 2048, 3840],
