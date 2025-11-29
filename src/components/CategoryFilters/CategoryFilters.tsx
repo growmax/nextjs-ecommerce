@@ -17,7 +17,6 @@ import { CategoryFilter } from "./filters/CategoryFilter";
 import { ProductSpecificationFilter } from "./filters/ProductSpecificationFilter";
 import { StockFilter } from "./filters/StockFilter";
 import { VariantAttributeFilter } from "./filters/VariantAttributeFilter";
-import { PriceFilter } from "./filters/PriceFilter";
 import { CatalogCodeFilter } from "./filters/CatalogCodeFilter";
 import { EquipmentCodeFilter } from "./filters/EquipmentCodeFilter";
 import type { FilterOption } from "@/types/category-filters";
@@ -31,7 +30,6 @@ interface CategoryFiltersProps {
   productSpecificationGroups: ProductSpecificationGroup[];
   catalogCodes?: FilterOption[];
   equipmentCodes?: FilterOption[];
-  priceStats?: { min?: number; max?: number };
   isLoading?: boolean;
   hideBrandFilter?: boolean;
 }
@@ -49,7 +47,6 @@ export function CategoryFilters({
   productSpecificationGroups,
   catalogCodes = [],
   equipmentCodes = [],
-  priceStats,
   isLoading = false,
   hideBrandFilter = false,
 }: CategoryFiltersProps) {
@@ -58,7 +55,6 @@ export function CategoryFilters({
     toggleVariantAttribute,
     toggleProductSpecification,
     setStockFilter,
-    setPriceRange,
     toggleCatalogCode,
     toggleEquipmentCode,
     removeVariantAttribute,
@@ -154,19 +150,6 @@ export function CategoryFilters({
                 specificationGroups={productSpecificationGroups}
                 selectedSpecifications={filters.productSpecifications}
                 onToggle={toggleProductSpecification}
-                isLoading={isLoading}
-              />
-            </CollapsibleSection>
-          )}
-
-          {/* Price Range */}
-          {priceStats && (
-            <CollapsibleSection title="Price Range" defaultOpen={false}>
-              <PriceFilter
-                minPrice={filters.priceRange?.min}
-                maxPrice={filters.priceRange?.max}
-                priceStats={priceStats}
-                onChange={setPriceRange}
                 isLoading={isLoading}
               />
             </CollapsibleSection>

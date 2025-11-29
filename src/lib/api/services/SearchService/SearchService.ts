@@ -1,3 +1,4 @@
+import type { CategoryFilterState } from "@/types/category-filters";
 import { RequestContext, openSearchClient } from "../../client";
 import { BaseService } from "../BaseService";
 
@@ -240,68 +241,7 @@ export class SearchService extends BaseService<SearchService> {
     return `search:${elasticIndex}:${Math.abs(hash).toString(36)}`;
   }
 
-  /**
-   * Server-safe version of searchProducts
-   * Returns empty results on error instead of throwing
-   * This is the actual implementation that does the search
-   */
-  async searchProductsServerSide(
-    options: ElasticSearchOptions
-  ): Promise<SearchProductsResponse> {
-    try {
-      const { elasticIndex, query, catalogCodes, equipmentCodes, context } =
-        options;
 
-      // Build the Elasticsearch request
-      const elasticRequest: ElasticSearchRequest = {
-        Elasticindex: elasticIndex,
-        queryType: "search",
-        ElasticType: "pgproduct",
-        ElasticBody: query,
-      };
-
-      // Add catalog/equipment code filters if provided
-      if (catalogCodes?.length || equipmentCodes?.length) {
-        const codes = [...(catalogCodes || []), ...(equipmentCodes || [])];
-
-        if (!elasticRequest.ElasticBody.query.bool.must) {
-          elasticRequest.ElasticBody.query.bool.must = [];
-        }
-
-        console.log(codes, "codes");
-
-        elasticRequest.ElasticBody.query.bool.must.push({
-          terms: {
-            "catalogCode.keyword": codes,
-          },
-        });
-      }
-
-      // Use BaseService callWith method for automatic context handling
-      const response = (await this.callWith("", elasticRequest, {
-        method: "POST",
-        ...(context && { context }),
-      })) as ElasticSearchResponse;
-
-      // Format and return results
-      const formattedData = this.formatElasticResults(response);
-      const total = response.body?.hits?.total?.value || formattedData.length;
-
-      return {
-        success: true,
-        data: formattedData,
-        total,
-      };
-    } catch (error: any) {
-      // Return empty results on error rather than throwing
-      console.log(error, "error");
-      return {
-        success: false,
-        data: [],
-        total: 0,
-      };
-    }
-  }
 
   /**
    * Server-safe version of searchProducts
@@ -515,10 +455,16 @@ export class SearchService extends BaseService<SearchService> {
   }
 
   /**
-   * Generate cache key for aggregation queries
-   * Creates a deterministic key from query parameters
+   * Get filter aggregations from OpenSearch
+   * Fetches aggregations with proper filtering and nested queries for variant attributes and product specifications
+   * 
+   * @param elasticIndex - Elasticsearch index name
+   * @param baseQuery - Base query with must and must_not arrays
+   * @param currentFilters - Current filter state for proper aggregation filtering
+   * @param context - Request context
+   * @returns Aggregation results with proper structure for filters
    */
-  private async generateAggregationCacheKey(
+  async getFilterAggregations(
     elasticIndex: string,
     baseQuery: {
       must: Array<Record<string, unknown>>;
@@ -807,6 +753,32 @@ export class SearchService extends BaseService<SearchService> {
     }
 
     return result;
+  }
+
+  /**
+   * Generate cache key for aggregation queries
+   * Creates a deterministic key from query parameters
+   */
+  private generateAggregationCacheKey(
+    elasticIndex: string,
+    query: ElasticSearchQuery
+  ): string {
+    // Create a stable hash of the query
+    const queryStr = JSON.stringify({
+      index: elasticIndex,
+      query: query.query,
+      aggs: query.aggs,
+    });
+
+    // Simple hash function for cache key
+    let hash = 0;
+    for (let i = 0; i < queryStr.length; i++) {
+      const char = queryStr.charCodeAt(i);
+      hash = (hash << 5) - hash + char;
+      hash = hash & hash; // Convert to 32-bit integer
+    }
+
+    return `aggs:${elasticIndex}:${Math.abs(hash).toString(36)}`;
   }
 
   /**

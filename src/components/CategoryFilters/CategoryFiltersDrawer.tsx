@@ -22,7 +22,6 @@ interface CategoryFiltersDrawerProps {
   productSpecificationGroups: ProductSpecificationGroup[];
   catalogCodes?: FilterOption[];
   equipmentCodes?: FilterOption[];
-  priceStats?: { min?: number; max?: number };
   isLoading?: boolean;
   hideBrandFilter?: boolean;
   trigger?: React.ReactNode;
@@ -41,7 +40,6 @@ export function CategoryFiltersDrawer({
   productSpecificationGroups,
   catalogCodes = [],
   equipmentCodes = [],
-  priceStats,
   isLoading = false,
   hideBrandFilter = false,
   trigger,
@@ -71,7 +69,6 @@ export function CategoryFiltersDrawer({
             productSpecificationGroups={productSpecificationGroups}
             catalogCodes={catalogCodes}
             equipmentCodes={equipmentCodes}
-            priceStats={priceStats}
             isLoading={isLoading}
             hideBrandFilter={hideBrandFilter}
           />

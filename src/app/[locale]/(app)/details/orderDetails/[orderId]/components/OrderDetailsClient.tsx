@@ -9,15 +9,15 @@ import { toast } from "sonner";
 import { EditOrderNameDialog } from "@/components/dialogs/EditOrderNameDialog";
 import { RequestEditDialog } from "@/components/dialogs/RequestEditDialog";
 import {
-    VersionsDialog,
-    type Version,
+  VersionsDialog,
+  type Version,
 } from "@/components/dialogs/VersionsDialog";
 import { ApplicationLayout, PageLayout } from "@/components/layout";
 import {
-    DetailsSkeleton,
-    OrderContactDetails,
-    OrderTermsCard,
-    SalesHeader,
+  DetailsSkeleton,
+  OrderContactDetails,
+  OrderTermsCard,
+  SalesHeader,
 } from "@/components/sales";
 import { useOrderDetails } from "@/hooks/details/orderdetails/useOrderDetails";
 import { useCurrentUser } from "@/hooks/useCurrentUser";
@@ -29,31 +29,29 @@ import { usePageLoader } from "@/hooks/usePageLoader";
 import { useTenantData } from "@/hooks/useTenantData";
 import type { PaymentDueDataItem } from "@/lib/api";
 import {
-    OrderDetailsService,
-    OrderNameService,
-    PaymentService,
-    RequestEditService,
+  OrderDetailsService,
+  OrderNameService,
+  PaymentService,
+  RequestEditService,
 } from "@/lib/api";
 import type { ProductCsvRow } from "@/lib/export-csv";
 import { exportProductsToCsv } from "@/lib/export-csv";
 import type {
-    AddressDetails,
-    OrderDetailsPageProps,
-    OrderTerms,
-    SelectedVersion,
+  AddressDetails,
+  OrderDetailsPageProps,
+  OrderTerms,
+  SelectedVersion,
 } from "@/types/details/orderdetails/index.types";
 import { zoneDateTimeCalculator } from "@/utils/date-format/date-format";
 import {
-    getLastDateToPay,
-    getStatusStyle,
-    getUserPreferences,
-    isEditInProgress,
-    isOrderCancelled,
+  getLastDateToPay,
+  getStatusStyle,
+  getUserPreferences,
+  isEditInProgress,
+  isOrderCancelled,
 } from "@/utils/details/orderdetails";
 import { decodeUnicode } from "@/utils/General/general";
 import { useQuery } from "@tanstack/react-query";
-// Import from index.ts which re-exports as named exports
-// No loading prop to avoid double loaders - main DetailsSkeleton handles all loading states
 const OrderProductsTable = dynamic(
   () => import("@/components/sales").then(mod => mod.OrderProductsTable),
   {
@@ -323,10 +321,6 @@ export default function OrderDetailsClient({ params }: OrderDetailsPageProps) {
     }
   };
 
-  const _handleEditOrderName = () => {
-    // Open dialog to edit order name
-    setEditDialogOpen(true);
-  };
 
   const handleSaveOrderName = async (newOrderName: string) => {
     if (!user || !orderDetails?.data?.orderDetails?.[0]?.orderIdentifier) {

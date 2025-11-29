@@ -25,8 +25,6 @@ function parseVariantAttributesFromURL(
     "page",
     "sort",
     "in_stock",
-    "min_price",
-    "max_price",
     "catalog_code",
     "equipment_code",
     // Add other known filter keys here
@@ -85,8 +83,6 @@ function buildURLParams(
       key !== "sort" &&
       !key.startsWith("spec_") &&
       key !== "in_stock" &&
-      key !== "min_price" &&
-      key !== "max_price" &&
       key !== "catalog_code" &&
       key !== "equipment_code"
     ) {
@@ -114,18 +110,6 @@ function buildURLParams(
     params.set("in_stock", String(filters.inStock));
   } else {
     params.delete("in_stock");
-  }
-
-  // Add price range filter
-  if (filters.priceRange?.min !== undefined) {
-    params.set("min_price", String(filters.priceRange.min));
-  } else {
-    params.delete("min_price");
-  }
-  if (filters.priceRange?.max !== undefined) {
-    params.set("max_price", String(filters.priceRange.max));
-  } else {
-    params.delete("max_price");
   }
 
   // Add catalog codes
@@ -174,17 +158,6 @@ export function useCategoryFilters() {
         ? false
         : undefined;
 
-    // Parse price range
-    const minPriceParam = searchParams.get("min_price");
-    const maxPriceParam = searchParams.get("max_price");
-    const priceRange =
-      minPriceParam || maxPriceParam
-        ? {
-            min: minPriceParam ? parseFloat(minPriceParam) : undefined,
-            max: maxPriceParam ? parseFloat(maxPriceParam) : undefined,
-          }
-        : undefined;
-
     // Parse catalog codes
     const catalogCodes = searchParams.getAll("catalog_code").filter(Boolean);
 
@@ -195,7 +168,6 @@ export function useCategoryFilters() {
       variantAttributes,
       productSpecifications,
       inStock: inStock as boolean | undefined,
-      priceRange,
       catalogCodes: catalogCodes.length > 0 ? catalogCodes : undefined,
       equipmentCodes: equipmentCodes.length > 0 ? equipmentCodes : undefined,
     };
@@ -288,15 +260,6 @@ export function useCategoryFilters() {
     [updateFilters]
   );
 
-  /**
-   * Set price range filter
-   */
-  const setPriceRange = useCallback(
-    (priceRange: { min?: number; max?: number } | undefined) => {
-      updateFilters({ priceRange });
-    },
-    [updateFilters]
-  );
 
   /**
    * Toggle catalog code
@@ -422,11 +385,6 @@ export function useCategoryFilters() {
       count += 1;
     }
 
-    // Count price range filter
-    if (currentFilters.priceRange?.min !== undefined || currentFilters.priceRange?.max !== undefined) {
-      count += 1;
-    }
-
     // Count catalog codes
     if (currentFilters.catalogCodes && currentFilters.catalogCodes.length > 0) {
       count += currentFilters.catalogCodes.length;
@@ -446,7 +404,6 @@ export function useCategoryFilters() {
     toggleVariantAttribute,
     toggleProductSpecification,
     setStockFilter,
-    setPriceRange,
     toggleCatalogCode,
     toggleEquipmentCode,
     clearAllFilters,

@@ -31,7 +31,7 @@ interface BrandCategoryPageInteractivityProps {
  * Client component that handles interactivity:
  * - Pagination controls
  * - Sort dropdown
- * - Filters (excluding brand filter)
+ * - Filters (including brand filter for uniformity)
  * - URL updates
  * 
  * Does NOT render products (products are server-rendered for SEO)
@@ -150,9 +150,7 @@ export function BrandCategoryPageInteractivity({
           productSpecificationGroups={formattedFilters.productSpecificationGroups}
           catalogCodes={formattedFilters.catalogCodes}
           equipmentCodes={formattedFilters.equipmentCodes}
-          priceStats={formattedFilters.priceStats}
           isLoading={!aggregations}
-          hideBrandFilter={true}
         />
       </aside>
 
@@ -169,9 +167,7 @@ export function BrandCategoryPageInteractivity({
             productSpecificationGroups={formattedFilters.productSpecificationGroups}
             catalogCodes={formattedFilters.catalogCodes}
             equipmentCodes={formattedFilters.equipmentCodes}
-            priceStats={formattedFilters.priceStats}
             isLoading={!aggregations}
-            hideBrandFilter={true}
           />
         </div>
 

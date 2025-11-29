@@ -94,6 +94,8 @@ export default async function AllBrandsPage({ params }: PageProps) {
     }
   }
 
+  console.log("brands", brands);
+
   // Generate breadcrumbs for All Brands page
   // Note: hrefs don't include locale prefix because Link from @/i18n/navigation auto-adds it
   const breadcrumbs: BreadcrumbItem[] = [

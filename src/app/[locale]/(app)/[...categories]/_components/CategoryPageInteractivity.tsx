@@ -65,7 +65,6 @@ export function CategoryPageInteractivity({
       productSpecificationGroupsCount: formattedFilters.productSpecificationGroups.length,
       catalogCodesCount: formattedFilters.catalogCodes.length,
       equipmentCodesCount: formattedFilters.equipmentCodes.length,
-      hasPriceStats: !!formattedFilters.priceStats,
     });
   }
 
@@ -148,7 +147,6 @@ export function CategoryPageInteractivity({
           productSpecificationGroups={formattedFilters.productSpecificationGroups}
           catalogCodes={formattedFilters.catalogCodes}
           equipmentCodes={formattedFilters.equipmentCodes}
-          priceStats={formattedFilters.priceStats}
           isLoading={!aggregations}
         />
       </aside>
@@ -166,7 +164,6 @@ export function CategoryPageInteractivity({
             productSpecificationGroups={formattedFilters.productSpecificationGroups}
             catalogCodes={formattedFilters.catalogCodes}
             equipmentCodes={formattedFilters.equipmentCodes}
-            priceStats={formattedFilters.priceStats}
             isLoading={!aggregations}
           />
         </div>

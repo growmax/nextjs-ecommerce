@@ -25,8 +25,6 @@ interface PageProps {
     page?: string;
     sort?: string;
     in_stock?: string;
-    min_price?: string;
-    max_price?: string;
     catalog_code?: string | string[];
     equipment_code?: string | string[];
     [key: string]: string | string[] | undefined; // For variant attributes and specs
@@ -264,7 +262,7 @@ export default async function CategoryPage({
   // Parse variant attributes from URL (any key that's not a known filter key)
   const variantAttributes: Record<string, string[]> = {};
   const productSpecifications: Record<string, string[]> = {};
-  const knownKeys = new Set(["page", "sort", "in_stock", "min_price", "max_price", "catalog_code", "equipment_code"]);
+  const knownKeys = new Set(["page", "sort", "in_stock", "catalog_code", "equipment_code"]);
 
   Object.entries(filters).forEach(([key, value]) => {
     if (!knownKeys.has(key) && value) {
@@ -299,17 +297,6 @@ export default async function CategoryPage({
         ? false
         : undefined;
 
-  // Parse price range filter
-  const minPrice = filters.min_price ? parseFloat(filters.min_price as string) : undefined;
-  const maxPrice = filters.max_price ? parseFloat(filters.max_price as string) : undefined;
-  const priceRange: { min?: number; max?: number } | undefined =
-    (minPrice !== undefined && !isNaN(minPrice)) || (maxPrice !== undefined && !isNaN(maxPrice))
-      ? {
-          ...(minPrice !== undefined && !isNaN(minPrice) ? { min: minPrice } : {}),
-          ...(maxPrice !== undefined && !isNaN(maxPrice) ? { max: maxPrice } : {}),
-        }
-      : undefined;
-
   // Parse catalog codes
   const catalogCodes = filters.catalog_code
     ? (Array.isArray(filters.catalog_code)
@@ -339,6 +326,23 @@ export default async function CategoryPage({
   // Get elastic index from elasticCode
   const elasticIndex = elasticCode ? `${elasticCode}pgandproducts` : "";
 
+  // Build the base query for aggregations and products
+  const queryResult = buildCategoryQuery(categoryIds, {
+    page,
+    pageSize: 20,
+    sortBy: { sortBy },
+    ...(Object.keys(variantAttributes).length > 0 && { variantAttributes }),
+    ...(Object.keys(productSpecifications).length > 0 && {
+      productSpecifications,
+    }),
+    ...(inStock !== undefined && { inStock }),
+    ...(catalogCodes && catalogCodes.length > 0 && { catalogCodes }),
+    ...(equipmentCodes && equipmentCodes.length > 0 && { equipmentCodes }),
+  });
+
+  // Extract base query for aggregations (need the bool object, not the full query)
+  const baseQueryForAggs = queryResult.query.query.bool;
+
   // Fetch aggregations server-side
   let aggregations: FilterAggregations | null = null;
   if (elasticIndex) {
@@ -349,7 +353,6 @@ export default async function CategoryPage({
           productSpecifications,
         }),
         ...(inStock !== undefined && { inStock }),
-        ...(priceRange && { priceRange }),
         ...(catalogCodes && catalogCodes.length > 0 && { catalogCodes }),
         ...(equipmentCodes && equipmentCodes.length > 0 && { equipmentCodes }),
       };
@@ -373,7 +376,6 @@ export default async function CategoryPage({
             variantAttributesKeys: aggregations.variantAttributes ? Object.keys(aggregations.variantAttributes) : [],
             hasProductSpecifications: !!aggregations.productSpecifications,
             productSpecificationsKeys: aggregations.productSpecifications ? Object.keys(aggregations.productSpecifications) : [],
-            hasPriceStats: !!aggregations.priceStats,
             rawAggregations: aggregations,
           });
         }
@@ -388,34 +390,11 @@ export default async function CategoryPage({
     }
   }
 
-  const queryResult = buildCategoryQuery(categoryIds, {
-    page,
-    pageSize: 20,
-    sortBy: { sortBy },
-    ...(Object.keys(variantAttributes).length > 0 && { variantAttributes }),
-    ...(Object.keys(productSpecifications).length > 0 && {
-      productSpecifications,
-    }),
-    ...(inStock !== undefined && { inStock }),
-    ...(priceRange && { priceRange }),
-    ...(catalogCodes && catalogCodes.length > 0 && { catalogCodes }),
-    ...(equipmentCodes && equipmentCodes.length > 0 && { equipmentCodes }),
-  });
 
   // Create products promise for streaming
   const productsPromise = elasticIndex
     ? (async () => {
         try {
-          // Build query using buildCategoryQuery
-          const queryResult = buildCategoryQuery(categoryIds, {
-            page,
-            pageSize: 20,
-            sortBy,
-            inStock,
-            variantAttributes,
-            productSpecifications,
-          });
-
           // Build query object ensuring sort is properly typed
           const searchQuery: ElasticSearchQuery = {
             query: queryResult.query.query,

@@ -33,6 +33,10 @@ interface PageProps {
   searchParams: Promise<{
     page?: string;
     sort?: string;
+    in_stock?: string;
+    catalog_code?: string | string[];
+    equipment_code?: string | string[];
+    [key: string]: string | string[] | undefined;
   }>;
 }
 
@@ -218,7 +222,7 @@ export default async function BrandCategoryPage({
   // Parse filters from URL (same as categories page)
   const variantAttributes: Record<string, string[]> = {};
   const productSpecifications: Record<string, string[]> = {};
-  const knownKeys = new Set(["page", "sort", "in_stock", "min_price", "max_price", "catalog_code", "equipment_code"]);
+  const knownKeys = new Set(["page", "sort", "in_stock", "catalog_code", "equipment_code"]);
 
   Object.entries(filters).forEach(([key, value]) => {
     if (!knownKeys.has(key) && value) {
@@ -253,17 +257,6 @@ export default async function BrandCategoryPage({
         ? false
         : undefined;
 
-  // Parse price range filter
-  const minPrice = filters.min_price ? parseFloat(filters.min_price as string) : undefined;
-  const maxPrice = filters.max_price ? parseFloat(filters.max_price as string) : undefined;
-  const priceRange =
-    minPrice !== undefined || maxPrice !== undefined
-      ? {
-          min: minPrice !== undefined && !isNaN(minPrice) ? minPrice : undefined,
-          max: maxPrice !== undefined && !isNaN(maxPrice) ? maxPrice : undefined,
-        }
-      : undefined;
-
   // Parse catalog codes
   const catalogCodes = filters.catalog_code
     ? (Array.isArray(filters.catalog_code)
@@ -294,7 +287,6 @@ export default async function BrandCategoryPage({
           productSpecifications,
         }),
         ...(inStock !== undefined && { inStock }),
-        ...(priceRange && { priceRange }),
         ...(catalogCodes && catalogCodes.length > 0 && { catalogCodes }),
         ...(equipmentCodes && equipmentCodes.length > 0 && { equipmentCodes }),
       }
@@ -375,7 +367,6 @@ export default async function BrandCategoryPage({
           productSpecifications,
         }),
         ...(inStock !== undefined && { inStock }),
-        ...(priceRange && { priceRange }),
         ...(catalogCodes && catalogCodes.length > 0 && { catalogCodes }),
         ...(equipmentCodes && equipmentCodes.length > 0 && { equipmentCodes }),
       };

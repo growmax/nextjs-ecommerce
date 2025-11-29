@@ -355,51 +355,6 @@ export function formatEquipmentCodesAggregation(
 }
 
 /**
- * Format price stats aggregation
- * Structure: filter.price_stats.{ min, max, ... }
- */
-export function formatPriceStatsAggregation(
-  aggregation: AggregationResult | undefined
-): { min?: number; max?: number } | undefined {
-  if (!aggregation) {
-    return undefined;
-  }
-
-  // Price stats aggregation returns nested structure:
-  // filter.price_stats.{ min, max, avg, sum, count }
-  const stats = aggregation as {
-    filter?: {
-      price_stats?: {
-        min?: number;
-        max?: number;
-        avg?: number;
-        sum?: number;
-        count?: number;
-      };
-    };
-    // Also check direct price_stats (for backwards compatibility)
-    price_stats?: {
-      min?: number;
-      max?: number;
-      avg?: number;
-      sum?: number;
-      count?: number;
-    };
-  };
-
-  const priceStats = stats.filter?.price_stats || stats.price_stats;
-
-  if (priceStats) {
-    return {
-      min: priceStats.min,
-      max: priceStats.max,
-    };
-  }
-
-  return undefined;
-}
-
-/**
  * Format all aggregations for filter components
  */
 export function formatAllAggregations(
@@ -415,7 +370,6 @@ export function formatAllAggregations(
   productSpecificationGroups: ProductSpecificationGroup[];
   catalogCodes: FilterOption[];
   equipmentCodes: FilterOption[];
-  priceStats: { min?: number; max?: number } | undefined;
 } {
   if (!aggregations) {
     if (process.env.NODE_ENV === 'development') {
@@ -429,7 +383,6 @@ export function formatAllAggregations(
       productSpecificationGroups: [],
       catalogCodes: [],
       equipmentCodes: [],
-      priceStats: undefined,
     };
   }
 
@@ -456,7 +409,6 @@ export function formatAllAggregations(
 
     const catalogCodes = formatCatalogCodesAggregation(aggregations.catalogCodes);
     const equipmentCodes = formatEquipmentCodesAggregation(aggregations.equipmentCodes);
-    const priceStats = formatPriceStatsAggregation(aggregations.priceStats as AggregationResult | undefined);
 
     if (process.env.NODE_ENV === 'development') {
       console.log('[formatAllAggregations] Formatted filters:', {
@@ -467,7 +419,6 @@ export function formatAllAggregations(
         productSpecificationGroupsCount: productSpecificationGroups.length,
         catalogCodesCount: catalogCodes.length,
         equipmentCodesCount: equipmentCodes.length,
-        hasPriceStats: !!priceStats,
         hasCategoriesAggregation: !!aggregations.categories,
       });
     }
@@ -480,7 +431,6 @@ export function formatAllAggregations(
       productSpecificationGroups,
       catalogCodes,
       equipmentCodes,
-      priceStats,
     };
   } catch (error) {
     console.error('[formatAllAggregations] Error formatting aggregations:', error);
@@ -493,7 +443,6 @@ export function formatAllAggregations(
       productSpecificationGroups: [],
       catalogCodes: [],
       equipmentCodes: [],
-      priceStats: undefined,
     };
   }
 }

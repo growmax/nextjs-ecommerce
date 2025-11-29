@@ -90,14 +90,14 @@ class BrandResolutionService {
    * Fetch all brands from OpenSearch using aggregation query with Redis caching
    */
   async getAllBrands(context?: RequestContext): Promise<Brand[]> {
-    // Get tenant code from context to build elastic index
-    const tenantCode = context?.tenantCode || "";
-    if (!tenantCode) {
-      console.warn("No tenant code provided for brand aggregation query");
+    // Get elasticCode from context (primary identifier for OpenSearch index)
+    // Fall back to tenantCode if elasticCode is not available
+    const elasticCode = context?.elasticCode || context?.tenantCode || "";
+    if (!elasticCode) {
+      console.warn("No elasticCode or tenantCode provided for brand aggregation query");
       return [];
     }
 
-    const elasticCode = context?.elasticCode || tenantCode;
     const cacheKey = `brands:all:${elasticCode}`;
 
     // Use cached version if available (server-side only)
@@ -119,38 +119,6 @@ class BrandResolutionService {
     return this.getAllBrandsUncached(context);
   }
 
-  /**
-   * Fetch all brands from OpenSearch using aggregation query with Redis caching
-   */
-  async getAllBrands(context?: RequestContext): Promise<Brand[]> {
-    // Get tenant code from context to build elastic index
-    const tenantCode = context?.tenantCode || "";
-    if (!tenantCode) {
-      console.warn("No tenant code provided for brand aggregation query");
-      return [];
-    }
-
-    const elasticCode = context?.elasticCode || tenantCode;
-    const cacheKey = `brands:all:${elasticCode}`;
-
-    // Use cached version if available (server-side only)
-    if (typeof window === "undefined") {
-      try {
-        const { withRedisCache } = await import("@/lib/cache");
-        // Cache all brands for 1 hour (3600 seconds)
-        // Brand list changes very rarely
-        return withRedisCache(
-          cacheKey,
-          () => this.getAllBrandsUncached(context),
-          3600 // 1 hour TTL
-        );
-      } catch {
-        // Fall through to non-cached version if cache import fails
-      }
-    }
-
-    return this.getAllBrandsUncached(context);
-  }
 
   /**
    * Internal method - fetch all brands without caching
@@ -159,10 +127,11 @@ class BrandResolutionService {
     context?: RequestContext
   ): Promise<Brand[]> {
     try {
-      // Get elasticCode from context to build elastic index
-      const elasticCode = context?.elasticCode || "";
+      // Get elasticCode from context (primary identifier for OpenSearch index)
+      // Fall back to tenantCode if elasticCode is not available
+      const elasticCode = context?.elasticCode || context?.tenantCode || "";
       if (!elasticCode) {
-        console.warn("No elasticCode provided for brand aggregation query");
+        console.warn("No elasticCode or tenantCode provided for brand aggregation query");
         return [];
       }
 
@@ -255,14 +224,14 @@ class BrandResolutionService {
     slug: string,
     context?: RequestContext
   ): Promise<Brand | null> {
-    // Get tenant code from context to build elastic index
-    const tenantCode = context?.tenantCode || "";
-    if (!tenantCode) {
-      console.warn("No tenant code provided for brand resolution query");
+    // Get elasticCode from context (primary identifier for OpenSearch index)
+    // Fall back to tenantCode if elasticCode is not available
+    const elasticCode = context?.elasticCode || context?.tenantCode || "";
+    if (!elasticCode) {
+      console.warn("No elasticCode or tenantCode provided for brand resolution query");
       return null;
     }
 
-    const elasticCode = context?.elasticCode || tenantCode;
     const cacheKey = `brand:slug:${elasticCode}:${slug}`;
 
     // Use cached version if available (server-side only)
@@ -296,10 +265,11 @@ class BrandResolutionService {
       // Since generateSlug() always produces lowercase slugs, we need to normalize the input
       const normalizedSlug = slug.toLowerCase();
 
-      // Get elasticCode from context to build elastic index
-      const elasticCode = context?.elasticCode || "";
+      // Get elasticCode from context (primary identifier for OpenSearch index)
+      // Fall back to tenantCode if elasticCode is not available
+      const elasticCode = context?.elasticCode || context?.tenantCode || "";
       if (!elasticCode) {
-        console.warn("No elasticCode provided for brand resolution query");
+        console.warn("No elasticCode or tenantCode provided for brand resolution query");
         return null;
       }
 

@@ -9,7 +9,7 @@ import SearchService, {
 import TenantService from "@/lib/api/services/TenantService";
 import BrandResolutionService from "@/lib/services/BrandResolutionService";
 import type { FilterAggregations } from "@/types/category-filters";
-import { buildBrandQuery, buildBrandFilter, getBaseQuery } from "@/utils/opensearch/browse-queries";
+import { buildBrandFilter, buildBrandQuery, getBaseQuery } from "@/utils/opensearch/browse-queries";
 import { Metadata } from "next";
 import { headers } from "next/headers";
 import { notFound } from "next/navigation";
@@ -24,6 +24,7 @@ interface PageProps {
   searchParams: Promise<{
     page?: string;
     sort?: string;
+    in_stock?: string;
   }>;
 }
 
@@ -96,14 +97,8 @@ export async function generateMetadata({
   return metadata;
 }
 
-/**
- * Pre-generate static params for popular brands
- */
 export async function generateStaticParams() {
   try {
-    // Note: generateStaticParams runs at build time, so we may not have tenant context
-    // This will return empty array if no tenant code is available
-    // In production, you may want to pre-generate for specific tenants
     const brands = await BrandResolutionService.getAllBrands();
 
     return brands.slice(0, 100).map(brand => ({
@@ -115,16 +110,10 @@ export async function generateStaticParams() {
   }
 }
 
-// Enable ISR - revalidate every 30 minutes
 export const revalidate = 1800;
 
-// Allow dynamic params for brands not pre-generated
 export const dynamicParams = true;
 
-/**
- * Brand Landing Page - Server Component
- * Shows brand homepage when no category is specified
- */
 export default async function BrandPage({ params, searchParams }: PageProps) {
   const { locale, "brand-slug": brandSlug } = await params;
   const filters = await searchParams;
@@ -182,10 +171,19 @@ export default async function BrandPage({ params, searchParams }: PageProps) {
   const page = parseInt(filters.page || "1", 10);
   const sortBy = parseInt(filters.sort || "1", 10);
 
+  // Parse stock filter
+  const inStock =
+    filters.in_stock === "true"
+      ? true
+      : filters.in_stock === "false"
+        ? false
+        : undefined;
+
   const queryResult = buildBrandQuery(brand.name, {
     page,
     pageSize: 20,
     sortBy: { sortBy },
+    ...(inStock !== undefined && { inStock }),
   });
 
   // Get elastic index from elasticCode
@@ -279,6 +277,8 @@ export default async function BrandPage({ params, searchParams }: PageProps) {
       })),
     },
   };
+
+  console.log(initialProducts,"initialProducts")
 
   return (
     <>

@@ -18,7 +18,6 @@ export interface BrowseQueryOptions {
   variantAttributes?: Record<string, string[]>; // Variant attribute filters { "Color": ["Red", "Blue"] }
   productSpecifications?: Record<string, string[]>; // Product specification filters { "specKey": ["value1", "value2"] }
   inStock?: boolean; // Stock/inventory status filter
-  priceRange?: { min?: number; max?: number }; // Price range filter
 }
 
 export interface BrowseQueryResult {
@@ -56,6 +55,7 @@ const PRODUCT_SOURCE_FIELDS = [
   "b2c_unit_list_price",
   "b2c_discount_price",
   "unit_list_price",
+  "inventory",
 ] as const;
 
 /**
@@ -290,46 +290,56 @@ function buildProductSpecificationFilters(
 
 /**
  * Build stock/inventory status filter
+ * Uses nested query on inventory array to check availableQty
+ * - In Stock: at least one inventory item has availableQty > 0
+ * - Out of Stock: no inventory items have availableQty > 0 OR inventory array is empty
  */
 function buildStockFilter(inStock?: boolean): Array<Record<string, unknown>> {
   if (inStock === undefined) {
     return [];
   }
 
-  // Assuming there's an inventory_status or similar field
-  // Adjust field name based on actual OpenSearch schema
-  return [
-    {
-      term: {
-        inventory_status: inStock ? "in_stock" : "out_of_stock",
+  if (inStock === true) {
+    // In Stock: at least one inventory item has availableQty > 0
+    return [
+      {
+        nested: {
+          path: "inventory",
+          query: {
+            range: {
+              "inventory.availableQty": {
+                gt: 0,
+              },
+            },
+          },
+        },
       },
-    },
-  ];
-}
-
-/**
- * Build price range filter
- */
-function buildPriceRangeFilter(priceRange?: { min?: number; max?: number }): Array<Record<string, unknown>> {
-  if (!priceRange || (priceRange.min === undefined && priceRange.max === undefined)) {
-    return [];
-  }
-
-  const rangeFilter: Record<string, unknown> = {};
-  if (priceRange.min !== undefined) {
-    rangeFilter.gte = priceRange.min;
-  }
-  if (priceRange.max !== undefined) {
-    rangeFilter.lte = priceRange.max;
-  }
-
-  return [
-    {
-      range: {
-        unit_list_price: rangeFilter,
+    ];
+  } else {
+    // Out of Stock: products where no inventory items have availableQty > 0
+    // This single condition matches:
+    // - Products with empty inventory: [] (nested query finds nothing, so must_not matches)
+    // - Products without inventory field (nested query finds nothing, so must_not matches)
+    // - Products where all inventory items have availableQty <= 0 (nested query finds nothing, so must_not matches)
+    return [
+      {
+        bool: {
+          must_not: {
+            nested: {
+              path: "inventory",
+              query: {
+                range: {
+                  "inventory.availableQty": {
+                    gt: 0,
+                  },
+                },
+              },
+            },
+          },
+        },
       },
-    },
-  ];
+    ];
+  }
 }
 
 /**
@@ -386,7 +396,6 @@ export function buildCategoryQuery(
     options.productSpecifications
   );
   const stockFilters = buildStockFilter(options.inStock);
-  const priceRangeFilters = buildPriceRangeFilter(options.priceRange);
 
   return {
     query: {
@@ -403,7 +412,6 @@ export function buildCategoryQuery(
             ...variantAttributeFilters,
             ...productSpecificationFilters,
             ...stockFilters,
-            ...priceRangeFilters,
           ],
           must_not: baseQuery.must_not,
         },
@@ -438,7 +446,6 @@ export function buildBrandQuery(
     options.productSpecifications
   );
   const stockFilters = buildStockFilter(options.inStock);
-  const priceRangeFilters = buildPriceRangeFilter(options.priceRange);
 
   return {
     query: {
@@ -455,7 +462,6 @@ export function buildBrandQuery(
             ...variantAttributeFilters,
             ...productSpecificationFilters,
             ...stockFilters,
-            ...priceRangeFilters,
           ],
           must_not: baseQuery.must_not,
         },
@@ -493,7 +499,6 @@ export function buildCategoryBrandQuery(
     options.productSpecifications
   );
   const stockFilters = buildStockFilter(options.inStock);
-  const priceRangeFilters = buildPriceRangeFilter(options.priceRange);
 
   return {
     query: {
@@ -511,7 +516,6 @@ export function buildCategoryBrandQuery(
             ...variantAttributeFilters,
             ...productSpecificationFilters,
             ...stockFilters,
-            ...priceRangeFilters,
           ],
           must_not: baseQuery.must_not,
         },
