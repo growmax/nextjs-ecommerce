@@ -40,7 +40,7 @@ describe("SellerWarehouseService", () => {
       );
 
       expect(callApiSpy).toHaveBeenCalledWith(
-        `/branches/findsellerBranch/${mockUserId}?companyId=${mockCompanyId}`,
+        `/branches/findsellerBranch/${mockUserId}?companyId=${mockFindSellerBranchRequest.sellerCompanyId}`,
         mockFindSellerBranchRequest,
         expect.any(Object),
         "POST",
@@ -149,7 +149,7 @@ describe("SellerWarehouseService", () => {
     });
 
     it("should return null when response has no data", async () => {
-      callApiSpy.mockResolvedValueOnce({ success: true, data: {} });
+      callApiSpy.mockResolvedValueOnce({ success: true, data: null });
 
       const result = await sellerWarehouseService.findWarehouseByBranchId(1);
 

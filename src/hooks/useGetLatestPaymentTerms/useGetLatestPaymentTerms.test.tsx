@@ -1,6 +1,5 @@
 import { renderHook } from "@testing-library/react";
 import {
-  mockAxios,
   mockAxiosError,
   mockAxiosResponse,
   mockAxiosResponseNoCashDiscount,
@@ -8,10 +7,12 @@ import {
   mockUser,
 } from "./useGetLatestPaymentTerms.mocks";
 
-// Mock axios
-jest.mock("axios", () => ({
+// Mock PaymentService
+jest.mock("@/lib/api/services/PaymentService/PaymentService", () => ({
   __esModule: true,
-  default: jest.fn(),
+  default: {
+    fetchPaymentTerms: jest.fn(),
+  },
 }));
 
 // Mock SWR
@@ -25,16 +26,24 @@ jest.mock("@/hooks/useCurrentUser", () => ({
   useCurrentUser: () => ({ user: mockUser }),
 }));
 
-import useGetLatestPaymentTerms from "./useGetLatestPaymentTerms";
+import PaymentService from "@/lib/api/services/PaymentService/PaymentService";
 import useSWRImmutable from "swr/immutable";
+import useGetLatestPaymentTerms from "./useGetLatestPaymentTerms";
 
 const mockUseSWR = useSWRImmutable as jest.MockedFunction<
   typeof useSWRImmutable
 >;
+const mockPaymentService = PaymentService as jest.Mocked<typeof PaymentService>;
 
 describe("useGetLatestPaymentTerms", () => {
   beforeEach(() => {
     jest.clearAllMocks();
+    // Setup default PaymentService mock
+    (mockPaymentService.fetchPaymentTerms as jest.Mock).mockResolvedValue({
+      data: mockAxiosResponse.data.data,
+      success: "success",
+      message: "Success",
+    });
   });
 
   it("should fetch and return cash discount payment terms successfully", () => {
@@ -188,7 +197,13 @@ describe("useGetLatestPaymentTerms", () => {
   });
 
   it("should call fetcher with correct axios configuration when key is not null", async () => {
-    (mockAxios as any).mockResolvedValue(mockAxiosResponse);
+    // Mock PaymentService.fetchPaymentTerms
+    (mockPaymentService.fetchPaymentTerms as jest.Mock).mockResolvedValue({
+      data: mockAxiosResponse.data.data,
+      success: "success",
+      message: "Success",
+    });
+
     mockUseSWR.mockReturnValue({
       data: mockCashDiscountTerm,
       error: undefined,
@@ -209,18 +224,13 @@ describe("useGetLatestPaymentTerms", () => {
       throw new Error("Fetcher function was not provided");
     }
 
-    // Call the fetcher to verify it uses axios correctly
+    // Call the fetcher to verify it uses PaymentService correctly
     const result = await passedFetcher();
 
-    // Verify axios was called with correct config
-    expect(mockAxios).toHaveBeenCalledWith({
-      url: "/api/sales/payments/getAllPaymentTerms",
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      data: { userId: mockUser.userId, companyId: mockUser.companyId },
-    });
+    // Verify PaymentService was called with correct userId
+    expect(mockPaymentService.fetchPaymentTerms).toHaveBeenCalledWith(
+      mockUser.userId
+    );
 
     // Verify fetcher filters and returns cash discount term
     expect(result).toEqual(mockCashDiscountTerm);
@@ -241,7 +251,13 @@ describe("useGetLatestPaymentTerms", () => {
   });
 
   it("should filter payment terms for cash discount", async () => {
-    (mockAxios as any).mockResolvedValue(mockAxiosResponse);
+    // Mock PaymentService.fetchPaymentTerms
+    (mockPaymentService.fetchPaymentTerms as jest.Mock).mockResolvedValue({
+      data: mockAxiosResponse.data.data,
+      success: "success",
+      message: "Success",
+    });
+
     mockUseSWR.mockReturnValue({
       data: mockCashDiscountTerm,
       error: undefined,
@@ -271,7 +287,13 @@ describe("useGetLatestPaymentTerms", () => {
   });
 
   it("should return undefined when no cash discount terms exist", async () => {
-    (mockAxios as any).mockResolvedValue(mockAxiosResponseNoCashDiscount);
+    // Mock PaymentService.fetchPaymentTerms
+    (mockPaymentService.fetchPaymentTerms as jest.Mock).mockResolvedValue({
+      data: mockAxiosResponseNoCashDiscount.data.data,
+      success: "success",
+      message: "Success",
+    });
+
     mockUseSWR.mockReturnValue({
       data: undefined,
       error: undefined,

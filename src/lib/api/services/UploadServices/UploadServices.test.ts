@@ -265,7 +265,8 @@ describe("UploadServices", () => {
       const callArgs = callWithSpy.mock.calls[0];
       const key = callArgs[1].Fields.key;
       expect(key).toContain(mockUploadOptions.folderName);
-      expect(key).toContain(mockUploadOptions.fileName);
+      // slugifyUrl removes dots, so expect the slugified version
+      expect(key).toContain("test-imagejpg");
     });
   });
 
