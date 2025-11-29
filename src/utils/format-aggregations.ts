@@ -6,12 +6,13 @@
 
 import type { CategoryPath } from "@/lib/services/CategoryResolutionService";
 import type {
-    AggregationResult,
-    BrandFilterOption,
-    CategoryFilterOption,
-    FilterAggregations,
-    ProductSpecificationGroup,
-    VariantAttributeGroup,
+  AggregationResult,
+  BrandFilterOption,
+  CategoryFilterOption,
+  FilterAggregations,
+  FilterOption,
+  ProductSpecificationGroup,
+  VariantAttributeGroup,
 } from "@/types/category-filters";
 
 /**

@@ -32,9 +32,9 @@ export function getRedisClient(): Redis | null {
     }
     // If disconnected or in error state, reset and reconnect
     if (
-      redisClient.status === "end" ||
-      redisClient.status === "close" ||
-      redisClient.status === "error"
+      (redisClient.status as string) === "end" ||
+      (redisClient.status as string) === "close" ||
+      (redisClient.status as string) === "error"
     ) {
       if (process.env.NODE_ENV === "development") {
         console.warn("⚠️  Redis client disconnected, resetting connection", {
@@ -206,9 +206,9 @@ export async function ensureRedisConnection(): Promise<boolean> {
 
     // Connect if not already connecting/connected
     if (
-      client.status === "end" ||
-      client.status === "close" ||
-      client.status === "wait"
+      (client.status as string) === "end" ||
+      (client.status as string) === "close" ||
+      (client.status as string) === "wait"
     ) {
       try {
         await client.connect();

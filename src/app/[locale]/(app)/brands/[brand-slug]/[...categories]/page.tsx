@@ -1,6 +1,7 @@
 import { CategoryBreadcrumbServer } from "@/components/Breadcrumb/CategoryBreadcrumbServer";
 import { ProductViewSwitcher } from "@/components/ProductGrid/ProductViewSwitcher";
 import { StructuredDataServer } from "@/components/seo/StructuredDataServer";
+import { Link } from "@/i18n/navigation";
 import type { RequestContext } from "@/lib/api/client";
 import SearchService, {
   ElasticSearchQuery,
@@ -11,17 +12,16 @@ import BrandResolutionService from "@/lib/services/BrandResolutionService";
 import CategoryResolutionService from "@/lib/services/CategoryResolutionService";
 import type { FilterAggregations } from "@/types/category-filters";
 import {
+  buildBrandFilter,
   buildBrandQuery,
   buildCategoryBrandQuery,
-  buildBrandFilter,
   buildCategoryFilter,
   getBaseQuery,
 } from "@/utils/opensearch/browse-queries";
 import { Metadata } from "next";
 import { headers } from "next/headers";
-import { Suspense } from "react";
-import { Link } from "@/i18n/navigation";
 import { notFound } from "next/navigation";
+import { Suspense } from "react";
 import { BrandCategoryPageInteractivity } from "./_components/BrandCategoryPageInteractivity";
 
 interface PageProps {
@@ -302,7 +302,6 @@ export default async function BrandCategoryPage({
         productSpecifications,
       }),
       ...(inStock !== undefined && { inStock }),
-      ...(priceRange && { priceRange }),
       ...(catalogCodes && catalogCodes.length > 0 && { catalogCodes }),
       ...(equipmentCodes && equipmentCodes.length > 0 && { equipmentCodes }),
     });

@@ -63,6 +63,7 @@ export interface ElasticSearchResponse {
         relation: string;
       };
     };
+    aggregations?: Record<string, AggregationResult>;
   };
 }
 
@@ -70,6 +71,7 @@ export interface SearchProductsResponse {
   success: boolean;
   data: FormattedProduct[];
   total: number;
+  aggregations?: Record<string, AggregationResult> | undefined;
 }
 
 export interface AggregationBucket {
@@ -295,11 +297,13 @@ export class SearchService extends BaseService<SearchService> {
       // Format and return results
       const formattedData = this.formatElasticResults(response);
       const total = response?.body?.hits?.total?.value || formattedData.length;
+      const aggregations = response?.body?.aggregations;
 
       return {
         success: true,
         data: formattedData,
         total,
+        ...(aggregations ? { aggregations } : {}),
       };
     } catch {
       // Return empty results on error
@@ -756,10 +760,43 @@ export class SearchService extends BaseService<SearchService> {
   }
 
   /**
+   * Get aggregations from OpenSearch with Redis caching
+   *
+   * @param elasticIndex - Elasticsearch index name
+   * @param query - Elasticsearch query with aggregations
+   * @param context - Request context
+   * @returns Aggregation results
+   */
+  async getAggregations(
+    elasticIndex: string,
+    query: ElasticSearchQuery,
+    context?: RequestContext
+  ): Promise<AggregationsResponse> {
+    // Use cached version if available (server-side only)
+    if (typeof window === "undefined") {
+      try {
+        const cacheKey = this.createAggregationCacheKey(elasticIndex, query);
+        const { withRedisCache } = await import("@/lib/cache");
+        // Cache aggregations for 30 minutes (1800 seconds)
+        // Aggregations change infrequently, so longer TTL is appropriate
+        return withRedisCache(
+          cacheKey,
+          () => this.getAggregationsUncached(elasticIndex, query, context),
+          1800 // 30 minutes TTL
+        );
+      } catch {
+        // Fall through to non-cached version if cache import fails
+      }
+    }
+
+    return this.getAggregationsUncached(elasticIndex, query, context);
+  }
+
+  /**
    * Generate cache key for aggregation queries
    * Creates a deterministic key from query parameters
    */
-  private generateAggregationCacheKey(
+  private createAggregationCacheKey(
     elasticIndex: string,
     query: ElasticSearchQuery
   ): string {
@@ -778,40 +815,7 @@ export class SearchService extends BaseService<SearchService> {
       hash = hash & hash; // Convert to 32-bit integer
     }
 
-    return `aggs:${elasticIndex}:${Math.abs(hash).toString(36)}`;
-  }
-
-  /**
-   * Get aggregations from OpenSearch with Redis caching
-   *
-   * @param elasticIndex - Elasticsearch index name
-   * @param query - Elasticsearch query with aggregations
-   * @param context - Request context
-   * @returns Aggregation results
-   */
-  async getAggregations(
-    elasticIndex: string,
-    query: ElasticSearchQuery,
-    context?: RequestContext
-  ): Promise<AggregationsResponse> {
-    // Use cached version if available (server-side only)
-    if (typeof window === "undefined") {
-      try {
-        const cacheKey = this.generateAggregationCacheKey(elasticIndex, query);
-        const { withRedisCache } = await import("@/lib/cache");
-        // Cache aggregations for 30 minutes (1800 seconds)
-        // Aggregations change infrequently, so longer TTL is appropriate
-        return withRedisCache(
-          cacheKey,
-          () => this.getAggregationsUncached(elasticIndex, query, context),
-          1800 // 30 minutes TTL
-        );
-      } catch {
-        // Fall through to non-cached version if cache import fails
-      }
-    }
-
-    return this.getAggregationsUncached(elasticIndex, query, context);
+    return `aggregations:${elasticIndex}:${Math.abs(hash).toString(36)}`;
   }
 
   /**

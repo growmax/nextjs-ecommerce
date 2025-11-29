@@ -44,7 +44,9 @@ export function usePrefetchMainRoutes() {
             // Silently fail
           }
         });
+        return undefined;
       }
     }
+    return undefined;
   }, [router]);
 }

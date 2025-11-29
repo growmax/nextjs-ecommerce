@@ -390,7 +390,6 @@ export default async function CategoryPage({
     }
   }
 
-
   // Create products promise for streaming
   const productsPromise = elasticIndex
     ? (async () => {
@@ -482,6 +481,9 @@ export default async function CategoryPage({
           sort: sortBy,
         }}
         total={initialProducts.total}
+        categoryPath={categoryPath}
+        aggregations={aggregations}
+        currentCategoryPath={categories}
       />
 
       {/* Product Grid - Server-rendered for SEO with Suspense for streaming */}

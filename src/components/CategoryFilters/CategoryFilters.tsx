@@ -5,21 +5,21 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
 import { useCategoryFilters } from "@/hooks/useCategoryFilters";
 import type {
-    BrandFilterOption,
-    CategoryFilterOption,
-    ProductSpecificationGroup,
-    VariantAttributeGroup,
+  BrandFilterOption,
+  CategoryFilterOption,
+  FilterOption,
+  ProductSpecificationGroup,
+  VariantAttributeGroup,
 } from "@/types/category-filters";
 import { Filter } from "lucide-react";
 import { ActiveFilters } from "./ActiveFilters";
 import { BrandFilter } from "./filters/BrandFilter";
+import { CatalogCodeFilter } from "./filters/CatalogCodeFilter";
 import { CategoryFilter } from "./filters/CategoryFilter";
+import { EquipmentCodeFilter } from "./filters/EquipmentCodeFilter";
 import { ProductSpecificationFilter } from "./filters/ProductSpecificationFilter";
 import { StockFilter } from "./filters/StockFilter";
 import { VariantAttributeFilter } from "./filters/VariantAttributeFilter";
-import { CatalogCodeFilter } from "./filters/CatalogCodeFilter";
-import { EquipmentCodeFilter } from "./filters/EquipmentCodeFilter";
-import type { FilterOption } from "@/types/category-filters";
 
 interface CategoryFiltersProps {
   brands: BrandFilterOption[];

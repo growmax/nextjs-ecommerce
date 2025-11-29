@@ -133,7 +133,7 @@ function getInitialViewMode(): ViewMode {
     if (saved === "grid" || saved === "list" || saved === "table") {
       return saved;
     }
-  } catch (e) {
+  } catch {
     // localStorage might not be available
   }
   

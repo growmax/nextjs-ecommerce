@@ -32,9 +32,9 @@ export interface CategoryFilterState {
   /** Stock/Inventory status filter */
   inStock?: boolean | undefined;
   /** Catalog codes filter */
-  catalogCodes?: string[];
+  catalogCodes?: string[] | undefined;
   /** Equipment codes filter */
-  equipmentCodes?: string[];
+  equipmentCodes?: string[] | undefined;
 }
 
 /**

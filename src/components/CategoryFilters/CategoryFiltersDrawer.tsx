@@ -5,9 +5,9 @@ import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import type {
   BrandFilterOption,
   CategoryFilterOption,
+  FilterOption,
   ProductSpecificationGroup,
   VariantAttributeGroup,
-  FilterOption,
 } from "@/types/category-filters";
 import { Filter } from "lucide-react";
 import { useState } from "react";

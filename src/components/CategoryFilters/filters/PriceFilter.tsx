@@ -1,14 +1,14 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { DollarSign } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Skeleton } from "@/components/ui/skeleton";
+import { DollarSign } from "lucide-react";
+import { useEffect, useState } from "react";
 
 interface PriceFilterProps {
-  minPrice?: number;
-  maxPrice?: number;
+  minPrice?: number | undefined;
+  maxPrice?: number | undefined;
   priceStats?: {
     min?: number;
     max?: number;
@@ -47,10 +47,10 @@ export function PriceFilter({
     if (numValue !== undefined && isNaN(numValue)) {
       return; // Don't update if invalid number
     }
-    onChange({
-      min: numValue,
-      max: maxPrice,
-    });
+    const newRange: { min?: number; max?: number } = {};
+    if (numValue !== undefined) newRange.min = numValue;
+    if (maxPrice !== undefined) newRange.max = maxPrice;
+    onChange(Object.keys(newRange).length > 0 ? newRange : undefined);
   };
 
   const handleMaxChange = (value: string) => {
@@ -59,10 +59,10 @@ export function PriceFilter({
     if (numValue !== undefined && isNaN(numValue)) {
       return; // Don't update if invalid number
     }
-    onChange({
-      min: minPrice,
-      max: numValue,
-    });
+    const newRange: { min?: number; max?: number } = {};
+    if (minPrice !== undefined) newRange.min = minPrice;
+    if (numValue !== undefined) newRange.max = numValue;
+    onChange(Object.keys(newRange).length > 0 ? newRange : undefined);
   };
 
   const handleClear = () => {

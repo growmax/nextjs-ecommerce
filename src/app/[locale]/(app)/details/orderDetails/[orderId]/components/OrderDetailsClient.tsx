@@ -73,7 +73,7 @@ const OrderStatusTracker = dynamic(
   }
 );
 
-export default function OrderDetailsClient({ params }: OrderDetailsPageProps) {
+export default function OrderDetailsClient({ params, initialOrderDetails }: OrderDetailsPageProps) {
   // Use the page loader hook to ensure navigation spinner is hidden immediately
   usePageLoader();
 
@@ -136,6 +136,7 @@ export default function OrderDetailsClient({ params }: OrderDetailsPageProps) {
     staleTime: 5 * 60 * 1000, // 5 minutes - order details may change
     gcTime: 10 * 60 * 1000, // 10 minutes
     refetchOnWindowFocus: false,
+    refetchOnMount: true, // Retry when dependencies become available
     retry: 1,
   });
 

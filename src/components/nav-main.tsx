@@ -38,6 +38,9 @@ function CollapsedMenuItem({
   isActive,
   onNavigate,
   onNavClick,
+  handleMouseEnter,
+  handleTouchStart,
+  handleFocus,
 }: {
   item: {
     title: string;
@@ -49,6 +52,9 @@ function CollapsedMenuItem({
   isActive: (url: string) => boolean;
   onNavigate?: (url: string) => void;
   onNavClick: (e: React.MouseEvent<HTMLAnchorElement>, url: string) => void;
+  handleMouseEnter: (url: string) => void;
+  handleTouchStart: (url: string) => void;
+  handleFocus: (url: string) => void;
 }) {
   const [isOpen, setIsOpen] = useState(false);
 
@@ -139,7 +145,7 @@ export function NavMain({
 
   // Handle navigation - let Next.js Link handle it naturally for better prefetching
   const handleNavClick = (
-    e: React.MouseEvent<HTMLAnchorElement>,
+    _e: React.MouseEvent<HTMLAnchorElement>,
     url: string
   ) => {
     onNavigate?.(url);
@@ -199,6 +205,9 @@ export function NavMain({
                 isActive={isActive}
                 {...(onNavigate && { onNavigate })}
                 onNavClick={handleNavClick}
+                handleMouseEnter={handleMouseEnter}
+                handleTouchStart={handleTouchStart}
+                handleFocus={handleFocus}
               />
             );
           }

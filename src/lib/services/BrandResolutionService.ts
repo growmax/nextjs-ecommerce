@@ -119,7 +119,6 @@ class BrandResolutionService {
     return this.getAllBrandsUncached(context);
   }
 
-
   /**
    * Internal method - fetch all brands without caching
    */

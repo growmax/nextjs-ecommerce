@@ -5,16 +5,16 @@ import { useTenant } from "@/contexts/TenantContext";
 import { useUserId } from "@/contexts/UserDetailsContext";
 import { useRouter } from "@/i18n/navigation";
 import CartServices, {
-  type AddMultipleItemsRequest,
-  type AddToCartRequest,
-  type DeleteCartRequest,
+    type AddMultipleItemsRequest,
+    type AddToCartRequest,
+    type DeleteCartRequest,
 } from "@/lib/api/CartServices";
 import DiscountService from "@/lib/api/services/DiscountService/DiscountService";
 import { AuthStorage } from "@/lib/auth";
 import {
-  batchCacheSellerInfo,
-  batchGetSellerInfoFromCache,
-  type SellerInfo,
+    batchCacheSellerInfo,
+    batchGetSellerInfoFromCache,
+    type SellerInfo,
 } from "@/lib/cache/sellerInfoCache";
 import { JWTService } from "@/lib/services/JWTService";
 import { useTenantStore } from "@/store/useTenantStore";
@@ -118,44 +118,6 @@ export function useCart() {
     }
     return true;
   }, [userId, tenantCode, router]);
-
-  /**
-   * Extract seller info from discount data
-   * Used when discount data is already available (from batched fetch)
-   * @param productIds - Array of product IDs to extract seller info for
-   * @param discountData - Discount data from batched fetch
-   * @returns Map of productId -> {sellerId, sellerName}
-   */
-  const _extractSellerInfoFromDiscountData = useCallback(
-    (
-      productIds: number[],
-      discountData: Array<{
-        ProductVariantId: number;
-        sellerId?: string;
-        sellerName?: string;
-      }>
-    ): Map<number, { sellerId: string | number; sellerName: string }> => {
-      const result = new Map<
-        number,
-        { sellerId: string | number; sellerName: string }
-      >();
-
-      productIds.forEach(productId => {
-        const discountItem = discountData.find(
-          item => item.ProductVariantId === productId
-        );
-        if (discountItem?.sellerId && discountItem?.sellerName) {
-          result.set(productId, {
-            sellerId: discountItem.sellerId,
-            sellerName: discountItem.sellerName,
-          });
-        }
-      });
-
-      return result;
-    },
-    []
-  );
 
   /**
    * Batch fetch seller info for multiple products

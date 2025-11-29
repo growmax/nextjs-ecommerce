@@ -256,7 +256,6 @@ export function useNavigationProgress({
         // For Next.js App Router: pathname change means route navigation started
         // We wait a small amount (50-100ms) to ensure GET response is fully received
         // This accounts for the time between route fetch and response processing
-        const getCompletionDelay = 50; // Small delay to ensure GET response is received
 
         pathnameChangeTimeoutRef.current = setTimeout(() => {
           if (mountedRef.current && isNavigatingRef.current) {

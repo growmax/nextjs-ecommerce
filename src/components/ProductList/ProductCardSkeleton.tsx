@@ -4,7 +4,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 
 interface ProductCardSkeletonProps {
-  viewMode?: "grid" | "list";
+  viewMode?: "grid" | "list" | "table";
 }
 
 /**
