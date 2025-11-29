@@ -1,7 +1,15 @@
-import { locales } from "@/i18n/config";
-import { getDomain } from "@/lib/domain";
-import createIntlMiddleware from "next-intl/middleware";
 import { NextRequest, NextResponse } from "next/server";
+
+// Inline locales to avoid importing from config (reduces bundle size)
+const locales = ["en", "es", "fr", "th", "vi", "id", "ms"] as const;
+
+// Inline getDomain to avoid extra imports
+function getDomain(host: string): string {
+  if (host === "localhost:3000" || host === "localhost:3001") {
+    return process.env.DEFAULT_DOMAIN || "sandbox.myapptino.com";
+  }
+  return host.replace("www.", "");
+}
 
 // Define protected routes that require authentication
 const PROTECTED_ROUTES = [
@@ -33,11 +41,7 @@ function hasAccessToken(request: NextRequest): boolean {
   return !!accessToken;
 }
 
-// Create next-intl middleware
-const intlMiddleware = createIntlMiddleware({
-  locales,
-  defaultLocale: "en",
-});
+// next-intl middleware will be created dynamically inside the middleware function
 
 export async function middleware(request: NextRequest) {
   const pathname = request.nextUrl.pathname;
@@ -108,15 +112,33 @@ export async function middleware(request: NextRequest) {
     return NextResponse.next();
   }
 
-  // Handle internationalization FIRST to ensure locale is in the pathname
-  const intlResponse = intlMiddleware(request);
-  const response = intlResponse || NextResponse.next();
-
-  // Get the pathname after intl middleware processing (with locale prefix)
-  const finalPathname = response.headers.get("x-middleware-rewrite")
-    ? new URL(response.headers.get("x-middleware-rewrite") || request.url)
-        .pathname
-    : pathname;
+  // Manual locale handling (replaces next-intl middleware for smaller bundle)
+  // Extract locale from pathname or detect from headers
+  const localeMatch = pathname.match(/^\/([a-z]{2}(-[A-Z]{2})?)(\/|$)/);
+  const currentLocale = localeMatch ? localeMatch[1] : null;
+  
+  // If no locale in pathname, redirect to add default locale
+  if (!currentLocale) {
+    // Get locale from Accept-Language header or use default
+    const acceptLanguage = request.headers.get("accept-language");
+    const preferredLocale = acceptLanguage?.split(",")[0]?.split("-")[0] || "en";
+    const validLocale = locales.includes(preferredLocale as any) ? preferredLocale : "en";
+    
+    // Redirect to path with locale prefix
+    const url = new URL(request.url);
+    url.pathname = `/${validLocale}${pathname === "/" ? "" : pathname}`;
+    return NextResponse.redirect(url);
+  }
+  
+  // Validate that the locale is supported
+  if (!locales.includes(currentLocale as any)) {
+    const url = new URL(request.url);
+    url.pathname = pathname.replace(/^\/[a-z]{2}(-[A-Z]{2})?/, "/en");
+    return NextResponse.redirect(url);
+  }
+  
+  const response = NextResponse.next();
+  const finalPathname = pathname;
 
   // Authentication-based redirects (check after locale is added)
   if (isProtectedRoute(finalPathname) && !isAuthenticated) {
