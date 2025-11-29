@@ -2,16 +2,16 @@
 
 import { Button } from "@/components/ui/button";
 import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
+    Card,
+    CardContent,
+    CardDescription,
+    CardHeader,
+    CardTitle,
 } from "@/components/ui/card";
-import { AlertTriangle, Home, RefreshCw } from "lucide-react";
-import { Link } from "@/i18n/navigation";
-import React, { Component, type ReactNode } from "react";
 import { defaultLocale } from "@/i18n/config";
+import { AlertTriangle, Home, RefreshCw } from "lucide-react";
+import Link from "next/link";
+import React, { Component, type ReactNode } from "react";
 
 interface ErrorBoundaryProps {
   children: ReactNode;

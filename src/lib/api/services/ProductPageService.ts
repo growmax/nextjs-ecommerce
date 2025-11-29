@@ -40,12 +40,15 @@ export class ProductPageService {
   ): Promise<ProductDetail | null> {
     const elasticIndex = `${elasticCode}pgandproducts`;
     const context: RequestContext = { origin, tenantCode };
-    return await OpenSearchService.getProductCached(
+    
+    const result = await OpenSearchService.getProductCached(
       productId,
       elasticIndex,
       "pgproduct",
       "get",
       context
     );
+    
+    return result;
   }
 }
