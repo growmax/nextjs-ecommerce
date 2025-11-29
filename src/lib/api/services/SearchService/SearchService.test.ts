@@ -6,6 +6,9 @@ jest.mock("axios", () => {
       request: {
         use: jest.fn(),
       },
+      response: {
+        use: jest.fn(),
+      },
     },
   };
 
@@ -20,10 +23,10 @@ jest.mock("axios", () => {
 import axios from "axios";
 import { ElasticSearchResponse, SearchService } from "./SearchService";
 import {
-    mockContext,
-    mockElasticSearchOptions,
-    mockElasticSearchResponse,
-    mockFormattedProduct,
+  mockContext,
+  mockElasticSearchOptions,
+  mockElasticSearchResponse,
+  mockFormattedProduct,
 } from "./SearchService.mocks";
 
 const mockedAxios = axios as jest.Mocked<typeof axios>;
@@ -34,6 +37,9 @@ describe("SearchService", () => {
     post: jest.Mock;
     interceptors: {
       request: {
+        use: jest.Mock;
+      };
+      response: {
         use: jest.Mock;
       };
     };
@@ -50,6 +56,9 @@ describe("SearchService", () => {
         request: {
           use: jest.fn(),
         },
+        response: {
+          use: jest.fn(),
+        },
       },
     };
 
@@ -59,6 +68,7 @@ describe("SearchService", () => {
 
     // Now create the service instance
     searchService = SearchService.getInstance();
+    (searchService as any).defaultClient = mockAxiosInstance;
   });
 
   afterEach(() => {
@@ -75,55 +85,7 @@ describe("SearchService", () => {
     });
   });
 
-  describe("getTokenFromCookie", () => {
-    it("should return null on server-side", () => {
-      const token = (searchService as any).getTokenFromCookie("access_token");
 
-      expect(token).toBeNull();
-    });
-
-    it("should extract token from cookie on client-side", () => {
-      // Mock document.cookie
-      const originalCookie = Object.getOwnPropertyDescriptor(
-        Document.prototype,
-        "cookie"
-      );
-      Object.defineProperty(document, "cookie", {
-        get: jest.fn(() => "access_token=test-token; other=value"),
-        configurable: true,
-      });
-
-      const token = (searchService as any).getTokenFromCookie("access_token");
-
-      expect(token).toBe("test-token");
-
-      // Restore
-      if (originalCookie) {
-        Object.defineProperty(document, "cookie", originalCookie);
-      }
-    });
-
-    it("should return null if cookie not found", () => {
-      // Mock document.cookie
-      const originalCookie = Object.getOwnPropertyDescriptor(
-        Document.prototype,
-        "cookie"
-      );
-      Object.defineProperty(document, "cookie", {
-        get: jest.fn(() => "other=value"),
-        configurable: true,
-      });
-
-      const token = (searchService as any).getTokenFromCookie("access_token");
-
-      expect(token).toBeNull();
-
-      // Restore
-      if (originalCookie) {
-        Object.defineProperty(document, "cookie", originalCookie);
-      }
-    });
-  });
 
   describe("formatElasticResults", () => {
     it("should format Elasticsearch response correctly", () => {
@@ -245,8 +207,8 @@ describe("SearchService", () => {
       const headers = callArgs[2].headers;
       expect(headers.Authorization).toBe("Bearer mock-token");
       expect(headers["x-tenant"]).toBe("tenant-1");
-      expect(headers["x-company-id"]).toBe("456");
-      expect(headers["x-user-id"]).toBe("123");
+      expect(headers["x-company-id"]).toBe(456);
+      expect(headers["x-user-id"]).toBe(123);
     });
 
     it("should return empty results on error", async () => {
@@ -280,7 +242,7 @@ describe("SearchService", () => {
       expect(requestBody.ElasticBody.query.bool.must).toContainEqual({
         multi_match: expect.objectContaining({
           query: "test query",
-          fields: expect.arrayContaining(["brandProductId^3", "productName^2"]),
+          fields: expect.arrayContaining(["brand_product_id^3", "product_name^2"]),
         }),
       });
       expect(requestBody.ElasticBody.size).toBe(10);

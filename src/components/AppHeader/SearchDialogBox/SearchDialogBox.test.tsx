@@ -5,8 +5,18 @@ import * as mockData from "./SearchDialogBox.mocks";
 // Polyfill scrollIntoView for jsdom (used by cmdk)
 Element.prototype.scrollIntoView = jest.fn();
 
-// Mock the fetch API
-global.fetch = jest.fn();
+import OpenElasticSearchService from "@/lib/api/services/ElacticQueryService/openElasticSearch/openElasticSearch";
+
+// Mock OpenElasticSearchService
+jest.mock(
+  "@/lib/api/services/ElacticQueryService/openElasticSearch/openElasticSearch",
+  () => ({
+    __esModule: true,
+    default: {
+      searchProducts: jest.fn(),
+    },
+  })
+);
 
 // Mock ImageWithFallback component
 jest.mock("@/components/ImageWithFallback", () => {
@@ -33,7 +43,7 @@ describe("SearchDialogBox", () => {
 
   beforeEach(() => {
     jest.clearAllMocks();
-    (global.fetch as jest.Mock).mockClear();
+    (OpenElasticSearchService.searchProducts as jest.Mock).mockClear();
   });
 
   describe("Rendering", () => {
@@ -73,15 +83,11 @@ describe("SearchDialogBox", () => {
     });
 
     it("should handle empty search results", async () => {
-      const mockResponse = {
-        ok: true,
-        json: async () => ({
-          data: [],
-          total: 0,
-          success: true,
-        }),
-      };
-      (global.fetch as jest.Mock).mockResolvedValue(mockResponse);
+      (OpenElasticSearchService.searchProducts as jest.Mock).mockResolvedValue({
+        data: [],
+        total: 0,
+        success: true,
+      });
 
       render(<SearchDialogBox {...defaultProps} />);
       const searchInput = screen.getByPlaceholderText(
@@ -94,23 +100,19 @@ describe("SearchDialogBox", () => {
 
     it("should call fetch when search input changes", async () => {
       jest.useFakeTimers();
-      const mockResponse = {
-        ok: true,
-        json: async () => ({
-          data: [
-            {
-              productId: 1,
-              productShortDescription: "Test Product",
-              brandsName: "Test Brand",
-              brandProductId: "123",
-              productIndexName: "test-product",
-            },
-          ],
-          total: 1,
-          success: true,
-        }),
-      };
-      (global.fetch as jest.Mock).mockResolvedValue(mockResponse);
+      (OpenElasticSearchService.searchProducts as jest.Mock).mockResolvedValue({
+        data: [
+          {
+            productId: 1,
+            productShortDescription: "Test Product",
+            brandsName: "Test Brand",
+            brandProductId: "123",
+            productIndexName: "test-product",
+          },
+        ],
+        total: 1,
+        success: true,
+      });
 
       render(<SearchDialogBox {...defaultProps} />);
       const searchInput = screen.getByPlaceholderText(
@@ -125,7 +127,7 @@ describe("SearchDialogBox", () => {
       // Wait for fetch to be called
       await waitFor(
         () => {
-          expect(global.fetch).toHaveBeenCalled();
+          expect(OpenElasticSearchService.searchProducts).toHaveBeenCalled();
         },
         { timeout: 100 }
       );
@@ -134,7 +136,9 @@ describe("SearchDialogBox", () => {
     });
 
     it("should handle API errors gracefully", async () => {
-      (global.fetch as jest.Mock).mockRejectedValue(new Error("API Error"));
+      (OpenElasticSearchService.searchProducts as jest.Mock).mockRejectedValue(
+        new Error("API Error")
+      );
 
       render(<SearchDialogBox {...defaultProps} />);
       const searchInput = screen.getByPlaceholderText(
@@ -204,30 +208,26 @@ describe("SearchDialogBox", () => {
   describe("Search Results Rendering", () => {
     it("should accept search input and update state", async () => {
       jest.useFakeTimers();
-      const mockResponse = {
-        ok: true,
-        json: async () => ({
-          data: [
-            {
-              productId: 1,
-              productShortDescription: "Product 1",
-              brandsName: "Brand 1",
-              brandProductId: "1",
-              productIndexName: "product-1",
-            },
-            {
-              productId: 2,
-              productShortDescription: "Product 2",
-              brandsName: "Brand 2",
-              brandProductId: "2",
-              productIndexName: "product-2",
-            },
-          ],
-          total: 2,
-          success: true,
-        }),
-      };
-      (global.fetch as jest.Mock).mockResolvedValue(mockResponse);
+      (OpenElasticSearchService.searchProducts as jest.Mock).mockResolvedValue({
+        data: [
+          {
+            productId: 1,
+            productShortDescription: "Product 1",
+            brandsName: "Brand 1",
+            brandProductId: "1",
+            productIndexName: "product-1",
+          },
+          {
+            productId: 2,
+            productShortDescription: "Product 2",
+            brandsName: "Brand 2",
+            brandProductId: "2",
+            productIndexName: "product-2",
+          },
+        ],
+        total: 2,
+        success: true,
+      });
 
       render(<SearchDialogBox {...defaultProps} />);
       const searchInput = screen.getByPlaceholderText(
@@ -243,7 +243,7 @@ describe("SearchDialogBox", () => {
       // Wait for fetch to be called after debounce
       await waitFor(
         () => {
-          expect(global.fetch).toHaveBeenCalled();
+          expect(OpenElasticSearchService.searchProducts).toHaveBeenCalled();
         },
         { timeout: 100 }
       );
@@ -255,15 +255,11 @@ describe("SearchDialogBox", () => {
   describe("Loading State", () => {
     it("should handle async API responses", async () => {
       jest.useFakeTimers();
-      const mockResponse = {
-        ok: true,
-        json: async () => ({
-          data: [],
-          total: 0,
-          success: true,
-        }),
-      };
-      (global.fetch as jest.Mock).mockResolvedValue(mockResponse);
+      (OpenElasticSearchService.searchProducts as jest.Mock).mockResolvedValue({
+        data: [],
+        total: 0,
+        success: true,
+      });
 
       render(<SearchDialogBox {...defaultProps} />);
       const searchInput = screen.getByPlaceholderText(
@@ -277,7 +273,7 @@ describe("SearchDialogBox", () => {
 
       await waitFor(
         () => {
-          expect(global.fetch).toHaveBeenCalled();
+          expect(OpenElasticSearchService.searchProducts).toHaveBeenCalled();
         },
         { timeout: 100 }
       );
@@ -289,15 +285,11 @@ describe("SearchDialogBox", () => {
   describe("API Request Format", () => {
     it("should call API with correct endpoint", async () => {
       jest.useFakeTimers();
-      const mockResponse = {
-        ok: true,
-        json: async () => ({
-          data: [],
-          total: 0,
-          success: true,
-        }),
-      };
-      (global.fetch as jest.Mock).mockResolvedValue(mockResponse);
+      (OpenElasticSearchService.searchProducts as jest.Mock).mockResolvedValue({
+        data: [],
+        total: 0,
+        success: true,
+      });
 
       render(<SearchDialogBox {...defaultProps} />);
       const searchInput = screen.getByPlaceholderText(
@@ -311,9 +303,9 @@ describe("SearchDialogBox", () => {
 
       await waitFor(
         () => {
-          expect(global.fetch).toHaveBeenCalledWith(
-            expect.stringContaining("/api/search"),
-            expect.any(Object)
+          expect(OpenElasticSearchService.searchProducts).toHaveBeenCalledWith(
+            "test",
+            "products_v3"
           );
         },
         { timeout: 100 }

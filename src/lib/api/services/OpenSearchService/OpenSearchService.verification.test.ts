@@ -10,10 +10,10 @@
 
 import { buildProductSearchQuery } from "@/utils/elasticsearch/search-queries";
 import {
-  buildBrandQuery,
-  buildCategoryQuery,
-  buildMajorCategoryQuery,
-  buildSubCategoryQuery,
+    buildBrandQuery,
+    buildCategoryQuery,
+    buildMajorCategoryQuery,
+    buildSubCategoryQuery,
 } from "@/utils/opensearch/browse-queries";
 
 // Mock the clients to prevent actual API calls
@@ -104,7 +104,12 @@ describe("OpenSearch Query Verification", () => {
       // Verify category filter
       const mustClauses = query.query.bool.must as Array<Record<string, unknown>>;
       expect(mustClauses).toContainEqual({
-        term: { "products_sub_categories.category_id": categoryId },
+        nested: {
+          path: "product_categories",
+          query: {
+            term: { "product_categories.categoryId": categoryId },
+          },
+        },
       });
     });
 
@@ -141,7 +146,12 @@ describe("OpenSearch Query Verification", () => {
 
       const mustClauses = query.query.bool.must as Array<Record<string, unknown>>;
       expect(mustClauses).toContainEqual({
-        term: { "products_sub_categories.sub_category_id": subCategoryId },
+        nested: {
+          path: "product_categories",
+          query: {
+            term: { "product_categories.categoryId": subCategoryId },
+          },
+        },
       });
     });
   });
@@ -155,7 +165,12 @@ describe("OpenSearch Query Verification", () => {
 
       const mustClauses = query.query.bool.must as Array<Record<string, unknown>>;
       expect(mustClauses).toContainEqual({
-        term: { "products_sub_categories.major_category_id": majorCategoryId },
+        nested: {
+          path: "product_categories",
+          query: {
+            term: { "product_categories.categoryId": majorCategoryId },
+          },
+        },
       });
     });
   });

@@ -6,6 +6,23 @@ jest.mock("next/navigation", () => ({
   }),
 }));
 
+jest.mock("@/hooks/useNavigationWithLoader", () => ({
+  useNavigationWithLoader: () => ({
+    push: jest.fn(),
+    replace: jest.fn(),
+  }),
+}));
+
+jest.mock("@/hooks/usePostNavigationFetch", () => ({
+  usePostNavigationFetch: (callback: () => void, deps: any[] = []) => {
+    const React = jest.requireActual("react");
+    React.useEffect(() => {
+      callback();
+      // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, deps);
+  },
+}));
+
 jest.mock("next-intl", () => ({
   useLocale: () => "en",
   useTranslations: () => (key: string) => key,
