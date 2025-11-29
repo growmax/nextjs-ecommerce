@@ -1,3 +1,4 @@
+import type { CategoryFilterState } from "@/types/category-filters";
 import { RequestContext, openSearchClient } from "../../client";
 import { BaseService } from "../BaseService";
 
@@ -62,6 +63,7 @@ export interface ElasticSearchResponse {
         relation: string;
       };
     };
+    aggregations?: Record<string, AggregationResult>;
   };
 }
 
@@ -69,6 +71,7 @@ export interface SearchProductsResponse {
   success: boolean;
   data: FormattedProduct[];
   total: number;
+  aggregations?: Record<string, AggregationResult> | undefined;
 }
 
 export interface AggregationBucket {
@@ -268,69 +271,6 @@ export class SearchService extends BaseService<SearchService> {
           elasticRequest.ElasticBody.query.bool.must = [];
         }
 
-        console.log(codes, "codes");
-
-        elasticRequest.ElasticBody.query.bool.must.push({
-          terms: {
-            "catalogCode.keyword": codes,
-          },
-        });
-      }
-
-      // Use BaseService callWith method for automatic context handling
-      const response = (await this.callWith("", elasticRequest, {
-        method: "POST",
-        ...(context && { context }),
-      })) as ElasticSearchResponse;
-
-      // Format and return results
-      const formattedData = this.formatElasticResults(response);
-      const total = response.body?.hits?.total?.value || formattedData.length;
-
-      return {
-        success: true,
-        data: formattedData,
-        total,
-      };
-    } catch (error: any) {
-      // Return empty results on error rather than throwing
-      console.log(error, "error");
-      return {
-        success: false,
-        data: [],
-        total: 0,
-      };
-    }
-  }
-
-  /**
-   * Server-safe version of searchProducts
-   * Returns empty results on error instead of throwing
-   * This is the actual implementation that does the search
-   */
-  async searchProductsServerSide(
-    options: ElasticSearchOptions
-  ): Promise<SearchProductsResponse> {
-    try {
-      const { elasticIndex, query, catalogCodes, equipmentCodes, context } =
-        options;
-
-      // Build the Elasticsearch request
-      const elasticRequest: ElasticSearchRequest = {
-        Elasticindex: elasticIndex,
-        queryType: "search",
-        ElasticType: "pgproduct",
-        ElasticBody: query,
-      };
-
-      // Add catalog/equipment code filters if provided
-      if (catalogCodes?.length || equipmentCodes?.length) {
-        const codes = [...(catalogCodes || []), ...(equipmentCodes || [])];
-
-        if (!elasticRequest.ElasticBody.query.bool.must) {
-          elasticRequest.ElasticBody.query.bool.must = [];
-        }
-
         elasticRequest.ElasticBody.query.bool.must.push({
           terms: {
             "catalogCode.keyword": codes,
@@ -355,11 +295,13 @@ export class SearchService extends BaseService<SearchService> {
       // Format and return results
       const formattedData = this.formatElasticResults(response);
       const total = response?.body?.hits?.total?.value || formattedData.length;
+      const aggregations = response?.body?.aggregations;
 
       return {
         success: true,
         data: formattedData,
         total,
+        ...(aggregations ? { aggregations } : {}),
       };
     } catch {
       // Return empty results on error
@@ -515,10 +457,10 @@ export class SearchService extends BaseService<SearchService> {
   }
 
   /**
-   * Generate cache key for aggregation queries
-   * Creates a deterministic key from query parameters
+   * Get filter aggregations with variant attributes and product specifications
+   * This is the main method for fetching aggregations for category/brand pages
    */
-  private async generateAggregationCacheKey(
+  async getFilterAggregations(
     elasticIndex: string,
     baseQuery: {
       must: Array<Record<string, unknown>>;
@@ -825,7 +767,7 @@ export class SearchService extends BaseService<SearchService> {
     // Use cached version if available (server-side only)
     if (typeof window === "undefined") {
       try {
-        const cacheKey = this.generateAggregationCacheKey(elasticIndex, query);
+        const cacheKey = this.createAggregationCacheKey(elasticIndex, query);
         const { withRedisCache } = await import("@/lib/cache");
         // Cache aggregations for 30 minutes (1800 seconds)
         // Aggregations change infrequently, so longer TTL is appropriate
@@ -840,6 +782,32 @@ export class SearchService extends BaseService<SearchService> {
     }
 
     return this.getAggregationsUncached(elasticIndex, query, context);
+  }
+
+  /**
+   * Generate cache key for aggregation queries
+   * Creates a deterministic key from query parameters
+   */
+  private createAggregationCacheKey(
+    elasticIndex: string,
+    query: ElasticSearchQuery
+  ): string {
+    // Create a stable hash of the query
+    const queryStr = JSON.stringify({
+      index: elasticIndex,
+      query: query.query,
+      aggs: query.aggs,
+    });
+
+    // Simple hash function for cache key
+    let hash = 0;
+    for (let i = 0; i < queryStr.length; i++) {
+      const char = queryStr.charCodeAt(i);
+      hash = (hash << 5) - hash + char;
+      hash = hash & hash; // Convert to 32-bit integer
+    }
+
+    return `aggregations:${elasticIndex}:${Math.abs(hash).toString(36)}`;
   }
 
   /**

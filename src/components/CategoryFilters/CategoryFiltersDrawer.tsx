@@ -3,11 +3,11 @@
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import type {
-  BrandFilterOption,
-  CategoryFilterOption,
-  ProductSpecificationGroup,
-  VariantAttributeGroup,
-  FilterOption,
+    BrandFilterOption,
+    CategoryFilterOption,
+    FilterOption,
+    ProductSpecificationGroup,
+    VariantAttributeGroup,
 } from "@/types/category-filters";
 import { Filter } from "lucide-react";
 import { useState } from "react";
@@ -22,7 +22,7 @@ interface CategoryFiltersDrawerProps {
   productSpecificationGroups: ProductSpecificationGroup[];
   catalogCodes?: FilterOption[];
   equipmentCodes?: FilterOption[];
-  priceStats?: { min?: number; max?: number };
+  priceStats?: { min?: number; max?: number } | undefined;
   isLoading?: boolean;
   hideBrandFilter?: boolean;
   trigger?: React.ReactNode;

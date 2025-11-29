@@ -4,10 +4,9 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { useNavigationWithLoader } from "@/hooks/useNavigationWithLoader";
 import type { BrandFilterOption } from "@/types/category-filters";
 import { Search } from "lucide-react";
-import { useRouter } from "@/i18n/navigation";
-import { useNavigationWithLoader } from "@/hooks/useNavigationWithLoader";
 import { useState } from "react";
 
 interface BrandFilterProps {

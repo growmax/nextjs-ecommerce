@@ -1,6 +1,7 @@
 import { CategoryBreadcrumbServer } from "@/components/Breadcrumb/CategoryBreadcrumbServer";
 import { ProductViewSwitcher } from "@/components/ProductGrid/ProductViewSwitcher";
 import { StructuredDataServer } from "@/components/seo/StructuredDataServer";
+import { Link } from "@/i18n/navigation";
 import type { RequestContext } from "@/lib/api/client";
 import SearchService, {
   ElasticSearchQuery,
@@ -11,17 +12,16 @@ import BrandResolutionService from "@/lib/services/BrandResolutionService";
 import CategoryResolutionService from "@/lib/services/CategoryResolutionService";
 import type { FilterAggregations } from "@/types/category-filters";
 import {
+  buildBrandFilter,
   buildBrandQuery,
   buildCategoryBrandQuery,
-  buildBrandFilter,
   buildCategoryFilter,
   getBaseQuery,
 } from "@/utils/opensearch/browse-queries";
 import { Metadata } from "next";
 import { headers } from "next/headers";
-import { Suspense } from "react";
-import { Link } from "@/i18n/navigation";
 import { notFound } from "next/navigation";
+import { Suspense } from "react";
 import { BrandCategoryPageInteractivity } from "./_components/BrandCategoryPageInteractivity";
 
 interface PageProps {
@@ -33,6 +33,12 @@ interface PageProps {
   searchParams: Promise<{
     page?: string;
     sort?: string;
+    in_stock?: string;
+    min_price?: string;
+    max_price?: string;
+    catalog_code?: string | string[];
+    equipment_code?: string | string[];
+    [key: string]: string | string[] | undefined; // For variant attributes and specs
   }>;
 }
 
@@ -256,13 +262,20 @@ export default async function BrandCategoryPage({
   // Parse price range filter
   const minPrice = filters.min_price ? parseFloat(filters.min_price as string) : undefined;
   const maxPrice = filters.max_price ? parseFloat(filters.max_price as string) : undefined;
-  const priceRange =
-    minPrice !== undefined || maxPrice !== undefined
-      ? {
-          min: minPrice !== undefined && !isNaN(minPrice) ? minPrice : undefined,
-          max: maxPrice !== undefined && !isNaN(maxPrice) ? maxPrice : undefined,
-        }
-      : undefined;
+  let priceRange: { min?: number; max?: number } | undefined = undefined;
+  if (minPrice !== undefined || maxPrice !== undefined) {
+    priceRange = {};
+    if (minPrice !== undefined && !isNaN(minPrice)) {
+      priceRange.min = minPrice;
+    }
+    if (maxPrice !== undefined && !isNaN(maxPrice)) {
+      priceRange.max = maxPrice;
+    }
+    // If no valid prices were parsed, set to undefined
+    if (Object.keys(priceRange).length === 0) {
+      priceRange = undefined;
+    }
+  }
 
   // Parse catalog codes
   const catalogCodes = filters.catalog_code

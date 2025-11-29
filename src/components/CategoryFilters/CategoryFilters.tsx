@@ -7,20 +7,20 @@ import { useCategoryFilters } from "@/hooks/useCategoryFilters";
 import type {
     BrandFilterOption,
     CategoryFilterOption,
+    FilterOption,
     ProductSpecificationGroup,
     VariantAttributeGroup,
 } from "@/types/category-filters";
 import { Filter } from "lucide-react";
 import { ActiveFilters } from "./ActiveFilters";
 import { BrandFilter } from "./filters/BrandFilter";
+import { CatalogCodeFilter } from "./filters/CatalogCodeFilter";
 import { CategoryFilter } from "./filters/CategoryFilter";
+import { EquipmentCodeFilter } from "./filters/EquipmentCodeFilter";
+import { PriceFilter } from "./filters/PriceFilter";
 import { ProductSpecificationFilter } from "./filters/ProductSpecificationFilter";
 import { StockFilter } from "./filters/StockFilter";
 import { VariantAttributeFilter } from "./filters/VariantAttributeFilter";
-import { PriceFilter } from "./filters/PriceFilter";
-import { CatalogCodeFilter } from "./filters/CatalogCodeFilter";
-import { EquipmentCodeFilter } from "./filters/EquipmentCodeFilter";
-import type { FilterOption } from "@/types/category-filters";
 
 interface CategoryFiltersProps {
   brands: BrandFilterOption[];
@@ -31,7 +31,7 @@ interface CategoryFiltersProps {
   productSpecificationGroups: ProductSpecificationGroup[];
   catalogCodes?: FilterOption[];
   equipmentCodes?: FilterOption[];
-  priceStats?: { min?: number; max?: number };
+  priceStats?: { min?: number; max?: number } | undefined;
   isLoading?: boolean;
   hideBrandFilter?: boolean;
 }

@@ -40,11 +40,11 @@ export interface CategoryFilterState {
   /** Stock/Inventory status filter */
   inStock?: boolean | undefined;
   /** Price range filter */
-  priceRange?: PriceRangeFilter;
+  priceRange?: PriceRangeFilter | undefined;
   /** Catalog codes filter */
-  catalogCodes?: string[];
+  catalogCodes?: string[] | undefined;
   /** Equipment codes filter */
-  equipmentCodes?: string[];
+  equipmentCodes?: string[] | undefined;
 }
 
 /**

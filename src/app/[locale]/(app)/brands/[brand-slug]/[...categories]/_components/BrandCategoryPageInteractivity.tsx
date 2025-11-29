@@ -1,16 +1,16 @@
 "use client";
 
-import { useRouter, useSearchParams, usePathname } from "next/navigation";
-import { useTransition, useCallback, useMemo } from "react";
+import { CategoryFilters } from "@/components/CategoryFilters/CategoryFilters";
+import { CategoryFiltersDrawer } from "@/components/CategoryFilters/CategoryFiltersDrawer";
 import { CategoryPagination } from "@/components/Pagination/CategoryPagination";
 import { ViewToggle } from "@/components/ProductList/ViewToggle";
 import { SortDropdown } from "@/components/Sort/SortDropdown";
 import { Skeleton } from "@/components/ui/skeleton";
-import { CategoryFilters } from "@/components/CategoryFilters/CategoryFilters";
-import { CategoryFiltersDrawer } from "@/components/CategoryFilters/CategoryFiltersDrawer";
 import type { CategoryPath } from "@/lib/services/CategoryResolutionService";
 import type { FilterAggregations } from "@/types/category-filters";
 import { formatAllAggregations } from "@/utils/format-aggregations";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
+import { useCallback, useMemo, useTransition } from "react";
 
 interface BrandCategoryPageInteractivityProps {
   initialFilters: {
@@ -40,7 +40,7 @@ export function BrandCategoryPageInteractivity({
   initialFilters,
   total,
   aggregations = null,
-  brandName,
+  brandName: _brandName,
   locale,
   currentCategoryPath,
   categoryPath = null,
@@ -52,23 +52,24 @@ export function BrandCategoryPageInteractivity({
   const [isPending, startTransition] = useTransition();
 
   // Format aggregations for filter components
-  // Use empty CategoryPath if categoryPath is null (for brand landing page)
-  const categoryPathForFormatting: CategoryPath = categoryPath || {
-    nodes: [],
-    ids: { categoryIds: [] },
-    slugs: [],
-    fullPath: "",
-  };
-
   const formattedFilters = useMemo(
-    () =>
-      formatAllAggregations(
+    () => {
+      // Use empty CategoryPath if categoryPath is null (for brand landing page)
+      const categoryPathForFormatting: CategoryPath = categoryPath || {
+        nodes: [],
+        ids: { categoryIds: [] },
+        slugs: [],
+        fullPath: "",
+      };
+      
+      return formatAllAggregations(
         aggregations,
         categoryPathForFormatting,
         currentCategoryPath,
         locale
-      ),
-    [aggregations, categoryPathForFormatting, currentCategoryPath, locale]
+      );
+    },
+    [aggregations, categoryPath, currentCategoryPath, locale]
   );
 
   // Parse current filters from URL

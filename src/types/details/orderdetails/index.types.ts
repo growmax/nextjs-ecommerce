@@ -38,9 +38,12 @@ export interface OrderTerms {
   additionalTerms?: string;
 }
 
+import { OrderDetailsResponse } from "@/lib/api/services/OrderDetailsService/OrderDetailsService";
+
 export interface OrderDetailsPageProps {
   params: Promise<{
     orderId: string;
     locale: string;
   }>;
+  initialOrderDetails?: OrderDetailsResponse | null;
 }

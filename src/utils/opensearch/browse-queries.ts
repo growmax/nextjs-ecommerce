@@ -17,7 +17,7 @@ export interface BrowseQueryOptions {
   equipmentCodes?: string[]; // Equipment codes for filtering
   variantAttributes?: Record<string, string[]>; // Variant attribute filters { "Color": ["Red", "Blue"] }
   productSpecifications?: Record<string, string[]>; // Product specification filters { "specKey": ["value1", "value2"] }
-  inStock?: boolean; // Stock/inventory status filter
+  inStock?: boolean | undefined; // Stock/inventory status filter
   priceRange?: { min?: number; max?: number }; // Price range filter
 }
 

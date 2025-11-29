@@ -45,29 +45,35 @@ const getCachedMessages = cache(async () => {
  * Layout Fallback - Renders immediately with messages loading in Suspense
  * This allows children (pages) to render while async operations complete
  * Messages load in background via Suspense to avoid translation errors
+ * IMPORTANT: Includes providers to prevent context errors in client components
  */
 function LayoutFallback({ children }: { children: ReactNode }) {
   return (
-    <Suspense
-      fallback={
-        // Minimal fallback - just show children with basic structure
-        // This renders instantly while messages load
-        <div className="min-h-screen bg-background">
-          <div className="flex">
-            <div className="w-64 bg-muted/50" /> {/* Sidebar placeholder */}
-            <div className="flex-1">{children}</div>
-          </div>
-        </div>
-      }
-    >
-      <LayoutFallbackWithMessages>{children}</LayoutFallbackWithMessages>
-    </Suspense>
+    <NextIntlClientProvider messages={{}}>
+      <LayoutDataLoader>
+        <Suspense
+          fallback={
+            // Minimal fallback - just show children with basic structure
+            // This renders instantly while messages load
+            <div className="min-h-screen bg-background">
+              <div className="flex">
+                <div className="w-64 bg-muted/50" /> {/* Sidebar placeholder */}
+                <div className="flex-1">{children}</div>
+              </div>
+            </div>
+          }
+        >
+          <LayoutFallbackWithMessages>{children}</LayoutFallbackWithMessages>
+        </Suspense>
+      </LayoutDataLoader>
+    </NextIntlClientProvider>
   );
 }
 
 /**
- * Layout Fallback With Messages - Loads messages for fallback
+ * Layout Fallback With Messages - Loads actual messages and full layout
  * Wrapped in Suspense so it doesn't block initial render
+ * Providers are already set up in LayoutFallback, this just loads the full structure
  */
 async function LayoutFallbackWithMessages({
   children,
@@ -75,25 +81,27 @@ async function LayoutFallbackWithMessages({
   children: ReactNode;
 }) {
   const messages = await getCachedMessages();
+  const headersList = await headers();
+  const cookieHeader = headersList.get("cookie") || "";
+  const initialSidebarOpen = parseSidebarStateCookie(cookieHeader);
+
   return (
     <NextIntlClientProvider messages={messages}>
-      <LayoutDataLoader>
-        <LoadingProvider>
-          <TopProgressBarProvider />
-          <NavigationProgressProvider>
-            <PrefetchMainRoutes />
-            <CartProviderWrapper>
-              <SidebarProviderWrapper defaultOpen={true}>
-                <AppSidebar />
-                <SidebarInset className="flex flex-col w-full overflow-x-hidden">
-                  <LayoutWithHeader>{children}</LayoutWithHeader>
-                </SidebarInset>
-              </SidebarProviderWrapper>
-            </CartProviderWrapper>
-            <Toaster richColors position="top-right" theme="light" />
-          </NavigationProgressProvider>
-        </LoadingProvider>
-      </LayoutDataLoader>
+      <LoadingProvider>
+        <TopProgressBarProvider />
+        <NavigationProgressProvider>
+          <PrefetchMainRoutes />
+          <CartProviderWrapper>
+            <SidebarProviderWrapper defaultOpen={initialSidebarOpen}>
+              <AppSidebar />
+              <SidebarInset className="flex flex-col w-full overflow-x-hidden">
+                <LayoutWithHeader>{children}</LayoutWithHeader>
+              </SidebarInset>
+            </SidebarProviderWrapper>
+          </CartProviderWrapper>
+          <Toaster richColors position="top-right" theme="light" />
+        </NavigationProgressProvider>
+      </LoadingProvider>
     </NextIntlClientProvider>
   );
 }

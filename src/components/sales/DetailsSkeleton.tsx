@@ -5,17 +5,24 @@ import { Skeleton } from "@/components/ui/skeleton";
 
 interface DetailsSkeletonProps {
   showStatusTracker?: boolean;
+  showHeader?: boolean;
   leftWidth?: string;
   rightWidth?: string;
 }
 
 export default function DetailsSkeleton({
   showStatusTracker = true,
+  showHeader = false,
   leftWidth = "lg:w-[65%]",
   rightWidth = "lg:w-[33%]",
 }: DetailsSkeletonProps) {
   return (
     <>
+      {showHeader && (
+        <div className="w-full h-[73px] bg-white border-b flex items-center px-6">
+          <Skeleton className="h-8 w-48" />
+        </div>
+      )}
       {/* Order Details Content - Scrollable area */}
       <div className="flex-1 w-full">
         <PageLayout variant="content">

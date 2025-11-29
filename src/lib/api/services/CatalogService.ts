@@ -1,10 +1,10 @@
+import { CatalogSettingsResponse, CategoriesResponse } from "@/types/appconfig";
 import {
-  homePageClient,
   catalogClient,
   createClientWithContext,
+  homePageClient,
   RequestContext,
 } from "../client";
-import { CategoriesResponse, CatalogSettingsResponse } from "@/types/appconfig";
 
 export interface Category {
   id: string;
@@ -321,13 +321,11 @@ export class CatalogService {
       id: number | string;
       name: string;
       imageSource?: string;
-      iconSource?: string;
-      description?: string;
       slug?: string;
       [key: string]: unknown;
     }>
   > {
-    const { SearchService } = await import("./SearchService/SearchService");
+    const SearchService = (await import("./SearchService/SearchService")).default;
 
     try {
       // Get elasticCode from context to build elastic index
@@ -413,12 +411,12 @@ export class CatalogService {
         },
       };
 
-      // Fetch categories from OpenSearch
-      const result = await SearchService.getAggregations(
+      // Fetch categories from OpenSearch using searchProducts with aggregations
+      const result = await SearchService.searchProducts({
         elasticIndex,
         query,
-        context
-      );
+        context,
+      });
 
       if (!result.success || !result.aggregations) {
         console.error(
@@ -466,7 +464,6 @@ export class CatalogService {
                 name: categoryName,
                 slug: categorySlug,
                 imageSource: categoryImage,
-                iconSource: categoryImage, // Use same image for icon
               });
             }
           }

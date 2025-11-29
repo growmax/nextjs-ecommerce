@@ -1,9 +1,9 @@
+import type { RequestContext } from "@/lib/api/client";
 import CatalogService from "@/lib/api/services/CatalogService";
 import TenantService from "@/lib/api/services/TenantService";
-import type { RequestContext } from "@/lib/api/client";
+import { Metadata } from "next";
 import { headers } from "next/headers";
 import Link from "next/link";
-import { Metadata } from "next";
 
 interface PageProps {
   params: Promise<{
@@ -17,7 +17,7 @@ interface PageProps {
 export async function generateMetadata({
   params,
 }: PageProps): Promise<Metadata> {
-  const { locale } = await params;
+  const { locale: _locale } = await params;
 
   return {
     title: "All Categories | E-Commerce",

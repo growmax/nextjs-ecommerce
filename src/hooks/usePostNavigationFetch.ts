@@ -59,6 +59,7 @@ export function usePostNavigationFetch(fetchFn: () => void, deps: any[] = []) {
     } else {
       // Fallback: immediate execution
       fetchFn();
+      return undefined;
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [pathname, ...deps]);

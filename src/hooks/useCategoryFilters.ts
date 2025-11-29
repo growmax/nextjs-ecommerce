@@ -177,13 +177,22 @@ export function useCategoryFilters() {
     // Parse price range
     const minPriceParam = searchParams.get("min_price");
     const maxPriceParam = searchParams.get("max_price");
-    const priceRange =
-      minPriceParam || maxPriceParam
-        ? {
-            min: minPriceParam ? parseFloat(minPriceParam) : undefined,
-            max: maxPriceParam ? parseFloat(maxPriceParam) : undefined,
-          }
-        : undefined;
+    let priceRange: { min?: number; max?: number } | undefined = undefined;
+    if (minPriceParam || maxPriceParam) {
+      priceRange = {};
+      if (minPriceParam) {
+        const minPrice = parseFloat(minPriceParam);
+        if (!isNaN(minPrice)) priceRange.min = minPrice;
+      }
+      if (maxPriceParam) {
+        const maxPrice = parseFloat(maxPriceParam);
+        if (!isNaN(maxPrice)) priceRange.max = maxPrice;
+      }
+      // If no valid prices were parsed, set to undefined
+      if (Object.keys(priceRange).length === 0) {
+        priceRange = undefined;
+      }
+    }
 
     // Parse catalog codes
     const catalogCodes = searchParams.getAll("catalog_code").filter(Boolean);

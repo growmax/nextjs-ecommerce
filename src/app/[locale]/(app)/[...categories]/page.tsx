@@ -339,6 +339,18 @@ export default async function CategoryPage({
   // Get elastic index from elasticCode
   const elasticIndex = elasticCode ? `${elasticCode}pgandproducts` : "";
 
+  // Build base query for aggregations
+  const { buildCategoryFilter, getBaseQuery } = await import(
+    "@/utils/opensearch/browse-queries"
+  );
+  const baseQuery = getBaseQuery();
+  const categoryFilters = buildCategoryFilter(categoryIds);
+  
+  const baseQueryForAggs = {
+    must: [...baseQuery.must, ...categoryFilters],
+    must_not: baseQuery.must_not,
+  };
+
   // Fetch aggregations server-side
   let aggregations: FilterAggregations | null = null;
   if (elasticIndex) {
@@ -388,20 +400,6 @@ export default async function CategoryPage({
     }
   }
 
-  const queryResult = buildCategoryQuery(categoryIds, {
-    page,
-    pageSize: 20,
-    sortBy: { sortBy },
-    ...(Object.keys(variantAttributes).length > 0 && { variantAttributes }),
-    ...(Object.keys(productSpecifications).length > 0 && {
-      productSpecifications,
-    }),
-    ...(inStock !== undefined && { inStock }),
-    ...(priceRange && { priceRange }),
-    ...(catalogCodes && catalogCodes.length > 0 && { catalogCodes }),
-    ...(equipmentCodes && equipmentCodes.length > 0 && { equipmentCodes }),
-  });
-
   // Create products promise for streaming
   const productsPromise = elasticIndex
     ? (async () => {
@@ -410,7 +408,7 @@ export default async function CategoryPage({
           const queryResult = buildCategoryQuery(categoryIds, {
             page,
             pageSize: 20,
-            sortBy,
+            sortBy: { sortBy },
             inStock,
             variantAttributes,
             productSpecifications,
@@ -503,6 +501,9 @@ export default async function CategoryPage({
           sort: sortBy,
         }}
         total={initialProducts.total}
+        categoryPath={categoryPath}
+        aggregations={aggregations}
+        currentCategoryPath={categories}
       />
 
       {/* Product Grid - Server-rendered for SEO with Suspense for streaming */}

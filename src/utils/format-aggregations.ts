@@ -10,6 +10,7 @@ import type {
     BrandFilterOption,
     CategoryFilterOption,
     FilterAggregations,
+    FilterOption,
     ProductSpecificationGroup,
     VariantAttributeGroup,
 } from "@/types/category-filters";
@@ -390,10 +391,14 @@ export function formatPriceStatsAggregation(
   const priceStats = stats.filter?.price_stats || stats.price_stats;
 
   if (priceStats) {
-    return {
-      min: priceStats.min,
-      max: priceStats.max,
-    };
+    const result: { min?: number; max?: number } = {};
+    if (priceStats.min !== undefined) {
+      result.min = priceStats.min;
+    }
+    if (priceStats.max !== undefined) {
+      result.max = priceStats.max;
+    }
+    return result;
   }
 
   return undefined;

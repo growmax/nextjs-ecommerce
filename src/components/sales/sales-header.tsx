@@ -3,10 +3,10 @@
 import { statusColor } from "@/components/custom/statuscolors";
 import { Button } from "@/components/ui/button";
 import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
+    DropdownMenu,
+    DropdownMenuContent,
+    DropdownMenuItem,
+    DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Skeleton } from "@/components/ui/skeleton";
 import { TopProgressBar } from "@/components/ui/top-progress-bar";
@@ -73,8 +73,6 @@ export default function SalesHeader({
   className,
   loading = false,
 }: SalesHeaderProps) {
-  const { state, isMobile } = useSidebar();
-
 
   return (
     <>

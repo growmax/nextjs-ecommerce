@@ -2,15 +2,15 @@
 
 import { Button } from "@/components/ui/button";
 import {
-  Card,
-  CardContent,
-  CardFooter,
-  CardHeader,
-  CardTitle,
+    Card,
+    CardContent,
+    CardFooter,
+    CardHeader,
+    CardTitle,
 } from "@/components/ui/card";
 
-import { Home, FolderX, Search, Grid3x3 } from "lucide-react";
 import { Link } from "@/i18n/navigation";
+import { FolderX, Grid3x3, Home, Search } from "lucide-react";
 
 interface CategoryNotFoundProps {
   attemptedSlugs: string[];
@@ -23,9 +23,8 @@ interface CategoryNotFoundProps {
  */
 export default function CategoryNotFound({
   attemptedSlugs,
-  locale = "en",
+  locale: _locale = "en",
 }: CategoryNotFoundProps) {
-  const categoryPath = attemptedSlugs.join(" > ");
   const attemptedCategory = attemptedSlugs[attemptedSlugs.length - 1] || "category";
 
   return (

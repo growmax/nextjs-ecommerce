@@ -11,7 +11,7 @@ const PLACEHOLDER_IMAGE = "https://placehold.co/600x400?text=Broken Image";
 
 interface ProductCardProps {
   product: ProductListItem;
-  viewMode?: "grid" | "list";
+  viewMode?: "grid" | "list" | "table";
 }
 
 /**

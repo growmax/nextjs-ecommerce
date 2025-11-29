@@ -23,8 +23,8 @@ import { statusColor } from "@/components/custom/statuscolors";
 import { useCurrentUser } from "@/hooks/useCurrentUser";
 import { useNavigationWithLoader } from "@/hooks/useNavigationWithLoader";
 import { usePageLoader } from "@/hooks/usePageLoader";
-import { useRequestDeduplication } from "@/hooks/useRequestDeduplication";
 import { usePostNavigationFetch } from "@/hooks/usePostNavigationFetch";
+import { useRequestDeduplication } from "@/hooks/useRequestDeduplication";
 import ordersFilterService, {
   OrderFilter,
 } from "@/lib/api/services/OrdersFilterService/OrdersFilterService";

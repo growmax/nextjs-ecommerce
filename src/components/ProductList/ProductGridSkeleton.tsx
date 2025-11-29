@@ -4,7 +4,7 @@ import { useSidebar } from "@/components/ui/sidebar";
 import { ProductCardSkeleton } from "./ProductCardSkeleton";
 
 interface ProductGridSkeletonProps {
-  viewMode?: "grid" | "list";
+  viewMode?: "grid" | "list" | "table";
   count?: number;
 }
 
