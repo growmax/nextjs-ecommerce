@@ -1,6 +1,6 @@
 import { OrderDetailsService } from "@/lib/api";
 import { JWTService } from "@/lib/services/JWTService";
-import type { OrderDetailsPageProps } from "@/types/details/orderdetails/index.types";
+import { OrderDetailsPageProps } from "@/types/details/orderdetails/index.types";
 import { cookies } from "next/headers";
 import { Suspense } from "react";
 import OrderDetailsClient from "./components/OrderDetailsClient";
