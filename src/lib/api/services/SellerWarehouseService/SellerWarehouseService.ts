@@ -98,7 +98,7 @@ export class SellerWarehouseService extends BaseService<SellerWarehouseService> 
   // Find seller branch based on buyer details and products (POST method)
   async findSellerBranch(
     userId: string,
-    companyId: string,
+    _companyId: string,
     request: FindSellerBranchRequest
   ): Promise<SellerBranch[]> {
     const url = `/branches/findsellerBranch/${userId}?companyId=${request.sellerCompanyId}`;

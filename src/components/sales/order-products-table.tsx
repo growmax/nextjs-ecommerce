@@ -233,8 +233,8 @@ export default function OrderProductsTable({
                     const discountValue =
                       product.discount ?? product.discountPercentage ?? 0;
                     // Get cash discount value from product
-                    const cashDiscountValue =
-                      product.cashdiscountValue ?? product.cashDiscountValue ?? 0;
+                    const cashDiscountValue: number =
+                      (product.cashdiscountValue ?? product.cashDiscountValue ?? 0) as number;
                     // Use unitListPrice as primary source for base price, fallback to other fields
                     const basePrice =
                       product.unitListPrice ??

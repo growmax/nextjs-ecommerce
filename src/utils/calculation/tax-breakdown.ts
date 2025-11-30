@@ -119,9 +119,6 @@ export function calculateShippingTax(
     tempCartValue[`${tax.taxName}Total`] = 0;
   });
 
-  // Initialize shippingTax outside the product loop
-  let totalShippingTax = 0;
-
   tempProducts.forEach((data, index) => {
     let intraTotalTax = 0;
     let shippingCompound = 0;

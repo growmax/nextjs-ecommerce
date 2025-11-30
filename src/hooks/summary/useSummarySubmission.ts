@@ -1,13 +1,13 @@
 "use client";
 
 import { useCart } from "@/hooks/useCart";
+import { useRouter } from "@/i18n/navigation";
 import OrdersService from "@/lib/api/services/OrdersService/OrdersService";
 import QuoteSubmissionService from "@/lib/api/services/QuoteSubmissionService/QuoteSubmissionService";
 import { containsXSS } from "@/utils/sanitization/sanitization.utils";
 import { SummaryFormData, summaryReqDTO } from "@/utils/summary/summaryReqDTO";
 import { addDays } from "date-fns";
 import { map } from "lodash";
-import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { UseFormGetValues, UseFormTrigger } from "react-hook-form";
 import { toast } from "sonner";
@@ -505,8 +505,10 @@ export default function useSummarySubmission(
         },
         body
       );
-       console.log(response);
-      if (response?.data?.orderIdentifier) {
+       
+      // Type assertion to allow both response formats: { orderIdentifier } or { data: { orderIdentifier } }
+      const responseWithData = response as { orderIdentifier?: string; data?: { orderIdentifier?: string } };
+      if (responseWithData?.data?.orderIdentifier || responseWithData?.orderIdentifier) {
         // Clear cart
         const selectedSellerId = getValues("selectedSellerId");
         if (selectedSellerId) {
@@ -524,10 +526,10 @@ export default function useSummarySubmission(
 
         toast.success("Order placed successfully");
 
-        // Navigate to orders landing page
+        // Navigate to orders landing page (note: orderslanding with 's')
         router.push("/landing/orderslanding");
 
-        return response.orderIdentifier;
+        return responseWithData?.data?.orderIdentifier || responseWithData?.orderIdentifier || null;
       }
 
       throw new Error("Order creation failed");

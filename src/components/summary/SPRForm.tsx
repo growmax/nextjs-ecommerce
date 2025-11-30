@@ -37,7 +37,7 @@ export default function SPRForm({
   isContentPage = false,
   isSummaryPage = true,
 }: SPRFormProps) {
-  const { quoteSettings } = useModuleSettings();
+  useModuleSettings();
   const {
     getValues,
     register,
@@ -51,7 +51,7 @@ export default function SPRForm({
   const sellerCompanyId = searchParams?.get("sellerId");
 
   const { competitors, competitorsLoading } = useGetManufacturerCompetitors(
-    sellerCompanyId,
+    sellerCompanyId || undefined,
     !!sellerCompanyId
   );
 
@@ -94,8 +94,7 @@ export default function SPRForm({
   // Handle field changes with XSS validation
   const handleFieldChange = async (
     fieldName: string,
-    value: string | string[],
-    displayName: string
+    value: string | string[]
   ) => {
     // XSS validation
     if (typeof value === "string" && value && containsXSS(value)) {
@@ -122,7 +121,7 @@ export default function SPRForm({
       const fieldName = isSummaryPage
         ? "sprDetails.competitorNames"
         : "quotationDetails[0].sprDetails.competitorNames";
-      await handleFieldChange(fieldName, updatedCompetitors, "Competitors");
+      await handleFieldChange(fieldName, updatedCompetitors);
     }
   };
 
@@ -132,17 +131,17 @@ export default function SPRForm({
       ? sprDetails.competitorNames
       : [];
     const updatedCompetitors = currentCompetitors.filter(
-      (comp) => comp !== competitorToRemove
+      (comp: string) => comp !== competitorToRemove
     );
     const fieldName = isSummaryPage
       ? "sprDetails.competitorNames"
       : "quotationDetails[0].sprDetails.competitorNames";
-    await handleFieldChange(fieldName, updatedCompetitors, "Competitors");
+    await handleFieldChange(fieldName, updatedCompetitors);
   };
 
   const sprErrors = isSummaryPage
     ? errors?.sprDetails
-    : errors?.quotationDetails?.[0]?.sprDetails;
+    : (errors?.quotationDetails as any)?.[0]?.sprDetails;
 
   return (
     <Card className="shadow-sm mt-4" id="endCustomerInfo">
@@ -176,7 +175,7 @@ export default function SPRForm({
                     const fieldName = isSummaryPage
                       ? "sprDetails.companyName"
                       : "quotationDetails[0].sprDetails.companyName";
-                    await handleFieldChange(fieldName, value, "End Customer Name");
+                    await handleFieldChange(fieldName, value);
                   },
                 }
               )}
@@ -218,7 +217,7 @@ export default function SPRForm({
                     const fieldName = isSummaryPage
                       ? "sprDetails.projectName"
                       : "quotationDetails[0].sprDetails.projectName";
-                    await handleFieldChange(fieldName, value, "Project Name");
+                    await handleFieldChange(fieldName, value);
                   },
                 }
               )}
@@ -349,7 +348,7 @@ export default function SPRForm({
                     const fieldName = isSummaryPage
                       ? "sprDetails.priceJustification"
                       : "quotationDetails[0].sprDetails.priceJustification";
-                    await handleFieldChange(fieldName, value, "Price Justification");
+                    await handleFieldChange(fieldName, value);
                   },
                 }
               )}

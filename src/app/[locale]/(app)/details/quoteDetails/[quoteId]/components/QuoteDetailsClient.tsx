@@ -4,7 +4,7 @@ import { Toaster } from "@/components/ui/sonner";
 import { FileText, Layers } from "lucide-react";
 import { useTranslations } from "next-intl";
 import dynamic from "next/dynamic";
-import { Suspense, useEffect, useMemo, useRef, useState } from "react";
+import React, { Suspense, useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
 
 import { EditOrderNameDialog } from "@/components/dialogs/EditOrderNameDialog";
@@ -476,6 +476,11 @@ export default function QuoteDetailsClient({
       onClick: handleConvertToOrder,
     },
   ];
+
+  const sprDetails = (quoteDetailData?.sprDetails as any) || null;
+  const showTargetDiscount = sprDetails &&
+    (sprDetails?.targetPrice > 0 || sprDetails?.sprRequestedDiscount > 0);
+
   console.log(displayQuoteDetails);
   return (
     <ApplicationLayout>
@@ -718,10 +723,7 @@ export default function QuoteDetailsClient({
                   </Suspense>
 
                   {/* Target Discount Card - Display only on detail page */}
-                  {quoteDetailData?.sprDetails && (
-                    (quoteDetailData.sprDetails as any)?.targetPrice > 0 ||
-                    (quoteDetailData.sprDetails as any)?.sprRequestedDiscount > 0
-                  ) && (
+                  {showTargetDiscount && (
                     <div className="mt-4">
                       <Suspense fallback={null}>
                         <div className="bg-white rounded-lg border border-gray-200 shadow-sm">
@@ -738,7 +740,7 @@ export default function QuoteDetailsClient({
                                   Total Discount
                                 </Label>
                                 <div className="text-sm font-semibold text-gray-900 w-1/2 text-right">
-                                  {((quoteDetailData.sprDetails as any)?.sprRequestedDiscount || 0).toFixed(2)}%
+                                  {(sprDetails?.sprRequestedDiscount || 0).toFixed(2)}%
                                 </div>
                               </div>
                               {/* Target Price Display */}
@@ -748,7 +750,7 @@ export default function QuoteDetailsClient({
                                 </Label>
                                 <div className="text-sm font-semibold text-gray-900 w-1/2 text-right">
                                   <PricingFormat
-                                    value={(quoteDetailData.sprDetails as any)?.targetPrice || 0}
+                                    value={sprDetails?.targetPrice || 0}
                                   />
                                 </div>
                               </div>

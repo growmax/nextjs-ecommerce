@@ -115,14 +115,6 @@ const mockInitialValues = {
   additionalTerms: "",
   buyerReferenceNumber: null,
   customerRequiredDate: null,
-  sprDetails: {
-    spr: false,
-    companyName: "",
-    projectName: "",
-    priceJustification: "",
-    competitorNames: [],
-    sprRequestedDiscount: 0,
-  },
   cashdiscount: false,
   overallShipping: 0,
   pfRate: 0,
@@ -172,6 +164,8 @@ const mockGlobalCalc = jest.fn((params: any) => ({
   })),
   breakup: [],
 }));
+
+const mockSubmitOrder = jest.fn();
 
 // Mock hooks
 jest.mock("@/hooks/useCurrentUser", () => ({
@@ -245,25 +239,13 @@ jest.mock("@/hooks/useModuleSettings", () => ({
   }),
 }));
 
-jest.mock("@/hooks/useAccessControl", () => ({
+jest.mock("@/hooks/summary/useSummarySubmission", () => ({
   __esModule: true,
   default: () => ({
-    hasQuotePermission: true,
-    hasOrderPermission: true,
-    listAccessElements: ["MQUOTE_ECQ", "MORDER_EPO"],
-    isLoading: false,
+    submitOrder: mockSubmitOrder,
+    isSubmitting: false,
   }),
 }));
-
-jest.mock(
-  "@/hooks/useGetCurrencyModuleSettings/useGetCurrencyModuleSettings",
-  () => ({
-    __esModule: true,
-    default: () => ({
-      minimumQuoteValue: undefined,
-    }),
-  })
-);
 
 jest.mock("@/hooks/useGetLatestPaymentTerms/useGetLatestPaymentTerms", () => ({
   __esModule: true,
@@ -463,7 +445,7 @@ jest.mock("@/components/summary/SummaryNameCard", () => {
       { "data-testid": "summary-name-card" },
       React.createElement("input", {
         type: "text",
-        "data-testid": "quote-name-input",
+        "data-testid": "order-name-input",
         defaultValue: name,
         onChange: e => onNameChange && onNameChange(e.target.value),
       }),
@@ -533,17 +515,6 @@ jest.mock("@/components/summary/TargetDiscountCard", () => {
   };
 });
 
-jest.mock("@/components/summary/SPRForm", () => {
-  const React = jest.requireActual<typeof import("react")>("react");
-  const MockSPRForm = () =>
-    React.createElement("div", { "data-testid": "spr-form" }, "SPR Form");
-  MockSPRForm.displayName = "MockSPRForm";
-  return {
-    __esModule: true,
-    default: MockSPRForm,
-  };
-});
-
 jest.mock("@/components/summary/Attachments", () => {
   const React = jest.requireActual<typeof import("react")>("react");
   const MockAttachments = () =>
@@ -555,161 +526,16 @@ jest.mock("@/components/summary/Attachments", () => {
   };
 });
 
-jest.mock("@/components/ui/dialog", () => {
-  const React = jest.requireActual<typeof import("react")>("react");
-  const MockDialog = ({
-    open,
-    onOpenChange,
-    children,
-  }: {
-    open: boolean;
-    onOpenChange: (open: boolean) => void;
-    children: React.ReactNode;
-  }) =>
-    open
-      ? React.createElement(
-          "div",
-          { "data-testid": "dialog" },
-          React.createElement("button", {
-            "data-testid": "dialog-close",
-            onClick: () => onOpenChange(false),
-          }),
-          children
-        )
-      : null;
-  MockDialog.displayName = "MockDialog";
-
-  const MockDialogContent = ({ children }: { children: React.ReactNode }) =>
-    React.createElement("div", { "data-testid": "dialog-content" }, children);
-  MockDialogContent.displayName = "MockDialogContent";
-
-  const MockDialogHeader = ({ children }: { children: React.ReactNode }) =>
-    React.createElement("div", { "data-testid": "dialog-header" }, children);
-  MockDialogHeader.displayName = "MockDialogHeader";
-
-  const MockDialogTitle = ({ children }: { children: React.ReactNode }) =>
-    React.createElement("h2", { "data-testid": "dialog-title" }, children);
-  MockDialogTitle.displayName = "MockDialogTitle";
-
-  const MockDialogDescription = ({ children }: { children: React.ReactNode }) =>
-    React.createElement("p", { "data-testid": "dialog-description" }, children);
-  MockDialogDescription.displayName = "MockDialogDescription";
-
-  const MockDialogFooter = ({ children }: { children: React.ReactNode }) =>
-    React.createElement("div", { "data-testid": "dialog-footer" }, children);
-  MockDialogFooter.displayName = "MockDialogFooter";
-
-  return {
-    Dialog: MockDialog,
-    DialogContent: MockDialogContent,
-    DialogHeader: MockDialogHeader,
-    DialogTitle: MockDialogTitle,
-    DialogDescription: MockDialogDescription,
-    DialogFooter: MockDialogFooter,
-  };
-});
-
-jest.mock("@/components/ui/button", () => {
-  const React = jest.requireActual<typeof import("react")>("react");
-  const MockButton = ({
-    children,
-    onClick,
-    disabled,
-    variant,
-  }: {
-    children: React.ReactNode;
-    onClick?: () => void;
-    disabled?: boolean;
-    variant?: string;
-  }) =>
-    React.createElement(
-      "button",
-      {
-        "data-testid": "button",
-        onClick,
-        disabled,
-        "data-variant": variant,
-      },
-      children
-    );
-  MockButton.displayName = "MockButton";
-  return {
-    Button: MockButton,
-  };
-});
-
-jest.mock("@/components/ui/checkbox", () => {
-  const React = jest.requireActual<typeof import("react")>("react");
-  const MockCheckbox = ({
-    checked,
-    onCheckedChange,
-    id,
-  }: {
-    checked?: boolean;
-    onCheckedChange?: (checked: boolean) => void;
-    id?: string;
-  }) =>
-    React.createElement("input", {
-      type: "checkbox",
-      "data-testid": `checkbox-${id}`,
-      checked: checked || false,
-      onChange: e => onCheckedChange && onCheckedChange(e.target.checked),
-    });
-  MockCheckbox.displayName = "MockCheckbox";
-  return {
-    Checkbox: MockCheckbox,
-  };
-});
-
-jest.mock("@/components/ui/label", () => {
-  const React = jest.requireActual<typeof import("react")>("react");
-  const MockLabel = ({
-    children,
-    htmlFor,
-  }: {
-    children: React.ReactNode;
-    htmlFor?: string;
-  }) =>
-    React.createElement("label", { "data-testid": "label", htmlFor }, children);
-  MockLabel.displayName = "MockLabel";
-  return {
-    Label: MockLabel,
-  };
-});
-
-jest.mock("lucide-react", () => {
-  const React = jest.requireActual<typeof import("react")>("react");
-  const MockFileText = () =>
-    React.createElement("div", { "data-testid": "file-text-icon" }, "FileText");
-  MockFileText.displayName = "MockFileText";
-  return {
-    FileText: MockFileText,
-  };
-});
-
-// Mock services
-jest.mock("@/lib/api", () => ({
-  QuoteSubmissionService: {
-    createQuoteFromSummary: jest.fn(),
-  },
-  formBundleProductsPayload: jest.fn(products => products),
-}));
-
-jest.mock("@/utils/summary/summaryReqDTO", () => ({
-  summaryReqDTO: jest.fn(data => data),
-}));
-
 jest.mock("@/utils/sanitization/sanitization.utils", () => ({
   containsXSS: jest.fn(() => false),
 }));
 
 // Mock validation schema to always pass
-
 jest.mock("@/utils/summary/validation", () => {
   // eslint-disable-next-line @typescript-eslint/no-require-imports
   const yup = require("yup");
   return {
-    BuyerQuoteSummaryValidations: yup.object().shape({}).noUnknown(),
+    BuyerOrderSummaryValidations: yup.object().shape({}).noUnknown(),
   };
 });
 
@@ -735,14 +561,9 @@ import {
   act,
 } from "@testing-library/react";
 import React, { ReactNode } from "react";
-import QuoteSummaryContent from "./QuoteSummaryContent";
-import { QuoteSubmissionService } from "@/lib/api";
+import OrderSummaryContent from "./OrderSummaryContent";
 import { toast } from "sonner";
 
-const mockCreateQuote =
-  QuoteSubmissionService.createQuoteFromSummary as jest.MockedFunction<
-    typeof QuoteSubmissionService.createQuoteFromSummary
-  >;
 const mockToastSuccess = toast.success as jest.MockedFunction<
   typeof toast.success
 >;
@@ -766,7 +587,7 @@ function createWrapper() {
   return Wrapper;
 }
 
-describe("QuoteSummaryContent", () => {
+describe("OrderSummaryContent", () => {
   beforeEach(() => {
     jest.clearAllMocks();
     mockGlobalCalc.mockImplementation((params: any) => ({
@@ -798,16 +619,13 @@ describe("QuoteSummaryContent", () => {
       })),
       breakup: [],
     }));
-    mockCreateQuote.mockResolvedValue({
-      quotationIdentifier: "QUO-123",
-      success: true,
-    } as any);
+    mockSubmitOrder.mockResolvedValue("ORD-123");
     mockRouterPush.mockClear();
   });
 
   describe("Rendering", () => {
     it("should render the component with all main sections", async () => {
-      render(<QuoteSummaryContent />, { wrapper: createWrapper() });
+      render(<OrderSummaryContent />, { wrapper: createWrapper() });
 
       await waitFor(() => {
         expect(screen.getByTestId("application-layout")).toBeInTheDocument();
@@ -815,18 +633,18 @@ describe("QuoteSummaryContent", () => {
       });
     });
 
-    it("should render sales header with quote name", async () => {
-      render(<QuoteSummaryContent />, { wrapper: createWrapper() });
+    it("should render sales header with order name", async () => {
+      render(<OrderSummaryContent />, { wrapper: createWrapper() });
 
       await waitFor(() => {
         const header = screen.getByTestId("sales-header");
         expect(header).toBeInTheDocument();
-        expect(header).toHaveTextContent("Test's Quote");
+        expect(header).toHaveTextContent("Test's Order");
       });
     });
 
     it("should render products table when products are available", async () => {
-      render(<QuoteSummaryContent />, { wrapper: createWrapper() });
+      render(<OrderSummaryContent />, { wrapper: createWrapper() });
 
       await waitFor(() => {
         expect(screen.getByTestId("order-products-table")).toBeInTheDocument();
@@ -834,7 +652,7 @@ describe("QuoteSummaryContent", () => {
     });
 
     it("should render contact details and terms cards", async () => {
-      render(<QuoteSummaryContent />, { wrapper: createWrapper() });
+      render(<OrderSummaryContent />, { wrapper: createWrapper() });
 
       await waitFor(() => {
         expect(screen.getByTestId("order-contact-details")).toBeInTheDocument();
@@ -843,7 +661,7 @@ describe("QuoteSummaryContent", () => {
     });
 
     it("should render price details section", async () => {
-      render(<QuoteSummaryContent />, { wrapper: createWrapper() });
+      render(<OrderSummaryContent />, { wrapper: createWrapper() });
 
       await waitFor(() => {
         expect(screen.getByTestId("order-price-details")).toBeInTheDocument();
@@ -851,7 +669,7 @@ describe("QuoteSummaryContent", () => {
     });
 
     it("should render summary name card", async () => {
-      render(<QuoteSummaryContent />, { wrapper: createWrapper() });
+      render(<OrderSummaryContent />, { wrapper: createWrapper() });
 
       await waitFor(() => {
         expect(screen.getByTestId("summary-name-card")).toBeInTheDocument();
@@ -859,23 +677,15 @@ describe("QuoteSummaryContent", () => {
     });
 
     it("should render cash discount card when enabled", async () => {
-      render(<QuoteSummaryContent />, { wrapper: createWrapper() });
+      render(<OrderSummaryContent />, { wrapper: createWrapper() });
 
       await waitFor(() => {
         expect(screen.getByTestId("cash-discount-card")).toBeInTheDocument();
       });
     });
 
-    it("should render SPR form section", async () => {
-      render(<QuoteSummaryContent />, { wrapper: createWrapper() });
-
-      await waitFor(() => {
-        expect(screen.getByTestId("spr-form")).toBeInTheDocument();
-      });
-    });
-
     it("should render attachments section", async () => {
-      render(<QuoteSummaryContent />, { wrapper: createWrapper() });
+      render(<OrderSummaryContent />, { wrapper: createWrapper() });
 
       await waitFor(() => {
         expect(screen.getByTestId("attachments")).toBeInTheDocument();
@@ -884,24 +694,24 @@ describe("QuoteSummaryContent", () => {
   });
 
   describe("User Interactions", () => {
-    it("should handle quote name change", async () => {
-      render(<QuoteSummaryContent />, { wrapper: createWrapper() });
+    it("should handle order name change", async () => {
+      render(<OrderSummaryContent />, { wrapper: createWrapper() });
 
       await waitFor(() => {
-        const nameInput = screen.getByTestId("quote-name-input");
+        const nameInput = screen.getByTestId("order-name-input");
         expect(nameInput).toBeInTheDocument();
       });
 
-      const nameInput = screen.getByTestId("quote-name-input");
-      fireEvent.change(nameInput, { target: { value: "New Quote Name" } });
+      const nameInput = screen.getByTestId("order-name-input");
+      fireEvent.change(nameInput, { target: { value: "New Order Name" } });
 
       await waitFor(() => {
-        expect(nameInput).toHaveValue("New Quote Name");
+        expect(nameInput).toHaveValue("New Order Name");
       });
     });
 
     it("should handle cancel button click", async () => {
-      render(<QuoteSummaryContent />, { wrapper: createWrapper() });
+      render(<OrderSummaryContent />, { wrapper: createWrapper() });
 
       await waitFor(() => {
         const cancelButton = screen.getByTestId("button-cancel");
@@ -924,7 +734,7 @@ describe("QuoteSummaryContent", () => {
     });
 
     it("should handle quantity change", async () => {
-      render(<QuoteSummaryContent />, { wrapper: createWrapper() });
+      render(<OrderSummaryContent />, { wrapper: createWrapper() });
 
       await waitFor(() => {
         const quantityInput = screen.getByTestId("quantity-input-1");
@@ -939,24 +749,8 @@ describe("QuoteSummaryContent", () => {
       });
     });
 
-    it("should handle SPR checkbox toggle", async () => {
-      render(<QuoteSummaryContent />, { wrapper: createWrapper() });
-
-      await waitFor(() => {
-        const sprCheckbox = screen.getByTestId("checkbox-spr-toggle");
-        expect(sprCheckbox).toBeInTheDocument();
-      });
-
-      const sprCheckbox = screen.getByTestId("checkbox-spr-toggle");
-      fireEvent.click(sprCheckbox);
-
-      await waitFor(() => {
-        expect(sprCheckbox).toBeChecked();
-      });
-    });
-
     it("should handle cash discount apply", async () => {
-      render(<QuoteSummaryContent />, { wrapper: createWrapper() });
+      render(<OrderSummaryContent />, { wrapper: createWrapper() });
 
       await waitFor(() => {
         const applyButton = screen.getByTestId("apply-cash-discount");
@@ -972,7 +766,7 @@ describe("QuoteSummaryContent", () => {
     });
 
     it("should handle cash discount remove", async () => {
-      render(<QuoteSummaryContent />, { wrapper: createWrapper() });
+      render(<OrderSummaryContent />, { wrapper: createWrapper() });
 
       await waitFor(() => {
         const removeButton = screen.getByTestId("remove-cash-discount");
@@ -988,7 +782,7 @@ describe("QuoteSummaryContent", () => {
     });
 
     it("should handle warehouse address change and update isInter", async () => {
-      render(<QuoteSummaryContent />, { wrapper: createWrapper() });
+      render(<OrderSummaryContent />, { wrapper: createWrapper() });
 
       await waitFor(() => {
         const changeWarehouseButton = screen.getByTestId("change-warehouse");
@@ -1005,85 +799,45 @@ describe("QuoteSummaryContent", () => {
   });
 
   describe("Form Submission", () => {
-    it("should open confirmation dialog when request quote button is clicked", async () => {
-      render(<QuoteSummaryContent />, { wrapper: createWrapper() });
+    it("should submit order when place order button is clicked", async () => {
+      render(<OrderSummaryContent />, { wrapper: createWrapper() });
 
       await waitFor(() => {
-        const requestButton = screen.getByTestId("button-request-for-quote");
-        expect(requestButton).toBeInTheDocument();
+        const placeOrderButton = screen.getByTestId("button-place-order");
+        expect(placeOrderButton).toBeInTheDocument();
       });
 
-      const requestButton = screen.getByTestId("button-request-for-quote");
-      fireEvent.click(requestButton);
+      const placeOrderButton = screen.getByTestId("button-place-order");
+
+      await act(async () => {
+        fireEvent.click(placeOrderButton);
+      });
 
       await waitFor(
         () => {
-          expect(screen.getByTestId("dialog")).toBeInTheDocument();
+          expect(mockSubmitOrder).toHaveBeenCalled();
         },
         { timeout: 3000 }
       );
     });
 
-    it("should submit quote when confirmed", async () => {
-      render(<QuoteSummaryContent />, { wrapper: createWrapper() });
+    it("should handle successful order submission", async () => {
+      render(<OrderSummaryContent />, { wrapper: createWrapper() });
 
       await waitFor(() => {
-        const requestButton = screen.getByTestId("button-request-for-quote");
-        expect(requestButton).toBeInTheDocument();
+        const placeOrderButton = screen.getByTestId("button-place-order");
+        expect(placeOrderButton).toBeInTheDocument();
       });
 
-      // Open dialog
-      fireEvent.click(screen.getByTestId("button-request-for-quote"));
-
-      await waitFor(
-        () => {
-          expect(screen.getByTestId("dialog")).toBeInTheDocument();
-        },
-        { timeout: 3000 }
-      );
-
-      // Confirm submission
-      const confirmButton = screen.getByText("Confirm");
-      fireEvent.click(confirmButton);
-
-      await waitFor(
-        () => {
-          expect(mockCreateQuote).toHaveBeenCalled();
-        },
-        { timeout: 3000 }
-      );
-    });
-
-    it("should handle successful quote submission", async () => {
-      render(<QuoteSummaryContent />, { wrapper: createWrapper() });
-
-      await waitFor(() => {
-        const requestButton = screen.getByTestId("button-request-for-quote");
-        expect(requestButton).toBeInTheDocument();
-      });
-
-      // Open dialog
-      await act(async () => {
-        fireEvent.click(screen.getByTestId("button-request-for-quote"));
-      });
-
-      await waitFor(
-        () => {
-          expect(screen.getByTestId("dialog")).toBeInTheDocument();
-        },
-        { timeout: 3000 }
-      );
-
-      // Confirm submission
-      const confirmButton = screen.getByText("Confirm");
+      const placeOrderButton = screen.getByTestId("button-place-order");
 
       await act(async () => {
-        fireEvent.click(confirmButton);
+        fireEvent.click(placeOrderButton);
       });
 
       await waitFor(
         () => {
-          expect(mockCreateQuote).toHaveBeenCalled();
+          expect(mockSubmitOrder).toHaveBeenCalled();
         },
         { timeout: 3000 }
       );
@@ -1092,74 +846,36 @@ describe("QuoteSummaryContent", () => {
       await waitFor(
         () => {
           expect(mockToastSuccess).toHaveBeenCalledWith(
-            "RFQ initiated successfully"
+            "Order placed successfully"
           );
-          expect(mockRouterPush).toHaveBeenCalledWith("/landing/quoteslanding");
+          expect(mockRouterPush).toHaveBeenCalledWith("/landing/orderslanding");
         },
         { timeout: 3000 }
       );
     });
 
-    it("should handle quote submission error", async () => {
-      const errorMessage = "Failed to create quote";
-      mockCreateQuote.mockRejectedValueOnce(new Error(errorMessage));
+    it("should handle order submission error", async () => {
+      const errorMessage = "Failed to place order";
+      mockSubmitOrder.mockRejectedValueOnce(new Error(errorMessage));
 
-      render(<QuoteSummaryContent />, { wrapper: createWrapper() });
+      render(<OrderSummaryContent />, { wrapper: createWrapper() });
 
       await waitFor(() => {
-        const requestButton = screen.getByTestId("button-request-for-quote");
-        expect(requestButton).toBeInTheDocument();
+        const placeOrderButton = screen.getByTestId("button-place-order");
+        expect(placeOrderButton).toBeInTheDocument();
       });
 
-      // Open dialog
-      fireEvent.click(screen.getByTestId("button-request-for-quote"));
+      const placeOrderButton = screen.getByTestId("button-place-order");
 
-      await waitFor(
-        () => {
-          expect(screen.getByTestId("dialog")).toBeInTheDocument();
-        },
-        { timeout: 3000 }
-      );
-
-      // Confirm submission
-      const confirmButton = screen.getByText("Confirm");
-      fireEvent.click(confirmButton);
+      await act(async () => {
+        fireEvent.click(placeOrderButton);
+      });
 
       await waitFor(
         () => {
           expect(mockToastError).toHaveBeenCalledWith(
-            errorMessage || "Failed to create quote. Please try again."
+            errorMessage || "Failed to place order. Please try again."
           );
-        },
-        { timeout: 3000 }
-      );
-    });
-
-    it("should close dialog when cancel is clicked", async () => {
-      render(<QuoteSummaryContent />, { wrapper: createWrapper() });
-
-      await waitFor(() => {
-        const requestButton = screen.getByTestId("button-request-for-quote");
-        expect(requestButton).toBeInTheDocument();
-      });
-
-      // Open dialog
-      fireEvent.click(screen.getByTestId("button-request-for-quote"));
-
-      await waitFor(
-        () => {
-          expect(screen.getByTestId("dialog")).toBeInTheDocument();
-        },
-        { timeout: 3000 }
-      );
-
-      // Close dialog
-      const closeButton = screen.getByTestId("dialog-close");
-      fireEvent.click(closeButton);
-
-      await waitFor(
-        () => {
-          expect(screen.queryByTestId("dialog")).not.toBeInTheDocument();
         },
         { timeout: 3000 }
       );
@@ -1183,14 +899,14 @@ describe("QuoteSummaryContent", () => {
           isLoading: false,
         });
 
-      render(<QuoteSummaryContent />, { wrapper: createWrapper() });
+      render(<OrderSummaryContent />, { wrapper: createWrapper() });
 
       await waitFor(() => {
-        const requestButton = screen.getByTestId("button-request-for-quote");
-        expect(requestButton).toBeInTheDocument();
+        const placeOrderButton = screen.getByTestId("button-place-order");
+        expect(placeOrderButton).toBeInTheDocument();
       });
 
-      fireEvent.click(screen.getByTestId("button-request-for-quote"));
+      fireEvent.click(screen.getByTestId("button-place-order"));
 
       await waitFor(() => {
         expect(mockToastInfo).toHaveBeenCalledWith(
@@ -1210,14 +926,14 @@ describe("QuoteSummaryContent", () => {
         isLoading: false,
       });
 
-      render(<QuoteSummaryContent />, { wrapper: createWrapper() });
+      render(<OrderSummaryContent />, { wrapper: createWrapper() });
 
       await waitFor(() => {
-        const requestButton = screen.getByTestId("button-request-for-quote");
-        expect(requestButton).toBeInTheDocument();
+        const placeOrderButton = screen.getByTestId("button-place-order");
+        expect(placeOrderButton).toBeInTheDocument();
       });
 
-      fireEvent.click(screen.getByTestId("button-request-for-quote"));
+      fireEvent.click(screen.getByTestId("button-place-order"));
 
       await waitFor(
         () => {
@@ -1240,18 +956,18 @@ describe("QuoteSummaryContent", () => {
           isLoading: false,
         });
 
-      render(<QuoteSummaryContent />, { wrapper: createWrapper() });
+      render(<OrderSummaryContent />, { wrapper: createWrapper() });
 
       await waitFor(() => {
-        const requestButton = screen.getByTestId("button-request-for-quote");
-        expect(requestButton).toBeInTheDocument();
+        const placeOrderButton = screen.getByTestId("button-place-order");
+        expect(placeOrderButton).toBeInTheDocument();
       });
 
-      fireEvent.click(screen.getByTestId("button-request-for-quote"));
+      fireEvent.click(screen.getByTestId("button-place-order"));
 
       await waitFor(() => {
         expect(mockToastInfo).toHaveBeenCalledWith(
-          "Add line items to create a new version"
+          "Add line items to place order"
         );
       });
     });
@@ -1265,7 +981,7 @@ describe("QuoteSummaryContent", () => {
         isLoading: true,
       });
 
-      render(<QuoteSummaryContent />, { wrapper: createWrapper() });
+      render(<OrderSummaryContent />, { wrapper: createWrapper() });
 
       await waitFor(
         () => {
@@ -1276,3 +992,5 @@ describe("QuoteSummaryContent", () => {
     });
   });
 });
+
+

@@ -1,8 +1,8 @@
 "use client";
 
 import { Button } from "@/components/ui/button";
-import { useRouter } from "@/i18n/navigation";
 import { useCurrentUser } from "@/hooks/useCurrentUser";
+import { useRouter } from "@/i18n/navigation";
 import { ShoppingCart } from "lucide-react";
 import { useTranslations } from "next-intl";
 
@@ -95,7 +95,7 @@ export default function CartProceedButton({
         disabled={disabled || isLoading}
       >
         <ShoppingCart className="mr-2 h-5 w-5" />
-        {t("placeOrder")}
+        {t("createOrder")}
       </Button>
     </div>
   );

@@ -110,7 +110,8 @@ export default function QuoteSummaryContent() {
   } = methods;
 
   // Watch specific fields that need to trigger re-renders
-  const products = (watch("products") as any[]) || [];
+  const watchedProducts = watch("products");
+  const products = useMemo(() => (watchedProducts as any[]) || [], [watchedProducts]);
   const sprEnabled = ((watch("sprDetails" as any) as any)?.spr) || false;
   const uploading = (watch("uploading" as any) as boolean) || false;
 
@@ -242,8 +243,7 @@ export default function QuoteSummaryContent() {
       }
     }
   }, [
-    watch("setBillingAddress" as any),
-    watch("setWarehouseAddress" as any),
+    watch,
     setValue,
     getValues,
     globalCalc,

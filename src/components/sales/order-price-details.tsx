@@ -339,6 +339,9 @@ export default function OrderPriceDetails({
     taxableAmount,
     overallShipping,
     overallTax,
+    hidePfRate,
+    propCashDiscountValue,
+    propTotalCashDiscount,
   ]);
 
   // Extract tax breakdown from cartValue (pre-calculated) or fallback to manual calculation

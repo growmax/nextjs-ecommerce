@@ -1,7 +1,6 @@
 import { useMemo } from "react";
 import cloneDeep from "lodash/cloneDeep";
 import {
-  cartCalculation,
   discountDetails,
 } from "@/utils/calculation/cartCalculation";
 import { calculateCart } from "@/utils/calculation/cart-calculation";

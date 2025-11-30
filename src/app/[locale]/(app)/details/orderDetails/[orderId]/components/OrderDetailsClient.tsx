@@ -987,20 +987,13 @@ export default function OrderDetailsClient({ params }: OrderDetailsPageProps) {
                   </Suspense>
 
                   {/* Attachments Card */}
-                  {((displayOrderDetails?.orderDetails?.[0]?.uploadedDocumentDetails ||
-                    displayOrderDetails?.uploadedDocumentDetails ||
-                    orderDetails?.data?.orderDetails?.[0]?.uploadedDocumentDetails ||
-                    orderDetails?.data?.uploadedDocumentDetails) &&
-                    Array.isArray(
-                      displayOrderDetails?.orderDetails?.[0]?.uploadedDocumentDetails ||
+                  {(() => {
+                    const attachments = (displayOrderDetails?.orderDetails?.[0]?.uploadedDocumentDetails ||
                       displayOrderDetails?.uploadedDocumentDetails ||
                       orderDetails?.data?.orderDetails?.[0]?.uploadedDocumentDetails ||
-                      orderDetails?.data?.uploadedDocumentDetails
-                    ) &&
-                    (displayOrderDetails?.orderDetails?.[0]?.uploadedDocumentDetails ||
-                      displayOrderDetails?.uploadedDocumentDetails ||
-                      orderDetails?.data?.orderDetails?.[0]?.uploadedDocumentDetails ||
-                      orderDetails?.data?.uploadedDocumentDetails).length > 0) && (
+                      orderDetails?.data?.uploadedDocumentDetails) as any[] | undefined;
+                    return attachments && Array.isArray(attachments) && attachments.length > 0;
+                  })() && (
                       <div className="mt-4">
                         <Suspense fallback={null}>
                           <div className="bg-white rounded-lg border border-gray-200 shadow-sm">
@@ -1011,13 +1004,11 @@ export default function OrderDetailsClient({ params }: OrderDetailsPageProps) {
                             </div>
                             <div className="px-6 py-4">
                               <div className="space-y-2">
-                                {(
-                                  displayOrderDetails?.orderDetails?.[0]?.uploadedDocumentDetails ||
+                                {((displayOrderDetails?.orderDetails?.[0]?.uploadedDocumentDetails ||
                                   displayOrderDetails?.uploadedDocumentDetails ||
                                   orderDetails?.data?.orderDetails?.[0]?.uploadedDocumentDetails ||
                                   orderDetails?.data?.uploadedDocumentDetails ||
-                                  []
-                                ).map(
+                                  []) as any[]).map(
                                   (
                                     attachment: any,
                                     index: number

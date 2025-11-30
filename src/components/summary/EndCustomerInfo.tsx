@@ -42,7 +42,6 @@ export default function EndCustomerInfo({
 }: EndCustomerInfoProps) {
   const { quoteSettings } = useModuleSettings();
   const {
-    getValues,
     register,
     setValue,
     trigger,
@@ -116,14 +115,14 @@ export default function EndCustomerInfo({
   const customerDateError = isSummaryPage
     ? errors?.customerRequiredDate
     : isOrder
-    ? errors?.orderDetails?.[0]?.customerRequiredDate
-    : errors?.quotationDetails?.[0]?.customerRequiredDate;
+    ? (errors?.orderDetails as any)?.[0]?.customerRequiredDate
+    : (errors?.quotationDetails as any)?.[0]?.customerRequiredDate;
 
   const buyerRefError = isSummaryPage
     ? errors?.buyerReferenceNumber
     : isOrder
-    ? errors?.orderDetails?.[0]?.buyerReferenceNumber
-    : errors?.quotationDetails?.[0]?.buyerReferenceNumber;
+    ? (errors?.orderDetails as any)?.[0]?.buyerReferenceNumber
+    : (errors?.quotationDetails as any)?.[0]?.buyerReferenceNumber;
 
   return (
     <Card className="shadow-sm mt-4" id="endCustomerInfo">

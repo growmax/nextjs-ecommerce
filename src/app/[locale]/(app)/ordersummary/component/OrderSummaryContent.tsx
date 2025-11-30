@@ -9,8 +9,6 @@ import { toast } from "sonner";
 
 // Hooks
 import useCurrencyFactor from "@/hooks/summary/useCurrencyFactor";
-import useGetChannel from "@/hooks/summary/useGetChannel";
-import useGetDivision from "@/hooks/summary/useGetDivision";
 import useSummaryDefault from "@/hooks/summary/useSummaryDefault";
 import useSummarySubmission from "@/hooks/summary/useSummarySubmission";
 import { useCart } from "@/hooks/useCart";
@@ -90,7 +88,8 @@ export default function OrderSummaryContent() {
   } = methods;
 
   // Watch specific fields that need to trigger re-renders
-  const products = (watch("products") as any[]) || [];
+  const watchedProducts = watch("products");
+  const products = useMemo(() => (watchedProducts as any[]) || [], [watchedProducts]);
   const uploading = (watch("uploading" as any) as boolean) || false;
 
   // Get calculation hook for recalculating cart values when products change
@@ -104,14 +103,11 @@ export default function OrderSummaryContent() {
   const userId = (companydata as any)?.userId;
   const companyId = (companydata as any)?.companyId;
   const companyName = (companydata as any)?.companyName;
-  const currency = (companydata as any)?.currency || user?.currency;
 
   const [orderName, setOrderName] = useState(
     companyName ? words(companyName)[0] + "'s Order" : "Order"
   );
 
-  const { division } = useGetDivision(products);
-  const { channel } = useGetChannel();
   const { CurrencyFactor } = useCurrencyFactor(user?.companyId);
 
   // Get currency factor value
@@ -228,8 +224,7 @@ export default function OrderSummaryContent() {
       }
     }
   }, [
-    watch("setBillingAddress" as any),
-    watch("setWarehouseAddress" as any),
+    watch,
     setValue,
     getValues,
     globalCalc,
@@ -366,7 +361,7 @@ export default function OrderSummaryContent() {
           emptyCart();
         }
 
-        router.push("/landing/orderlanding");
+        router.push("/landing/orderslanding");
         toast.success("Order placed successfully");
       }
     } catch (error: any) {
@@ -479,9 +474,51 @@ export default function OrderSummaryContent() {
         setValue("cartValue" as any, updatedCartValue, { shouldDirty: false });
       }
 
-      // Update products with recalculated values (unitPrice will have cash discount applied)
+      // Update products with recalculated values, preserving important original fields
       if (calculationResult?.products && calculationResult.products.length > 0) {
-        setValue("products", calculationResult.products, { shouldDirty: true });
+        const finalProducts = calculationResult.products.map((calculatedProduct: any) => {
+          // Find the corresponding product from updatedProducts to preserve original fields
+          const calculatedProductId = 
+            calculatedProduct.brandProductId ||
+            calculatedProduct.itemCode ||
+            calculatedProduct.orderIdentifier ||
+            calculatedProduct.productId ||
+            "";
+          
+          const originalProduct = updatedProducts.find((p: any) => {
+            const pId = 
+              p.brandProductId ||
+              p.itemCode ||
+              p.orderIdentifier ||
+              p.productId ||
+              "";
+            return String(pId) === String(calculatedProductId);
+          });
+          
+          if (originalProduct) {
+            // Preserve important original fields while using calculated values
+            return {
+              ...originalProduct, // Start with original product to preserve all fields
+              ...calculatedProduct, // Override with calculated values
+              // Preserve quantity fields
+              quantity: originalProduct.quantity || calculatedProduct.quantity,
+              askedQuantity: originalProduct.askedQuantity || calculatedProduct.askedQuantity,
+              unitQuantity: originalProduct.unitQuantity || calculatedProduct.unitQuantity,
+              // Preserve original identifiers and metadata
+              brandProductId: originalProduct.brandProductId || calculatedProduct.brandProductId,
+              itemCode: originalProduct.itemCode || calculatedProduct.itemCode,
+              orderIdentifier: originalProduct.orderIdentifier || calculatedProduct.orderIdentifier,
+              productId: originalProduct.productId || calculatedProduct.productId,
+              itemNo: originalProduct.itemNo || calculatedProduct.itemNo,
+              // Preserve display fields
+              productShortDescription: originalProduct.productShortDescription || calculatedProduct.productShortDescription,
+              itemName: originalProduct.itemName || calculatedProduct.itemName,
+            };
+          }
+          return calculatedProduct;
+        });
+        
+        setValue("products", finalProducts, { shouldDirty: true });
       }
 
       // Update getBreakup if available
@@ -655,10 +692,10 @@ export default function OrderSummaryContent() {
         setValue("cartValue" as any, calculationResult.cartValue, { shouldDirty: false });
       }
 
-      // Update products with calculated values, preserving the user's quantity
+      // Update products with calculated values, preserving important original fields
       if (calculationResult?.products && calculationResult.products.length > 0) {
         const finalProducts = calculationResult.products.map((calculatedProduct: any) => {
-          // Find the corresponding product from updatedProducts to preserve quantity
+          // Find the corresponding product from updatedProducts to preserve original fields
           const calculatedProductId = 
             calculatedProduct.brandProductId ||
             calculatedProduct.itemCode ||
@@ -666,7 +703,7 @@ export default function OrderSummaryContent() {
             calculatedProduct.productId ||
             "";
           
-          const userProduct = updatedProducts.find((p: any) => {
+          const originalProduct = updatedProducts.find((p: any) => {
             const pId = 
               p.brandProductId ||
               p.itemCode ||
@@ -676,13 +713,24 @@ export default function OrderSummaryContent() {
             return String(pId) === String(calculatedProductId);
           });
           
-          if (userProduct) {
-            // Preserve the quantity the user just typed
+          if (originalProduct) {
+            // Preserve important original fields while using calculated values
             return {
-              ...calculatedProduct,
-              quantity: userProduct.quantity,
-              askedQuantity: userProduct.askedQuantity,
-              unitQuantity: userProduct.quantity, // Also preserve unitQuantity
+              ...originalProduct, // Start with original product to preserve all fields
+              ...calculatedProduct, // Override with calculated values
+              // Preserve quantity fields from user input
+              quantity: originalProduct.quantity,
+              askedQuantity: originalProduct.askedQuantity,
+              unitQuantity: originalProduct.quantity,
+              // Preserve original identifiers and metadata
+              brandProductId: originalProduct.brandProductId || calculatedProduct.brandProductId,
+              itemCode: originalProduct.itemCode || calculatedProduct.itemCode,
+              orderIdentifier: originalProduct.orderIdentifier || calculatedProduct.orderIdentifier,
+              productId: originalProduct.productId || calculatedProduct.productId,
+              itemNo: originalProduct.itemNo || calculatedProduct.itemNo,
+              // Preserve display fields
+              productShortDescription: originalProduct.productShortDescription || calculatedProduct.productShortDescription,
+              itemName: originalProduct.itemName || calculatedProduct.itemName,
             };
           }
           return calculatedProduct;
@@ -753,7 +801,7 @@ export default function OrderSummaryContent() {
               {
                 label: "PLACE ORDER",
                 variant: "default" as const,
-                onClick: handleSubmit(handlePlaceOrder, (errors) => {
+                onClick: handleSubmit(handlePlaceOrder, () => {
                   // Handle validation errors
                   toast.error("Please fix the validation errors before submitting");
                 }),
