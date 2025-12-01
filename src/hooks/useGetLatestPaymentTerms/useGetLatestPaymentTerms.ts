@@ -23,6 +23,7 @@ export default function useGetLatestPaymentTerms(
 ) {
   const { user } = useCurrentUser();
   const userId = user?.userId;
+  const companyId = user?.companyId;
 
   const { data: paymentTerms, isLoading } = useQuery({
     queryKey: ["paymentTerms", userId, companyId],

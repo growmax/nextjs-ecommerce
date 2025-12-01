@@ -28,12 +28,8 @@ jest.mock("@/hooks/useCurrentUser", () => ({
 
 import PaymentService from "@/lib/api/services/PaymentService/PaymentService";
 import { useQuery } from "@tanstack/react-query";
-import useSWRImmutable from "swr/immutable";
 import useGetLatestPaymentTerms from "./useGetLatestPaymentTerms";
 
-const mockUseSWR = useSWRImmutable as jest.MockedFunction<
-  typeof useSWRImmutable
->;
 const mockPaymentService = PaymentService as jest.Mocked<typeof PaymentService>;
 
 const mockUseQuery = useQuery as jest.MockedFunction<typeof useQuery>;
@@ -199,7 +195,7 @@ describe("useGetLatestPaymentTerms", () => {
       message: "Success",
     });
 
-    mockUseSWR.mockReturnValue({
+    mockUseQuery.mockReturnValue({
       data: mockCashDiscountTerm,
       error: undefined,
       isLoading: false,
@@ -218,10 +214,9 @@ describe("useGetLatestPaymentTerms", () => {
     if (!queryFn) {
       throw new Error("queryFn was not provided");
     }
-    const passedFetcher = swrCall[1];
 
-    // Call the fetcher to verify it uses PaymentService correctly
-    const result = await passedFetcher();
+    // Call the queryFn to verify it uses PaymentService correctly
+    const result = await queryFn();
 
     // Verify PaymentService was called with correct userId
     expect(mockPaymentService.fetchPaymentTerms).toHaveBeenCalledWith(
@@ -254,7 +249,7 @@ describe("useGetLatestPaymentTerms", () => {
       message: "Success",
     });
 
-    mockUseSWR.mockReturnValue({
+    mockUseQuery.mockReturnValue({
       data: mockCashDiscountTerm,
       error: undefined,
       isLoading: false,
@@ -290,7 +285,7 @@ describe("useGetLatestPaymentTerms", () => {
       message: "Success",
     });
 
-    mockUseSWR.mockReturnValue({
+    mockUseQuery.mockReturnValue({
       data: undefined,
       error: undefined,
       isLoading: false,
