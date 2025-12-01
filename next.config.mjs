@@ -79,77 +79,81 @@ const nextConfig = {
       };
       // Optimize module resolution
       config.resolve.symlinks = false;
-      // Optimize for faster development builds
-      config.optimization = {
-        ...config.optimization,
-        removeAvailableModules: false,
-        removeEmptyChunks: false,
-        // Enable split chunks for better caching
-        splitChunks: {
-          chunks: 'all',
-          cacheGroups: {
-            default: false,
-            vendors: false,
-            // Framework chunk (React, Next.js)
-            framework: {
-              name: 'framework',
-              chunks: 'all',
-              test: /[\\/]node_modules[\\/](react|react-dom|scheduler|next)[\\/]/,
-              priority: 40,
-              enforce: true,
-            },
-            // UI libraries chunk
-            ui: {
-              name: 'ui',
-              chunks: 'all',
-              test: /[\\/]node_modules[\\/](@radix-ui|lucide-react)[\\/]/,
-              priority: 30,
-            },
-            // Common libraries chunk
-            lib: {
-              name: 'lib',
-              chunks: 'all',
-              test: /[\\/]node_modules[\\/]/,
-              priority: 20,
-              minChunks: 2,
+      // Optimize for faster development builds (client-side only)
+      if (!isServer) {
+        config.optimization = {
+          ...config.optimization,
+          removeAvailableModules: false,
+          removeEmptyChunks: false,
+          // Enable split chunks for better caching (client-side only)
+          splitChunks: {
+            chunks: 'all',
+            cacheGroups: {
+              default: false,
+              vendors: false,
+              // Framework chunk (React, Next.js)
+              framework: {
+                name: 'framework',
+                chunks: 'all',
+                test: /[\\/]node_modules[\\/](react|react-dom|scheduler|next)[\\/]/,
+                priority: 40,
+                enforce: true,
+              },
+              // UI libraries chunk
+              ui: {
+                name: 'ui',
+                chunks: 'all',
+                test: /[\\/]node_modules[\\/](@radix-ui|lucide-react)[\\/]/,
+                priority: 30,
+              },
+              // Common libraries chunk
+              lib: {
+                name: 'lib',
+                chunks: 'all',
+                test: /[\\/]node_modules[\\/]/,
+                priority: 20,
+                minChunks: 2,
+              },
             },
           },
-        },
-        // Enable module concatenation for smaller bundles
-        concatenateModules: true,
-      };
+          // Enable module concatenation for smaller bundles
+          concatenateModules: true,
+        };
+      }
     } else {
-      // Production optimizations
-      config.optimization = {
-        ...config.optimization,
-        splitChunks: {
-          chunks: 'all',
-          cacheGroups: {
-            default: false,
-            vendors: false,
-            framework: {
-              name: 'framework',
-              chunks: 'all',
-              test: /[\\/]node_modules[\\/](react|react-dom|scheduler|next)[\\/]/,
-              priority: 40,
-              enforce: true,
-            },
-            ui: {
-              name: 'ui',
-              chunks: 'all',
-              test: /[\\/]node_modules[\\/](@radix-ui|lucide-react)[\\/]/,
-              priority: 30,
-            },
-            lib: {
-              name: 'lib',
-              chunks: 'all',
-              test: /[\\/]node_modules[\\/]/,
-              priority: 20,
-              minChunks: 2,
+      // Production optimizations (client-side only)
+      if (!isServer) {
+        config.optimization = {
+          ...config.optimization,
+          splitChunks: {
+            chunks: 'all',
+            cacheGroups: {
+              default: false,
+              vendors: false,
+              framework: {
+                name: 'framework',
+                chunks: 'all',
+                test: /[\\/]node_modules[\\/](react|react-dom|scheduler|next)[\\/]/,
+                priority: 40,
+                enforce: true,
+              },
+              ui: {
+                name: 'ui',
+                chunks: 'all',
+                test: /[\\/]node_modules[\\/](@radix-ui|lucide-react)[\\/]/,
+                priority: 30,
+              },
+              lib: {
+                name: 'lib',
+                chunks: 'all',
+                test: /[\\/]node_modules[\\/]/,
+                priority: 20,
+                minChunks: 2,
+              },
             },
           },
-        },
-      };
+        };
+      }
     }
 
     if (!isServer) {
