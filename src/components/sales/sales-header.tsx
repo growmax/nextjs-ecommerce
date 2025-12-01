@@ -3,13 +3,13 @@
 import { statusColor } from "@/components/custom/statuscolors";
 import { Button } from "@/components/ui/button";
 import {
-    DropdownMenu,
-    DropdownMenuContent,
-    DropdownMenuItem,
-    DropdownMenuTrigger,
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { useSidebar } from "@/components/ui/sidebar";
 import { Skeleton } from "@/components/ui/skeleton";
-import { TopProgressBar } from "@/components/ui/top-progress-bar";
 import { cn } from "@/lib/utils";
 import { MoreVertical, Pencil, RefreshCw, X } from "lucide-react";
 
@@ -23,7 +23,6 @@ export interface SalesHeaderButton {
     | "destructive"
     | "link";
   onClick: () => void;
-  onMouseEnter?: () => void;
   disabled?: boolean;
   icon?: React.ReactNode;
 }
@@ -58,7 +57,7 @@ export interface SalesHeaderProps {
 
 export default function SalesHeader({
   title,
-  identifier: _identifier,
+  identifier,
   status,
   onEdit,
   onRefresh,
@@ -73,149 +72,154 @@ export default function SalesHeader({
   className,
   loading = false,
 }: SalesHeaderProps) {
+  const { state, isMobile } = useSidebar();
+  const leftOffset = isMobile
+    ? "0px"
+    : state === "expanded"
+      ? "var(--sidebar-width)"
+      : "var(--sidebar-width-icon)";
 
   return (
-    <>
-      {/* Top Progress Bar - Shows during navigation and API calls */}
-      <TopProgressBar />
-
-      <div
-        className={cn(
-          "flex items-center justify-between gap-3 md:gap-4 px-3 md:px-4 py-3 md:py-3.5 bg-white border-b shadow-sm transition-all duration-200 min-h-[56px] md:min-h-[64px] w-full",
-          className
-        )}
-      >
-        {/* Left Section - Title, Identifier, and Status */}
-        <div className="flex items-center gap-2 md:gap-3 flex-1 min-w-0">
-          {/* Title with Edit Icon */}
-          <div className="flex items-center gap-2 min-w-0">
-            {loading ? (
-              <Skeleton className="h-6 w-48" />
-            ) : (
-              <h1 className="text-base md:text-lg font-semibold text-gray-900 truncate">
-                {title}
-              </h1>
-            )}
-            {showEditIcon && onEdit && !loading && (
-              <Button
-                variant="ghost"
-                size="icon"
-                onClick={onEdit}
-                className="size-8 md:size-9 text-gray-500 hover:text-gray-700 hover:bg-gray-100 shrink-0"
-              >
-                <Pencil className="size-4 md:size-4.5" />
-              </Button>
-            )}
-          </div>
-
-          {/* Status Container */}
-          {status && (
-            <div className="flex items-center gap-2 md:gap-3 flex-wrap">
-              {/* Status Badge */}
-              {loading ? (
-                <Skeleton className="h-6 w-25 " />
-              ) : (
-                <span
-                  className="px-2.5 py-1 rounded-full text-[10px] md:text-xs font-medium text-white whitespace-nowrap shrink-0 leading-tight"
-                  style={{
-                    backgroundColor: statusColor(status.label.toUpperCase()),
-                  }}
-                >
-                  {status.label
-                    .split(" ")
-                    .map(
-                      word =>
-                        word.charAt(0).toUpperCase() +
-                        word.slice(1).toLowerCase()
-                    )
-                    .join(" ")}
-                </span>
-              )}
-            </div>
+    <div
+      className={cn(
+        "fixed top-14 left-0 right-0 z-40 flex flex-col md:flex-row md:items-center justify-between gap-2 md:gap-4 px-3 md:px-4 py-2 md:py-3 bg-white border-b shadow-sm transition-all duration-200",
+        className
+      )}
+      style={{ left: leftOffset }}
+    >
+      {/* Left Section - Title, Identifier, and Status */}
+      <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-3 flex-1 min-w-0">
+        {/* Title with Edit Icon */}
+        <div className="flex items-center justify-center sm:justify-start gap-2 min-w-0">
+          {loading ? (
+            <Skeleton className="h-6 w-48" />
+          ) : (
+            <h1 className="text-base md:text-lg font-semibold text-gray-900 truncate">
+              {title}
+            </h1>
+          )}
+          {showEditIcon && onEdit && !loading && (
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={onEdit}
+              className="size-7 md:size-8 text-gray-500 hover:text-gray-700 shrink-0"
+            >
+              <Pencil className="size-3.5 md:size-4" />
+            </Button>
           )}
         </div>
 
-        {/* Right Section - Action Buttons and Icons */}
-        <div className="flex items-center gap-2 md:gap-2.5 shrink-0 mt-1">
-          {/* Custom Action Buttons */}
+        {/* Identifier and Status Container */}
+        <div className="flex items-center justify-center sm:justify-start gap-2 sm:gap-3 flex-wrap">
+          {/* Identifier */}
           {loading ? (
-            <>
-              <Skeleton className="h-9 w-20 md:w-24" />
-              <Skeleton className="h-9 w-20 md:w-24" />
-            </>
+            <Skeleton className="h-4 w-24" />
           ) : (
-            buttons.map(button => (
-              <Button
-                key={button.label}
-                variant={button.variant || "outline"}
-                onClick={button.onClick}
-                onMouseEnter={button.onMouseEnter}
-                disabled={button.disabled}
-                className="uppercase text-[10px] md:text-xs font-semibold px-3 md:px-4 py-2 h-9 md:h-10 whitespace-nowrap"
+            <span className="text-xs md:text-sm font-medium text-gray-600 truncate">
+              {identifier}
+            </span>
+          )}
+
+          {/* Status Badge */}
+          {loading ? (
+            <Skeleton className="h-6 w-20" />
+          ) : (
+            status && (
+              <span
+                className="px-3 py-1 rounded-full text-sm font-medium text-white whitespace-nowrap shrink-0"
+                style={{
+                  backgroundColor: statusColor(status.label.toUpperCase()),
+                }}
               >
-                {button.icon && <span className="mr-1.5">{button.icon}</span>}
-                {button.label}
-              </Button>
-            ))
-          )}
-
-          {/* Menu Icon with Dropdown */}
-          {showMenu && (menuOptions.length > 0 || onMenuClick) && !loading && (
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="text-gray-500 hover:text-gray-700 hover:bg-gray-100 size-9 md:size-10"
-                >
-                  <MoreVertical className="size-4 md:size-5" />
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="w-48">
-                {menuOptions.map((option, index) => (
-                  <DropdownMenuItem
-                    key={`menu-option-${index}`}
-                    onClick={option.onClick}
-                    disabled={option.disabled || false}
-                    className="cursor-pointer"
-                  >
-                    {option.label}
-                  </DropdownMenuItem>
-                ))}
-                {onMenuClick && menuOptions.length === 0 && (
-                  <DropdownMenuItem onClick={onMenuClick}>
-                    Menu Options
-                  </DropdownMenuItem>
-                )}
-              </DropdownMenuContent>
-            </DropdownMenu>
-          )}
-
-          {/* Refresh Icon */}
-          {showRefresh && onRefresh && !loading && (
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={onRefresh}
-              className="text-gray-500 hover:text-gray-700 hover:bg-gray-100 size-9 md:size-10"
-            >
-              <RefreshCw className="size-4 md:size-5" />
-            </Button>
-          )}
-
-          {/* Close Icon */}
-          {showClose && onClose && !loading && (
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={onClose}
-              className="text-gray-500 hover:text-gray-700 hover:bg-gray-100 size-9 md:size-10"
-            >
-              <X className="size-4 md:size-5" />
-            </Button>
+                {status.label}
+              </span>
+            )
           )}
         </div>
       </div>
-    </>
+
+      {/* Right Section - Action Buttons and Icons */}
+      <div className="flex items-center gap-2 self-end md:self-auto">
+        {/* Custom Action Buttons */}
+        {loading ? (
+          <>
+            <Skeleton className="h-8 w-20 md:w-24" />
+            <Skeleton className="h-8 w-20 md:w-24" />
+          </>
+        ) : (
+          buttons.map(button => (
+            <Button
+              key={button.label}
+              variant={button.variant || "outline"}
+              onClick={button.onClick}
+              disabled={button.disabled}
+              className="uppercase text-[10px] md:text-xs font-semibold px-2 md:px-4 py-1.5 md:py-2 h-7 md:h-9 whitespace-nowrap"
+            >
+              {button.icon && <span className="mr-1">{button.icon}</span>}
+              {button.label}
+            </Button>
+          ))
+        )}
+
+        {/* Menu Icon with Dropdown */}
+        {showMenu && (menuOptions.length > 0 || onMenuClick) && !loading && (
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button
+                variant="ghost"
+                size="icon"
+                className="text-gray-500 hover:text-gray-700 size-7 md:size-9"
+              >
+                <MoreVertical className="size-4 md:size-5" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-48">
+              {}
+              {menuOptions.map((option, index) => (
+                <DropdownMenuItem
+                  key={`menu-option-${index}`}
+                  onClick={option.onClick}
+                  disabled={option.disabled || false}
+                  className="cursor-pointer"
+                >
+                  {option.label}
+                </DropdownMenuItem>
+              ))}
+              {}
+              {onMenuClick && menuOptions.length === 0 && (
+                <DropdownMenuItem onClick={onMenuClick}>
+                  Menu Options
+                </DropdownMenuItem>
+              )}
+            </DropdownMenuContent>
+          </DropdownMenu>
+        )}
+
+        {/* Refresh Icon */}
+        {showRefresh && onRefresh && !loading && (
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={onRefresh}
+            className="text-gray-500 hover:text-gray-700 size-7 md:size-9"
+          >
+            <RefreshCw className="size-4 md:size-5" />
+          </Button>
+        )}
+
+        {/* Close Icon */}
+        {showClose && onClose && !loading && (
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={onClose}
+            className="text-gray-500 hover:text-gray-700 size-7 md:size-9"
+          >
+            <X className="size-4 md:size-5" />
+          </Button>
+        )}
+      </div>
+    </div>
   );
 }

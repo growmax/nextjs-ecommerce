@@ -16,8 +16,9 @@ import {
 import { Skeleton } from "@/components/ui/skeleton";
 import { useCurrentUser } from "@/hooks/useCurrentUser";
 import { useNavigationWithLoader } from "@/hooks/useNavigationWithLoader";
-import { useRequestDeduplication } from "@/hooks/useRequestDeduplication";
+import { usePageLoader } from "@/hooks/usePageLoader";
 import { usePostNavigationFetch } from "@/hooks/usePostNavigationFetch";
+import { useRequestDeduplication } from "@/hooks/useRequestDeduplication";
 import PreferenceService, {
   FilterPreferenceResponse,
 } from "@/lib/api/services/PreferenceService/PreferenceService";
@@ -25,6 +26,7 @@ import QuotesService, {
   type QuoteItem,
 } from "@/lib/api/services/QuotesService/QuotesService";
 import { getAccounting } from "@/utils/calculation/salesCalculation/salesCalculation";
+import { cn } from "@/lib/utils";
 import { ColumnDef } from "@tanstack/react-table";
 import { useTranslations } from "next-intl";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
@@ -39,6 +41,9 @@ function QuotesLandingTable({
   refreshTrigger,
   setExportCallback,
 }: QuotesLandingTableProps) {
+  // Use the page loader hook to ensure navigation spinner is hidden immediately
+  usePageLoader();
+
   const { user } = useCurrentUser();
   const router = useNavigationWithLoader();
   const t = useTranslations("quotes");
@@ -67,33 +72,50 @@ function QuotesLandingTable({
   const abortControllerRef = useRef<AbortController | null>(null);
   const isLoadingPreferencesRef = useRef(false);
 
+  // Ref for scrollable container to reset scroll position
+  const scrollContainerRef = useRef<HTMLDivElement | null>(null);
+
   const TableSkeleton = ({ rows = 10 }: { rows?: number }) => (
     <div className="border shadow overflow-hidden flex flex-col bg-background rounded-lg">
       <div className="border-b border-border bg-muted flex-shrink-0">
         <div className="flex font-medium text-sm text-foreground">
-          <div className="px-2 py-3 w-[150px] pl-2">{t("quoteId")}</div>
-          <div className="px-2 py-3 w-[200px]">{t("quoteName")}</div>
-          <div className="px-2 py-3 w-[150px]">{t("quotedDate")}</div>
-          <div className="px-2 py-3 w-[150px]">{t("lastModified")}</div>
-          <div className="px-2 py-3 w-[300px]">{t("accountName")}</div>
-          <div className="px-2 py-3 w-[150px]">{t("totalItems")}</div>
-          <div className="px-2 py-3 w-[150px]">{t("subtotal")}</div>
-          <div className="px-2 py-3 w-[150px]">{t("taxableAmount")}</div>
-          <div className="px-2 py-3 w-[150px]">{t("total")}</div>
-          <div className="px-2 py-3 w-[200px]">{t("status")}</div>
+          <div className="px-2 py-3 w-[150px] border-r border-border">
+            {t("quoteId")}
+          </div>
+          <div className="px-2 py-3 w-[200px] border-r border-border">
+            {t("quoteName")}
+          </div>
+          <div className="px-2 py-3 w-[200px] border-r border-border">
+            {t("status")}
+          </div>
+          <div className="px-2 py-3 w-[300px] border-r border-border">
+            {t("accountName")}
+          </div>
+          <div className="px-2 py-3 w-[150px] border-r border-border">
+            {t("totalItems")}
+          </div>
+          <div className="px-2 py-3 w-[150px] border-r border-border">
+            {t("subtotal")}
+          </div>
+          <div className="px-2 py-3 w-[150px] border-r border-border">
+            {t("taxableAmount")}
+          </div>
+          <div className="px-2 py-3 w-[150px] border-r border-border">
+            {t("total")}
+          </div>
           <div className="px-2 py-3 w-[150px]">{t("requiredDate")}</div>
         </div>
       </div>
       <div className="flex-1 overflow-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
         {Array.from({ length: rows }).map((_, rowIndex) => (
-          <div
-            key={`row-${rowIndex}`}
-            className="border-b border-border flex animate-pulse"
-          >
-            {Array.from({ length: 11 }).map((_, colIndex) => (
+          <div key={`row-${rowIndex}`} className="border-b border-border flex ">
+            {Array.from({ length: 9 }).map((_, colIndex) => (
               <div
                 key={`cell-${rowIndex}-${colIndex}`}
-                className="px-2 py-3 w-[150px] flex items-center"
+                className={cn(
+                  "px-2 py-3 w-[150px] flex items-center",
+                  colIndex < 8 && "border-r border-border"
+                )}
               >
                 <Skeleton className="h-4 w-full bg-muted" />
               </div>
@@ -148,33 +170,42 @@ function QuotesLandingTable({
         ),
       },
       {
-        accessorKey: "createdDate",
-        header: t("quotedDate"),
-        size: 150,
+        accessorKey: "updatedBuyerStatus",
+        header: () => <span className="pl-[30px]">{t("status")}</span>,
+        size: 200,
         cell: ({ row }) => {
-          const date = row.original.createdDate;
-          return date ? new Date(date).toLocaleDateString() : "-";
+          const status = row.original.updatedBuyerStatus;
+          if (!status)
+            return <span className="text-muted-foreground pl-[30px]">-</span>;
+          const color = statusColor(status.toUpperCase());
+          const titleCaseStatus = status
+            .split(" ")
+            .map(
+              word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()
+            )
+            .join(" ");
+          return (
+            <div className="pl-[30px]">
+              <span
+                className="px-2 py-1 rounded text-xs font-medium text-primary-foreground whitespace-nowrap border border-border/30"
+                style={{ backgroundColor: color }}
+              >
+                {titleCaseStatus}
+              </span>
+            </div>
+          );
         },
       },
       {
-        accessorKey: "lastModifiedDate",
-        header: t("lastModified"),
-        size: 150,
-        cell: ({ row }) => {
-          const date = row.original.lastUpdatedDate;
-          return date ? new Date(date).toLocaleDateString() : "-";
-        },
-      },
-      {
-        accessorKey: "buyerCompanyName",
+        accessorKey: "sellerCompanyName",
         header: t("accountName"),
         size: 300,
         cell: ({ row }) => (
           <div
             className="max-w-[300px]"
-            title={row.original.buyerCompanyName || "-"}
+            title={row.original.sellerCompanyName || "-"}
           >
-            {row.original.buyerCompanyName || "-"}
+            {row.original.sellerCompanyName || "-"}
           </div>
         ),
       },
@@ -250,33 +281,6 @@ function QuotesLandingTable({
             />
           </span>
         ),
-      },
-      {
-        accessorKey: "updatedBuyerStatus",
-        header: () => <span className="pl-[30px]">{t("status")}</span>,
-        size: 200,
-        cell: ({ row }) => {
-          const status = row.original.updatedBuyerStatus;
-          if (!status)
-            return <span className="text-muted-foreground pl-[30px]">-</span>;
-          const color = statusColor(status.toUpperCase());
-          const titleCaseStatus = status
-            .split(" ")
-            .map(
-              word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()
-            )
-            .join(" ");
-          return (
-            <div className="pl-[30px]">
-              <span
-                className="px-2 py-1 rounded text-xs font-medium text-primary-foreground whitespace-nowrap border border-border/30"
-                style={{ backgroundColor: color }}
-              >
-                {titleCaseStatus}
-              </span>
-            </div>
-          );
-        },
       },
       {
         accessorKey: "requiredDate",
@@ -731,8 +735,44 @@ function QuotesLandingTable({
 
   // Fetch quotes after navigation completes - ensures instant navigation
   usePostNavigationFetch(() => {
-    fetchQuotes();
-  }, [fetchQuotes, refreshTrigger]);
+    if (user?.userId && user?.companyId) {
+      fetchQuotes();
+    }
+  }, [fetchQuotes, user?.userId, user?.companyId]);
+
+  // Ensure fetch happens when user becomes available (fallback for initial load)
+  useEffect(() => {
+    if (user?.userId && user?.companyId && initialLoad) {
+      // Small delay to ensure usePostNavigationFetch has a chance to run first
+      const timer = setTimeout(() => {
+        fetchQuotes();
+      }, 100);
+      return () => clearTimeout(timer);
+    }
+  }, [user?.userId, user?.companyId, initialLoad, fetchQuotes]);
+
+  // Trigger fetch when page or rowPerPage changes (only after initial load)
+  useEffect(() => {
+    if (user?.userId && user?.companyId && !initialLoad) {
+      fetchQuotes();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [page, rowPerPage]);
+
+  // Trigger fetch when filterData changes (only after initial load)
+  useEffect(() => {
+    if (user?.userId && user?.companyId && !initialLoad) {
+      fetchQuotes();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [filterData]);
+
+  useEffect(() => {
+    if (refreshTrigger && refreshTrigger > 0) {
+      fetchQuotes();
+      toast.success(t("quotesRefreshed"));
+    }
+  }, [refreshTrigger, fetchQuotes, t]);
 
   // Cleanup: abort any in-flight requests on unmount
   useEffect(() => {
@@ -763,7 +803,7 @@ function QuotesLandingTable({
         [t("quoteName")]: q.quoteName || "",
         [t("quotedDate")]: formatDate(q.createdDate),
         [t("lastModified")]: formatDate(q.lastUpdatedDate),
-        [t("accountName")]: q.buyerCompanyName || "",
+        [t("accountName")]: q.sellerCompanyName || "",
         [t("totalItems")]: q.itemCount || 0,
         [t("subTotal")]: getAccounting(
           q.curencySymbol || null,
@@ -865,11 +905,31 @@ function QuotesLandingTable({
   };
 
   const handlePrevious = () => {
-    setPage(prev => Math.max(prev - 1, 0));
+    setPage(prev => prev - 1);
+    // Reset scroll to top and left with smooth behavior
+    if (scrollContainerRef.current) {
+      scrollContainerRef.current.scrollTo({
+        top: 0,
+        left: 0,
+        behavior: "smooth",
+      });
+    }
+    // Also reset window scroll
+    window.scrollTo({ top: 0, left: 0, behavior: "smooth" });
   };
 
   const handleNext = () => {
     setPage(prev => prev + 1);
+    // Reset scroll to top and left with smooth behavior
+    if (scrollContainerRef.current) {
+      scrollContainerRef.current.scrollTo({
+        top: 0,
+        left: 0,
+        behavior: "smooth",
+      });
+    }
+    // Also reset window scroll
+    window.scrollTo({ top: 0, left: 0, behavior: "smooth" });
   };
 
   return (
@@ -901,7 +961,10 @@ function QuotesLandingTable({
 
       <div className="flex flex-col">
         <div className="w-full overflow-x-hidden">
-          <div className="w-full overflow-x-auto scrollbar-thin-horizontal">
+          <div
+            ref={scrollContainerRef}
+            className="w-full overflow-x-auto scrollbar-thin-horizontal"
+          >
             {initialLoad && loading ? (
               <TableSkeleton rows={rowPerPage} />
             ) : !initialLoad && quotes.length === 0 ? (
@@ -917,7 +980,7 @@ function QuotesLandingTable({
                 pagination={pagination}
                 setPagination={handlePaginationChange}
                 setPage={setPage}
-                pageOptions={[20, 50, 100]}
+                pageOptions={[20, 50, 75, 100]}
                 handlePrevious={handlePrevious}
                 handleNext={handleNext}
                 page={page}
@@ -934,6 +997,7 @@ function QuotesLandingTable({
                     router.push(`/details/quoteDetails/${quoteId}`);
                   }
                 }}
+                tableHeight="h-[calc(103vh-180px)]"
               />
             )}
           </div>

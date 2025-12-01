@@ -4,7 +4,14 @@ import { Toaster } from "@/components/ui/sonner";
 import { FileText, Layers } from "lucide-react";
 import { useTranslations } from "next-intl";
 import dynamic from "next/dynamic";
-import { Suspense, useEffect, useMemo, useRef, useState } from "react";
+import {
+  Suspense,
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 import { toast } from "sonner";
 
 import { EditOrderNameDialog } from "@/components/dialogs/EditOrderNameDialog";
@@ -26,6 +33,7 @@ import { useQuoteDetails } from "@/hooks/details/quotedetails/useQuoteDetails";
 import { useCurrentUser } from "@/hooks/useCurrentUser";
 import { useGetVersionDetails } from "@/hooks/useGetVersionDetails/useGetVersionDetails";
 import { useNavigationWithLoader } from "@/hooks/useNavigationWithLoader";
+import { usePageLoader } from "@/hooks/usePageLoader";
 import { usePostNavigationFetch } from "@/hooks/usePostNavigationFetch";
 import { useTenantData } from "@/hooks/useTenantData";
 import type { QuotationDetailsResponse } from "@/lib/api";
@@ -79,6 +87,9 @@ export default function QuoteDetailsClient({
   const { tenantData } = useTenantData();
   const { push } = useNavigationWithLoader();
 
+  // Hide navigation loader to show page skeleton instead
+  usePageLoader();
+
   const lastFetchKeyRef = useRef<string | null>(null);
   const processedVersionRef = useRef<string | null>(null);
   const userId = user?.userId;
@@ -95,52 +106,72 @@ export default function QuoteDetailsClient({
     loadParams();
   }, [params]);
 
-  // Fetch quote details after navigation completes - ensures instant navigation
-  usePostNavigationFetch(() => {
-    const fetchQuoteDetails = async () => {
-      // Wait for params, user and tenant data to be available
-      if (
-        !paramsLoaded ||
-        !quoteIdentifier ||
-        !userId ||
-        !tenantCode ||
-        !companyId
-      ) {
-        return;
-      }
+  // Fetch function - shared between usePostNavigationFetch and useEffect fallback
+  const fetchQuoteDetails = useCallback(async () => {
+    // Wait for params and user data to be available
+    // Note: tenantCode is optional and only used for deduplication, not required for API call
+    if (!paramsLoaded || !quoteIdentifier || !userId || !companyId) {
+      return;
+    }
 
-      const fetchKey = [quoteIdentifier, userId, companyId, tenantCode].join(
-        "|"
-      );
+    const fetchKey = [
+      quoteIdentifier,
+      userId,
+      companyId,
+      tenantCode || "",
+    ].join("|");
 
-      if (lastFetchKeyRef.current === fetchKey) {
-        return;
-      }
+    if (lastFetchKeyRef.current === fetchKey) {
+      return;
+    }
 
-      try {
-        setLoading(true);
-        setError(null);
+    try {
+      setLoading(true);
+      setError(null);
 
-        const response = await QuotationDetailsService.fetchQuotationDetails({
-          userId,
-          companyId,
-          quotationIdentifier: quoteIdentifier,
-        });
+      const response = await QuotationDetailsService.fetchQuotationDetails({
+        userId,
+        companyId,
+        quotationIdentifier: quoteIdentifier,
+      });
 
+      // Validate response structure
+      if (response && response.data) {
         setQuoteDetails(response);
         lastFetchKeyRef.current = fetchKey;
-      } catch (err) {
-        const errorMessage =
-          err instanceof Error ? err.message : t("failedToFetchQuoteDetails");
-        setError(errorMessage);
-        toast.error(errorMessage);
-      } finally {
-        setLoading(false);
+      } else {
+        throw new Error("Invalid response structure from API");
       }
-    };
-
-    fetchQuoteDetails();
+    } catch (err) {
+      const errorMessage =
+        err instanceof Error ? err.message : t("failedToFetchQuoteDetails");
+      setError(errorMessage);
+      toast.error(errorMessage);
+      // Ensure loading is set to false even on error
+      setLoading(false);
+    } finally {
+      setLoading(false);
+    }
   }, [paramsLoaded, quoteIdentifier, userId, companyId, tenantCode, t]);
+
+  // Fetch quote details after navigation completes - ensures instant navigation
+  usePostNavigationFetch(() => {
+    fetchQuoteDetails();
+  }, [fetchQuoteDetails]);
+
+  // Fallback useEffect to ensure fetch happens when dependencies are ready
+  // This ensures the API is called even if usePostNavigationFetch doesn't trigger
+  useEffect(() => {
+    // Only fetch if all dependencies are ready
+    // The fetchQuoteDetails function handles deduplication internally
+    if (paramsLoaded && quoteIdentifier && userId && companyId) {
+      // Small delay to let usePostNavigationFetch try first, then fallback
+      const timer = setTimeout(() => {
+        fetchQuoteDetails();
+      }, 150);
+      return () => clearTimeout(timer);
+    }
+  }, [paramsLoaded, quoteIdentifier, userId, companyId, fetchQuoteDetails]);
 
   const {
     versions: quoteVersions,
@@ -479,7 +510,8 @@ export default function QuoteDetailsClient({
   ];
 
   const sprDetails = (quoteDetailData?.sprDetails as any) || null;
-  const showTargetDiscount = sprDetails &&
+  const showTargetDiscount =
+    sprDetails &&
     (sprDetails?.targetPrice > 0 || sprDetails?.sprRequestedDiscount > 0);
 
   console.log(displayQuoteDetails);
@@ -741,7 +773,10 @@ export default function QuoteDetailsClient({
                                   Total Discount
                                 </Label>
                                 <div className="text-sm font-semibold text-gray-900 w-1/2 text-right">
-                                  {(sprDetails?.sprRequestedDiscount || 0).toFixed(2)}%
+                                  {(
+                                    sprDetails?.sprRequestedDiscount || 0
+                                  ).toFixed(2)}
+                                  %
                                 </div>
                               </div>
                               {/* Target Price Display */}
@@ -815,7 +850,9 @@ export default function QuoteDetailsClient({
 
                   {/* Attachments Card */}
                   {displayQuoteDetails?.uploadedDocumentDetails &&
-                    Array.isArray(displayQuoteDetails.uploadedDocumentDetails) &&
+                    Array.isArray(
+                      displayQuoteDetails.uploadedDocumentDetails
+                    ) &&
                     displayQuoteDetails.uploadedDocumentDetails.length > 0 && (
                       <div className="mt-4">
                         <Suspense fallback={null}>
@@ -828,33 +865,29 @@ export default function QuoteDetailsClient({
                             <div className="px-6 py-4">
                               <div className="space-y-2">
                                 {displayQuoteDetails.uploadedDocumentDetails.map(
-                                  (
-                                    attachment: any,
-                                    index: number
-                                  ) => {
+                                  (attachment: any, index: number) => {
                                     const fileUrl =
                                       attachment.source ||
                                       attachment.filePath ||
                                       attachment.attachment;
                                     const fileName =
-                                      attachment.name ||
-                                      `File ${index + 1}`;
+                                      attachment.name || `File ${index + 1}`;
                                     const attachedBy =
                                       attachment.width?.split(",")[0] ||
                                       "Unknown";
-                                    const attachedDate = attachment.width
-                                      ?.split(",")[1]
-                                      ? new Date(
-                                          attachment.width.split(",")[1]
-                                        ).toLocaleString("en-IN", {
-                                          day: "2-digit",
-                                          month: "2-digit",
-                                          year: "numeric",
-                                          hour: "2-digit",
-                                          minute: "2-digit",
-                                          hour12: true,
-                                        })
-                                      : null;
+                                    const attachedDate =
+                                      attachment.width?.split(",")[1]
+                                        ? new Date(
+                                            attachment.width.split(",")[1]
+                                          ).toLocaleString("en-IN", {
+                                            day: "2-digit",
+                                            month: "2-digit",
+                                            year: "numeric",
+                                            hour: "2-digit",
+                                            minute: "2-digit",
+                                            hour12: true,
+                                          })
+                                        : null;
 
                                     return (
                                       <div

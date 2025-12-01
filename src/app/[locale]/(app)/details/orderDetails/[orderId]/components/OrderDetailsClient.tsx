@@ -1,4 +1,5 @@
 "use client";
+import { Skeleton } from "@/components/ui/skeleton";
 import { Toaster } from "@/components/ui/sonner";
 import { FileText, Layers } from "lucide-react";
 import { useTranslations } from "next-intl";
@@ -12,7 +13,6 @@ import {
   VersionsDialog,
   type Version,
 } from "@/components/dialogs/VersionsDialog";
-import { ApplicationLayout, PageLayout } from "@/components/layout";
 import {
   DetailsSkeleton,
   OrderContactDetails,
@@ -73,7 +73,10 @@ const OrderStatusTracker = dynamic(
   }
 );
 
-export default function OrderDetailsClient({ params, initialOrderDetails }: OrderDetailsClientProps) {
+export default function OrderDetailsClient({
+  params,
+  initialOrderDetails,
+}: OrderDetailsClientProps) {
   // Use the page loader hook to ensure navigation spinner is hidden immediately
   usePageLoader();
 
@@ -132,11 +135,12 @@ export default function OrderDetailsClient({ params, initialOrderDetails }: Orde
     },
     enabled:
       paramsLoaded && !!orderId && !!userId && !!tenantCode && !!companyId,
-    initialData: initialOrderDetails,
-    staleTime: 5 * 60 * 1000, // 5 minutes - order details may change
+    // Use placeholderData instead of initialData to ensure refetch happens
+    ...(initialOrderDetails && { placeholderData: initialOrderDetails }),
+    staleTime: 0, // Always consider data stale to ensure fresh fetch
     gcTime: 10 * 60 * 1000, // 10 minutes
     refetchOnWindowFocus: false,
-    refetchOnMount: true, // Retry when dependencies become available
+    refetchOnMount: true, // Always refetch on mount to get latest data
     retry: 1,
   });
 
@@ -204,6 +208,23 @@ export default function OrderDetailsClient({ params, initialOrderDetails }: Orde
     refetchOnWindowFocus: false,
     retry: 1,
   });
+
+  // Ensure query runs when params are ready (only once when params become available)
+  const hasRefetchedRef = useRef(false);
+  useEffect(() => {
+    if (
+      paramsLoaded &&
+      orderId &&
+      userId &&
+      tenantCode &&
+      companyId &&
+      !hasRefetchedRef.current
+    ) {
+      // Trigger a refetch to ensure we get fresh data from the API
+      hasRefetchedRef.current = true;
+      refetchOrder();
+    }
+  }, [paramsLoaded, orderId, userId, tenantCode, companyId, refetchOrder]);
 
   // Handle order details errors
   useEffect(() => {
@@ -322,7 +343,6 @@ export default function OrderDetailsClient({ params, initialOrderDetails }: Orde
     }
   };
 
-
   const handleSaveOrderName = async (newOrderName: string) => {
     if (!user || !orderDetails?.data?.orderDetails?.[0]?.orderIdentifier) {
       throw new Error("Missing required data for updating order name");
@@ -374,17 +394,29 @@ export default function OrderDetailsClient({ params, initialOrderDetails }: Orde
           ? primaryHeader.taxExemption
           : Boolean((user as { taxExemption?: boolean })?.taxExemption);
 
+    // Check for both insuranceCharges and insuranceValue (API might use either)
+    // Also check in orderTerms as insurance might be stored there
+    const detailOrderTerms = detail?.orderTerms as
+      | {
+          insuranceValue?: number;
+          insuranceCharges?: number;
+          [key: string]: unknown;
+        }
+      | undefined;
+
     const resolvedInsurance = Number(
-      detail?.insuranceCharges ?? primaryHeader?.insuranceCharges ?? 0
+      detail?.insuranceCharges ??
+        detail?.insuranceValue ??
+        detailOrderTerms?.insuranceCharges ??
+        detailOrderTerms?.insuranceValue ??
+        primaryHeader?.insuranceCharges ??
+        primaryHeader?.insuranceValue ??
+        0
     );
 
     const resolvedShipping = Number(
       detail?.overallShipping ?? primaryHeader?.overallShipping ?? 0
     );
-
-    const detailOrderTerms = detail?.orderTerms as
-      | { pfValue?: number }
-      | undefined;
 
     const resolvedPfRate = Number(
       detail?.pfRate ?? detailOrderTerms?.pfValue ?? primaryHeader?.pfRate ?? 0
@@ -579,40 +611,38 @@ export default function OrderDetailsClient({ params, initialOrderDetails }: Orde
   const lastDateToPay = getLastDateToPay(paymentDueData, preferences);
 
   return (
-    <ApplicationLayout className="bg-background">
-      {/* Sales Header */}
-      <div className="flex-shrink-0">
-        <SalesHeader
-          title={orderName ? decodeUnicode(orderName) : t("orderDetails")}
-          identifier={orderId || "..."}
-          {...(status && {
-            status: {
-              label: status,
-              className: getStatusStyle(status),
-            },
-          })}
-          onEdit={handleEditOrder}
-          onRefresh={handleRefresh}
-          onClose={handleClose}
-          menuOptions={[
-            {
-              label: tDetails("clone"),
-              onClick: handleClone,
-            },
-            {
-              label: tDetails("downloadPDF"),
-              onClick: handleDownloadPDF,
-            },
-          ]}
-          buttons={headerButtons}
-          showEditIcon={true}
-          loading={orderLoading}
-        />
-      </div>
+    <div className="flex flex-col h-full overflow-hidden bg-gray-50">
+      {/* Sales Header - Fixed at top */}
+      <SalesHeader
+        title={orderName ? decodeUnicode(orderName) : "Order Details"}
+        identifier={orderId || "..."}
+        {...(status && {
+          status: {
+            label: status,
+            className: getStatusStyle(status),
+          },
+        })}
+        onEdit={handleEditOrder}
+        onRefresh={handleRefresh}
+        onClose={handleClose}
+        menuOptions={[
+          {
+            label: "Clone",
+            onClick: handleClone,
+          },
+          {
+            label: "Download PDF",
+            onClick: handleDownloadPDF,
+          },
+        ]}
+        buttons={headerButtons}
+        showEditIcon={true}
+        loading={orderLoading}
+      />
 
       {/* Order Details Content - Scrollable area */}
-      <div className="flex-1 w-full">
-        <PageLayout variant="content">
+      <div className="flex-1 overflow-y-auto overflow-x-hidden  relative z-0">
+        <div className="container mx-auto px-2 sm:px-3 md:px-4 py-2 sm:py-3">
           {orderLoading ? (
             <DetailsSkeleton
               showStatusTracker={true}
@@ -620,7 +650,7 @@ export default function OrderDetailsClient({ params, initialOrderDetails }: Orde
               rightWidth="lg:w-[33%]"
             />
           ) : (
-            <div className="flex flex-col lg:flex-row gap-2 sm:gap-3 md:gap-4 w-full">
+            <div className="flex flex-col lg:flex-row gap-2 sm:gap-3 md:gap-4">
               {/* Left Side - Status Tracker and Products Table - 60% */}
               <div className="w-full lg:w-[65%] space-y-2 sm:space-y-3">
                 {/* Cancellation Card */}
@@ -628,7 +658,7 @@ export default function OrderDetailsClient({ params, initialOrderDetails }: Orde
                   cancelMsg &&
                   !orderLoading &&
                   (orderDetails || displayOrderDetails) && (
-                    <div className="mt-4 bg-gray-50 rounded-lg p-3 sm:p-4 border border-gray-200 shadow-sm">
+                    <div className="bg-gray-50 rounded-lg p-3 sm:p-4 border border-gray-200 shadow-sm">
                       <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
                         {/* Left Section - Order Identifier and Date */}
                         <div className="flex flex-col gap-1">
@@ -651,7 +681,7 @@ export default function OrderDetailsClient({ params, initialOrderDetails }: Orde
                         {/* Right Section - Cancellation Reason */}
                         <div className="flex flex-col gap-1 sm:text-right">
                           <div className="text-xs sm:text-sm font-medium text-gray-700">
-                            {t("reasonForCancellation")}
+                            Reason for cancellation
                           </div>
                           <div className="text-sm sm:text-base font-medium text-red-600">
                             {cancelMsg || ""}
@@ -660,20 +690,13 @@ export default function OrderDetailsClient({ params, initialOrderDetails }: Orde
                       </div>
                     </div>
                   )}
-                {/* Status Tracker - Reserve space to prevent layout shift */}
+                {/* Status Tracker */}
                 {!orderLoading &&
                   !orderError &&
                   (orderDetails || displayOrderDetails) &&
                   !cancelled && (
-                    <div className="mt-4">
-                      <Suspense
-                        fallback={
-                          <div
-                            className="h-48 w-full"
-                            aria-label="Loading status tracker"
-                          />
-                        }
-                      >
+                    <div className="mt-[55px]">
+                      <Suspense fallback={<Skeleton className="h-48 w-full" />}>
                         <OrderStatusTracker
                           {...(orderId && { orderId })}
                           {...(displayOrderDetails?.createdDate && {
@@ -715,7 +738,7 @@ export default function OrderDetailsClient({ params, initialOrderDetails }: Orde
                 {!orderLoading &&
                   !orderError &&
                   (orderDetails || displayOrderDetails) && (
-                    <Suspense fallback={null}>
+                    <Suspense fallback={<Skeleton className="h-64 w-full" />}>
                       <OrderProductsTable
                         products={
                           displayOrderDetails?.orderDetails?.[0]
@@ -756,7 +779,7 @@ export default function OrderDetailsClient({ params, initialOrderDetails }: Orde
                 {!orderLoading &&
                   !orderError &&
                   (orderDetails || displayOrderDetails) && (
-                    <div className="grid grid-cols-1 md:grid-cols-2 details-card-gap details-section-margin">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-2 sm:gap-3">
                       {/* Contact Details Card */}
                       <OrderContactDetails
                         billingAddress={
@@ -883,8 +906,8 @@ export default function OrderDetailsClient({ params, initialOrderDetails }: Orde
               {!orderLoading &&
                 !orderError &&
                 (orderDetails || displayOrderDetails) && (
-                  <div className="w-full lg:w-[33%] mt-4">
-                    <Suspense fallback={null}>
+                  <div className="w-full lg:w-[33%] mt-[55px]">
+                    <Suspense fallback={<Skeleton className="h-96 w-full" />}>
                       <OrderPriceDetails
                         products={
                           displayOrderDetails?.orderDetails?.[0]
@@ -952,6 +975,8 @@ export default function OrderDetailsClient({ params, initialOrderDetails }: Orde
                                   ?.calculatedTotal ||
                                   orderDetails?.data?.orderDetails?.[0]
                                     ?.calculatedTotal ||
+                                  orderDetails?.data?.orderDetails?.[0]
+                                    ?.calculatedTotal ||
                                   displayOrderDetails?.orderDetails?.[0]
                                     ?.grandTotal ||
                                   orderDetails?.data?.orderDetails?.[0]
@@ -981,22 +1006,29 @@ export default function OrderDetailsClient({ params, initialOrderDetails }: Orde
                           ? {
                               taxableAmount: Number(
                                 displayOrderDetails?.orderDetails?.[0]
-                                  ?.taxableAmount ||
-                                0
-                            ),
-                          }
-                        : {})}
-                    />
-                  </Suspense>
+                                  ?.taxableAmount || 0
+                              ),
+                            }
+                          : {})}
+                      />
+                    </Suspense>
 
-                  {/* Attachments Card */}
-                  {(() => {
-                    const attachments = (displayOrderDetails?.orderDetails?.[0]?.uploadedDocumentDetails ||
-                      displayOrderDetails?.uploadedDocumentDetails ||
-                      orderDetails?.data?.orderDetails?.[0]?.uploadedDocumentDetails ||
-                      orderDetails?.data?.uploadedDocumentDetails) as any[] | undefined;
-                    return attachments && Array.isArray(attachments) && attachments.length > 0;
-                  })() && (
+                    {/* Attachments Card */}
+                    {(() => {
+                      const attachments = (displayOrderDetails
+                        ?.orderDetails?.[0]?.uploadedDocumentDetails ||
+                        displayOrderDetails?.uploadedDocumentDetails ||
+                        orderDetails?.data?.orderDetails?.[0]
+                          ?.uploadedDocumentDetails ||
+                        orderDetails?.data?.uploadedDocumentDetails) as
+                        | any[]
+                        | undefined;
+                      return (
+                        attachments &&
+                        Array.isArray(attachments) &&
+                        attachments.length > 0
+                      );
+                    })() && (
                       <div className="mt-4">
                         <Suspense fallback={null}>
                           <div className="bg-white rounded-lg border border-gray-200 shadow-sm">
@@ -1007,82 +1039,82 @@ export default function OrderDetailsClient({ params, initialOrderDetails }: Orde
                             </div>
                             <div className="px-6 py-4">
                               <div className="space-y-2">
-                                {((displayOrderDetails?.orderDetails?.[0]?.uploadedDocumentDetails ||
-                                  displayOrderDetails?.uploadedDocumentDetails ||
-                                  orderDetails?.data?.orderDetails?.[0]?.uploadedDocumentDetails ||
-                                  orderDetails?.data?.uploadedDocumentDetails ||
-                                  []) as any[]).map(
-                                  (
-                                    attachment: any,
-                                    index: number
-                                  ) => {
-                                    const fileUrl =
-                                      attachment.source ||
-                                      attachment.filePath ||
-                                      attachment.attachment;
-                                    const fileName =
-                                      attachment.name ||
-                                      `File ${index + 1}`;
-                                    const attachedBy =
-                                      attachment.width?.split(",")[0] ||
-                                      "Unknown";
-                                    const attachedDate = attachment.width
-                                      ?.split(",")[1]
-                                      ? new Date(
-                                          attachment.width.split(",")[1]
-                                        ).toLocaleString("en-IN", {
-                                          day: "2-digit",
-                                          month: "2-digit",
-                                          year: "numeric",
-                                          hour: "2-digit",
-                                          minute: "2-digit",
-                                          hour12: true,
-                                        })
-                                      : null;
+                                {(
+                                  (displayOrderDetails?.orderDetails?.[0]
+                                    ?.uploadedDocumentDetails ||
+                                    displayOrderDetails?.uploadedDocumentDetails ||
+                                    orderDetails?.data?.orderDetails?.[0]
+                                      ?.uploadedDocumentDetails ||
+                                    orderDetails?.data
+                                      ?.uploadedDocumentDetails ||
+                                    []) as any[]
+                                ).map((attachment: any, index: number) => {
+                                  const fileUrl =
+                                    attachment.source ||
+                                    attachment.filePath ||
+                                    attachment.attachment;
+                                  const fileName =
+                                    attachment.name || `File ${index + 1}`;
+                                  const attachedBy =
+                                    attachment.width?.split(",")[0] ||
+                                    "Unknown";
+                                  const attachedDate = attachment.width?.split(
+                                    ","
+                                  )[1]
+                                    ? new Date(
+                                        attachment.width.split(",")[1]
+                                      ).toLocaleString("en-IN", {
+                                        day: "2-digit",
+                                        month: "2-digit",
+                                        year: "numeric",
+                                        hour: "2-digit",
+                                        minute: "2-digit",
+                                        hour12: true,
+                                      })
+                                    : null;
 
-                                    return (
-                                      <div
-                                        key={index}
-                                        className="flex items-center justify-between p-3 border rounded-md bg-gray-50 hover:bg-gray-100 transition-colors cursor-pointer"
-                                        onClick={() => {
-                                          if (fileUrl) {
-                                            window.open(fileUrl, "_blank");
-                                          }
-                                        }}
-                                      >
-                                        <div className="flex items-center gap-3 flex-1 min-w-0">
-                                          <FileText className="h-5 w-5 text-muted-foreground flex-shrink-0" />
-                                          <div className="flex-1 min-w-0">
-                                            <p className="text-sm font-medium text-gray-900 truncate">
-                                              {fileName}
+                                  return (
+                                    <div
+                                      key={index}
+                                      className="flex items-center justify-between p-3 border rounded-md bg-gray-50 hover:bg-gray-100 transition-colors cursor-pointer"
+                                      onClick={() => {
+                                        if (fileUrl) {
+                                          window.open(fileUrl, "_blank");
+                                        }
+                                      }}
+                                    >
+                                      <div className="flex items-center gap-3 flex-1 min-w-0">
+                                        <FileText className="h-5 w-5 text-muted-foreground flex-shrink-0" />
+                                        <div className="flex-1 min-w-0">
+                                          <p className="text-sm font-medium text-gray-900 truncate">
+                                            {fileName}
+                                          </p>
+                                          {attachedBy && attachedDate && (
+                                            <p className="text-xs text-muted-foreground">
+                                              Attached By {attachedBy}{" "}
+                                              {attachedDate}
                                             </p>
-                                            {attachedBy && attachedDate && (
-                                              <p className="text-xs text-muted-foreground">
-                                                Attached By {attachedBy}{" "}
-                                                {attachedDate}
-                                              </p>
-                                            )}
-                                          </div>
+                                          )}
                                         </div>
                                       </div>
-                                    );
-                                  }
-                                )}
+                                    </div>
+                                  );
+                                })}
                               </div>
                             </div>
                           </div>
                         </Suspense>
                       </div>
                     )}
-                </div>
-              )}
+                  </div>
+                )}
             </div>
           )}
-        </PageLayout>
+        </div>
       </div>
 
       {/* Right Sidebar Icons - Positioned just below the SalesHeader component, flush to right edge */}
-      <div className="fixed right-0 top-[127px] z-50 bg-white border-l border-t border-b border-gray-200 shadow-lg rounded-l-lg p-1">
+      <div className="fixed right-0 top-[118px] z-50 bg-white border-l border-t border-b border-gray-200 shadow-lg rounded-l-lg p-1">
         <button
           className={`p-1.5 hover:bg-gray-100 rounded transition-colors ${
             versionsDialogOpen ? "bg-primary/10" : ""
@@ -1137,6 +1169,6 @@ export default function OrderDetailsClient({ params, initialOrderDetails }: Orde
           className: "text-sm px-3 py-2",
         }}
       />
-    </ApplicationLayout>
+    </div>
   );
 }

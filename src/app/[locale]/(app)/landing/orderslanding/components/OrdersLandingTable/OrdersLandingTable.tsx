@@ -28,6 +28,7 @@ import { useRequestDeduplication } from "@/hooks/useRequestDeduplication";
 import ordersFilterService, {
   OrderFilter,
 } from "@/lib/api/services/OrdersFilterService/OrdersFilterService";
+import { cn } from "@/lib/utils";
 import { type Order } from "@/types/dashboard/DasbordOrderstable/DashboardOrdersTable";
 import { getAccounting } from "@/utils/calculation/salesCalculation/salesCalculation";
 import { OrdersLandingTableProps } from "../../types/ordertypes";
@@ -52,26 +53,46 @@ const TableSkeleton = ({ rows = 10 }: { rows?: number }) => {
     <div className="border shadow overflow-hidden flex flex-col bg-background rounded-lg">
       <div className="border-b border-border bg-muted flex-shrink-0">
         <div className="flex font-medium text-sm text-foreground">
-          <div className="px-2 py-3 w-[150px]">{t("orderId")}</div>
-          <div className="px-2 py-3 w-[200px]">{t("orderName")}</div>
-          <div className="px-2 py-3 w-[150px]">{t("orderDate")}</div>
-          <div className="px-2 py-3 w-[150px]">{t("date")}</div>
-          <div className="px-2 py-3 w-[300px]">{t("accountName")}</div>
-          <div className="px-2 py-3 w-[150px]">{t("totalItems")}</div>
-          <div className="px-2 py-3 w-[150px]">{t("subtotal")}</div>
-          <div className="px-2 py-3 w-[150px]">{t("taxableAmount")}</div>
-          <div className="px-2 py-3 w-[150px]">{t("total")}</div>
-          <div className="px-2 py-3 w-[200px]">{t("status")}</div>
+          <div className="px-2 py-3 w-[150px] border-r border-border">
+            {t("orderId")}
+          </div>
+          <div className="px-2 py-3 w-[200px] border-r border-border">
+            {t("orderName")}
+          </div>
+          <div className="px-2 py-3 w-[200px] border-r border-border">
+            {t("status")}
+          </div>
+          <div className="px-2 py-3 w-[150px] border-r border-border">
+            {t("orderDate")}
+          </div>
+          <div className="px-2 py-3 w-[300px] border-r border-border">
+            {t("accountName")}
+          </div>
+          <div className="px-2 py-3 w-[150px] border-r border-border">
+            {t("totalItems")}
+          </div>
+          <div className="px-2 py-3 w-[150px] border-r border-border">
+            {t("subtotal")}
+          </div>
+          <div className="px-2 py-3 w-[150px] border-r border-border">
+            {t("taxableAmount")}
+          </div>
+          <div className="px-2 py-3 w-[150px] border-r border-border">
+            {t("total")}
+          </div>
           <div className="px-2 py-3 w-[150px]">{t("requiredDate")}</div>
         </div>
       </div>
       <div className="flex-1 overflow-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
         {Array.from({ length: rows }).map((_, rowIndex) => (
           <div key={`row-${rowIndex}`} className="border-b border-border flex ">
-            {Array.from({ length: 11 }).map((_, colIndex) => (
+            {Array.from({ length: 10 }).map((_, colIndex) => (
               <div
                 key={`cell-${rowIndex}-${colIndex}`}
-                className="px-2 py-3 w-[150px] flex items-center"
+                className={cn(
+                  "px-2 py-3 w-[150px] flex items-center",
+                  colIndex < 9 && "border-r border-border"
+                )}
               >
                 <Skeleton className="h-4 w-full bg-muted" />
               </div>
@@ -164,10 +185,31 @@ function OrdersLandingTable({
         ),
       },
       {
-        accessorKey: "lastModifiedDate",
-        header: t("date"),
-        size: 150,
-        cell: ({ row }) => formatDate(row.original.lastUpdatedDate),
+        accessorKey: "status",
+        header: () => <span className="pl-[30px]">{t("status")}</span>,
+        size: 200,
+        cell: ({ row }) => {
+          const status = row.original.updatedBuyerStatus;
+          if (!status)
+            return <span className="text-muted-foreground pl-[30px]">-</span>;
+          const color = statusColor(status.toUpperCase());
+          const titleCaseStatus = status
+            .split(" ")
+            .map(
+              word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()
+            )
+            .join(" ");
+          return (
+            <div className="pl-[30px]">
+              <span
+                className="px-2 py-1 rounded text-xs font-medium text-primary-foreground whitespace-nowrap border border-border/30"
+                style={{ backgroundColor: color }}
+              >
+                {titleCaseStatus}
+              </span>
+            </div>
+          );
+        },
       },
       {
         accessorKey: "orderDate",
@@ -175,7 +217,6 @@ function OrdersLandingTable({
         size: 150,
         cell: ({ row }) => formatDate(row.original.createdDate),
       },
-
       {
         accessorKey: "accountName",
         header: t("accountName"),
@@ -261,33 +302,6 @@ function OrdersLandingTable({
             />
           </span>
         ),
-      },
-      {
-        accessorKey: "status",
-        header: () => <span className="pl-[30px]">{t("status")}</span>,
-        size: 200,
-        cell: ({ row }) => {
-          const status = row.original.updatedBuyerStatus;
-          if (!status)
-            return <span className="text-muted-foreground pl-[30px]">-</span>;
-          const color = statusColor(status.toUpperCase());
-          const titleCaseStatus = status
-            .split(" ")
-            .map(
-              word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()
-            )
-            .join(" ");
-          return (
-            <div className="pl-[30px]">
-              <span
-                className="px-2 py-1 rounded text-xs font-medium text-primary-foreground whitespace-nowrap border border-border/30"
-                style={{ backgroundColor: color }}
-              >
-                {titleCaseStatus}
-              </span>
-            </div>
-          );
-        },
       },
       {
         accessorKey: "requiredDate",
@@ -383,10 +397,9 @@ function OrdersLandingTable({
 
   // Fetch orders
   const fetchOrders = useCallback(async () => {
+    // Don't fetch if we don't have user info yet
     if (!user?.userId || !user?.companyId) {
-      setOrders([]);
-      setTotalCount(0);
-      setLoading(false);
+      // Keep loading true while waiting for user data
       return;
     }
 
@@ -647,8 +660,38 @@ function OrdersLandingTable({
 
   // Fetch orders after navigation completes - ensures instant navigation
   usePostNavigationFetch(() => {
-    fetchOrders();
-  }, [fetchOrders]);
+    if (user?.userId && user?.companyId) {
+      fetchOrders();
+    }
+  }, [fetchOrders, user?.userId, user?.companyId]);
+
+  // Ensure fetch happens when user becomes available (fallback for initial load)
+  useEffect(() => {
+    if (user?.userId && user?.companyId && initialLoad) {
+      // Small delay to ensure usePostNavigationFetch has a chance to run first
+      const timer = setTimeout(() => {
+        fetchOrders();
+      }, 100);
+      return () => clearTimeout(timer);
+    }
+    return undefined;
+  }, [user?.userId, user?.companyId, initialLoad, fetchOrders]);
+
+  // Trigger fetch when page or rowPerPage changes (only after initial load)
+  useEffect(() => {
+    if (user?.userId && user?.companyId && !initialLoad) {
+      fetchOrders();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [page, rowPerPage]);
+
+  // Trigger fetch when filterData changes (only after initial load)
+  useEffect(() => {
+    if (user?.userId && user?.companyId && !initialLoad) {
+      fetchOrders();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [filterData]);
 
   useEffect(() => {
     if (refreshTrigger && refreshTrigger > 0) {
@@ -767,6 +810,7 @@ function OrdersLandingTable({
                     router.push(`/details/orderDetails/${orderId}`);
                   }
                 }}
+                tableHeight="h-[calc(103vh-180px)]"
               />
             )}
           </div>

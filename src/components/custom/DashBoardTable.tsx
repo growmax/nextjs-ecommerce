@@ -120,7 +120,7 @@ const DashboardTable = <T,>({
         )}
         <Table className="min-w-full table-auto">
           <TableHeader
-            className="bg-muted sticky top-0 z-20"
+            className="bg-muted sticky top-0 z-30"
             style={{
               borderTopLeftRadius: "var(--radius)",
               borderTopRightRadius: "var(--radius)",
@@ -128,56 +128,67 @@ const DashboardTable = <T,>({
           >
             {table.getHeaderGroups().map((headerGroup: HeaderGroup<T>) => (
               <TableRow key={headerGroup.id}>
-                {headerGroup.headers.map((header: Header<T, unknown>) => {
-                  const isSticky =
-                    (header.column.columnDef.meta as { sticky?: boolean })
-                      ?.sticky === true;
-                  const alignCenter =
-                    (header.column.columnDef.meta as { alignCenter?: boolean })
-                      ?.alignCenter === true;
-                  const alignRight =
-                    (header.column.columnDef.meta as { alignRight?: boolean })
-                      ?.alignRight === true;
-                  return (
-                    <TableHead
-                      key={header.id}
-                      className={cn(
-                        "px-1 py-0.5 bg-muted border-b relative align-middle",
-                        alignCenter
-                          ? "text-center"
-                          : alignRight
-                            ? "text-right"
-                            : "text-left",
-                        isSticky &&
-                          "sticky left-0 z-[31] bg-muted border-r border-border"
-                      )}
-                      style={{
-                        width: header.getSize(),
-                        maxWidth: header.getSize(),
-                        minWidth: header.getSize(),
-                        wordBreak: "break-word",
-                        lineHeight: "1.4",
-                        overflow: "hidden",
-                      }}
-                    >
-                      {header.isPlaceholder
-                        ? null
-                        : flexRender(
-                            header.column.columnDef.header,
-                            header.getContext()
+                {headerGroup.headers.map(
+                  (header: Header<T, unknown>, index: number) => {
+                    const isSticky =
+                      (header.column.columnDef.meta as { sticky?: boolean })
+                        ?.sticky === true;
+                    const alignCenter =
+                      (
+                        header.column.columnDef.meta as {
+                          alignCenter?: boolean;
+                        }
+                      )?.alignCenter === true;
+                    const alignRight =
+                      (header.column.columnDef.meta as { alignRight?: boolean })
+                        ?.alignRight === true;
+                    const isLastColumn =
+                      index === headerGroup.headers.length - 1;
+                    return (
+                      <TableHead
+                        key={header.id}
+                        className={cn(
+                          "px-1 py-0.5 bg-muted border-b relative align-middle",
+                          alignCenter
+                            ? "text-center"
+                            : alignRight
+                              ? "text-right"
+                              : "text-left",
+                          isSticky &&
+                            "sticky left-0 z-[31] bg-muted border-r border-border",
+                          !isLastColumn && "border-r border-border"
+                        )}
+                        style={{
+                          width: header.getSize(),
+                          maxWidth: header.getSize(),
+                          minWidth: header.getSize(),
+                          wordBreak: "break-word",
+                          lineHeight: "1.4",
+                          overflow: "hidden",
+                        }}
+                      >
+                        {header.isPlaceholder
+                          ? null
+                          : flexRender(
+                              header.column.columnDef.header,
+                              header.getContext()
+                            )}
+                        {enableColumnResizing &&
+                          header.column.getCanResize() && (
+                            <div
+                              onMouseDown={header.getResizeHandler()}
+                              onTouchStart={header.getResizeHandler()}
+                              className={`absolute right-0 top-0 h-full w-1 bg-gray-300 cursor-col-resize select-none touch-none hover:bg-blue-500 ${
+                                header.column.getIsResizing()
+                                  ? "bg-blue-500"
+                                  : ""
+                              }`}
+                            />
                           )}
-                      {enableColumnResizing && header.column.getCanResize() && (
-                        <div
-                          onMouseDown={header.getResizeHandler()}
-                          onTouchStart={header.getResizeHandler()}
-                          className={`absolute right-0 top-0 h-full w-1 bg-gray-300 cursor-col-resize select-none touch-none hover:bg-blue-500 ${
-                            header.column.getIsResizing() ? "bg-blue-500" : ""
-                          }`}
-                        />
-                      )}
-                    </TableHead>
-                  );
-                })}
+                      </TableHead>
+                    );
+                  }
+                )}
               </TableRow>
             ))}
           </TableHeader>
@@ -190,46 +201,54 @@ const DashboardTable = <T,>({
                   onClick={() => onRowClick?.(row.original)}
                   onMouseEnter={() => onRowHover?.(row.original)}
                 >
-                  {row.getVisibleCells().map((cell: Cell<T, unknown>) => {
-                    const isSticky =
-                      (cell.column.columnDef.meta as { sticky?: boolean })
-                        ?.sticky === true;
-                    const alignCenter =
-                      (cell.column.columnDef.meta as { alignCenter?: boolean })
-                        ?.alignCenter === true;
-                    const alignRight =
-                      (cell.column.columnDef.meta as { alignRight?: boolean })
-                        ?.alignRight === true;
-                    return (
-                      <TableCell
-                        key={cell.id}
-                        className={cn(
-                          "px-1 py-0.25 text-xs sm:text-sm align-middle",
-                          alignCenter
-                            ? "text-center"
-                            : alignRight
-                              ? "text-right"
-                              : "text-left",
-                          isSticky &&
-                            "sticky left-0 z-20 bg-muted border-r border-border group-hover:bg-muted"
-                        )}
-                        style={{
-                          width: cell.column.getSize(),
-                          maxWidth: cell.column.getSize(),
-                          minWidth: cell.column.getSize(),
-                          wordBreak: "break-word",
-                          lineHeight: "1",
-                          overflow: "hidden",
-                          whiteSpace: "normal",
-                        }}
-                      >
-                        {flexRender(
-                          cell.column.columnDef.cell,
-                          cell.getContext()
-                        )}
-                      </TableCell>
-                    );
-                  })}
+                  {row
+                    .getVisibleCells()
+                    .map((cell: Cell<T, unknown>, index: number) => {
+                      const isSticky =
+                        (cell.column.columnDef.meta as { sticky?: boolean })
+                          ?.sticky === true;
+                      const alignCenter =
+                        (
+                          cell.column.columnDef.meta as {
+                            alignCenter?: boolean;
+                          }
+                        )?.alignCenter === true;
+                      const alignRight =
+                        (cell.column.columnDef.meta as { alignRight?: boolean })
+                          ?.alignRight === true;
+                      const isLastColumn =
+                        index === row.getVisibleCells().length - 1;
+                      return (
+                        <TableCell
+                          key={cell.id}
+                          className={cn(
+                            "px-1 py-0.25 text-xs sm:text-sm align-middle",
+                            alignCenter
+                              ? "text-center"
+                              : alignRight
+                                ? "text-right"
+                                : "text-left",
+                            isSticky &&
+                              "sticky left-0 z-20 bg-muted border-r border-border group-hover:bg-muted",
+                            !isLastColumn && "border-r border-border"
+                          )}
+                          style={{
+                            width: cell.column.getSize(),
+                            maxWidth: cell.column.getSize(),
+                            minWidth: cell.column.getSize(),
+                            wordBreak: "break-word",
+                            lineHeight: "1",
+                            overflow: "hidden",
+                            whiteSpace: "normal",
+                          }}
+                        >
+                          {flexRender(
+                            cell.column.columnDef.cell,
+                            cell.getContext()
+                          )}
+                        </TableCell>
+                      );
+                    })}
                 </TableRow>
               ))
             ) : (
