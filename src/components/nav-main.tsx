@@ -1,31 +1,32 @@
 "use client";
 
-import { ChevronRight, type LucideIcon } from "lucide-react";
+import { usePrefetchOnHover } from "@/hooks/usePrefetchOnHover";
 import { Link, usePathname } from "@/i18n/navigation";
+import { ChevronRight, type LucideIcon } from "lucide-react";
 import { useState } from "react";
 
 import { useTranslations } from "next-intl";
 
 import {
-  Collapsible,
-  CollapsibleContent,
-  CollapsibleTrigger,
+    Collapsible,
+    CollapsibleContent,
+    CollapsibleTrigger,
 } from "@/components/ui/collapsible";
 import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
+    Popover,
+    PopoverContent,
+    PopoverTrigger,
 } from "@/components/ui/popover";
 import {
-  SidebarGroup,
-  SidebarGroupLabel,
-  SidebarMenu,
-  SidebarMenuButton,
-  SidebarMenuItem,
-  SidebarMenuSub,
-  SidebarMenuSubButton,
-  SidebarMenuSubItem,
-  useSidebar,
+    SidebarGroup,
+    SidebarGroupLabel,
+    SidebarMenu,
+    SidebarMenuButton,
+    SidebarMenuItem,
+    SidebarMenuSub,
+    SidebarMenuSubButton,
+    SidebarMenuSubItem,
+    useSidebar,
 } from "@/components/ui/sidebar";
 import { cn } from "@/lib/utils";
 
@@ -36,6 +37,10 @@ function CollapsedMenuItem({
   hasActiveSub,
   isActive,
   onNavigate,
+  onNavClick,
+  handleMouseEnter,
+  handleTouchStart,
+  handleFocus,
 }: {
   item: {
     title: string;
@@ -46,6 +51,10 @@ function CollapsedMenuItem({
   hasActiveSub: boolean;
   isActive: (url: string) => boolean;
   onNavigate?: (url: string) => void;
+  onNavClick: (e: React.MouseEvent<HTMLAnchorElement>, url: string) => void;
+  handleMouseEnter: (url: string) => void;
+  handleTouchStart: (url: string) => void;
+  handleFocus: (url: string) => void;
 }) {
   const [isOpen, setIsOpen] = useState(false);
 
@@ -54,7 +63,7 @@ function CollapsedMenuItem({
       <Popover open={isOpen} onOpenChange={setIsOpen}>
         <PopoverTrigger asChild>
           <SidebarMenuButton
-            tooltip={item.title}
+            tooltip={{ children: item.title, className: "z-[101]" }}
             isActive={hasActiveSub}
             className="justify-center w-full"
           >
@@ -72,13 +81,18 @@ function CollapsedMenuItem({
               <Link
                 key={subItem.title}
                 href={subItem.url}
+                prefetch={true}
                 className={cn(
                   "text-sm font-medium text-sidebar-foreground rounded-md px-3 py-1.5 transition-colors",
                   isActive(subItem.url)
                     ? "bg-sidebar-accent text-sidebar-accent-foreground"
                     : "hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
                 )}
-                onClick={() => {
+                onMouseEnter={() => handleMouseEnter(subItem.url)}
+                onTouchStart={() => handleTouchStart(subItem.url)}
+                onFocus={() => handleFocus(subItem.url)}
+                onClick={e => {
+                  onNavClick(e, subItem.url);
                   onNavigate?.(subItem.url);
                   setIsOpen(false); // Close popover on navigation
                 }}
@@ -112,6 +126,8 @@ export function NavMain({
   const pathname = usePathname();
   const { state, isMobile } = useSidebar();
   const isCollapsed = state === "collapsed" && !isMobile;
+  const { handleMouseEnter, handleTouchStart, handleFocus } =
+    usePrefetchOnHover();
 
   const t = useTranslations("navigation");
 
@@ -125,6 +141,16 @@ export function NavMain({
   const isActive = (url: string) => {
     if (url === "/") return pathWithoutLocale === "/";
     return pathWithoutLocale.startsWith(url);
+  };
+
+  // Handle navigation - let Next.js Link handle it naturally for better prefetching
+  const handleNavClick = (
+    _e: React.MouseEvent<HTMLAnchorElement>,
+    url: string
+  ) => {
+    onNavigate?.(url);
+    // Don't prevent default - let Next.js Link handle navigation for optimal performance
+    // This allows Next.js's built-in prefetching and navigation optimizations to work
   };
 
   return (
@@ -143,17 +169,21 @@ export function NavMain({
               <SidebarMenuItem key={item.title}>
                 <SidebarMenuButton
                   asChild
-                  tooltip={item.title}
+                  tooltip={{ children: item.title, className: "z-[101]" }}
                   isActive={isActive(item.url)}
                   className={cn(isCollapsed ? "justify-center" : "")}
                 >
                   <Link
                     href={item.url}
+                    prefetch={true}
                     className={cn(
                       "flex items-center gap-2",
                       isCollapsed && "justify-center gap-0"
                     )}
-                    onClick={() => onNavigate?.(item.url)}
+                    onMouseEnter={() => handleMouseEnter(item.url)}
+                    onTouchStart={() => handleTouchStart(item.url)}
+                    onFocus={() => handleFocus(item.url)}
+                    onClick={e => handleNavClick(e, item.url)}
                   >
                     {item.icon && <item.icon className="size-5" />}
                     {!isCollapsed && (
@@ -174,6 +204,10 @@ export function NavMain({
                 hasActiveSub={hasActiveSub}
                 isActive={isActive}
                 {...(onNavigate && { onNavigate })}
+                onNavClick={handleNavClick}
+                handleMouseEnter={handleMouseEnter}
+                handleTouchStart={handleTouchStart}
+                handleFocus={handleFocus}
               />
             );
           }
@@ -191,7 +225,7 @@ export function NavMain({
                   className="w-full [&[data-state=closed]>button]:h-8 [&[data-state=open]>button]:h-8"
                 >
                   <SidebarMenuButton
-                    tooltip={item.title}
+                    tooltip={{ children: item.title, className: "z-[101]" }}
                     isActive={hasActiveSub}
                     className="gap-2"
                   >
@@ -207,9 +241,18 @@ export function NavMain({
                         <SidebarMenuSubButton
                           asChild
                           isActive={isActive(subItem.url)}
-                          onClick={() => onNavigate?.(subItem.url)}
                         >
-                          <Link href={subItem.url}>
+                          <Link
+                            href={subItem.url}
+                            prefetch={true}
+                            onMouseEnter={() => handleMouseEnter(subItem.url)}
+                            onTouchStart={() => handleTouchStart(subItem.url)}
+                            onFocus={() => handleFocus(subItem.url)}
+                            onClick={e => {
+                              handleNavClick(e, subItem.url);
+                              onNavigate?.(subItem.url);
+                            }}
+                          >
                             <span>{subItem.title}</span>
                           </Link>
                         </SidebarMenuSubButton>

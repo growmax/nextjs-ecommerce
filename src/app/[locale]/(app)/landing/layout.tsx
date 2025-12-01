@@ -1,5 +1,5 @@
-import React from "react";
 import { LandingLayout } from "@/components/layout";
+import React from "react";
 
 export default function LandingLayoutWrapper({
   children,

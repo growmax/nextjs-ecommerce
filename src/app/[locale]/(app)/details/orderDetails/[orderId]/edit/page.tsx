@@ -1,8 +1,8 @@
 "use client";
 
 import { Layers } from "lucide-react";
-import { useLocale, useTranslations } from "next-intl";
-import { useRouter } from "next/navigation";
+import { useTranslations } from "next-intl";
+import { useNavigationWithLoader } from "@/hooks/useNavigationWithLoader";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
 
@@ -111,8 +111,7 @@ const decodeUnicode = (str: string): string => {
 };
 
 export default function EditOrderPage({ params }: EditOrderPageProps) {
-  const router = useRouter();
-  const locale = useLocale();
+  const { push } = useNavigationWithLoader();
   const t = useTranslations("orders");
   const tDetails = useTranslations("details");
 
@@ -767,7 +766,7 @@ export default function EditOrderPage({ params }: EditOrderPageProps) {
   };
 
   const handleCancel = () => {
-    router.push(`/${locale}/details/orderDetails/${orderId}`);
+    push(`/details/orderDetails/${orderId}`);
   };
 
   const handleQuantityChange = (productId: string, quantity: number) => {
@@ -1126,7 +1125,7 @@ export default function EditOrderPage({ params }: EditOrderPageProps) {
       toast.success(t("newVersionCreatedSuccessfully"));
 
       // Step 6: Navigate back to order details page
-      router.push(`/${locale}/details/orderDetails/${orderId}`);
+      push(`/details/orderDetails/${orderId}`);
     } catch (error) {
       toast.error(
         error instanceof Error ? error.message : t("failedToPlaceOrder")

@@ -4,7 +4,7 @@ import { ServerUser } from "@/lib/auth-server";
 import { useHybridAuth } from "@/hooks/useHybridAuth";
 import { useGlobalLoader } from "@/hooks/useGlobalLoader";
 import { useUserDetails } from "@/contexts/UserDetailsContext";
-import Link from "next/link";
+import { Link } from "@/i18n/navigation";
 import Image from "next/image";
 
 interface AuthAwareNavProps {
@@ -46,7 +46,12 @@ export function AuthAwareNav({
   };
 
   if (auth.isAuthenticated && auth.user) {
-    return <AuthenticatedNav user={auth.user as ServerUser} onLogout={handleLogout} />;
+    return (
+      <AuthenticatedNav
+        user={auth.user as ServerUser}
+        onLogout={handleLogout}
+      />
+    );
   } else {
     return <PublicNav />;
   }
@@ -86,13 +91,13 @@ function AuthenticatedNav({
 
       {/* Desktop Navigation */}
       <nav className="hidden sm:flex items-center gap-4">
-        <Link href="/dashboard" className="hover:text-primary">
+        <Link href="/dashboard" prefetch={true} className="hover:text-primary">
           Dashboard
         </Link>
-        <Link href="/profile" className="hover:text-primary">
+        <Link href="/profile" prefetch={true} className="hover:text-primary">
           Profile
         </Link>
-        <Link href="/company" className="hover:text-primary">
+        <Link href="/company" prefetch={true} className="hover:text-primary">
           Company
         </Link>
       </nav>
@@ -142,12 +147,14 @@ function PublicNav() {
     <div className="flex items-center gap-2">
       <Link
         href="/login"
+        prefetch={true}
         className="px-3 py-1 text-sm border rounded hover:bg-accent"
       >
         Login
       </Link>
       <Link
         href="/register"
+        prefetch={true}
         className="px-3 py-1 text-sm bg-primary text-primary-foreground rounded hover:bg-primary/90"
       >
         Register

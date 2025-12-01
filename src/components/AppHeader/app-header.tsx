@@ -8,12 +8,16 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Separator } from "@/components/ui/separator";
 import { SidebarTrigger, useSidebar } from "@/components/ui/sidebar";
+import { Skeleton } from "@/components/ui/skeleton";
 import { useCart } from "@/contexts/CartContext";
 import { useUserDetails } from "@/contexts/UserDetailsContext";
 import useLogout from "@/hooks/Auth/useLogout";
 import useUserProfile from "@/hooks/Profile/useUserProfile";
 import { useTenantData } from "@/hooks/useTenantData";
 
+
+import { useNavigationWithLoader } from "@/hooks/useNavigationWithLoader";
+import { Link } from "@/i18n/navigation";
 import { cn } from "@/lib/utils";
 import { getUserInitials } from "@/utils/General/general";
 import {
@@ -22,27 +26,38 @@ import {
   Search,
   ShoppingCart,
 } from "lucide-react";
-import { useTranslations } from "next-intl";
-import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useLocale, useTranslations } from "next-intl";
 import { useCallback, useEffect, useMemo, useState } from "react";
 
-export function AppHeader() {
-  const [open, setOpen] = useState(false);
+export function AppHeader({
+  open: externalOpen,
+  setOpen: externalSetOpen,
+}: {
+  open?: boolean;
+  setOpen?: (v: boolean) => void;
+} = {}) {
+  const [internalOpen, setInternalOpen] = useState(false);
+  const open = externalOpen ?? internalOpen;
+  const setOpen = externalSetOpen ?? setInternalOpen;
   const [searchValue, setSearchValue] = useState("");
   const { userProfile } = useUserProfile();
   const { isLoggingOut, handleLogout } = useLogout();
-  const router = useRouter();
-  const { isAuthenticated } = useUserDetails();
+  const router = useNavigationWithLoader();
+  const { isAuthenticated, isLoading: isAuthLoading } = useUserDetails();
 
   // Sync tenant data from context to Zustand store (early initialization)
   useTenantData();
 
   const { cartCount } = useCart();
+  const locale = useLocale();
   const notificationsCount = 5;
   const tNav = useTranslations("navigation");
   const tAuth = useTranslations("auth");
   const tSearch = useTranslations("search");
+
+  // Don't render auth-dependent UI until authentication state is determined
+  // This prevents flickering between login/logout states
+  const showAuthUI = !isAuthLoading;
 
   // Keyboard shortcut to open search (Cmd/Ctrl + K)
   useEffect(() => {
@@ -55,7 +70,7 @@ export function AppHeader() {
 
     document.addEventListener("keydown", down);
     return () => document.removeEventListener("keydown", down);
-  }, []);
+  }, [setOpen]);
 
   const { state: sidebarState } = useSidebar();
   const isSidebarCollapsed = sidebarState === "collapsed";
@@ -64,8 +79,11 @@ export function AppHeader() {
   const elasticIndex = "schwingstetterpgandproducts";
 
   // ---- Command Suggestions ----
-  const suggestionItems = useMemo(
-    () => [
+  const suggestionItems = useMemo(() => {
+    // Don't show suggestions until auth state is determined
+    if (!showAuthUI || !isAuthenticated) return [];
+
+    return [
       {
         key: "orders",
         label: tNav("orders"),
@@ -78,9 +96,8 @@ export function AppHeader() {
         icon: <CommandIcon />,
         href: "/dashboard",
       },
-    ],
-    [tNav]
-  );
+    ];
+  }, [tNav, showAuthUI, isAuthenticated]);
 
   const handleSelect = useCallback(
     (href: string) => {
@@ -88,14 +105,14 @@ export function AppHeader() {
       setOpen(false);
       setSearchValue("");
     },
-    [router]
+    [router, setOpen]
   );
 
   return (
     <>
       <header
         className={cn(
-          "fixed top-0 z-[100] border-b bg-background/80 backdrop-blur-md supports-[backdrop-filter]:bg-background/80 transition-all duration-200",
+          "fixed top-0 z-[10] border-b bg-background/80 backdrop-blur-md supports-[backdrop-filter]:bg-background/80 transition-all duration-200",
           // Mobile: Full width (sidebar is overlay)
           "left-0 right-0",
           // Desktop: Adjust for sidebar
@@ -108,6 +125,7 @@ export function AppHeader() {
           <div className="md:hidden">
             <Link
               href="/"
+              prefetch={true}
               className="flex items-center gap-2 cursor-pointer mr-2"
             >
               <div className="bg-black text-white flex aspect-square size-7 sm:size-8 items-center justify-center rounded-lg">
@@ -162,19 +180,23 @@ export function AppHeader() {
               <LanguageSwitcher />
 
               {/* Notifications */}
-              {isAuthenticated && (
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="h-7 w-7 md:h-8 md:w-8 relative"
-                >
-                  <Bell className="h-3.5 w-3.5 md:h-4 md:w-4" />
-                  {notificationsCount > 0 && (
-                    <span className="absolute -top-1 -right-1 h-4 w-4 rounded-full bg-red-500 text-xs text-white flex items-center justify-center">
-                      {notificationsCount > 9 ? "9+" : notificationsCount}
-                    </span>
-                  )}
-                </Button>
+              {!showAuthUI ? (
+                <Skeleton className="h-7 w-7 md:h-8 md:w-8 rounded-md" />
+              ) : (
+                isAuthenticated && (
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-7 w-7 md:h-8 md:w-8 relative"
+                  >
+                    <Bell className="h-3.5 w-3.5 md:h-4 md:w-4" />
+                    {notificationsCount > 0 && (
+                      <span className="absolute -top-1 -right-1 h-4 w-4 rounded-full bg-red-500 text-xs text-white flex items-center justify-center">
+                        {notificationsCount > 9 ? "9+" : notificationsCount}
+                      </span>
+                    )}
+                  </Button>
+                )
               )}
 
               {/* Cart */}
@@ -198,7 +220,9 @@ export function AppHeader() {
               />
 
               {/* Profile Dropdown with Real Data */}
-              {isAuthenticated ? (
+              {!showAuthUI ? (
+                <Skeleton className="h-7 w-7 md:h-8 md:w-8 rounded-full" />
+              ) : isAuthenticated ? (
                 <AvatarCard
                   user={userProfile}
                   onLogout={handleLogout}
@@ -256,7 +280,9 @@ export function AppHeader() {
               </Button>
 
               {/* Profile Dropdown with Real Data */}
-              {isAuthenticated ? (
+              {!showAuthUI ? (
+                <Skeleton className="h-7 w-7 sm:h-8 sm:w-8 rounded-full" />
+              ) : isAuthenticated ? (
                 <AvatarCard
                   user={userProfile}
                   onLogout={handleLogout}
@@ -307,6 +333,7 @@ export function AppHeader() {
         suggestionItems={suggestionItems}
         handleSelect={handleSelect}
         setSearchValue={setSearchValue}
+        locale={locale}
       />
     </>
   );

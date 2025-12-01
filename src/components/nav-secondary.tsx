@@ -39,7 +39,7 @@ export function NavSecondary({
                 size="sm"
                 isActive={isActive(item.url)}
               >
-                <Link href={item.url}>
+                <Link href={item.url} prefetch={true}>
                   <item.icon />
                   <span>{item.title}</span>
                 </Link>

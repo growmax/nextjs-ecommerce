@@ -4,14 +4,43 @@ jest.mock("next/navigation", () => ({
     push: jest.fn(),
     replace: jest.fn(),
   }),
+  usePathname: () => "/some/path",
 }));
 
 jest.mock("next-intl", () => ({
   useLocale: () => "en",
+  useTranslations: () => (key: string) => key,
 }));
 
 jest.mock("@/hooks/usePageScroll", () => ({
   usePageScroll: jest.fn(),
+}));
+
+jest.mock("@/hooks/useCurrentUser", () => ({
+  useCurrentUser: () => ({
+    user: {
+      userId: "user-1",
+      companyId: "company-1",
+    },
+  }),
+}));
+
+jest.mock("@/hooks/useTenantData", () => ({
+  useTenantData: () => ({
+    tenantData: {
+      tenant: {
+        tenantCode: "tenant-1",
+        elasticCode: "testelastic",
+      },
+    },
+  }),
+}));
+
+jest.mock("@/hooks/useNavigationWithLoader", () => ({
+  useNavigationWithLoader: () => ({
+    handleNavigation: jest.fn(),
+    isNavigating: false,
+  }),
 }));
 
 jest.mock("@/components/sales", () => {
@@ -32,20 +61,9 @@ jest.mock("@/components/sales", () => {
   };
 });
 
-jest.mock("next/dynamic", () => {
-  const React = jest.requireActual<typeof import("react")>("react");
-  return {
-    __esModule: true,
-    default: (_loader: any) => {
-      const DynamicComponent = ({ params: _params }: any) =>
-        React.createElement(
-          "div",
-          { "data-testid": "quote-details-client" },
-          "QuoteDetailsClient"
-        );
-      DynamicComponent.displayName = "DynamicQuoteDetailsClient";
-      return DynamicComponent;
-    },
+jest.mock("./components/QuoteDetailsClient", () => {
+  return function MockQuoteDetailsClient() {
+    return <div data-testid="quote-details-client">QuoteDetailsClient</div>;
   };
 });
 

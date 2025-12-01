@@ -3,10 +3,10 @@ import { DataTable } from "@/components/Global/DataTable";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { useTranslations } from "next-intl";
 import CompanyService from "@/lib/api/services/CompanyService";
 import type { ColumnDef } from "@tanstack/react-table";
 import { Loader2, Plus, Search, Trash2 } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { useEffect, useMemo, useState } from "react";
 import CompanyDialogBox from "./CompanyDialogBox";
 
@@ -276,7 +276,7 @@ const CompanyBranchTable = () => {
   return (
     <SectionCard
       title={t("companyBranches")}
-      className="h-full flex flex-col"
+      className="h-full flex flex-col pb-0"
       contentClassName="p-0 flex-1 overflow-hidden"
       showSeparator={false}
       headerActions={

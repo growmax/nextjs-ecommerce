@@ -6,7 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { Minus, Plus, Trash2 } from "lucide-react";
 import Image from "next/image";
-import Link from "next/link";
+import { Link } from "@/i18n/navigation";
 import { useState } from "react";
 
 // Mock data array for cart items
@@ -60,7 +60,7 @@ function CartItemCard() {
           </div>
           {/* Product Info */}
           <div className="flex-1">
-            <Link href={`#`} className="hover:text-primary">
+            <Link href={`#`} prefetch={true} className="hover:text-primary">
               <h3 className="font-medium">{item.title}</h3>
             </Link>
             <p className="text-sm text-gray-600">Brand: {item.brandName}</p>

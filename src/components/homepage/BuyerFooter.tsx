@@ -84,11 +84,8 @@ export default function BuyerFooter({
     return null;
   }
 
+  // CONTENT ONLY from API. Styling is removed.
   const {
-    footerBgColorMob = "#000000",
-    footerBgColor = "#000000",
-    titleTextColorMob = "#ffffff",
-    titleTextColor = "#ffffff",
     copyRight = {},
     backToTop,
     showCopyRightMob = false,
@@ -105,10 +102,7 @@ export default function BuyerFooter({
   } = footerData;
 
   const {
-    CRbgColor = "#101010",
-    CRbgColorMob = "#101010",
-    textColorMob = "#ffffff",
-    textColor = "#ffffff",
+    // CRbgColor, CRbgColorMob, textColor, textColorMob are removed
     title,
     titleMob,
   } = copyRight;
@@ -156,7 +150,7 @@ export default function BuyerFooter({
             isCollapsedViewMob &&
             listOfItems &&
             listOfItems.length > 0 && (
-              <div className="w-full">
+              <div className="w-full bg-muted text-muted-foreground">
                 <Accordion type="multiple" className="w-full">
                   {listOfItems.slice(0, 4).map((list: any, indexP: number) => {
                     const showColumn =
@@ -176,7 +170,7 @@ export default function BuyerFooter({
                       <AccordionItem
                         key={indexP}
                         value={`footer-${indexP}`}
-                        className="border-b m-0"
+                        className="border-b border-border m-0"
                       >
                         <AccordionTrigger className="px-4 py-3">
                           <span className="text-base font-medium">
@@ -204,11 +198,8 @@ export default function BuyerFooter({
             listOfItems &&
             listOfItems.length > 0 && (
               <div
-                className="w-full"
-                style={{
-                  backgroundColor: isMobile ? footerBgColorMob : footerBgColor,
-                  color: isMobile ? titleTextColorMob : titleTextColor,
-                }}
+                className="w-full bg-muted text-muted-foreground"
+                // Inline style for color removed
               >
                 <div className="flex flex-col">
                   {listOfItems.slice(0, 4).map((list: any, indexP: number) => {
@@ -239,14 +230,13 @@ export default function BuyerFooter({
         {(isMobile ? showCopyRightMob : showCopyRight) && (
           <div
             className={cn(
-              "w-full",
+              "w-full bg-background text-foreground", // Color classes applied
               isMobile
                 ? "flex flex-col items-center"
                 : "flex flex-row items-center"
             )}
             style={{
-              backgroundColor: isMobile ? CRbgColorMob : CRbgColor,
-              color: isMobile ? textColorMob : textColor,
+              // backgroundColor and color removed, padding kept
               padding: "16px",
             }}
           >
@@ -292,14 +282,14 @@ export default function BuyerFooter({
       {!isMobile && backToTop && showBackToTop && (
         <button
           onClick={handleBackToTop}
-          className="fixed z-50 rounded-full h-12 w-12 p-0 shadow-lg bg-white hover:bg-gray-100 transition-colors"
+          className="fixed z-50 rounded-full h-12 w-12 p-0 shadow-lg bg-card text-card-foreground hover:bg-accent transition-colors"
           style={{
             bottom: "48px",
             right: "18px",
           }}
           aria-label="Back to top"
         >
-          <ChevronUp className="h-6 w-6 mx-auto text-gray-800" />
+          <ChevronUp className="h-6 w-6 mx-auto" />
         </button>
       )}
 
@@ -307,9 +297,9 @@ export default function BuyerFooter({
       {showWhatsappButton && whatsappNumber && (
         <button
           onClick={handleWhatsApp}
-          className="fixed z-[100] rounded-full h-14 w-14 p-0 shadow-lg transition-colors"
+          className="fixed z-[100] rounded-full h-14 w-14 p-0 shadow-lg transition-colors text-white bg-[#25D366] hover:bg-[#128C7E]"
           style={{
-            backgroundColor: "#49c95a",
+            // backgroundColor removed, positioning kept
             bottom: isMobile
               ? "85px"
               : whatsappAlign === "right"
@@ -351,27 +341,19 @@ function FooterColumnContent({
   isMobile: boolean;
   indexP: number;
 }) {
-  const {
-    footerBgColor = "inherit",
-    footerBgColorMob = "inherit",
-    titleTextColor = "inherit",
-    titleTextColorMob = "inherit",
-    borderColor = "#ccc",
-    borderColorMob = "#ccc",
-    borderWidth = 0,
-    borderWidthMob = 0,
-  } = list;
+  // Color and border properties are removed from destructuring
+  const { borderWidth = 0, borderWidthMob = 0 } = list;
 
   return (
     <div
-      className={cn("w-full", isMobile ? "flex flex-col" : "flex flex-row")}
+      className={cn(
+        "w-full bg-muted text-muted-foreground", // Color classes applied
+        isMobile ? "flex flex-col" : "flex flex-row"
+      )}
       style={{
-        backgroundColor: isMobile ? footerBgColorMob : footerBgColor,
-        color: isMobile ? titleTextColorMob : titleTextColor,
+        // backgroundColor, color, and borderColor removed. Padding and borderWidth kept.
         padding: "16px",
-        borderBottom: `${isMobile ? borderWidthMob : borderWidth}px solid ${
-          isMobile ? borderColorMob : borderColor
-        }`,
+        borderBottom: `${isMobile ? borderWidthMob : borderWidth}px solid var(--border)`,
       }}
     >
       {list?.innerList?.map((innerItem: any, indexC: number) => {
@@ -390,21 +372,16 @@ function FooterColumnContent({
           >
             {innerItem.title && (
               <h3
-                className="text-lg font-semibold mb-3"
-                style={{
-                  lineHeight: "30px",
-                  marginBottom: "12px",
-                }}
+                className="text-lg font-semibold mb-3 leading-tight" // Replaced inline style with classes
+                // style={{ lineHeight: "30px", marginBottom: "12px" }}
               >
                 {innerItem.title}
               </h3>
             )}
             {innerItem.description && (
               <div
-                className="text-sm"
-                style={{
-                  fontSize: "0.875rem",
-                }}
+                className="text-sm prose prose-sm dark:prose-invert" // Added prose classes for better rendering
+                // style={{ fontSize: "0.875rem" }}
                 dangerouslySetInnerHTML={{
                   __html: innerItem.description,
                 }}

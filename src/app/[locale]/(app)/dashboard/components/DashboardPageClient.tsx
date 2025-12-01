@@ -1,6 +1,10 @@
 "use client";
 
-import { Skeleton } from "@/components/ui/skeleton";
+import { useRouteRequestTracking } from "@/hooks/useRouteRequestTracking";
+import {
+    DashboardChartSkeleton,
+    DashboardOrdersTableSkeleton,
+} from "./DashboardSkeletons";
 
 import dynamic from "next/dynamic";
 import { Suspense } from "react";
@@ -10,12 +14,7 @@ const DashboardChart = dynamic(
   () =>
     import("./DashboardChart/DashboardChart").then(mod => mod.DashboardChart),
   {
-    loading: () => (
-      <div className="space-y-4">
-        <Skeleton className="h-8 w-48" />
-        <Skeleton className="h-64 w-full" />
-      </div>
-    ),
+    loading: () => <DashboardChartSkeleton />,
     ssr: false,
   }
 );
@@ -23,47 +22,32 @@ const DashboardChart = dynamic(
 const DashboardOrdersTable = dynamic(
   () => import("./DashboardOrdersTable/DashboardOrdersTable"),
   {
-    loading: () => (
-      <div className="space-y-4">
-        <Skeleton className="h-8 w-48" />
-        <Skeleton className="h-64 w-full" />
-      </div>
-    ),
+    loading: () => <DashboardOrdersTableSkeleton />,
     ssr: false,
   }
 );
 
 export default function DashboardPageClient() {
+  useRouteRequestTracking(); // Track route to prevent duplicate RSC calls
+
   return (
     <div className="min-h-screen bg-background">
-      <main className="container mx-auto px-4 py-6 sm:py-8">
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 items-start">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 items-start">
           <div className="w-full">
             <Suspense
-              fallback={
-                <div className="space-y-4">
-                  <Skeleton className="h-8 w-48" />
-                  <Skeleton className="h-64 w-full" />
-                </div>
-              }
+              fallback={<DashboardChartSkeleton />}
             >
               <DashboardChart />
             </Suspense>
           </div>
           <div className="w-full">
             <Suspense
-              fallback={
-                <div className="space-y-4">
-                  <Skeleton className="h-8 w-48" />
-                  <Skeleton className="h-64 w-full" />
-                </div>
-              }
+              fallback={<DashboardOrdersTableSkeleton />}
             >
               <DashboardOrdersTable />
             </Suspense>
           </div>
         </div>
-      </main>
     </div>
   );
 }

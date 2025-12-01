@@ -22,6 +22,13 @@ jest.mock("@/hooks/usePageScroll", () => ({
   usePageScroll: jest.fn(),
 }));
 
+jest.mock("@/hooks/useNavigationWithLoader", () => ({
+  useNavigationWithLoader: () => ({
+    handleNavigation: jest.fn(),
+    isNavigating: false,
+  }),
+}));
+
 // Mock data
 const mockUser = {
   userId: "user-1",

@@ -5,9 +5,13 @@ import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { ProductListItem } from "@/types/product-listing";
 
+import { useEffect, useState } from "react";
+
+const PLACEHOLDER_IMAGE = "https://placehold.co/600x400?text=Broken Image";
+
 interface ProductCardProps {
   product: ProductListItem;
-  viewMode?: "grid" | "list";
+  viewMode?: "grid" | "list" | "table";
 }
 
 /**
@@ -16,6 +20,11 @@ interface ProductCardProps {
  */
 export function ProductCard({ product, viewMode = "grid" }: ProductCardProps) {
   const isGrid = viewMode === "grid";
+  const [imageSrc, setImageSrc] = useState(product.image);
+
+  useEffect(() => {
+    setImageSrc(product.image);
+  }, [product.image]);
 
   return (
     <Card
@@ -37,8 +46,9 @@ export function ProductCard({ product, viewMode = "grid" }: ProductCardProps) {
           }`}
         >
           <img
-            src="https://placehold.co/600x400?text=Image"
+            src={imageSrc || PLACEHOLDER_IMAGE}
             alt={product.title}
+            onError={() => setImageSrc(PLACEHOLDER_IMAGE)}
             className={`object-cover absolute inset-0 ${
               isGrid ? "h-full w-full" : "h-full w-full md:h-[calc(100%-48px)] md:top-6 md:rounded-md"
             }`}
@@ -64,7 +74,7 @@ export function ProductCard({ product, viewMode = "grid" }: ProductCardProps) {
             {/* Price */}
             <div className="flex flex-wrap items-center gap-2">
               <span className="text-lg font-bold text-blue-600">
-                ₹{(product.price / 100).toFixed(2)}
+                ₹{product.price}
               </span>
             </div>
 

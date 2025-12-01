@@ -19,6 +19,14 @@ jest.mock("@/hooks/usePageScroll", () => ({
   usePageScroll: jest.fn(),
 }));
 
+jest.mock("@/hooks/useGlobalLoader", () => ({
+  useLoading: () => ({
+    showLoading: jest.fn(),
+    hideLoading: jest.fn(),
+    isLoading: false,
+  }),
+}));
+
 // Mock hooks
 const mockUser = {
   userId: "user-1",

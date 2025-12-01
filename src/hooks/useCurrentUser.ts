@@ -1,7 +1,7 @@
 "use client";
 
 import { useUserDetails } from "@/contexts/UserDetailsContext";
-import UserServices from "@/lib/api/services/UserServices/UserServices";
+import API from "@/lib/api";
 import { AuthStorage } from "@/lib/auth";
 import { JWTService } from "@/lib/services/JWTService";
 import { useEffect, useState } from "react";
@@ -109,7 +109,7 @@ export function useCurrentUser() {
 
         // Fallback: Try to fetch from API (but handle 404 gracefully)
         try {
-          const response = await UserServices.getUser({ sub });
+          const response = await API.User.getUser({ sub });
           if (response.data) {
             const userData: CurrentUser = {
               currency: response.data.currency,

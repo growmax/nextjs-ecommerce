@@ -1,0 +1,489 @@
+# OpenSearch Query Assistant Rule
+
+When the user asks for help with OpenSearch queries or wants to structure/create queries, analyze the `@opensearch` folder and follow these guidelines.
+
+## Context Analysis
+
+1. **Always reference the OpenSearch backend structure** in `/opensearch/growmax_opensearch/`:
+   - Index mapping: `api/elasticsearch/opensearch_indexes.go` - Contains the complete field mapping schema
+   - Product model: `Model/ElasticProductDTO.go` - Contains the document structure
+   - Query builders: Frontend implementations in `src/utils/opensearch/browse-queries.ts` and `src/utils/elasticsearch/search-queries.ts`
+
+2. **Reference documentation** in `docs/OPENSEARCH_QUERIES.md` for:
+   - Query patterns and examples
+   - Field naming conventions
+   - Request/response formats
+   - Common patterns and best practices
+
+## Request Structure
+
+All OpenSearch requests MUST follow this exact structure:
+
+```typescript
+{
+  Elasticindex: string;      // Index name (e.g., "tenantcodepgandproducts")
+  ElasticBody: object | string; // Query object for search, productIndexName for get
+  ElasticType: string;       // Document type (default: "pgproduct")
+  queryType: "search" | "get" | "update" | "delete"; // Operation type
+}
+```
+
+**Critical Parameter Naming:**
+- ✅ `Elasticindex` (capital E, lowercase i) - **CORRECT**
+- ✅ `ElasticBody` (capital E, capital B) - **CORRECT**
+- ✅ `ElasticType` (capital E, capital T) - **CORRECT**
+- ✅ `queryType` (lowercase q, lowercase t) - **CORRECT**
+
+**API Endpoint:**
+- URL: `https://api.myapptino.com/opensearch/invocations`
+- Method: `POST`
+- Headers: `Content-Type: application/json`, optional: `Authorization`, `x-tenant`, `x-company-id`, `x-user-id`
+
+## Field Naming Conventions
+
+**CRITICAL:** OpenSearch uses **camelCase** field names, NOT snake_case.
+
+### Text Fields with `.keyword` Suffix
+For exact match queries (term, terms), use `.keyword` suffix:
+- `brandProductId.keyword` (for exact match)
+- `brandsName.keyword` (for exact match)
+- `productShortDescription.keyword` (for exact match)
+- `productsSubCategories.categoryName.keyword` (for exact match)
+- `catalogCode.keyword` (for exact match, array field)
+
+### Numeric Fields (no `.keyword`)
+- `productId` (long)
+- `productGroupId` (long)
+- `isPublished` (long, values: 0 or 1)
+- `unitListPrice` (float)
+- `categoryId` (long)
+
+### Boolean Fields (no `.keyword`)
+- `internal` (boolean, exclude with `term: { internal: true }`)
+- `internalProduct` (boolean)
+
+### Common Field Mappings
+
+| Database Column | OpenSearch Field | Query Type | Notes |
+|----------------|------------------|------------|-------|
+| `Brand_Product_ID` | `brandProductId` | text | Use `.keyword` for exact match |
+| `Product_Short_Description` | `productShortDescription` | text | Use `.keyword` for exact match |
+| `Brands_Name` | `brandsName` | text | Use `.keyword` for exact match |
+| `Product_Group_ID` | `productGroupId` | long | Direct query, no `.keyword` |
+| `IsPublished` | `isPublished` | long | Values: 0 or 1 |
+| `is_Internal` | `internal` | boolean | Exclude with `term: { internal: true }` |
+| `Unit_List_Price` | `unitListPrice` | float | Direct query |
+
+## Base Query Structure
+
+All browse/search queries MUST include these base filters:
+
+### Must Clause (Required Filters)
+```json
+{
+  "must": [
+    {
+      "term": {
+        "isPublished": 1
+      }
+    }
+  ]
+}
+```
+
+### Must Not Clause (Exclusions)
+```json
+{
+  "must_not": [
+    {
+      "match": {
+        "prodgrpIndexName": {
+          "query": "PrdGrp0*"
+        }
+      }
+    },
+    {
+      "term": {
+        "internal": true
+      }
+    }
+  ]
+}
+```
+
+## Query Types
+
+### 1. Product Search (Full-Text Search)
+
+Use when: User wants to search for products by text/keywords
+
+**Query Builder:** `buildProductSearchQuery(searchText: string)` from `src/utils/elasticsearch/search-queries.ts`
+
+**Key Features:**
+- Uses `query_string` with `my_analyzer` for full-text search
+- Uses `multi_match` with multiple strategies (phrase_prefix, cross_fields, best_fields)
+- Searches across multiple fields with boost values
+- Fields searched: `name`, `keywords^8`, `brandProductId^5`, `productShortDescription^9`, `description`, `pgName`, `productSeries`, `brandsName`, `ean`, category fields, etc.
+
+**Example:**
+```typescript
+import { buildProductSearchQuery } from "@/utils/elasticsearch/search-queries";
+import SearchService from "@/lib/api/services/SearchService/SearchService";
+
+const query = buildProductSearchQuery("cordless drill");
+const results = await SearchService.searchProducts({
+  elasticIndex: "tenantcodepgandproducts",
+  query,
+});
+```
+
+### 2. Browse Queries (Category/Brand/Product Group)
+
+Use when: User wants to filter products by category hierarchy, brand, or product group
+
+**Query Builders:** From `src/utils/opensearch/browse-queries.ts`
+
+#### Category Query
+```typescript
+import { buildCategoryQuery } from "@/utils/opensearch/browse-queries";
+
+const { query } = buildCategoryQuery(categoryId, {
+  page: 1,
+  pageSize: 20,
+  sortBy: { sortBy: 2 }, // Price: Low to High
+  filters: { brands: ["DEWALT"] },
+  catalogCodes: ["CAT001"],
+});
+```
+
+#### Subcategory Query
+```typescript
+const { query } = buildSubCategoryQuery(subCategoryId, options);
+```
+
+#### Major Category Query
+```typescript
+const { query } = buildMajorCategoryQuery(majorCategoryId, options);
+```
+
+#### Brand Query
+```typescript
+const { query } = buildBrandQuery("DEWALT", options); // Brand name must match exactly
+```
+
+#### Product Group Query
+```typescript
+const { query } = buildProductGroupQuery(productGroupId, options);
+```
+
+#### Slug-based Query
+```typescript
+const { query } = buildQueryFromSlug("c_123", options); // Category
+// Patterns: m_{majorCategoryId}, c_{categoryId}, s_{subCategoryId}, b_{brandName}, pg_{productGroupId}
+```
+
+**Browse Query Options:**
+```typescript
+interface BrowseQueryOptions {
+  page?: number;           // 1-based, default: 1
+  pageSize?: number;       // default: 20
+  sortBy?: {
+    sortBy?: number;       // 1=relevance, 2=price-asc, 3=price-desc, 4=field-asc, 5=field-desc
+    sortByField?: string;  // Field name for custom sorting (when sortBy is 4 or 5)
+  };
+  filters?: Record<string, string[]>; // Additional filters
+  catalogCodes?: string[];            // Catalog codes for filtering
+  equipmentCodes?: string[];          // Equipment codes for filtering
+}
+```
+
+### 3. Product Detail (Get Single Product)
+
+Use when: User wants to fetch a single product by identifier
+
+**Service:** `OpenSearchService.getProduct()` from `src/lib/api/services/OpenSearchService/OpenSearchService.ts`
+
+```typescript
+import OpenSearchService from "@/lib/api/services/OpenSearchService/OpenSearchService";
+
+const product = await OpenSearchService.getProduct(
+  "Prod0000000001",  // productIndexName
+  "tenantcodepgandproducts",  // index name
+  "pgproduct",  // document type
+  "get"  // query type
+);
+```
+
+**Request Structure:**
+```json
+{
+  "Elasticindex": "tenantcodepgandproducts",
+  "ElasticBody": "Prod0000000001",  // productIndexName as string
+  "ElasticType": "pgproduct",
+  "queryType": "get"
+}
+```
+
+## Filter Patterns
+
+### Pattern 1: Single Filter Value (AND)
+```json
+{
+  "term": {
+    "brandsName.keyword": "DEWALT"
+  }
+}
+```
+
+### Pattern 2: Multiple Filter Values (OR)
+```json
+{
+  "bool": {
+    "should": [
+      { "term": { "brandsName.keyword": "DEWALT" } },
+      { "term": { "brandsName.keyword": "Milwaukee" } }
+    ],
+    "minimum_should_match": 1
+  }
+}
+```
+
+### Pattern 3: Catalog/Equipment Code Filtering
+```json
+{
+  "terms": {
+    "catalogCode.keyword": ["CAT001", "CAT002", "EQ001"]
+  }
+}
+```
+
+### Pattern 4: Category Hierarchy Filters
+```json
+// Category filter
+{
+  "term": {
+    "productsSubCategories.categoryId": 123
+  }
+}
+
+// Subcategory filter
+{
+  "term": {
+    "productsSubCategories.subCategoryId": 456
+  }
+}
+
+// Major category filter
+{
+  "term": {
+    "productsSubCategories.majorCategoryId": 789
+  }
+}
+```
+
+## Sort Options
+
+| sortBy | Description | Sort Field |
+|--------|-------------|------------|
+| 1 | Relevance (default) | `_score` |
+| 2 | Price: Low to High | `unitListPrice` (asc) |
+| 3 | Price: High to Low | `unitListPrice` (desc) |
+| 4 | Custom Field: Ascending | `{sortByField}.keyword` (asc) |
+| 5 | Custom Field: Descending | `{sortByField}.keyword` (desc) |
+
+**Example:**
+```json
+{
+  "sort": [
+    {
+      "unitListPrice": {
+        "order": "asc"
+      }
+    }
+  ]
+}
+```
+
+## Common Product Fields Reference
+
+### Core Product Fields
+- `productId` (long) - Unique product ID
+- `productIndexName` (text) - Product index name (e.g., "Prod0000000001")
+- `productGroupId` (long) - Product group ID
+- `pgIndexName` (text) - Product group index name
+- `pgName` (text) - Product group name
+- `brandProductId` (text) - Brand product identifier
+- `brandsName` (text) - Brand name
+- `productShortDescription` (text) - Product short description
+- `productDescription` (text) - Product full description
+- `keywords` (text) - Search keywords
+
+### Pricing Fields
+- `unitListPrice` (float) - List price
+- `b2CUnitListPrice` (float) - B2C list price
+- `b2CDiscountPrice` (float) - B2C discount price
+- `defaultDiscountPrice` (float) - Default discount price
+- `unitMrp` (float) - MRP
+
+### Category Fields (Array)
+- `productsSubCategories[].categoryId` (long)
+- `productsSubCategories[].categoryName` (text)
+- `productsSubCategories[].subCategoryId` (long)
+- `productsSubCategories[].subCategoryName` (text)
+- `productsSubCategories[].majorCategoryId` (long)
+- `productsSubCategories[].majorCategoryName` (text)
+
+### Assets Fields
+- `productAssetss[]` (array) - Product images/assets
+  - `source` (text) - Image URL
+  - `type` (text) - Asset type
+  - `isDefault` (long) - Default flag
+
+### Specification Fields
+- `productSpecifications[]` (array)
+  - `key` (text) - Specification name
+  - `value` (text) - Specification value
+
+### Status Fields
+- `isPublished` (long) - Publication status (1 = published, 0 = not published)
+- `internal` (boolean) - Internal product flag
+- `internalProduct` (boolean) - Alternative internal flag
+
+### Additional Fields
+- `ean` (text) - EAN code
+- `upc` (text) - UPC code
+- `hsnCode` (text) - HSN code
+- `catalogCode[]` (array of strings) - Catalog codes
+- `prodgrpIndexName` (text) - Product group index name (exclude "PrdGrp0*")
+
+## Query Building Guidelines
+
+1. **Always use existing query builders** when possible:
+   - For search: `buildProductSearchQuery()`
+   - For browse: `buildCategoryQuery()`, `buildSubCategoryQuery()`, `buildMajorCategoryQuery()`, `buildBrandQuery()`, `buildProductGroupQuery()`, `buildQueryFromSlug()`
+
+2. **When creating custom queries:**
+   - Include base query structure (isPublished, must_not exclusions)
+   - Use correct field names (camelCase)
+   - Add `.keyword` suffix for text field exact matches
+   - Use proper query types (term, terms, match, bool, etc.)
+
+3. **Pagination:**
+   ```json
+   {
+     "from": 0,  // (page - 1) * pageSize
+     "size": 20
+   }
+   ```
+
+4. **Source Field Selection:**
+   ```json
+   {
+     "_source": [
+       "brandProductId",
+       "productShortDescription",
+       "productAssetss",
+       "brandsName",
+       "productId",
+       "productIndexName",
+       "b2CUnitListPrice",
+       "b2CDiscountPrice"
+     ]
+   }
+   ```
+
+## Response Parsing
+
+### Search Response Structure
+```typescript
+{
+  hits: {
+    hits: [
+      {
+        _source: {
+          // Product data
+        },
+        _id: "<document-id>",
+        _score: <relevance-score>
+      }
+    ],
+    total: {
+      value: <total-count>,
+      relation: "eq"
+    }
+  }
+}
+```
+
+### Get Response Structure
+```typescript
+{
+  body: {
+    _source: {
+      // Product data
+    },
+    _id: "<document-id>",
+    found: true
+  },
+  statusCode: 200
+}
+```
+
+## Index Naming Convention
+
+Index names follow the pattern: `{tenantCode}pgandproducts`
+
+Examples:
+- `growmaxpgandproducts` for tenant code "growmax"
+- `tenantcodepgandproducts` for tenant code "tenantcode"
+
+## Error Handling
+
+Common issues and solutions:
+
+1. **No results returned**
+   - Verify `Elasticindex` is correct
+   - Check if products are published (`isPublished: 1`)
+   - Ensure products are not internal (`internal: false`)
+   - Verify filter field names match index mapping
+
+2. **Query format errors**
+   - Verify parameter names: `Elasticindex`, `ElasticBody`, `ElasticType`, `queryType`
+   - Check `queryType` is "search" or "get"
+   - Ensure `ElasticType` is "pgproduct"
+
+3. **Field mapping errors**
+   - Verify field names use camelCase
+   - Check if `.keyword` suffix is needed for exact matches
+   - Verify field exists in index mapping (`opensearch_indexes.go`)
+
+4. **Authentication errors**
+   - Verify `Authorization` header if required
+   - Check `x-tenant` header matches index tenant
+
+## Best Practices
+
+1. **Use query builders** from `src/utils/opensearch/browse-queries.ts` and `src/utils/elasticsearch/search-queries.ts` instead of building queries manually
+
+2. **Validate field names** against the index mapping in `opensearch_indexes.go`
+
+3. **Use TypeScript types** from the codebase:
+   - `ElasticSearchQuery` from search-queries.ts
+   - `BrowseQueryOptions` from browse-queries.ts
+
+4. **Test queries** using the verification scripts or Postman collection:
+   - `scripts/verify-opensearch-queries.ts`
+   - `docs/OpenSearch_Queries.postman_collection.json`
+
+5. **Reference documentation** in `docs/OPENSEARCH_QUERIES.md` for complete examples and patterns
+
+6. **Always include base filters** (isPublished, must_not exclusions) in custom queries
+
+## When User Asks for Query Help
+
+1. **Identify the query type**: Search, Browse (category/brand/product group), or Get product detail
+2. **Check existing query builders**: Recommend using existing builders if appropriate
+3. **Reference field mappings**: Verify field names against index mapping
+4. **Provide complete example**: Include request structure, query body, and usage example
+5. **Highlight critical conventions**: Field naming (camelCase), `.keyword` suffix for exact matches, parameter naming
+6. **Suggest testing**: Recommend testing with Postman collection or verification scripts

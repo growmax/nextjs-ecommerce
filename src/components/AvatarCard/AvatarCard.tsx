@@ -23,7 +23,7 @@ import {
   User,
 } from "lucide-react";
 import { useTranslations } from "next-intl";
-import Link from "next/link";
+import { Link } from "@/i18n/navigation";
 import { AvatarCardProps } from "./Avatarcard.types";
 
 export function AvatarCard({
@@ -192,7 +192,7 @@ export function AvatarCard({
           const Icon = item.icon;
           return (
             <DropdownMenuItem key={item.href} asChild>
-              <Link href={item.href}>
+              <Link href={item.href} prefetch={true}>
                 <Icon className="h-4 w-4" />
                 <span>{item.label}</span>
               </Link>

@@ -1,3 +1,4 @@
+"use client";
 import { Toaster } from "@/components/ui/sonner";
 import { Layers } from "lucide-react";
 import { useTranslations } from "next-intl";
@@ -19,10 +20,12 @@ import {
   SalesHeader,
 } from "@/components/sales";
 import { useOrderDetails } from "@/hooks/details/orderdetails/useOrderDetails";
-import { useLoading } from "@/hooks/useGlobalLoader";
 import { useCurrentUser } from "@/hooks/useCurrentUser";
 import { useGetVersionDetails } from "@/hooks/useGetVersionDetails/useGetVersionDetails";
+import { useLoading } from "@/hooks/useGlobalLoader";
 import useModuleSettings from "@/hooks/useModuleSettings";
+import { useNavigationWithLoader } from "@/hooks/useNavigationWithLoader";
+import { usePageLoader } from "@/hooks/usePageLoader";
 import { useTenantData } from "@/hooks/useTenantData";
 import type { PaymentDueDataItem } from "@/lib/api";
 import {
@@ -49,9 +52,6 @@ import {
 } from "@/utils/details/orderdetails";
 import { decodeUnicode } from "@/utils/General/general";
 import { useQuery } from "@tanstack/react-query";
-import { useRouter } from "@/i18n/navigation";
-// Import from index.ts which re-exports as named exports
-// No loading prop to avoid double loaders - main DetailsSkeleton handles all loading states
 const OrderProductsTable = dynamic(
   () => import("@/components/sales").then(mod => mod.OrderProductsTable),
   {
@@ -73,10 +73,13 @@ const OrderStatusTracker = dynamic(
   }
 );
 
-export default function OrderDetailsClient({ params }: OrderDetailsPageProps) {
+export default function OrderDetailsClient({ params, initialOrderDetails }: OrderDetailsPageProps) {
+  // Use the page loader hook to ensure navigation spinner is hidden immediately
+  usePageLoader();
+
   const [orderId, setOrderId] = useState<string>("");
   const [paramsLoaded, setParamsLoaded] = useState(false);
-  const router = useRouter();
+  const { push } = useNavigationWithLoader();
   const t = useTranslations("orders");
   const tDetails = useTranslations("details");
 
@@ -129,9 +132,11 @@ export default function OrderDetailsClient({ params }: OrderDetailsPageProps) {
     },
     enabled:
       paramsLoaded && !!orderId && !!userId && !!tenantCode && !!companyId,
+    initialData: initialOrderDetails,
     staleTime: 5 * 60 * 1000, // 5 minutes - order details may change
     gcTime: 10 * 60 * 1000, // 10 minutes
     refetchOnWindowFocus: false,
+    refetchOnMount: true, // Retry when dependencies become available
     retry: 1,
   });
 
@@ -235,27 +240,16 @@ export default function OrderDetailsClient({ params }: OrderDetailsPageProps) {
   );
 
   // Consolidated loading state - only show one loader at a time
+  // We REMOVE the check for initial orderLoading. The initial load will be handled
+  // by the Skeleton UI in the JSX. We ONLY show global spinner for background actions.
   useEffect(() => {
-    // Priority: version loading > order loading
     if (versionLoading && triggerVersionCall) {
       showLoading("Loading version details...", "order-details-page");
-    } else if (orderLoading && paramsLoaded) {
-      showLoading("Loading order details...", "order-details-page");
-    } else if (
-      paramsLoaded &&
-      !orderLoading &&
-      (!versionLoading || !triggerVersionCall)
-    ) {
+    } else {
+      // Ensure page-specific global loader is hidden
       hideLoading("order-details-page");
     }
-  }, [
-    orderLoading,
-    versionLoading,
-    triggerVersionCall,
-    paramsLoaded,
-    showLoading,
-    hideLoading,
-  ]);
+  }, [versionLoading, triggerVersionCall, showLoading, hideLoading]);
 
   const processedVersionRef = useRef<string | null>(null);
 
@@ -308,16 +302,26 @@ export default function OrderDetailsClient({ params }: OrderDetailsPageProps) {
   };
 
   const handleClose = () => {
-    router.push("/landing/orderslanding");
+    push("/landing/orderslanding");
+    push("/landing/orderslanding");
   };
 
   const handleEditQuote = () => {
-    router.push(`/details/orderDetails/${orderId}/edit`);
+    if (orderId) {
+      push(`/details/orderDetails/${orderId}/edit`);
+    }
+    if (orderId) {
+      push(`/details/orderDetails/${orderId}/edit`);
+    }
   };
 
   const handleEditOrder = () => {
-    setEditDialogOpen(true);
+    // Navigate to edit page when edit icon is clicked - non-blocking
+    if (orderId) {
+      push(`/details/orderDetails/${orderId}/edit`);
+    }
   };
+
 
   const handleSaveOrderName = async (newOrderName: string) => {
     if (!user || !orderDetails?.data?.orderDetails?.[0]?.orderIdentifier) {
@@ -575,9 +579,9 @@ export default function OrderDetailsClient({ params }: OrderDetailsPageProps) {
   const lastDateToPay = getLastDateToPay(paymentDueData, preferences);
 
   return (
-    <ApplicationLayout>
-      {/* Sales Header - Fixed at top */}
-      <div className="flex-shrink-0 sticky top-0 z-50 bg-gray-50">
+    <ApplicationLayout className="bg-background">
+      {/* Sales Header */}
+      <div className="flex-shrink-0">
         <SalesHeader
           title={orderName ? decodeUnicode(orderName) : t("orderDetails")}
           identifier={orderId || "..."}
@@ -624,7 +628,7 @@ export default function OrderDetailsClient({ params }: OrderDetailsPageProps) {
                   cancelMsg &&
                   !orderLoading &&
                   (orderDetails || displayOrderDetails) && (
-                    <div className="mt-[80px] bg-gray-50 rounded-lg p-3 sm:p-4 border border-gray-200 shadow-sm">
+                    <div className="mt-4 bg-gray-50 rounded-lg p-3 sm:p-4 border border-gray-200 shadow-sm">
                       <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
                         {/* Left Section - Order Identifier and Date */}
                         <div className="flex flex-col gap-1">
@@ -661,7 +665,7 @@ export default function OrderDetailsClient({ params }: OrderDetailsPageProps) {
                   !orderError &&
                   (orderDetails || displayOrderDetails) &&
                   !cancelled && (
-                    <div className="mt-[80px]">
+                    <div className="mt-4">
                       <Suspense
                         fallback={
                           <div
@@ -752,7 +756,7 @@ export default function OrderDetailsClient({ params }: OrderDetailsPageProps) {
                 {!orderLoading &&
                   !orderError &&
                   (orderDetails || displayOrderDetails) && (
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-2 sm:gap-3 mt-4">
+                    <div className="grid grid-cols-1 md:grid-cols-2 details-card-gap details-section-margin">
                       {/* Contact Details Card */}
                       <OrderContactDetails
                         billingAddress={
@@ -879,7 +883,7 @@ export default function OrderDetailsClient({ params }: OrderDetailsPageProps) {
               {!orderLoading &&
                 !orderError &&
                 (orderDetails || displayOrderDetails) && (
-                  <div className="w-full lg:w-[33%] mt-[80px]">
+                  <div className="w-full lg:w-[33%] mt-4">
                     <Suspense fallback={null}>
                       <OrderPriceDetails
                         products={

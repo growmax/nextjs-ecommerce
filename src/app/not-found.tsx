@@ -1,7 +1,7 @@
 "use client";
 
 import { Button } from "@/components/ui/button";
-import { Home, ArrowLeft } from "lucide-react";
+import { ArrowLeft, Home } from "lucide-react";
 import Link from "next/link";
 
 export default function NotFound() {
@@ -24,7 +24,7 @@ export default function NotFound() {
 
         {/* Action Buttons */}
         <div className="flex flex-col sm:flex-row gap-4 justify-center pt-6">
-          <Link href="/">
+          <Link href="/" prefetch={true}>
             <Button size="lg" className="w-full sm:w-auto">
               <Home className="mr-2 h-4 w-4" />
               Go Home

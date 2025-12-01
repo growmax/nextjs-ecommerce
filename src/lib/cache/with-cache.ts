@@ -16,12 +16,31 @@ export async function withRedisCache<T>(
   }
 
   try {
+    // Ensure Redis is connected before making requests
+    const { ensureRedisConnection } = await import("./redis-client");
+    const isConnected = await ensureRedisConnection();
+
+    if (!isConnected) {
+      return fn();
+    }
+
+    // Double-check that the client is actually ready before using it
+    if (redis.status !== "ready") {
+      return fn();
+    }
+
     const cached = await redis.get(key);
 
     if (cached) {
       return JSON.parse(cached) as T;
     }
+
     const result = await fn();
+
+    // Check again before writing (connection might have dropped)
+    if (redis.status !== "ready") {
+      return result; // Return result without caching
+    }
 
     const defaultTtl = parseInt(process.env.REDIS_DEFAULT_TTL || "3600", 10);
     const finalTtl = ttl || defaultTtl;
@@ -29,7 +48,21 @@ export async function withRedisCache<T>(
     await redis.setex(key, finalTtl, JSON.stringify(result));
 
     return result;
-  } catch {
+  } catch (error) {
+    // Handle specific "Stream isn't writeable" error gracefully
+    const errorMessage = error instanceof Error ? error.message : String(error);
+    const isStreamError =
+      errorMessage.includes("Stream isn't writeable") ||
+      errorMessage.includes("enableOfflineQueue");
+
+    if (process.env.NODE_ENV === "development" && !isStreamError) {
+      console.error("❌ Redis Cache ERROR", {
+        key,
+        error: errorMessage,
+      });
+    }
+    // For stream errors, just fallback to function execution (silent)
+    // For other errors, also fallback but log them
     return fn();
   }
 }

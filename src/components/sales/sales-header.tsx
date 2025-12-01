@@ -3,12 +3,11 @@
 import { statusColor } from "@/components/custom/statuscolors";
 import { Button } from "@/components/ui/button";
 import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
+    DropdownMenu,
+    DropdownMenuContent,
+    DropdownMenuItem,
+    DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { useSidebar } from "@/components/ui/sidebar";
 import { Skeleton } from "@/components/ui/skeleton";
 import { TopProgressBar } from "@/components/ui/top-progress-bar";
 import { cn } from "@/lib/utils";
@@ -74,12 +73,6 @@ export default function SalesHeader({
   className,
   loading = false,
 }: SalesHeaderProps) {
-  const { state, isMobile } = useSidebar();
-  const leftOffset = isMobile
-    ? "0px"
-    : state === "expanded"
-      ? "var(--sidebar-width)"
-      : "var(--sidebar-width-icon)";
 
   return (
     <>
@@ -88,10 +81,9 @@ export default function SalesHeader({
 
       <div
         className={cn(
-          "fixed top-14 left-0 right-0 z-40 flex items-center justify-between gap-3 md:gap-4 px-3 md:px-4 py-3 md:py-3.5 bg-white border-b shadow-sm transition-all duration-200 min-h-[56px] md:min-h-[64px]",
+          "flex items-center justify-between gap-3 md:gap-4 px-3 md:px-4 py-3 md:py-3.5 bg-white border-b shadow-sm transition-all duration-200 min-h-[56px] md:min-h-[64px] w-full",
           className
         )}
-        style={{ left: leftOffset }}
       >
         {/* Left Section - Title, Identifier, and Status */}
         <div className="flex items-center gap-2 md:gap-3 flex-1 min-w-0">

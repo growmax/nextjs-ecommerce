@@ -1,7 +1,7 @@
 "use client";
 
 import React from "react";
-import Link from "next/link";
+import { Link } from "@/i18n/navigation";
 import {
   Menubar,
   MenubarContent,
@@ -43,12 +43,12 @@ const MenubarDemo = () => {
       </Menubar>
 
       <div className="flex gap-2">
-        <Link href="/login">
+        <Link href="/login" prefetch={true}>
           <Button variant="outline" size="sm">
             Login
           </Button>
         </Link>
-        <Link href="/register">
+        <Link href="/register" prefetch={true}>
           <Button size="sm">Register</Button>
         </Link>
       </div>

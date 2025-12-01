@@ -3,20 +3,20 @@
 import { statusColor } from "@/components/custom/statuscolors";
 import { Button } from "@/components/ui/button";
 import {
-  Card,
-  CardContent,
-  CardFooter,
-  CardHeader,
-  CardTitle,
+    Card,
+    CardContent,
+    CardFooter,
+    CardHeader,
+    CardTitle,
 } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
+    Table,
+    TableBody,
+    TableCell,
+    TableHead,
+    TableHeader,
+    TableRow,
 } from "@/components/ui/table";
 import { useDashboardOrders } from "@/hooks/useDashboardData";
 import { Order } from "@/types/dashboard/DasbordOrderstable/DashboardOrdersTable";
@@ -130,17 +130,17 @@ export default function DashboardOrdersTable() {
 
   return h(
     "div",
-    { className: "p-3" },
+    { className: "" },
     loading || isRefreshing
       ? h(
           Card,
           {
             className:
-              "w-full bg-white rounded-lg shadow-sm border border-gray-200 !py-0 !gap-0",
+              "w-full bg-background rounded-lg shadow-sm border border-border !py-0 !gap-0",
           },
           h(
             CardHeader,
-            { className: "px-4 pt-4 !pb-0 border-b border-gray-200" },
+            { className: "px-4 pt-4 !pb-0 border-b border-border" },
             h(
               "div",
               { className: "flex justify-start" },
@@ -155,7 +155,7 @@ export default function DashboardOrdersTable() {
               { className: "overflow-hidden" },
               h(
                 "div",
-                { className: "bg-gray-50 px-3 py-2 border-b border-gray-100" },
+                { className: "bg-muted px-3 py-2 border-b border-border" },
                 h(
                   "div",
                   { className: "flex justify-between items-center" },
@@ -170,7 +170,7 @@ export default function DashboardOrdersTable() {
                   "div",
                   {
                     key: `skeleton-row-${index}`,
-                    className: "px-3 py-3 border-b border-gray-100",
+                    className: "px-3 py-3 border-b border-border",
                   },
                   h(
                     "div",
@@ -188,7 +188,7 @@ export default function DashboardOrdersTable() {
             CardFooter,
             {
               className:
-                "flex justify-start px-2 py-2 !pt-2 border-t border-gray-200",
+                "flex justify-start px-2 py-2 !pt-2 border-t border-border",
             },
             h(Skeleton, { className: "h-8 w-20 rounded" })
           )
@@ -197,22 +197,22 @@ export default function DashboardOrdersTable() {
           Card,
           {
             className:
-              "w-full bg-white rounded-lg shadow-sm border border-gray-200 !py-0 !gap-0",
+              "w-full bg-background rounded-lg shadow-sm border border-border !py-0 !gap-0",
           },
           h(
             CardHeader,
-            { className: "px-4 pt-4 !pb-0 border-b border-gray-200" },
+            { className: "px-4 pt-4 !pb-0 border-b border-border" },
             h(
               "div",
               { className: "flex justify-start" },
               h(
                 CardTitle,
-                { className: "text-sm font-medium text-gray-900 text-center" },
+                { className: "text-sm font-medium text-foreground text-center" },
                 h("span", {}, `${t("historyOfOrders")} `),
                 totalCount > 0 &&
                   h(
                     "span",
-                    { className: "text-xs font-normal text-gray-600" },
+                    { className: "text-xs font-normal text-muted-foreground" },
                     `(${totalCount})`
                   )
               )
@@ -232,22 +232,22 @@ export default function DashboardOrdersTable() {
                   { className: "w-full" },
                   h(
                     TableHeader,
-                    { className: "bg-gray-50" },
+                    {},
                     h(
                       TableRow,
-                      { className: "border-b border-gray-100" },
+                      { className: "bg-muted border-b border-border hover:bg-muted" },
                       h(
                         TableHead,
                         {
                           className:
-                            "text-xs font-medium text-gray-600 px-3 py-1 text-left",
+                            "text-xs font-medium text-foreground px-3 py-1 text-left",
                           scope: "col",
                         },
                         h(
                           "span",
                           {
                             className:
-                              "inline-flex items-center cursor-pointer hover:text-gray-900",
+                              "inline-flex items-center cursor-pointer hover:text-foreground",
                             onClick: () => handleSort("orderIdentifier"),
                             role: "button",
                             tabIndex: 0,
@@ -260,13 +260,13 @@ export default function DashboardOrdersTable() {
                         TableHead,
                         {
                           className:
-                            "text-xs font-medium text-gray-600 px-3 py-1 text-left",
+                            "text-xs font-medium text-foreground px-3 py-1 text-left",
                           scope: "col",
                         },
                         h(
                           "span",
                           {
-                            className: `inline-flex items-center cursor-pointer hover:text-gray-900 ${sortConfig.key === "orderName" ? "text-gray-900" : ""}`,
+                            className: "inline-flex items-center cursor-pointer hover:text-foreground",
                             onClick: () => handleSort("orderName"),
                             role: "button",
                             tabIndex: 0,
@@ -279,14 +279,14 @@ export default function DashboardOrdersTable() {
                         TableHead,
                         {
                           className:
-                            "text-xs font-medium text-gray-600 px-3 py-1 text-left",
+                            "text-xs font-medium text-foreground px-3 py-1 text-left",
                           scope: "col",
                         },
                         h(
                           "span",
                           {
                             className:
-                              "inline-flex items-center cursor-pointer hover:text-gray-900",
+                              "inline-flex items-center cursor-pointer hover:text-foreground",
                             onClick: () => handleSort("requiredDate"),
                             role: "button",
                             tabIndex: 0,
@@ -299,14 +299,14 @@ export default function DashboardOrdersTable() {
                         TableHead,
                         {
                           className:
-                            "text-xs font-medium text-gray-600 px-3 py-1 text-right",
+                            "text-xs font-medium text-foreground px-3 py-1 text-right",
                           scope: "col",
                         },
                         h(
                           "span",
                           {
                             className:
-                              "inline-flex items-center cursor-pointer hover:text-gray-900 justify-end w-full",
+                              "inline-flex items-center cursor-pointer hover:text-foreground justify-end w-full",
                             onClick: () => handleSort("updatedBuyerStatus"),
                             role: "button",
                             tabIndex: 0,
@@ -319,7 +319,7 @@ export default function DashboardOrdersTable() {
                   ),
                   h(
                     TableBody,
-                    { className: "bg-white divide-y divide-gray-100" },
+                    { className: "bg-background divide-y divide-border" },
                     isError
                       ? h(
                           TableRow,
@@ -328,8 +328,8 @@ export default function DashboardOrdersTable() {
                             TableCell,
                             {
                               colSpan: 4,
-                              className:
-                                "px-3 py-3 text-center text-sm text-red-500",
+                            className:
+                              "px-3 py-3 text-center text-sm text-destructive",
                             },
                             `${t("failedToFetchOrders")} ${error instanceof Error ? error.message : "Unknown error"}`
                           )
@@ -343,7 +343,7 @@ export default function DashboardOrdersTable() {
                               {
                                 colSpan: 4,
                                 className:
-                                  "px-3 py-3 text-center text-sm text-gray-500",
+                                  "px-3 py-3 text-center text-sm text-muted-foreground",
                               },
                               t("noOrdersFound")
                             )
@@ -353,28 +353,28 @@ export default function DashboardOrdersTable() {
                               TableRow,
                               {
                                 key: order.orderIdentifier || index,
-                                className: "hover:bg-gray-50 transition-colors",
+                                className: "hover:bg-muted/50 transition-colors",
                                 role: "checkbox",
                                 tabIndex: -1,
                               },
                               h(
                                 TableCell,
                                 {
-                                  className: "px-4 py-3 text-sm text-gray-900",
+                                  className: "px-4 py-3 text-sm text-foreground",
                                 },
                                 order.orderIdentifier
                               ),
                               h(
                                 TableCell,
                                 {
-                                  className: "px-4 py-3 text-sm text-gray-900",
+                                  className: "px-4 py-3 text-sm text-foreground",
                                 },
                                 order.orderName
                               ),
                               h(
                                 TableCell,
                                 {
-                                  className: "px-4 py-3 text-sm text-gray-500",
+                                  className: "px-4 py-3 text-sm text-muted-foreground",
                                 },
                                 // order.requiredDate ||
                                 //   order.createdDate?.split(" ")[0] ||
@@ -412,7 +412,7 @@ export default function DashboardOrdersTable() {
               CardFooter,
               {
                 className:
-                  "flex justify-end px-2 py-2 !pt-2 border-t border-gray-200",
+                  "flex justify-end px-2 py-2 !pt-2 border-t border-border",
               },
               h(
                 Button,
@@ -421,7 +421,7 @@ export default function DashboardOrdersTable() {
                   size: "sm",
                   onClick: handleShowMore,
                   className:
-                    "text-black hover:bg-blacke-50 border-black-600 hover:border-black-700 normal-case text-sm font-medium px-3 py-1 min-h-[32px] transition-all cursor-pointer",
+                    "text-foreground hover:bg-muted/50 border-border hover:border-border normal-case text-sm font-medium px-3 py-1 min-h-[32px] transition-all cursor-pointer",
                 },
                 t("showMore")
               )

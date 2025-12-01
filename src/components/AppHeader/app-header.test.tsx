@@ -1,5 +1,5 @@
+import { fireEvent, render, screen } from "@testing-library/react";
 import React from "react";
-import { render, screen, fireEvent } from "@testing-library/react";
 
 // Mock next-intl BEFORE importing AppHeader to avoid ESM parsing issues
 jest.mock("next-intl", () => ({
@@ -32,26 +32,42 @@ jest.mock("next/navigation", () => ({
   useRouter: () => ({ push: jest.fn() }),
 }));
 
+jest.mock("@/hooks/useNavigationWithLoader", () => ({
+  useNavigationWithLoader: () => ({
+    push: jest.fn(),
+    replace: jest.fn(),
+  }),
+}));
+
+jest.mock("@/hooks/useTenantData", () => ({
+  useTenantData: jest.fn(),
+}));
+
 import { AppHeader } from "./app-header";
 
-jest.mock("@/components/ui/command", () => ({
-  CommandDialog: ({ children, open }: any) =>
-    open ? <div>{children}</div> : null,
-  CommandInput: ({ onValueChange }: any) => (
-    <input
-      data-testid="command-input"
-      onChange={e => onValueChange(e.target.value)}
-    />
-  ),
-  CommandList: ({ children }: any) => <div>{children}</div>,
-  CommandEmpty: ({ children }: any) => <div>{children}</div>,
-  CommandGroup: ({ children }: any) => <div>{children}</div>,
-  CommandItem: ({ children, onSelect }: any) => (
-    <div data-testid="command-item" onClick={() => onSelect()}>
-      {children}
-    </div>
-  ),
-}));
+jest.mock("@/components/AppHeader/SearchDialogBox/SearchDialogBox", () => {
+  return function MockSearchDialogBox({
+    open,
+    suggestionItems,
+    handleSelect,
+  }: any) {
+    if (!open) return null;
+    return (
+      <div data-testid="search-dialog-box">
+        <input data-testid="command-input" />
+        {suggestionItems.map((item: any) => (
+          <div
+            key={item.key}
+            data-testid="command-item"
+            onClick={() => handleSelect(item.href)}
+          >
+            {item.label}
+          </div>
+        ))}
+      </div>
+    );
+  };
+});
 
 jest.mock("@/components/ui/sidebar", () => ({
   SidebarTrigger: (props: any) => (

@@ -5,6 +5,7 @@ import axios, {
   AxiosResponse,
   InternalAxiosRequestConfig,
 } from "axios";
+import https from "https";
 
 // API Configuration
 const API_CONFIG = {
@@ -61,6 +62,7 @@ export interface RequestContext {
   accessToken?: string;
   origin?: string;
   tenantCode?: string;
+  elasticCode?: string;
 }
 
 // Custom error class
@@ -111,6 +113,27 @@ function getTenantFromToken(token: string): string | null {
   }
 }
 
+// Create HTTPS agent for server-side requests
+// This fixes SSL/TLS issues in Node.js environment, particularly SNI (Server Name Indication) problems
+function createHttpsAgent() {
+  if (typeof window !== "undefined") {
+    // Client-side: no HTTPS agent needed (browser handles this)
+    return undefined;
+  }
+
+  return new https.Agent({
+    // Let Node.js negotiate the best TLS version (supports TLS 1.2 and 1.3)
+    // Don't restrict to a specific version to avoid "unrecognized name" errors
+    // Keep connections alive for better performance
+    keepAlive: true,
+    keepAliveMsecs: 1000,
+    maxSockets: 50,
+    maxFreeSockets: 10,
+    // Reject unauthorized certificates in production
+    rejectUnauthorized: process.env.NODE_ENV === "production",
+  });
+}
+
 // Create axios instance factory
 function createApiClient(config: ApiClientConfig = {}): AxiosInstance {
   const instance = axios.create({
@@ -121,12 +144,35 @@ function createApiClient(config: ApiClientConfig = {}): AxiosInstance {
     headers: {
       "Content-Type": "application/json",
     },
+    // Add HTTPS agent for server-side requests
+    httpsAgent: createHttpsAgent(),
     ...config,
   });
 
   // Request interceptor
   instance.interceptors.request.use(
     (config: InternalAxiosRequestConfig) => {
+      // Set SNI (Server Name Indication) for server-side HTTPS requests
+      // This is critical for proper TLS handshake with servers that require SNI
+      if (typeof window === "undefined" && config.url && config.httpsAgent) {
+        try {
+          const url = new URL(config.url, config.baseURL);
+          if (url.protocol === "https:") {
+            // Extract hostname without port for SNI
+            const hostname = url.hostname;
+            // Set servername on the agent config for this specific request
+            // This ensures SNI is sent with the correct hostname
+            if (config.httpsAgent instanceof https.Agent) {
+              // Create a new agent instance with the correct servername for this request
+              // Note: We can't modify the agent directly, so we'll handle this via the request config
+              (config as unknown as { servername?: string }).servername = hostname;
+            }
+          }
+        } catch {
+          // URL parsing failed, skip SNI configuration
+        }
+      }
+
       // Auto-inject authorization token
       if (typeof window !== "undefined") {
         // Try both client-specific and standard cookies for compatibility

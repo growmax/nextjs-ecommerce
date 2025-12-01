@@ -60,7 +60,8 @@ import { decodeUnicode } from "@/utils/General/general";
 import { prepareQuoteSubmissionDTO } from "@/utils/quote/quoteSubmissionDTO/quoteSubmissionDTO";
 import { isEmpty } from "lodash";
 import some from "lodash/some";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useSearchParams } from "next/navigation";
+import { useNavigationWithLoader } from "@/hooks/useNavigationWithLoader";
 
 // Import types for proper typing
 interface AddressDetails {
@@ -114,7 +115,7 @@ export default function EditQuotePage({ params }: EditQuotePageProps) {
 
   const searchParams = useSearchParams();
   const isPlaceOrderMode = searchParams.get("placeOrder") === "true";
-  const router = useRouter();
+  const { push } = useNavigationWithLoader();
 
   const [quoteIdentifier, setQuoteIdentifier] = useState<string>("");
   const [paramsLoaded, setParamsLoaded] = useState(false);
@@ -716,7 +717,7 @@ export default function EditQuotePage({ params }: EditQuotePageProps) {
   };
 
   const handleCancel = () => {
-    router.push(`/details/quoteDetails/${quoteIdentifier}`);
+    push(`/details/quoteDetails/${quoteIdentifier}`);
   };
 
   const handleQuantityChange = (productId: string, quantity: number) => {
@@ -922,7 +923,7 @@ export default function EditQuotePage({ params }: EditQuotePageProps) {
       if (response?.orderIdentifier) {
         toast.success(t("orderPlacedSuccessfullyFromQuote"));
         // Navigate to the order details page
-        router.push(`/details/orderDetails/${response.orderIdentifier}`);
+        push(`/details/orderDetails/${response.orderIdentifier}`);
       } else {
         toast.error(t("failedToPlaceOrderFromQuote"));
       }
@@ -1014,7 +1015,7 @@ export default function EditQuotePage({ params }: EditQuotePageProps) {
 
       if (success) {
         // Navigate to quote details page after successful submission
-        router.push(`/details/quoteDetails/${quoteIdentifier}`);
+        push(`/details/quoteDetails/${quoteIdentifier}`);
       }
     } catch (error) {
       toast.error(

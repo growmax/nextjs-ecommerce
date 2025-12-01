@@ -1,10 +1,22 @@
-import { Brand, Category, ColorOption } from "@/types/product-listing/index";
+import { Brand, ColorOption } from "@/types/product-listing/index";
+
+// Category interface with API ID mapping
+export interface Category {
+  id: string;      // URL slug
+  label: string;   // Display name
+  apiId?: number;  // API category ID (optional for backward compatibility)
+}
 
 /**
  * Main Categories for Navigation
+ * Note: apiId values should match the OpenSearch API category IDs
+ * Currently only "milwakee" and "electronics" have confirmed API IDs
  */
 export const categories: Category[] = [
-  { id: "all", label: "All Products" },
+  { id: "all", label: "All Products", apiId: 0 },
+  { id: "milwakee", label: "Milwakee", apiId: 23 },
+  { id: "electronics", label: "Electronics", apiId: 18 },
+  // TODO: Add API IDs for these categories once available
   { id: "power-tools", label: "Power Tools" },
   { id: "hand-tools", label: "Hand Tools" },
   { id: "safety", label: "Safety Equipment" },
@@ -19,6 +31,7 @@ export const categories: Category[] = [
  */
 export const brands: Brand[] = [
   { id: "milwaukee", label: "Milwaukee" },
+  { id: "milwakee", label: "Milwakee" }, // API spelling
   { id: "dewalt", label: "DeWalt" },
   { id: "makita", label: "Makita" },
   { id: "bosch", label: "Bosch" },

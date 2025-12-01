@@ -1,7 +1,7 @@
 "use client";
 
 import { useUserDetails } from "@/contexts/UserDetailsContext";
-import UserServices from "@/lib/api/services/UserServices/UserServices";
+import API from "@/lib/api";
 import { AuthStorage } from "@/lib/auth";
 import { UserApiResponse, UserDetails } from "@/lib/interfaces/UserInterfaces";
 import { JWTService } from "@/lib/services/JWTService";
@@ -44,7 +44,7 @@ export default function useUser() {
       if (!sub) {
         throw new Error("No sub available");
       }
-      return await UserServices.getUser({ sub });
+      return await API.User.getUser({ sub });
     },
     enabled: !!sub && isAuthenticated,
     staleTime: 10 * 60 * 1000, // 10 minutes - user data rarely changes

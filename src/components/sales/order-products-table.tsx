@@ -7,18 +7,18 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { CustomPagination } from "@/components/ui/custom-pagination";
 import { Input } from "@/components/ui/input";
 import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
+    Table,
+    TableBody,
+    TableCell,
+    TableHead,
+    TableHeader,
+    TableRow,
 } from "@/components/ui/table";
 import useProductAssets from "@/hooks/useProductAssets";
 import { cn } from "@/lib/utils";
 import { Download } from "lucide-react";
-import { useState } from "react";
 import { useTranslations } from "next-intl";
+import { useState } from "react";
 import type { ProductSearchResult } from "./ProductSearchInput";
 import ProductSearchInput from "./ProductSearchInput";
 
@@ -171,7 +171,7 @@ export default function OrderProductsTable({
         <div className="overflow-x-auto relative">
           <Table>
             <TableHeader>
-              <TableRow className="bg-muted/50">
+              <TableRow className="bg-muted hover:bg-muted">
                 <TableHead className="font-medium text-primary sticky left-0 bg-muted z-20 min-w-[150px] sm:min-w-[200px] shadow-[2px_0_4px_-2px_rgba(0,0,0,0.1)] py-3 before:absolute before:inset-0 before:bg-muted before:-z-10">
                   <span className="relative z-10">{t("items")}</span>
                 </TableHead>
@@ -306,7 +306,7 @@ export default function OrderProductsTable({
                     return (
                       <TableRow
                         key={product.itemNo || index}
-                        className="group hover:bg-muted/30 h-12 border-b"
+                        className="group hover:bg-muted h-12 border-b"
                       >
                         <TableCell className="sticky left-0 bg-white dark:bg-gray-950 group-hover:bg-muted/30 z-10 min-w-[150px] sm:min-w-[200px] shadow-[2px_0_4px_-2px_rgba(0,0,0,0.1)] transition-colors py-3 before:absolute before:inset-0 before:bg-white dark:before:bg-gray-950 before:-z-10">
                           <div className="flex items-center gap-3 relative z-10">
@@ -435,7 +435,7 @@ export default function OrderProductsTable({
                   }).map((_, index) => (
                     <TableRow
                       key={`empty-row-${currentPage}-${startIndex + index}`}
-                      className="h-12 border-b-0"
+                      className="h-12 border-b-0 hover:bg-transparent"
                     >
                       <TableCell className="sticky left-0 bg-white dark:bg-gray-950 z-10 min-w-[150px] sm:min-w-[200px] shadow-[2px_0_4px_-2px_rgba(0,0,0,0.1)] py-3 before:absolute before:inset-0 before:bg-white dark:before:bg-gray-950 before:-z-10">
                         <div className="h-6"></div>

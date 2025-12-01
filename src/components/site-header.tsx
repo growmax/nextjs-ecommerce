@@ -9,7 +9,7 @@ import {
   ShoppingCart,
   SidebarIcon,
 } from "lucide-react";
-import Link from "next/link";
+import { Link } from "@/i18n/navigation";
 
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
@@ -63,7 +63,7 @@ export function SiteHeader() {
           <SidebarIcon />
         </Button>
         <Separator orientation="vertical" className="mr-2 h-4" />
-        <Link href="/" className="flex items-center">
+        <Link href="/" prefetch={true} className="flex items-center">
           <span className="font-bold text-lg text-foreground hover:opacity-80">
             Siemens
           </span>
@@ -81,7 +81,7 @@ export function SiteHeader() {
             className="relative h-9 w-9"
             asChild
           >
-            <Link href="/notification">
+            <Link href="/notification" prefetch={true}>
               <Bell className="h-5 w-5" />
               {notificationCount > 0 && (
                 <Badge className="absolute -right-1 -top-1 h-5 w-5 flex items-center justify-center p-0 text-xs">
@@ -98,7 +98,7 @@ export function SiteHeader() {
             className="relative h-9 w-9"
             asChild
           >
-            <Link href="/cart">
+            <Link href="/cart" prefetch={true}>
               <ShoppingCart className="h-5 w-5" />
               {cartCount > 0 && (
                 <Badge className="absolute -right-1 -top-1 h-5 w-5 flex items-center justify-center p-0 text-xs">
@@ -154,13 +154,13 @@ export function SiteHeader() {
                 <DropdownMenuSeparator />
                 <DropdownMenuGroup>
                   <DropdownMenuItem asChild>
-                    <Link href="/settings/profile">
+                    <Link href="/settings/profile" prefetch={true}>
                       <IdCard className="h-4 w-4" />
                       {tNav("profile")}
                     </Link>
                   </DropdownMenuItem>
                   <DropdownMenuItem asChild>
-                    <Link href="/settings/company">
+                    <Link href="/settings/company" prefetch={true}>
                       <Building2 className="h-4 w-4" />
                       {tNav("companySettings")}
                     </Link>
@@ -183,7 +183,9 @@ export function SiteHeader() {
             </DropdownMenu>
           ) : (
             <Button asChild variant="default" size="sm">
-              <Link href="/login">{tAuth("login")}</Link>
+              <Link href="/login" prefetch={true}>
+                {tAuth("login")}
+              </Link>
             </Button>
           )}
         </div>

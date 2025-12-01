@@ -1,16 +1,25 @@
 "use client";
 import { usePageScroll } from "@/hooks/usePageScroll";
-import dynamic from "next/dynamic";
-
-const OrdersLandingPageClient = dynamic(
-  () => import("./components/OrdersLandingPageClient"),
-  {
-    ssr: false,
-  }
-);
+import { useRouteRequestTracking } from "@/hooks/useRouteRequestTracking";
+import { Suspense } from "react";
+import OrdersLandingPageClient from "./components/OrdersLandingPageClient";
 
 export default function OrdersLandingPage() {
   usePageScroll();
+  useRouteRequestTracking(); // Track route to prevent duplicate RSC calls
 
-  return <OrdersLandingPageClient />;
+  return (
+    <Suspense
+      fallback={
+        <div className="min-h-screen bg-background">
+          <div className="p-6 space-y-4">
+            <div className="h-12 w-64 bg-muted animate-pulse rounded" />
+            <div className="h-96 w-full bg-muted animate-pulse rounded" />
+          </div>
+        </div>
+      }
+    >
+      <OrdersLandingPageClient />
+    </Suspense>
+  );
 }
