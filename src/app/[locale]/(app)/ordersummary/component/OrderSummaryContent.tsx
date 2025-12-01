@@ -36,6 +36,7 @@ import SummaryNameCard from "@/components/summary/SummaryNameCard";
 import { useCalculation } from "@/hooks/useCalculation/useCalculation";
 import { containsXSS } from "@/utils/sanitization/sanitization.utils";
 import { BuyerOrderSummaryValidations } from "@/utils/summary/validation";
+import { useGlobalLoader } from "@/hooks/useGlobalLoader";
 
 // Constants
 const NEGATIVE_VALUE_MSG = "Some products have negative prices";
@@ -64,6 +65,7 @@ export default function OrderSummaryContent() {
   const { companydata } = useUser();
   const { emptyCart, emptyCartBySeller } = useCart();
   const { quoteSettings } = useModuleSettings(user);
+  const { hideLoading } = useGlobalLoader();
 
   const isSummary = true;
   const isOrder = true; // This is an order summary page
@@ -91,6 +93,23 @@ export default function OrderSummaryContent() {
   const watchedProducts = watch("products");
   const products = useMemo(() => (watchedProducts as any[]) || [], [watchedProducts]);
   const uploading = (watch("uploading" as any) as boolean) || false;
+  
+  // Check if critical data is loaded - show UI even if some non-critical loading states are pending
+  const hasCriticalData = useMemo(() => {
+    return products && products.length > 0 && initialValues?.cartValue;
+  }, [products, initialValues?.cartValue]);
+  
+  // Use more lenient loading check - only show loader if critical data is not available
+  const shouldShowLoader = isLoading && !hasCriticalData;
+  
+  // Hide global navigation loader when critical data is available
+  useEffect(() => {
+    if (hasCriticalData) {
+      // Hide navigation loader if it's still showing
+      hideLoading("navigation");
+      hideLoading("navigation-manual");
+    }
+  }, [hasCriticalData, hideLoading]);
 
   // Get calculation hook for recalculating cart values when products change
   const { globalCalc } = useCalculation();
@@ -136,9 +155,9 @@ export default function OrderSummaryContent() {
     currencyFactorValue
   );
 
-  // Reset form when initial values are loaded (only once when loading completes)
+  // Reset form when initial values are loaded (only once when loading completes or critical data is available)
   useEffect(() => {
-    if (!isLoading && !hasInitializedRef.current) {
+    if ((!isLoading || hasCriticalData) && !hasInitializedRef.current) {
       // Create a stable key from initialValues to detect actual changes
       const initialValuesKey = JSON.stringify({
         productsCount: initialValues?.products?.length || 0,
@@ -156,7 +175,7 @@ export default function OrderSummaryContent() {
         hasInitializedRef.current = true;
       }
     }
-  }, [isLoading, initialValues, reset, companyName]);
+  }, [isLoading, hasCriticalData, initialValues, reset, companyName]);
 
   // Update isInter based on billing and warehouse address states
   // Reference: buyer-fe useTaxBreakup.js line 40 - setBillingAddress?.state !== warehouse?.addressId?.state
@@ -808,14 +827,14 @@ export default function OrderSummaryContent() {
                 disabled: formState.isSubmitting || isSubmitting,
               },
             ]}
-            loading={isLoading}
+            loading={shouldShowLoader}
           />
         </div>
 
         {/* Order Summary Content - Scrollable area */}
         <div className="flex-1 w-full">
           <PageLayout variant="content">
-            {isLoading ? (
+            {shouldShowLoader ? (
               <DetailsSkeleton
                 showStatusTracker={false}
                 leftWidth="lg:w-[65%]"
@@ -830,11 +849,11 @@ export default function OrderSummaryContent() {
                     name={orderName}
                     onNameChange={handleNameChange}
                     title="Order Name"
-                    loading={isLoading}
+                    loading={shouldShowLoader}
                   />
 
                   {/* Products Table */}
-                  {!isLoading && products && products.length > 0 && (
+                  {!shouldShowLoader && products && products.length > 0 && (
                     <Suspense fallback={null}>
                       <OrderProductsTable
                         products={products}
@@ -848,7 +867,7 @@ export default function OrderSummaryContent() {
                   )}
 
                   {/* Contact Details and Terms Cards - Side by Side */}
-                  {!isLoading && (
+                  {!shouldShowLoader && (
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-2 sm:gap-3 md:gap-4 mt-4">
                       {/* Contact Details Card */}
                       <OrderContactDetails
@@ -936,13 +955,13 @@ export default function OrderSummaryContent() {
                 </div>
 
                 {/* Right Side - Price Details - 33% */}
-                {!isLoading && (
+                {!shouldShowLoader && (
                   <div className="w-full lg:w-[33%] mt-[80px]">
                     <div className="space-y-4">
                       <ApplyVolumeDiscountBtn
                         uploading={formState.isSubmitting || isSubmitting}
                         isSummary={true}
-                        isLoading={isLoading}
+                        isLoading={shouldShowLoader}
                       />
                       {/* Show cash discount card if cash discount is enabled in settings */}
                       {quoteSettings?.showCashDiscount && (

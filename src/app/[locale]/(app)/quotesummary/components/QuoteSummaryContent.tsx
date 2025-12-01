@@ -57,6 +57,7 @@ import { getAccounting } from "@/utils/calculation/salesCalculation/salesCalcula
 import { containsXSS } from "@/utils/sanitization/sanitization.utils";
 import { summaryReqDTO } from "@/utils/summary/summaryReqDTO";
 import { BuyerQuoteSummaryValidations } from "@/utils/summary/validation";
+import { useGlobalLoader } from "@/hooks/useGlobalLoader";
 
 // Constants
 const NEGATIVE_VALUE_MSG = "Some products have negative prices";
@@ -86,6 +87,7 @@ export default function QuoteSummaryContent() {
   const { emptyCart, emptyCartBySeller } = useCart();
   const { quoteSettings } = useModuleSettings(user);
   const { hasQuotePermission } = useAccessControl();
+  const { hideLoading } = useGlobalLoader();
 
   const isSummary = true;
   const isOrder = false; // This is a quote summary page, not an order
@@ -112,6 +114,23 @@ export default function QuoteSummaryContent() {
   // Watch specific fields that need to trigger re-renders
   const watchedProducts = watch("products");
   const products = useMemo(() => (watchedProducts as any[]) || [], [watchedProducts]);
+  
+  // Check if critical data is loaded - show UI even if some non-critical loading states are pending
+  const hasCriticalData = useMemo(() => {
+    return products && products.length > 0 && initialValues?.cartValue;
+  }, [products, initialValues?.cartValue]);
+  
+  // Use more lenient loading check - only show loader if critical data is not available
+  const shouldShowLoader = isLoading && !hasCriticalData;
+  
+  // Hide global navigation loader when critical data is available
+  useEffect(() => {
+    if (hasCriticalData) {
+      // Hide navigation loader if it's still showing
+      hideLoading("navigation");
+      hideLoading("navigation-manual");
+    }
+  }, [hasCriticalData, hideLoading]);
   const sprEnabled = ((watch("sprDetails" as any) as any)?.spr) || false;
   const uploading = (watch("uploading" as any) as boolean) || false;
 
@@ -147,9 +166,9 @@ export default function QuoteSummaryContent() {
     currency || {}
   );
 
-  // Reset form when initial values are loaded (only once when loading completes)
+  // Reset form when initial values are loaded (only once when loading completes or critical data is available)
   useEffect(() => {
-    if (!isLoading && !hasInitializedRef.current) {
+    if ((!isLoading || hasCriticalData) && !hasInitializedRef.current) {
       // Create a stable key from initialValues to detect actual changes
       const initialValuesKey = JSON.stringify({
         productsCount: initialValues?.products?.length || 0,
@@ -167,7 +186,7 @@ export default function QuoteSummaryContent() {
         hasInitializedRef.current = true;
       }
     }
-  }, [isLoading, initialValues, reset, companyName]);
+  }, [isLoading, hasCriticalData, initialValues, reset, companyName]);
 
   // Trigger validation when SPR status changes
   useEffect(() => {
@@ -1150,14 +1169,14 @@ export default function QuoteSummaryContent() {
                 disabled: formState.isSubmitting || !hasQuotePermission,
               },
             ]}
-            loading={isLoading}
+            loading={shouldShowLoader}
           />
         </div>
 
         {/* Quote Summary Content - Scrollable area */}
         <div className="flex-1 w-full">
           <PageLayout variant="content">
-            {isLoading ? (
+            {shouldShowLoader ? (
               <DetailsSkeleton
                 showStatusTracker={false}
                 leftWidth="lg:w-[65%]"
@@ -1172,11 +1191,11 @@ export default function QuoteSummaryContent() {
                     name={quoteName}
                     onNameChange={handleNameChange}
                     title="Quote Name"
-                    loading={isLoading}
+                    loading={shouldShowLoader}
                   />
 
                   {/* Products Table */}
-                  {!isLoading && products && products.length > 0 && (
+                  {!shouldShowLoader && products && products.length > 0 && (
                     <Suspense fallback={null}>
                       <OrderProductsTable
                         products={products}
@@ -1190,7 +1209,7 @@ export default function QuoteSummaryContent() {
                   )}
 
                   {/* Contact Details and Terms Cards - Side by Side */}
-                  {!isLoading && (
+                  {!shouldShowLoader && (
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-2 sm:gap-3 md:gap-4 mt-4">
                       {/* Contact Details Card */}
                         <OrderContactDetails
@@ -1305,13 +1324,13 @@ export default function QuoteSummaryContent() {
                 </div>
 
                 {/* Right Side - Price Details, Customer Information, and Attachments - 33% */}
-                {!isLoading && (
+                {!shouldShowLoader && (
                   <div className="w-full lg:w-[33%] mt-[80px]">
                     <div className="space-y-4">
                       <ApplyVolumeDiscountBtn
                         uploading={formState.isSubmitting}
                         isSummary={true}
-                        isLoading={isLoading}
+                        isLoading={shouldShowLoader}
                       />
                       {/* Show cash discount card if cash discount is enabled in settings */}
                       {/* The card component itself handles visibility based on cashDiscountValue and isSummaryPage */}

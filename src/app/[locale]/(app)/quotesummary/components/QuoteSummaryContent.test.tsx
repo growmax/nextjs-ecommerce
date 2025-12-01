@@ -738,6 +738,7 @@ import React, { ReactNode } from "react";
 import QuoteSummaryContent from "./QuoteSummaryContent";
 import { QuoteSubmissionService } from "@/lib/api";
 import { toast } from "sonner";
+import { LoadingProvider } from "@/hooks/useGlobalLoader";
 
 const mockCreateQuote =
   QuoteSubmissionService.createQuoteFromSummary as jest.MockedFunction<
@@ -749,7 +750,7 @@ const mockToastSuccess = toast.success as jest.MockedFunction<
 const mockToastError = toast.error as jest.MockedFunction<typeof toast.error>;
 const mockToastInfo = toast.info as jest.MockedFunction<typeof toast.info>;
 
-// Helper to create a wrapper with QueryClient
+// Helper to create a wrapper with QueryClient and LoadingProvider
 function createWrapper() {
   const queryClient = new QueryClient({
     defaultOptions: {
@@ -761,7 +762,11 @@ function createWrapper() {
   });
 
   const Wrapper = ({ children }: { children: ReactNode }) =>
-    React.createElement(QueryClientProvider, { client: queryClient }, children);
+    React.createElement(
+      LoadingProvider,
+      {},
+      React.createElement(QueryClientProvider, { client: queryClient }, children)
+    );
   Wrapper.displayName = "QueryClientWrapper";
   return Wrapper;
 }
@@ -1261,7 +1266,11 @@ describe("QuoteSummaryContent", () => {
     it("should show loading skeleton when data is loading", async () => {
       // eslint-disable-next-line @typescript-eslint/no-require-imports
       jest.spyOn(require("@/hooks/summary/useSummaryDefault"), "default").mockReturnValue({
-        initialValues: mockInitialValues,
+        initialValues: {
+          ...mockInitialValues,
+          products: [], // No products so hasCriticalData will be false
+          cartValue: null, // No cartValue so hasCriticalData will be false
+        },
         isLoading: true,
       });
 
