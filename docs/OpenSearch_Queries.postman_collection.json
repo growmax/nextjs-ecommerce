@@ -1,0 +1,887 @@
+{
+  "info": {
+    "_postman_id": "opensearch-queries-collection-v2",
+    "name": "OpenSearch Queries - Complete Collection (Updated)",
+    "description": "Complete collection of OpenSearch queries with CORRECT field names matching actual OpenSearch response structure.\n\n**Field Name Updates:**\n- isPublished → is_published\n- internal → is_internal (value: false, not true)\n- productsSubCategories → products_sub_categories\n- brandsName → brands_name or brand_name\n- productGroupId → product_group_id\n- prodgrpIndexName → pg_index_name\n- unitListPrice → unit_list_price\n\n**Response Structure:**\n- GET queries: response.body._source\n- Search queries: response.body.hits.hits\n\n**Setup Instructions:**\n1. Import this collection into Postman\n2. Create an environment with the variables listed below\n3. Update the environment variables with your actual values\n4. Start testing!",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "1. Product Search",
+      "item": [
+        {
+          "name": "Search - Basic Text Search",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "exec": [
+                  "pm.request.headers.add({",
+                  "    key: 'Authorization',",
+                  "    value: 'Bearer ' + pm.environment.get('access_token')",
+                  "});",
+                  "",
+                  "pm.request.headers.add({",
+                  "    key: 'x-tenant',",
+                  "    value: pm.environment.get('tenant_code')",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status code is 200', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test('Response has body.hits', function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData).to.have.property('body');",
+                  "    pm.expect(jsonData.body).to.have.property('hits');",
+                  "    pm.expect(jsonData.body.hits).to.have.property('hits');",
+                  "});",
+                  "",
+                  "pm.test('Has results', function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    var total = jsonData.body.hits.total.value || 0;",
+                  "    console.log('Total results:', total);",
+                  "    pm.expect(total).to.be.above(0);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"Elasticindex\": \"{{index_name}}\",\n    \"queryType\": \"search\",\n    \"ElasticType\": \"pgproduct\",\n    \"ElasticBody\": {\n        \"size\": 24,\n        \"_source\": [\n            \"brand_product_id\",\n            \"product_short_description\",\n            \"product_assetss\",\n            \"brands_name\",\n            \"brand_name\",\n            \"products_sub_categories.subCategoryName\",\n            \"product_id\",\n            \"product_index_name\",\n            \"unit_list_price\",\n            \"b2c_unit_list_price\",\n            \"b2c_discount_price\"\n        ],\n        \"query\": {\n            \"bool\": {\n                \"minimum_should_match\": 1,\n                \"must\": [\n                    {\n                        \"term\": {\n                            \"is_published\": 1\n                        }\n                    }\n                ],\n                \"should\": [\n                    {\n                        \"query_string\": {\n                            \"query\": \"drill\",\n                            \"analyzer\": \"my_analyzer\",\n                            \"analyze_wildcard\": true,\n                            \"auto_generate_phrase_queries\": true,\n                            \"default_operator\": \"AND\",\n                            \"fields\": [\n                                \"product_short_description^9\",\n                                \"brand_product_id^5\",\n                                \"pg_name\",\n                                \"product_series\",\n                                \"brands_name\",\n                                \"brand_name\",\n                                \"products_sub_categories.categoryName\",\n                                \"products_sub_categories.subCategoryName\",\n                                \"products_sub_categories.majorCategoryName\"\n                            ],\n                            \"boost\": 200\n                        }\n                    },\n                    {\n                        \"multi_match\": {\n                            \"query\": \"drill\",\n                            \"type\": \"phrase_prefix\",\n                            \"boost\": 190,\n                            \"fields\": [\n                                \"product_short_description^9\",\n                                \"brand_product_id^5\",\n                                \"pg_name\",\n                                \"brands_name\",\n                                \"brand_name\"\n                            ]\n                        }\n                    },\n                    {\n                        \"multi_match\": {\n                            \"query\": \"drill\",\n                            \"type\": \"cross_fields\",\n                            \"minimum_should_match\": \"90%\",\n                            \"analyzer\": \"my_analyzer\",\n                            \"boost\": 98,\n                            \"fields\": [\n                                \"brands_name\",\n                                \"brand_name\",\n                                \"products_sub_categories.categoryName\",\n                                \"products_sub_categories.subCategoryName\",\n                                \"products_sub_categories.majorCategoryName\"\n                            ]\n                        }\n                    },\n                    {\n                        \"multi_match\": {\n                            \"query\": \"drill\",\n                            \"type\": \"best_fields\",\n                            \"analyzer\": \"my_analyzer\",\n                            \"fields\": [\n                                \"product_short_description^9\",\n                                \"brand_product_id^5\",\n                                \"pg_name\"\n                            ]\n                        }\n                    }\n                ],\n                \"must_not\": [\n                    {\n                        \"match\": {\n                            \"pg_index_name\": {\n                                \"query\": \"PrdGrp0*\"\n                            }\n                        }\n                    },\n                    {\n                        \"term\": {\n                            \"is_internal\": true\n                        }\n                    }\n                ]\n            }\n        }\n    }\n}"
+            },
+            "url": {
+              "raw": "{{opensearch_url}}",
+              "host": ["{{opensearch_url}}"]
+            },
+            "description": "Full-text product search with multiple match strategies. Replace 'drill' in the query_string and multi_match queries with your search term."
+          }
+        }
+      ],
+      "description": "Product search queries for full-text search functionality"
+    },
+    {
+      "name": "2. Browse Queries",
+      "item": [
+        {
+          "name": "Browse - By Category",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "exec": [
+                  "pm.request.headers.add({",
+                  "    key: 'Authorization',",
+                  "    value: 'Bearer ' + pm.environment.get('access_token')",
+                  "});",
+                  "",
+                  "pm.request.headers.add({",
+                  "    key: 'x-tenant',",
+                  "    value: pm.environment.get('tenant_code')",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status code is 200', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test('Response has body.hits', function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData).to.have.property('body');",
+                  "    pm.expect(jsonData.body).to.have.property('hits');",
+                  "});",
+                  "",
+                  "var jsonData = pm.response.json();",
+                  "var total = jsonData.body.hits.total.value || 0;",
+                  "console.log('Category results:', total);"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"Elasticindex\": \"{{index_name}}\",\n    \"queryType\": \"search\",\n    \"ElasticType\": \"pgproduct\",\n    \"ElasticBody\": {\n        \"from\": 0,\n        \"size\": 20,\n        \"query\": {\n            \"bool\": {\n                \"must\": [\n                    {\n                        \"term\": {\n                            \"is_published\": 1\n                        }\n                    },\n                    {\n                        \"term\": {\n                            \"products_sub_categories.categoryId\": {{category_id}}\n                        }\n                    }\n                ],\n                \"must_not\": [\n                    {\n                        \"match\": {\n                            \"pg_index_name\": {\n                                \"query\": \"PrdGrp0*\"\n                            }\n                        }\n                    },\n                    {\n                        \"term\": {\n                            \"is_internal\": true\n                        }\n                    }\n                ]\n            }\n        }\n    }\n}"
+            },
+            "url": {
+              "raw": "{{opensearch_url}}",
+              "host": ["{{opensearch_url}}"]
+            },
+            "description": "Browse products by category ID. Update category_id in the environment variable or replace {{category_id}} with actual ID."
+          }
+        },
+        {
+          "name": "Browse - By Subcategory",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "exec": [
+                  "pm.request.headers.add({",
+                  "    key: 'Authorization',",
+                  "    value: 'Bearer ' + pm.environment.get('access_token')",
+                  "});",
+                  "",
+                  "pm.request.headers.add({",
+                  "    key: 'x-tenant',",
+                  "    value: pm.environment.get('tenant_code')",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status code is 200', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "var jsonData = pm.response.json();",
+                  "var total = jsonData.body.hits.total.value || 0;",
+                  "console.log('Subcategory results:', total);"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"Elasticindex\": \"{{index_name}}\",\n    \"queryType\": \"search\",\n    \"ElasticType\": \"pgproduct\",\n    \"ElasticBody\": {\n        \"from\": 0,\n        \"size\": 20,\n        \"query\": {\n            \"bool\": {\n                \"must\": [\n                    {\n                        \"term\": {\n                            \"is_published\": 1\n                        }\n                    },\n                    {\n                        \"term\": {\n                            \"products_sub_categories.subCategoryId\": {{subcategory_id}}\n                        }\n                    }\n                ],\n                \"must_not\": [\n                    {\n                        \"match\": {\n                            \"pg_index_name\": {\n                                \"query\": \"PrdGrp0*\"\n                            }\n                        }\n                    },\n                    {\n                        \"term\": {\n                            \"is_internal\": true\n                        }\n                    }\n                ]\n            }\n        }\n    }\n}"
+            },
+            "url": {
+              "raw": "{{opensearch_url}}",
+              "host": ["{{opensearch_url}}"]
+            },
+            "description": "Browse products by subcategory ID."
+          }
+        },
+        {
+          "name": "Browse - By Major Category",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "exec": [
+                  "pm.request.headers.add({",
+                  "    key: 'Authorization',",
+                  "    value: 'Bearer ' + pm.environment.get('access_token')",
+                  "});",
+                  "",
+                  "pm.request.headers.add({",
+                  "    key: 'x-tenant',",
+                  "    value: pm.environment.get('tenant_code')",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status code is 200', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "var jsonData = pm.response.json();",
+                  "var total = jsonData.body.hits.total.value || 0;",
+                  "console.log('Major category results:', total);"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"Elasticindex\": \"{{index_name}}\",\n    \"queryType\": \"search\",\n    \"ElasticType\": \"pgproduct\",\n    \"ElasticBody\": {\n        \"from\": 0,\n        \"size\": 20,\n        \"query\": {\n            \"bool\": {\n                \"must\": [\n                    {\n                        \"term\": {\n                            \"is_published\": 1\n                        }\n                    },\n                    {\n                        \"term\": {\n                            \"products_sub_categories.majorCategoryId\": {{major_category_id}}\n                        }\n                    }\n                ],\n                \"must_not\": [\n                    {\n                        \"match\": {\n                            \"pg_index_name\": {\n                                \"query\": \"PrdGrp0*\"\n                            }\n                        }\n                    },\n                    {\n                        \"term\": {\n                            \"is_internal\": true\n                        }\n                    }\n                ]\n            }\n        }\n    }\n}"
+            },
+            "url": {
+              "raw": "{{opensearch_url}}",
+              "host": ["{{opensearch_url}}"]
+            },
+            "description": "Browse products by major category ID."
+          }
+        },
+        {
+          "name": "Browse - By Brand",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "exec": [
+                  "pm.request.headers.add({",
+                  "    key: 'Authorization',",
+                  "    value: 'Bearer ' + pm.environment.get('access_token')",
+                  "});",
+                  "",
+                  "pm.request.headers.add({",
+                  "    key: 'x-tenant',",
+                  "    value: pm.environment.get('tenant_code')",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status code is 200', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "var jsonData = pm.response.json();",
+                  "var total = jsonData.body.hits.total.value || 0;",
+                  "console.log('Brand results:', total);"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"Elasticindex\": \"{{index_name}}\",\n    \"queryType\": \"search\",\n    \"ElasticType\": \"pgproduct\",\n    \"ElasticBody\": {\n        \"from\": 0,\n        \"size\": 20,\n        \"query\": {\n            \"bool\": {\n                \"must\": [\n                    {\n                        \"term\": {\n                            \"is_published\": 1\n                        }\n                    },\n                    {\n                        \"term\": {\n                            \"brands_name.keyword\": \"{{brand_name}}\"\n                        }\n                    }\n                ],\n                \"must_not\": [\n                    {\n                        \"match\": {\n                            \"pg_index_name\": {\n                                \"query\": \"PrdGrp0*\"\n                            }\n                        }\n                    },\n                    {\n                        \"term\": {\n                            \"is_internal\": true\n                        }\n                    }\n                ]\n            }\n        }\n    }\n}"
+            },
+            "url": {
+              "raw": "{{opensearch_url}}",
+              "host": ["{{opensearch_url}}"]
+            },
+            "description": "Browse products by brand name. Brand name must match exactly (case-sensitive). Uses brands_name.keyword field."
+          }
+        },
+        {
+          "name": "Browse - By Product Group",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "exec": [
+                  "pm.request.headers.add({",
+                  "    key: 'Authorization',",
+                  "    value: 'Bearer ' + pm.environment.get('access_token')",
+                  "});",
+                  "",
+                  "pm.request.headers.add({",
+                  "    key: 'x-tenant',",
+                  "    value: pm.environment.get('tenant_code')",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status code is 200', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "var jsonData = pm.response.json();",
+                  "var total = jsonData.body.hits.total.value || 0;",
+                  "console.log('Product group results:', total);"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"Elasticindex\": \"{{index_name}}\",\n    \"queryType\": \"search\",\n    \"ElasticType\": \"pgproduct\",\n    \"ElasticBody\": {\n        \"from\": 0,\n        \"size\": 20,\n        \"query\": {\n            \"bool\": {\n                \"must\": [\n                    {\n                        \"term\": {\n                            \"is_published\": 1\n                        }\n                    },\n                    {\n                        \"term\": {\n                            \"product_group_id\": {{product_group_id}}\n                        }\n                    }\n                ],\n                \"must_not\": [\n                    {\n                        \"match\": {\n                            \"pg_index_name\": {\n                                \"query\": \"PrdGrp0*\"\n                            }\n                        }\n                    },\n                    {\n                        \"term\": {\n                            \"is_internal\": true\n                        }\n                    }\n                ]\n            }\n        }\n    }\n}"
+            },
+            "url": {
+              "raw": "{{opensearch_url}}",
+              "host": ["{{opensearch_url}}"]
+            },
+            "description": "Browse products by product group ID."
+          }
+        },
+        {
+          "name": "Browse - All Products (No Filter)",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "exec": [
+                  "pm.request.headers.add({",
+                  "    key: 'Authorization',",
+                  "    value: 'Bearer ' + pm.environment.get('access_token')",
+                  "});",
+                  "",
+                  "pm.request.headers.add({",
+                  "    key: 'x-tenant',",
+                  "    value: pm.environment.get('tenant_code')",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status code is 200', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "var jsonData = pm.response.json();",
+                  "var total = jsonData.body.hits.total.value || 0;",
+                  "console.log('Total products:', total);",
+                  "pm.expect(total).to.be.above(0);"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"Elasticindex\": \"{{index_name}}\",\n    \"queryType\": \"search\",\n    \"ElasticType\": \"pgproduct\",\n    \"ElasticBody\": {\n        \"from\": 0,\n        \"size\": 20,\n        \"query\": {\n            \"bool\": {\n                \"must\": [\n                    {\n                        \"term\": {\n                            \"is_published\": 1\n                        }\n                    }\n                ],\n                \"must_not\": [\n                    {\n                        \"match\": {\n                            \"pg_index_name\": {\n                                \"query\": \"PrdGrp0*\"\n                            }\n                        }\n                    },\n                    {\n                        \"term\": {\n                            \"is_internal\": true\n                        }\n                    }\n                ]\n            }\n        }\n    }\n}"
+            },
+            "url": {
+              "raw": "{{opensearch_url}}",
+              "host": ["{{opensearch_url}}"]
+            },
+            "description": "Get all published products (no category/brand filters). Good for testing basic connectivity."
+          }
+        }
+      ],
+      "description": "Browse queries for filtering products by category, subcategory, brand, etc."
+    },
+    {
+      "name": "3. Browse with Sorting",
+      "item": [
+        {
+          "name": "Browse - Category with Price Sort (Low to High)",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "exec": [
+                  "pm.request.headers.add({",
+                  "    key: 'Authorization',",
+                  "    value: 'Bearer ' + pm.environment.get('access_token')",
+                  "});",
+                  "",
+                  "pm.request.headers.add({",
+                  "    key: 'x-tenant',",
+                  "    value: pm.environment.get('tenant_code')",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status code is 200', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "var jsonData = pm.response.json();",
+                  "var total = jsonData.body.hits.total.value || 0;",
+                  "console.log('Sorted results:', total);"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"Elasticindex\": \"{{index_name}}\",\n    \"queryType\": \"search\",\n    \"ElasticType\": \"pgproduct\",\n    \"ElasticBody\": {\n        \"from\": 0,\n        \"size\": 20,\n        \"query\": {\n            \"bool\": {\n                \"must\": [\n                    {\n                        \"term\": {\n                            \"is_published\": 1\n                        }\n                    },\n                    {\n                        \"term\": {\n                            \"products_sub_categories.categoryId\": {{category_id}}\n                        }\n                    }\n                ],\n                \"must_not\": [\n                    {\n                        \"match\": {\n                            \"pg_index_name\": {\n                                \"query\": \"PrdGrp0*\"\n                            }\n                        }\n                    },\n                    {\n                        \"term\": {\n                            \"is_internal\": true\n                        }\n                    }\n                ]\n            }\n        },\n        \"sort\": [\n            {\n                \"unit_list_price\": {\n                    \"order\": \"asc\"\n                }\n            }\n        ]\n    }\n}"
+            },
+            "url": {
+              "raw": "{{opensearch_url}}",
+              "host": ["{{opensearch_url}}"]
+            },
+            "description": "Browse by category with price sorting (low to high). Uses unit_list_price field. Change 'asc' to 'desc' for high to low."
+          }
+        },
+        {
+          "name": "Browse - Category with Price Sort (High to Low)",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "exec": [
+                  "pm.request.headers.add({",
+                  "    key: 'Authorization',",
+                  "    value: 'Bearer ' + pm.environment.get('access_token')",
+                  "});",
+                  "",
+                  "pm.request.headers.add({",
+                  "    key: 'x-tenant',",
+                  "    value: pm.environment.get('tenant_code')",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status code is 200', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"Elasticindex\": \"{{index_name}}\",\n    \"queryType\": \"search\",\n    \"ElasticType\": \"pgproduct\",\n    \"ElasticBody\": {\n        \"from\": 0,\n        \"size\": 20,\n        \"query\": {\n            \"bool\": {\n                \"must\": [\n                    {\n                        \"term\": {\n                            \"is_published\": 1\n                        }\n                    },\n                    {\n                        \"term\": {\n                            \"products_sub_categories.categoryId\": {{category_id}}\n                        }\n                    }\n                ],\n                \"must_not\": [\n                    {\n                        \"match\": {\n                            \"pg_index_name\": {\n                                \"query\": \"PrdGrp0*\"\n                            }\n                        }\n                    },\n                    {\n                        \"term\": {\n                            \"is_internal\": true\n                        }\n                    }\n                ]\n            }\n        },\n        \"sort\": [\n            {\n                \"unit_list_price\": {\n                    \"order\": \"desc\"\n                }\n            }\n        ]\n    }\n}"
+            },
+            "url": {
+              "raw": "{{opensearch_url}}",
+              "host": ["{{opensearch_url}}"]
+            },
+            "description": "Browse by category with price sorting (high to low). Uses unit_list_price field."
+          }
+        }
+      ],
+      "description": "Browse queries with sorting options"
+    },
+    {
+      "name": "4. Browse with Filters",
+      "item": [
+        {
+          "name": "Browse - Category with Catalog Code Filter",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "exec": [
+                  "pm.request.headers.add({",
+                  "    key: 'Authorization',",
+                  "    value: 'Bearer ' + pm.environment.get('access_token')",
+                  "});",
+                  "",
+                  "pm.request.headers.add({",
+                  "    key: 'x-tenant',",
+                  "    value: pm.environment.get('tenant_code')",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status code is 200', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "var jsonData = pm.response.json();",
+                  "var total = jsonData.body.hits.total.value || 0;",
+                  "console.log('Filtered results:', total);"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"Elasticindex\": \"{{index_name}}\",\n    \"queryType\": \"search\",\n    \"ElasticType\": \"pgproduct\",\n    \"ElasticBody\": {\n        \"from\": 0,\n        \"size\": 20,\n        \"query\": {\n            \"bool\": {\n                \"must\": [\n                    {\n                        \"term\": {\n                            \"is_published\": 1\n                        }\n                    },\n                    {\n                        \"term\": {\n                            \"products_sub_categories.categoryId\": {{category_id}}\n                        }\n                    },\n                    {\n                        \"terms\": {\n                            \"catalog_code.keyword\": [\"CAT001\", \"CAT002\"]\n                        }\n                    }\n                ],\n                \"must_not\": [\n                    {\n                        \"match\": {\n                            \"pg_index_name\": {\n                                \"query\": \"PrdGrp0*\"\n                            }\n                        }\n                    },\n                    {\n                        \"term\": {\n                            \"is_internal\": true\n                        }\n                    }\n                ]\n            }\n        }\n    }\n}"
+            },
+            "url": {
+              "raw": "{{opensearch_url}}",
+              "host": ["{{opensearch_url}}"]
+            },
+            "description": "Browse by category with catalog code filtering. Update catalog codes in the terms array. Note: catalog_code is an array field."
+          }
+        },
+        {
+          "name": "Browse - Category with Brand Filter",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "exec": [
+                  "pm.request.headers.add({",
+                  "    key: 'Authorization',",
+                  "    value: 'Bearer ' + pm.environment.get('access_token')",
+                  "});",
+                  "",
+                  "pm.request.headers.add({",
+                  "    key: 'x-tenant',",
+                  "    value: pm.environment.get('tenant_code')",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status code is 200', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"Elasticindex\": \"{{index_name}}\",\n    \"queryType\": \"search\",\n    \"ElasticType\": \"pgproduct\",\n    \"ElasticBody\": {\n        \"from\": 0,\n        \"size\": 20,\n        \"query\": {\n            \"bool\": {\n                \"must\": [\n                    {\n                        \"term\": {\n                            \"is_published\": 1\n                        }\n                    },\n                    {\n                        \"term\": {\n                            \"products_sub_categories.categoryId\": {{category_id}}\n                        }\n                    },\n                    {\n                        \"term\": {\n                            \"brands_name.keyword\": \"{{brand_name}}\"\n                        }\n                    }\n                ],\n                \"must_not\": [\n                    {\n                        \"match\": {\n                            \"pg_index_name\": {\n                                \"query\": \"PrdGrp0*\"\n                            }\n                        }\n                    },\n                    {\n                        \"term\": {\n                            \"is_internal\": true\n                        }\n                    }\n                ]\n            }\n        }\n    }\n}"
+            },
+            "url": {
+              "raw": "{{opensearch_url}}",
+              "host": ["{{opensearch_url}}"]
+            },
+            "description": "Browse by category with additional brand filter."
+          }
+        }
+      ],
+      "description": "Browse queries with additional filters (catalog codes, brand, etc.)"
+    },
+    {
+      "name": "5. Product Detail",
+      "item": [
+        {
+          "name": "Get Product - By Index Name",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "exec": [
+                  "pm.request.headers.add({",
+                  "    key: 'Authorization',",
+                  "    value: 'Bearer ' + pm.environment.get('access_token')",
+                  "});",
+                  "",
+                  "pm.request.headers.add({",
+                  "    key: 'x-tenant',",
+                  "    value: pm.environment.get('tenant_code')",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status code is 200', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test('Product found', function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    var found = jsonData.body && jsonData.body.found;",
+                  "    pm.expect(found).to.be.true;",
+                  "});",
+                  "",
+                  "pm.test('Has product data', function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.body).to.have.property('_source');",
+                  "    console.log('Product ID:', jsonData.body._source.product_id);",
+                  "    console.log('Product Name:', jsonData.body._source.product_short_description);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"Elasticindex\": \"{{index_name}}\",\n    \"queryType\": \"get\",\n    \"ElasticType\": \"pgproduct\",\n    \"ElasticBody\": \"{{product_index_name}}\"\n}"
+            },
+            "url": {
+              "raw": "{{opensearch_url}}",
+              "host": ["{{opensearch_url}}"]
+            },
+            "description": "Get a single product by its index name (e.g., Prod0000064175). Note: ElasticBody is a string, not an object for queryType: 'get'. Response structure: response.body._source contains the product data."
+          }
+        }
+      ],
+      "description": "Product detail queries for fetching individual products"
+    },
+    {
+      "name": "6. Pagination Examples",
+      "item": [
+        {
+          "name": "Browse - Category Page 1",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "exec": [
+                  "pm.request.headers.add({",
+                  "    key: 'Authorization',",
+                  "    value: 'Bearer ' + pm.environment.get('access_token')",
+                  "});",
+                  "",
+                  "pm.request.headers.add({",
+                  "    key: 'x-tenant',",
+                  "    value: pm.environment.get('tenant_code')",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status code is 200', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "var jsonData = pm.response.json();",
+                  "var total = jsonData.body.hits.total.value || 0;",
+                  "var returned = jsonData.body.hits.hits.length;",
+                  "console.log('Page 1: Showing', returned, 'of', total, 'total results');"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"Elasticindex\": \"{{index_name}}\",\n    \"queryType\": \"search\",\n    \"ElasticType\": \"pgproduct\",\n    \"ElasticBody\": {\n        \"from\": 0,\n        \"size\": 20,\n        \"query\": {\n            \"bool\": {\n                \"must\": [\n                    {\n                        \"term\": {\n                            \"is_published\": 1\n                        }\n                    },\n                    {\n                        \"term\": {\n                            \"products_sub_categories.categoryId\": {{category_id}}\n                        }\n                    }\n                ],\n                \"must_not\": [\n                    {\n                        \"match\": {\n                            \"pg_index_name\": {\n                                \"query\": \"PrdGrp0*\"\n                            }\n                        }\n                    },\n                    {\n                        \"term\": {\n                            \"is_internal\": true\n                        }\n                    }\n                ]\n            }\n        }\n    }\n}"
+            },
+            "url": {
+              "raw": "{{opensearch_url}}",
+              "host": ["{{opensearch_url}}"]
+            },
+            "description": "Page 1: from=0, size=20 (shows first 20 results)"
+          }
+        },
+        {
+          "name": "Browse - Category Page 2",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "exec": [
+                  "pm.request.headers.add({",
+                  "    key: 'Authorization',",
+                  "    value: 'Bearer ' + pm.environment.get('access_token')",
+                  "});",
+                  "",
+                  "pm.request.headers.add({",
+                  "    key: 'x-tenant',",
+                  "    value: pm.environment.get('tenant_code')",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status code is 200', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "var jsonData = pm.response.json();",
+                  "var returned = jsonData.body.hits.hits.length;",
+                  "console.log('Page 2: Showing', returned, 'results (items 21-40)');"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"Elasticindex\": \"{{index_name}}\",\n    \"queryType\": \"search\",\n    \"ElasticType\": \"pgproduct\",\n    \"ElasticBody\": {\n        \"from\": 20,\n        \"size\": 20,\n        \"query\": {\n            \"bool\": {\n                \"must\": [\n                    {\n                        \"term\": {\n                            \"is_published\": 1\n                        }\n                    },\n                    {\n                        \"term\": {\n                            \"products_sub_categories.categoryId\": {{category_id}}\n                        }\n                    }\n                ],\n                \"must_not\": [\n                    {\n                        \"match\": {\n                            \"pg_index_name\": {\n                                \"query\": \"PrdGrp0*\"\n                            }\n                        }\n                    },\n                    {\n                        \"term\": {\n                            \"is_internal\": true\n                        }\n                    }\n                ]\n            }\n        }\n    }\n}"
+            },
+            "url": {
+              "raw": "{{opensearch_url}}",
+              "host": ["{{opensearch_url}}"]
+            },
+            "description": "Page 2: from=20, size=20 (shows results 21-40)"
+          }
+        }
+      ],
+      "description": "Examples of pagination with different page numbers"
+    }
+  ],
+  "variable": [
+    {
+      "key": "opensearch_url",
+      "value": "https://api.myapptino.com/opensearch/invocations",
+      "type": "string"
+    },
+    {
+      "key": "index_name",
+      "value": "schwingstetterpgandproducts",
+      "type": "string"
+    },
+    {
+      "key": "access_token",
+      "value": "YOUR_ACCESS_TOKEN_HERE",
+      "type": "string"
+    },
+    {
+      "key": "tenant_code",
+      "value": "YOUR_TENANT_CODE_HERE",
+      "type": "string"
+    },
+    {
+      "key": "category_id",
+      "value": "3673",
+      "type": "string"
+    },
+    {
+      "key": "subcategory_id",
+      "value": "5048",
+      "type": "string"
+    },
+    {
+      "key": "major_category_id",
+      "value": "2212",
+      "type": "string"
+    },
+    {
+      "key": "brand_name",
+      "value": "Milwakee",
+      "type": "string"
+    },
+    {
+      "key": "product_group_id",
+      "value": "54518",
+      "type": "string"
+    },
+    {
+      "key": "product_index_name",
+      "value": "Prod0000064175",
+      "type": "string"
+    }
+  ]
+}

@@ -2,28 +2,28 @@
 
 import { Toaster } from "@/components/ui/sonner";
 import { Layers } from "lucide-react";
+import { useTranslations } from "next-intl";
 import dynamic from "next/dynamic";
 import { Suspense, useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
-import { useTranslations } from "next-intl";
 
 import { EditOrderNameDialog } from "@/components/dialogs/EditOrderNameDialog";
 import {
-  VersionsDialog,
-  type Version,
+    VersionsDialog,
+    type Version,
 } from "@/components/dialogs/VersionsDialog";
 import { ApplicationLayout, PageLayout } from "@/components/layout";
 import {
-  CustomerInfoCard,
-  DetailsSkeleton,
-  OrderContactDetails,
-  OrderTermsCard,
-  SalesHeader,
+    CustomerInfoCard,
+    DetailsSkeleton,
+    OrderContactDetails,
+    OrderTermsCard,
+    SalesHeader,
 } from "@/components/sales";
 import { useQuoteDetails } from "@/hooks/details/quotedetails/useQuoteDetails";
 import { useCurrentUser } from "@/hooks/useCurrentUser";
 import { useGetVersionDetails } from "@/hooks/useGetVersionDetails/useGetVersionDetails";
-import { useRoutePrefetch } from "@/hooks/useRoutePrefetch";
+import { useNavigationWithLoader } from "@/hooks/useNavigationWithLoader";
 import { useTenantData } from "@/hooks/useTenantData";
 import type { QuotationDetailsResponse } from "@/lib/api";
 import { QuotationDetailsService } from "@/lib/api";
@@ -33,6 +33,7 @@ import { exportProductsToCsv } from "@/lib/export-csv";
 import type { SelectedVersion } from "@/types/details/orderdetails/version.types";
 import { getStatusStyle } from "@/utils/details/orderdetails";
 import { decodeUnicode } from "@/utils/General/general";
+import { usePostNavigationFetch } from "@/hooks/usePostNavigationFetch";
 
 // Dynamic imports for heavy components
 // No loading prop to avoid double loaders - main DetailsSkeleton handles all loading states
@@ -74,7 +75,7 @@ export default function QuoteDetailsClient({
 
   const { user } = useCurrentUser();
   const { tenantData } = useTenantData();
-  const { prefetch, prefetchAndNavigate } = useRoutePrefetch();
+  const { push } = useNavigationWithLoader();
 
   const lastFetchKeyRef = useRef<string | null>(null);
   const processedVersionRef = useRef<string | null>(null);
@@ -92,7 +93,8 @@ export default function QuoteDetailsClient({
     loadParams();
   }, [params]);
 
-  useEffect(() => {
+  // Fetch quote details after navigation completes - ensures instant navigation
+  usePostNavigationFetch(() => {
     const fetchQuoteDetails = async () => {
       // Wait for params, user and tenant data to be available
       if (
@@ -208,18 +210,6 @@ export default function QuoteDetailsClient({
     quoteDetails?.data?.quotationDetails?.[0]?.quotationIdentifier ||
     quoteIdentifier ||
     "...";
-  useEffect(() => {
-    if (quoteIdentifier && quoteDetails && !loading) {
-      prefetch(`/details/quoteDetails/${quoteIdentifier}/edit`);
-    }
-  }, [quoteIdentifier, quoteDetails, loading, prefetch]);
-
-  useEffect(() => {
-    prefetch("/landing/orderslanding");
-    prefetch("/landing/quoteslanding");
-    prefetch("/settings/profile");
-    prefetch("/settings/company");
-  }, [prefetch]);
 
   const handleEditQuote = () => {
     const updatedBuyerStatus =
@@ -240,7 +230,14 @@ export default function QuoteDetailsClient({
       updatedBuyerStatus === "QUOTE RECEIVED" ||
       updatedBuyerStatus === "OPEN"
     ) {
-      prefetchAndNavigate(`/details/quoteDetails/${quoteIdentifier}/edit`);
+      // Non-blocking navigation
+      if (quoteIdentifier) {
+        push(`/details/quoteDetails/${quoteIdentifier}/edit`);
+      }
+      // Non-blocking navigation
+      if (quoteIdentifier) {
+        push(`/details/quoteDetails/${quoteIdentifier}/edit`);
+      }
       return;
     }
 
@@ -330,7 +327,8 @@ export default function QuoteDetailsClient({
   };
 
   const handleClose = () => {
-    prefetchAndNavigate("/landing/quoteslanding");
+    push("/landing/quoteslanding");
+    push("/landing/quoteslanding");
   };
 
   const handleClone = () => {
@@ -388,9 +386,14 @@ export default function QuoteDetailsClient({
       (reorder && validityTill && new Date() < new Date(validityTill)) ||
       updatedBuyerStatus === "QUOTE RECEIVED"
     ) {
-      prefetchAndNavigate(
-        `/details/quoteDetails/${quoteIdentifier}/edit?placeOrder=true`
-      );
+      // Non-blocking navigation
+      if (quoteIdentifier) {
+        push(`/details/quoteDetails/${quoteIdentifier}/edit?placeOrder=true`);
+      }
+      // Non-blocking navigation
+      if (quoteIdentifier) {
+        push(`/details/quoteDetails/${quoteIdentifier}/edit?placeOrder=true`);
+      }
       return;
     }
 
@@ -465,8 +468,6 @@ export default function QuoteDetailsClient({
       label: t("editQuoteButton"),
       variant: "outline" as const,
       onClick: handleEditQuote,
-      onMouseEnter: () =>
-        prefetch(`/details/quoteDetails/${quoteIdentifier}/edit`),
     },
     {
       label: t("placeOrderButton"),
@@ -476,9 +477,9 @@ export default function QuoteDetailsClient({
   ];
 
   return (
-    <ApplicationLayout>
-      {/* Sales Header - Fixed at top */}
-      <div className="flex-shrink-0 sticky top-0 z-50 bg-gray-50">
+    <ApplicationLayout className="bg-background">
+      {/* Sales Header */}
+      <div className="flex-shrink-0">
         <SalesHeader
           title={quoteName ? decodeUnicode(quoteName) : t("quoteDetails")}
           identifier={displayQuoteId}
@@ -509,7 +510,7 @@ export default function QuoteDetailsClient({
 
       {/* Quote Details Content - Scrollable area */}
       <div className="flex-1 w-full">
-        <PageLayout variant="content">
+        <PageLayout variant="content" className="mt-4">
           {loading ? (
             <DetailsSkeleton
               showStatusTracker={false}
@@ -519,7 +520,7 @@ export default function QuoteDetailsClient({
           ) : (
             <div className="flex flex-col lg:flex-row gap-2 sm:gap-3 md:gap-4 w-full">
               {/* Left Side - Products Table, Contact & Terms - 65% */}
-              <div className="w-full lg:w-[65%] space-y-2 sm:space-y-3 mt-[80px]">
+              <div className="w-full lg:w-[65%] space-y-2 sm:space-y-3">
                 {/* Products Table */}
                 {!loading && !error && quoteDetails && (
                   <Suspense fallback={null}>
@@ -542,7 +543,7 @@ export default function QuoteDetailsClient({
 
                 {/* Contact Details and Terms Cards - Side by Side */}
                 {!loading && !error && quoteDetails && (
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-2 sm:gap-3 md:gap-4 mt-4">
+                  <div className="grid grid-cols-1 md:grid-cols-2 details-card-gap details-section-margin">
                     {/* Contact Details Card */}
                     <OrderContactDetails
                       billingAddress={
@@ -659,7 +660,7 @@ export default function QuoteDetailsClient({
 
               {/* Right Side - Price Details - 40% */}
               {!loading && !error && quoteDetails && (
-                <div className="w-full lg:w-[40%] space-y-2 sm:space-y-3 mt-[80px]">
+                <div className="w-full lg:w-[40%] space-y-2 sm:space-y-3">
                   <Suspense fallback={null}>
                     <OrderPriceDetails
                       products={products}

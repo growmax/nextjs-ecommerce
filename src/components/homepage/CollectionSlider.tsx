@@ -7,7 +7,7 @@ import { cn } from "@/lib/utils";
 import useEmblaCarousel from "embla-carousel-react";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import Image from "next/image";
-import Link from "next/link";
+import { Link } from "@/i18n/navigation";
 import { useCallback, useEffect, useState } from "react";
 import TitleComponent from "./TitleComponent";
 
@@ -243,12 +243,10 @@ export default function CollectionSlider({
                       <Card
                         className={cn(
                           "cursor-pointer transition-all duration-300",
-                          "overflow-hidden h-full",
-                          isMobile ? "rounded-2xl" : "rounded-2xl"
+                          "overflow-hidden h-full rounded-lg"
                         )}
                         style={{
                           boxShadow: "0px 0px 12px rgba(24, 110, 212, 0.1)",
-                          borderRadius: "16px",
                         }}
                         onMouseEnter={e => {
                           e.currentTarget.style.boxShadow =
@@ -269,10 +267,10 @@ export default function CollectionSlider({
                       >
                         <Link
                           href={href}
+                          prefetch={true}
                           target={isOpenNewTabCond ? "_blank" : "_self"}
-                          className="block w-full no-underline text-inherit"
+                          className="block w-full no-underline text-inherit rounded-lg"
                           style={{
-                            borderRadius: "16px",
                             textDecoration: "none",
                             color: "inherit",
                             width: "100%",
@@ -280,7 +278,7 @@ export default function CollectionSlider({
                         >
                           {showImage && (
                             <div
-                              className="relative w-full overflow-hidden"
+                              className="relative w-full overflow-hidden rounded-lg"
                               style={{
                                 margin: isMobile
                                   ? imageOuterPaddingMob
@@ -289,16 +287,14 @@ export default function CollectionSlider({
                                   : imageOuterPadding
                                     ? `${imageOuterPadding / 8}rem`
                                     : "0.5rem",
-                                borderRadius: "16px",
                               }}
                             >
                               <div
-                                className="relative w-full overflow-hidden"
+                                className="relative w-full overflow-hidden rounded-lg"
                                 style={{
                                   height: isMobile
                                     ? `${imageHeightMobileView}px`
                                     : `${imageHeightWebView}px`,
-                                  borderRadius: "16px",
                                   position: "relative",
                                 }}
                               >
@@ -310,12 +306,11 @@ export default function CollectionSlider({
                                   }
                                   alt={item.name || "Collection"}
                                   fill
-                                  className="transition-transform duration-400 ease-in-out"
+                                  className="transition-transform duration-400 ease-in-out rounded-lg"
                                   style={{
                                     objectFit: isMobile
                                       ? imageAlignMob
                                       : imageAlign,
-                                    borderRadius: "16px",
                                     transition: "transform 0.4s ease 0s",
                                   }}
                                   sizes="(max-width: 768px) 50vw, (max-width: 1200px) 33vw, 16vw"
@@ -394,12 +389,11 @@ export default function CollectionSlider({
                   >
                     <Card
                       className={cn(
-                        "cursor-pointer transition-all duration-300 rounded-2xl overflow-hidden p-2",
+                        "cursor-pointer transition-all duration-300 rounded-lg overflow-hidden p-2",
                         "bg-white"
                       )}
                       style={{
                         boxShadow: "inset 0px 0px 2px rgba(24, 110, 212, 0.08)",
-                        borderRadius: "16px",
                         padding: "8px",
                       }}
                       onMouseEnter={e => {
@@ -414,9 +408,8 @@ export default function CollectionSlider({
                       <Link
                         href={href}
                         target={isOpenNewTabCond ? "_blank" : "_self"}
-                        className="relative w-full h-[110px] overflow-hidden flex items-center justify-center bg-white"
+                        className="relative w-full h-[110px] overflow-hidden flex items-center justify-center bg-white rounded-lg"
                         style={{
-                          borderRadius: "16px",
                           position: "relative",
                         }}
                       >

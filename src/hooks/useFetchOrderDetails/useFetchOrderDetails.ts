@@ -4,7 +4,7 @@ import { useCurrentUser } from "@/hooks/useCurrentUser";
 import useModuleSettings from "@/hooks/useModuleSettings";
 import { useTenantData } from "@/hooks/useTenantData";
 import { OrderDetailsService, type OrderDetailsResponse } from "@/lib/api";
-import useSWR from "swr";
+import { useQuery } from "@tanstack/react-query";
 
 /**
  * Utility function to process order data
@@ -53,55 +53,50 @@ export default function useFetchOrderDetails(
   const tenantId = tenantData?.tenant?.tenantCode;
   const roundOff = 2; // Default round off, update if user object has roundOff property
 
-  // Fetch order details using service (not direct API route)
-  const fetchOrders = async () => {
-    if (!userId || !companyId || !tenantId || !orderId) {
-      throw new Error("Missing required parameters");
-    }
+  // Use React Query for data fetching with caching
+  const { data, error, isLoading, refetch } = useQuery({
+    queryKey: ["orderDetails", orderId, userId, companyId, tenantId],
+    queryFn: async () => {
+      if (!userId || !companyId || !tenantId || !orderId) {
+        throw new Error("Missing required parameters");
+      }
 
-    // Use service instead of direct API call
-    const response = await OrderDetailsService.fetchOrderDetails({
-      userId,
-      tenantId,
-      companyId,
-      orderId,
-    });
+      // Use service instead of direct API call
+      const response = await OrderDetailsService.fetchOrderDetails({
+        userId,
+        tenantId,
+        companyId,
+        orderId,
+      });
 
-    // Process data using utility function
-    if (response && response.data && response.data.orderDetails) {
-      const processedData = initialDataValuvation(
-        response,
-        roundOff,
-        quoteSettings
-      );
+      // Process data using utility function
+      if (response && response.data && response.data.orderDetails) {
+        const processedData = initialDataValuvation(
+          response,
+          roundOff,
+          quoteSettings
+        );
 
-      // Return processed data
-      return {
-        ...response,
-        data: processedData.data,
-      };
-    }
+        // Return processed data
+        return {
+          ...response,
+          data: processedData.data,
+        };
+      }
 
-    return response;
-  };
-
-  // Use SWR for data fetching with caching
-  const { data, error, mutate, isLoading } = useSWR(
-    orderId && companyId && userId && tenantId
-      ? `orderDetails-${orderId}-${userId}-${companyId}`
-      : null,
-    fetchOrders,
-    {
-      revalidateIfStale: true,
-      revalidateOnFocus: false,
-      revalidateOnReconnect: true,
-    }
-  );
+      return response;
+    },
+    enabled: !!orderId && !!companyId && !!userId && !!tenantId,
+    staleTime: 5 * 60 * 1000, // 5 minutes - order details may change
+    gcTime: 10 * 60 * 1000, // 10 minutes
+    refetchOnWindowFocus: false,
+    refetchOnReconnect: true,
+  });
 
   return {
     fetchOrderResponse: data?.data,
     fetchOrderError: error,
-    fetchOrderResponseLoading: isLoading || (!error && !data),
-    fetchOrderResponseMutate: mutate,
+    fetchOrderResponseLoading: isLoading,
+    fetchOrderResponseMutate: refetch,
   };
 }

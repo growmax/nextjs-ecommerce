@@ -26,7 +26,9 @@ export default function Footer() {
               asChild
               className="h-auto py-1 px-2"
             >
-              <Link href="/about">{t("navigation.about")}</Link>
+              <Link href="/about" prefetch={true}>
+                {t("navigation.about")}
+              </Link>
             </Button>
             <span className="hidden sm:inline text-muted-foreground">•</span>
             <Button
@@ -35,7 +37,9 @@ export default function Footer() {
               asChild
               className="h-auto py-1 px-2"
             >
-              <Link href="/privacy">{t("navigation.privacy")}</Link>
+              <Link href="/privacy" prefetch={true}>
+                {t("navigation.privacy")}
+              </Link>
             </Button>
             <span className="hidden sm:inline text-muted-foreground">•</span>
             <Button
@@ -44,7 +48,9 @@ export default function Footer() {
               asChild
               className="h-auto py-1 px-2"
             >
-              <Link href="/terms">{t("navigation.terms")}</Link>
+              <Link href="/terms" prefetch={true}>
+                {t("navigation.terms")}
+              </Link>
             </Button>
             <span className="hidden sm:inline text-muted-foreground">•</span>
             <Button
@@ -53,7 +59,9 @@ export default function Footer() {
               asChild
               className="h-auto py-1 px-2"
             >
-              <Link href="/contact">{t("navigation.contact")}</Link>
+              <Link href="/contact" prefetch={true}>
+                {t("navigation.contact")}
+              </Link>
             </Button>
             <span className="hidden sm:inline text-muted-foreground">•</span>
             <Button
@@ -62,7 +70,9 @@ export default function Footer() {
               asChild
               className="h-auto py-1 px-2"
             >
-              <Link href="/check_out">{t("ecommerce.checkout")}</Link>
+              <Link href="/check_out" prefetch={true}>
+                {t("ecommerce.checkout")}
+              </Link>
             </Button>
             <span className="hidden sm:inline text-muted-foreground">•</span>
             <Button
@@ -71,7 +81,9 @@ export default function Footer() {
               asChild
               className="h-auto py-1 px-2"
             >
-              <Link href="/card_page">{t("ecommerce.cart")}</Link>
+              <Link href="/card_page" prefetch={true}>
+                {t("ecommerce.cart")}
+              </Link>
             </Button>
             <span className="hidden sm:inline text-muted-foreground">•</span>
             <Button
@@ -80,7 +92,9 @@ export default function Footer() {
               asChild
               className="h-auto py-1 px-2"
             >
-              <Link href="/orders">{t("ecommerce.orders")}</Link>
+              <Link href="/orders" prefetch={true}>
+                {t("ecommerce.orders")}
+              </Link>
             </Button>
           </div>
 

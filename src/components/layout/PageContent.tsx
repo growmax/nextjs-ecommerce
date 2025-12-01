@@ -1,7 +1,7 @@
 "use client";
 
-import React from "react";
 import { cn } from "@/lib/utils";
+import React from "react";
 
 export type LayoutType = "full-width" | "centered" | "auto";
 
@@ -17,9 +17,9 @@ export function PageContent({
   className,
 }: PageContentProps) {
   const layoutClasses = {
-    auto: "container mx-auto px-4 py-4 relative",
-    "full-width": "w-full px-4 py-4 relative", 
-    centered: "container mx-auto px-4 py-4 max-w-4xl relative",
+    auto: "container mx-auto px-2 sm:px-3 lg:px-4 py-2 sm:py-3 max-w-[80%] relative",
+    "full-width": "w-full px-2 sm:px-3 lg:px-4 py-2 sm:py-3 relative", 
+    centered: "container mx-auto px-2 sm:px-3 lg:px-4 py-2 sm:py-3 max-w-4xl relative",
   };
 
   return (

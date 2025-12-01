@@ -1,5 +1,5 @@
-import React from "react";
 import "@testing-library/jest-dom";
+import React from "react";
 
 // Mock next-intl BEFORE any other imports
 jest.mock("next-intl", () => ({
@@ -29,7 +29,6 @@ jest.mock("@/components/custom/dashboard-toolbar", () => {
 jest.mock("next/navigation", () => ({
   useRouter: () => ({
     push: jest.fn(),
-    prefetch: jest.fn(),
   }),
 }));
 
@@ -54,8 +53,8 @@ jest.mock("./OrdersLandingTable/OrdersLandingTable", () => {
   return jest.fn(() => <div data-testid="orders-table">Orders Table</div>);
 });
 
-import { render } from "@testing-library/react";
 import { describe, it } from "@jest/globals";
+import { render } from "@testing-library/react";
 import OrdersLandingPageClient from "./OrdersLandingPageClient";
 
 describe("OrdersLandingPageClient", () => {

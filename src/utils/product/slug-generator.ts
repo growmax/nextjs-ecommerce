@@ -66,7 +66,7 @@ export function generateProductSlug(
 
   // Truncate if too long (leave room for product ID)
   const maxCombinedLength =
-    maxLength - productIndexName.toLowerCase().length - 1;
+    maxLength - productIndexName.length - 1; // Keep original case length
   if (combinedSlug.length > maxCombinedLength) {
     combinedSlug = combinedSlug.substring(0, maxCombinedLength);
     // Ensure we don't cut in the middle of a word
@@ -76,8 +76,8 @@ export function generateProductSlug(
     }
   }
 
-  // Add product index name at the end
-  const slug = `${combinedSlug}-${productIndexName.toLowerCase()}`;
+  // Add product index name at the end - KEEP ORIGINAL CASE
+  const slug = `${combinedSlug}-${productIndexName}`;
 
   return slug;
 }
@@ -102,15 +102,26 @@ export function parseProductSlug(slug: string): string | null {
   // Split slug by hyphens
   const parts = slug.split("-");
 
-  // Look for product index pattern (prod followed by digits)
+  // Look for product index pattern (Prod followed by digits, case-insensitive)
   const prodIndexPattern = /^prod\d+$/i;
   for (let i = parts.length - 1; i >= 0; i--) {
     const part = parts[i];
     if (!part) continue;
 
     if (prodIndexPattern.test(part)) {
-      // Capitalize 'Prod' and return
-      return `Prod${part.substring(4)}`;
+      // Always capitalize 'Prod' and normalize zero padding
+      // Database expects: Prod0000064097 (5 zeros, total 10 digits after 'Prod')
+      // Search might return: prod00000064097 (6+ zeros)
+      
+      // Extract just the numeric part
+      const numericPart = part.substring(4); // Remove 'prod' prefix
+      
+      // Convert to number to remove leading zeros, then pad to 10 digits
+      const productNumber = parseInt(numericPart, 10);
+      const normalizedNumber = productNumber.toString().padStart(10, '0');
+      
+      const productId = `Prod${normalizedNumber}`;
+      return productId;
     }
   }
 

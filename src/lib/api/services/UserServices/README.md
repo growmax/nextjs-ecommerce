@@ -1,10 +1,12 @@
 # UserServices
 
-Service for fetching user data by name/ID.
+⚠️ **DEPRECATED**: This service has been merged into `UserService.ts`. 
+
+Please use `API.User` from `@/lib/api` instead.
 
 ## Overview
 
-This service provides functionality to retrieve user information by name or ID.
+This service has been consolidated into `UserService` which now extends `BaseService` and provides all the same functionality plus additional methods.
 
 ## Class
 
@@ -25,12 +27,12 @@ Gets user by name or ID.
 
 **Returns:** `Promise<UserApiResponse>` - User API response
 
-**Example:**
+**Example (New Way):**
 
 ```typescript
-import UserServices from "@/lib/api/services/UserServices/UserServices";
+import API from "@/lib/api";
 
-const user = await UserServices.getUser({ sub: "user123" });
+const user = await API.User.getUser({ sub: "user123" });
 ```
 
 ## API Endpoint

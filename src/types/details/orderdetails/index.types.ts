@@ -4,6 +4,10 @@ export * from "./version.types";
 // export * from "./payment.types"; // Commented out - use PaymentDueDataItem from @/lib/api instead
 
 // Import types for proper typing
+import type { OrderDetailsResponse } from "@/lib/api";
+
+// Re-export for convenience
+export type { OrderDetailsResponse };
 export interface AddressDetails {
   addressLine?: string;
   branchName?: string;
@@ -43,4 +47,12 @@ export interface OrderDetailsPageProps {
     orderId: string;
     locale: string;
   }>;
+}
+
+export interface OrderDetailsClientProps {
+  params: Promise<{
+    orderId: string;
+    locale: string;
+  }>;
+  initialOrderDetails?: OrderDetailsResponse | null;
 }

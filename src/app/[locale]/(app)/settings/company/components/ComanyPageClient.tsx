@@ -1,19 +1,13 @@
 "use client";
 
 import HeaderBar from "@/components/Global/HeaderBar/HeaderBar";
-import { useRoutePrefetch } from "@/hooks/useRoutePrefetch";
-import { useTranslations } from "next-intl";
-import { useEffect } from "react";
+
 import CompanyBranchTable from "@/components/SettingsCompany/CompanyBranchTable/CompanyBranchTable";
+import { useTranslations } from "next-intl";
 import CompanyDetail from "./CompanyDetail";
 
 const ComanyPageClient = () => {
-  const { prefetch } = useRoutePrefetch();
   const t = useTranslations("companySettings");
-
-  useEffect(() => {
-    prefetch("/settings/profile");
-  }, [prefetch]);
 
   return (
     <>

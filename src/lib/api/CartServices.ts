@@ -27,7 +27,6 @@ export interface AddToCartRequest {
     quantity: number;
     itemNo?: number;
     pos: number;
-    addBundle: boolean;
     sellerId?: number;
     sellerName?: string;
     sellerLocation?: string;
@@ -66,7 +65,6 @@ export interface AddMultipleItemsRequest {
     productsId: number;
     productId: number;
     quantity: number;
-    addBundle: boolean;
     sellerId?: number;
     sellerName?: string;
     sellerLocation?: string;

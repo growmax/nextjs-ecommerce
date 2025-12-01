@@ -5,7 +5,6 @@ jest.mock("next/navigation", () => ({
   useRouter: () => ({
     push: jest.fn(),
     replace: jest.fn(),
-    prefetch: jest.fn(),
   }),
 }));
 
@@ -20,6 +19,14 @@ jest.mock("next-intl", () => ({
 
 jest.mock("@/hooks/usePageScroll", () => ({
   usePageScroll: jest.fn(),
+}));
+
+jest.mock("@/hooks/useGlobalLoader", () => ({
+  useLoading: () => ({
+    showLoading: jest.fn(),
+    hideLoading: jest.fn(),
+    isLoading: false,
+  }),
 }));
 
 // Mock hooks

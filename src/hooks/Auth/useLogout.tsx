@@ -1,6 +1,7 @@
 "use client";
 
 import { useUserDetails } from "@/contexts/UserDetailsContext";
+import { useGlobalLoader } from "@/hooks/useGlobalLoader";
 import { redirectTo } from "@/lib/utils/navigation"; // Added import
 import { useTranslations } from "next-intl";
 import { useState } from "react";
@@ -8,6 +9,7 @@ import { toast } from "sonner";
 
 export default function useLogout() {
   const { logout } = useUserDetails();
+  const { showLogoutLoader, hideLoading } = useGlobalLoader();
   const [isLoggingOut, setIsLoggingOut] = useState(false);
   const translate = useTranslations();
 
@@ -15,6 +17,7 @@ export default function useLogout() {
     if (isLoggingOut) return; // Prevent double-clicking
 
     setIsLoggingOut(true);
+    showLogoutLoader(); // Show global full-page loader
 
     try {
       await logout();
@@ -36,6 +39,7 @@ export default function useLogout() {
     } finally {
       // This may not execute if redirect happens quickly, but good practice.
       setIsLoggingOut(false);
+      hideLoading("logout"); // Hide global loader
     }
   };
 

@@ -3,7 +3,6 @@ jest.mock("next/navigation", () => ({
   useRouter: () => ({
     push: jest.fn(),
     replace: jest.fn(),
-    prefetch: jest.fn(),
   }),
 }));
 
@@ -15,22 +14,35 @@ jest.mock("@/hooks/usePageScroll", () => ({
   usePageScroll: jest.fn(),
 }));
 
-jest.mock("next/dynamic", () => {
-  const React = jest.requireActual<typeof import("react")>("react");
-  return {
-    __esModule: true,
-    default: (_loader: any) => {
-      const DynamicComponent = ({ params: _params }: any) =>
-        React.createElement(
-          "div",
-          { "data-testid": "order-details-client" },
-          "OrderDetailsClient"
-        );
-      DynamicComponent.displayName = "DynamicOrderDetailsClient";
-      return DynamicComponent;
-    },
+jest.mock("./components/OrderDetailsClient", () => {
+  return function MockOrderDetailsClient() {
+    return <div data-testid="order-details-client">OrderDetailsClient</div>;
   };
 });
+
+jest.mock("next/headers", () => ({
+  cookies: jest.fn(() => Promise.resolve({
+    get: jest.fn(() => ({ value: "mock-token" })),
+  })),
+}));
+
+jest.mock("@/lib/api", () => ({
+  OrderDetailsService: {
+    fetchOrderDetailsWithContext: jest.fn().mockResolvedValue({}),
+  },
+}));
+
+jest.mock("@/lib/services/JWTService", () => ({
+  JWTService: {
+    getInstance: () => ({
+      decodeToken: () => ({
+        sub: "123",
+        companyId: "456",
+        iss: "tenant-1",
+      }),
+    }),
+  },
+}));
 
 jest.mock("./components/OrderDetailsSkeleton", () => {
   const React = jest.requireActual<typeof import("react")>("react");
@@ -64,19 +76,19 @@ describe("OrderDetailsPage", () => {
   it("should render the page with Suspense wrapper", async () => {
     const params = Promise.resolve({ orderId: "order-123", locale: "en" });
 
-    render(<OrderDetailsPage params={params} />);
+    const ui = await OrderDetailsPage({ params });
+    render(ui);
 
     // Should render the client component (mocked)
-    await screen.findByTestId("order-details-client");
     expect(screen.getByTestId("order-details-client")).toBeInTheDocument();
   });
 
   it("should handle params correctly", async () => {
     const params = Promise.resolve({ orderId: "order-456", locale: "en" });
 
-    render(<OrderDetailsPage params={params} />);
+    const ui = await OrderDetailsPage({ params });
+    render(ui);
 
-    await screen.findByTestId("order-details-client");
     expect(screen.getByTestId("order-details-client")).toBeInTheDocument();
   });
 });

@@ -1,0 +1,109 @@
+{
+  "info": {
+    "name": "Category Lookup by Slug - Test",
+    "description": "Test collection for finding category by slug using nested OpenSearch queries",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "Find Category by Slug - milwakee",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          },
+          {
+            "key": "x-tenant",
+            "value": "schwingstetter",
+            "description": "Tenant code - change as needed"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"Elasticindex\": \"schwingstetterpgandproducts\",\n  \"queryType\": \"search\",\n  \"ElasticType\": \"pgproduct\",\n  \"ElasticBody\": {\n    \"size\": 0,\n    \"query\": {\n      \"bool\": {\n        \"must\": [\n          {\n            \"term\": {\n              \"is_published\": 1\n            }\n          },\n          {\n            \"nested\": {\n              \"path\": \"product_categories\",\n              \"query\": {\n                \"term\": {\n                  \"product_categories.categorySlug.keyword\": \"milwakee\"\n                }\n              }\n            }\n          }\n        ],\n        \"must_not\": [\n          {\n            \"match\": {\n              \"pg_index_name\": {\n                \"query\": \"PrdGrp0*\"\n              }\n            }\n          },\n          {\n            \"term\": {\n              \"is_internal\": true\n            }\n          }\n        ]\n      }\n    },\n    \"aggs\": {\n      \"category_info\": {\n        \"nested\": {\n          \"path\": \"product_categories\"\n        },\n        \"aggs\": {\n          \"filtered\": {\n            \"filter\": {\n              \"term\": {\n                \"product_categories.categorySlug.keyword\": \"milwakee\"\n              }\n            },\n            \"aggs\": {\n              \"category_id\": {\n                \"terms\": {\n                  \"field\": \"product_categories.categoryId\",\n                  \"size\": 1\n                },\n                \"aggs\": {\n                  \"category_name\": {\n                    \"terms\": {\n                      \"field\": \"product_categories.categoryName.keyword\",\n                      \"size\": 1\n                    }\n                  },\n                  \"category_slug\": {\n                    \"terms\": {\n                      \"field\": \"product_categories.categorySlug.keyword\",\n                      \"size\": 1\n                    }\n                  },\n                  \"category_path\": {\n                    \"terms\": {\n                      \"field\": \"product_categories.categoryPath.keyword\",\n                      \"size\": 1\n                    }\n                  },\n                  \"category_level\": {\n                    \"terms\": {\n                      \"field\": \"product_categories.categoryLevel\",\n                      \"size\": 1\n                    }\n                  },\n                  \"ancestor_ids\": {\n                    \"terms\": {\n                      \"field\": \"product_categories.ancestorIds\",\n                      \"size\": 100\n                    }\n                  },\n                  \"is_active\": {\n                    \"terms\": {\n                      \"field\": \"product_categories.isActive\",\n                      \"size\": 1\n                    }\n                  }\n                }\n              }\n            }\n          }\n        }\n      }\n    }\n  }\n}"
+        },
+        "url": {
+          "raw": "https://api.myapptino.com/opensearch/invocations",
+          "protocol": "https",
+          "host": ["api", "myapptino", "com"],
+          "path": ["opensearch", "invocations"]
+        },
+        "description": "Find category by slug 'milwakee' using nested aggregation query. Returns category details including categoryId, categoryName, categorySlug, categoryPath, categoryLevel, ancestorIds, and isActive."
+      },
+      "response": []
+    },
+    {
+      "name": "Find Category by Slug - electronics",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          },
+          {
+            "key": "x-tenant",
+            "value": "schwingstetter",
+            "description": "Tenant code - change as needed"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"Elasticindex\": \"schwingstetterpgandproducts\",\n  \"queryType\": \"search\",\n  \"ElasticType\": \"pgproduct\",\n  \"ElasticBody\": {\n    \"size\": 0,\n    \"query\": {\n      \"bool\": {\n        \"must\": [\n          {\n            \"term\": {\n              \"is_published\": 1\n            }\n          },\n          {\n            \"nested\": {\n              \"path\": \"product_categories\",\n              \"query\": {\n                \"term\": {\n                  \"product_categories.categorySlug.keyword\": \"electronics\"\n                }\n              }\n            }\n          }\n        ],\n        \"must_not\": [\n          {\n            \"match\": {\n              \"pg_index_name\": {\n                \"query\": \"PrdGrp0*\"\n              }\n            }\n          },\n          {\n            \"term\": {\n              \"is_internal\": true\n            }\n          }\n        ]\n      }\n    },\n    \"aggs\": {\n      \"category_info\": {\n        \"nested\": {\n          \"path\": \"product_categories\"\n        },\n        \"aggs\": {\n          \"filtered\": {\n            \"filter\": {\n              \"term\": {\n                \"product_categories.categorySlug.keyword\": \"electronics\"\n              }\n            },\n            \"aggs\": {\n              \"category_id\": {\n                \"terms\": {\n                  \"field\": \"product_categories.categoryId\",\n                  \"size\": 1\n                },\n                \"aggs\": {\n                  \"category_name\": {\n                    \"terms\": {\n                      \"field\": \"product_categories.categoryName.keyword\",\n                      \"size\": 1\n                    }\n                  },\n                  \"category_slug\": {\n                    \"terms\": {\n                      \"field\": \"product_categories.categorySlug.keyword\",\n                      \"size\": 1\n                    }\n                  },\n                  \"category_path\": {\n                    \"terms\": {\n                      \"field\": \"product_categories.categoryPath.keyword\",\n                      \"size\": 1\n                    }\n                  },\n                  \"category_level\": {\n                    \"terms\": {\n                      \"field\": \"product_categories.categoryLevel\",\n                      \"size\": 1\n                    }\n                  },\n                  \"ancestor_ids\": {\n                    \"terms\": {\n                      \"field\": \"product_categories.ancestorIds\",\n                      \"size\": 100\n                    }\n                  },\n                  \"is_active\": {\n                    \"terms\": {\n                      \"field\": \"product_categories.isActive\",\n                      \"size\": 1\n                    }\n                  }\n                }\n              }\n            }\n          }\n        }\n      }\n    }\n  }\n}"
+        },
+        "url": {
+          "raw": "https://api.myapptino.com/opensearch/invocations",
+          "protocol": "https",
+          "host": ["api", "myapptino", "com"],
+          "path": ["opensearch", "invocations"]
+        },
+        "description": "Find category by slug 'electronics' - example for testing different category slugs"
+      },
+      "response": []
+    },
+    {
+      "name": "Find Category by Slug - Dynamic (Variable)",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          },
+          {
+            "key": "x-tenant",
+            "value": "{{tenant_code}}",
+            "description": "Use collection variable 'tenant_code'"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"Elasticindex\": \"{{tenant_code}}pgandproducts\",\n  \"queryType\": \"search\",\n  \"ElasticType\": \"pgproduct\",\n  \"ElasticBody\": {\n    \"size\": 0,\n    \"query\": {\n      \"bool\": {\n        \"must\": [\n          {\n            \"term\": {\n              \"is_published\": 1\n            }\n          },\n          {\n            \"nested\": {\n              \"path\": \"product_categories\",\n              \"query\": {\n                \"term\": {\n                  \"product_categories.categorySlug.keyword\": \"{{category_slug}}\"\n                }\n              }\n            }\n          }\n        ],\n        \"must_not\": [\n          {\n            \"match\": {\n              \"pg_index_name\": {\n                \"query\": \"PrdGrp0*\"\n              }\n            }\n          },\n          {\n            \"term\": {\n              \"is_internal\": true\n            }\n          }\n        ]\n      }\n    },\n    \"aggs\": {\n      \"category_info\": {\n        \"nested\": {\n          \"path\": \"product_categories\"\n        },\n        \"aggs\": {\n          \"filtered\": {\n            \"filter\": {\n              \"term\": {\n                \"product_categories.categorySlug.keyword\": \"{{category_slug}}\"\n              }\n            },\n            \"aggs\": {\n              \"category_id\": {\n                \"terms\": {\n                  \"field\": \"product_categories.categoryId\",\n                  \"size\": 1\n                },\n                \"aggs\": {\n                  \"category_name\": {\n                    \"terms\": {\n                      \"field\": \"product_categories.categoryName.keyword\",\n                      \"size\": 1\n                    }\n                  },\n                  \"category_slug\": {\n                    \"terms\": {\n                      \"field\": \"product_categories.categorySlug.keyword\",\n                      \"size\": 1\n                    }\n                  },\n                  \"category_path\": {\n                    \"terms\": {\n                      \"field\": \"product_categories.categoryPath.keyword\",\n                      \"size\": 1\n                    }\n                  },\n                  \"category_level\": {\n                    \"terms\": {\n                      \"field\": \"product_categories.categoryLevel\",\n                      \"size\": 1\n                    }\n                  },\n                  \"ancestor_ids\": {\n                    \"terms\": {\n                      \"field\": \"product_categories.ancestorIds\",\n                      \"size\": 100\n                    }\n                  },\n                  \"is_active\": {\n                    \"terms\": {\n                      \"field\": \"product_categories.isActive\",\n                      \"size\": 1\n                    }\n                  }\n                }\n              }\n            }\n          }\n        }\n      }\n    }\n  }\n}"
+        },
+        "url": {
+          "raw": "https://api.myapptino.com/opensearch/invocations",
+          "protocol": "https",
+          "host": ["api", "myapptino", "com"],
+          "path": ["opensearch", "invocations"]
+        },
+        "description": "Dynamic version - use collection variables 'tenant_code' and 'category_slug' to test different categories"
+      },
+      "response": []
+    }
+  ],
+  "variable": [
+    {
+      "key": "tenant_code",
+      "value": "schwingstetter",
+      "type": "string"
+    },
+    {
+      "key": "category_slug",
+      "value": "milwakee",
+      "type": "string"
+    }
+  ]
+}
+

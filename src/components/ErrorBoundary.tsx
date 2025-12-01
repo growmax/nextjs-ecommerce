@@ -2,12 +2,13 @@
 
 import { Button } from "@/components/ui/button";
 import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
+    Card,
+    CardContent,
+    CardDescription,
+    CardHeader,
+    CardTitle,
 } from "@/components/ui/card";
+import { defaultLocale } from "@/i18n/config";
 import { AlertTriangle, Home, RefreshCw } from "lucide-react";
 import Link from "next/link";
 import React, { Component, type ReactNode } from "react";
@@ -99,7 +100,7 @@ export class ErrorBoundary extends Component<
                   Try Again
                 </Button>
                 <Button asChild variant="outline" className="flex-1">
-                  <Link href="/">
+                  <Link href={`/${defaultLocale}`} prefetch={true}>
                     <Home className="mr-2 h-4 w-4" />
                     Go Home
                   </Link>

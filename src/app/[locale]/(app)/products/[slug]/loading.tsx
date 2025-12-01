@@ -8,8 +8,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 export default function ProductLoading() {
   return (
     <div className="min-h-screen bg-background">
-      <div className="container mx-auto px-4 py-8">
-        {/* Product Hero Section Skeleton */}
+      {/* Product Hero Section Skeleton */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
           {/* Image Gallery Skeleton */}
           <div className="space-y-4">
@@ -139,7 +138,6 @@ export default function ProductLoading() {
             ))}
           </div>
         </div>
-      </div>
     </div>
   );
 }

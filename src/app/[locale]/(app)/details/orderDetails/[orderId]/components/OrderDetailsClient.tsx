@@ -1,11 +1,10 @@
 "use client";
-
 import { Toaster } from "@/components/ui/sonner";
 import { Layers } from "lucide-react";
+import { useTranslations } from "next-intl";
 import dynamic from "next/dynamic";
 import { Suspense, useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
-import { useTranslations } from "next-intl";
 
 import { EditOrderNameDialog } from "@/components/dialogs/EditOrderNameDialog";
 import { RequestEditDialog } from "@/components/dialogs/RequestEditDialog";
@@ -23,14 +22,12 @@ import {
 import { useOrderDetails } from "@/hooks/details/orderdetails/useOrderDetails";
 import { useCurrentUser } from "@/hooks/useCurrentUser";
 import { useGetVersionDetails } from "@/hooks/useGetVersionDetails/useGetVersionDetails";
+import { useLoading } from "@/hooks/useGlobalLoader";
 import useModuleSettings from "@/hooks/useModuleSettings";
-import { useRoutePrefetch } from "@/hooks/useRoutePrefetch";
+import { useNavigationWithLoader } from "@/hooks/useNavigationWithLoader";
+import { usePageLoader } from "@/hooks/usePageLoader";
 import { useTenantData } from "@/hooks/useTenantData";
-import type {
-  OrderDetailsResponse,
-  PaymentDueDataItem,
-  PaymentHistoryItem,
-} from "@/lib/api";
+import type { PaymentDueDataItem } from "@/lib/api";
 import {
   OrderDetailsService,
   OrderNameService,
@@ -41,7 +38,7 @@ import type { ProductCsvRow } from "@/lib/export-csv";
 import { exportProductsToCsv } from "@/lib/export-csv";
 import type {
   AddressDetails,
-  OrderDetailsPageProps,
+  OrderDetailsClientProps,
   OrderTerms,
   SelectedVersion,
 } from "@/types/details/orderdetails/index.types";
@@ -54,10 +51,7 @@ import {
   isOrderCancelled,
 } from "@/utils/details/orderdetails";
 import { decodeUnicode } from "@/utils/General/general";
-
-// Dynamic imports for heavy components
-// Import from index.ts which re-exports as named exports
-// No loading prop to avoid double loaders - main DetailsSkeleton handles all loading states
+import { useQuery } from "@tanstack/react-query";
 const OrderProductsTable = dynamic(
   () => import("@/components/sales").then(mod => mod.OrderProductsTable),
   {
@@ -79,40 +73,28 @@ const OrderStatusTracker = dynamic(
   }
 );
 
-export default function OrderDetailsClient({ params }: OrderDetailsPageProps) {
+export default function OrderDetailsClient({ params, initialOrderDetails }: OrderDetailsClientProps) {
+  // Use the page loader hook to ensure navigation spinner is hidden immediately
+  usePageLoader();
+
   const [orderId, setOrderId] = useState<string>("");
   const [paramsLoaded, setParamsLoaded] = useState(false);
-  const { prefetch, prefetchAndNavigate } = useRoutePrefetch();
+  const { push } = useNavigationWithLoader();
   const t = useTranslations("orders");
   const tDetails = useTranslations("details");
 
-  const [orderDetails, setOrderDetails] = useState<OrderDetailsResponse | null>(
-    null
-  );
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
   const [editDialogOpen, setEditDialogOpen] = useState(false);
   const [requestEditDialogOpen, setRequestEditDialogOpen] = useState(false);
   const [versionsDialogOpen, setVersionsDialogOpen] = useState(false);
   const [selectedVersion, setSelectedVersion] =
     useState<SelectedVersion | null>(null);
   const [triggerVersionCall, setTriggerVersionCall] = useState(false);
-  const [paymentHistory, setPaymentHistory] = useState<PaymentHistoryItem[]>(
-    []
-  );
-  const [paymentDueData, setPaymentDueData] = useState<PaymentDueDataItem[]>(
-    []
-  );
 
   const { user } = useCurrentUser();
   const { tenantData } = useTenantData();
+  const { showLoading, hideLoading } = useLoading();
 
   const preferences = getUserPreferences();
-  const totalPaid = paymentHistory.reduce(
-    (sum, item) => sum + (item.amountReceived || 0),
-    0
-  );
-  const lastFetchKeyRef = useRef<string | null>(null);
   const userId = user?.userId;
   const companyId = user?.companyId;
   const tenantCode = tenantData?.tenant?.tenantCode;
@@ -126,76 +108,73 @@ export default function OrderDetailsClient({ params }: OrderDetailsPageProps) {
     loadParams();
   }, [params]);
 
-  useEffect(() => {
-    const fetchOrderDetails = async () => {
-      // Wait for params, user and tenant data to be available
-      if (!paramsLoaded || !orderId || !userId || !tenantCode || !companyId) {
-        return;
+  // React Query hook for order details - runs when all params are ready
+  const {
+    data: orderDetails,
+    isLoading: orderLoading,
+    error: orderError,
+    refetch: refetchOrder,
+  } = useQuery({
+    queryKey: ["orderDetails", orderId, userId, companyId, tenantCode],
+    queryFn: async () => {
+      if (!userId || !tenantCode || !companyId || !orderId) {
+        throw new Error("Missing required parameters");
       }
 
-      // Build a stable key from primitives only
-      const fetchKey = [orderId, userId, companyId, tenantCode].join("|");
+      const response = await OrderDetailsService.fetchOrderDetails({
+        userId,
+        tenantId: tenantCode,
+        companyId,
+        orderId,
+      });
 
-      // Skip if we've already fetched for this exact key (prevents duplicate calls in dev)
-      if (lastFetchKeyRef.current === fetchKey) {
-        return;
-      }
+      return response;
+    },
+    enabled:
+      paramsLoaded && !!orderId && !!userId && !!tenantCode && !!companyId,
+    initialData: initialOrderDetails,
+    staleTime: 5 * 60 * 1000, // 5 minutes - order details may change
+    gcTime: 10 * 60 * 1000, // 10 minutes
+    refetchOnWindowFocus: false,
+    refetchOnMount: true, // Retry when dependencies become available
+    retry: 1,
+  });
 
-      try {
-        setLoading(true);
-        setError(null);
+  // React Query hook for payment history - runs in parallel with order details
+  const { data: paymentHistory = [], refetch: refetchPaymentHistory } =
+    useQuery({
+      queryKey: ["paymentHistory", orderId],
+      queryFn: async () => {
+        if (!orderId) {
+          return [];
+        }
 
-        const response = await OrderDetailsService.fetchOrderDetails({
-          userId,
-          tenantId: tenantCode,
-          companyId,
-          orderId,
-        });
+        try {
+          const response =
+            await PaymentService.fetchOverallPaymentsByOrder(orderId);
+          return Array.isArray(response?.data) ? response.data : [];
+        } catch {
+          return [];
+        }
+      },
+      enabled: paramsLoaded && !!orderId,
+      staleTime: 5 * 60 * 1000, // 5 minutes
+      gcTime: 10 * 60 * 1000, // 10 minutes
+      refetchOnWindowFocus: false,
+      retry: 1,
+    });
 
-        setOrderDetails(response);
-        lastFetchKeyRef.current = fetchKey;
-      } catch (err) {
-        const errorMessage =
-          err instanceof Error ? err.message : t("failedToFetchOrderDetails");
-        setError(errorMessage);
-        toast.error(errorMessage);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchOrderDetails();
-  }, [paramsLoaded, orderId, userId, companyId, tenantCode, t]);
-
-  useEffect(() => {
-    const fetchPayments = async () => {
-      if (!orderId || !orderDetails) {
-        setPaymentHistory([]);
-        return;
-      }
-
-      try {
-        const response =
-          await PaymentService.fetchOverallPaymentsByOrder(orderId);
-        const items = Array.isArray(response?.data) ? response.data : [];
-        setPaymentHistory(items);
-      } catch {
-        setPaymentHistory([]);
-      }
-    };
-
-    fetchPayments();
-  }, [orderId, orderDetails]);
-
-  useEffect(() => {
-    const fetchPaymentDue = async () => {
-      if (!orderId || !orderDetails) {
-        setPaymentDueData([]);
-        return;
+  // React Query hook for payment due - runs in parallel with order details
+  const { data: paymentDueData = [], refetch: refetchPaymentDue } = useQuery({
+    queryKey: ["paymentDue", orderId],
+    queryFn: async () => {
+      if (!orderId) {
+        return [];
       }
 
       try {
         const response = await PaymentService.fetchPaymentDueByOrder(orderId);
+
         // Handle nested response structure from API (data.data.data)
         let data: PaymentDueDataItem[] = [];
         if (response && typeof response === "object") {
@@ -214,21 +193,40 @@ export default function OrderDetailsClient({ params }: OrderDetailsPageProps) {
             data = response;
           }
         }
-        setPaymentDueData(data);
+        return data;
       } catch {
-        setPaymentDueData([]);
+        return [];
       }
-    };
+    },
+    enabled: paramsLoaded && !!orderId,
+    staleTime: 5 * 60 * 1000, // 5 minutes
+    gcTime: 10 * 60 * 1000, // 10 minutes
+    refetchOnWindowFocus: false,
+    retry: 1,
+  });
 
-    fetchPaymentDue();
-  }, [orderId, orderDetails]);
+  // Handle order details errors
+  useEffect(() => {
+    if (orderError) {
+      const errorMessage =
+        orderError instanceof Error
+          ? orderError.message
+          : t("failedToFetchOrderDetails");
+      toast.error(errorMessage);
+    }
+  }, [orderError, t]);
+
+  const totalPaid = paymentHistory.reduce(
+    (sum, item) => sum + (item.amountReceived || 0),
+    0
+  );
 
   const {
     versions: orderVersions,
     orderIdentifier,
     orderVersion,
   } = useOrderDetails({
-    orderDetails,
+    orderDetails: orderDetails ?? null,
     orderId,
     selectedVersion,
   });
@@ -240,6 +238,18 @@ export default function OrderDetailsClient({ params }: OrderDetailsPageProps) {
       triggerVersionCall,
     }
   );
+
+  // Consolidated loading state - only show one loader at a time
+  // We REMOVE the check for initial orderLoading. The initial load will be handled
+  // by the Skeleton UI in the JSX. We ONLY show global spinner for background actions.
+  useEffect(() => {
+    if (versionLoading && triggerVersionCall) {
+      showLoading("Loading version details...", "order-details-page");
+    } else {
+      // Ensure page-specific global loader is hidden
+      hideLoading("order-details-page");
+    }
+  }, [versionLoading, triggerVersionCall, showLoading, hideLoading]);
 
   const processedVersionRef = useRef<string | null>(null);
 
@@ -275,51 +285,50 @@ export default function OrderDetailsClient({ params }: OrderDetailsPageProps) {
   const handleRefresh = async () => {
     if (!orderId || !user || !tenantData?.tenant) return;
 
-    setLoading(true);
+    // Show loading progress bar (use same ID to prevent multiple loaders)
+    showLoading("Refreshing order details...", "order-details-page");
+
     try {
-      const response = await OrderDetailsService.fetchOrderDetails({
-        userId: user.userId,
-        tenantId: tenantData.tenant.tenantCode,
-        companyId: user.companyId,
-        orderId,
-      });
-      setOrderDetails(response);
-    } catch {
+      // Refetch all three queries in parallel using React Query
+      await Promise.all([
+        refetchOrder(),
+        refetchPaymentHistory(),
+        refetchPaymentDue(),
+      ]);
     } finally {
-      setLoading(false);
+      // Hide loading progress bar
+      hideLoading("order-details-page");
     }
   };
 
   const handleClose = () => {
-    prefetchAndNavigate("/landing/orderslanding");
+    push("/landing/orderslanding");
+    push("/landing/orderslanding");
   };
 
-  useEffect(() => {
-    if (orderId && orderDetails && !loading) {
-      prefetch(`/details/orderDetails/${orderId}/edit`);
-    }
-  }, [orderId, orderDetails, loading, prefetch]);
-
-  useEffect(() => {
-    prefetch("/landing/orderslanding");
-    prefetch("/landing/quoteslanding");
-    prefetch("/settings/profile");
-    prefetch("/settings/company");
-  }, [prefetch]);
-
   const handleEditQuote = () => {
-    prefetchAndNavigate(`/details/orderDetails/${orderId}/edit`);
+    if (orderId) {
+      push(`/details/orderDetails/${orderId}/edit`);
+    }
+    if (orderId) {
+      push(`/details/orderDetails/${orderId}/edit`);
+    }
   };
 
   const handleEditOrder = () => {
-    setEditDialogOpen(true);
+    // Navigate to edit page when edit icon is clicked - non-blocking
+    if (orderId) {
+      push(`/details/orderDetails/${orderId}/edit`);
+    }
   };
+
 
   const handleSaveOrderName = async (newOrderName: string) => {
     if (!user || !orderDetails?.data?.orderDetails?.[0]?.orderIdentifier) {
       throw new Error("Missing required data for updating order name");
     }
 
+    showLoading("Saving order name...", "order-details-page");
     try {
       await OrderNameService.updateOrderName({
         userId: user.userId,
@@ -328,20 +337,12 @@ export default function OrderDetailsClient({ params }: OrderDetailsPageProps) {
         orderName: newOrderName,
       });
 
-      if (orderDetails && orderDetails.data?.orderDetails) {
-        const updatedOrderDetails = {
-          ...orderDetails,
-          data: {
-            ...orderDetails.data,
-            orderDetails: orderDetails.data.orderDetails.map((order, index) =>
-              index === 0 ? { ...order, orderName: newOrderName } : order
-            ),
-          },
-        };
-        setOrderDetails(updatedOrderDetails);
-      }
+      // Invalidate and refetch order details to get updated data
+      await refetchOrder();
     } catch (err) {
       throw err;
+    } finally {
+      hideLoading("order-details-page");
     }
   };
 
@@ -493,6 +494,7 @@ export default function OrderDetailsClient({ params }: OrderDetailsPageProps) {
       return;
     }
 
+    showLoading("Submitting edit request...", "order-details-page");
     try {
       await RequestEditService.requestEdit({
         userId: user.userId,
@@ -508,6 +510,8 @@ export default function OrderDetailsClient({ params }: OrderDetailsPageProps) {
         error instanceof Error ? error.message : t("failedToSubmitEditRequest");
       toast.error(errorMessage);
       throw error;
+    } finally {
+      hideLoading("order-details-page");
     }
   };
 
@@ -562,7 +566,6 @@ export default function OrderDetailsClient({ params }: OrderDetailsPageProps) {
           label: t("editOrderButton"),
           variant: "outline" as const,
           onClick: handleEditQuote,
-          onMouseEnter: () => prefetch(`/details/orderDetails/${orderId}/edit`),
         },
       ]
     : [
@@ -576,9 +579,9 @@ export default function OrderDetailsClient({ params }: OrderDetailsPageProps) {
   const lastDateToPay = getLastDateToPay(paymentDueData, preferences);
 
   return (
-    <ApplicationLayout>
-      {/* Sales Header - Fixed at top */}
-      <div className="flex-shrink-0 sticky top-0 z-50 bg-gray-50">
+    <ApplicationLayout className="bg-background">
+      {/* Sales Header */}
+      <div className="flex-shrink-0">
         <SalesHeader
           title={orderName ? decodeUnicode(orderName) : t("orderDetails")}
           identifier={orderId || "..."}
@@ -603,14 +606,14 @@ export default function OrderDetailsClient({ params }: OrderDetailsPageProps) {
           ]}
           buttons={headerButtons}
           showEditIcon={true}
-          loading={loading}
+          loading={orderLoading}
         />
       </div>
 
       {/* Order Details Content - Scrollable area */}
       <div className="flex-1 w-full">
         <PageLayout variant="content">
-          {loading ? (
+          {orderLoading ? (
             <DetailsSkeleton
               showStatusTracker={true}
               leftWidth="lg:w-[65%]"
@@ -623,9 +626,9 @@ export default function OrderDetailsClient({ params }: OrderDetailsPageProps) {
                 {/* Cancellation Card */}
                 {cancelled &&
                   cancelMsg &&
-                  !loading &&
+                  !orderLoading &&
                   (orderDetails || displayOrderDetails) && (
-                    <div className="mt-[80px] bg-gray-50 rounded-lg p-3 sm:p-4 border border-gray-200 shadow-sm">
+                    <div className="mt-4 bg-gray-50 rounded-lg p-3 sm:p-4 border border-gray-200 shadow-sm">
                       <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
                         {/* Left Section - Order Identifier and Date */}
                         <div className="flex flex-col gap-1">
@@ -658,11 +661,11 @@ export default function OrderDetailsClient({ params }: OrderDetailsPageProps) {
                     </div>
                   )}
                 {/* Status Tracker - Reserve space to prevent layout shift */}
-                {!loading &&
-                  !error &&
+                {!orderLoading &&
+                  !orderError &&
                   (orderDetails || displayOrderDetails) &&
                   !cancelled && (
-                    <div className="mt-[80px]">
+                    <div className="mt-4">
                       <Suspense
                         fallback={
                           <div
@@ -709,8 +712,8 @@ export default function OrderDetailsClient({ params }: OrderDetailsPageProps) {
                   )}
 
                 {/* Products Table */}
-                {!loading &&
-                  !error &&
+                {!orderLoading &&
+                  !orderError &&
                   (orderDetails || displayOrderDetails) && (
                     <Suspense fallback={null}>
                       <OrderProductsTable
@@ -750,10 +753,10 @@ export default function OrderDetailsClient({ params }: OrderDetailsPageProps) {
                   )}
 
                 {/* Contact Details and Terms Cards - Side by Side */}
-                {!loading &&
-                  !error &&
+                {!orderLoading &&
+                  !orderError &&
                   (orderDetails || displayOrderDetails) && (
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-2 sm:gap-3 mt-4">
+                    <div className="grid grid-cols-1 md:grid-cols-2 details-card-gap details-section-margin">
                       {/* Contact Details Card */}
                       <OrderContactDetails
                         billingAddress={
@@ -877,116 +880,118 @@ export default function OrderDetailsClient({ params }: OrderDetailsPageProps) {
               </div>
 
               {/* Right Side - Price Details - 40% */}
-              {!loading && !error && (orderDetails || displayOrderDetails) && (
-                <div className="w-full lg:w-[33%] mt-[80px]">
-                  <Suspense fallback={null}>
-                    <OrderPriceDetails
-                      products={
-                        displayOrderDetails?.orderDetails?.[0]
-                          ?.dbProductDetails ||
-                        orderDetails?.data?.orderDetails?.[0]
-                          ?.dbProductDetails ||
-                        []
-                      }
-                      isInter={pricingContext.isInter}
-                      insuranceCharges={pricingContext.insuranceCharges}
-                      precision={2}
-                      Settings={{
-                        roundingAdjustment:
+              {!orderLoading &&
+                !orderError &&
+                (orderDetails || displayOrderDetails) && (
+                  <div className="w-full lg:w-[33%] mt-4">
+                    <Suspense fallback={null}>
+                      <OrderPriceDetails
+                        products={
                           displayOrderDetails?.orderDetails?.[0]
-                            ?.roundingAdjustmentEnabled ||
+                            ?.dbProductDetails ||
                           orderDetails?.data?.orderDetails?.[0]
-                            ?.roundingAdjustmentEnabled ||
-                          false,
-                      }}
-                      isSeller={
-                        (user as { isSeller?: boolean })?.isSeller || false
-                      }
-                      taxExemption={pricingContext.taxExemption}
-                      currency={
-                        (
-                          (displayOrderDetails?.buyerCurrencySymbol ||
-                            orderDetails?.data?.buyerCurrencySymbol) as {
-                            symbol?: string;
-                          }
-                        )?.symbol || "INR ₹"
-                      }
-                      {...(displayOrderDetails?.orderDetails?.[0]
-                        ?.overallShipping !== undefined ||
-                      orderDetails?.data?.orderDetails?.[0]?.overallShipping !==
-                        undefined
-                        ? {
-                            overallShipping: pricingContext.overallShipping,
-                          }
-                        : {})}
-                      {...(displayOrderDetails?.orderDetails?.[0]
-                        ?.overallTax !== undefined ||
-                      orderDetails?.data?.orderDetails?.[0]?.overallTax !==
-                        undefined
-                        ? {
-                            overallTax: Number(
-                              displayOrderDetails?.orderDetails?.[0]
-                                ?.overallTax ||
-                                orderDetails?.data?.orderDetails?.[0]
-                                  ?.overallTax ||
-                                0
-                            ),
-                          }
-                        : {})}
-                      {...(displayOrderDetails?.orderDetails?.[0]
-                        ?.calculatedTotal !== undefined ||
-                      orderDetails?.data?.orderDetails?.[0]?.calculatedTotal !==
-                        undefined ||
-                      displayOrderDetails?.orderDetails?.[0]?.grandTotal !==
-                        undefined ||
-                      orderDetails?.data?.orderDetails?.[0]?.grandTotal !==
-                        undefined
-                        ? {
-                            calculatedTotal: Number(
-                              displayOrderDetails?.orderDetails?.[0]
-                                ?.calculatedTotal ||
-                                orderDetails?.data?.orderDetails?.[0]
-                                  ?.calculatedTotal ||
+                            ?.dbProductDetails ||
+                          []
+                        }
+                        isInter={pricingContext.isInter}
+                        insuranceCharges={pricingContext.insuranceCharges}
+                        precision={2}
+                        Settings={{
+                          roundingAdjustment:
+                            displayOrderDetails?.orderDetails?.[0]
+                              ?.roundingAdjustmentEnabled ||
+                            orderDetails?.data?.orderDetails?.[0]
+                              ?.roundingAdjustmentEnabled ||
+                            false,
+                        }}
+                        isSeller={
+                          (user as { isSeller?: boolean })?.isSeller || false
+                        }
+                        taxExemption={pricingContext.taxExemption}
+                        currency={
+                          (
+                            (displayOrderDetails?.buyerCurrencySymbol ||
+                              orderDetails?.data?.buyerCurrencySymbol) as {
+                              symbol?: string;
+                            }
+                          )?.symbol || "INR ₹"
+                        }
+                        {...(displayOrderDetails?.orderDetails?.[0]
+                          ?.overallShipping !== undefined ||
+                        orderDetails?.data?.orderDetails?.[0]
+                          ?.overallShipping !== undefined
+                          ? {
+                              overallShipping: pricingContext.overallShipping,
+                            }
+                          : {})}
+                        {...(displayOrderDetails?.orderDetails?.[0]
+                          ?.overallTax !== undefined ||
+                        orderDetails?.data?.orderDetails?.[0]?.overallTax !==
+                          undefined
+                          ? {
+                              overallTax: Number(
                                 displayOrderDetails?.orderDetails?.[0]
-                                  ?.grandTotal ||
-                                orderDetails?.data?.orderDetails?.[0]
-                                  ?.grandTotal ||
-                                0
-                            ),
-                          }
-                        : {})}
-                      {...(displayOrderDetails?.orderDetails?.[0]?.subTotal !==
-                        undefined ||
-                      orderDetails?.data?.orderDetails?.[0]?.subTotal !==
-                        undefined
-                        ? {
-                            subTotal: Number(
-                              displayOrderDetails?.orderDetails?.[0]
-                                ?.subTotal ||
-                                orderDetails?.data?.orderDetails?.[0]
+                                  ?.overallTax ||
+                                  orderDetails?.data?.orderDetails?.[0]
+                                    ?.overallTax ||
+                                  0
+                              ),
+                            }
+                          : {})}
+                        {...(displayOrderDetails?.orderDetails?.[0]
+                          ?.calculatedTotal !== undefined ||
+                        orderDetails?.data?.orderDetails?.[0]
+                          ?.calculatedTotal !== undefined ||
+                        displayOrderDetails?.orderDetails?.[0]?.grandTotal !==
+                          undefined ||
+                        orderDetails?.data?.orderDetails?.[0]?.grandTotal !==
+                          undefined
+                          ? {
+                              calculatedTotal: Number(
+                                displayOrderDetails?.orderDetails?.[0]
+                                  ?.calculatedTotal ||
+                                  orderDetails?.data?.orderDetails?.[0]
+                                    ?.calculatedTotal ||
+                                  displayOrderDetails?.orderDetails?.[0]
+                                    ?.grandTotal ||
+                                  orderDetails?.data?.orderDetails?.[0]
+                                    ?.grandTotal ||
+                                  0
+                              ),
+                            }
+                          : {})}
+                        {...(displayOrderDetails?.orderDetails?.[0]
+                          ?.subTotal !== undefined ||
+                        orderDetails?.data?.orderDetails?.[0]?.subTotal !==
+                          undefined
+                          ? {
+                              subTotal: Number(
+                                displayOrderDetails?.orderDetails?.[0]
                                   ?.subTotal ||
-                                0
-                            ),
-                          }
-                        : {})}
-                      {...(displayOrderDetails?.orderDetails?.[0]
-                        ?.taxableAmount !== undefined ||
-                      orderDetails?.data?.orderDetails?.[0]?.taxableAmount !==
-                        undefined
-                        ? {
-                            taxableAmount: Number(
-                              displayOrderDetails?.orderDetails?.[0]
-                                ?.taxableAmount ||
-                                orderDetails?.data?.orderDetails?.[0]
+                                  orderDetails?.data?.orderDetails?.[0]
+                                    ?.subTotal ||
+                                  0
+                              ),
+                            }
+                          : {})}
+                        {...(displayOrderDetails?.orderDetails?.[0]
+                          ?.taxableAmount !== undefined ||
+                        orderDetails?.data?.orderDetails?.[0]?.taxableAmount !==
+                          undefined
+                          ? {
+                              taxableAmount: Number(
+                                displayOrderDetails?.orderDetails?.[0]
                                   ?.taxableAmount ||
-                                0
-                            ),
-                          }
-                        : {})}
-                    />
-                  </Suspense>
-                </div>
-              )}
+                                  orderDetails?.data?.orderDetails?.[0]
+                                    ?.taxableAmount ||
+                                  0
+                              ),
+                            }
+                          : {})}
+                      />
+                    </Suspense>
+                  </div>
+                )}
             </div>
           )}
         </PageLayout>
@@ -1015,14 +1020,14 @@ export default function OrderDetailsClient({ params }: OrderDetailsPageProps) {
         onOpenChange={setEditDialogOpen}
         currentOrderName={orderName || ""}
         onSave={handleSaveOrderName}
-        loading={loading}
+        loading={orderLoading}
       />
 
       <RequestEditDialog
         open={requestEditDialogOpen}
         onOpenChange={setRequestEditDialogOpen}
         onConfirm={handleConfirmRequestEdit}
-        loading={loading}
+        loading={orderLoading}
       />
 
       {/* Versions Dialog */}
@@ -1031,7 +1036,7 @@ export default function OrderDetailsClient({ params }: OrderDetailsPageProps) {
         onOpenChange={setVersionsDialogOpen}
         versions={orderVersions}
         orderId={orderId}
-        loading={loading}
+        loading={orderLoading || versionLoading}
         currentVersionNumber={selectedVersion?.versionNumber || 1}
         onVersionSelect={handleVersionSelect}
       />

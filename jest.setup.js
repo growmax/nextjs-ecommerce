@@ -1,9 +1,32 @@
 // Learn more: https://github.com/testing-library/jest-dom
 import "@testing-library/jest-dom";
 
+// Polyfill Web APIs for middleware tests (Request, Response, etc.)
+// These are needed for Next.js middleware which runs in Edge Runtime
+if (typeof globalThis.Request === "undefined") {
+  try {
+    // Polyfill TextDecoder/TextEncoder first (required by @whatwg-node/fetch)
+    if (typeof globalThis.TextDecoder === "undefined") {
+      const { TextDecoder, TextEncoder } = require("util");
+      globalThis.TextDecoder = TextDecoder;
+      globalThis.TextEncoder = TextEncoder;
+    }
+    
+    // Use @whatwg-node/fetch for Web API polyfills
+    const { Request, Response, Headers, fetch } = require("@whatwg-node/fetch");
+    globalThis.Request = Request;
+    globalThis.Response = Response;
+    globalThis.Headers = Headers;
+    globalThis.fetch = fetch;
+  } catch (e) {
+    // Fallback: Try Node's built-in fetch (Node 18+)
+    console.warn("Could not load Web API polyfills:", e.message);
+  }
+}
+
 // Mock next-intl
 jest.mock("next-intl", () => ({
-  useTranslations: namespace => key => {
+  useTranslations: _namespace => key => {
     // Return the key as-is for testing (tests should expect keys, not translated text)
     return key;
   },
@@ -58,6 +81,26 @@ jest.mock("next/navigation", () => ({
     return "/";
   },
 }));
+
+// Mock @/i18n/navigation to avoid ESM parsing issues with next-intl/navigation
+jest.mock("@/i18n/navigation", () => {
+  const React = jest.requireActual("react");
+  return {
+    Link: ({ children, href, ...props }) => {
+      return React.createElement("a", { href, ...props }, children);
+    },
+    redirect: jest.fn(),
+    usePathname: () => "/",
+    useRouter: () => ({
+      push: jest.fn(),
+      replace: jest.fn(),
+      refresh: jest.fn(),
+      back: jest.fn(),
+      forward: jest.fn(),
+      prefetch: jest.fn(),
+    }),
+  };
+});
 
 // Mock window.matchMedia
 // Check if window exists before defining matchMedia

@@ -2,10 +2,10 @@
 // These mocks are for testing the service in isolation.
 
 import type {
-  ElasticSearchOptions,
-  ElasticSearchResponse,
-  FormattedProduct,
-  SearchProductsResponse,
+    ElasticSearchOptions,
+    ElasticSearchResponse,
+    FormattedProduct,
+    SearchProductsResponse,
 } from "./SearchService";
 
 export const mockFormattedProduct: FormattedProduct = {
@@ -22,16 +22,18 @@ export const mockFormattedProduct: FormattedProduct = {
 };
 
 export const mockElasticSearchResponse: ElasticSearchResponse = {
-  hits: {
-    hits: [
-      {
-        _id: "1",
-        _source: mockFormattedProduct,
+  body: {
+    hits: {
+      hits: [
+        {
+          _id: "1",
+          _source: mockFormattedProduct,
+        },
+      ],
+      total: {
+        value: 1,
+        relation: "eq",
       },
-    ],
-    total: {
-      value: 1,
-      relation: "eq",
     },
   },
 };

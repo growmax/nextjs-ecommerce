@@ -94,12 +94,12 @@ export function useProductsByIds(
     const must: Array<Record<string, unknown>> = [
       {
         term: {
-          isPublished: 1,
+          is_published: 1,
         },
       },
       {
         terms: {
-          "brandProductId.keyword": brandProductIds,
+          "brand_product_id.keyword": brandProductIds,
         },
       },
     ];

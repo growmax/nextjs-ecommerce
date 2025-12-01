@@ -5,43 +5,43 @@ const searchTextSchema = z.string().min(1, "Search text cannot be empty");
 const PRODUCT_SEARCH_FIELDS = [
   "name",
   "keywords^8",
-  "brandProductId^5",
-  "productShortDescription^9",
+  "brand_product_id^5",
+  "product_short_description^9",
   "description",
-  "pgName",
+  "pg_name",
   "variantAttributeses.name",
   "productSeries",
-  "brandsName",
+  "brands_name",
   "variantAttributeses.options",
   "productSpecifications.key",
   "productSpecifications.value",
   "productGroupSpecifications.key",
   "productGroupSpecifications.value",
-  "productsSubCategories.categoryName",
-  "productsSubCategories.subCategoryName",
-  "productsSubCategories.majorCategoryName",
+  "products_sub_categories.categoryName",
+  "products_sub_categories.subCategoryName",
+  "products_sub_categories.majorCategoryName",
   "ean",
 ] as const;
 
 const PRODUCT_SOURCE_FIELDS = [
-  "brandProductId",
-  "productShortDescription",
-  "productAssetss",
-  "brandsName",
-  "productsSubCategories.subCategoryName",
-  "productId",
-  "productIndexName",
+  "brand_product_id",
+  "product_short_description",
+  "product_assetss",
+  "brands_name",
+  "products_sub_categories.subCategoryName",
+  "product_id",
+  "product_index_name",
   "ean",
   "keywords",
-  "b2CUnitListPrice",
-  "b2CDiscountPrice",
+  "b2c_unit_list_price",
+  "b2c_discount_price",
 ] as const;
 
 const CATEGORY_SEARCH_FIELDS = [
-  "brandsName",
-  "productsSubCategories.categoryName",
-  "productsSubCategories.subCategoryName",
-  "productsSubCategories.majorCategoryName",
+  "brands_name",
+  "products_sub_categories.categoryName",
+  "products_sub_categories.subCategoryName",
+  "products_sub_categories.majorCategoryName",
 ] as const;
 
 const sanitizeSearchValue = (value: string): string => {
@@ -60,7 +60,7 @@ export interface ElasticSearchQuery {
       minimum_should_match: number;
       must: Array<{
         term: {
-          isPublished: number;
+          is_published: number;
         };
       }>;
       should: Array<{
@@ -84,12 +84,12 @@ export interface ElasticSearchQuery {
       }>;
       must_not: Array<{
         match?: {
-          prodgrpIndexName: {
+          pg_index_name: {
             query: string;
           };
         };
         term?: {
-          internal: boolean;
+          is_internal: boolean;
         };
       }>;
     };
@@ -109,7 +109,7 @@ export const buildProductSearchQuery = (searchText: string): ElasticSearchQuery 
         must: [
           {
             term: {
-              isPublished: 1,
+              is_published: 1,
             },
           },
         ],
@@ -155,14 +155,14 @@ export const buildProductSearchQuery = (searchText: string): ElasticSearchQuery 
         must_not: [
           {
             match: {
-              prodgrpIndexName: {
+              pg_index_name: {
                 query: "PrdGrp0*",
               },
             },
           },
           {
             term: {
-              internal: true,
+              is_internal: true,
             },
           },
         ],

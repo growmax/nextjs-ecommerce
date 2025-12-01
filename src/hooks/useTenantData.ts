@@ -1,69 +1,54 @@
 "use client";
 
-import { useTenantStore } from "@/store/useTenantStore";
-import TenantService from "@/lib/api/services/TenantService";
-import { TenantConfigResponse } from "@/types/appconfig";
-import { TenantData } from "@/store/useTenantStore";
-import { useUserDetails } from "@/contexts/UserDetailsContext";
+import { useTenant } from "@/contexts/TenantContext";
+import { TenantData, useTenantStore } from "@/store/useTenantStore";
 import { useEffect } from "react";
 
 /**
- * Hook to fetch and access tenant data from the global store
+ * Hook to access tenant data from the global store
  *
- * This hook automatically fetches tenant data after user authentication
- * and stores it in Zustand for global access.
+ * This hook syncs tenant data from TenantProvider (server-side fetch)
+ * to the Zustand store for backward compatibility with existing code.
+ *
+ * **No API calls are made** - data comes from server-side fetch in layout.
  */
 export function useTenantData() {
-  const { tenantData, loading, error, setTenantData, setLoading, setError } =
-    useTenantStore();
-  const { isAuthenticated } = useUserDetails();
+  const { tenantData, loading, error, setTenantData } = useTenantStore();
+  const tenantContext = useTenant();
 
   useEffect(() => {
-    // Only fetch if authenticated and tenant data not already loaded
-    if (!isAuthenticated || tenantData || loading) {
+    // Skip if data already loaded in store or if context is loading
+    if (tenantData || tenantContext.isLoading) {
       return;
     }
 
-    const fetchTenantData = async () => {
-      setLoading(true);
+    // Skip if context has error
+    if (tenantContext.error) {
+      return;
+    }
 
-      try {
-        // Get domain from environment variable
-        const domain =
-          process.env.NEXT_PUBLIC_DEFAULT_DOMAIN ||
-          "schwingstetter.myapptino.com";
+    // Sync data from TenantProvider to Zustand store
+    // This ensures backward compatibility with code using useTenantData
+    if (
+      tenantContext.tenant ||
+      tenantContext.company ||
+      tenantContext.currency
+    ) {
+      const syncedData: TenantData = {
+        tenant: tenantContext.tenant as any, // Type cast for compatibility
+        sellerCompanyId: tenantContext.company as any, // Type cast for compatibility
+        sellerCurrency: tenantContext.currency,
+      };
 
-        // Call getTenantConfig from TenantService
-        const response: TenantConfigResponse =
-          await TenantService.getTenantConfig(domain);
-
-        if (response.data) {
-          const { tenant, sellerCompanyId, sellerCurrency } = response.data;
-
-          const tenantInfo: TenantData = {
-            tenant: tenant || null,
-            sellerCompanyId: sellerCompanyId || null,
-            sellerCurrency: sellerCurrency || null,
-          };
-
-          setTenantData(tenantInfo);
-        } else {
-          throw new Error("No tenant data returned from API");
-        }
-      } catch (err) {
-        const errorMessage =
-          err instanceof Error ? err.message : "Failed to fetch tenant data";
-        setError(errorMessage);
-      }
-    };
-
-    fetchTenantData();
+      setTenantData(syncedData);
+    }
   }, [
-    isAuthenticated,
     tenantData,
-    loading,
-    setError,
-    setLoading,
+    tenantContext.tenant,
+    tenantContext.company,
+    tenantContext.currency,
+    tenantContext.isLoading,
+    tenantContext.error,
     setTenantData,
   ]);
 

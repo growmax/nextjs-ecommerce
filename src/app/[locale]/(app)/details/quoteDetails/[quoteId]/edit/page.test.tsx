@@ -5,7 +5,6 @@ jest.mock("next/navigation", () => ({
   useRouter: () => ({
     push: jest.fn(),
     replace: jest.fn(),
-    prefetch: jest.fn(),
   }),
   useSearchParams: () => ({
     get: jest.fn(() => null),
@@ -23,6 +22,13 @@ jest.mock("next-intl", () => ({
 
 jest.mock("@/hooks/usePageScroll", () => ({
   usePageScroll: jest.fn(),
+}));
+
+jest.mock("@/hooks/useNavigationWithLoader", () => ({
+  useNavigationWithLoader: () => ({
+    handleNavigation: jest.fn(),
+    isNavigating: false,
+  }),
 }));
 
 // Mock data

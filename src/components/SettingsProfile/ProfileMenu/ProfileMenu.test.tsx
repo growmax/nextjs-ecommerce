@@ -71,16 +71,6 @@ jest.mock("next/navigation", () => ({
   useLocale: () => "en",
 }));
 
-// Mock useRoutePrefetch hook
-jest.mock("@/hooks/useRoutePrefetch", () => ({
-  useRoutePrefetch: () => ({
-    prefetch: jest.fn(),
-    prefetchMultiple: jest.fn(),
-    prefetchAndNavigate: jest.fn(),
-    clearCache: jest.fn(),
-  }),
-}));
-
 // Mock hooks: useLogout and useUserProfile
 const mockHandleLogout = jest.fn();
 let mockIsLoggingOut = false;
