@@ -211,19 +211,35 @@ function createWrapper() {
 }
 
 describe("AppHeader", () => {
-  it("renders and opens the command dialog on Ctrl/Cmd+K shortcut", () => {
+  it("navigates to search page on Ctrl/Cmd+K shortcut", () => {
+    const mockPush = jest.fn();
+    jest.spyOn(require("@/hooks/useNavigationWithLoader"), "useNavigationWithLoader").mockReturnValue({
+      push: mockPush,
+      replace: jest.fn(),
+    });
+    
     render(<AppHeader />, { wrapper: createWrapper() });
     fireEvent.keyDown(document, { key: "k", ctrlKey: true });
-    expect(screen.getByTestId("command-input")).toBeInTheDocument();
+    
+    expect(mockPush).toHaveBeenCalledWith("/search");
   });
 
-  it("closes the dialog when selecting a suggestion", () => {
+  it("navigates to search page when Enter is pressed in search input", () => {
+    const mockPush = jest.fn();
+    jest.spyOn(require("@/hooks/useNavigationWithLoader"), "useNavigationWithLoader").mockReturnValue({
+      push: mockPush,
+      replace: jest.fn(),
+    });
+    
     render(<AppHeader />, { wrapper: createWrapper() });
-    fireEvent.keyDown(document, { key: "k", ctrlKey: true });
-
-    const item = screen.getAllByTestId("command-item")[0]!;
-    fireEvent.click(item);
-
-    expect(screen.queryByTestId("command-input")).not.toBeInTheDocument();
+    
+    // Find the search input
+    const searchInput = screen.getByPlaceholderText("placeholder");
+    
+    // Type a search query
+    fireEvent.change(searchInput, { target: { value: "test query" } });
+    fireEvent.keyDown(searchInput, { key: "Enter" });
+    
+    expect(mockPush).toHaveBeenCalledWith("/search?q=test%20query");
   });
 });
