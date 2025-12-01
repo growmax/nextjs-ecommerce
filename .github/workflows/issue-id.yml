@@ -1,4 +1,5 @@
 name: 🏷️ Auto Assign Issue ID (#)
+
 on:
   issues:
     types: [opened]
@@ -11,13 +12,19 @@ jobs:
       - name: Determine issue type prefix
         id: prefix
         run: |
-          LABELS=$(echo "${{ toJson(github.event.issue.labels) }}" | tr '[:upper:]' '[:lower:]')
+          LABELS=$(printf "%s" '${{ toJson(github.event.issue.labels) }}' | tr '[:upper:]' '[:lower:]')
           PREFIX="GEN"
-          if [[ "$LABELS" == *"bug"* ]]; then PREFIX="BUG"
-          elif [[ "$LABELS" == *"feature"* ]]; then PREFIX="FEAT"
-          elif [[ "$LABELS" == *"refactor"* ]]; then PREFIX="REFACTOR"
-          elif [[ "$LABELS" == *"hotfix"* ]]; then PREFIX="HOTFIX"
+
+          if [[ "$LABELS" == *"bug"* ]]; then
+            PREFIX="BUG"
+          elif [[ "$LABELS" == *"feature"* ]]; then
+            PREFIX="FEAT"
+          elif [[ "$LABELS" == *"refactor"* ]]; then
+            PREFIX="REFACTOR"
+          elif [[ "$LABELS" == *"hotfix"* ]]; then
+            PREFIX="HOTFIX"
           fi
+
           echo "prefix=$PREFIX" >> $GITHUB_OUTPUT
 
       - name: Add ID to title and comment

@@ -1,8 +1,7 @@
 "use client";
 
 import { type LucideIcon } from "lucide-react";
-import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { Link, usePathname } from "@/i18n/navigation";
 import * as React from "react";
 
 import {
@@ -35,8 +34,12 @@ export function NavSecondary({
         <SidebarMenu>
           {items.map(item => (
             <SidebarMenuItem key={item.title}>
-              <SidebarMenuButton asChild size="sm" isActive={isActive(item.url)}>
-                <Link href={item.url}>
+              <SidebarMenuButton
+                asChild
+                size="sm"
+                isActive={isActive(item.url)}
+              >
+                <Link href={item.url} prefetch={true}>
                   <item.icon />
                   <span>{item.title}</span>
                 </Link>

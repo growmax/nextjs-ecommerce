@@ -2,8 +2,8 @@
 // These mocks are for testing the service in isolation.
 
 import type {
-  UploadOptions,
   PresignedUrlResponse,
+  UploadOptions,
   UploadProgress,
 } from "./UploadServices";
 

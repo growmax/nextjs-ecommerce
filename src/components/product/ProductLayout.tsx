@@ -12,11 +12,13 @@ import { ProductDetail } from "@/types/product/product-detail";
 interface ProductLayoutProps {
   product: ProductDetail;
   canonicalUrl: string;
+  locale?: string;
 }
 
 export default function ProductLayout({
   product,
   canonicalUrl,
+  locale = "en",
 }: ProductLayoutProps) {
   return (
     <div className="min-h-screen bg-background">
@@ -27,7 +29,7 @@ export default function ProductLayout({
       <div className="container mx-auto px-4 py-8">
         {/* Product Breadcrumb */}
         <div className="py-3">
-          <ProductBreadcrumb product={product} />
+          <ProductBreadcrumb product={product} locale={locale} />
         </div>
 
         {/* Two-Column Layout: Image Gallery (Left) + Product Details (Right) */}

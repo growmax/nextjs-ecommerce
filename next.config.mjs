@@ -15,12 +15,27 @@ const bundleAnalyzer = withBundleAnalyzer({
 
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  // Enable React.StrictMode for better performance warnings and debugging
-  reactStrictMode: true,
+  // Disable React.StrictMode in development to prevent duplicate RSC calls
+  // Keep enabled in production via environment variable if needed
+  reactStrictMode: process.env.NODE_ENV === "production",
+  // Allow cross-origin requests in development (prevents warnings)
+  // Format: full URLs with protocol or host:port
+  allowedDevOrigins: process.env.NODE_ENV === "development" 
+    ? [
+        "http://192.168.1.8:3000",
+        "http://localhost:3000",
+        "http://127.0.0.1:3000",
+        "192.168.1.8:3000",
+        "localhost:3000",
+        "127.0.0.1:3000"
+      ]
+    : undefined,
   typescript: {
     // Allow production builds to succeed even when there are TypeScript errors
     ignoreBuildErrors: false,
   },
+  // Moved from experimental in Next.js 15
+  serverExternalPackages: ["ioredis"],
   experimental: {
     optimizePackageImports: [
       "lucide-react",
@@ -36,6 +51,10 @@ const nextConfig = {
       "react-hook-form",
       "@hookform/resolvers",
     ],
+    // Optimize CSS loading
+    optimisticClientCache: true,
+    // Enable parallel route compilation
+    webpackBuildWorker: true,
   },
   poweredByHeader: false,
   compress: true,
@@ -50,6 +69,91 @@ const nextConfig = {
       config.infrastructureLogging = {
         level: "error",
       };
+      // Enable webpack caching for faster rebuilds
+      config.cache = {
+        type: "filesystem",
+        buildDependencies: {
+          config: [__filename],
+        },
+        cacheDirectory: `${__dirname}/.next/cache/webpack`,
+      };
+      // Optimize module resolution
+      config.resolve.symlinks = false;
+      // Optimize for faster development builds (client-side only)
+      if (!isServer) {
+        config.optimization = {
+          ...config.optimization,
+          removeAvailableModules: false,
+          removeEmptyChunks: false,
+          // Enable split chunks for better caching (client-side only)
+          splitChunks: {
+            chunks: 'all',
+            cacheGroups: {
+              default: false,
+              vendors: false,
+              // Framework chunk (React, Next.js)
+              framework: {
+                name: 'framework',
+                chunks: 'all',
+                test: /[\\/]node_modules[\\/](react|react-dom|scheduler|next)[\\/]/,
+                priority: 40,
+                enforce: true,
+              },
+              // UI libraries chunk
+              ui: {
+                name: 'ui',
+                chunks: 'all',
+                test: /[\\/]node_modules[\\/](@radix-ui|lucide-react)[\\/]/,
+                priority: 30,
+              },
+              // Common libraries chunk
+              lib: {
+                name: 'lib',
+                chunks: 'all',
+                test: /[\\/]node_modules[\\/]/,
+                priority: 20,
+                minChunks: 2,
+              },
+            },
+          },
+          // Enable module concatenation for smaller bundles
+          concatenateModules: true,
+        };
+      }
+    } else {
+      // Production optimizations (client-side only)
+      if (!isServer) {
+        config.optimization = {
+          ...config.optimization,
+          splitChunks: {
+            chunks: 'all',
+            cacheGroups: {
+              default: false,
+              vendors: false,
+              framework: {
+                name: 'framework',
+                chunks: 'all',
+                test: /[\\/]node_modules[\\/](react|react-dom|scheduler|next)[\\/]/,
+                priority: 40,
+                enforce: true,
+              },
+              ui: {
+                name: 'ui',
+                chunks: 'all',
+                test: /[\\/]node_modules[\\/](@radix-ui|lucide-react)[\\/]/,
+                priority: 30,
+              },
+              lib: {
+                name: 'lib',
+                chunks: 'all',
+                test: /[\\/]node_modules[\\/]/,
+                priority: 20,
+                minChunks: 2,
+              },
+            },
+          },
+        };
+      }
     }
 
     if (!isServer) {
@@ -71,6 +175,7 @@ const nextConfig = {
 
     return config;
   },
+  // SWC minification is now enabled by default in Next.js 15
   images: {
     formats: ["image/avif", "image/webp"],
     deviceSizes: [640, 750, 828, 1080, 1200, 1920, 2048, 3840],

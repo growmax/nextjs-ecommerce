@@ -15,10 +15,10 @@ jest.mock("@/lib/api/services/PaymentService/PaymentService", () => ({
   },
 }));
 
-// Mock SWR
-jest.mock("swr/immutable", () => ({
+// Mock React Query
+jest.mock("@tanstack/react-query", () => ({
   __esModule: true,
-  default: jest.fn(),
+  useQuery: jest.fn(),
 }));
 
 // Mock useCurrentUser
@@ -27,6 +27,7 @@ jest.mock("@/hooks/useCurrentUser", () => ({
 }));
 
 import PaymentService from "@/lib/api/services/PaymentService/PaymentService";
+import { useQuery } from "@tanstack/react-query";
 import useSWRImmutable from "swr/immutable";
 import useGetLatestPaymentTerms from "./useGetLatestPaymentTerms";
 
@@ -34,6 +35,8 @@ const mockUseSWR = useSWRImmutable as jest.MockedFunction<
   typeof useSWRImmutable
 >;
 const mockPaymentService = PaymentService as jest.Mocked<typeof PaymentService>;
+
+const mockUseQuery = useQuery as jest.MockedFunction<typeof useQuery>;
 
 describe("useGetLatestPaymentTerms", () => {
   beforeEach(() => {
@@ -47,12 +50,11 @@ describe("useGetLatestPaymentTerms", () => {
   });
 
   it("should fetch and return cash discount payment terms successfully", () => {
-    mockUseSWR.mockReturnValue({
+    mockUseQuery.mockReturnValue({
       data: mockCashDiscountTerm,
       error: undefined,
       isLoading: false,
-      isValidating: false,
-      mutate: jest.fn(),
+      refetch: jest.fn(),
     } as any);
 
     const { result } = renderHook(() => useGetLatestPaymentTerms(true));
@@ -62,12 +64,11 @@ describe("useGetLatestPaymentTerms", () => {
   });
 
   it("should return undefined when no cash discount terms are found", () => {
-    mockUseSWR.mockReturnValue({
+    mockUseQuery.mockReturnValue({
       data: undefined,
       error: undefined,
-      isLoading: false,
-      isValidating: false,
-      mutate: jest.fn(),
+      isLoading: true,
+      refetch: jest.fn(),
     } as any);
 
     const { result } = renderHook(() => useGetLatestPaymentTerms(true));
@@ -77,68 +78,67 @@ describe("useGetLatestPaymentTerms", () => {
   });
 
   it("should not fetch when fetchLatestPaymentTerm is false", () => {
-    mockUseSWR.mockReturnValue({
+    mockUseQuery.mockReturnValue({
       data: undefined,
       error: undefined,
       isLoading: false,
-      isValidating: false,
-      mutate: jest.fn(),
+      refetch: jest.fn(),
     } as any);
 
     const { result } = renderHook(() => useGetLatestPaymentTerms(false));
 
-    expect(mockUseSWR).toHaveBeenCalledWith(null, expect.any(Function), {
-      revalidateOnFocus: true,
-    });
+    expect(mockUseQuery).toHaveBeenCalledWith(
+      expect.objectContaining({
+        enabled: false,
+      })
+    );
     expect(result.current.latestPaymentTerms).toBeUndefined();
-    expect(result.current.latestPaymentTermsLoading).toBe(true);
+    expect(result.current.latestPaymentTermsLoading).toBe(false);
   });
 
   it("should not fetch when fetchLatestPaymentTerm is false (simulating no userId scenario)", () => {
-    // When fetchLatestPaymentTerm is false, it simulates the behavior when userId is not available
-    mockUseSWR.mockReturnValue({
+    mockUseQuery.mockReturnValue({
       data: undefined,
       error: undefined,
       isLoading: false,
-      isValidating: false,
-      mutate: jest.fn(),
+      refetch: jest.fn(),
     } as any);
 
     const { result } = renderHook(() => useGetLatestPaymentTerms(false));
 
-    expect(mockUseSWR).toHaveBeenCalledWith(null, expect.any(Function), {
-      revalidateOnFocus: true,
-    });
+    expect(mockUseQuery).toHaveBeenCalledWith(
+      expect.objectContaining({
+        enabled: false,
+      })
+    );
     expect(result.current.latestPaymentTerms).toBeUndefined();
   });
 
   it("should fetch when fetchLatestPaymentTerm is true and userId is available", () => {
-    mockUseSWR.mockReturnValue({
+    mockUseQuery.mockReturnValue({
       data: mockCashDiscountTerm,
       error: undefined,
       isLoading: false,
-      isValidating: false,
-      mutate: jest.fn(),
+      refetch: jest.fn(),
     } as any);
 
     renderHook(() => useGetLatestPaymentTerms(true));
 
-    expect(mockUseSWR).toHaveBeenCalledWith(
-      ["fetchPaymentTerms", mockUser.userId],
-      expect.any(Function),
-      {
-        revalidateOnFocus: true,
-      }
+    expect(mockUseQuery).toHaveBeenCalledWith(
+      expect.objectContaining({
+        queryKey: ["paymentTerms", mockUser.userId, mockUser.companyId],
+        enabled: true,
+        refetchOnWindowFocus: false,
+      })
     );
   });
 
-  it("should show loading state when data is not available and no error", () => {
-    mockUseSWR.mockReturnValue({
+  it("should show loading state when isLoading is true", () => {
+    mockUseQuery.mockReturnValue({
       data: undefined,
       error: undefined,
-      isLoading: false,
-      isValidating: false,
-      mutate: jest.fn(),
+      isLoading: true,
+      refetch: jest.fn(),
     } as any);
 
     const { result } = renderHook(() => useGetLatestPaymentTerms(true));
@@ -148,12 +148,11 @@ describe("useGetLatestPaymentTerms", () => {
   });
 
   it("should not show loading state when error is present", () => {
-    mockUseSWR.mockReturnValue({
+    mockUseQuery.mockReturnValue({
       data: undefined,
       error: mockAxiosError,
       isLoading: false,
-      isValidating: false,
-      mutate: jest.fn(),
+      refetch: jest.fn(),
     } as any);
 
     const { result } = renderHook(() => useGetLatestPaymentTerms(true));
@@ -163,12 +162,11 @@ describe("useGetLatestPaymentTerms", () => {
   });
 
   it("should not show loading state when data is available", () => {
-    mockUseSWR.mockReturnValue({
+    mockUseQuery.mockReturnValue({
       data: mockCashDiscountTerm,
       error: undefined,
       isLoading: false,
-      isValidating: false,
-      mutate: jest.fn(),
+      refetch: jest.fn(),
     } as any);
 
     const { result } = renderHook(() => useGetLatestPaymentTerms(true));
@@ -176,23 +174,20 @@ describe("useGetLatestPaymentTerms", () => {
     expect(result.current.latestPaymentTermsLoading).toBe(false);
   });
 
-  it("should create correct SWR key with userId", () => {
-    mockUseSWR.mockReturnValue({
+  it("should create correct query key with userId and companyId", () => {
+    mockUseQuery.mockReturnValue({
       data: mockCashDiscountTerm,
       error: undefined,
       isLoading: false,
-      isValidating: false,
-      mutate: jest.fn(),
+      refetch: jest.fn(),
     } as any);
 
     renderHook(() => useGetLatestPaymentTerms(true));
 
-    expect(mockUseSWR).toHaveBeenCalledWith(
-      ["fetchPaymentTerms", mockUser.userId],
-      expect.any(Function),
-      {
-        revalidateOnFocus: true,
-      }
+    expect(mockUseQuery).toHaveBeenCalledWith(
+      expect.objectContaining({
+        queryKey: ["paymentTerms", mockUser.userId, mockUser.companyId],
+      })
     );
   });
 
@@ -208,21 +203,22 @@ describe("useGetLatestPaymentTerms", () => {
       data: mockCashDiscountTerm,
       error: undefined,
       isLoading: false,
-      isValidating: false,
-      mutate: jest.fn(),
+      refetch: jest.fn(),
     } as any);
 
     renderHook(() => useGetLatestPaymentTerms(true));
 
-    // Get the fetcher function that was passed to useSWR
-    const swrCall = mockUseSWR.mock.calls[0];
-    if (!swrCall) {
-      throw new Error("useSWR was not called");
+    // Get the queryFn function that was passed to useQuery
+    const queryCall = mockUseQuery.mock.calls[0];
+    if (!queryCall) {
+      throw new Error("useQuery was not called");
+    }
+    const config = queryCall[0] as any;
+    const queryFn = config.queryFn;
+    if (!queryFn) {
+      throw new Error("queryFn was not provided");
     }
     const passedFetcher = swrCall[1];
-    if (!passedFetcher) {
-      throw new Error("Fetcher function was not provided");
-    }
 
     // Call the fetcher to verify it uses PaymentService correctly
     const result = await passedFetcher();
@@ -232,13 +228,13 @@ describe("useGetLatestPaymentTerms", () => {
       mockUser.userId
     );
 
-    // Verify fetcher filters and returns cash discount term
+    // Verify queryFn filters and returns cash discount term
     expect(result).toEqual(mockCashDiscountTerm);
   });
 
-  it("should throw error when userId is not provided in fetcher", async () => {
-    // Create a fetcher that simulates missing userId
-    const fetcherWithoutUserId = async () => {
+  it("should throw error when userId is not provided in queryFn", async () => {
+    // Create a queryFn that simulates missing userId
+    const queryFnWithoutUserId = async () => {
       const userId = undefined; // Simulate missing userId
       if (!userId) {
         throw new Error("User ID is required");
@@ -247,7 +243,7 @@ describe("useGetLatestPaymentTerms", () => {
     };
 
     // Test the error handling logic
-    await expect(fetcherWithoutUserId()).rejects.toThrow("User ID is required");
+    await expect(queryFnWithoutUserId()).rejects.toThrow("User ID is required");
   });
 
   it("should filter payment terms for cash discount", async () => {
@@ -262,24 +258,24 @@ describe("useGetLatestPaymentTerms", () => {
       data: mockCashDiscountTerm,
       error: undefined,
       isLoading: false,
-      isValidating: false,
-      mutate: jest.fn(),
+      refetch: jest.fn(),
     } as any);
 
     renderHook(() => useGetLatestPaymentTerms(true));
 
-    // Get the fetcher function
-    const swrCall = mockUseSWR.mock.calls[0];
-    if (!swrCall) {
-      throw new Error("useSWR was not called");
+    // Get the queryFn function
+    const queryCall = mockUseQuery.mock.calls[0];
+    if (!queryCall) {
+      throw new Error("useQuery was not called");
     }
-    const passedFetcher = swrCall[1];
-    if (!passedFetcher) {
-      throw new Error("Fetcher function was not provided");
+    const config = queryCall[0] as any;
+    const queryFn = config.queryFn;
+    if (!queryFn) {
+      throw new Error("queryFn was not provided");
     }
 
-    // Call the fetcher
-    const result = await passedFetcher();
+    // Call the queryFn
+    const result = await queryFn();
 
     // Should return only the term with cashdiscount === true
     expect(result).toEqual(mockCashDiscountTerm);
@@ -298,63 +294,61 @@ describe("useGetLatestPaymentTerms", () => {
       data: undefined,
       error: undefined,
       isLoading: false,
-      isValidating: false,
-      mutate: jest.fn(),
+      refetch: jest.fn(),
     } as any);
 
     renderHook(() => useGetLatestPaymentTerms(true));
 
-    // Get the fetcher function
-    const swrCall = mockUseSWR.mock.calls[0];
-    if (!swrCall) {
-      throw new Error("useSWR was not called");
+    // Get the queryFn function
+    const queryCall = mockUseQuery.mock.calls[0];
+    if (!queryCall) {
+      throw new Error("useQuery was not called");
     }
-    const passedFetcher = swrCall[1];
-    if (!passedFetcher) {
-      throw new Error("Fetcher function was not provided");
+    const config = queryCall[0] as any;
+    const queryFn = config.queryFn;
+    if (!queryFn) {
+      throw new Error("queryFn was not provided");
     }
 
-    // Call the fetcher
-    const result = await passedFetcher();
+    // Call the queryFn
+    const result = await queryFn();
 
     // Should return undefined when no cash discount terms
     expect(result).toBeUndefined();
   });
 
-  it("should use SWR options with revalidateOnFocus set to true", () => {
-    mockUseSWR.mockReturnValue({
+  it("should use React Query options with refetchOnWindowFocus set to false", () => {
+    mockUseQuery.mockReturnValue({
       data: mockCashDiscountTerm,
       error: undefined,
       isLoading: false,
-      isValidating: false,
-      mutate: jest.fn(),
+      refetch: jest.fn(),
     } as any);
 
     renderHook(() => useGetLatestPaymentTerms(true));
 
-    expect(mockUseSWR).toHaveBeenCalledWith(
-      expect.any(Array),
-      expect.any(Function),
-      {
-        revalidateOnFocus: true,
-      }
+    expect(mockUseQuery).toHaveBeenCalledWith(
+      expect.objectContaining({
+        refetchOnWindowFocus: false,
+      })
     );
   });
 
   it("should handle default parameter when fetchLatestPaymentTerm is not provided", () => {
-    mockUseSWR.mockReturnValue({
+    mockUseQuery.mockReturnValue({
       data: undefined,
       error: undefined,
       isLoading: false,
-      isValidating: false,
-      mutate: jest.fn(),
+      refetch: jest.fn(),
     } as any);
 
     renderHook(() => useGetLatestPaymentTerms());
 
-    // Should default to false, so key should be null
-    expect(mockUseSWR).toHaveBeenCalledWith(null, expect.any(Function), {
-      revalidateOnFocus: true,
-    });
+    // Should default to false, so enabled should be false
+    expect(mockUseQuery).toHaveBeenCalledWith(
+      expect.objectContaining({
+        enabled: false,
+      })
+    );
   });
 });

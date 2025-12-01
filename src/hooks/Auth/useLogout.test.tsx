@@ -4,6 +4,8 @@ import { act, renderHook } from "@testing-library/react";
 import { useRouter } from "next/navigation";
 import useLogout from "./useLogout";
 
+import { useGlobalLoader } from "@/hooks/useGlobalLoader";
+
 // Mock the hooks and utility
 jest.mock("@/contexts/UserDetailsContext", () => ({
   useUserDetails: jest.fn(),
@@ -12,6 +14,9 @@ jest.mock("next/navigation", () => ({
   useRouter: jest.fn(),
 }));
 jest.mock("@/lib/utils/navigation"); // Mock the redirectTo utility
+jest.mock("@/hooks/useGlobalLoader", () => ({
+  useGlobalLoader: jest.fn(),
+}));
 
 // Type assertion for the mocked hooks and utility
 const useUserDetailsMock = useUserDetails as jest.MockedFunction<
@@ -19,10 +24,15 @@ const useUserDetailsMock = useUserDetails as jest.MockedFunction<
 >;
 const useRouterMock = useRouter as jest.MockedFunction<typeof useRouter>;
 const redirectToMock = redirectTo as jest.MockedFunction<typeof redirectTo>; // Mocked redirectTo
+const useGlobalLoaderMock = useGlobalLoader as jest.MockedFunction<
+  typeof useGlobalLoader
+>;
 
 describe("useLogout", () => {
   const mockLogout = jest.fn();
   const mockPush = jest.fn(); // Mock useRouter().push
+  const mockShowLogoutLoader = jest.fn();
+  const mockHideLoading = jest.fn();
 
   beforeEach(() => {
     // Reset mocks before each test
@@ -34,11 +44,15 @@ describe("useLogout", () => {
     } as any);
     useRouterMock.mockReturnValue({
       push: mockPush,
-      prefetch: jest.fn(),
+
       back: jest.fn(),
       forward: jest.fn(),
       refresh: jest.fn(),
       replace: jest.fn(),
+    } as any);
+    useGlobalLoaderMock.mockReturnValue({
+      showLogoutLoader: mockShowLogoutLoader,
+      hideLoading: mockHideLoading,
     } as any);
   });
 

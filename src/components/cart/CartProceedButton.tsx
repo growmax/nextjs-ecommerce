@@ -2,7 +2,7 @@
 
 import { Button } from "@/components/ui/button";
 import { useCurrentUser } from "@/hooks/useCurrentUser";
-import { useRouter } from "@/i18n/navigation";
+import { useNavigationWithLoader } from "@/hooks/useNavigationWithLoader";
 import { ShoppingCart } from "lucide-react";
 import { useTranslations } from "next-intl";
 
@@ -23,7 +23,7 @@ export default function CartProceedButton({
   isLoading = false,
   selectedSellerId,
 }: CartProceedButtonProps) {
-  const router = useRouter();
+  const router = useNavigationWithLoader();
   const { user } = useCurrentUser();
   const t = useTranslations("cart");
 

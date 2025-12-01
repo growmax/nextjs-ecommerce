@@ -1,5 +1,6 @@
 import { TenantProvider } from "@/contexts/TenantContext";
 import { UserDetailsProvider } from "@/contexts/UserDetailsContext";
+import { LoadingProvider } from "@/hooks/useGlobalLoader";
 import TenantService from "@/lib/api/services/TenantService";
 import { getServerAuthState } from "@/lib/auth-server";
 import { ServerUserService } from "@/lib/services/ServerUserService";
@@ -53,8 +54,10 @@ export default async function AuthLayout({
           initialAuthState={authState.isAuthenticated}
           initialUserData={userData?.data || null}
         >
-          {/* Auth pages: No nav, no footer */}
-          <main className="min-h-screen">{children}</main>
+          <LoadingProvider>
+            {/* Auth pages: No nav, no footer */}
+            <main className="min-h-screen">{children}</main>
+          </LoadingProvider>
         </UserDetailsProvider>
       </TenantProvider>
     </NextIntlClientProvider>

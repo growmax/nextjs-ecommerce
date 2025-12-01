@@ -1,9 +1,9 @@
 "use client";
 
 import { ColumnDef } from "@tanstack/react-table";
-import { useCallback, useEffect, useMemo, useState } from "react";
-import { toast } from "sonner";
 import { useTranslations } from "next-intl";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { toast } from "sonner";
 
 import PricingFormat from "@/components/PricingFormat";
 import DashboardTable from "@/components/custom/DashBoardTable";
@@ -21,7 +21,10 @@ import { Skeleton } from "@/components/ui/skeleton";
 
 import { statusColor } from "@/components/custom/statuscolors";
 import { useCurrentUser } from "@/hooks/useCurrentUser";
-import { useRoutePrefetch } from "@/hooks/useRoutePrefetch";
+import { useNavigationWithLoader } from "@/hooks/useNavigationWithLoader";
+import { usePageLoader } from "@/hooks/usePageLoader";
+import { usePostNavigationFetch } from "@/hooks/usePostNavigationFetch";
+import { useRequestDeduplication } from "@/hooks/useRequestDeduplication";
 import ordersFilterService, {
   OrderFilter,
 } from "@/lib/api/services/OrdersFilterService/OrdersFilterService";
@@ -46,9 +49,9 @@ const convertDateToString = (
 const TableSkeleton = ({ rows = 10 }: { rows?: number }) => {
   const t = useTranslations("orders");
   return (
-    <div className="rounded-md border shadow-sm overflow-hidden flex flex-col">
-      <div className="border-b border-gray-200 bg-gray-50 flex-shrink-0">
-        <div className="flex font-medium text-sm text-gray-700">
+    <div className="border shadow overflow-hidden flex flex-col bg-background rounded-lg">
+      <div className="border-b border-border bg-muted flex-shrink-0">
+        <div className="flex font-medium text-sm text-foreground">
           <div className="px-2 py-3 w-[150px]">{t("orderId")}</div>
           <div className="px-2 py-3 w-[200px]">{t("orderName")}</div>
           <div className="px-2 py-3 w-[150px]">{t("orderDate")}</div>
@@ -64,22 +67,19 @@ const TableSkeleton = ({ rows = 10 }: { rows?: number }) => {
       </div>
       <div className="flex-1 overflow-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
         {Array.from({ length: rows }).map((_, rowIndex) => (
-          <div
-            key={`row-${rowIndex}`}
-            className="border-b border-gray-100 flex "
-          >
+          <div key={`row-${rowIndex}`} className="border-b border-border flex ">
             {Array.from({ length: 11 }).map((_, colIndex) => (
               <div
                 key={`cell-${rowIndex}-${colIndex}`}
                 className="px-2 py-3 w-[150px] flex items-center"
               >
-                <Skeleton className="h-4 w-full bg-gray-200" />
+                <Skeleton className="h-4 w-full bg-muted" />
               </div>
             ))}
           </div>
         ))}
       </div>
-      <div className="flex items-center justify-end gap-4 px-4 py-2 border-t bg-gray-50/50 flex-shrink-0">
+      <div className="flex items-center justify-end gap-4 px-4 py-2 border-t border-border bg-muted/50 flex-shrink-0">
         <Skeleton className="h-3 w-16" />
         <Skeleton className="h-6 w-12" />
         <Skeleton className="h-3 w-20" />
@@ -94,10 +94,21 @@ function OrdersLandingTable({
   refreshTrigger,
   setExportCallback,
 }: OrdersLandingTableProps) {
+  // Use the page loader hook to ensure navigation spinner is hidden immediately
+  usePageLoader();
+
   const { user } = useCurrentUser();
-  const { prefetch, prefetchMultiple, prefetchAndNavigate } =
-    useRoutePrefetch();
+  const router = useNavigationWithLoader();
   const t = useTranslations("orders");
+  const { deduplicate } = useRequestDeduplication();
+
+  // Refs to prevent duplicate API calls
+  const isFetchingRef = useRef(false);
+  const lastFetchParamsRef = useRef<string>("");
+  const abortControllerRef = useRef<AbortController | null>(null);
+
+  // Ref for scrollable container to reset scroll position
+  const scrollContainerRef = useRef<HTMLDivElement | null>(null);
 
   // State
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
@@ -106,7 +117,7 @@ function OrdersLandingTable({
   const [initialLoad, setInitialLoad] = useState(true);
   const [totalCount, setTotalCount] = useState(0);
   const [page, setPage] = useState(0);
-  const [rowPerPage, setRowPerPage] = useState(20);
+  const [rowPerPage, setRowPerPage] = useState(16);
   const [pagination, setPagination] = useState({ pageIndex: 0, pageSize: 20 });
   const [filterData, setFilterData] = useState<QuoteFilterFormData | null>(
     null
@@ -258,7 +269,7 @@ function OrdersLandingTable({
         cell: ({ row }) => {
           const status = row.original.updatedBuyerStatus;
           if (!status)
-            return <span className="text-gray-400 pl-[30px]">-</span>;
+            return <span className="text-muted-foreground pl-[30px]">-</span>;
           const color = statusColor(status.toUpperCase());
           const titleCaseStatus = status
             .split(" ")
@@ -269,7 +280,7 @@ function OrdersLandingTable({
           return (
             <div className="pl-[30px]">
               <span
-                className="px-2 py-0.5 rounded-full text-xs font-medium text-white whitespace-nowrap"
+                className="px-2 py-1 rounded text-xs font-medium text-primary-foreground whitespace-nowrap border border-border/30"
                 style={{ backgroundColor: color }}
               >
                 {titleCaseStatus}
@@ -379,100 +390,143 @@ function OrdersLandingTable({
       return;
     }
 
-    setLoading(true);
+    // Create a unique key for this fetch request
+    const fetchKey = `orders-${JSON.stringify({
+      page,
+      rowPerPage,
+      userId: user.userId,
+      companyId: user.companyId,
+      filterData,
+    })}`;
 
-    const calculatedOffset = page;
-    const userId = parseInt(user.userId.toString());
-    const companyId = parseInt(user.companyId.toString());
-
-    try {
-      let response;
-
-      if (filterData) {
-        const isSimpleStatusFilter =
-          filterData.status &&
-          filterData.status.length === 1 &&
-          !filterData.quoteId &&
-          !filterData.quoteName &&
-          !filterData.quotedDateStart &&
-          !filterData.quotedDateEnd &&
-          !filterData.lastUpdatedDateStart &&
-          !filterData.lastUpdatedDateEnd &&
-          !filterData.subtotalStart &&
-          !filterData.subtotalEnd &&
-          !filterData.taxableStart &&
-          !filterData.taxableEnd &&
-          !filterData.totalStart &&
-          !filterData.totalEnd;
-
-        if (isSimpleStatusFilter) {
-          const status = filterData.status?.[0];
-          if (status) {
-            response = await ordersFilterService.getOrdersByStatus(
-              userId,
-              companyId,
-              status,
-              calculatedOffset,
-              rowPerPage
-            );
-          } else {
-            throw new Error("Status is undefined");
-          }
-        } else {
-          const filter = createFilterFromData(filterData, calculatedOffset);
-          response = await ordersFilterService.getOrdersWithCustomFilters(
-            userId,
-            companyId,
-            filter
-          );
-        }
-      } else {
-        response = await ordersFilterService.getAllOrders(
-          userId,
-          companyId,
-          calculatedOffset,
-          rowPerPage
-        );
+    // Use deduplication to prevent concurrent duplicate requests
+    return deduplicate(async () => {
+      // Prevent duplicate calls with same parameters
+      if (isFetchingRef.current && lastFetchParamsRef.current === fetchKey) {
+        return;
       }
 
-      const apiResponse = response as {
-        data?: {
+      // Cancel any in-flight request
+      if (abortControllerRef.current) {
+        abortControllerRef.current.abort();
+      }
+
+      // Create new abort controller for this request
+      abortControllerRef.current = new AbortController();
+      const signal = abortControllerRef.current.signal;
+
+      // Mark as fetching and store params
+      isFetchingRef.current = true;
+      lastFetchParamsRef.current = fetchKey;
+
+      setLoading(true);
+
+      const calculatedOffset = page;
+      const userId = parseInt(user.userId.toString());
+      const companyId = parseInt(user.companyId.toString());
+
+      try {
+        let response;
+
+        if (filterData) {
+          const isSimpleStatusFilter =
+            filterData.status &&
+            filterData.status.length === 1 &&
+            !filterData.quoteId &&
+            !filterData.quoteName &&
+            !filterData.quotedDateStart &&
+            !filterData.quotedDateEnd &&
+            !filterData.lastUpdatedDateStart &&
+            !filterData.lastUpdatedDateEnd &&
+            !filterData.subtotalStart &&
+            !filterData.subtotalEnd &&
+            !filterData.taxableStart &&
+            !filterData.taxableEnd &&
+            !filterData.totalStart &&
+            !filterData.totalEnd;
+
+          if (isSimpleStatusFilter) {
+            const status = filterData.status?.[0];
+            if (status) {
+              response = await ordersFilterService.getOrdersByStatus(
+                userId,
+                companyId,
+                status,
+                calculatedOffset,
+                rowPerPage
+              );
+            } else {
+              throw new Error("Status is undefined");
+            }
+          } else {
+            const filter = createFilterFromData(filterData, calculatedOffset);
+            response = await ordersFilterService.getOrdersWithCustomFilters(
+              userId,
+              companyId,
+              filter
+            );
+          }
+        } else {
+          response = await ordersFilterService.getAllOrders(
+            userId,
+            companyId,
+            calculatedOffset,
+            rowPerPage
+          );
+        }
+
+        const apiResponse = response as {
+          data?: {
+            ordersResponse?: Order[];
+            orders?: Order[];
+            totalOrderCount?: number;
+            totalCount?: number;
+          };
           ordersResponse?: Order[];
           orders?: Order[];
           totalOrderCount?: number;
           totalCount?: number;
         };
-        ordersResponse?: Order[];
-        orders?: Order[];
-        totalOrderCount?: number;
-        totalCount?: number;
-      };
 
-      const ordersData =
-        apiResponse.data?.ordersResponse ||
-        apiResponse.data?.orders ||
-        apiResponse.ordersResponse ||
-        apiResponse.orders ||
-        [];
-      const totalCountData =
-        apiResponse.data?.totalOrderCount ||
-        apiResponse.data?.totalCount ||
-        apiResponse.totalOrderCount ||
-        apiResponse.totalCount ||
-        0;
+        const ordersData =
+          apiResponse.data?.ordersResponse ||
+          apiResponse.data?.orders ||
+          apiResponse.ordersResponse ||
+          apiResponse.orders ||
+          [];
+        const totalCountData =
+          apiResponse.data?.totalOrderCount ||
+          apiResponse.data?.totalCount ||
+          apiResponse.totalOrderCount ||
+          apiResponse.totalCount ||
+          0;
 
-      setOrders(ordersData);
-      setTotalCount(totalCountData);
-    } catch {
-      toast.error(t("failedToFetch"));
-      setOrders([]);
-      setTotalCount(0);
-    } finally {
-      setLoading(false);
-      if (initialLoad) {
-        setInitialLoad(false);
+        // Only update state if request wasn't aborted
+        if (!signal.aborted) {
+          setOrders(ordersData);
+          setTotalCount(totalCountData);
+        }
+      } catch (error: any) {
+        // Don't show error if request was aborted
+        if (error?.name === "AbortError" || signal.aborted) {
+          return;
+        }
+        toast.error(t("failedToFetch"));
+        if (!signal.aborted) {
+          setOrders([]);
+          setTotalCount(0);
+        }
+      } finally {
+        // Only update loading state if request wasn't aborted
+        if (!signal.aborted) {
+          setLoading(false);
+          if (initialLoad) {
+            setInitialLoad(false);
+          }
+          isFetchingRef.current = false;
+        }
       }
-    }
+    }, fetchKey); // Close deduplicate call
   }, [
     user?.userId,
     user?.companyId,
@@ -482,6 +536,7 @@ function OrdersLandingTable({
     createFilterFromData,
     initialLoad,
     t,
+    deduplicate,
   ]);
 
   // Export functionality
@@ -590,7 +645,8 @@ function OrdersLandingTable({
     setExportCallback?.(() => handleExport);
   }, [handleExport, setExportCallback]);
 
-  useEffect(() => {
+  // Fetch orders after navigation completes - ensures instant navigation
+  usePostNavigationFetch(() => {
     fetchOrders();
   }, [fetchOrders]);
 
@@ -600,39 +656,42 @@ function OrdersLandingTable({
       toast.success(t("ordersRefreshed"));
     }
   }, [refreshTrigger, fetchOrders, t]);
+
+  // Cleanup: abort any in-flight requests on unmount
+  useEffect(() => {
+    return () => {
+      if (abortControllerRef.current) {
+        abortControllerRef.current.abort();
+      }
+    };
+  }, []);
   const handlePrevious = () => {
     setPage(prev => prev - 1);
+    // Reset scroll to top and left with smooth behavior
+    if (scrollContainerRef.current) {
+      scrollContainerRef.current.scrollTo({
+        top: 0,
+        left: 0,
+        behavior: "smooth",
+      });
+    }
+    // Also reset window scroll
+    window.scrollTo({ top: 0, left: 0, behavior: "smooth" });
   };
 
   const handleNext = () => {
     setPage(prev => prev + 1);
-  };
-
-  // Prefetch routes for visible orders (only first page for performance)
-  // More aggressive prefetching happens on hover
-  useEffect(() => {
-    if (orders.length > 0 && !loading && page === 0) {
-      // Only prefetch first 10 orders on initial load to avoid overwhelming
-      const routes = orders
-        .slice(0, 10)
-        .map(order => order.orderIdentifier)
-        .filter((id): id is string => Boolean(id))
-        .map(id => `/details/orderDetails/${id}`);
-      if (routes.length > 0) {
-        prefetchMultiple(routes, 5);
-      }
+    // Reset scroll to top and left with smooth behavior
+    if (scrollContainerRef.current) {
+      scrollContainerRef.current.scrollTo({
+        top: 0,
+        left: 0,
+        behavior: "smooth",
+      });
     }
-  }, [orders, loading, page, prefetchMultiple]);
-
-  // Handle row hover to prefetch route
-  const handleRowHover = useCallback(
-    (row: Order) => {
-      if (row.orderIdentifier) {
-        prefetch(`/details/orderDetails/${row.orderIdentifier}`);
-      }
-    },
-    [prefetch]
-  );
+    // Also reset window scroll
+    window.scrollTo({ top: 0, left: 0, behavior: "smooth" });
+  };
 
   return (
     <>
@@ -666,17 +725,20 @@ function OrdersLandingTable({
         title={t("addNewOrder")}
       >
         <div className="space-y-4">
-          <p className="text-gray-600">{t("addNewOrderDescription")}</p>
+          <p className="text-muted-foreground">{t("addNewOrderDescription")}</p>
         </div>
       </SideDrawer>
 
       <div className="flex flex-col">
         <div className="w-full overflow-x-hidden">
-          <div className="w-full overflow-x-auto scrollbar-thin-horizontal">
+          <div
+            ref={scrollContainerRef}
+            className="w-full overflow-x-auto scrollbar-thin-horizontal"
+          >
             {initialLoad && loading ? (
               <TableSkeleton rows={rowPerPage} />
             ) : !initialLoad && orders.length === 0 ? (
-              <div className="flex items-center justify-center text-gray-500 py-8">
+              <div className="flex items-center justify-center text-muted-foreground py-8">
                 {t("noOrders")}
               </div>
             ) : (
@@ -702,11 +764,9 @@ function OrdersLandingTable({
                 onRowClick={row => {
                   const orderId = row.orderIdentifier;
                   if (orderId) {
-                    prefetchAndNavigate(`/details/orderDetails/${orderId}`);
+                    router.push(`/details/orderDetails/${orderId}`);
                   }
                 }}
-                onRowHover={handleRowHover}
-                tableHeight=""
               />
             )}
           </div>
@@ -726,7 +786,7 @@ function OrdersLandingTable({
             </DialogDescription>
           </DialogHeader>
           <div className="py-4">
-            <div className="text-center text-gray-500 py-8">
+            <div className="text-center text-muted-foreground py-8">
               {t("noItemsToDisplay")}
             </div>
           </div>

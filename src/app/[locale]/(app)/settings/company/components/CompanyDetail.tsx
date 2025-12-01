@@ -2,8 +2,8 @@
 
 import { SaveCancelToolbar } from "@/components/custom/save-cancel-toolbar";
 import SectionCard from "@/components/custom/SectionCard";
+import CompanyFormInput from "@/components/forms/FormInput/FormInput";
 import { Button } from "@/components/ui/button";
-import { useTranslations } from "next-intl";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -23,11 +23,11 @@ import {
 } from "@/components/ui/form";
 import { CompanyService, SubIndustryService } from "@/lib/api";
 import type { CompanyApiResponse } from "@/lib/api/services/CompanyService";
+import { useTranslations } from "next-intl";
 import Image from "next/image";
 import React, { useEffect, useRef, useState } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
-import CompanyFormInput from "./FormInput";
 
 type SubIndustryOption = {
   id: string | number;

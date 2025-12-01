@@ -2,7 +2,13 @@
 
 import { AuthStorage } from "@/lib/auth";
 import { UserDetails } from "@/lib/interfaces/UserInterfaces";
-import React, { createContext, useCallback, useContext, useState } from "react";
+import React, {
+  createContext,
+  useCallback,
+  useContext,
+  useMemo,
+  useState,
+} from "react";
 
 /**
  * Consolidated User Details Context
@@ -87,7 +93,13 @@ export function UserDetailsProvider({
     }
     return AuthStorage.isAuthenticated();
   });
-  const [isLoading] = useState(false);
+  // Loading state: true during hydration, false after mount
+  const [isLoading, setIsLoading] = useState(true);
+
+  // Set loading to false after hydration
+  React.useEffect(() => {
+    setIsLoading(false);
+  }, []);
 
   const login = useCallback(
     (
@@ -123,15 +135,19 @@ export function UserDetailsProvider({
     return authenticated;
   }, []);
 
-  const contextValue: UserDetailsContextData = {
-    isAuthenticated,
-    isLoading,
-    user,
-    error: user ? null : isAuthenticated ? "No user session" : null,
-    login,
-    logout,
-    checkAuth,
-  };
+  // Memoize context value to prevent unnecessary re-renders
+  const contextValue = useMemo<UserDetailsContextData>(
+    () => ({
+      isAuthenticated,
+      isLoading,
+      user,
+      error: user ? null : isAuthenticated ? "No user session" : null,
+      login,
+      logout,
+      checkAuth,
+    }),
+    [isAuthenticated, isLoading, user, login, logout, checkAuth]
+  );
 
   return (
     <UserDetailsContext.Provider value={contextValue}>

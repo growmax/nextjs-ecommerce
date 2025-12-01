@@ -1,5 +1,5 @@
+import { useQuery } from "@tanstack/react-query";
 import axios from "axios";
-import useSWR from "swr/immutable";
 
 /**
  * Hook to check if volume discount is enabled for a company
@@ -23,29 +23,29 @@ function useCheckVolumeDiscountEnabled(
   companyId: string | number | undefined | null,
   cond = true
 ) {
-  const fetcher = async () => {
-    return axios({
-      url: "/api/sales/checkIsVDEnabledByCompanyId",
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      data: { companyId },
-    });
-  };
-
-  const { data, error } = useSWR(
-    companyId && cond
-      ? ["Check_Is_Volume_Discount_Enabled", companyId, cond]
-      : null,
-    fetcher
-  );
+  const { data, isLoading } = useQuery({
+    queryKey: ["volumeDiscount", companyId],
+    queryFn: async () => {
+      return axios({
+        url: "/api/sales/checkIsVDEnabledByCompanyId",
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        data: { companyId },
+      });
+    },
+    enabled: !!companyId && cond,
+    staleTime: 30 * 60 * 1000, // 30 minutes - volume discount settings rarely change
+    gcTime: 60 * 60 * 1000, // 1 hour
+    refetchOnWindowFocus: false,
+  });
 
   return {
     VDapplied: false,
     ShowVDButton: data?.data?.data ? true : false,
     VolumeDiscountAvailable: data?.data?.data ? true : false,
-    vdLoading: !data && !error,
+    vdLoading: isLoading,
   };
 }
 

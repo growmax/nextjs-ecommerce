@@ -1,37 +1,37 @@
 "use client";
 
 import {
-  closestCenter,
-  DndContext,
-  KeyboardSensor,
-  MouseSensor,
-  TouchSensor,
-  useSensor,
-  useSensors,
-  type DragEndEvent,
-  type UniqueIdentifier,
+    closestCenter,
+    DndContext,
+    KeyboardSensor,
+    MouseSensor,
+    TouchSensor,
+    useSensor,
+    useSensors,
+    type DragEndEvent,
+    type UniqueIdentifier,
 } from "@dnd-kit/core";
 import { restrictToVerticalAxis } from "@dnd-kit/modifiers";
 import {
-  arrayMove,
-  SortableContext,
-  verticalListSortingStrategy,
+    arrayMove,
+    SortableContext,
+    verticalListSortingStrategy,
 } from "@dnd-kit/sortable";
 import {
-  flexRender,
-  getCoreRowModel,
-  getFacetedRowModel,
-  getFacetedUniqueValues,
-  getFilteredRowModel,
-  getPaginationRowModel,
-  getSortedRowModel,
-  useReactTable,
-  type ColumnFiltersState,
-  type PaginationState,
-  type Row,
-  type RowSelectionState,
-  type SortingState,
-  type VisibilityState,
+    flexRender,
+    getCoreRowModel,
+    getFacetedRowModel,
+    getFacetedUniqueValues,
+    getFilteredRowModel,
+    getPaginationRowModel,
+    getSortedRowModel,
+    useReactTable,
+    type ColumnFiltersState,
+    type PaginationState,
+    type Row,
+    type RowSelectionState,
+    type SortingState,
+    type VisibilityState,
 } from "@tanstack/react-table";
 import { ChevronDown, Columns3, Plus } from "lucide-react";
 import * as React from "react";
@@ -39,26 +39,26 @@ import * as React from "react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
-  DropdownMenu,
-  DropdownMenuCheckboxItem,
-  DropdownMenuContent,
-  DropdownMenuTrigger,
+    DropdownMenu,
+    DropdownMenuCheckboxItem,
+    DropdownMenuContent,
+    DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Label } from "@/components/ui/label";
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
 } from "@/components/ui/select";
 import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
+    Table,
+    TableBody,
+    TableCell,
+    TableHead,
+    TableHeader,
+    TableRow,
 } from "@/components/ui/table";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
@@ -337,9 +337,9 @@ export function DataTable<TData>({
   // Render table content
   const renderTableContent = () => {
     const tableElement = (
-      <div className="overflow-hidden rounded-lg border">
+      <div className="overflow-x-auto rounded-lg border">
         <Table className={tableClassName}>
-          <TableHeader className="bg-muted sticky top-0 z-10">
+          <TableHeader className="bg-muted sticky top-0 z-[1]">
             {table.getHeaderGroups().map(headerGroup => (
               <TableRow key={headerGroup.id}>
                 {headerGroup.headers.map(header => {
@@ -502,7 +502,7 @@ export function DataTable<TData>({
   return (
     <div className={`flex flex-col ${className || ""}`}>
       {renderToolbar()}
-      <div className="flex-1 overflow-auto">
+      <div className="flex-1 overflow-auto mb-4">
         <div className="px-4 lg:px-6">{renderTableContent()}</div>
       </div>
       {showPagination && (

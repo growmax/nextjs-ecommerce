@@ -5,6 +5,7 @@ import axios, {
   AxiosResponse,
   InternalAxiosRequestConfig,
 } from "axios";
+import https from "https";
 
 // API Configuration
 const API_CONFIG = {
@@ -67,6 +68,7 @@ export interface RequestContext {
   accessToken?: string;
   origin?: string;
   tenantCode?: string;
+  elasticCode?: string;
 }
 
 // Custom error class
@@ -133,16 +135,35 @@ function createApiClient(config: ApiClientConfig = {}): AxiosInstance {
       "Content-Type": "application/json",
     },
   };
-  
+
   if (config.baseURL !== undefined) {
     axiosConfig.baseURL = config.baseURL;
   }
-  
   const instance = axios.create(axiosConfig);
-
   // Request interceptor
   instance.interceptors.request.use(
     (config: InternalAxiosRequestConfig) => {
+      // Set SNI (Server Name Indication) for server-side HTTPS requests
+      // This is critical for proper TLS handshake with servers that require SNI
+      if (typeof window === "undefined" && config.url && config.httpsAgent) {
+        try {
+          const url = new URL(config.url, config.baseURL);
+          if (url.protocol === "https:") {
+            // Extract hostname without port for SNI
+            const hostname = url.hostname;
+            // Set servername on the agent config for this specific request
+            // This ensures SNI is sent with the correct hostname
+            if (config.httpsAgent instanceof https.Agent) {
+              // Create a new agent instance with the correct servername for this request
+              // Note: We can't modify the agent directly, so we'll handle this via the request config
+              (config as unknown as { servername?: string }).servername = hostname;
+            }
+          }
+        } catch {
+          // URL parsing failed, skip SNI configuration
+        }
+      }
+
       // Auto-inject authorization token
       if (typeof window !== "undefined") {
         // Try both client-specific and standard cookies for compatibility

@@ -3,16 +3,16 @@
 import { AddressDetailsDialog } from "@/components/dialogs/AddressDetailsDialog";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
-  HoverCard,
-  HoverCardContent,
-  HoverCardTrigger,
+    HoverCard,
+    HoverCardContent,
+    HoverCardTrigger,
 } from "@/components/ui/hover-card";
 import { Input } from "@/components/ui/input";
 import { Separator } from "@/components/ui/separator";
 import { type BillingAddress } from "@/lib/api";
 import SellerWarehouseService, {
-  type SellerBranch,
-  type Warehouse,
+    type SellerBranch,
+    type Warehouse,
 } from "@/lib/api/services/SellerWarehouseService/SellerWarehouseService";
 import { zoneDateTimeCalculator } from "@/utils/date-format/date-format";
 import { Pencil } from "lucide-react";
@@ -745,14 +745,14 @@ export default function OrderContactDetails({
     }
   };
   return (
-    <Card className="shadow-sm pb-0">
-      <CardHeader className="px-6 -my-5  bg-gray-50 rounded-t-lg items-end gap-0">
+    <Card className="shadow-sm pb-0 py-0 gap-0">
+      <CardHeader className="px-6 py-2 bg-muted rounded-t-lg items-end gap-0">
         <CardTitle className="text-xl font-semibold text-gray-900 m-0!">
           {t("contactDetails")}
         </CardTitle>
       </CardHeader>
       <Separator />
-      <CardContent className="px-6 pt-2 pb-0 gap-0 -mt-5">
+      <CardContent className="px-6 pt-2 pb-0 gap-0">
         <div className="divide-y divide-gray-100 [&>div]:py-1.5 [&>div:last-child]:pb-0">
           {/* Company */}
           <DetailRow

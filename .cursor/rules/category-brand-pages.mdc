@@ -1,0 +1,514 @@
+# Category and Brand Pages Development Rule
+
+When implementing features or tasks for category pages (`[...categories]/page.tsx`) or brand pages (`brands/[brand-slug]/page.tsx` and `brands/[brand-slug]/[...categories]/page.tsx`), follow this comprehensive guide for proper planning and implementation.
+
+## Critical Reference: OpenSearch Integration
+
+**ALWAYS REFERENCE:** `@nextjs-ecommerce/.cursor/rules/opensearch-queries.mdc` for all OpenSearch query patterns, field naming conventions, and query building guidelines.
+
+OpenSearch is the **primary data source** for:
+
+- Product listings and search results
+- Filter aggregations (brands, categories, variant attributes, product specifications)
+- Catalog and equipment code filtering
+
+## Page Architecture Overview
+
+### Category Pages Structure
+
+**Location:** `src/app/[locale]/(app)/[...categories]/page.tsx`
+
+**Key Components:**
+
+1. **Server Component (page.tsx)** - Handles:
+   - SEO metadata generation (`generateMetadata`)
+   - Category path resolution via `CategoryResolutionService`
+   - Tenant context extraction from headers
+   - OpenSearch query building using `buildCategoryQuery()` from `@/utils/opensearch/browse-queries`
+   - Initial product fetching via `SearchService.searchProducts()`
+   - Filter aggregations via `SearchService.getFilterAggregations()`
+   - Server-side rendering for SEO
+
+2. **Client Component (`CategoryPageInteractivity`)** - Handles:
+   - URL state management (pagination, sorting, filters)
+   - Client-side filtering and product updates
+   - Filter sidebar/drawer
+   - View mode toggle (grid/list/table)
+   - Pagination controls
+
+3. **Product Grid Components:**
+   - `ProductGridServer` - Server component for initial render
+   - `ProductGridServerClient` - Client wrapper for interactivity
+   - `ProductListViewClient` - List view implementation
+   - `ProductTableViewClient` - Table view implementation
+
+### Brand Pages Structure
+
+**Locations:**
+
+- `src/app/[locale]/(app)/brands/All/page.tsx` - All brands listing
+- `src/app/[locale]/(app)/brands/[brand-slug]/page.tsx` - Single brand page
+- `src/app/[locale]/(app)/brands/[brand-slug]/[...categories]/page.tsx` - Brand + category page
+
+**Key Components:**
+
+1. **All Brands Page:**
+   - Uses `BrandsService.getAllBrands()` to fetch brands via OpenSearch aggregations
+   - Displays brands in a grid layout
+   - Generates slugs from brand names
+
+2. **Brand Pages:**
+   - Similar structure to category pages
+   - Uses `buildBrandQuery()` from `@/utils/opensearch/browse-queries`
+   - Brand name must match exactly in OpenSearch (`brandsName.keyword`)
+   - Shows all filters uniformly (including brand filter) for consistency with category pages
+   - When category is included (`brands/[brand-slug]/[...categories]`), category-specific filters are automatically loaded
+
+## Data Flow Pattern
+
+### Standard Flow for Category/Brand Pages:
+
+```
+1. Server Component (page.tsx)
+   ├─ Extract tenant context from headers
+   │  └─ TenantService.getTenantDataCached() → elasticCode, tenantCode
+   │
+   ├─ Resolve category/brand path
+   │  └─ CategoryResolutionService.resolveCategories() or brand slug resolution
+   │
+   ├─ Build OpenSearch query
+   │  └─ buildCategoryQuery() / buildBrandQuery() / buildQueryFromSlug()
+   │     └─ Options: page, pageSize, sortBy, filters, catalogCodes, equipmentCodes
+   │
+   ├─ Fetch products
+   │  └─ SearchService.searchProducts({ elasticIndex, query })
+   │
+   ├─ Fetch filter aggregations
+   │  └─ SearchService.getFilterAggregations(elasticIndex, baseQuery, filterState)
+   │
+   └─ Render with Suspense boundaries
+      ├─ ProductGridServer (initial render)
+      └─ CategoryPageInteractivity (client controls)
+```
+
+### Client-Side Updates:
+
+```
+URL SearchParams Change
+  ↓
+CategoryPageInteractivity detects change
+  ↓
+Build new query with updated filters
+  ↓
+SearchService.searchProducts() (client-side)
+  ↓
+Update product grid and pagination
+```
+
+## OpenSearch Query Building
+
+### Required Query Builders
+
+**Location:** `src/utils/opensearch/browse-queries.ts`
+
+**Available Functions:**
+
+- `buildCategoryQuery(categoryIds, options)` - For category filtering
+- `buildSubCategoryQuery(subCategoryId, options)` - For subcategory filtering
+- `buildMajorCategoryQuery(majorCategoryId, options)` - For major category filtering
+- `buildBrandQuery(brandName, options)` - For brand filtering (exact match required)
+- `buildProductGroupQuery(productGroupId, options)` - For product group filtering
+- `buildQueryFromSlug(slug, options)` - Universal slug-based query builder
+  - Patterns: `m_{majorCategoryId}`, `c_{categoryId}`, `s_{subCategoryId}`, `b_{brandName}`, `pg_{productGroupId}`
+
+### Query Options Interface
+
+```typescript
+interface BrowseQueryOptions {
+  page?: number; // 1-based, default: 1
+  pageSize?: number; // default: 20
+  sortBy?: {
+    sortBy?: number; // 1=relevance, 2=price-asc, 3=price-desc, 4=field-asc, 5=field-desc
+    sortByField?: string; // Field name for custom sorting (when sortBy is 4 or 5)
+  };
+  filters?: Record<string, string[]>; // Additional filters
+  variantAttributes?: Record<string, string[]>; // Variant attribute filters
+  productSpecifications?: Record<string, string[]>; // Product spec filters
+  catalogCodes?: string[]; // Catalog codes for filtering
+  equipmentCodes?: string[]; // Equipment codes for filtering
+  inStock?: boolean; // Stock availability filter
+}
+```
+
+### Base Query Requirements
+
+**ALWAYS include these base filters** (handled by query builders):
+
+```json
+{
+  "must": [{ "term": { "isPublished": 1 } }],
+  "must_not": [
+    { "match": { "prodgrpIndexName": { "query": "PrdGrp0*" } } },
+    { "term": { "internal": true } }
+  ]
+}
+```
+
+## Filter System Architecture
+
+### Uniform Filter Display
+
+**All page types (category, brand, brand+category) display filters uniformly:**
+
+- All filter types are shown on all pages for consistency
+- Brand filter is visible on brand pages (not hidden)
+- Category-specific filters automatically load when category is included in brand pages
+- Filter sidebar uses the same `CategoryFilters` component across all page types
+
+### Filter Types
+
+1. **Brand Filters** - From aggregations (`brandsName.keyword`)
+2. **Category Filters** - Hierarchical (major → category → subcategory)
+3. **Variant Attributes** - Dynamic product attributes (e.g., color, size)
+4. **Product Specifications** - Technical specifications (e.g., voltage, power)
+5. **Catalog Codes** - Catalog-based filtering
+6. **Equipment Codes** - Equipment-based filtering
+7. **Stock Status** - In stock/out of stock filtering (uses `inventory` array with `availableQty` field)
+
+### Filter Aggregations
+
+**Service:** `SearchService.getFilterAggregations(elasticIndex, baseQuery, filterState)`
+
+**Returns:** `FilterAggregations` type with:
+
+- `brands` - Available brand options
+- `categories` - Child and sibling categories
+- `variantAttributes` - Grouped variant attributes
+- `productSpecifications` - Grouped product specifications
+- `catalogCodes` - Available catalog codes
+- `equipmentCodes` - Available equipment codes
+
+### Filter State Management
+
+Filters are managed via URL search parameters:
+
+- `page` - Current page number
+- `sort` - Sort option (1-5)
+- `in_stock` - Stock filter (true/false)
+- `catalog_code` - Catalog codes (array)
+- `equipment_code` - Equipment codes (array)
+- `{attributeName}` - Variant attributes
+- `spec_{specName}` - Product specifications
+
+## Implementation Checklist
+
+When implementing a feature or task on category/brand pages:
+
+### 1. Planning Phase
+
+- [ ] **Identify the scope:**
+  - Is it a category page feature? Brand page? Both?
+  - Does it affect product listing, filters, or both?
+  - Is it server-side or client-side?
+
+- [ ] **Review OpenSearch requirements:**
+  - Check `@nextjs-ecommerce/.cursor/rules/opensearch-queries.mdc`
+  - Determine if new query builder needed or existing one can be used
+  - Identify required OpenSearch fields and aggregations
+
+- [ ] **Understand data flow:**
+  - Where does data come from? (OpenSearch, API, local state)
+  - How is it transformed?
+  - Where is it consumed? (Server component, client component, both)
+
+### 2. Query Building
+
+- [ ] **Use existing query builders** when possible:
+  - Check `src/utils/opensearch/browse-queries.ts` for available builders
+  - Use `buildQueryFromSlug()` for flexible slug-based queries
+
+- [ ] **If custom query needed:**
+  - Follow base query structure (must/must_not clauses)
+  - Use camelCase field names (not snake_case)
+  - Add `.keyword` suffix for text field exact matches
+  - Reference field mappings from `opensearch-queries.mdc`
+
+### 3. Server Component Implementation
+
+- [ ] **Extract tenant context:**
+
+  ```typescript
+  const headersList = await headers();
+  const tenantDomain = headersList.get("x-tenant-domain") || "";
+  const tenantOrigin = headersList.get("x-tenant-origin") || "";
+  const tenantData = await TenantService.getTenantDataCached(
+    tenantDomain,
+    tenantOrigin
+  );
+  const elasticCode = tenantData?.data?.tenant?.elasticCode || "";
+  const elasticIndex = `${elasticCode}pgandproducts`;
+  ```
+
+- [ ] **Build RequestContext:**
+
+  ```typescript
+  const context: RequestContext = {
+    elasticCode,
+    tenantCode: tenantData?.data?.tenant?.tenantCode || "",
+    ...(tenantOrigin && { origin: tenantOrigin }),
+  };
+  ```
+
+- [ ] **Resolve category/brand path:**
+  - Category: `CategoryResolutionService.resolveCategories(categories, context)`
+  - Brand: Extract from slug and validate
+
+- [ ] **Build and execute query:**
+
+  ```typescript
+  const { query } = buildCategoryQuery(categoryIds, options);
+  const result = await SearchService.searchProducts({ elasticIndex, query });
+  ```
+
+- [ ] **Fetch aggregations if filters needed:**
+  ```typescript
+  const aggregations = await SearchService.getFilterAggregations(
+    elasticIndex,
+    baseQueryForAggs,
+    filterState,
+    context
+  );
+  ```
+
+### 4. Client Component Implementation
+
+- [ ] **URL state management:**
+  - Use `useSearchParams()` and `useRouter()` from Next.js
+  - Update URL params for filters, pagination, sorting
+  - Sync URL state with component state
+
+- [ ] **Product fetching:**
+  - Use `SearchService.searchProducts()` for client-side updates
+  - Show loading states during fetch
+  - Handle errors gracefully
+
+- [ ] **Filter UI:**
+  - Use `CategoryFiltersDrawer` for mobile
+  - Use `CategoryFilters` component for desktop sidebar
+  - Show all filters uniformly across all page types (category, brand, brand+category)
+  - Brand filter is visible on all pages (not hidden on brand pages)
+  - Pass aggregations to filter components
+  - Handle filter state updates
+  - When category is included in brand pages, category-specific filters are automatically loaded via `categoryPath` prop
+
+### 5. Component Integration
+
+- [ ] **Product Grid:**
+  - Use `ProductGridServer` for initial server render
+  - Use `ProductGridServerClient` for client updates
+  - Support view modes: grid, list, table
+  - Handle empty states
+
+- [ ] **Pagination:**
+  - Use `CategoryPagination` component
+  - Calculate total pages from total count
+  - Update URL on page change
+
+- [ ] **Sorting:**
+  - Use `SortDropdown` component
+  - Map sort options to OpenSearch sort queries
+  - Update URL on sort change
+
+### 6. SEO Considerations
+
+- [ ] **Metadata generation:**
+  - Implement `generateMetadata()` function
+  - Use category/brand name and description
+  - Include OpenGraph tags
+
+- [ ] **Structured data:**
+  - Add `StructuredDataServer` component
+  - Use CollectionPage schema for category pages
+  - Include breadcrumb structured data
+
+- [ ] **Breadcrumbs:**
+  - Use `CategoryBreadcrumbServer` for server render
+  - Generate breadcrumbs from category path
+
+### 7. Error Handling
+
+- [ ] **Category/Brand not found:**
+  - Return `notFound()` or custom 404 component
+  - Show helpful error messages
+
+- [ ] **OpenSearch errors:**
+  - Catch and log errors
+  - Show empty state with helpful message
+  - Don't break page rendering
+
+- [ ] **Network errors:**
+  - Handle timeout errors
+  - Provide retry mechanisms
+  - Show user-friendly error messages
+
+## Common Patterns
+
+### Pattern 1: Adding a New Filter
+
+1. Add filter to URL search params parsing in server component
+2. Add filter to `BrowseQueryOptions` if needed
+3. Update query builder to include filter in OpenSearch query
+4. Add aggregation for filter in `getFilterAggregations()`
+5. Add filter UI component (sidebar/drawer)
+6. Update client component to handle filter state
+
+### Pattern 2: Adding a New Sort Option
+
+1. Add sort option to `SortDropdown` component
+2. Map sort option to OpenSearch sort query
+3. Update query builder to handle new sort
+4. Update URL param parsing
+
+### Pattern 3: Modifying Product Display
+
+1. Update `ProductGridServer` for server render
+2. Update `ProductGridServerClient` for client updates
+3. Update view mode components if needed
+4. Ensure responsive design maintained
+
+### Pattern 4: Adding Category/Brand Page Variant
+
+1. Create new page file following existing structure
+2. Implement category/brand resolution logic
+3. Use appropriate query builder (`buildCategoryQuery`, `buildBrandQuery`, etc.)
+4. Reuse existing components (ProductGrid, Filters, Pagination)
+5. Customize metadata and structured data
+
+## Key Services Reference
+
+### SearchService
+
+**Location:** `src/lib/api/services/SearchService/SearchService.ts`
+
+**Key Methods:**
+
+- `searchProducts({ elasticIndex, query })` - Search products
+- `getFilterAggregations(elasticIndex, baseQuery, filterState, context)` - Get filter options
+- `getAggregations(elasticIndex, query, context)` - Get raw aggregations
+
+### CategoryResolutionService
+
+**Location:** `src/lib/services/CategoryResolutionService.ts`
+
+**Key Methods:**
+
+- `resolveCategories(categories, context)` - Resolve category slugs to IDs
+- `getCategoryTree(context)` - Get full category tree
+- `generateNextMetadata(categoryPath, locale, baseUrl)` - Generate SEO metadata
+- `getCategoryBreadcrumbs(categoryPath, locale)` - Generate breadcrumbs
+
+### BrandsService
+
+**Location:** `src/lib/api/services/BrandsService.ts`
+
+**Key Methods:**
+
+- `getAllBrands(context)` - Get all brands via OpenSearch aggregations
+- `getBrandsByCompanyId(companyId, context)` - Get brands by company
+
+### TenantService
+
+**Location:** `src/lib/api/services/TenantService.ts`
+
+**Key Methods:**
+
+- `getTenantDataCached(tenantDomain, tenantOrigin)` - Get tenant data (cached)
+
+## Testing Considerations
+
+- [ ] Test with different category hierarchies (major → category → subcategory)
+- [ ] Test with different brand names (special characters, spaces)
+- [ ] Test filter combinations
+- [ ] Test pagination edge cases (first page, last page, empty results)
+- [ ] Test sorting with different options
+- [ ] Test responsive design (mobile, tablet, desktop)
+- [ ] Test SEO metadata generation
+- [ ] Test error states (no products, invalid category, network errors)
+
+## Performance Optimization
+
+- [ ] Use `Suspense` boundaries for streaming
+- [ ] Implement proper caching for tenant data
+- [ ] Use `revalidate` for ISR (Incremental Static Regeneration)
+- [ ] Optimize OpenSearch queries (limit `_source` fields, use pagination)
+- [ ] Implement loading states for better UX
+- [ ] Use `generateStaticParams` where possible
+
+## Related Files Reference
+
+**Page Files:**
+
+- `src/app/[locale]/(app)/[...categories]/page.tsx` - Category pages
+- `src/app/[locale]/(app)/brands/All/page.tsx` - All brands page
+- `src/app/[locale]/(app)/brands/[brand-slug]/page.tsx` - Brand page
+- `src/app/[locale]/(app)/brands/[brand-slug]/[...categories]/page.tsx` - Brand + category page
+
+**Component Files:**
+
+- `src/components/ProductGrid/ProductGridServer.tsx` - Server product grid
+- `src/components/ProductGrid/ProductGridServerClient.tsx` - Client product grid wrapper
+- `src/app/[locale]/(app)/[...categories]/_components/CategoryPageInteractivity.tsx` - Category page controls
+- `src/app/[locale]/(app)/brands/[brand-slug]/[...categories]/_components/BrandCategoryPageInteractivity.tsx` - Brand category page controls
+
+**Utility Files:**
+
+- `src/utils/opensearch/browse-queries.ts` - Query builders
+- `src/utils/elasticsearch/search-queries.ts` - Search query builders
+- `src/lib/services/CategoryResolutionService.ts` - Category resolution
+
+**Service Files:**
+
+- `src/lib/api/services/SearchService/SearchService.ts` - Search service
+- `src/lib/api/services/BrandsService.ts` - Brands service
+- `src/lib/api/services/TenantService.ts` - Tenant service
+
+## Quick Reference: Common Tasks
+
+### Add a new filter type
+
+1. Update `FilterAggregations` type
+2. Add aggregation to `getFilterAggregations()`
+3. Add filter parsing in server component
+4. Update query builder to include filter
+5. Add filter UI component
+
+### Change products per page
+
+1. Update `pageSize` in query options
+2. Update pagination calculation
+3. Update URL param handling
+
+### Add new sort option
+
+1. Add option to `SortDropdown`
+2. Map to OpenSearch sort query
+3. Update query builder
+
+### Modify product card display
+
+1. Update `ProductGridServer` component
+2. Update view mode components if needed
+3. Ensure responsive design
+
+## Important Notes
+
+1. **Always use query builders** from `browse-queries.ts` instead of building queries manually
+2. **Field names must be camelCase** with `.keyword` suffix for exact matches
+3. **Always include base filters** (isPublished, must_not exclusions)
+4. **Tenant context is required** for all OpenSearch queries
+5. **URL state drives client updates** - don't use local state for filters/pagination
+6. **Server components for SEO** - initial render must be server-side
+7. **Client components for interactivity** - use client components for user interactions
+8. **Uniform filter display** - All pages (category, brand, brand+category) show all filters including brand filter for consistency
+9. **Category-specific filters** - When category is included in brand pages, pass `categoryPath` prop to ensure category filters load correctly
+10. **Reference opensearch-queries.mdc** for all OpenSearch-related questions

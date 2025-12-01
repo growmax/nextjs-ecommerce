@@ -1,4 +1,3 @@
-import { PageContent } from "@/components/layout/PageContent";
 import MobileCartAction from "@/components/product/MobileCartAction";
 import MobileNavigation from "@/components/product/MobileNavigation";
 import ProductBreadcrumb from "@/components/product/ProductBreadcrumb";
@@ -242,26 +241,22 @@ export async function generateMetadata({
 }
 
 export default async function ProductPage({ params }: ProductPageProps) {
-  const { slug } = await params;
+  const { slug, locale } = await params;
   const { tenantData, origin } =
     await ProductPageService.getProductPageContext();
   if (!tenantData?.data?.tenant?.elasticCode) {
     return (
-      <PageContent>
-        <div className="container mx-auto px-4 py-8">
-          <div className="text-center">
-            <h1 className="text-2xl font-bold text-gray-900 mb-4">
-              Product Not Found
-            </h1>
-            <p className="text-gray-600 mb-6">
-              The requested product could not be found.
-            </p>
-            <Button onClick={() => window.history.back()} variant="outline">
-              Go Back
-            </Button>
-          </div>
-        </div>
-      </PageContent>
+      <div className="text-center">
+        <h1 className="text-2xl font-bold text-gray-900 mb-4">
+          Product Not Found
+        </h1>
+        <p className="text-gray-600 mb-6">
+          The requested product could not be found.
+        </p>
+        <Button onClick={() => window.history.back()} variant="outline">
+          Go Back
+        </Button>
+      </div>
     );
   }
 
@@ -270,19 +265,15 @@ export default async function ProductPage({ params }: ProductPageProps) {
 
   if (!productId) {
     return (
-      <PageContent>
-        <div className="container mx-auto px-4 py-8">
-          <div className="text-center">
-            <h1 className="text-2xl font-bold text-gray-900 mb-4">
-              Invalid Product
-            </h1>
-            <p className="text-gray-600 mb-6">Invalid product identifier.</p>
-            <Button onClick={() => window.history.back()} variant="outline">
-              Go Back
-            </Button>
-          </div>
-        </div>
-      </PageContent>
+      <div className="text-center">
+        <h1 className="text-2xl font-bold text-gray-900 mb-4">
+          Invalid Product
+        </h1>
+        <p className="text-gray-600 mb-6">Invalid product identifier.</p>
+        <Button onClick={() => window.history.back()} variant="outline">
+          Go Back
+        </Button>
+      </div>
     );
   }
 
@@ -292,6 +283,7 @@ export default async function ProductPage({ params }: ProductPageProps) {
     tenantCode,
     origin
   );
+  
   if (!productData) {
     const { notFound } = await import("next/navigation");
     return notFound();
@@ -313,46 +305,44 @@ export default async function ProductPage({ params }: ProductPageProps) {
       {/* Mobile Navigation */}
       <MobileNavigation product={product} />
 
-      <PageContent layout="auto">
-        <div className="py-3">
-          <ProductBreadcrumb product={product} />
+      <div className="py-3">
+        <ProductBreadcrumb product={product} locale={locale} />
+      </div>
+
+      {/* Two-Column Layout: Image Gallery (Left) + Product Details (Right) */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-12 pb-24 lg:pb-8">
+        {/* Left Column: Sticky Image Gallery */}
+        <div className="lg:sticky lg:top-8 lg:h-fit">
+          <ProductImageGalleryClient
+            images={product.product_assetss || []}
+            productTitle={product.title}
+          />
         </div>
 
-        {/* Two-Column Layout: Image Gallery (Left) + Product Details (Right) */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-12 pb-24 lg:pb-8">
-          {/* Left Column: Sticky Image Gallery */}
-          <div className="lg:sticky lg:top-8 lg:h-fit">
-            <ProductImageGalleryClient
-              images={product.product_assetss || []}
-              productTitle={product.title}
+        {/* Right Column: Essential SEO Content (Server-Side) + Interactive Features (Client-Side) */}
+        <ProductPageClientContainer
+          product={product}
+          elasticIndex={elasticIndex}
+          context={context}
+          baseImages={product.product_assetss || []}
+        >
+          {/* Server-Side SEO Critical Content */}
+          <ProductInfo product={product} />
+
+          {/* Client-Side Variant Selection */}
+          <Suspense fallback={<VariantPageSkeleton />}>
+            <ProductPageClient
+              product={product}
+              elasticIndex={elasticIndex}
+              context={context}
+              baseImages={product.product_assetss || []}
             />
-          </div>
+          </Suspense>
+        </ProductPageClientContainer>
+      </div>
 
-          {/* Right Column: Essential SEO Content (Server-Side) + Interactive Features (Client-Side) */}
-          <ProductPageClientContainer
-            product={product}
-            elasticIndex={elasticIndex}
-            context={context}
-            baseImages={product.product_assetss || []}
-          >
-            {/* Server-Side SEO Critical Content */}
-            <ProductInfo product={product} />
-
-            {/* Client-Side Variant Selection */}
-            <Suspense fallback={<VariantPageSkeleton />}>
-              <ProductPageClient
-                product={product}
-                elasticIndex={elasticIndex}
-                context={context}
-                baseImages={product.product_assetss || []}
-              />
-            </Suspense>
-          </ProductPageClientContainer>
-        </div>
-
-        {/* Mobile Only: Fixed Bottom Cart Action */}
-        <MobileCartAction product={product} />
-      </PageContent>
+      {/* Mobile Only: Fixed Bottom Cart Action */}
+      <MobileCartAction product={product} />
     </ProductVariantProvider>
   );
 }

@@ -1,12 +1,12 @@
 "use client";
 
+import { Button } from "@/components/ui/button";
+import { useIsMobile } from "@/hooks/use-mobile";
+import { cn } from "@/lib/utils";
+import type { SaveCancelToolbarProps } from "@/types/save-cancel";
 import * as React from "react";
 import { createPortal } from "react-dom";
-import { cn } from "@/lib/utils";
-import { Button } from "@/components/ui/button";
 import { LoadingButton } from "./loading-button";
-import { useIsMobile } from "@/hooks/use-mobile";
-import type { SaveCancelToolbarProps } from "@/types/save-cancel";
 
 const SaveCancelToolbar = React.forwardRef<
   HTMLDivElement,
@@ -30,95 +30,88 @@ const SaveCancelToolbar = React.forwardRef<
   ) => {
     const isMobile = useIsMobile();
     const [mounted, setMounted] = React.useState(false);
-    const [isScrolled, setIsScrolled] = React.useState(false);
-    const [isSidebarOpen, setIsSidebarOpen] = React.useState(false);
+    const [sidebarLeftOffset, setSidebarLeftOffset] = React.useState(0);
     const [anchorOffset, setAnchorOffset] = React.useState<number | null>(null);
 
     React.useEffect(() => {
       setMounted(true);
     }, []);
 
+    // Calculate sidebar offset by measuring SidebarInset (main content area)
+    // This matches how the layout positions content relative to the sidebar
     React.useEffect(() => {
-      const handleScroll = () => {
-        setIsScrolled(window.scrollY > 0);
-      };
+      const calculateSidebarOffset = () => {
+        if (isMobile) {
+          setSidebarLeftOffset(0);
+          return;
+        }
 
-      window.addEventListener("scroll", handleScroll);
-      return () => window.removeEventListener("scroll", handleScroll);
-    }, []);
-
-    React.useEffect(() => {
-      const checkSidebarState = () => {
-        let isOpen = false;
-
-        // Method 1: Check for settings sidebar specifically
-        const settingsSidebar = document.querySelector(
-          'div[class*="w-64"][class*="min-h-full"][class*="border-r"]'
-        );
-
-        // Method 2: Check if we're on a settings page and screen is large enough
-        const isSettingsPage = window.location.pathname.includes("/settings");
-        const isLargeScreen = window.innerWidth >= 1024;
-
-        if (isSettingsPage && isLargeScreen && settingsSidebar) {
-          const styles = window.getComputedStyle(settingsSidebar);
-          // Check if the sidebar is actually visible (not hidden)
-          if (styles.display !== "none" && styles.visibility !== "hidden") {
-            isOpen = true;
+        // Find the SidebarInset (main element) - this is positioned by the sidebar system
+        const sidebarWrapper = document.querySelector('[class*="group/sidebar-wrapper"]');
+        if (sidebarWrapper) {
+          const mainContent = sidebarWrapper.querySelector('main') as HTMLElement;
+          if (mainContent) {
+            const rect = mainContent.getBoundingClientRect();
+            // The left position of main content is where the sidebar ends
+            setSidebarLeftOffset(rect.left);
+            return;
           }
         }
 
-        // Method 3: Check for mobile/fixed sidebar elements that might be visible
-        const fixedSidebarElements = document.querySelectorAll(
-          '[class*="w-64"][class*="fixed"]'
-        );
-        fixedSidebarElements.forEach(element => {
-          const styles = window.getComputedStyle(element);
-          const transform = styles.transform;
-          // If transform doesn't contain translateX(-100%) or translate3d(-100%, it's visible
-          if (
-            !transform.includes("translateX(-") &&
-            !transform.includes("translate3d(-")
-          ) {
-            isOpen = true;
+        // Fallback: find any main element
+        const mainElements = document.querySelectorAll('main');
+        for (const mainEl of Array.from(mainElements)) {
+          const el = mainEl as HTMLElement;
+          const rect = el.getBoundingClientRect();
+          if (rect.left > 0) {
+            setSidebarLeftOffset(rect.left);
+            return;
           }
+        }
+
+        // Default fallback
+        setSidebarLeftOffset(0);
+      };
+
+      calculateSidebarOffset();
+
+      // Use ResizeObserver to watch for changes in main content position
+      let resizeObserver: ResizeObserver | null = null;
+      const sidebarWrapper = document.querySelector('[class*="group/sidebar-wrapper"]');
+      if (sidebarWrapper) {
+        const mainContent = sidebarWrapper.querySelector('main') as HTMLElement;
+        if (mainContent && 'ResizeObserver' in window) {
+          resizeObserver = new ResizeObserver(() => {
+            requestAnimationFrame(() => {
+              calculateSidebarOffset();
+            });
+          });
+          resizeObserver.observe(mainContent);
+        }
+      }
+
+      // Watch for sidebar state changes
+      const mutationObserver = new MutationObserver(() => {
+        requestAnimationFrame(() => {
+          calculateSidebarOffset();
         });
-
-        // Method 4: Check for overlay (mobile sidebar open)
-        const hasOverlay =
-          document.querySelector('[class*="bg-black/50"]') ||
-          document.querySelector('[class*="bg-black\\/50"]');
-
-        if (hasOverlay) {
-          isOpen = true;
-        }
-
-        setIsSidebarOpen(isOpen);
-      };
-
-      // Check initially with a small delay to ensure DOM is ready
-      setTimeout(checkSidebarState, 100);
-
-      // Add resize listener for window size changes
-      window.addEventListener("resize", checkSidebarState);
-
-      // Use MutationObserver to watch for changes
-      const observer = new MutationObserver(() => {
-        setTimeout(checkSidebarState, 10);
       });
 
-      observer.observe(document.body, {
+      mutationObserver.observe(document.body, {
         attributes: true,
         childList: true,
         subtree: true,
-        attributeFilter: ["class", "style"],
+        attributeFilter: ["class", "style", "data-state", "data-collapsible"],
       });
 
+      window.addEventListener("resize", calculateSidebarOffset);
+
       return () => {
-        window.removeEventListener("resize", checkSidebarState);
-        observer.disconnect();
+        resizeObserver?.disconnect();
+        mutationObserver.disconnect();
+        window.removeEventListener("resize", calculateSidebarOffset);
       };
-    }, []);
+    }, [isMobile]);
 
     React.useEffect(() => {
       if (!anchorSelector) {
@@ -153,7 +146,7 @@ const SaveCancelToolbar = React.forwardRef<
       };
     }, [anchorSelector]);
 
-    if (!show || !mounted || isScrolled) return null;
+    if (!show || !mounted) return null;
 
     const computedTop = anchorOffset ?? (isMobile ? 68 : 64);
 
@@ -161,20 +154,13 @@ const SaveCancelToolbar = React.forwardRef<
       <div
         ref={ref}
         className={cn(
-          "fixed z-50 bg-white border-b border-gray-200 shadow-sm",
-          isMobile
-            ? "top-17 left-0 right-0"
-            : "top-17 bottom-150 left-1 right-0",
+          "fixed z-50 bg-white border-b border-gray-200 shadow-sm transition-all duration-200",
           className
         )}
         style={{
           position: "fixed !important" as React.CSSProperties["position"],
           top: `${computedTop}px !important`,
-          left: isMobile
-            ? "0 !important"
-            : isSidebarOpen
-              ? "64px !important"
-              : "64px !important",
+          left: isMobile ? "0 !important" : `${sidebarLeftOffset}px !important`,
           right: "0 !important",
           zIndex: "51 !important",
           transform: "none !important",

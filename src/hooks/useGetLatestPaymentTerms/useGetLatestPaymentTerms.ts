@@ -1,7 +1,7 @@
 import { useCurrentUser } from "@/hooks/useCurrentUser";
 import type { PaymentTerm } from "@/lib/api";
 import PaymentService from "@/lib/api/services/PaymentService/PaymentService";
-import useSWR from "swr/immutable";
+import { useQuery } from "@tanstack/react-query";
 
 /**
  * Hook to get latest payment terms with cash discount
@@ -24,33 +24,32 @@ export default function useGetLatestPaymentTerms(
   const { user } = useCurrentUser();
   const userId = user?.userId;
 
-  const fetcher = async () => {
-    if (!userId) {
-      throw new Error("User ID is required");
-    }
+  const { data: paymentTerms, isLoading } = useQuery({
+    queryKey: ["paymentTerms", userId, companyId],
+    queryFn: async () => {
+      if (!userId) {
+        throw new Error("User ID is required");
+      }
 
-    // Use PaymentService.fetchPaymentTerms which calls PaymentTerms/fetchPaymentTerms?userId=${userId}&isB2C=false
-    const response = await PaymentService.fetchPaymentTerms(userId);
+      // Use PaymentService.fetchPaymentTerms which calls PaymentTerms/fetchPaymentTerms?userId=${userId}&isB2C=false
+      const response = await PaymentService.fetchPaymentTerms(userId);
 
-    // Filter for cash discount terms and return the first one
-    // Response structure: { data: PaymentTerm[], success: string, message: string }
-    const dataterms = response?.data?.filter(
-      (term: PaymentTerm) => term.cashdiscount === true
-    )?.[0];
+      // Filter for cash discount terms and return the first one
+      // Response structure: { data: PaymentTerm[], success: string, message: string }
+      const dataterms = response?.data?.filter(
+        (term: PaymentTerm) => term.cashdiscount === true
+      )?.[0];
 
-    return dataterms;
-  };
-
-  const { data: paymentTerms, error: paymentTermError } = useSWR(
-    userId && fetchLatestPaymentTerm ? ["fetchPaymentTerms", userId] : null,
-    fetcher,
-    {
-      revalidateOnFocus: true,
-    }
-  );
+      return dataterms;
+    },
+    enabled: !!userId && fetchLatestPaymentTerm,
+    staleTime: 30 * 60 * 1000, // 30 minutes - payment terms rarely change
+    gcTime: 60 * 60 * 1000, // 1 hour
+    refetchOnWindowFocus: false,
+  });
 
   return {
     latestPaymentTerms: paymentTerms,
-    latestPaymentTermsLoading: !paymentTerms && !paymentTermError,
+    latestPaymentTermsLoading: isLoading,
   };
 }

@@ -5,8 +5,8 @@ const Input = React.forwardRef<
   HTMLInputElement,
   React.InputHTMLAttributes<HTMLInputElement>
 >(({ className, type, value, ...props }, ref) => {
-  // Convert null values to empty string
-  const safeValue = value === null ? "" : value;
+  // Always coerce null/undefined to empty string so the input remains controlled
+  const safeValue = value == null ? "" : value;
 
   return (
     <input

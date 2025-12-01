@@ -67,9 +67,13 @@ Uploads a file to S3 using a presigned URL.
 **Example:**
 
 ```typescript
-const result = await UploadServices.uploadToS3(file, presignedData, (progress) => {
-  console.log(`Uploaded: ${progress.loaded} / ${progress.total}`);
-});
+const result = await UploadServices.uploadToS3(
+  file,
+  presignedData,
+  progress => {
+    console.log(`Uploaded: ${progress.loaded} / ${progress.total}`);
+  }
+);
 // result.Location = "https://bucket.s3.region.amazonaws.com/key"
 ```
 
@@ -102,7 +106,7 @@ const result = await UploadServices.postUpload(
     folderName: "app_assets/company_images/123/logo/456",
     fileName: "company-logo.jpg",
   },
-  (progress) => {
+  progress => {
     console.log(`Progress: ${(progress.loaded / progress.total) * 100}%`);
   }
 );
@@ -201,4 +205,3 @@ services/
 - Base: `BaseService` - Base service implementation
 - Client: `BasePageUrl` - Base page API client
 - Component: `ImageUpload` - Component that uses this service
-

@@ -52,6 +52,11 @@
       ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono",
       "Courier New", monospace;
     --radius: 0.625rem;
+    /* Header and layout dimensions */
+    --header-height: 3.5rem; /* h-14 - mobile header */
+    --header-height-desktop: 4rem; /* h-16 - desktop header */
+    --main-content-height: calc(100vh - var(--header-height));
+    --main-content-height-desktop: calc(100vh - var(--header-height-desktop));
     --shadow-x: 0;
     --shadow-y: 1px;
     --shadow-blur: 3px;
@@ -73,6 +78,13 @@
     --shadow-2xl: 0 1px 3px 0px hsl(0 0% 0% / 0.25);
     --tracking-normal: 0em;
     --spacing: 0.25rem;
+    /* Details page card spacing */
+    --details-card-gap-mobile: 0.5rem; /* 2 = 0.5rem */
+    --details-card-gap-sm: 0.75rem; /* 3 = 0.75rem */
+    --details-card-gap-md: 1rem; /* 4 = 1rem */
+    --details-section-margin-mobile: 0.5rem; /* 2 = 0.5rem */
+    --details-section-margin-sm: 0.75rem; /* 3 = 0.75rem */
+    --details-section-margin-md: 1rem; /* 4 = 1rem */
   }
 
   .dark {
@@ -212,5 +224,51 @@
 
   .scrollbar-thin-horizontal::-webkit-scrollbar-thumb:hover {
     background: #94a3b8; /* Thumb color on hover */
+  }
+
+  /* Progress bar animation for add to cart button */
+  @keyframes progress-slide {
+    0% {
+      transform: translateX(-100%);
+    }
+    50% {
+      transform: translateX(150%);
+    }
+    100% {
+      transform: translateX(-100%);
+    }
+  }
+
+  /* Details page card spacing utilities */
+  .details-card-gap {
+    gap: var(--details-card-gap-mobile);
+  }
+
+  @media (min-width: 640px) {
+    .details-card-gap {
+      gap: var(--details-card-gap-sm);
+    }
+  }
+
+  @media (min-width: 768px) {
+    .details-card-gap {
+      gap: var(--details-card-gap-md);
+    }
+  }
+
+  .details-section-margin {
+    margin-top: var(--details-section-margin-mobile);
+  }
+
+  @media (min-width: 640px) {
+    .details-section-margin {
+      margin-top: var(--details-section-margin-sm);
+    }
+  }
+
+  @media (min-width: 768px) {
+    .details-section-margin {
+      margin-top: var(--details-section-margin-md);
+    }
   }
 }

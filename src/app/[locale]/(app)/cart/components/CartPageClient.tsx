@@ -13,13 +13,13 @@ import useCartPrice from "@/hooks/useCartPrice";
 import { useCurrentUser } from "@/hooks/useCurrentUser";
 import useGetCurrencyModuleSettings from "@/hooks/useGetCurrencyModuleSettings/useGetCurrencyModuleSettings";
 import useModuleSettings from "@/hooks/useModuleSettings";
+import { useNavigationWithLoader } from "@/hooks/useNavigationWithLoader";
 import useSelectedSellerCart from "@/hooks/useSelectedSellerCart";
-import { useRouter } from "@/i18n/navigation";
 import type { CartItem } from "@/types/calculation/cart";
 import { cartCalculation } from "@/utils/calculation/cartCalculation";
 import {
-  validateCreateOrder,
-  validateRequestQuote,
+    validateCreateOrder,
+    validateRequestQuote,
 } from "@/utils/cart/cartValidation";
 import { ShoppingCart } from "lucide-react";
 import { useTranslations } from "next-intl";
@@ -29,7 +29,7 @@ import { toast } from "sonner";
 export default function CartPageClient() {
   const { user, loading: userLoading } = useCurrentUser();
   const currency = user?.currency;
-  const router = useRouter();
+  const router = useNavigationWithLoader();
   const t = useTranslations("cart");
   const { cart, cartCount, isLoading: isCartLoading } = useCartContext();
   const {
@@ -122,7 +122,7 @@ export default function CartPageClient() {
   // Show skeleton loader when any loading state is active
   if (isLoading) {
     return (
-      <div className="container mx-auto px-4 py-6 max-w-7xl">
+      <>
         <div className="mb-8">
           <Skeleton className="h-9 w-48 mb-2" />
           <Skeleton className="h-5 w-32" />
@@ -200,40 +200,36 @@ export default function CartPageClient() {
             </div>
           </div>
         </div>
-      </div>
+      </>
     );
   }
 
   // Only show "log in" message after user loading completes and user is confirmed null
   if (!userLoading && !user) {
     return (
-      <div className="container mx-auto p-4">
-        <Card>
-          <CardContent className="p-8 text-center">
-            <ShoppingCart className="h-12 w-12 mx-auto text-gray-400 mb-4" />
-            <h2 className="text-xl font-semibold mb-2">{t("pleaseLogin")}</h2>
-            <p className="text-gray-600">{t("pleaseLoginDescription")}</p>
-          </CardContent>
-        </Card>
-      </div>
+      <Card>
+        <CardContent className="p-8 text-center">
+          <ShoppingCart className="h-12 w-12 mx-auto text-gray-400 mb-4" />
+          <h2 className="text-xl font-semibold mb-2">{t("pleaseLogin")}</h2>
+          <p className="text-gray-600">{t("pleaseLoginDescription")}</p>
+        </CardContent>
+      </Card>
     );
   }
 
   // If cart is empty, show empty state
   if (!cart || cart.length === 0) {
     return (
-      <div className="container mx-auto p-4">
-        <Card>
-          <CardContent className="p-8 text-center">
-            <ShoppingCart className="h-12 w-12 mx-auto text-gray-400 mb-4" />
-            <h2 className="text-xl font-semibold mb-2">{t("empty")}</h2>
-            <p className="text-gray-600 mb-4">{t("emptyDescription")}</p>
-            <Button onClick={() => router.push("/products")}>
-              {t("continueShopping")}
-            </Button>
-          </CardContent>
-        </Card>
-      </div>
+      <Card>
+        <CardContent className="p-8 text-center">
+          <ShoppingCart className="h-12 w-12 mx-auto text-gray-400 mb-4" />
+          <h2 className="text-xl font-semibold mb-2">{t("empty")}</h2>
+          <p className="text-gray-600 mb-4">{t("emptyDescription")}</p>
+          <Button onClick={() => router.push("/products")}>
+            {t("continueShopping")}
+          </Button>
+        </CardContent>
+      </Card>
     );
   }
 
@@ -405,7 +401,7 @@ export default function CartPageClient() {
   };
 
   return (
-    <div className="container mx-auto px-4 py-6 max-w-7xl">
+    <>
       <div className="mb-8">
         <h1 className="text-3xl font-bold mb-2">{t("title")}</h1>
         <p className="text-muted-foreground text-sm">
@@ -491,6 +487,6 @@ export default function CartPageClient() {
           </div>
         )}
       </div>
-    </div>
+    </>
   );
 }

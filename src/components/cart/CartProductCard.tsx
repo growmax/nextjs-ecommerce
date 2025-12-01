@@ -125,14 +125,6 @@ export default function CartProductCard({
   }, [item, suitableDiscount, isPricingLoading]);
 
   const handleQuantityChange = async (newQuantity: number) => {
-    console.log("🟢 [CartProductCard] handleQuantityChange called", {
-      productId: item.productId,
-      currentQuantity: item.quantity,
-      newQuantity,
-      itemNo: item.itemNo,
-      sellerId: item.sellerId,
-    });
-
     if (newQuantity < 1) {
       console.warn("⚠️ [CartProductCard] Quantity < 1, returning early");
       return;
@@ -146,12 +138,6 @@ export default function CartProductCard({
     };
 
     try {
-      console.log("📞 [CartProductCard] Calling changeQty with:", {
-        productId: Number(item.productId),
-        itemNo: item.itemNo,
-        quantity: newQuantity,
-        sellerId: item.sellerId,
-      });
 
       await changeQty(
         {
@@ -169,7 +155,6 @@ export default function CartProductCard({
         setError
       );
 
-      console.log("✅ [CartProductCard] changeQty completed successfully");
 
       if (onUpdate) {
         onUpdate(newQuantity);

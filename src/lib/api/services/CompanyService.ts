@@ -1,6 +1,6 @@
 import { AuthStorage } from "../../auth";
 import { JWTService } from "../../services/JWTService";
-import { coreCommerceClient } from "../client";
+import { authClient, coreCommerceClient } from "../client";
 import { BaseService } from "./BaseService";
 
 // Branch Address Interface
@@ -295,6 +295,36 @@ export interface ZoneInfo {
   zoneName?: string;
   zoneCode?: string;
 }
+export interface UserProfile {
+  id: string;
+  tenantId: string;
+
+  displayName: string;
+  email: string;
+  secondaryEmail: string;
+
+  emailVerified: boolean;
+  hasPassword: boolean;
+  status: string;
+  isSeller: boolean;
+
+  callingCodes: string;
+  callingCodesSecondary: string;
+
+  countryCallingCode: string;
+  countryCallingCodeSecondary: string;
+
+  iso2: string;
+  iso2Secondary: string;
+
+  phoneNumber: string;                 // e.g. +919159153985
+  phoneNumberVerified: boolean;
+
+  nationalMobileNum: string;           // e.g. 919159153985
+  nationalMobileNumSecondary: string;  // can be empty
+
+  secondaryPhoneNumber: string;
+}
 
 // Create Branch Request Interface
 export interface CreateBranchRequest {
@@ -391,7 +421,12 @@ export interface TopDataItem {
   amountVale: number;
   name: string;
 }
-
+export interface OtpReq {
+  Otp: string | number;
+  UserName: string | number;
+  isEmail: boolean;
+  userId: string | number;
+}
 // Dashboard Data Interface
 export interface DashboardData {
   activeAccounts: number;
@@ -421,9 +456,14 @@ export interface DashboardResponse {
   message: string | null;
   status: string;
 }
+export interface VerifyRequest {
+  phoneNumber: string | number;
+
+}
 
 export class CompanyService extends BaseService<CompanyService> {
   protected defaultClient = coreCommerceClient;
+
 
   /**
    * Resolve userId and companyId from params or from stored JWT token.
@@ -446,7 +486,7 @@ export class CompanyService extends BaseService<CompanyService> {
             JWTService.getInstance().decodeToken(accessToken);
           userId = userId ?? payload?.userId ?? payload?.id ?? payload?.sub;
           companyId = companyId ?? payload?.companyId;
-        } catch {}
+        } catch { }
       }
     }
 
@@ -531,7 +571,98 @@ export class CompanyService extends BaseService<CompanyService> {
       "PUT"
     )) as CompanyApiResponse;
   }
+  async verfiy(params: { body: VerifyRequest }): Promise<unknown> {
 
+    return this.callWith(
+      `/user/sendVerificationPhoneNumber`,
+      {
+        phoneNumber: params?.body?.phoneNumber,
+
+      },
+      {
+        method: "POST",
+        client: authClient,
+      }
+    );
+  }
+  async verfiyOTp(params: { body: OtpReq }): Promise<unknown> {
+
+    return this.callWith(
+      `user/VerifyOtp`,
+      {
+        Otp: params?.body?.Otp,
+        UserName: params?.body?.UserName,
+        isEmail: params?.body?.isEmail,
+        userId: params?.body?.userId
+
+      },
+      {
+        method: "POST",
+        client: authClient,
+      }
+    );
+  }
+  async getProfile(params?: {
+    tenantId?: string;
+    domain?: string;
+  }): Promise<unknown> {
+    const payload: {
+      tenantId?: string;
+      domain?: string;
+    } = {};
+
+    if (params?.tenantId) {
+      payload.tenantId = params.tenantId;
+    }
+
+    if (params?.domain) {
+      payload.domain = params.domain;
+    }
+
+    return this.callWith(
+      `/user/me`,
+      Object.keys(payload).length > 0 ? payload : undefined,
+      {
+        method: "GET",
+        client: authClient,
+      }
+    );
+  }
+  async getUserPreference(params?: {
+    userId?: string;
+  }): Promise<unknown> {
+    if (!params?.userId) {
+      throw new Error("userId is required");
+    }
+
+    return this.callWith(
+      `/userpreferences/findAllUserPreferences?userId=${params.userId}`,
+      undefined,
+      {
+        method: "GET",
+        client: coreCommerceClient,
+      }
+    );
+  }
+
+  async saveUserPreferences(params: {
+    id?: number;
+    tenantId?: number;
+    userId: { id: number };
+    vendorId?: number | null;
+    dateFormat: string;
+    timeFormat: string;
+    timeZone: string;
+  }): Promise<unknown> {
+    return this.callWith(
+      `/userpreferences/saveUserPreferences`,
+      params,
+      {
+        method: "POST",
+        client: coreCommerceClient,
+      }
+    );
+  }
   // Backwards-compatible alias (optional)
   async getCurrentCompany(): Promise<CompanyApiResponse | null> {
     return this.getBranch();
@@ -555,6 +686,21 @@ export class CompanyService extends BaseService<CompanyService> {
       "POST"
     )) as CreateBranchResponse;
   }
+  async updateProfile(
+    sub: number | string,
+    params: UserProfile
+  ): Promise<unknown> {
+    return await this.callWith(
+      `/user/UpdateUsers/${sub}`,
+      params,
+      {
+        method: "PUT",
+        client: authClient,
+      }
+    );
+  }
+
+
 
   async updateBranchAddress(
     params: UpdateBranchRequest

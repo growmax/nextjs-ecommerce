@@ -54,7 +54,6 @@ export default function MobileCartAction({ product }: MobileCartActionProps) {
           quantity: newQuantity,
           itemNo: 0,
           pos: 0,
-          addBundle: true,
         },
       });
       toast.success(

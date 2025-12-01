@@ -1,7 +1,7 @@
 "use client";
 
-import React from "react";
 import { useTranslations } from "next-intl";
+import React from "react";
 
 import {
   Cell,
@@ -88,21 +88,27 @@ const DashboardTable = <T,>({
   return (
     <div
       className={cn(
-        "border rounded-lg overflow-x-hidden flex flex-col w-full",
+        "border overflow-x-hidden flex flex-col w-full z-0",
         tableHeight || ""
       )}
+      style={{
+        borderRadius: "var(--radius)",
+      }}
     >
       {/* Scrollable Table Container - Header and Body together */}
       <div
         className={cn(
-          "overflow-x-auto overflow-y-visible relative scrollbar-thin-horizontal",
+          "overflow-x-auto overflow-y-auto relative scrollbar-thin-horizontal",
           tableHeight ? "flex-1" : ""
         )}
       >
         {/* Loading overlay - covers table content for both initial load and filter changes */}
         {loading && (
           <div className="absolute inset-0 bg-background/80 backdrop-blur-sm z-30 flex items-center justify-center">
-            <div className="bg-background border shadow-lg rounded-lg p-6 flex flex-col items-center gap-4">
+            <div
+              className="bg-background border shadow-lg p-6 flex flex-col items-center gap-4"
+              style={{ borderRadius: "var(--radius)" }}
+            >
               <div className="flex gap-1">
                 <div className="w-2 h-2 bg-primary rounded-full animate-bounce [animation-delay:-0.3s]"></div>
                 <div className="w-2 h-2 bg-primary rounded-full animate-bounce [animation-delay:-0.15s]"></div>
@@ -113,7 +119,13 @@ const DashboardTable = <T,>({
           </div>
         )}
         <Table className="min-w-full table-auto">
-          <TableHeader className="bg-gray-100 sticky top-0 z-30 rounded-t-lg">
+          <TableHeader
+            className="bg-muted sticky top-0 z-20"
+            style={{
+              borderTopLeftRadius: "var(--radius)",
+              borderTopRightRadius: "var(--radius)",
+            }}
+          >
             {table.getHeaderGroups().map((headerGroup: HeaderGroup<T>) => (
               <TableRow key={headerGroup.id}>
                 {headerGroup.headers.map((header: Header<T, unknown>) => {
@@ -130,14 +142,14 @@ const DashboardTable = <T,>({
                     <TableHead
                       key={header.id}
                       className={cn(
-                        "px-1 py-0.5 bg-gray-100 border-b relative align-middle",
+                        "px-1 py-0.5 bg-muted border-b relative align-middle",
                         alignCenter
                           ? "text-center"
                           : alignRight
                             ? "text-right"
                             : "text-left",
                         isSticky &&
-                          "sticky left-0 z-[31] bg-gray-100 border-r border-gray-300"
+                          "sticky left-0 z-[31] bg-muted border-r border-border"
                       )}
                       style={{
                         width: header.getSize(),
@@ -174,7 +186,7 @@ const DashboardTable = <T,>({
               table.getRowModel().rows.map((row: Row<T>, _index: number) => (
                 <TableRow
                   key={row.id}
-                  className="group hover:bg-gray-100 cursor-pointer"
+                  className="group hover:bg-muted cursor-pointer"
                   onClick={() => onRowClick?.(row.original)}
                   onMouseEnter={() => onRowHover?.(row.original)}
                 >
@@ -199,7 +211,7 @@ const DashboardTable = <T,>({
                               ? "text-right"
                               : "text-left",
                           isSticky &&
-                            "sticky left-0 z-20 bg-white border-r border-gray-300 group-hover:bg-gray-100"
+                            "sticky left-0 z-20 bg-muted border-r border-border group-hover:bg-muted"
                         )}
                         style={{
                           width: cell.column.getSize(),

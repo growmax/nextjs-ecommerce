@@ -43,7 +43,6 @@ describe("UploadServices", () => {
     uploadServices = new UploadServices();
     callWithSpy = jest.spyOn(BaseService.prototype as any, "callWith");
     axiosPostSpy = mockAxiosPost;
-
     // Reset mocks
     mockAxiosPost.mockReset();
     jest.clearAllMocks();

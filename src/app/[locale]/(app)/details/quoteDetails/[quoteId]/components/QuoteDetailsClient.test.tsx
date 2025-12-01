@@ -1,10 +1,28 @@
+import "@testing-library/jest-dom";
+
 // Mock Next.js modules first (before any imports)
 jest.mock("next/navigation", () => ({
   useRouter: () => ({
     push: jest.fn(),
     replace: jest.fn(),
-    prefetch: jest.fn(),
   }),
+}));
+
+jest.mock("@/hooks/useNavigationWithLoader", () => ({
+  useNavigationWithLoader: () => ({
+    push: jest.fn(),
+    replace: jest.fn(),
+  }),
+}));
+
+jest.mock("@/hooks/usePostNavigationFetch", () => ({
+  usePostNavigationFetch: (callback: () => void, deps: any[] = []) => {
+    const React = jest.requireActual("react");
+    React.useEffect(() => {
+      callback();
+      // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, deps);
+  },
 }));
 
 jest.mock("next-intl", () => ({
@@ -405,13 +423,13 @@ jest.mock("@/utils/General/general", () => ({
   decodeUnicode: jest.fn(str => str),
 }));
 
+import { QuotationDetailsService } from "@/lib/api";
+import QuotationNameService from "@/lib/api/services/QuotationNameService/QuotationNameService";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { render, screen, waitFor } from "@testing-library/react";
 import React, { ReactNode } from "react";
-import QuoteDetailsClient from "./QuoteDetailsClient";
-import { QuotationDetailsService } from "@/lib/api";
-import QuotationNameService from "@/lib/api/services/QuotationNameService/QuotationNameService";
 import { toast } from "sonner";
+import QuoteDetailsClient from "./QuoteDetailsClient";
 
 const mockFetchQuoteDetails =
   QuotationDetailsService.fetchQuotationDetails as jest.MockedFunction<
