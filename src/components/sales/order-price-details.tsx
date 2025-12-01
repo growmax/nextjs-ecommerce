@@ -195,8 +195,6 @@ export default function OrderPriceDetails({
               : 0);
 
       // Calculate cash discount from products
-
-      let cashDiscountValue = 0;
       if (products && products.length > 0) {
         products.forEach((product: any) => {
           const qty = product.quantity || product.askedQuantity || 1;
@@ -204,7 +202,6 @@ export default function OrderPriceDetails({
           const cashDiscount =
             product.cashdiscountValue || product.cashDiscountValue || 0;
           if (cashDiscount > 0) {
-            cashDiscountValue = cashDiscount; // Use the first non-zero value
             totalCashDiscountFromProducts +=
               (unitPrice * qty * cashDiscount) / 100;
           }
@@ -629,13 +626,13 @@ export default function OrderPriceDetails({
   // Calculate discount exactly as buyer-fe
   // DISCOUNT = isNumber(cartValue?.totalBasicDiscount) ? cartValue?.totalBasicDiscount : cartValue?.totalLP - cartValue?.totalValue
   // When VD applied: cartValue?.totalLP - VDDetails?.subTotal
-  const DISCOUNT =
-    VolumeDiscountAvailable && VDapplied
-      ? cartValue.totalLP - (VDDetails?.subTotal || 0)
-      : cartValue.totalBasicDiscount !== undefined &&
-          cartValue.totalBasicDiscount !== null
-        ? cartValue.totalBasicDiscount
-        : cartValue.totalLP - cartValue.totalValue;
+  // Note: DISCOUNT calculation removed as it's not currently used in the UI
+  // If needed in future, calculate as:
+  // const DISCOUNT = VolumeDiscountAvailable && VDapplied
+  //   ? cartValue.totalLP - (VDDetails?.subTotal || 0)
+  //   : cartValue.totalBasicDiscount !== undefined && cartValue.totalBasicDiscount !== null
+  //     ? cartValue.totalBasicDiscount
+  //     : cartValue.totalLP - cartValue.totalValue;
 
   const CASH_DISCOUNT = cartValue.totalCashDiscount || 0;
 

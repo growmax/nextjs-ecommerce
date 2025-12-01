@@ -52,12 +52,12 @@ import { FileText } from "lucide-react";
 
 // Utils
 import { useCalculation } from "@/hooks/useCalculation/useCalculation";
+import { useGlobalLoader } from "@/hooks/useGlobalLoader";
 import { formBundleProductsPayload, QuoteSubmissionService } from "@/lib/api";
 import { getAccounting } from "@/utils/calculation/salesCalculation/salesCalculation";
 import { containsXSS } from "@/utils/sanitization/sanitization.utils";
 import { summaryReqDTO } from "@/utils/summary/summaryReqDTO";
 import { BuyerQuoteSummaryValidations } from "@/utils/summary/validation";
-import { useGlobalLoader } from "@/hooks/useGlobalLoader";
 
 // Constants
 const NEGATIVE_VALUE_MSG = "Some products have negative prices";
@@ -1189,13 +1189,15 @@ export default function QuoteSummaryContent() {
   const sellerCompanyId = (setSellerAddress as any)?.companyId?.id;
 
   // Watch form values for pricing context (these are reactive and will trigger re-renders)
+  // Note: cartValue uses || {} fallback which creates new object references, but this is intentional
+  // as we want to react to cartValue changes from watch()
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   const cartValue = (watch("cartValue" as any) as any) || {};
   const isInter = (watch("isInter") as boolean) || false;
   const taxExempted = (watch("taxExempted") as boolean) || false;
   const preferencesForPricing = (watch("preferences" as any) as any) || {};
-  console.log(cartValue);
-  console.log(isInter);
-  console.log(products);
+
+  
   // Get pricing context for OrderPriceDetails
   const pricingContext = useMemo(() => {
     const insuranceCharges = Number(
@@ -1208,12 +1210,11 @@ export default function QuoteSummaryContent() {
       insuranceCharges,
       cartValue,
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [
     isInter,
     taxExempted,
     preferencesForPricing?.insuranceId?.insuranceValue,
-    JSON.stringify(cartValue),
+    cartValue,
   ]);
 
   return (

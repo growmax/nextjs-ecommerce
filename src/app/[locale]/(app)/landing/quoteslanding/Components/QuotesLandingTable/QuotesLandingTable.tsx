@@ -749,6 +749,7 @@ function QuotesLandingTable({
       }, 100);
       return () => clearTimeout(timer);
     }
+    return undefined;
   }, [user?.userId, user?.companyId, initialLoad, fetchQuotes]);
 
   // Trigger fetch when page or rowPerPage changes (only after initial load)

@@ -745,6 +745,7 @@ export default function EditOrderPage({ params }: EditOrderPageProps) {
       }, 100);
       return () => clearTimeout(timer);
     }
+    return undefined;
   }, [
     paramsLoaded,
     orderId,

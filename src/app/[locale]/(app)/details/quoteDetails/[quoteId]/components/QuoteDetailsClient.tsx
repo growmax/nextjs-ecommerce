@@ -171,6 +171,7 @@ export default function QuoteDetailsClient({
       }, 150);
       return () => clearTimeout(timer);
     }
+    return undefined;
   }, [paramsLoaded, quoteIdentifier, userId, companyId, fetchQuoteDetails]);
 
   const {
