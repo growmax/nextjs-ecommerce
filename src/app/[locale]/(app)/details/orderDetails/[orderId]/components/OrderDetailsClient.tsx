@@ -38,7 +38,7 @@ import type { ProductCsvRow } from "@/lib/export-csv";
 import { exportProductsToCsv } from "@/lib/export-csv";
 import type {
   AddressDetails,
-  OrderDetailsPageProps,
+  OrderDetailsClientProps,
   OrderTerms,
   SelectedVersion,
 } from "@/types/details/orderdetails/index.types";
@@ -73,7 +73,7 @@ const OrderStatusTracker = dynamic(
   }
 );
 
-export default function OrderDetailsClient({ params, initialOrderDetails }: OrderDetailsPageProps) {
+export default function OrderDetailsClient({ params, initialOrderDetails }: OrderDetailsClientProps) {
   // Use the page loader hook to ensure navigation spinner is hidden immediately
   usePageLoader();
 

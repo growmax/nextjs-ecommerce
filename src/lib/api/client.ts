@@ -25,6 +25,12 @@ const API_CONFIG = {
   OPENSEARCH_URL:
     process.env.OPENSEARCH_URL ||
     "https://api.myapptino.com/opensearch/invocations",
+  BASE_API_URL:
+    process.env.BASE_API_URL || "https://schwingstetter.myapptino.com/api/",
+  BUCKET_NAME: process.env.NEXT_PUBLIC_S3BUCKET || 'growmax-dev-app-assets',
+  ACCESS_KEY: process.env.AWS_S3_ACCESS_KEY,
+  SECRET_KEY: process.env.AWS_S3_SECRET_KEY,
+  REGION: process.env.AWS_S3_REGION || 'ap-northeast-1',
   ELASTIC_URL:
     process.env.ELASTIC_URL ||
     "https://api.myapptino.com/elasticsearch/invocations",
@@ -32,7 +38,7 @@ const API_CONFIG = {
 
 // Types
 export interface ApiClientConfig {
-  baseURL?: string;
+  baseURL?: string | undefined;
   timeout?: number;
   withCredentials?: boolean;
 }
@@ -113,30 +119,14 @@ function getTenantFromToken(token: string): string | null {
   }
 }
 
-// Create HTTPS agent for server-side requests
-// This fixes SSL/TLS issues in Node.js environment, particularly SNI (Server Name Indication) problems
-function createHttpsAgent() {
-  if (typeof window !== "undefined") {
-    // Client-side: no HTTPS agent needed (browser handles this)
-    return undefined;
-  }
-
-  return new https.Agent({
-    // Let Node.js negotiate the best TLS version (supports TLS 1.2 and 1.3)
-    // Don't restrict to a specific version to avoid "unrecognized name" errors
-    // Keep connections alive for better performance
-    keepAlive: true,
-    keepAliveMsecs: 1000,
-    maxSockets: 50,
-    maxFreeSockets: 10,
-    // Reject unauthorized certificates in production
-    rejectUnauthorized: process.env.NODE_ENV === "production",
-  });
-}
-
 // Create axios instance factory
 function createApiClient(config: ApiClientConfig = {}): AxiosInstance {
-  const instance = axios.create({
+  const axiosConfig: {
+    timeout: number;
+    withCredentials: boolean;
+    headers: { "Content-Type": string };
+    baseURL?: string;
+  } = {
     timeout: 30000,
     // Only use withCredentials for same-origin requests to avoid CORS conflicts
     // External APIs with wildcard CORS headers don't support credentials
@@ -144,11 +134,12 @@ function createApiClient(config: ApiClientConfig = {}): AxiosInstance {
     headers: {
       "Content-Type": "application/json",
     },
-    // Add HTTPS agent for server-side requests
-    httpsAgent: createHttpsAgent(),
-    ...config,
-  });
+  };
 
+  if (config.baseURL !== undefined) {
+    axiosConfig.baseURL = config.baseURL;
+  }
+  const instance = axios.create(axiosConfig);
   // Request interceptor
   instance.interceptors.request.use(
     (config: InternalAxiosRequestConfig) => {
@@ -304,6 +295,9 @@ function createApiClient(config: ApiClientConfig = {}): AxiosInstance {
 export const authClient = createApiClient({
   baseURL: API_CONFIG.AUTH_URL,
 });
+export const BasePageUrl = createApiClient({
+  baseURL: API_CONFIG.API_BASE_URL,
+});
 
 export const homePageClient = createApiClient({
   baseURL: API_CONFIG.HOME_PAGE_URL,
@@ -341,11 +335,26 @@ export const preferenceClient = createApiClient({
   baseURL: API_CONFIG.PREFERENCE_URL,
 });
 
+export const userPreferenceApiClient = createApiClient({
+  baseURL: API_CONFIG.BASE_API_URL,
+});
+
 // Local Next.js API client (for /api routes)
 export const localApiClient = createApiClient({
   baseURL: "", // Empty baseURL for relative paths to current domain
 });
-
+export const bucketName = createApiClient({
+  baseURL: API_CONFIG.BUCKET_NAME, // Empty baseURL for relative paths to current domain
+});
+export const accessKey = createApiClient({
+  baseURL: API_CONFIG.ACCESS_KEY, // Empty baseURL for relative paths to current domain
+});
+export const secretKey = createApiClient({
+  baseURL: API_CONFIG.SECRET_KEY, // Empty baseURL for relative paths to current domain
+});
+export const region = createApiClient({
+  baseURL: API_CONFIG.REGION, // Empty baseURL for relative paths to current domain
+});
 // Utility functions
 export const createClientWithContext = (
   baseClient: AxiosInstance,

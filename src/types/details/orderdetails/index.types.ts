@@ -5,6 +5,9 @@ export * from "./version.types";
 
 // Import types for proper typing
 import type { OrderDetailsResponse } from "@/lib/api";
+
+// Re-export for convenience
+export type { OrderDetailsResponse };
 export interface AddressDetails {
   addressLine?: string;
   branchName?: string;
@@ -40,6 +43,13 @@ export interface OrderTerms {
 }
 
 export interface OrderDetailsPageProps {
+  params: Promise<{
+    orderId: string;
+    locale: string;
+  }>;
+}
+
+export interface OrderDetailsClientProps {
   params: Promise<{
     orderId: string;
     locale: string;

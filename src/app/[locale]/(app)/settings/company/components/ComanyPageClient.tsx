@@ -2,8 +2,8 @@
 
 import HeaderBar from "@/components/Global/HeaderBar/HeaderBar";
 
+import CompanyBranchTable from "@/components/SettingsCompany/CompanyBranchTable/CompanyBranchTable";
 import { useTranslations } from "next-intl";
-import CompanyBranchTable from "./CompanyBranchTable";
 import CompanyDetail from "./CompanyDetail";
 
 const ComanyPageClient = () => {

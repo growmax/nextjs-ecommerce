@@ -1,7 +1,10 @@
 "use client";
 
-import { usePostNavigationFetch } from "@/hooks/usePostNavigationFetch";
-import { useState } from "react";
+import { useTenantCompany, useTenantInfo } from "@/contexts/TenantContext";
+import { useCurrentUser } from "@/hooks/useCurrentUser";
+import CompanyService from "@/lib/api/services/CompanyService";
+import UserPreferenceApiService from "@/lib/api/services/Settings/Profile/userPreference/userPreferenceApiService";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 
 interface Profile {
@@ -11,12 +14,14 @@ interface Profile {
   altPhone?: string;
   altEmail: string;
   avatar?: string | null;
+  picture?: string | null;
 }
 
 interface UserPreferencesData {
   timeZone: string;
   dateFormat: string;
   timeFormat: string;
+  id: string;
 }
 
 interface PreferenceOption {
@@ -36,6 +41,7 @@ export function useProfileData() {
     timeZone: "",
     dateFormat: "",
     timeFormat: "",
+    id: "",
   });
   const [preferenceOptions, setPreferenceOptions] = useState<PreferenceOptions>(
     {
@@ -45,56 +51,115 @@ export function useProfileData() {
     }
   );
   const [isLoading, setIsLoading] = useState(true);
+  // Current user and tenant context
+  const { user } = useCurrentUser();
+  const company = useTenantCompany();
+  const tenantInfo = useTenantInfo();
+  const tenantId = tenantInfo?.tenantCode;
+  const domainName = tenantInfo?.tenantDomain;
+  const userId = user?.userId;
+  const [profileDatas, setProfileDatas] = useState([])
+  // Use refs to track if data has been loaded to prevent multiple calls
+  const profileLoadedRef = useRef(false);
+  const preferencesLoadedRef = useRef(false);
 
-  // Load profile data
-  const loadProfile = async () => {
+  // Load profile data - called only once (unless force is true)
+  const loadProfile = useCallback(async (force = false) => {
+    if (profileLoadedRef.current && !force) return;
+
     try {
-      const savedData = localStorage.getItem("profileData");
+      if (force) {
+        profileLoadedRef.current = false;
+      }
+      profileLoadedRef.current = true;
 
-      const response = await fetch("/api/profile", {
-        headers: {
-          "x-tenant": "schwingstetterdemo",
-        },
-      });
+      const response = await CompanyService.getProfile(
+        tenantId || domainName
+          ? {
+            ...(tenantId && { tenantId }),
+            ...(domainName && { domain: domainName }),
+          }
+          : undefined
+      );
 
-      if (response.ok) {
-        const apiData = await response.json();
+      // Handle nested response structure: response.data.data
+      const apiData = (response as any)?.data?.data || (response as any)?.data || response;
+      setProfileDatas(apiData);
+      if (apiData) {
+        // Extract phone number and remove country code prefixes
+        const phoneNumber = apiData.phoneNumber || "";
+        const cleanedPhone = phoneNumber
+          .replace(/^\+91/, "")
+          .replace(/^\+null/, "")
+          .replace(/^null/, "")
+          .trim();
 
-        let data: Profile = {
-          name: apiData.name || "",
+        const data: Profile = {
+          name: apiData.displayName || "",
           email: apiData.email || "",
-          phone: apiData.phone?.replace("+91", "").replace("+null", "") || "",
-          altPhone: apiData.altPhone || "",
-          altEmail: apiData.altEmail || "",
-          avatar: apiData.avatar || "",
+          phone: cleanedPhone,
+          altPhone: apiData.secondaryPhoneNumber || "",
+          altEmail: apiData.secondaryEmail || "",
+          avatar: apiData.avatar || null,
+          picture: apiData.picture || null,
         };
-
-        if (savedData) {
-          const saved = JSON.parse(savedData);
-          data = { ...data, ...saved };
-        }
 
         setProfile(data);
       } else {
         toast.error("Failed to load profile data");
       }
-    } catch {
+    } catch (error) {
+      console.error("Failed to load profile:", error);
       toast.error("Failed to load profile data");
+      profileLoadedRef.current = false; // Reset on error to allow retry
     }
-  };
+  }, [tenantId, domainName]);
 
-  // Load preferences data
-  const loadPreferences = async () => {
+  // Load preferences data - called only once when userId is available (unless force is true)
+  const loadPreferences = useCallback(async (force = false) => {
+    if ((preferencesLoadedRef.current && !force) || !userId) {
+      if (!userId) {
+        setIsLoading(false);
+      }
+      return;
+    }
+
     try {
-      const savedPrefs = localStorage.getItem("userPreferences");
+      if (force) {
+        preferencesLoadedRef.current = false;
+      }
+      preferencesLoadedRef.current = true;
 
-      const response = await fetch("/api/userpreferences");
+      // Get user preferences from service
+      const response = await CompanyService.getUserPreference({
+        userId: userId.toString(),
+      });
 
-      if (response.ok) {
-        const apiData = await response.json();
+      // Handle nested response structure: response.data.data
+      const apiData = (response as any)?.data?.data || (response as any)?.data || response;
+
+      if (apiData) {
+        // Extract preferences from API response
+        const preferencesData: UserPreferencesData = {
+          timeZone: apiData[0]?.timeZone || "",
+          dateFormat: apiData[0]?.dateFormat || "",
+          timeFormat: apiData[0]?.timeFormat || "",
+          id: apiData[0]?.id || "",
+        };
+
+        setPreferences(preferencesData);
+      } else {
+        toast.error("Failed to load preferences data");
+      }
+
+      // Load preference options from API (still needed for dropdowns)
+      const optionsResponse = await fetch("/api/userpreferences");
+
+      if (optionsResponse.ok) {
+        const optionsData = await optionsResponse.json();
 
         const timeZoneOptions =
-          apiData.timeZoneOptions?.map(
+          optionsData.timeZoneOptions?.map(
             (tz: { value: string; key: string }) => ({
               value: tz.value,
               label: tz.key,
@@ -102,7 +167,7 @@ export function useProfileData() {
           ) || [];
 
         const dateFormatOptions =
-          apiData.dateFormatOptions?.map(
+          optionsData.dateFormatOptions?.map(
             (df: { value: string; dateFormatName: string }) => ({
               value: df.value,
               label: df.dateFormatName,
@@ -110,10 +175,10 @@ export function useProfileData() {
           ) || [];
 
         const timeFormatOptions =
-          apiData.timeFormatOptions?.map(
-            (tf: { value: string; timeFormatName: string }) => ({
+          optionsData.timeFormatOptions?.map(
+            (tf: { value: string; display: string }) => ({
               value: tf.value,
-              label: tf.timeFormatName,
+              label: tf.display,
             })
           ) || [];
 
@@ -122,57 +187,25 @@ export function useProfileData() {
           dateFormatOptions,
           timeFormatOptions,
         });
-
-        let defaultPreferences: UserPreferencesData = {
-          timeZone: timeZoneOptions[0]?.value || "",
-          dateFormat: dateFormatOptions[0]?.value || "",
-          timeFormat: timeFormatOptions[0]?.value || "",
-        };
-
-        if (savedPrefs) {
-          const saved = JSON.parse(savedPrefs);
-          defaultPreferences = { ...defaultPreferences, ...saved };
-        }
-
-        setPreferences(defaultPreferences);
-      } else {
-        toast.error("Failed to load preferences data");
       }
-    } catch {
+    } catch (error) {
+      console.error("Failed to load preferences:", error);
       toast.error("Failed to load preferences data");
+      preferencesLoadedRef.current = false; // Reset on error to allow retry
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [userId]);
 
   // Save profile
   const saveProfile = async (profileData: Profile) => {
     try {
-      const response = await fetch("/api/profile", {
-        method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-          "x-tenant": "schwingstetterdemo",
-        },
-        body: JSON.stringify({
-          name: profileData.name,
-          phoneNumber: profileData.phone ? `+91${profileData.phone}` : "",
-          altPhone: profileData.altPhone,
-          altEmail: profileData.altEmail,
-        }),
-      });
-
-      if (!response.ok) {
-        throw new Error("Failed to save profile");
-      }
-
-      localStorage.setItem("profileData", JSON.stringify(profileData));
       setProfile(profileData);
-      toast.success("Profile saved successfully!");
-
+      // Note: Toast notification is handled by the calling component
       return true;
-    } catch {
-      toast.error("Failed to save profile. Please try again.");
+    } catch (error) {
+      console.error("Failed to save profile:", error);
+      // Note: Error toast is handled by the calling component
       return false;
     }
   };
@@ -180,39 +213,80 @@ export function useProfileData() {
   // Save preferences
   const savePreferences = async (preferencesData: UserPreferencesData) => {
     try {
-      const response = await fetch("/api/userpreferences", {
-        method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(preferencesData),
-      });
-
-      if (!response.ok) {
-        throw new Error("Failed to save preferences");
+      // Validate required fields before API call
+      if (
+        !preferencesData.timeZone ||
+        !preferencesData.dateFormat ||
+        !preferencesData.timeFormat
+      ) {
+        toast.error("Please fill all required preference fields");
+        return false;
       }
 
-      localStorage.setItem("userPreferences", JSON.stringify(preferencesData));
-      setPreferences(preferencesData);
-      toast.success("Preferences saved successfully!");
+      // Build payload expected by backend
+      const payload: any = {
+        dateFormat: preferencesData.dateFormat,
+        timeFormat: preferencesData.timeFormat,
+        timeZone: preferencesData.timeZone,
+      };
+
+      // Include optional ids if available in stored preferences
+      if ((preferencesData as any)?.id)
+        payload.id = (preferencesData as any).id;
+      if (tenantId) payload.tenantId = tenantId;
+      if (user && user.userId) payload.userId = { id: user.userId };
+      payload.vendorId = company?.vendorId ?? null;
+
+      const result = await UserPreferenceApiService.savePreference(payload);
+
+      // Validate response
+      if (
+        !result ||
+        !result.timeZone ||
+        !result.dateFormat ||
+        !result.timeFormat
+      ) {
+        throw new Error("Invalid response from server");
+      }
+
+      const saved: UserPreferencesData = {
+        timeZone: result.timeZone,
+        dateFormat: result.dateFormat,
+        timeFormat: result.timeFormat,
+        id: (result as any)?.id || (preferencesData as any)?.id || "",
+      };
+
+      // Update state after successful API call
+      setPreferences(saved);
+      // Note: Toast notification is handled by the calling component
 
       return true;
-    } catch {
-      toast.error("Failed to save preferences. Please try again.");
+    } catch (error) {
+      console.error("Failed to save preferences:", error);
+      // Note: Error toast is handled by the calling component
       return false;
     }
   };
 
-  // Initialize data after navigation completes - ensures instant navigation
-  usePostNavigationFetch(() => {
+  // Initialize data on mount - call services only once
+  useEffect(() => {
     loadProfile();
-    loadPreferences();
-  }, []);
+  }, [loadProfile]);
+
+  useEffect(() => {
+    if (userId) {
+      loadPreferences();
+    } else {
+      setIsLoading(false);
+    }
+  }, [userId, loadPreferences]);
 
   return {
     profile,
     preferences,
     preferenceOptions,
+    profileDatas,
+    setProfileDatas,
     isLoading,
     setProfile,
     setPreferences,

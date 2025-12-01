@@ -1,11 +1,20 @@
 "use client";
 
 import { useRouteRequestTracking } from "@/hooks/useRouteRequestTracking";
+import dynamic from "next/dynamic";
 import { Suspense } from "react";
-import CompanyPageClient from "./components/ComanyPageClient";
+
+// Dynamically import ComanyPageClient
+const CompanyPageClient = dynamic(
+  () => import("./ComanyPageClient/ComanyPageClient"),
+  {
+    ssr: false,
+  }
+);
 
 export default function CompanySettingsPage() {
-  useRouteRequestTracking(); // Track route to prevent duplicate RSC calls
+  useRouteRequestTracking();
+
   return (
     <Suspense
       fallback={

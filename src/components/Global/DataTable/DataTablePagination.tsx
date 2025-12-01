@@ -2,10 +2,10 @@
 
 import type { Table } from "@tanstack/react-table";
 import {
-    ChevronLeft,
-    ChevronRight,
-    ChevronsLeft,
-    ChevronsRight,
+  ChevronLeft,
+  ChevronRight,
+  ChevronsLeft,
+  ChevronsRight,
 } from "lucide-react";
 import { useTranslations } from "next-intl";
 import * as React from "react";

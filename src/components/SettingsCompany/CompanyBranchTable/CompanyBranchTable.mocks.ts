@@ -1,0 +1,36 @@
+export const sampleBranches = [
+  {
+    id: 1,
+    name: "Main Branch",
+    addressId: {
+      id: 11,
+      branchName: "Main Branch",
+      addressLine: "123 Main St",
+      city: "Metropolis",
+      state: "State",
+      pinCodeId: "12345",
+      country: "Country",
+      isBilling: true,
+      isShipping: false,
+      primaryContact: "Alice",
+      mobileNo: "+911234567890",
+    },
+  },
+  {
+    id: 2,
+    name: "Secondary Branch",
+    addressId: {
+      id: 12,
+      branchName: "Secondary Branch",
+      addressLine: "456 Side Rd",
+      city: "Gotham",
+      state: "State",
+      pinCodeId: "67890",
+      country: "Country",
+      isBilling: false,
+      isShipping: true,
+      primaryContact: "Bob",
+      mobileNo: "+911098765432",
+    },
+  },
+];

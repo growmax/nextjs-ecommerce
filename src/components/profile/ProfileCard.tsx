@@ -1,8 +1,8 @@
 "use client";
 
-import { FormField } from "@/components/forms/FormField";
+import { FormField } from "@/components/forms/FormField/FormField";
 import { ImageUpload } from "@/components/forms/ImageUpload";
-import { PhoneInput } from "@/components/forms/PhoneInput";
+import { PhoneInput } from "@/components/forms/PhoneInput/PhoneInput";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -132,7 +132,7 @@ export function ProfileCard({
           <PhoneInput
             label={t("mobileNumber")}
             value={profile.phone}
-            onChange={value => onChange("phone", value)}
+            onChange={(value: string) => onChange("phone", value)}
             {...(onVerifyPhone && { onVerify: onVerifyPhone })}
             verified={phoneVerified}
             required
@@ -143,7 +143,7 @@ export function ProfileCard({
           <PhoneInput
             label={t("secondaryPhone")}
             value={profile.altPhone || ""}
-            onChange={value => onChange("altPhone", value)}
+            onChange={(value: string) => onChange("altPhone", value)}
             disabled={isLoading}
           />
 

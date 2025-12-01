@@ -67,7 +67,6 @@ export function AppHeader({
         setOpen(true);
       }
     };
-
     document.addEventListener("keydown", down);
     return () => document.removeEventListener("keydown", down);
   }, [setOpen]);
@@ -75,7 +74,6 @@ export function AppHeader({
   const { state: sidebarState } = useSidebar();
   const isSidebarCollapsed = sidebarState === "collapsed";
 
-  // ---- Elastic Index ----
   const elasticIndex = "schwingstetterpgandproducts";
 
   // ---- Command Suggestions ----
@@ -110,6 +108,7 @@ export function AppHeader({
 
   return (
     <>
+      {/* ---------- FIXED HEADER (FULLY RESPONSIVE) ---------- */}
       <header
         className={cn(
           "fixed top-0 z-[10] border-b bg-background/80 backdrop-blur-md supports-[backdrop-filter]:bg-background/80 transition-all duration-200",
@@ -172,9 +171,10 @@ export function AppHeader({
             </div>
           </div>
 
-          {/* Right Side Icons */}
+          {/* ---------- RIGHT SIDE ICONS ---------- */}
           <div className="flex items-center gap-1 ml-auto">
-            {/* Desktop Right Side Icons */}
+
+            {/* Desktop */}
             <div className="hidden md:flex items-center gap-1">
               {/* Language Switcher */}
               <LanguageSwitcher />
@@ -199,7 +199,6 @@ export function AppHeader({
                 )
               )}
 
-              {/* Cart */}
               <Button
                 variant="ghost"
                 size="icon"
@@ -260,7 +259,7 @@ export function AppHeader({
               )}
             </div>
 
-            {/* Mobile Right Side Icons (Condensed) */}
+            {/* ---------- Mobile Icons ---------- */}
             <div className="md:hidden flex items-center gap-1">
               {/* Language Switcher */}
               <LanguageSwitcher />
@@ -322,10 +321,11 @@ export function AppHeader({
           </div>
         </div>
 
-        {/* Bottom Separator */}
+        {/* Bottom Border */}
         <div className="h-px bg-border"></div>
       </header>
-      {/* ----- COMMAND DIALOG (moved to separate component) ----- */}
+
+      {/* ---------- SEARCH DIALOG ---------- */}
       <SearchDialogBox
         open={open}
         setOpen={setOpen}
@@ -338,3 +338,4 @@ export function AppHeader({
     </>
   );
 }
+

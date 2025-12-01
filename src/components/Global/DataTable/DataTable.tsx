@@ -337,7 +337,7 @@ export function DataTable<TData>({
   // Render table content
   const renderTableContent = () => {
     const tableElement = (
-      <div className="overflow-hidden rounded-lg border m-4 md:m-6">
+      <div className="overflow-x-auto rounded-lg border">
         <Table className={tableClassName}>
           <TableHeader className="bg-muted sticky top-0 z-[1]">
             {table.getHeaderGroups().map(headerGroup => (
@@ -502,8 +502,8 @@ export function DataTable<TData>({
   return (
     <div className={`flex flex-col ${className || ""}`}>
       {renderToolbar()}
-      <div className="flex-1 overflow-auto">
-        {renderTableContent()}
+      <div className="flex-1 overflow-auto mb-4">
+        <div className="px-4 lg:px-6">{renderTableContent()}</div>
       </div>
       {showPagination && (
         <div className="flex-shrink-0 border-t bg-background">

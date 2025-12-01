@@ -1,3 +1,5 @@
+import "@testing-library/jest-dom";
+
 // Mock Next.js modules first (before any imports)
 jest.mock("next/navigation", () => ({
   useRouter: () => ({
