@@ -37,6 +37,7 @@ export default function useMultipleDiscount(
 ) {
   const [cartValue, setCartValue] = useState<any>({});
   const calculationRef = useRef(false);
+  const previousCartRef = useRef<string>("");
   const { user } = useCurrentUser();
   const { tenantData } = useTenantData();
   const { quoteSettings } = useModuleSettings(user);
@@ -101,6 +102,22 @@ export default function useMultipleDiscount(
       cart?.length > 0 &&
       CurrencyFactor !== undefined
     ) {
+      // Create a stable key from cart to detect actual changes
+      const cartKey = JSON.stringify(
+        cart.map((item: any) => ({
+          productId: item.productId,
+          quantity: item.quantity,
+          askedQuantity: item.askedQuantity,
+        }))
+      );
+
+      // Only recalculate if cart actually changed
+      if (cartKey === previousCartRef.current) {
+        return;
+      }
+
+      previousCartRef.current = cartKey;
+
       try {
         const cart1 = map(cart || [], item => {
           // Set pfItemValue from pfRate

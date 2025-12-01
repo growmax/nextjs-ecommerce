@@ -12,7 +12,6 @@ export const metadata: Metadata = {
 
 export const revalidate = 3600; // 1 hour
 
-
 export default async function HomePage() {
   // Get domain from headers
   const headersList = await headers();

@@ -1,10 +1,6 @@
 import OrderSummaryContent from "./component/OrderSummaryContent";
 
-export default function OrderSummary(){
-    return(
-        <div>
-            <OrderSummaryContent/>
-        </div>
-    )
+export default function OrderSummaryPage() {
+  return <OrderSummaryContent />;
 }
 

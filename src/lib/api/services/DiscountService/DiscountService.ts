@@ -169,7 +169,7 @@ export class DiscountService extends BaseService<DiscountService> {
     request: GetAllSellerPricesRequest
   ): Promise<GetAllSellerPricesResponse> {
     return (await this.callWith(
-      "/discounts/discount/getAllSellerPrices",
+      "/discount/getAllSellerPrices",
       request,
       {
         method: "POST",
@@ -185,7 +185,7 @@ export class DiscountService extends BaseService<DiscountService> {
     request: GetAllSellerPricesRequest
   ): Promise<GetAllSellerPricesResponse | null> {
     return (await this.callWithSafe(
-      "/discounts/discount/getAllSellerPrices",
+      "/discount/getAllSellerPrices",
       request,
       {
         method: "POST",

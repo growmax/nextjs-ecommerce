@@ -1,7 +1,11 @@
 // Mocks for UploadServices
 // These mocks are for testing the service in isolation.
 
-import type { UploadOptions, PresignedUrlResponse, UploadProgress } from "./UploadServices";
+import type {
+  PresignedUrlResponse,
+  UploadOptions,
+  UploadProgress,
+} from "./UploadServices";
 
 export const mockUploadOptions: UploadOptions = {
   folderName: "app_assets/company_images/123/logo/456",
@@ -22,9 +26,11 @@ export const mockPresignedUrlResponse: PresignedUrlResponse = {
     acl: "public-read",
     bucket: "growmax-dev-app-assets",
     "Content-Type": "image/jpeg",
-    policy: "eyJleHBpcmF0aW9uIjoiMjAyNC0wMS0wMVQwMDowMDowMFoiLCJjb25kaXRpb25zIjpbXX0=",
+    policy:
+      "eyJleHBpcmF0aW9uIjoiMjAyNC0wMS0wMVQwMDowMDowMFoiLCJjb25kaXRpb25zIjpbXX0=",
     "x-amz-algorithm": "AWS4-HMAC-SHA256",
-    "x-amz-credential": "AKIAIOSFODNN7EXAMPLE/20240101/us-east-1/s3/aws4_request",
+    "x-amz-credential":
+      "AKIAIOSFODNN7EXAMPLE/20240101/us-east-1/s3/aws4_request",
     "x-amz-date": "20240101T000000Z",
     "x-amz-signature": "test-signature",
   },
@@ -69,9 +75,13 @@ export const mockFile = new File(["test content"], "test-image.jpg", {
   type: "image/jpeg",
 });
 
-export const mockFileWithSpecialChars = new File(["test content"], "test image@#$%^&.jpg", {
-  type: "image/jpeg",
-});
+export const mockFileWithSpecialChars = new File(
+  ["test content"],
+  "test image@#$%^&.jpg",
+  {
+    type: "image/jpeg",
+  }
+);
 
 export const mockFileWithoutExtension = new File(["test content"], "test-image", {
   type: "image/jpeg",
@@ -82,16 +92,19 @@ export const mockUploadProgress: UploadProgress = {
   total: 100,
 };
 
-export const mockS3Location = "https://growmax-dev-app-assets.s3.ap-northeast-1.amazonaws.com/app_assets/company_images/123/logo/456/test-image_1234567890.jpg";
+export const mockS3Location =
+  "https://growmax-dev-app-assets.s3.ap-northeast-1.amazonaws.com/app_assets/company_images/123/logo/456/test-image_1234567890.jpg";
 
 export const mockPostUploadResponse = {
-  Location: "https://s3.amazonaws.com/test-bucket/app_assets/company_images/123/logo/456/test-image_1234567890.jpg",
+  Location:
+    "https://s3.amazonaws.com/test-bucket/app_assets/company_images/123/logo/456/test-image_1234567890.jpg",
   url: "https://s3.amazonaws.com/test-bucket",
   key: "app_assets/company_images/123/logo/456/test-image_1234567890.jpg",
 };
 
 export const mockPostUploadResponseWithTrailingSlash = {
-  Location: "https://s3.amazonaws.com/test-bucket/app_assets/company_images/123/logo/456/test-image_1234567890.jpg",
+  Location:
+    "https://s3.amazonaws.com/test-bucket/app_assets/company_images/123/logo/456/test-image_1234567890.jpg",
   url: "https://s3.amazonaws.com/test-bucket/",
   key: "app_assets/company_images/123/logo/456/test-image_1234567890.jpg",
 };
