@@ -45,7 +45,7 @@ export function formatBrandsAggregation(
         .map(slug => slug.trim());
       
       const categoryPathStr = normalizedPath.join("/");
-      navigationPath = `/${locale}/brands/${encodeURIComponent(bucket.key)}/${categoryPathStr}`;
+      navigationPath = `/brands/${encodeURIComponent(bucket.key)}/${categoryPathStr}`;
     }
 
     return {

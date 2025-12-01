@@ -1,5 +1,5 @@
 import { CategoryBreadcrumbServer } from "@/components/Breadcrumb/CategoryBreadcrumbServer";
-import { ProductGridServer } from "@/components/ProductGrid/ProductGridServer";
+import { ProductViewSwitcher } from "@/components/ProductGrid/ProductViewSwitcher";
 import { StructuredDataServer } from "@/components/seo/StructuredDataServer";
 import type { RequestContext } from "@/lib/api/client";
 import SearchService, {
@@ -495,7 +495,7 @@ export default async function CategoryPage({
         categoryPath={categoryPath}
         aggregations={aggregations}
         currentCategoryPath={categories}
-      />
+      >
 
       {/* Product Grid - Server-rendered for SEO with Suspense for streaming */}
       <div className="relative">
@@ -517,6 +517,7 @@ export default async function CategoryPage({
           />
         </Suspense>
       </div>
+      </CategoryPageInteractivity>
     </>
   );
 }
@@ -542,5 +543,5 @@ async function ProductGridWrapper({
     );
   }
 
-  return <ProductGridServer products={products} locale={locale} />;
+  return <ProductViewSwitcher products={products} locale={locale} />;
 }
