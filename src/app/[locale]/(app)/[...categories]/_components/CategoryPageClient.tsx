@@ -15,6 +15,8 @@ import { CategoryPagination } from "@/components/Pagination/CategoryPagination";
 import { SortDropdown } from "@/components/Sort/SortDropdown";
 import { Skeleton } from "@/components/ui/skeleton";
 import { StructuredData } from "@/components/seo/StructuredData";
+import { Card, CardContent } from "@/components/ui/card";
+import { Package } from "lucide-react";
 
 interface CategoryPageClientProps {
   categoryPath: CategoryPath;
@@ -250,8 +252,18 @@ export default function CategoryPageClient({
         )}
 
         {products.length === 0 && !isLoading ? (
-          <div className="text-center py-12">
-            <p className="text-gray-600 text-lg">No products found.</p>
+          <div className="py-12">
+            <Card>
+              <CardContent className="p-8 md:p-12 text-center">
+                <Package className="w-12 h-12 md:w-16 md:h-16 text-muted-foreground mx-auto mb-4" />
+                <h3 className="text-lg md:text-xl font-semibold mb-2">
+                  No products found{lastNode?.name ? ` in ${lastNode.name}` : ""}
+                </h3>
+                <p className="text-sm md:text-base text-muted-foreground max-w-md mx-auto">
+                  Try adjusting your filters or browse other categories.
+                </p>
+              </CardContent>
+            </Card>
           </div>
         ) : (
           <ProductGrid products={products} />

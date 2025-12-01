@@ -18,6 +18,8 @@ import {
   buildCategoryFilter,
   getBaseQuery,
 } from "@/utils/opensearch/browse-queries";
+import { Card, CardContent } from "@/components/ui/card";
+import { Package } from "lucide-react";
 import { Metadata } from "next";
 import { headers } from "next/headers";
 import { notFound } from "next/navigation";
@@ -541,11 +543,19 @@ async function BrandProductGridWrapper({
 
   if (products.length === 0) {
     return (
-      <div className="text-center py-12">
-        <p className="text-gray-600 text-lg">
-          No {brandName} products found
-          {categoryName ? ` in ${categoryName}` : ""}.
-        </p>
+      <div className="py-12">
+        <Card>
+          <CardContent className="p-8 md:p-12 text-center">
+            <Package className="w-12 h-12 md:w-16 md:h-16 text-muted-foreground mx-auto mb-4" />
+            <h3 className="text-lg md:text-xl font-semibold mb-2">
+              No {brandName} products found
+              {categoryName ? ` in ${categoryName}` : ""}
+            </h3>
+            <p className="text-sm md:text-base text-muted-foreground max-w-md mx-auto">
+              Try adjusting your filters or browse other categories.
+            </p>
+          </CardContent>
+        </Card>
       </div>
     );
   }

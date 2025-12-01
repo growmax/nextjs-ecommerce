@@ -1,6 +1,29 @@
 // Learn more: https://github.com/testing-library/jest-dom
 import "@testing-library/jest-dom";
 
+// Polyfill Web APIs for middleware tests (Request, Response, etc.)
+// These are needed for Next.js middleware which runs in Edge Runtime
+if (typeof globalThis.Request === "undefined") {
+  try {
+    // Polyfill TextDecoder/TextEncoder first (required by @whatwg-node/fetch)
+    if (typeof globalThis.TextDecoder === "undefined") {
+      const { TextDecoder, TextEncoder } = require("util");
+      globalThis.TextDecoder = TextDecoder;
+      globalThis.TextEncoder = TextEncoder;
+    }
+    
+    // Use @whatwg-node/fetch for Web API polyfills
+    const { Request, Response, Headers, fetch } = require("@whatwg-node/fetch");
+    globalThis.Request = Request;
+    globalThis.Response = Response;
+    globalThis.Headers = Headers;
+    globalThis.fetch = fetch;
+  } catch (e) {
+    // Fallback: Try Node's built-in fetch (Node 18+)
+    console.warn("Could not load Web API polyfills:", e.message);
+  }
+}
+
 // Mock next-intl
 jest.mock("next-intl", () => ({
   useTranslations: _namespace => key => {

@@ -746,11 +746,6 @@ export class SearchService extends BaseService<SearchService> {
           {} as unknown as AggregationResult;
       }
     } else {
-      if (process.env.NODE_ENV === "development") {
-        console.warn(
-          "[SearchService] No product specification keys aggregation found or empty buckets"
-        );
-      }
       // Set to empty object so formatter knows there are no specifications
       result.aggregations.productSpecifications =
         {} as unknown as AggregationResult;

@@ -5,6 +5,8 @@ import { FormattedProduct } from "@/lib/api/services/SearchService/SearchService
 import { ProductListItem } from "@/types/product-listing";
 import Image from "next/image";
 import AddToCartButton from "./AddToCartButton";
+import { Card, CardContent } from "@/components/ui/card";
+import { Package } from "lucide-react";
 
 /**
  * Transform FormattedProduct to ProductListItem
@@ -89,8 +91,18 @@ export function ProductGridServer({
 }: ProductGridServerProps) {
   if (products.length === 0) {
     return (
-      <div className="py-12 text-center rounded-lg">
-        <p className="text-lg text-muted-foreground">No products found.</p>
+      <div className="py-12">
+        <Card>
+          <CardContent className="p-8 md:p-12 text-center">
+            <Package className="w-12 h-12 md:w-16 md:h-16 text-muted-foreground mx-auto mb-4" />
+            <h3 className="text-lg md:text-xl font-semibold mb-2">
+              No products found
+            </h3>
+            <p className="text-sm md:text-base text-muted-foreground max-w-md mx-auto">
+              We couldn't find any products matching your criteria. Try adjusting your filters or browse other categories.
+            </p>
+          </CardContent>
+        </Card>
       </div>
     );
   }

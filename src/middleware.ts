@@ -41,8 +41,6 @@ function hasAccessToken(request: NextRequest): boolean {
   return !!accessToken;
 }
 
-// next-intl middleware will be created dynamically inside the middleware function
-
 export async function middleware(request: NextRequest) {
   const pathname = request.nextUrl.pathname;
 

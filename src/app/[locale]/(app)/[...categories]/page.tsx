@@ -210,20 +210,31 @@ export default async function CategoryPage({
   // Fetch tenant data to get elasticCode (uses cache, so it's fast)
   let elasticCode = "";
   let tenantCode = "";
+  let tenantData = null;
   if (tenantDomain && tenantOrigin) {
     try {
-      const tenantData = await TenantService.getTenantDataCached(
+      tenantData = await TenantService.getTenantDataCached(
         tenantDomain,
         tenantOrigin
       );
       elasticCode = tenantData?.data?.tenant?.elasticCode || "";
       tenantCode = tenantData?.data?.tenant?.tenantCode || "";
+      
     } catch (error) {
-      console.error("Error fetching tenant data:", error);
+      console.error("[CategoryPage] Error fetching tenant data:", error);
+    }
+  } else {
+    // Log missing headers in development
+    if (process.env.NODE_ENV === 'development') {
+      console.warn("[CategoryPage] Missing tenant headers:", {
+        tenantDomain: tenantDomain || 'MISSING',
+        tenantOrigin: tenantOrigin || 'MISSING',
+        host,
+        protocol,
+      });
     }
   }
 
-  // If no elasticCode, cannot resolve categories - return 404
   if (!elasticCode) {
     notFound();
   }
