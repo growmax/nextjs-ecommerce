@@ -761,12 +761,13 @@ function createWrapper() {
     },
   });
 
-  const Wrapper = ({ children }: { children: ReactNode }) =>
-    React.createElement(
-      LoadingProvider,
-      {},
-      React.createElement(QueryClientProvider, { client: queryClient }, children)
-    );
+  const Wrapper = ({ children }: { children: ReactNode }) => (
+    <LoadingProvider>
+      <QueryClientProvider client={queryClient}>
+        {children}
+      </QueryClientProvider>
+    </LoadingProvider>
+  );
   Wrapper.displayName = "QueryClientWrapper";
   return Wrapper;
 }
