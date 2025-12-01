@@ -1,6 +1,6 @@
 "use client";
 import { Toaster } from "@/components/ui/sonner";
-import { Layers } from "lucide-react";
+import { FileText, Layers } from "lucide-react";
 import { useTranslations } from "next-intl";
 import dynamic from "next/dynamic";
 import { Suspense, useEffect, useMemo, useRef, useState } from "react";
@@ -982,16 +982,100 @@ export default function OrderDetailsClient({ params, initialOrderDetails }: Orde
                               taxableAmount: Number(
                                 displayOrderDetails?.orderDetails?.[0]
                                   ?.taxableAmount ||
-                                  orderDetails?.data?.orderDetails?.[0]
-                                    ?.taxableAmount ||
-                                  0
-                              ),
-                            }
-                          : {})}
-                      />
-                    </Suspense>
-                  </div>
-                )}
+                                0
+                            ),
+                          }
+                        : {})}
+                    />
+                  </Suspense>
+
+                  {/* Attachments Card */}
+                  {(() => {
+                    const attachments = (displayOrderDetails?.orderDetails?.[0]?.uploadedDocumentDetails ||
+                      displayOrderDetails?.uploadedDocumentDetails ||
+                      orderDetails?.data?.orderDetails?.[0]?.uploadedDocumentDetails ||
+                      orderDetails?.data?.uploadedDocumentDetails) as any[] | undefined;
+                    return attachments && Array.isArray(attachments) && attachments.length > 0;
+                  })() && (
+                      <div className="mt-4">
+                        <Suspense fallback={null}>
+                          <div className="bg-white rounded-lg border border-gray-200 shadow-sm">
+                            <div className="px-6 py-4 bg-gray-50 rounded-t-lg border-b">
+                              <h3 className="text-xl font-semibold text-gray-900">
+                                Attachments
+                              </h3>
+                            </div>
+                            <div className="px-6 py-4">
+                              <div className="space-y-2">
+                                {((displayOrderDetails?.orderDetails?.[0]?.uploadedDocumentDetails ||
+                                  displayOrderDetails?.uploadedDocumentDetails ||
+                                  orderDetails?.data?.orderDetails?.[0]?.uploadedDocumentDetails ||
+                                  orderDetails?.data?.uploadedDocumentDetails ||
+                                  []) as any[]).map(
+                                  (
+                                    attachment: any,
+                                    index: number
+                                  ) => {
+                                    const fileUrl =
+                                      attachment.source ||
+                                      attachment.filePath ||
+                                      attachment.attachment;
+                                    const fileName =
+                                      attachment.name ||
+                                      `File ${index + 1}`;
+                                    const attachedBy =
+                                      attachment.width?.split(",")[0] ||
+                                      "Unknown";
+                                    const attachedDate = attachment.width
+                                      ?.split(",")[1]
+                                      ? new Date(
+                                          attachment.width.split(",")[1]
+                                        ).toLocaleString("en-IN", {
+                                          day: "2-digit",
+                                          month: "2-digit",
+                                          year: "numeric",
+                                          hour: "2-digit",
+                                          minute: "2-digit",
+                                          hour12: true,
+                                        })
+                                      : null;
+
+                                    return (
+                                      <div
+                                        key={index}
+                                        className="flex items-center justify-between p-3 border rounded-md bg-gray-50 hover:bg-gray-100 transition-colors cursor-pointer"
+                                        onClick={() => {
+                                          if (fileUrl) {
+                                            window.open(fileUrl, "_blank");
+                                          }
+                                        }}
+                                      >
+                                        <div className="flex items-center gap-3 flex-1 min-w-0">
+                                          <FileText className="h-5 w-5 text-muted-foreground flex-shrink-0" />
+                                          <div className="flex-1 min-w-0">
+                                            <p className="text-sm font-medium text-gray-900 truncate">
+                                              {fileName}
+                                            </p>
+                                            {attachedBy && attachedDate && (
+                                              <p className="text-xs text-muted-foreground">
+                                                Attached By {attachedBy}{" "}
+                                                {attachedDate}
+                                              </p>
+                                            )}
+                                          </div>
+                                        </div>
+                                      </div>
+                                    );
+                                  }
+                                )}
+                              </div>
+                            </div>
+                          </div>
+                        </Suspense>
+                      </div>
+                    )}
+                </div>
+              )}
             </div>
           )}
         </PageLayout>

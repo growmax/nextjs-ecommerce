@@ -9,11 +9,61 @@ export interface SellerBranch {
   companyId: number;
 }
 
+// Warehouse interface - matches the full structure returned by the API
+// Reference: buyer-fe returns full warehouse object with addressId, companyId, etc.
 export interface Warehouse {
   id: number;
-  name: string;
+  name?: string;
   wareHouseName: string;
   wareHousecode?: string;
+  addressId?: {
+    addressLine?: string;
+    billToCode?: string | null;
+    branchName?: string;
+    city?: string;
+    country?: string;
+    countryCode?: string | null;
+    district?: string;
+    email?: string | null;
+    gst?: string | null;
+    id?: number;
+    isBilling?: boolean;
+    isCustAddress?: boolean;
+    isShipping?: boolean;
+    lattitude?: string;
+    locality?: string;
+    locationUrl?: string;
+    longitude?: string;
+    mobileNo?: string | null;
+    nationalMobileNum?: string | null;
+    phone?: string;
+    pinCodeId?: string;
+    primaryContact?: string | null;
+    regAddress?: boolean;
+    shipToCode?: string | null;
+    soldToCode?: string | null;
+    state?: string;
+    tenantId?: number;
+    vendorID?: number | null;
+    vendorId?: number | null;
+    wareHouse?: boolean;
+  };
+  companyId?: any; // Full company object structure
+  contactNumber?: string;
+  contactPerson?: string;
+  isDefault?: boolean;
+  nationalMobileNum?: string;
+  salesOrgCode?: {
+    code?: string;
+    id?: number;
+    name?: string;
+    tenantId?: number;
+  };
+  tenantId?: number;
+  vendorId?: number | null;
+  wareHouseIdentifier?: string;
+  zoneId?: number | null;
+  [key: string]: any; // Allow additional properties from API
 }
 
 // API Response types
@@ -27,11 +77,8 @@ interface SellerBranchResponseItem {
   };
 }
 
-interface WarehouseResponse {
-  wareHouseName: string;
-  id: number;
-  wareHousecode?: string;
-}
+// WarehouseResponse is now the full warehouse object from API
+type WarehouseResponse = Warehouse;
 
 export interface FindSellerBranchRequest {
   userId: number;
@@ -51,10 +98,10 @@ export class SellerWarehouseService extends BaseService<SellerWarehouseService> 
   // Find seller branch based on buyer details and products (POST method)
   async findSellerBranch(
     userId: string,
-    companyId: string,
+    _companyId: string,
     request: FindSellerBranchRequest
   ): Promise<SellerBranch[]> {
-    const url = `/branches/findsellerBranch/${userId}?companyId=${companyId}`;
+    const url = `/branches/findsellerBranch/${userId}?companyId=${request.sellerCompanyId}`;
 
     const response = await this.call(url, request, "POST");
 
@@ -75,24 +122,26 @@ export class SellerWarehouseService extends BaseService<SellerWarehouseService> 
   }
 
   // Find warehouse by branch ID (GET method)
+  // Reference: buyer-fe returns full warehouse object with addressId, companyId, etc.
+  // This matches the structure returned by /api/address/warehouse.js in buyer-fe
   async findWarehouseByBranchId(branchId: number): Promise<Warehouse | null> {
     const url = `/branches/findWareHouseByBranchId/2?branchId=${branchId}`;
 
     try {
       const response = await this.call(url, undefined, "GET");
 
-      // Normalize API response - response format: { success: true, data: { wareHouseName: "...", id: ... } }
+      // Normalize API response - response format: { success: true, data: { ...full warehouse object... } }
+      // Reference: buyer-fe pages/api/address/warehouse.js returns data.data (full warehouse object)
       if (response && typeof response === "object" && "data" in response) {
         const data = (response as { success?: boolean; data: unknown }).data;
-        if (data && typeof data === "object" && "wareHouseName" in data) {
+        if (data && typeof data === "object") {
           const warehouseData = data as WarehouseResponse;
+          // Return the full warehouse object as-is from the API
+          // This includes addressId, companyId, and all other fields
           return {
-            id: warehouseData.id,
-            name: warehouseData.wareHouseName,
-            wareHouseName: warehouseData.wareHouseName,
-            ...(warehouseData.wareHousecode && {
-              wareHousecode: warehouseData.wareHousecode,
-            }),
+            ...warehouseData,
+            // Ensure name is set for backward compatibility
+            name: warehouseData.name || warehouseData.wareHouseName,
           };
         }
       }

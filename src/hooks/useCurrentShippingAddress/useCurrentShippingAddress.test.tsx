@@ -1,4 +1,6 @@
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { act, renderHook, waitFor } from "@testing-library/react";
+import React from "react";
 import {
   mockShippingAddresses,
   mockStoredAddress,
@@ -35,14 +37,22 @@ jest.mock("../useShipping", () => ({
   default: jest.fn(),
 }));
 
+// Mock useUser (default export)
+jest.mock("../useUser", () => ({
+  __esModule: true,
+  default: jest.fn(() => ({
+    companydata: { userId: 123, companyId: 456 },
+  })),
+}));
+
 // Mock useUserDetails
 jest.mock("@/contexts/UserDetailsContext", () => ({
   useUserDetails: jest.fn(),
 }));
 
-import useCurrentShippingAddress from "./useCurrentShippingAddress";
-import useShipping from "../useShipping";
 import { useUserDetails } from "@/contexts/UserDetailsContext";
+import useShipping from "../useShipping";
+import useCurrentShippingAddress from "./useCurrentShippingAddress";
 
 const mockUseShippingHook = useShipping as jest.MockedFunction<
   typeof useShipping
@@ -50,6 +60,24 @@ const mockUseShippingHook = useShipping as jest.MockedFunction<
 const mockUseUserDetailsHook = useUserDetails as jest.MockedFunction<
   typeof useUserDetails
 >;
+
+// Create a wrapper with QueryClientProvider
+const createWrapper = () => {
+  const queryClient = new QueryClient({
+    defaultOptions: {
+      queries: {
+        retry: false,
+        gcTime: 0,
+      },
+    },
+  });
+
+  const Wrapper = ({ children }: { children: React.ReactNode }) => (
+    <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
+  );
+  Wrapper.displayName = "QueryClientWrapper";
+  return Wrapper;
+};
 
 describe("useCurrentShippingAddress", () => {
   beforeEach(() => {
@@ -61,7 +89,8 @@ describe("useCurrentShippingAddress", () => {
 
   it("should initialize with first address from API when no localStorage data", async () => {
     const { result } = renderHook(() =>
-      useCurrentShippingAddress(mockUserData)
+      useCurrentShippingAddress(mockUserData),
+      { wrapper: createWrapper() }
     );
 
     await waitFor(() => {
@@ -83,7 +112,8 @@ describe("useCurrentShippingAddress", () => {
     );
 
     const { result } = renderHook(() =>
-      useCurrentShippingAddress(mockUserData)
+      useCurrentShippingAddress(mockUserData),
+      { wrapper: createWrapper() }
     );
 
     await waitFor(() => {
@@ -112,7 +142,8 @@ describe("useCurrentShippingAddress", () => {
     });
 
     const { result } = renderHook(() =>
-      useCurrentShippingAddress(mockUserData)
+      useCurrentShippingAddress(mockUserData),
+      { wrapper: createWrapper() }
     );
 
     await waitFor(() => {
@@ -130,7 +161,8 @@ describe("useCurrentShippingAddress", () => {
     });
 
     const { result } = renderHook(() =>
-      useCurrentShippingAddress(mockUserData)
+      useCurrentShippingAddress(mockUserData),
+      { wrapper: createWrapper() }
     );
 
     await waitFor(() => {
@@ -148,7 +180,8 @@ describe("useCurrentShippingAddress", () => {
     });
 
     const { result } = renderHook(() =>
-      useCurrentShippingAddress(mockUserData)
+      useCurrentShippingAddress(mockUserData),
+      { wrapper: createWrapper() }
     );
 
     // Should still be empty while loading
@@ -170,7 +203,8 @@ describe("useCurrentShippingAddress", () => {
     localStorageMock.setItem("SelectedShippingAddressData", "invalid-json");
 
     const { result } = renderHook(() =>
-      useCurrentShippingAddress(mockUserData)
+      useCurrentShippingAddress(mockUserData),
+      { wrapper: createWrapper() }
     );
 
     await waitFor(() => {
@@ -191,7 +225,8 @@ describe("useCurrentShippingAddress", () => {
     );
 
     const { result } = renderHook(() =>
-      useCurrentShippingAddress(mockUserData)
+      useCurrentShippingAddress(mockUserData),
+      { wrapper: createWrapper() }
     );
 
     await waitFor(() => {
@@ -208,7 +243,8 @@ describe("useCurrentShippingAddress", () => {
     localStorageMock.setItem("SelectedShippingAddressData", "undefined");
 
     const { result } = renderHook(() =>
-      useCurrentShippingAddress(mockUserData)
+      useCurrentShippingAddress(mockUserData),
+      { wrapper: createWrapper() }
     );
 
     await waitFor(() => {
@@ -225,7 +261,8 @@ describe("useCurrentShippingAddress", () => {
     localStorageMock.setItem("SelectedShippingAddressData", "null");
 
     const { result } = renderHook(() =>
-      useCurrentShippingAddress(mockUserData)
+      useCurrentShippingAddress(mockUserData),
+      { wrapper: createWrapper() }
     );
 
     await waitFor(() => {
@@ -240,7 +277,8 @@ describe("useCurrentShippingAddress", () => {
 
   it("should update address using mutate function", async () => {
     const { result } = renderHook(() =>
-      useCurrentShippingAddress(mockUserData)
+      useCurrentShippingAddress(mockUserData),
+      { wrapper: createWrapper() }
     );
 
     await waitFor(() => {
@@ -270,7 +308,8 @@ describe("useCurrentShippingAddress", () => {
 
   it("should only initialize once per authentication session", async () => {
     const { result, rerender } = renderHook(() =>
-      useCurrentShippingAddress(mockUserData)
+      useCurrentShippingAddress(mockUserData),
+      { wrapper: createWrapper() }
     );
 
     await waitFor(() => {
@@ -304,7 +343,9 @@ describe("useCurrentShippingAddress", () => {
       ShippingAddressDataError: null,
     });
 
-    const { result } = renderHook(() => useCurrentShippingAddress(null));
+    const { result } = renderHook(() => useCurrentShippingAddress(null), {
+      wrapper: createWrapper(),
+    });
 
     await waitFor(() => {
       expect(result.current.SelectedShippingAddressData).toBeDefined();
@@ -322,8 +363,9 @@ describe("useCurrentShippingAddress", () => {
       ShippingAddressDataError: null,
     });
 
-    const { result } = renderHook(() =>
-      useCurrentShippingAddress(undefined as any)
+    const { result } = renderHook(
+      () => useCurrentShippingAddress(undefined as any),
+      { wrapper: createWrapper() }
     );
 
     await waitFor(() => {
@@ -338,7 +380,8 @@ describe("useCurrentShippingAddress", () => {
   it("should reset initialization when authentication changes", async () => {
     // Start authenticated
     const { result, rerender } = renderHook(() =>
-      useCurrentShippingAddress(mockUserData)
+      useCurrentShippingAddress(mockUserData),
+      { wrapper: createWrapper() }
     );
 
     await waitFor(() => {
@@ -391,7 +434,8 @@ describe("useCurrentShippingAddress", () => {
     });
 
     const { result } = renderHook(() =>
-      useCurrentShippingAddress(mockUserData)
+      useCurrentShippingAddress(mockUserData),
+      { wrapper: createWrapper() }
     );
 
     await waitFor(() => {

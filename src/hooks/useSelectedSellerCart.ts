@@ -5,6 +5,7 @@ import useMultipleSellerCart from "./useMultipleSellerCart";
 
 const useSelectedSellerCart = (cartItems: any, selectedSellerId: any) => {
   const { user } = useCurrentUser();
+
   // const { moduleSettings } = useModuleSettings(user);
 
   const cartData = cartItems || [];

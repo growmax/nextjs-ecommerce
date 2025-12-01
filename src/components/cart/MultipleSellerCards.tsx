@@ -1,14 +1,15 @@
 "use client";
 
+import PricingFormat from "@/components/PricingFormat";
+import CartPriceDetails from "@/components/sales/CartPriceDetails";
 import {
   Accordion,
   AccordionContent,
   AccordionItem,
   AccordionTrigger,
 } from "@/components/ui/accordion";
-import { Card } from "@/components/ui/card";
-import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
 import {
   Dialog,
   DialogContent,
@@ -17,18 +18,17 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { Skeleton } from "@/components/ui/skeleton";
 import { useCart as useCartContext } from "@/contexts/CartContext";
+import { useCart } from "@/hooks/useCart";
 import { useCurrentUser } from "@/hooks/useCurrentUser";
 import useMultipleSellerCart from "@/hooks/useMultipleSellerCart";
-import { useCart } from "@/hooks/useCart";
 import type { CartItem } from "@/types/calculation/cart";
-import { useMemo, useState } from "react";
 import { Trash2 } from "lucide-react";
-import CartProductCard from "./CartProductCard";
-import PricingFormat from "@/components/PricingFormat";
-import CartPriceDetails from "@/components/sales/CartPriceDetails";
-import CartProceedButton from "./CartProceedButton";
 import { useTranslations } from "next-intl";
+import { useEffect, useMemo, useState } from "react";
+import CartProceedButton from "./CartProceedButton";
+import CartProductCard from "./CartProductCard";
 
 interface MultipleSellerCardsProps {
   onItemUpdate?: (item: CartItem, quantity: number) => void;
@@ -40,12 +40,14 @@ interface MultipleSellerCardsProps {
   isPricingLoading?: boolean;
   handleOrder?: (sellerId: string | number) => void;
   handleQuote?: (sellerId: string | number) => void;
+  onSellerSelect: (sellerId: string) => void;
 }
 
 export default function MultipleSellerCards({
   onItemUpdate,
   onItemDelete,
   isPricingLoading = false,
+  onSellerSelect,
   handleOrder,
   handleQuote,
 }: MultipleSellerCardsProps) {
@@ -82,6 +84,22 @@ export default function MultipleSellerCards({
     isPricingLoading: pricingLoadingFromHook,
   } = useMultipleSellerCart(cart, calculationParams);
 
+  // Determine default expanded seller (first seller when multiple sellers exist)
+  // Calculate this before early returns so we can use it in useEffect
+  const defaultSellerId = useMemo(() => {
+    return hasMultipleSellers && sellerIds.length > 0
+      ? String(sellerIds[0])
+      : undefined;
+  }, [hasMultipleSellers, sellerIds]);
+
+  // Notify parent of initial selection on mount - MUST be before early returns
+  useEffect(() => {
+    if (defaultSellerId) {
+      onSellerSelect(defaultSellerId);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []); // Only on mount
+
   // Use prop value if provided, otherwise use hook's loading state
   const isPricingLoadingState = isPricingLoading ?? pricingLoadingFromHook;
 
@@ -101,11 +119,14 @@ export default function MultipleSellerCards({
 
   const currency = user?.currency;
 
-  // Determine default expanded seller (first seller when multiple sellers exist)
-  const defaultSellerId =
-    hasMultipleSellers && sellerIds.length > 0
-      ? String(sellerIds[0])
-      : undefined;
+  // Handle accordion value change - this fires when accordion expands/collapses
+  const handleAccordionChange = (value: string | undefined) => {
+    console.log("Accordion changed to:", value);
+    if (value) {
+      // Call onSellerSelect when a seller is expanded
+      onSellerSelect(value);
+    }
+  };
 
   // Handle delete icon click
   const handleDeleteClick = (
@@ -149,6 +170,7 @@ export default function MultipleSellerCards({
         type="single"
         collapsible
         {...(defaultSellerId ? { defaultValue: defaultSellerId } : {})}
+        onValueChange={handleAccordionChange}
         className="w-full"
       >
         {sellerIds.map(sellerId => {
@@ -165,24 +187,24 @@ export default function MultipleSellerCards({
               className="overflow-hidden transition-all duration-200 mb-6 last:mb-0 border-2 border-gray-200 shadow-sm hover:shadow-md"
             >
               <AccordionItem value={String(sellerId)} className="border-0">
-                <AccordionTrigger className="hover:no-underline px-6 py-4 bg-transparent hover:bg-transparent">
-                  <div className="flex flex-1 items-center justify-between pr-4">
-                    <div className="flex flex-col items-start gap-2">
-                      <div className="flex items-center gap-2 flex-wrap">
-                        <span className="font-semibold text-lg">
+                <AccordionTrigger className="hover:no-underline px-4 sm:px-6 py-3 sm:py-4 bg-transparent hover:bg-transparent">
+                  <div className="flex flex-1 items-start sm:items-center justify-between gap-2 pr-2 sm:pr-4 w-full">
+                    <div className="flex flex-col items-start gap-1.5 sm:gap-2 flex-1 min-w-0">
+                      <div className="flex items-center gap-2 flex-wrap w-full">
+                        <span className="font-semibold text-base sm:text-lg truncate">
                           {sellerCart.seller?.name ||
                             `${t("unknownSeller")} ${sellerId}`}
                         </span>
                         {sellerCart.seller?.location &&
                           sellerCart.seller.location !==
                             t("locationNotSpecified") && (
-                            <span className="text-sm text-muted-foreground">
+                            <span className="text-xs sm:text-sm text-muted-foreground hidden sm:inline">
                               • {sellerCart.seller.location}
                             </span>
                           )}
                       </div>
-                      <div className="flex items-center gap-3 text-sm text-muted-foreground">
-                        <span className="inline-flex items-center justify-center px-2.5 py-1 text-xs font-medium bg-muted text-muted-foreground rounded-full">
+                      <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2 sm:gap-3 text-xs sm:text-sm text-muted-foreground w-full">
+                        <span className="inline-flex items-center justify-center px-2 sm:px-2.5 py-0.5 sm:py-1 text-xs font-medium bg-muted text-muted-foreground rounded-full">
                           {itemCount} {itemCount === 1 ? t("item") : t("items")}
                         </span>
                         <span className="font-medium text-foreground">
@@ -198,20 +220,20 @@ export default function MultipleSellerCards({
                         </span>
                       </div>
                     </div>
+                    <button
+                      type="button"
+                      onClick={e => handleDeleteClick(e, sellerId)}
+                      className="ml-2 p-1.5 text-muted-foreground hover:text-destructive transition-colors rounded-md hover:bg-muted shrink-0 flex items-center justify-center"
+                      aria-label="Delete seller cart items"
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </button>
                   </div>
-                  <button
-                    type="button"
-                    onClick={e => handleDeleteClick(e, sellerId)}
-                    className="ml-2 p-1.5 text-muted-foreground hover:text-destructive transition-colors rounded-md hover:bg-muted shrink-0 translate-y-0.5 flex items-center justify-center"
-                    aria-label="Delete seller cart items"
-                  >
-                    <Trash2 className="h-4 w-4" />
-                  </button>
                 </AccordionTrigger>
                 <AccordionContent className="px-0 pb-0">
-                  <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 px-6 pb-6 pt-2">
-                    {/* Left Column: Products List (2/3 width) */}
-                    <div className="lg:col-span-2 space-y-4">
+                  <div className="flex flex-col lg:grid lg:grid-cols-3 gap-4 sm:gap-6 px-4 sm:px-6 pb-4 sm:pb-6 pt-2">
+                    {/* Left Column: Products List (2/3 width on desktop, full width on mobile) */}
+                    <div className="lg:col-span-2 space-y-4 order-1">
                       {sellerCart.items?.map(
                         (item: CartItem, itemIndex: number) => (
                           <CartProductCard
@@ -237,9 +259,9 @@ export default function MultipleSellerCards({
                       )}
                     </div>
 
-                    {/* Right Column: Price Details & Buttons (1/3 width) */}
-                    <div className="lg:col-span-1">
-                      <div className="sticky top-4 space-y-4">
+                    {/* Right Column: Price Details & Buttons (1/3 width on desktop, full width on mobile) */}
+                    <div className="lg:col-span-1 order-2 lg:order-2">
+                      <div className="lg:sticky lg:top-4 space-y-4">
                         {sellerCart.pricing && currency && (
                           <CartPriceDetails
                             cartValue={sellerCart.pricing}

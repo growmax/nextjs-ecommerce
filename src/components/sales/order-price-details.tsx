@@ -37,6 +37,11 @@ interface OrderPriceDetailsProps {
   calculatedTotal?: number;
   subTotal?: number;
   taxableAmount?: number;
+  // Cash discount values from cartValue - use these when available
+  totalCashDiscount?: number;
+  cashDiscountValue?: number;
+  // Hide P&F Rate for quote summary pages
+  hidePfRate?: boolean;
 }
 
 export default function OrderPriceDetails({
@@ -53,6 +58,9 @@ export default function OrderPriceDetails({
   calculatedTotal,
   subTotal,
   taxableAmount,
+  totalCashDiscount: propTotalCashDiscount,
+  cashDiscountValue: propCashDiscountValue,
+  hidePfRate = false,
 }: OrderPriceDetailsProps) {
   const t = useTranslations("components");
   const [taxExpanded, setTaxExpanded] = useState(false);
@@ -72,6 +80,16 @@ export default function OrderPriceDetails({
       let pfRateFromProducts = 0;
       let totalLPFromProducts = 0;
       let totalBasicDiscountFromProducts = 0;
+      let totalCashDiscountFromProducts = 0;
+      let cashDiscountValueFromProducts = 0;
+
+      // Use cash discount values from props if available (from cartValue), otherwise calculate from products
+      if (propTotalCashDiscount !== undefined && propTotalCashDiscount !== null) {
+        totalCashDiscountFromProducts = propTotalCashDiscount;
+      }
+      if (propCashDiscountValue !== undefined && propCashDiscountValue !== null) {
+        cashDiscountValueFromProducts = propCashDiscountValue;
+      }
 
       if (products && products.length > 0) {
         products.forEach((product: any) => {
@@ -80,35 +98,63 @@ export default function OrderPriceDetails({
             (product.unitListPrice || product.unitLP || 0) *
             (product.quantity || product.askedQuantity || 1);
 
-          // Calculate basic discount if list price > unit price
+          // Calculate cash discount if applicable (only if not provided via props)
+          // Cash discount is always calculated on unitListPrice (list price), not on unitPrice
+          if (propTotalCashDiscount === undefined || propTotalCashDiscount === null) {
+            const productCashDiscountValue =
+              product.cashdiscountValue || product.cashDiscountValue || 0;
+            if (productCashDiscountValue > 0) {
+              // Extract cash discount value (percentage)
+              if (!cashDiscountValueFromProducts) {
+                cashDiscountValueFromProducts = productCashDiscountValue;
+              }
+              // Calculate cash discount amount based on unitListPrice (list price)
+              // This matches the calculation in cart-calculation.ts
+              const qty = product.quantity || product.askedQuantity || 1;
+              const listPrice = product.unitListPrice || product.unitLP || 0;
+              // Cash discount = (unitListPrice * cashdiscountValue) / 100 * quantity
+              const cashDiscountAmount = (listPrice * productCashDiscountValue) / 100;
+              totalCashDiscountFromProducts += cashDiscountAmount * qty;
+            }
+          }
+
+          // Calculate basic discount (difference between list price and original unit price before cash discount)
+          // Basic discount = listPrice - originalUnitPrice (or unitPrice if no cash discount)
           const qty = product.quantity || product.askedQuantity || 1;
           const listPrice = product.unitListPrice || product.unitLP || 0;
-          const unitPrice = product.unitPrice || product.discountedPrice || 0;
-          if (listPrice > unitPrice) {
-            totalBasicDiscountFromProducts += (listPrice - unitPrice) * qty;
+          const originalPriceForBasicDiscount =
+            product.originalUnitPrice || product.unitPrice || product.discountedPrice || 0;
+          if (listPrice > originalPriceForBasicDiscount) {
+            const basicDiscountAmount =
+              listPrice - originalPriceForBasicDiscount;
+            totalBasicDiscountFromProducts += basicDiscountAmount * qty;
           }
         });
       }
 
       // If we can't calculate pfRate from products, derive it from taxableAmount and subTotal
+      // But only if hidePfRate is false (for orders, not quotes)
       const calculatedPfRate =
-        pfRateFromProducts > 0
-          ? pfRateFromProducts
-          : taxableAmount -
-            subTotal -
-            (overallShipping !== undefined && overallShipping !== null
-              ? overallShipping
-              : 0);
+        hidePfRate
+          ? 0 // Don't calculate P&F Rate for quotes
+          : pfRateFromProducts > 0
+            ? pfRateFromProducts
+            : taxableAmount -
+              subTotal -
+              (overallShipping !== undefined && overallShipping !== null
+                ? overallShipping
+                : 0);
 
       return {
         totalItems: products?.length || 0,
         totalLP: totalLPFromProducts,
         totalBasicDiscount: totalBasicDiscountFromProducts,
-        totalCashDiscount: 0,
+        totalCashDiscount: totalCashDiscountFromProducts,
+        cashDiscountValue: cashDiscountValueFromProducts,
         totalValue: subTotal,
         totalTax: overallTax,
         totalShipping: overallShipping !== undefined ? overallShipping : 0,
-        pfRate: calculatedPfRate > 0 ? calculatedPfRate : 0,
+        pfRate: hidePfRate ? 0 : (calculatedPfRate > 0 ? calculatedPfRate : 0),
         taxableAmount,
         grandTotal: calculatedTotal,
         hideListPricePublic: totalLPFromProducts === 0,
@@ -293,6 +339,9 @@ export default function OrderPriceDetails({
     taxableAmount,
     overallShipping,
     overallTax,
+    hidePfRate,
+    propCashDiscountValue,
+    propTotalCashDiscount,
   ]);
 
   // Extract tax breakdown from cartValue (pre-calculated) or fallback to manual calculation
@@ -408,10 +457,14 @@ export default function OrderPriceDetails({
     overallShipping !== undefined && overallShipping !== null
       ? overallShipping
       : cartValue.totalShipping || 0;
+  // For tax, prefer overallTax if provided, otherwise use cartValue.totalTax
+  // If both are 0 or undefined, calculate from products as fallback
   const finalTax =
     overallTax !== undefined && overallTax !== null
       ? overallTax
-      : cartValue.totalTax || 0;
+      : cartValue.totalTax !== undefined && cartValue.totalTax !== null
+        ? cartValue.totalTax
+        : 0;
 
   // Total should use calculatedTotal (exact value) not grandTotal (which may be rounded)
   // This ensures we show the precise amount like INR ₹33.99 instead of rounded INR ₹34.00
@@ -429,16 +482,18 @@ export default function OrderPriceDetails({
       ? taxableAmount
       : cartValue.taxableAmount || 0;
 
-  // Calculate discount (basic discount or cash discount)
-  // Total discount is the sum of both basic and cash discount, or just basic if cash doesn't exist
-  const discount =
-    (cartValue.totalBasicDiscount || 0) + (cartValue.totalCashDiscount || 0);
+  // Calculate discounts separately (basic discount and cash discount)
+  const basicDiscount = cartValue.totalBasicDiscount || 0;
+  const cashDiscount = cartValue.totalCashDiscount || 0;
+  const cashDiscountValue = cartValue.cashDiscountValue || 0;
 
   // Show fields conditionally
   const showListPrice = !cartValue.hideListPricePublic && cartValue.totalLP > 0;
-  const showDiscount = discount > 0;
+  const showBasicDiscount = basicDiscount > 0;
+  const showCashDiscount = cashDiscount > 0;
   const showShippingCharges = finalShipping > 0;
-  const showPfRate = cartValue.pfRate > 0;
+  // Hide P&F Rate if hidePfRate prop is true (for quote summary pages)
+  const showPfRate = !hidePfRate && cartValue.pfRate > 0;
 
   return (
     <Card className="shadow-sm bg-white p-0 m-0 overflow-hidden gap-4 w-full">
@@ -475,8 +530,8 @@ export default function OrderPriceDetails({
           </div>
         )}
 
-        {/* Discount - only show if there's a discount */}
-        {showDiscount && (
+        {/* Basic Discount - only show if there's a basic discount */}
+        {showBasicDiscount && (
           <div className="flex justify-between items-center gap-4 min-w-0">
             <div className="flex-shrink-0">
               <h5 className="text-sm font-normal text-green-600">
@@ -485,7 +540,24 @@ export default function OrderPriceDetails({
             </div>
             <div className="text-right flex-shrink-0 break-words">
               <h5 className="text-sm font-normal text-green-600">
-                -<PricingFormat value={discount} />
+                -<PricingFormat value={basicDiscount} />
+              </h5>
+            </div>
+          </div>
+        )}
+
+        {/* Cash Discount - only show if there's a cash discount */}
+        {showCashDiscount && (
+          <div className="flex justify-between items-center gap-4 min-w-0">
+            <div className="flex-shrink-0">
+              <h5 className="text-sm font-normal text-green-600">
+                {t("cashDiscount")}{" "}
+                {cashDiscountValue > 0 ? `(${cashDiscountValue}%)` : ""}
+              </h5>
+            </div>
+            <div className="text-right flex-shrink-0 break-words">
+              <h5 className="text-sm font-normal text-green-600">
+                -<PricingFormat value={cashDiscount} />
               </h5>
             </div>
           </div>

@@ -95,7 +95,7 @@ export default function CartProceedButton({
         disabled={disabled || isLoading}
       >
         <ShoppingCart className="mr-2 h-5 w-5" />
-        {t("placeOrder")}
+        {t("createOrder")}
       </Button>
     </div>
   );

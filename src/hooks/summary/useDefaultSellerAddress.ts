@@ -1,9 +1,9 @@
 "use client";
 
-import { useQuery } from "@tanstack/react-query";
-import { map } from "lodash";
 import useUser from "@/hooks/useUser";
 import SellerWarehouseService from "@/lib/api/services/SellerWarehouseService/SellerWarehouseService";
+import { useQuery } from "@tanstack/react-query";
+import { useMemo } from "react";
 
 /**
  * Hook to fetch default seller address/branch
@@ -22,7 +22,7 @@ export default function useDefaultSellerAddress(
   const { companydata } = useUser();
   const userId = (companydata as { userId?: number })?.userId;
   const companyId = (companydata as { companyId?: number })?.companyId;
-
+ 
   const { data, error, isLoading } = useQuery({
     queryKey: [
       "defualtSellerAddress",
@@ -60,9 +60,16 @@ export default function useDefaultSellerAddress(
     gcTime: 10 * 60 * 1000, // 10 minutes
     refetchOnWindowFocus: false,
   });
-
-  // Return the full branch objects, not just branchId
-  const formatAddress = map(data || [], o => (o as any).branchId || o);
+  
+  // Format the response - data is already an array of SellerBranch objects from the service
+  // Each item has: { id, name, branchId, companyId }
+  const formatAddress = useMemo(() => {
+    if (!data || !Array.isArray(data) || data.length === 0) {
+      return [];
+    }
+    // Return the full branch objects as they are already formatted by SellerWarehouseService
+    return data;
+  }, [data]);
 
   return {
     defaultSellerAddress: formatAddress || [],

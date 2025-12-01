@@ -246,10 +246,18 @@ export const summaryReqDTO = (
       ? VDDetails.taxableAmount
       : cartValue.taxableAmount,
     isSPRRequested: isOrder ? false : isSPRRequested,
-    sprDetails: sprDetails,
+    sprDetails: sprDetails
+      ? {
+          ...sprDetails,
+          sprRequestedDiscount:
+            typeof sprDetails.sprRequestedDiscount === "string"
+              ? parseFloat(sprDetails.sprRequestedDiscount) || 0
+              : sprDetails.sprRequestedDiscount || 0,
+        }
+      : sprDetails,
     modifiedByUsername: authData?.displayName
-      ? authData?.displayName
-      : "" + ", " + (authData?.companyName ? authData?.companyName : ""),
+      ? authData?.displayName + (authData?.companyName ? ", " + authData?.companyName : "")
+      : "",
     notes: null,
     [isOrder ? "orderDescription" : "quoteDescription"]: "string",
     [isOrder ? "orderDivisionId" : "quoteDivisionId"]: division
@@ -265,7 +273,7 @@ export const summaryReqDTO = (
         ? preferences?.deliveryTermsId?.name
         : preferences?.deliveryTermsId?.description,
       deliveryTermsId: preferences?.deliveryTermsId?.id,
-      deliveryTermsCode2: deliveryPlace,
+      ...(deliveryPlace ? { deliveryTermsCode2: deliveryPlace } : {}),
       diValue: 0,
       dispatchInstructions: preferences?.dispatchInstructionsId?.name,
       dispatchInstructionsId: preferences?.dispatchInstructionsId?.id,
@@ -316,28 +324,31 @@ export const summaryReqDTO = (
     overallTax: VDDetails.subTotalVolume
       ? VDDetails.overallTax
       : cartValue.totalTax,
-    payerCode: setRegisterAddress?.soldToCode,
-    payerBranchName: setRegisterAddress?.branchName,
+    payerCode: setRegisterAddress?.soldToCode || undefined,
+    payerBranchName: setRegisterAddress?.branchName || undefined,
     po: true,
     quotationIdentifier: null,
     quoteName: "quoteName",
     requiredDate: customerRequiredDate
       ? new Date(customerRequiredDate).toISOString()
       : null,
-    registerAddressDetails: {
-      addressLine: setRegisterAddress?.addressLine,
-      branchName: setRegisterAddress?.branchName,
-      city: setRegisterAddress?.city,
-      country: setRegisterAddress?.country,
-      district: setRegisterAddress?.district,
-      locality: setRegisterAddress?.locality,
-      pincode: setRegisterAddress?.pinCodeId,
-      state: setRegisterAddress?.state,
-      gst: setRegisterAddress?.gst,
-      billToCode: setRegisterAddress?.billToCode,
-      shipToCode: setRegisterAddress?.shipToCode,
-      soldToCode: setRegisterAddress?.soldToCode,
-    },
+    registerAddressDetails:
+      setRegisterAddress && Object.keys(setRegisterAddress).length > 0
+        ? {
+            addressLine: setRegisterAddress?.addressLine,
+            branchName: setRegisterAddress?.branchName,
+            city: setRegisterAddress?.city,
+            country: setRegisterAddress?.country,
+            district: setRegisterAddress?.district,
+            locality: setRegisterAddress?.locality,
+            pincode: setRegisterAddress?.pinCodeId,
+            state: setRegisterAddress?.state,
+            gst: setRegisterAddress?.gst,
+            billToCode: setRegisterAddress?.billToCode,
+            shipToCode: setRegisterAddress?.shipToCode,
+            soldToCode: setRegisterAddress?.soldToCode,
+          }
+        : {},
     shippingAddressDetails: {
       addressLine: setShippingAddress.addressLine,
       branchName: setShippingAddress.branchName,
