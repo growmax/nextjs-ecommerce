@@ -5,6 +5,7 @@
 
 /**
  * OpenSearch response structure from the API
+ * Can be either wrapped in body or flat structure
  */
 interface OpenSearchRawResponse {
   body?: {
@@ -14,9 +15,15 @@ interface OpenSearchRawResponse {
     found?: boolean;
     [key: string]: unknown;
   };
+  // Flat structure (direct GET response)
+  _source?: unknown;
+  _id?: string;
+  _index?: string;
+  found?: boolean;
   statusCode?: number;
   headers?: Record<string, string>;
   meta?: unknown;
+  [key: string]: unknown;
 }
 
 /**
@@ -45,14 +52,28 @@ export function extractOpenSearchData<T = unknown>(
 
   const rawResponse = response as OpenSearchRawResponse;
 
+  // Handle wrapped structure: { body: { _source: ..., found: ... } }
+  if (rawResponse.body) {
+    // Check if the document was found
+    if (rawResponse.body.found === false) {
+      return null;
+    }
+
+    // Extract the _source field which contains the actual data
+    if (rawResponse.body._source) {
+      return rawResponse.body._source as T;
+    }
+  }
+
+  // Handle flat structure: { _source: ..., found: ... } (direct GET response)
   // Check if the document was found
-  if (rawResponse.body?.found === false) {
+  if (rawResponse.found === false) {
     return null;
   }
 
-  // Extract the _source field which contains the actual data
-  if (rawResponse.body?._source) {
-    return rawResponse.body._source as T;
+  // Extract the _source field from flat structure
+  if (rawResponse._source) {
+    return rawResponse._source as T;
   }
 
   // Fallback: Check if response has direct data field (for other response types)

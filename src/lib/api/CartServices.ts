@@ -257,4 +257,48 @@ export class CartService extends BaseService<CartService> {
     );
   }
 }
-export default CartService.getInstance();
+
+// Lazy getter pattern to ensure instance is always available
+// This handles cases where the module might be reloaded after page refresh
+let cartServiceInstance: CartService | null = null;
+
+const getCartServiceInstance = (): CartService => {
+  if (!cartServiceInstance) {
+    try {
+      cartServiceInstance = CartService.getInstance();
+    } catch (error) {
+      console.error("Error initializing CartService:", error);
+      // Fallback: create a new instance if getInstance fails
+      cartServiceInstance = new CartService();
+    }
+  }
+  
+  // Verify the instance has the required methods
+  if (!cartServiceInstance || typeof cartServiceInstance.postCart !== "function") {
+    console.error("CartService instance is not properly initialized, recreating...");
+    // Force recreation
+    cartServiceInstance = new CartService();
+  }
+  
+  return cartServiceInstance;
+};
+
+// Create a proxy object that always returns a valid instance
+const cartServiceProxy = new Proxy({} as CartService, {
+  get(_target, prop) {
+    const instance = getCartServiceInstance();
+    const value = (instance as any)[prop];
+    // If it's a function, bind it to the instance
+    if (typeof value === "function") {
+      return value.bind(instance);
+    }
+    return value;
+  },
+  set(_target, prop, value) {
+    const instance = getCartServiceInstance();
+    (instance as any)[prop] = value;
+    return true;
+  },
+});
+
+export default cartServiceProxy;
