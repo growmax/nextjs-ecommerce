@@ -6,6 +6,7 @@ import { CategoryPagination } from "@/components/Pagination/CategoryPagination";
 import { ViewToggle } from "@/components/ProductList/ViewToggle";
 import { SortDropdown } from "@/components/Sort/SortDropdown";
 import { Skeleton } from "@/components/ui/skeleton";
+import { ProductLoadingProvider } from "@/contexts/ProductLoadingContext";
 import type { CategoryPath } from "@/lib/services/CategoryResolutionService";
 import type { FilterAggregations } from "@/types/category-filters";
 import { formatAllAggregations } from "@/utils/format-aggregations";
@@ -191,8 +192,10 @@ export function CategoryPageInteractivity({
           </div>
         </div>
 
-        {/* Product Grid - Passed as children */}
-        {children}
+        {/* Product Grid - Broadcast loading state via context */}
+        <ProductLoadingProvider value={{ isLoading }}>
+          {children}
+        </ProductLoadingProvider>
 
         {/* Pagination */}
         {totalPages > 1 && (

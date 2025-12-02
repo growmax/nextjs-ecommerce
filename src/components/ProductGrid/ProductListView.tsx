@@ -1,12 +1,12 @@
-import { FormattedProduct } from "@/lib/api/services/SearchService/SearchService";
-import { DiscountItem } from "@/lib/api/services/DiscountService/DiscountService";
-import { ProductListItem } from "@/types/product-listing";
-import Image from "next/image";
-import Link from "next/link";
-import AddToCartButton from "./AddToCartButton";
+import ImageWithFallback from "@/components/ImageWithFallback";
 import { ProductPrice } from "@/components/product/ProductPrice";
 import { Card, CardContent } from "@/components/ui/card";
+import { DiscountItem } from "@/lib/api/services/DiscountService/DiscountService";
+import { FormattedProduct } from "@/lib/api/services/SearchService/SearchService";
+import { ProductListItem } from "@/types/product-listing";
 import { Package } from "lucide-react";
+import Link from "next/link";
+import AddToCartButton from "./AddToCartButton";
 
 /**
  * Transform FormattedProduct to ProductListItem
@@ -113,13 +113,13 @@ export function ProductListView({
           >
             <div className="p-0 flex flex-col md:flex-row w-full">
               {/* Product Image */}
-              <div className="relative w-full md:w-2/5 aspect-[16/10] md:aspect-auto md:min-w-[180px] md:max-w-[280px] shrink-0 md:py-6 md:pl-6">
+              <div className="relative w-full md:w-2/5 bg-white flex items-center justify-center min-h-[200px] max-h-[260px] md:min-w-[180px] md:max-w-[280px] shrink-0 md:py-6 md:pl-6 rounded-t-lg md:rounded-l-lg md:rounded-t-none overflow-hidden">
                 <Link href={productUrl} prefetch={true}>
-                  <Image
+                  <ImageWithFallback
                     src={productListItem.image}
                     alt={productListItem.title}
                     fill
-                    className="object-cover md:h-[calc(100%-48px)] md:top-6 md:rounded-md"
+                    className="object-contain p-2"
                     sizes="(max-width: 768px) 100vw, 280px"
                   />
                 </Link>

@@ -1,22 +1,21 @@
 "use client";
 
-import { useEffect, useState, useTransition, useCallback, useMemo } from "react";
-import { useRouter, useSearchParams, usePathname } from "next/navigation";
-import {
-  CategoryPath,
-  BreadcrumbItem,
-} from "@/lib/services/CategoryResolutionService";
-import { buildCategoryQuery } from "@/utils/opensearch/browse-queries";
-import SearchService, { ElasticSearchQuery } from "@/lib/api/services/SearchService/SearchService";
-import { FormattedProduct } from "@/lib/api/services/SearchService/SearchService";
-import { ProductGrid } from "@/components/ProductGrid/ProductGrid";
 import { CategoryBreadcrumb } from "@/components/Breadcrumb/CategoryBreadcrumb";
 import { CategoryPagination } from "@/components/Pagination/CategoryPagination";
-import { SortDropdown } from "@/components/Sort/SortDropdown";
-import { Skeleton } from "@/components/ui/skeleton";
+import { ProductGrid } from "@/components/ProductGrid/ProductGrid";
 import { StructuredData } from "@/components/seo/StructuredData";
+import { SortDropdown } from "@/components/Sort/SortDropdown";
 import { Card, CardContent } from "@/components/ui/card";
+import { Skeleton } from "@/components/ui/skeleton";
+import SearchService, { ElasticSearchQuery, FormattedProduct } from "@/lib/api/services/SearchService/SearchService";
+import {
+  BreadcrumbItem,
+  CategoryPath,
+} from "@/lib/services/CategoryResolutionService";
+import { buildCategoryQuery } from "@/utils/opensearch/browse-queries";
 import { Package } from "lucide-react";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
+import { useCallback, useEffect, useMemo, useState, useTransition } from "react";
 
 interface CategoryPageClientProps {
   categoryPath: CategoryPath;

@@ -1,13 +1,10 @@
 "use client";
 
+import ImageWithFallback from "@/components/ImageWithFallback";
 import AddToCartSection from "@/components/product/AddToCartSection";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { ProductListItem } from "@/types/product-listing";
-
-import { useEffect, useState } from "react";
-
-const PLACEHOLDER_IMAGE = "https://placehold.co/600x400?text=Broken Image";
 
 interface ProductCardProps {
   product: ProductListItem;
@@ -20,11 +17,6 @@ interface ProductCardProps {
  */
 export function ProductCard({ product, viewMode = "grid" }: ProductCardProps) {
   const isGrid = viewMode === "grid";
-  const [imageSrc, setImageSrc] = useState(product.image);
-
-  useEffect(() => {
-    setImageSrc(product.image);
-  }, [product.image]);
 
   return (
     <Card
@@ -39,19 +31,20 @@ export function ProductCard({ product, viewMode = "grid" }: ProductCardProps) {
       >
         {/* Product Image */}
         <div
-          className={`relative ${
+          className={`relative bg-white ${
             isGrid
-              ? "w-full aspect-[16/10]"
-              : "w-full md:w-2/5 aspect-[16/10] md:aspect-auto md:min-w-[180px] md:max-w-[280px] shrink-0 md:py-6"
+              ? "w-full aspect-square"
+              : "w-full md:w-2/5 aspect-square md:aspect-auto md:min-w-[180px] md:max-w-[280px] shrink-0 md:py-6"
           }`}
         >
-          <img
-            src={imageSrc || PLACEHOLDER_IMAGE}
+          <ImageWithFallback
+            src={product.image}
             alt={product.title}
-            onError={() => setImageSrc(PLACEHOLDER_IMAGE)}
-            className={`object-cover absolute inset-0 ${
-              isGrid ? "h-full w-full" : "h-full w-full md:h-[calc(100%-48px)] md:top-6 md:rounded-md"
+            fill
+            className={`object-contain ${
+              isGrid ? "p-4" : "md:rounded-md p-2"
             }`}
+            sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
           />
           {product.isNew && (
             <Badge

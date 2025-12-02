@@ -1,12 +1,12 @@
-import { FormattedProduct } from "@/lib/api/services/SearchService/SearchService";
-import { DiscountItem } from "@/lib/api/services/DiscountService/DiscountService";
-import { ProductListItem } from "@/types/product-listing";
-import Image from "next/image";
-import Link from "next/link";
-import AddToCartButton from "./AddToCartButton";
+import ImageWithFallback from "@/components/ImageWithFallback";
 import { ProductPrice } from "@/components/product/ProductPrice";
 import { Card, CardContent } from "@/components/ui/card";
+import { DiscountItem } from "@/lib/api/services/DiscountService/DiscountService";
+import { FormattedProduct } from "@/lib/api/services/SearchService/SearchService";
+import { ProductListItem } from "@/types/product-listing";
 import { Package } from "lucide-react";
+import Link from "next/link";
+import AddToCartButton from "./AddToCartButton";
 
 /**
  * Transform FormattedProduct to ProductListItem
@@ -140,7 +140,7 @@ export function ProductTableView({
                   <td className="p-3">
                     <div className="flex items-center gap-3">
                       <div className="relative w-16 h-16 shrink-0">
-                        <Image
+                        <ImageWithFallback
                           src={productListItem.image}
                           alt={productListItem.title}
                           fill
@@ -224,7 +224,7 @@ export function ProductTableView({
             >
               <div className="flex gap-3">
                 <div className="relative w-20 h-20 shrink-0">
-                  <Image
+                  <ImageWithFallback
                     src={productListItem.image}
                     alt={productListItem.title}
                     fill

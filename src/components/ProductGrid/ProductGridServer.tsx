@@ -1,12 +1,12 @@
+import ImageWithFallback from "@/components/ImageWithFallback";
 import { ProductPrice } from "@/components/product/ProductPrice";
+import { Card, CardContent } from "@/components/ui/card";
 import { Link } from "@/i18n/navigation";
 import { DiscountItem } from "@/lib/api/services/DiscountService/DiscountService";
 import { FormattedProduct } from "@/lib/api/services/SearchService/SearchService";
 import { ProductListItem } from "@/types/product-listing";
-import Image from "next/image";
-import AddToCartButton from "./AddToCartButton";
-import { Card, CardContent } from "@/components/ui/card";
 import { Package } from "lucide-react";
+import AddToCartButton from "./AddToCartButton";
 
 /**
  * Transform FormattedProduct to ProductListItem
@@ -121,13 +121,13 @@ export function ProductGridServer({
           >
             <div className="p-0 flex flex-col h-full">
               {/* Product Image */}
-              <div className="relative w-full aspect-[16/10]">
+              <div className="relative w-full bg-white flex items-center justify-center min-h-[220px] max-h-[320px] rounded-t-lg overflow-hidden">
                 <Link href={productUrl} prefetch={true}>
-                  <Image
+                  <ImageWithFallback
                     src={productListItem.image}
                     alt={productListItem.title}
                     fill
-                    className="object-cover"
+                    className="object-contain p-2"
                     sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, (max-width: 1280px) 33vw, 25vw"
                   />
                 </Link>

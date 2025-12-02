@@ -1,6 +1,7 @@
 import { CategoryBreadcrumbServer } from "@/components/Breadcrumb/CategoryBreadcrumbServer";
 import { ProductViewSwitcher } from "@/components/ProductGrid/ProductViewSwitcher";
 import { StructuredDataServer } from "@/components/seo/StructuredDataServer";
+import { Card, CardContent } from "@/components/ui/card";
 import { Link } from "@/i18n/navigation";
 import type { RequestContext } from "@/lib/api/client";
 import SearchService, {
@@ -18,7 +19,6 @@ import {
   buildCategoryFilter,
   getBaseQuery,
 } from "@/utils/opensearch/browse-queries";
-import { Card, CardContent } from "@/components/ui/card";
 import { Package } from "lucide-react";
 import { Metadata } from "next";
 import { headers } from "next/headers";
@@ -502,7 +502,7 @@ export default async function BrandCategoryPage({
           <Suspense
             fallback={
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4 md:gap-6">
-                {Array.from({ length: 8 }).map((_, i) => (
+                {Array.from({ length: 20 }).map((_, i) => (
                   <div
                     key={i}
                     className="h-[380px] bg-muted animate-pulse rounded-lg"
