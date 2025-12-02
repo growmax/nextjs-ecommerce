@@ -15,27 +15,36 @@ interface ProductTableSkeletonProps {
 export function ProductTableSkeleton({ count = 12 }: ProductTableSkeletonProps) {
   return (
     <>
-      {/* Desktop Table View Skeleton - matches ProductTableView structure */}
-      <div className="hidden md:block overflow-x-auto">
-        <table className="w-full border-collapse">
+      {/* Desktop Table View Skeleton - matches ProductTableView structure exactly */}
+      <div className="hidden md:block w-full overflow-x-auto product-table-wrapper" role="status" aria-label="Loading products">
+        <table className="w-full table-fixed border-collapse">
+          {/* This colgroup must match ProductTableView exactly — do not remove */}
+          <colgroup>
+            <col style={{ width: "var(--product-table-col-product, 35%)" }} />
+            <col style={{ width: "var(--product-table-col-brand, 13%)" }} />
+            <col style={{ width: "var(--product-table-col-sku, 11%)" }} />
+            <col style={{ width: "var(--product-table-col-price, 13%)" }} />
+            <col style={{ width: "var(--product-table-col-stock, 12%)" }} />
+            <col style={{ width: "var(--product-table-col-actions, 16%)" }} />
+          </colgroup>
           <thead>
             <tr className="border-b">
-              <th className="text-left p-3 font-medium text-sm text-muted-foreground">
+              <th scope="col" className="text-left p-3 font-medium text-sm text-foreground">
                 Product
               </th>
-              <th className="text-left p-3 font-medium text-sm text-muted-foreground">
+              <th scope="col" className="text-left p-3 font-medium text-sm text-foreground">
                 Brand
               </th>
-              <th className="text-left p-3 font-medium text-sm text-muted-foreground">
+              <th scope="col" className="text-left p-3 font-medium text-sm text-foreground">
                 SKU
               </th>
-              <th className="text-right p-3 font-medium text-sm text-muted-foreground">
+              <th scope="col" className="text-right p-3 font-medium text-sm text-foreground">
                 Price
               </th>
-              <th className="text-center p-3 font-medium text-sm text-muted-foreground">
+              <th scope="col" className="text-center p-3 font-medium text-sm text-foreground">
                 Stock
               </th>
-              <th className="text-center p-3 font-medium text-sm text-muted-foreground">
+              <th scope="col" className="text-center p-3 font-medium text-sm text-foreground">
                 Actions
               </th>
             </tr>
@@ -43,11 +52,12 @@ export function ProductTableSkeleton({ count = 12 }: ProductTableSkeletonProps) 
           <tbody>
             {Array.from({ length: count }).map((_, index) => (
               <tr key={index} className="border-b hover:bg-muted/50 transition-colors">
-                {/* Product column with image and title */}
+                {/* Product column with image and title - matches ProductTableView */}
                 <td className="p-3">
-                  <div className="flex items-center gap-3">
-                    <Skeleton className="w-16 h-16 shrink-0 rounded" />
-                    <div className="space-y-2 flex-1">
+                  <div className="flex items-center gap-3 min-w-0">
+                    {/* Match aspect-square from ProductTableView - 48px */}
+                    <Skeleton className="w-12 h-12 shrink-0 rounded aspect-square" />
+                    <div className="min-w-0 flex-1 space-y-2">
                       <Skeleton className="h-4 w-full max-w-xs" />
                       <Skeleton className="h-4 w-3/4 max-w-xs" />
                     </div>

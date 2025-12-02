@@ -3,9 +3,9 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardFooter } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
+import { useTranslations } from "next-intl";
 import Image from "next/image";
 import React from "react";
-import { useTranslations } from "next-intl";
 
 interface ProductTileProps {
   id: string;

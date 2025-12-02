@@ -306,27 +306,29 @@ export default async function BrandPage({ params, searchParams }: PageProps) {
       {/* Structured Data for SEO - Server-rendered */}
       <StructuredDataServer data={structuredData} />
 
-      {/* Breadcrumbs - Server-rendered */}
-      <CategoryBreadcrumbServer breadcrumbs={breadcrumbs} />
+      {/* Responsive Container Wrapper */}
+      <div className="max-w-screen-2xl mx-auto px-4 sm:px-6 lg:px-8">
+        {/* Breadcrumbs - Server-rendered */}
+        <CategoryBreadcrumbServer breadcrumbs={breadcrumbs} />
 
-      {/* Brand Header - Server-rendered */}
-      <div className="mb-6">
-        <div className="flex items-center gap-4 mb-2">
-          {brand.logoUrl && (
-            <img
-              src={brand.logoUrl}
-              alt={brand.name}
-              className="h-12 w-auto object-contain"
-            />
-          )}
-          <h1 className="text-3xl font-bold text-slate-800 dark:text-slate-100">
-            {brand.name}
-          </h1>
+        {/* Brand Header - Server-rendered */}
+        <div className="mb-4 sm:mb-6">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3 sm:gap-4 mb-2">
+            {brand.logoUrl && (
+              <img
+                src={brand.logoUrl}
+                alt={brand.name}
+                className="h-10 sm:h-12 lg:h-14 w-auto object-contain"
+              />
+            )}
+            <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-slate-800 dark:text-slate-100 break-words">
+              {brand.name}
+            </h1>
+          </div>
         </div>
-      </div>
 
-      {/* Interactivity Controls - Client component for pagination/sorting/filters */}
-      <BrandCategoryPageInteractivity
+        {/* Interactivity Controls - Client component for pagination/sorting/filters */}
+        <BrandCategoryPageInteractivity
         initialFilters={{
           page,
           sort: sortBy,
@@ -358,7 +360,8 @@ export default async function BrandPage({ params, searchParams }: PageProps) {
             />
           </Suspense>
         </div>
-      </BrandCategoryPageInteractivity>
+        </BrandCategoryPageInteractivity>
+      </div>
     </>
   );
 }

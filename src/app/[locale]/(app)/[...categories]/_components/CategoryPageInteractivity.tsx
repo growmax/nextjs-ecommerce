@@ -170,19 +170,24 @@ export function CategoryPageInteractivity({
         </div>
 
         {/* Controls Bar */}
-        <div className="mb-6 flex items-center justify-between gap-4">
-          <div className="text-sm text-gray-600 dark:text-gray-400">
+        <div className="mb-4 md:mb-6 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 sm:gap-4">
+          <div className="text-xs sm:text-sm text-gray-600 dark:text-gray-400 order-2 sm:order-1">
             {isLoading ? (
               <Skeleton className="h-4 w-32" />
             ) : (
               <>
-                Showing {((currentFilters.page - 1) * 20) + 1} -{" "}
-                {Math.min(currentFilters.page * 20, total)} of {total} products
+                <span className="hidden sm:inline">
+                  Showing {((currentFilters.page - 1) * 20) + 1} -{" "}
+                  {Math.min(currentFilters.page * 20, total)} of {total} products
+                </span>
+                <span className="sm:hidden">
+                  {total} products
+                </span>
               </>
             )}
           </div>
 
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2 sm:gap-3 order-1 sm:order-2 w-full sm:w-auto justify-between sm:justify-end">
             <ViewToggle />
             <SortDropdown
               value={currentFilters.sort}

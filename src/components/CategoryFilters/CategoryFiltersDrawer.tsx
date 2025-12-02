@@ -3,11 +3,11 @@
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import type {
-  BrandFilterOption,
-  CategoryFilterOption,
-  FilterOption,
-  ProductSpecificationGroup,
-  VariantAttributeGroup,
+    BrandFilterOption,
+    CategoryFilterOption,
+    FilterOption,
+    ProductSpecificationGroup,
+    VariantAttributeGroup,
 } from "@/types/category-filters";
 import { Filter } from "lucide-react";
 import { useState } from "react";

@@ -108,7 +108,7 @@ export function ProductGridServer({
   }
 
   return (
-    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4 md:gap-6">
+    <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3 sm:gap-4 md:gap-6">
       {products.map(product => {
         const productListItem = transformProduct(product);
         const productSlug = product.productIndexName || product.id || "";
@@ -117,11 +117,11 @@ export function ProductGridServer({
         return (
           <div
             key={productListItem.id}
-            className="group transition-shadow hover:shadow-lg overflow-hidden h-full flex flex-col min-h-[380px] border rounded-lg"
+            className="group transition-shadow hover:shadow-lg overflow-hidden h-full flex flex-col min-h-[320px] sm:min-h-[380px] border rounded-lg"
           >
             <div className="p-0 flex flex-col h-full">
               {/* Product Image */}
-              <div className="relative w-full bg-white flex items-center justify-center min-h-[220px] max-h-[320px] rounded-t-lg overflow-hidden">
+              <div className="relative w-full bg-white flex items-center justify-center min-h-[140px] sm:min-h-[180px] md:min-h-[220px] aspect-square rounded-t-lg overflow-hidden">
                 <Link href={productUrl} prefetch={true}>
                   <ImageWithFallback
                     src={productListItem.image}
@@ -139,10 +139,10 @@ export function ProductGridServer({
               </div>
 
               {/* Product Info */}
-              <div className="flex-1 p-2 md:p-5 flex flex-col justify-between">
-                <div className="space-y-3">
+              <div className="flex-1 p-2 sm:p-3 md:p-5 flex flex-col justify-between">
+                <div className="space-y-2 sm:space-y-3">
                   <Link href={productUrl} prefetch={true}>
-                    <h3 className="line-clamp-2 text-base font-medium leading-tight hover:text-blue-600">
+                    <h3 className="line-clamp-2 text-xs sm:text-sm md:text-base font-medium leading-tight hover:text-blue-600">
                       {productListItem.title}
                     </h3>
                   </Link>
@@ -156,23 +156,23 @@ export function ProductGridServer({
                     {...(discountError && { discountError })}
                   />
 
-                  <p className="text-sm text-muted-foreground">
-                    Brand: {productListItem.brand}
+                  <p className="text-xs sm:text-sm text-gray-700 dark:text-gray-300 truncate">
+                    {productListItem.brand}
                   </p>
-                  <p className="text-sm text-muted-foreground">
-                    SKU: {productListItem.sku}
+                  <p className="text-xs sm:text-sm text-gray-700 dark:text-gray-300 truncate hidden sm:block">
+                    {productListItem.sku}
                   </p>
 
                   {/* Stock Status */}
                   {!productListItem.inStock && (
-                    <span className="text-xs px-2 py-1 rounded bg-red-100 text-red-800 w-fit">
+                    <span className="text-xs px-1.5 sm:px-2 py-0.5 sm:py-1 rounded bg-red-100 text-red-800 w-fit">
                       Out of Stock
                     </span>
                   )}
                 </div>
 
                 {/* Add to Cart Button */}
-                <div className="pt-5 mt-auto">
+                <div className="pt-3 sm:pt-5 mt-auto">
                   <AddToCartButton
                     productId={productListItem.id}
                     productTitle={productListItem.title}

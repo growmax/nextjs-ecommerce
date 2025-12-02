@@ -100,7 +100,7 @@ export function ProductListView({
   }
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-3 sm:space-y-4">
       {products.map(product => {
         const productListItem = transformProduct(product);
         const productSlug = product.productIndexName || product.id || "";
@@ -109,11 +109,11 @@ export function ProductListView({
         return (
           <div
             key={productListItem.id}
-            className="group transition-shadow hover:shadow-lg overflow-hidden border rounded-lg flex flex-col md:flex-row min-h-[220px]"
+            className="group transition-shadow hover:shadow-lg overflow-hidden border rounded-lg flex flex-col sm:flex-row min-h-[200px] sm:min-h-[220px]"
           >
-            <div className="p-0 flex flex-col md:flex-row w-full">
+            <div className="p-0 flex flex-col sm:flex-row w-full">
               {/* Product Image */}
-              <div className="relative w-full md:w-2/5 bg-white flex items-center justify-center min-h-[200px] max-h-[260px] md:min-w-[180px] md:max-w-[280px] shrink-0 md:py-6 md:pl-6 rounded-t-lg md:rounded-l-lg md:rounded-t-none overflow-hidden">
+              <div className="relative w-full sm:w-2/5 bg-white flex items-center justify-center min-h-[160px] sm:min-h-[200px] aspect-square sm:aspect-auto sm:min-w-[180px] sm:max-w-[280px] shrink-0 sm:py-4 sm:pl-4 md:py-6 md:pl-6 rounded-t-lg sm:rounded-l-lg sm:rounded-t-none overflow-hidden">
                 <Link href={productUrl} prefetch={true}>
                   <ImageWithFallback
                     src={productListItem.image}
@@ -131,10 +131,10 @@ export function ProductListView({
               </div>
 
               {/* Product Info */}
-              <div className="flex-1 p-4 md:p-6 flex flex-col justify-between">
-                <div className="space-y-3">
+              <div className="flex-1 p-3 sm:p-4 md:p-6 flex flex-col justify-between">
+                <div className="space-y-2 sm:space-y-3">
                   <Link href={productUrl} prefetch={true}>
-                    <h3 className="line-clamp-2 text-lg font-medium leading-tight hover:text-blue-600">
+                    <h3 className="line-clamp-2 text-sm sm:text-base md:text-lg font-medium leading-tight hover:text-blue-600">
                       {productListItem.title}
                     </h3>
                   </Link>
@@ -148,21 +148,21 @@ export function ProductListView({
                     {...(discountError && { discountError })}
                   />
 
-                  <div className="flex flex-wrap gap-4 text-sm text-muted-foreground">
-                    <p>Brand: {productListItem.brand}</p>
-                    <p>SKU: {productListItem.sku}</p>
+                  <div className="flex flex-wrap gap-2 sm:gap-4 text-xs sm:text-sm text-gray-700 dark:text-gray-300">
+                    <p className="truncate">{productListItem.brand}</p>
+                    <p className="truncate hidden sm:block">SKU: {productListItem.sku}</p>
                   </div>
 
                   {/* Stock Status */}
                   {!productListItem.inStock && (
-                    <span className="text-xs px-2 py-1 rounded bg-red-100 text-red-800 w-fit">
+                    <span className="text-xs px-1.5 sm:px-2 py-0.5 sm:py-1 rounded bg-red-100 text-red-800 w-fit">
                       Out of Stock
                     </span>
                   )}
                 </div>
 
                 {/* Add to Cart Button */}
-                <div className="pt-5 mt-auto md:w-1/2">
+                <div className="pt-3 sm:pt-5 mt-auto w-full sm:w-1/2">
                   <AddToCartButton
                     productId={productListItem.id}
                     productTitle={productListItem.title}

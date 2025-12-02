@@ -71,10 +71,10 @@ export function ProductCard({ product, viewMode = "grid" }: ProductCardProps) {
               </span>
             </div>
 
-            <p className="text-sm text-muted-foreground">
+            <p className="text-sm text-gray-700 dark:text-gray-300">
               Brand: {product.brand}
             </p>
-            <p className="text-sm text-muted-foreground">SKU: {product.sku}</p>
+            <p className="text-sm text-gray-700 dark:text-gray-300">SKU: {product.sku}</p>
 
             {/* Stock Status */}
             {!product.inStock && (

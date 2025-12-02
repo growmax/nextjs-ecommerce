@@ -427,7 +427,7 @@ export default async function BrandCategoryPage({
   };
 
   return (
-    <div className="container mx-auto px-4 py-8">
+    <>
       {/* Script to sync viewMode from localStorage before React hydrates */}
       <script
         dangerouslySetInnerHTML={{
@@ -450,42 +450,44 @@ export default async function BrandCategoryPage({
       {/* Structured Data for SEO - Server-rendered */}
       <StructuredDataServer data={structuredData} />
 
-      {/* Breadcrumbs - Server-rendered */}
-      <CategoryBreadcrumbServer breadcrumbs={breadcrumbs} />
+      {/* Responsive Container Wrapper */}
+      <div className="max-w-screen-2xl mx-auto px-4 sm:px-6 lg:px-8">
+        {/* Breadcrumbs - Server-rendered */}
+        <CategoryBreadcrumbServer breadcrumbs={breadcrumbs} />
 
-      {/* Brand Header - Server-rendered */}
-      <div className="mb-6">
-        <div className="flex items-center gap-4 mb-2">
-          {brand.logoUrl && (
-            <img
-              src={brand.logoUrl}
-              alt={brand.name}
-              className="h-12 w-auto object-contain"
-            />
+        {/* Brand Header - Server-rendered */}
+        <div className="mb-4 sm:mb-6">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3 sm:gap-4 mb-2">
+            {brand.logoUrl && (
+              <img
+                src={brand.logoUrl}
+                alt={brand.name}
+                className="h-10 sm:h-12 lg:h-14 w-auto object-contain"
+              />
+            )}
+            <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-slate-800 dark:text-slate-100 break-words">
+              {brand.name}
+              {categoryName && ` ${categoryName}`}
+            </h1>
+          </div>
+          {categoryPath && categoryPath.nodes.length > 0 && (
+            <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-400 break-words">
+              {categoryPath.fullPath}
+            </p>
           )}
-          <h1 className="text-3xl font-bold text-slate-800 dark:text-slate-100">
-            {brand.name}
-            {categoryName && ` ${categoryName}`}
-          </h1>
+          {categoryUrl && (
+            <Link
+              href={categoryUrl}
+              prefetch={true}
+              className="text-xs sm:text-sm text-blue-600 hover:underline mt-2 inline-block transition-colors"
+            >
+              View all brands in this category →
+            </Link>
+          )}
         </div>
-        {categoryPath && categoryPath.nodes.length > 0 && (
-          <p className="text-sm text-gray-600 dark:text-gray-400">
-            {categoryPath.fullPath}
-          </p>
-        )}
-        {categoryUrl && (
-          <Link
-            href={categoryUrl}
-            prefetch={true}
-            className="text-sm text-blue-600 hover:underline mt-2 inline-block"
-          >
-            View all brands in this category →
-          </Link>
-        )}
-      </div>
 
-      {/* Interactivity Controls - Client component for pagination/sorting/filters */}
-      <BrandCategoryPageInteractivity
+        {/* Interactivity Controls - Client component for pagination/sorting/filters */}
+        <BrandCategoryPageInteractivity
         initialFilters={{
           page,
           sort: sortBy,
@@ -519,8 +521,9 @@ export default async function BrandCategoryPage({
             />
           </Suspense>
         </div>
-      </BrandCategoryPageInteractivity>
-    </div>
+        </BrandCategoryPageInteractivity>
+      </div>
+    </>
   );
 }
 

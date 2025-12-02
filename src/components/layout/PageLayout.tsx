@@ -26,11 +26,12 @@ export function PageLayout({
 
   if (variant === "content") {
     return (
-      <div className={cn("w-full overflow-x-hidden z-0", className)}>
+      <div className={cn("w-full min-w-0 overflow-x-auto z-0", className)}>
         <div
           className={cn(
-            "pb-[20px]",
-            isSidebarCollapsed ? "px-[60px]" : "px-[15px]"
+            "pb-5",
+            // Use responsive padding instead of hardcoded values
+            isSidebarCollapsed ? "px-6 md:px-8" : "px-4 md:px-6"
           )}
         >
           {children}
@@ -40,11 +41,12 @@ export function PageLayout({
   }
 
   return (
-    <div className={cn("w-full overflow-x-hidden", className)}>
+    <div className={cn("w-full min-w-0 overflow-x-auto", className)}>
       <div
         className={cn(
-          "mt-[5px] mb-[10px]",
-          isSidebarCollapsed ? "px-[45px]" : "px-[0px]"
+          "mt-1 mb-2",
+          // Use responsive padding instead of hardcoded values
+          isSidebarCollapsed ? "px-6 md:px-8" : "px-4 md:px-6"
         )}
       >
         {children}

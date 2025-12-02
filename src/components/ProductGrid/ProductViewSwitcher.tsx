@@ -34,28 +34,25 @@ export function ProductViewSwitcher({
   // Use context loading state if available, fallback to prop
   const isLoading = isLoadingContext || isLoadingProp;
 
-  // Show skeleton during loading
+  // Show skeleton during loading with transition
   if (isLoading) {
-    switch (viewMode) {
-      case "list":
-        return <ProductGridSkeleton viewMode="list" count={20} />;
-      case "table":
-        return <ProductTableSkeleton count={20} />;
-      case "grid":
-      default:
-        return <ProductGridSkeleton viewMode="grid" count={20} />;
-    }
+    return (
+      <div className="product-table-transition opacity-100">
+        {viewMode === "list" && <ProductGridSkeleton viewMode="list" count={20} />}
+        {viewMode === "table" && <ProductTableSkeleton count={20} />}
+        {(viewMode === "grid" || !viewMode) && <ProductGridSkeleton viewMode="grid" count={20} />}
+      </div>
+    );
   }
 
-  // Show actual products
-  switch (viewMode) {
-    case "list":
-      return <ProductListViewClient products={products} locale={locale} />;
-    case "table":
-      return <ProductTableViewClient products={products} locale={locale} />;
-    case "grid":
-    default:
-      return <ProductGridServerClient products={products} locale={locale} />;
-  }
+  // Show actual products with transition
+  return (
+    <div className="product-table-transition opacity-100">
+      {viewMode === "list" && <ProductListViewClient products={products} locale={locale} />}
+      {viewMode === "table" && <ProductTableViewClient products={products} locale={locale} />}
+      {(viewMode === "grid" || !viewMode) && <ProductGridServerClient products={products} locale={locale} />}
+    </div>
+  );
 }
+
 

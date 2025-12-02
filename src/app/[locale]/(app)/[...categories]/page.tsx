@@ -475,18 +475,20 @@ export default async function CategoryPage({
       {/* Structured Data for SEO - Server-rendered */}
       <StructuredDataServer data={structuredData} />
 
-      {/* Breadcrumbs - Server-rendered */}
-      <CategoryBreadcrumbServer breadcrumbs={breadcrumbs} />
+      {/* Responsive Container Wrapper */}
+      <div className="max-w-screen-2xl mx-auto px-4 sm:px-6 lg:px-8">
+        {/* Breadcrumbs - Server-rendered */}
+        <CategoryBreadcrumbServer breadcrumbs={breadcrumbs} />
 
-      {/* Category Header - Server-rendered */}
-      <div className="mb-6">
-        <h1 className="text-3xl font-bold text-slate-800 dark:text-slate-100 mb-2">
-          {lastNode?.name || "Category"}
-        </h1>
-      </div>
+        {/* Category Header - Server-rendered */}
+        <div className="mb-4 sm:mb-6">
+          <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-slate-800 dark:text-slate-100 mb-2 break-words">
+            {lastNode?.name || "Category"}
+          </h1>
+        </div>
 
-      {/* Interactivity Controls - Client component for pagination/sorting/filters */}
-      <CategoryPageInteractivity
+        {/* Interactivity Controls - Client component for pagination/sorting/filters */}
+        <CategoryPageInteractivity
         initialFilters={{
           page,
           sort: sortBy,
@@ -516,8 +518,9 @@ export default async function CategoryPage({
             locale={locale}
           />
         </Suspense>
+        </div>
+        </CategoryPageInteractivity>
       </div>
-      </CategoryPageInteractivity>
     </>
   );
 }

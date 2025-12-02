@@ -44,8 +44,8 @@ export function ProductPrice({
   // Show skeleton while loading
   if (discountLoading) {
     return (
-      <div className="flex flex-wrap items-center gap-2">
-        <Skeleton className="h-7 w-24" />
+      <div className="inline-flex items-center gap-2 whitespace-nowrap">
+        <Skeleton className="h-6 w-20" />
       </div>
     );
   }
@@ -53,8 +53,8 @@ export function ProductPrice({
   // Show error state (graceful degradation - show unitListPrice)
   if (discountError) {
     return (
-      <div className="flex flex-wrap items-center gap-2">
-        <span className="text-xl font-bold text-blue-600">
+      <div className="inline-flex items-center gap-2 whitespace-nowrap">
+        <span className="text-lg font-bold text-blue-600">
           ₹{unitListPrice || 0}
         </span>
       </div>
@@ -63,8 +63,8 @@ export function ProductPrice({
 
   // Show final price
   return (
-    <div className="flex flex-wrap items-center gap-2">
-      <span className="text-xl font-bold text-blue-600">
+    <div className="inline-flex items-center gap-2 whitespace-nowrap">
+      <span className="text-lg font-bold text-blue-600">
         ₹{displayPrice}
       </span>
     </div>
