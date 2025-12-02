@@ -1,6 +1,5 @@
 import { renderHook } from "@testing-library/react";
 import {
-  mockAxios,
   mockAxiosError,
   mockAxiosResponse,
   mockAxiosResponseNoCashDiscount,
@@ -8,10 +7,12 @@ import {
   mockUser,
 } from "./useGetLatestPaymentTerms.mocks";
 
-// Mock axios
-jest.mock("axios", () => ({
+// Mock PaymentService
+jest.mock("@/lib/api/services/PaymentService/PaymentService", () => ({
   __esModule: true,
-  default: jest.fn(),
+  default: {
+    fetchPaymentTerms: jest.fn(),
+  },
 }));
 
 // Mock React Query
@@ -25,14 +26,23 @@ jest.mock("@/hooks/useCurrentUser", () => ({
   useCurrentUser: () => ({ user: mockUser }),
 }));
 
+import PaymentService from "@/lib/api/services/PaymentService/PaymentService";
 import { useQuery } from "@tanstack/react-query";
 import useGetLatestPaymentTerms from "./useGetLatestPaymentTerms";
+
+const mockPaymentService = PaymentService as jest.Mocked<typeof PaymentService>;
 
 const mockUseQuery = useQuery as jest.MockedFunction<typeof useQuery>;
 
 describe("useGetLatestPaymentTerms", () => {
   beforeEach(() => {
     jest.clearAllMocks();
+    // Setup default PaymentService mock
+    (mockPaymentService.fetchPaymentTerms as jest.Mock).mockResolvedValue({
+      data: mockAxiosResponse.data.data,
+      success: "success",
+      message: "Success",
+    });
   });
 
   it("should fetch and return cash discount payment terms successfully", () => {
@@ -177,8 +187,14 @@ describe("useGetLatestPaymentTerms", () => {
     );
   });
 
-  it("should call queryFn with correct axios configuration when enabled", async () => {
-    (mockAxios as any).mockResolvedValue(mockAxiosResponse);
+  it("should call fetcher with correct axios configuration when key is not null", async () => {
+    // Mock PaymentService.fetchPaymentTerms
+    (mockPaymentService.fetchPaymentTerms as jest.Mock).mockResolvedValue({
+      data: mockAxiosResponse.data.data,
+      success: "success",
+      message: "Success",
+    });
+
     mockUseQuery.mockReturnValue({
       data: mockCashDiscountTerm,
       error: undefined,
@@ -199,18 +215,13 @@ describe("useGetLatestPaymentTerms", () => {
       throw new Error("queryFn was not provided");
     }
 
-    // Call the queryFn to verify it uses axios correctly
+    // Call the queryFn to verify it uses PaymentService correctly
     const result = await queryFn();
 
-    // Verify axios was called with correct config
-    expect(mockAxios).toHaveBeenCalledWith({
-      url: "/api/sales/payments/getAllPaymentTerms",
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      data: { userId: mockUser.userId, companyId: mockUser.companyId },
-    });
+    // Verify PaymentService was called with correct userId
+    expect(mockPaymentService.fetchPaymentTerms).toHaveBeenCalledWith(
+      mockUser.userId
+    );
 
     // Verify queryFn filters and returns cash discount term
     expect(result).toEqual(mockCashDiscountTerm);
@@ -231,7 +242,13 @@ describe("useGetLatestPaymentTerms", () => {
   });
 
   it("should filter payment terms for cash discount", async () => {
-    (mockAxios as any).mockResolvedValue(mockAxiosResponse);
+    // Mock PaymentService.fetchPaymentTerms
+    (mockPaymentService.fetchPaymentTerms as jest.Mock).mockResolvedValue({
+      data: mockAxiosResponse.data.data,
+      success: "success",
+      message: "Success",
+    });
+
     mockUseQuery.mockReturnValue({
       data: mockCashDiscountTerm,
       error: undefined,
@@ -261,7 +278,13 @@ describe("useGetLatestPaymentTerms", () => {
   });
 
   it("should return undefined when no cash discount terms exist", async () => {
-    (mockAxios as any).mockResolvedValue(mockAxiosResponseNoCashDiscount);
+    // Mock PaymentService.fetchPaymentTerms
+    (mockPaymentService.fetchPaymentTerms as jest.Mock).mockResolvedValue({
+      data: mockAxiosResponseNoCashDiscount.data.data,
+      success: "success",
+      message: "Success",
+    });
+
     mockUseQuery.mockReturnValue({
       data: undefined,
       error: undefined,

@@ -1,9 +1,9 @@
 import { useMemo } from "react";
 import cloneDeep from "lodash/cloneDeep";
 import {
-  cartCalculation,
   discountDetails,
 } from "@/utils/calculation/cartCalculation";
+import { calculateCart } from "@/utils/calculation/cart-calculation";
 import { calculateShippingTax } from "@/utils/calculation/tax-breakdown";
 
 interface CalculationParams {
@@ -94,26 +94,32 @@ export function useCalculation() {
           );
 
           // Calculate cart totals
-          const calculatedValue = cartCalculation(
-            processedProducts,
+          // Use calculateCart instead of cartCalculation to get processedItems with cash discount applied
+          // This ensures calculateShippingTax receives products with discounted totalPrice
+          const cartResult = calculateCart({
+            cartData: processedProducts,
             isInter,
             insuranceCharges,
             precision,
-            Settings
-          );
+            settings: Settings,
+          });
+          const calculatedValue = cartResult.cartValue;
+          const calculatedProducts = cartResult.processedItems;
 
           // Check if products have hsnDetails for tax calculation
-          const hasHsnDetails = processedProducts.some(
+          const hasHsnDetails = calculatedProducts.some(
             (p: any) =>
               p.hsnDetails && (p.hsnDetails.interTax || p.hsnDetails.intraTax)
           );
 
           if (hasHsnDetails) {
             try {
+              // CRITICAL: Pass calculatedProducts (with cash discount applied) instead of processedProducts
+              // This ensures tax is calculated on discounted totalPrice (5565.42) not original (5679)
               const shippingTaxResult = calculateShippingTax(
                 overallShipping || calculatedValue.totalShipping || 0,
                 calculatedValue,
-                processedProducts,
+                calculatedProducts,
                 isBeforeTax,
                 isInter,
                 precision,
@@ -129,7 +135,7 @@ export function useCalculation() {
               console.error("Error calculating shipping tax:", error);
               return {
                 cartValue: calculatedValue,
-                products: processedProducts,
+                products: calculatedProducts,
                 breakup: [],
               };
             }
@@ -137,7 +143,7 @@ export function useCalculation() {
 
           return {
             cartValue: calculatedValue,
-            products: processedProducts,
+            products: calculatedProducts,
             breakup: [],
           };
         } catch (error) {

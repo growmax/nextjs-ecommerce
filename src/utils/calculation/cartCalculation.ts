@@ -33,15 +33,17 @@ export const cartCalculation = (
   };
   cartArray = cartArray.map((data: any, index: number) => {
     // Apply cash discount to unit price if applicable
+    // Cash discount is calculated on unitListPrice (list price) and applied to unitPrice
     if (data.cashdiscountValue && data.cashdiscountValue > 0) {
-      // Only store original unit price if not already stored
+      // Store original unit price if not already stored (for calculation purposes)
       if (!data.originalUnitPrice) {
         data.originalUnitPrice = data.unitPrice;
       }
-      // Calculate discounted unit price from the original price
-      data.unitPrice =
-        data.originalUnitPrice -
-        (data.originalUnitPrice * data.cashdiscountValue) / 100;
+      // Cash discount amount is calculated on unitListPrice (list price)
+      const cashDiscountAmount = (data.unitListPrice * data.cashdiscountValue) / 100;
+      // Apply cash discount: subtract cash discount amount from current unitPrice
+      // This ensures cash discount is calculated on list price but applied after basic discount
+      data.unitPrice = round(data.unitPrice - cashDiscountAmount, precision);
     }
     if (!data.volumeDiscountApplied) {
       data.totalPrice = data.quantity * data.unitPrice;
@@ -137,16 +139,10 @@ export const cartCalculation = (
     data.buyerRequestedPrice = data.unitPrice;
 
     // Calculate cash discount if applicable
-    if (
-      data.cashdiscountValue &&
-      data.cashdiscountValue > 0 &&
-      data.originalUnitPrice
-    ) {
-      // Cash discount amount is the difference between original price and discounted price
-      data.cashDiscountedPrice = round(
-        (data.originalUnitPrice - data.unitPrice) * data.quantity,
-        precision
-      );
+    if (data.cashdiscountValue && data.cashdiscountValue > 0) {
+      // Cash discount is calculated on unitListPrice (list price)
+      const cashDiscountAmount = (data.unitListPrice * data.cashdiscountValue) / 100;
+      data.cashDiscountedPrice = round(cashDiscountAmount * data.quantity, precision);
       cartValue.totalCashDiscount += data.cashDiscountedPrice;
       cartValue.cashDiscountValue = data.cashdiscountValue;
     }

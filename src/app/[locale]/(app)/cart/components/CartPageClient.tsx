@@ -45,8 +45,15 @@ export default function CartPageClient() {
 
   // Access control
   const { hasQuotePermission, hasOrderPermission } = useAccessControl();
-
-  // Module settings for minimum values
+  const [selectedSellerId, setSelectedSellerId] = useState<string | null>(
+    () => {
+      if (typeof window !== "undefined") {
+        return localStorage.getItem("selectedSellerId") || null;
+      }
+      return null;
+    }
+  );
+  //Module settings for minimum values
   const { quoteSettings, orderSettings } = useModuleSettings(
     user ? { userId: user.userId, companyId: user.companyId } : null
   );
@@ -58,18 +65,28 @@ export default function CartPageClient() {
       orderSettings?.isMinOrderValueEnabled,
     {}
   );
-
   // Get selected seller cart for multi-seller support
   // This hook already fetches discount data, applies it, and calculates pricing
+  // Use selectedSellerId state to sync with accordion selection
   const {
     hasMultipleSellers,
     selectedSellerId: selectedSeller,
     selectedSellerPricing,
     isPricingLoading: isMultiSellerPricingLoading,
-  } = useSelectedSellerCart(cart, null);
+  } = useSelectedSellerCart(cart, selectedSellerId);
+
+ 
 
   // Use useCartPrice for single-seller scenarios to ensure discount calculation is applied
   // This follows the buyer-fe pattern: fetch discounts -> apply to items -> calculate totals
+  const handleSellerSelection = (sellerId: string) => {
+
+    setSelectedSellerId(sellerId);
+    // Persist to localStorage
+    if (typeof window !== "undefined" && sellerId) {
+      localStorage.setItem("selectedSellerId", sellerId);
+    }
+  };
   const {
     cartValue: singleSellerCartValue,
     processedItems: singleSellerProcessedItems,
@@ -418,6 +435,7 @@ export default function CartPageClient() {
                   )!
                 );
               }}
+              onSellerSelect={handleSellerSelection}
               handleOrder={handleOrder}
               handleQuote={handleQuote}
             />

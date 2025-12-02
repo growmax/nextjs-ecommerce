@@ -34,11 +34,6 @@ jest.mock("../../client", () => ({
   BasePageUrl: {},
 }));
 
-// Mock slugifyUrl utility
-jest.mock("@/lib/utils/product", () => ({
-  slugifyUrl: jest.fn((str: string) => str.toLowerCase().replace(/\s+/g, "-")),
-}));
-
 describe("UploadServices", () => {
   let uploadServices: UploadServices;
   let callWithSpy: jest.SpyInstance;
@@ -48,7 +43,6 @@ describe("UploadServices", () => {
     uploadServices = new UploadServices();
     callWithSpy = jest.spyOn(BaseService.prototype as any, "callWith");
     axiosPostSpy = mockAxiosPost;
-    
     // Reset mocks
     mockAxiosPost.mockReset();
     jest.clearAllMocks();
@@ -62,7 +56,9 @@ describe("UploadServices", () => {
   describe("getPresignedUrl", () => {
     it("should call API with correct endpoint and parameters", async () => {
       // Arrange
-      callWithSpy.mockResolvedValueOnce(mockPresignedUrlResponseWithoutNestedData);
+      callWithSpy.mockResolvedValueOnce(
+        mockPresignedUrlResponseWithoutNestedData
+      );
 
       // Act
       const result = await uploadServices.getPresignedUrl(mockUploadOptions);
@@ -94,7 +90,9 @@ describe("UploadServices", () => {
       // Arrange
       const originalEnv = process.env.NEXT_PUBLIC_S3BUCKET;
       delete process.env.NEXT_PUBLIC_S3BUCKET;
-      callWithSpy.mockResolvedValueOnce(mockPresignedUrlResponseWithoutNestedData);
+      callWithSpy.mockResolvedValueOnce(
+        mockPresignedUrlResponseWithoutNestedData
+      );
 
       // Act
       await uploadServices.getPresignedUrl(mockUploadOptions);
@@ -116,7 +114,9 @@ describe("UploadServices", () => {
       // Arrange
       const originalEnv = process.env.AWS_S3_REGION;
       delete process.env.AWS_S3_REGION;
-      callWithSpy.mockResolvedValueOnce(mockPresignedUrlResponseWithoutNestedData);
+      callWithSpy.mockResolvedValueOnce(
+        mockPresignedUrlResponseWithoutNestedData
+      );
 
       // Act
       const result = await uploadServices.getPresignedUrl(mockUploadOptions);
@@ -143,7 +143,9 @@ describe("UploadServices", () => {
 
     it("should handle response without nested data property", async () => {
       // Arrange
-      callWithSpy.mockResolvedValueOnce(mockPresignedUrlResponseWithoutNestedData);
+      callWithSpy.mockResolvedValueOnce(
+        mockPresignedUrlResponseWithoutNestedData
+      );
 
       // Act
       const result = await uploadServices.getPresignedUrl(mockUploadOptions);
@@ -151,7 +153,9 @@ describe("UploadServices", () => {
       // Assert
       expect(result).toHaveProperty("url");
       expect(result).toHaveProperty("fields");
-      expect(result.url).toBe(mockPresignedUrlResponseWithoutNestedData.url);
+      expect(result.url).toBe(
+        mockPresignedUrlResponseWithoutNestedData.url
+      );
     });
 
     it("should extract bucket from fields if available", async () => {
@@ -186,12 +190,16 @@ describe("UploadServices", () => {
       const result = await uploadServices.getPresignedUrl(mockUploadOptions);
 
       // Assert
-      expect(result.Bucket).toBe(process.env.NEXT_PUBLIC_S3BUCKET || "growmax-dev-app-assets");
+      expect(result.Bucket).toBe(
+        process.env.NEXT_PUBLIC_S3BUCKET || "growmax-dev-app-assets"
+      );
     });
 
     it("should sanitize filename by removing special characters", async () => {
       // Arrange
-      callWithSpy.mockResolvedValueOnce(mockPresignedUrlResponseWithoutNestedData);
+      callWithSpy.mockResolvedValueOnce(
+        mockPresignedUrlResponseWithoutNestedData
+      );
 
       // Act
       await uploadServices.getPresignedUrl({
@@ -212,9 +220,9 @@ describe("UploadServices", () => {
       callWithSpy.mockResolvedValueOnce(mockPresignedUrlResponseMissingUrl);
 
       // Act & Assert
-      await expect(uploadServices.getPresignedUrl(mockUploadOptions)).rejects.toThrow(
-        "Invalid presigned URL response structure"
-      );
+      await expect(
+        uploadServices.getPresignedUrl(mockUploadOptions)
+      ).rejects.toThrow("Invalid presigned URL response structure");
     });
 
     it("should throw error when response is missing fields", async () => {
@@ -222,17 +230,21 @@ describe("UploadServices", () => {
       callWithSpy.mockResolvedValueOnce(mockPresignedUrlResponseInvalid);
 
       // Act & Assert
-      await expect(uploadServices.getPresignedUrl(mockUploadOptions)).rejects.toThrow(
-        "Invalid presigned URL response structure"
-      );
+      await expect(
+        uploadServices.getPresignedUrl(mockUploadOptions)
+      ).rejects.toThrow("Invalid presigned URL response structure");
     });
 
     it("should handle optional parameters", async () => {
       // Arrange
-      callWithSpy.mockResolvedValueOnce(mockPresignedUrlResponseWithoutNestedData);
+      callWithSpy.mockResolvedValueOnce(
+        mockPresignedUrlResponseWithoutNestedData
+      );
 
       // Act
-      const result = await uploadServices.getPresignedUrl(mockUploadOptionsWithoutOptional);
+      const result = await uploadServices.getPresignedUrl(
+        mockUploadOptionsWithoutOptional
+      );
 
       // Assert
       expect(result).toHaveProperty("url");
@@ -241,7 +253,9 @@ describe("UploadServices", () => {
 
     it("should generate correct key format with folder and filename", async () => {
       // Arrange
-      callWithSpy.mockResolvedValueOnce(mockPresignedUrlResponseWithoutNestedData);
+      callWithSpy.mockResolvedValueOnce(
+        mockPresignedUrlResponseWithoutNestedData
+      );
 
       // Act
       await uploadServices.getPresignedUrl(mockUploadOptions);
@@ -250,7 +264,8 @@ describe("UploadServices", () => {
       const callArgs = callWithSpy.mock.calls[0];
       const key = callArgs[1].Fields.key;
       expect(key).toContain(mockUploadOptions.folderName);
-      expect(key).toContain(mockUploadOptions.fileName);
+      // slugifyUrl removes dots, so expect the slugified version
+      expect(key).toContain("test-imagejpg");
     });
   });
 
@@ -260,7 +275,10 @@ describe("UploadServices", () => {
       axiosPostSpy.mockResolvedValueOnce({ status: 200 });
 
       // Act
-      const result = await uploadServices.uploadToS3(mockFile, mockPresignedUrlResponse);
+      const result = await uploadServices.uploadToS3(
+        mockFile,
+        mockPresignedUrlResponse
+      );
 
       // Assert
       expect(axiosPostSpy).toHaveBeenCalledWith(
@@ -287,13 +305,17 @@ describe("UploadServices", () => {
           config.onUploadProgress({
             loaded: 50,
             total: 100,
-          });
+          } as any);
         }
         return Promise.resolve({ status: 200 });
       });
 
       // Act
-      await uploadServices.uploadToS3(mockFile, mockPresignedUrlResponse, onProgress);
+      await uploadServices.uploadToS3(
+        mockFile,
+        mockPresignedUrlResponse,
+        onProgress
+      );
 
       // Assert
       expect(onProgress).toHaveBeenCalledWith({
@@ -388,7 +410,10 @@ describe("UploadServices", () => {
       axiosPostSpy.mockResolvedValueOnce({ status: 200 });
 
       // Act
-      const result = await uploadServices.uploadToS3(mockFile, mockPresignedUrlResponse);
+      const result = await uploadServices.uploadToS3(
+        mockFile,
+        mockPresignedUrlResponse
+      );
 
       // Assert
       const expectedUrl = `https://${mockPresignedUrlResponse.Bucket}.s3.${mockPresignedUrlResponse.region}.amazonaws.com/${mockPresignedUrlResponse.key}`;
@@ -410,7 +435,9 @@ describe("UploadServices", () => {
   describe("postUpload", () => {
     beforeEach(() => {
       // Mock getPresignedUrl and uploadToS3
-      jest.spyOn(uploadServices, "getPresignedUrl").mockResolvedValue(mockPresignedUrlResponse);
+      jest
+        .spyOn(uploadServices, "getPresignedUrl")
+        .mockResolvedValue(mockPresignedUrlResponse);
       jest.spyOn(uploadServices, "uploadToS3").mockResolvedValue({
         Location: mockS3Location,
       });
@@ -436,7 +463,10 @@ describe("UploadServices", () => {
       const getPresignedUrlSpy = jest.spyOn(uploadServices, "getPresignedUrl");
 
       // Act
-      await uploadServices.postUpload(mockFileWithoutExtension, mockUploadOptions);
+      await uploadServices.postUpload(
+        mockFileWithoutExtension,
+        mockUploadOptions
+      );
 
       // Assert
       // When file has no extension, fileExtension becomes the whole filename
@@ -454,7 +484,10 @@ describe("UploadServices", () => {
       const getPresignedUrlSpy = jest.spyOn(uploadServices, "getPresignedUrl");
 
       // Act
-      await uploadServices.postUpload(mockFileWithSpecialChars, mockUploadOptions);
+      await uploadServices.postUpload(
+        mockFileWithSpecialChars,
+        mockUploadOptions
+      );
 
       // Assert
       // The filename is passed as-is to getPresignedUrl, sanitization happens inside getPresignedUrl
@@ -513,13 +546,18 @@ describe("UploadServices", () => {
         ...mockPresignedUrlResponse,
         url: "https://s3.amazonaws.com/test-bucket/",
       };
-      jest.spyOn(uploadServices, "getPresignedUrl").mockResolvedValue(presignedDataWithSlash);
+      jest
+        .spyOn(uploadServices, "getPresignedUrl")
+        .mockResolvedValue(presignedDataWithSlash);
       jest.spyOn(uploadServices, "uploadToS3").mockResolvedValue({
         Location: mockS3Location,
       });
 
       // Act
-      const result = await uploadServices.postUpload(mockFile, mockUploadOptions);
+      const result = await uploadServices.postUpload(
+        mockFile,
+        mockUploadOptions
+      );
 
       // Assert
       expect(result.Location).toBe(
@@ -533,13 +571,18 @@ describe("UploadServices", () => {
         ...mockPresignedUrlResponse,
         url: "https://s3.amazonaws.com/test-bucket",
       };
-      jest.spyOn(uploadServices, "getPresignedUrl").mockResolvedValue(presignedDataWithoutSlash);
+      jest
+        .spyOn(uploadServices, "getPresignedUrl")
+        .mockResolvedValue(presignedDataWithoutSlash);
       jest.spyOn(uploadServices, "uploadToS3").mockResolvedValue({
         Location: mockS3Location,
       });
 
       // Act
-      const result = await uploadServices.postUpload(mockFile, mockUploadOptions);
+      const result = await uploadServices.postUpload(
+        mockFile,
+        mockUploadOptions
+      );
 
       // Assert
       expect(result.Location).toBe(
@@ -556,13 +599,18 @@ describe("UploadServices", () => {
           key: "custom-key-from-fields",
         },
       };
-      jest.spyOn(uploadServices, "getPresignedUrl").mockResolvedValue(presignedDataWithKeyInFields);
+      jest
+        .spyOn(uploadServices, "getPresignedUrl")
+        .mockResolvedValue(presignedDataWithKeyInFields);
       jest.spyOn(uploadServices, "uploadToS3").mockResolvedValue({
         Location: mockS3Location,
       });
 
       // Act
-      const result = await uploadServices.postUpload(mockFile, mockUploadOptions);
+      const result = await uploadServices.postUpload(
+        mockFile,
+        mockUploadOptions
+      );
 
       // Assert
       expect(result.key).toBe("custom-key-from-fields");
@@ -576,13 +624,18 @@ describe("UploadServices", () => {
           acl: "public-read",
         },
       };
-      jest.spyOn(uploadServices, "getPresignedUrl").mockResolvedValue(presignedDataWithoutKeyInFields);
+      jest
+        .spyOn(uploadServices, "getPresignedUrl")
+        .mockResolvedValue(presignedDataWithoutKeyInFields);
       jest.spyOn(uploadServices, "uploadToS3").mockResolvedValue({
         Location: mockS3Location,
       });
 
       // Act
-      const result = await uploadServices.postUpload(mockFile, mockUploadOptions);
+      const result = await uploadServices.postUpload(
+        mockFile,
+        mockUploadOptions
+      );
 
       // Assert
       expect(result.key).toBe(presignedDataWithoutKeyInFields.key);
@@ -594,20 +647,27 @@ describe("UploadServices", () => {
         ...mockPresignedUrlResponse,
         url: "https://s3.amazonaws.com/test-bucket",
       };
-      jest.spyOn(uploadServices, "getPresignedUrl").mockResolvedValue(presignedData);
+      jest
+        .spyOn(uploadServices, "getPresignedUrl")
+        .mockResolvedValue(presignedData);
       jest.spyOn(uploadServices, "uploadToS3").mockResolvedValue({
         Location: mockS3Location,
       });
 
       // Act
-      const result = await uploadServices.postUpload(mockFile, mockUploadOptions);
+      const result = await uploadServices.postUpload(
+        mockFile,
+        mockUploadOptions
+      );
 
       // Assert
       expect(result).toHaveProperty("Location");
       expect(result).toHaveProperty("url");
       expect(result).toHaveProperty("key");
       expect(result.url).toBe(presignedData.url);
-      expect(result.key).toBe(presignedData.fields.key || presignedData.key);
+      expect(result.key).toBe(
+        presignedData.fields.key || presignedData.key
+      );
     });
 
     it("should handle errors from getPresignedUrl", async () => {
@@ -616,21 +676,23 @@ describe("UploadServices", () => {
       jest.spyOn(uploadServices, "getPresignedUrl").mockRejectedValue(error);
 
       // Act & Assert
-      await expect(uploadServices.postUpload(mockFile, mockUploadOptions)).rejects.toThrow(
-        "Failed to get presigned URL"
-      );
+      await expect(
+        uploadServices.postUpload(mockFile, mockUploadOptions)
+      ).rejects.toThrow("Failed to get presigned URL");
     });
 
     it("should handle errors from uploadToS3", async () => {
       // Arrange
       const error = new Error("Upload failed");
-      jest.spyOn(uploadServices, "getPresignedUrl").mockResolvedValue(mockPresignedUrlResponse);
+      jest
+        .spyOn(uploadServices, "getPresignedUrl")
+        .mockResolvedValue(mockPresignedUrlResponse);
       jest.spyOn(uploadServices, "uploadToS3").mockRejectedValue(error);
 
       // Act & Assert
-      await expect(uploadServices.postUpload(mockFile, mockUploadOptions)).rejects.toThrow(
-        "Upload failed"
-      );
+      await expect(
+        uploadServices.postUpload(mockFile, mockUploadOptions)
+      ).rejects.toThrow("Upload failed");
     });
   });
 });

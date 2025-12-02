@@ -117,7 +117,7 @@ describe("DiscountService", () => {
       );
 
       expect(callWithSpy).toHaveBeenCalledWith(
-        "/discounts/discount/getAllSellerPrices",
+        "/discount/getAllSellerPrices",
         mockGetAllSellerPricesRequest,
         {
           method: "POST",
@@ -136,7 +136,7 @@ describe("DiscountService", () => {
       );
 
       expect(callWithSafeSpy).toHaveBeenCalledWith(
-        "/discounts/discount/getAllSellerPrices",
+        "/discount/getAllSellerPrices",
         mockGetAllSellerPricesRequest,
         {
           method: "POST",
