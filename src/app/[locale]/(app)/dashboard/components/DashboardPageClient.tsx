@@ -2,8 +2,8 @@
 
 import { useRouteRequestTracking } from "@/hooks/useRouteRequestTracking";
 import {
-    DashboardChartSkeleton,
-    DashboardOrdersTableSkeleton,
+  DashboardChartSkeleton,
+  DashboardOrdersTableSkeleton,
 } from "./DashboardSkeletons";
 
 import dynamic from "next/dynamic";
@@ -31,8 +31,8 @@ export default function DashboardPageClient() {
   useRouteRequestTracking(); // Track route to prevent duplicate RSC calls
 
   return (
-    <div className="min-h-screen bg-background">
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 items-start">
+    <div className="bg-background">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 items-stretch">
           <div className="w-full">
             <Suspense
               fallback={<DashboardChartSkeleton />}

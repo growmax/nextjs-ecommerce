@@ -1,9 +1,15 @@
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Link } from "@/i18n/navigation";
-import { ArrowLeft, Search } from "lucide-react";
+import { CategoryBreadcrumbServer } from "@/components/Breadcrumb/CategoryBreadcrumbServer";
+import { Card, CardContent } from "@/components/ui/card";
+import SearchService, {
+  ElasticSearchQuery,
+  FormattedProduct,
+} from "@/lib/api/services/SearchService/SearchService";
+import TenantService from "@/lib/api/services/TenantService";
+import { buildSearchQuery } from "@/utils/opensearch/browse-queries";
+import { Package } from "lucide-react";
 import type { Metadata } from "next";
-import SearchClient from "./SearchClient";
+import { headers } from "next/headers";
+import { SearchResultsClient } from "./_components/SearchResultsClient";
 
 export const metadata: Metadata = {
   title: "Search Products | E-Commerce",
@@ -11,70 +17,128 @@ export const metadata: Metadata = {
 };
 
 // Enable ISR for search page - revalidate every 30 minutes
-// Search results can be cached but refreshed more frequently than homepage
-export const revalidate = 1800; // 30 minutes
+export const revalidate = 1800;
 
 interface SearchPageProps {
+  params: Promise<{
+    locale: string;
+  }>;
   searchParams: Promise<{
-    query?: string;
+    q?: string;
+    page?: string;
+    sort?: string;
   }>;
 }
 
-export default async function SearchPage({ searchParams }: SearchPageProps) {
+export default async function SearchPage({ params, searchParams }: SearchPageProps) {
+  const { locale } = await params;
   const resolvedSearchParams = await searchParams;
-  const query = resolvedSearchParams.query || "";
+  const query = resolvedSearchParams.q || "";
+  const page = parseInt(resolvedSearchParams.page || "1", 10);
+  const sortBy = parseInt(resolvedSearchParams.sort || "1", 10);
+
+  // Get tenant data from headers
+  const headersList = await headers();
+  const tenantDomain = headersList.get("x-tenant-domain") || "";
+  const tenantOrigin = headersList.get("x-tenant-origin") || "";
+
+  // Fetch tenant data to get elasticCode
+  let elasticCode = "";
+  if (tenantDomain && tenantOrigin) {
+    try {
+      const tenantData = await TenantService.getTenantDataCached(
+        tenantDomain,
+        tenantOrigin
+      );
+      elasticCode = tenantData?.data?.tenant?.elasticCode || "";
+    } catch (error) {
+      console.error("Error fetching tenant data in search page:", error);
+    }
+  }
+
+
+  // Build elastic index
+  const elasticIndex = elasticCode ? `${elasticCode}pgandproducts` : "";
+
+  // Fetch products if query exists and elasticIndex is available
+  let products: FormattedProduct[] = [];
+  let total = 0;
+
+  if (query.trim() && elasticIndex) {
+    try {
+      // Build search query with pagination and sorting
+      const queryResult = buildSearchQuery(query.trim(), {
+        page,
+        pageSize: 20,
+        sortBy: { sortBy },
+      });
+
+      // Build query object ensuring sort is properly typed
+      const searchQuery: ElasticSearchQuery = {
+        query: queryResult.query.query,
+        size: queryResult.query.size,
+        from: queryResult.query.from,
+        _source: queryResult.query._source,
+        ...(queryResult.query.sort && { sort: queryResult.query.sort }),
+      };
+
+      const result = await SearchService.searchProducts({
+        elasticIndex,
+        query: searchQuery,
+      });
+
+      products = result.data || [];
+      total = result.total || 0;
+    } catch (error) {
+      console.error("Error searching products:", error);
+      products = [];
+      total = 0;
+    }
+  }
+
+  // Breadcrumbs for search page
+  const breadcrumbs = [
+    { label: "Home", href: "/" },
+    ...(query
+      ? [{ label: `Results for "${query}"`, href: `/search?q=${query}` }]
+      : []),
+  ];
 
   return (
     <div className="container mx-auto px-4 py-8">
-      <Card className="max-w-2xl mx-auto">
-        <CardHeader>
-          <div className="flex items-center justify-between">
-            <CardTitle>Search</CardTitle>
-            <Button variant="ghost" size="sm" asChild>
-              <Link
-                href="/"
-                prefetch={true}
-                className="flex items-center gap-2"
-              >
-                <ArrowLeft className="h-4 w-4" />
-                Back
-              </Link>
-            </Button>
-          </div>
-        </CardHeader>
+      {/* Breadcrumbs */}
+      <CategoryBreadcrumbServer breadcrumbs={breadcrumbs} />
 
-        <CardContent className="space-y-6">
-          <SearchClient initialQuery={query} />
+      {/* Page Header */}
+      <div className="mb-6">
+        <h1 className="text-3xl font-bold text-slate-800 dark:text-slate-100">
+          Search Results
+        </h1>
+      </div>
 
-          {query ? (
-            <div className="space-y-4">
-              <p className="text-muted-foreground">
-                Showing results for:{" "}
-                <span className="font-semibold">&quot;{query}&quot;</span>
-              </p>
-              <div className="text-center py-12">
-                <Search className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-                <CardTitle className="text-muted-foreground mb-2">
-                  No results found
-                </CardTitle>
-                <p className="text-sm text-muted-foreground">
-                  Try searching for something else
-                </p>
-              </div>
-            </div>
-          ) : (
-            <div className="text-center py-12">
-              <Search className="h-16 w-16 text-muted-foreground mx-auto mb-4" />
-              <CardTitle className="text-muted-foreground mb-2">
-                Start searching
-              </CardTitle>
-              <p className="text-muted-foreground">
-                Enter a search term to find products
-              </p>
-            </div>
-          )}
-        </CardContent>
-      </Card>
+      {/* Results Section */}
+      {!query ? (
+        <Card>
+          <CardContent className="p-8 md:p-12 text-center">
+            <Package className="w-12 h-12 md:w-16 md:h-16 text-muted-foreground mx-auto mb-4" />
+            <h3 className="text-lg md:text-xl font-semibold mb-2">
+              No search query
+            </h3>
+            <p className="text-sm md:text-base text-muted-foreground max-w-md mx-auto">
+              Please enter a search term in the header to find products.
+            </p>
+          </CardContent>
+        </Card>
+      ) : (
+        <SearchResultsClient
+          initialProducts={products}
+          initialTotal={total}
+          initialPage={page}
+          initialSort={sortBy}
+          searchQuery={query}
+          locale={locale}
+        />
+      )}
     </div>
   );
 }

@@ -1,6 +1,6 @@
 "use client";
 
-import SearchDialogBox from "@/components/AppHeader/SearchDialogBox/SearchDialogBox";
+
 import { AvatarCard } from "@/components/AvatarCard/AvatarCard";
 import { LanguageSwitcher } from "@/components/LanguageSwitcher/LanguageSwitcher";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -21,24 +21,14 @@ import { Link } from "@/i18n/navigation";
 import { cn } from "@/lib/utils";
 import { getUserInitials } from "@/utils/General/general";
 import {
-  Bell,
   Command as CommandIcon,
   Search,
   ShoppingCart,
 } from "lucide-react";
-import { useLocale, useTranslations } from "next-intl";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useTranslations } from "next-intl";
+import { useEffect, useState } from "react";
 
-export function AppHeader({
-  open: externalOpen,
-  setOpen: externalSetOpen,
-}: {
-  open?: boolean;
-  setOpen?: (v: boolean) => void;
-} = {}) {
-  const [internalOpen, setInternalOpen] = useState(false);
-  const open = externalOpen ?? internalOpen;
-  const setOpen = externalSetOpen ?? setInternalOpen;
+export function AppHeader() {
   const [searchValue, setSearchValue] = useState("");
   const { userProfile } = useUserProfile();
   const { isLoggingOut, handleLogout } = useLogout();
@@ -49,9 +39,6 @@ export function AppHeader({
   useTenantData();
 
   const { cartCount } = useCart();
-  const locale = useLocale();
-  const notificationsCount = 5;
-  const tNav = useTranslations("navigation");
   const tAuth = useTranslations("auth");
   const tSearch = useTranslations("search");
 
@@ -59,52 +46,21 @@ export function AppHeader({
   // This prevents flickering between login/logout states
   const showAuthUI = !isAuthLoading;
 
-  // Keyboard shortcut to open search (Cmd/Ctrl + K)
+  // Keyboard shortcut to navigate to search (Cmd/Ctrl + K)
   useEffect(() => {
     const down = (e: KeyboardEvent) => {
       if (e.key === "k" && (e.metaKey || e.ctrlKey)) {
         e.preventDefault();
-        setOpen(true);
+        router.push("/search");
       }
     };
     document.addEventListener("keydown", down);
     return () => document.removeEventListener("keydown", down);
-  }, [setOpen]);
+  }, [router]);
 
   const { state: sidebarState } = useSidebar();
   const isSidebarCollapsed = sidebarState === "collapsed";
 
-  const elasticIndex = "schwingstetterpgandproducts";
-
-  // ---- Command Suggestions ----
-  const suggestionItems = useMemo(() => {
-    // Don't show suggestions until auth state is determined
-    if (!showAuthUI || !isAuthenticated) return [];
-
-    return [
-      {
-        key: "orders",
-        label: tNav("orders"),
-        icon: <ShoppingCart />,
-        href: "/landing/orderslanding",
-      },
-      {
-        key: "dashboard",
-        label: tNav("dashboard"),
-        icon: <CommandIcon />,
-        href: "/dashboard",
-      },
-    ];
-  }, [tNav, showAuthUI, isAuthenticated]);
-
-  const handleSelect = useCallback(
-    (href: string) => {
-      router.push(href);
-      setOpen(false);
-      setSearchValue("");
-    },
-    [router, setOpen]
-  );
 
   return (
     <>
@@ -138,7 +94,7 @@ export function AppHeader({
             <Button
               variant="ghost"
               size="icon"
-              onClick={() => setOpen(true)}
+              onClick={() => router.push("/search")}
               className="h-7 w-7 sm:h-8 sm:w-8"
             >
               <Search className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
@@ -160,9 +116,12 @@ export function AppHeader({
                 placeholder={tSearch("placeholder")}
                 value={searchValue}
                 onChange={e => setSearchValue(e.target.value)}
+                onKeyDown={e => {
+                  if (e.key === "Enter" && searchValue.trim()) {
+                    router.push(`/search?q=${encodeURIComponent(searchValue.trim())}`);
+                  }
+                }}
                 className="pl-8 lg:pl-10 pr-12 lg:pr-16 text-sm h-8 lg:h-10"
-                onClick={() => setOpen(true)}
-                readOnly
               />
               <div className="absolute right-2 lg:right-3 top-1/2 transform -translate-y-1/2 hidden lg:flex items-center gap-1">
                 <CommandIcon className="h-3 w-3 text-muted-foreground" />
@@ -179,25 +138,8 @@ export function AppHeader({
               {/* Language Switcher */}
               <LanguageSwitcher />
 
-              {/* Notifications */}
-              {!showAuthUI ? (
-                <Skeleton className="h-7 w-7 md:h-8 md:w-8 rounded-md" />
-              ) : (
-                isAuthenticated && (
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="h-7 w-7 md:h-8 md:w-8 relative"
-                  >
-                    <Bell className="h-3.5 w-3.5 md:h-4 md:w-4" />
-                    {notificationsCount > 0 && (
-                      <span className="absolute -top-1 -right-1 h-4 w-4 rounded-full bg-red-500 text-xs text-white flex items-center justify-center">
-                        {notificationsCount > 9 ? "9+" : notificationsCount}
-                      </span>
-                    )}
-                  </Button>
-                )
-              )}
+              {/* Notifications - Removed */}
+
 
               <Button
                 variant="ghost"
@@ -325,16 +267,7 @@ export function AppHeader({
         <div className="h-px bg-border"></div>
       </header>
 
-      {/* ---------- SEARCH DIALOG ---------- */}
-      <SearchDialogBox
-        open={open}
-        setOpen={setOpen}
-        elasticIndex={elasticIndex}
-        suggestionItems={suggestionItems}
-        handleSelect={handleSelect}
-        setSearchValue={setSearchValue}
-        locale={locale}
-      />
+
     </>
   );
 }
