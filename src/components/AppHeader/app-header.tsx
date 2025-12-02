@@ -21,7 +21,6 @@ import { Link } from "@/i18n/navigation";
 import { cn } from "@/lib/utils";
 import { getUserInitials } from "@/utils/General/general";
 import {
-  Bell,
   Command as CommandIcon,
   Search,
   ShoppingCart,
@@ -40,7 +39,6 @@ export function AppHeader() {
   useTenantData();
 
   const { cartCount } = useCart();
-  const notificationsCount = 5;
   const tAuth = useTranslations("auth");
   const tSearch = useTranslations("search");
 
@@ -140,25 +138,8 @@ export function AppHeader() {
               {/* Language Switcher */}
               <LanguageSwitcher />
 
-              {/* Notifications */}
-              {!showAuthUI ? (
-                <Skeleton className="h-7 w-7 md:h-8 md:w-8 rounded-md" />
-              ) : (
-                isAuthenticated && (
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="h-7 w-7 md:h-8 md:w-8 relative"
-                  >
-                    <Bell className="h-3.5 w-3.5 md:h-4 md:w-4" />
-                    {notificationsCount > 0 && (
-                      <span className="absolute -top-1 -right-1 h-4 w-4 rounded-full bg-red-500 text-xs text-white flex items-center justify-center">
-                        {notificationsCount > 9 ? "9+" : notificationsCount}
-                      </span>
-                    )}
-                  </Button>
-                )
-              )}
+              {/* Notifications - Removed */}
+
 
               <Button
                 variant="ghost"

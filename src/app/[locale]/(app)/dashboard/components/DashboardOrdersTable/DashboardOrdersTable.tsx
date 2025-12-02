@@ -3,20 +3,19 @@
 import { statusColor } from "@/components/custom/statuscolors";
 import { Button } from "@/components/ui/button";
 import {
-    Card,
-    CardContent,
-    CardFooter,
-    CardHeader,
-    CardTitle,
+  Card,
+  CardContent,
+  CardFooter,
+  CardHeader,
+  CardTitle,
 } from "@/components/ui/card";
-import { Skeleton } from "@/components/ui/skeleton";
 import {
-    Table,
-    TableBody,
-    TableCell,
-    TableHead,
-    TableHeader,
-    TableRow,
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
 } from "@/components/ui/table";
 import { useDashboardOrders } from "@/hooks/useDashboardData";
 import { Order } from "@/types/dashboard/DasbordOrderstable/DashboardOrdersTable";
@@ -24,6 +23,7 @@ import { ArrowDownIcon, ArrowUpDown } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useRouter } from "next/navigation";
 import React, { useMemo, useState } from "react";
+import { DashboardOrdersTableSkeleton } from "../DashboardSkeletons";
 
 const { createElement: h } = React;
 
@@ -133,86 +133,28 @@ export default function DashboardOrdersTable() {
     { className: "" },
     loading || isRefreshing
       ? h(
-          Card,
-          {
-            className:
-              "w-full bg-background rounded-lg shadow-sm border border-border !py-0 !gap-0",
-          },
-          h(
-            CardHeader,
-            { className: "px-4 pt-4 !pb-0 border-b border-border" },
-            h(
-              "div",
-              { className: "flex justify-start" },
-              h(Skeleton, { className: "h-5 w-48" })
-            )
-          ),
-          h(
-            CardContent,
-            { className: "p-0" },
-            h(
-              "div",
-              { className: "overflow-hidden" },
-              h(
-                "div",
-                { className: "bg-muted px-3 py-2 border-b border-border" },
-                h(
-                  "div",
-                  { className: "flex justify-between items-center" },
-                  h(Skeleton, { className: "h-4 w-16" }),
-                  h(Skeleton, { className: "h-4 w-20" }),
-                  h(Skeleton, { className: "h-4 w-24" }),
-                  h(Skeleton, { className: "h-4 w-16" })
-                )
-              ),
-              Array.from({ length: 10 }).map((_, index) =>
-                h(
-                  "div",
-                  {
-                    key: `skeleton-row-${index}`,
-                    className: "px-3 py-3 border-b border-border",
-                  },
-                  h(
-                    "div",
-                    { className: "flex justify-between items-center" },
-                    h(Skeleton, { className: "h-4 w-20" }),
-                    h(Skeleton, { className: "h-4 w-32" }),
-                    h(Skeleton, { className: "h-4 w-24" }),
-                    h(Skeleton, { className: "h-5 w-16 rounded" })
-                  )
-                )
-              )
-            )
-          ),
-          h(
-            CardFooter,
-            {
-              className:
-                "flex justify-start px-2 py-2 !pt-2 border-t border-border",
-            },
-            h(Skeleton, { className: "h-8 w-20 rounded" })
-          )
-        )
+        DashboardOrdersTableSkeleton
+      )
       : h(
           Card,
           {
             className:
-              "w-full bg-background rounded-lg shadow-sm border border-border !py-0 !gap-0",
+              "w-full bg-background rounded-lg shadow-sm border border-border !py-0 !gap-0 h-[600px] flex flex-col",
           },
           h(
             CardHeader,
-            { className: "px-4 pt-4 !pb-0 border-b border-border" },
+            { className: "px-4 pt-4 pb-4 border-b border-border" },
             h(
               "div",
               { className: "flex justify-start" },
               h(
                 CardTitle,
-                { className: "text-sm font-medium text-foreground text-center" },
+                { className: "leading-none font-semibold text-foreground" },
                 h("span", {}, `${t("historyOfOrders")} `),
                 totalCount > 0 &&
                   h(
                     "span",
-                    { className: "text-xs font-normal text-muted-foreground" },
+                    { className: "text-sm font-semibold text-muted-foreground" },
                     `(${totalCount})`
                   )
               )
@@ -220,7 +162,7 @@ export default function DashboardOrdersTable() {
           ),
           h(
             CardContent,
-            { className: "p-0" },
+            { className: "p-0 flex-1 overflow-auto" },
             h(
               "div",
               { className: "overflow-hidden" },
@@ -275,11 +217,12 @@ export default function DashboardOrdersTable() {
                           getSortIcon("orderName")
                         )
                       ),
+
                       h(
                         TableHead,
                         {
                           className:
-                            "text-xs font-medium text-foreground px-3 py-1 text-left",
+                            "text-xs font-medium text-foreground px-3 py-1 text-center",
                           scope: "col",
                         },
                         h(
@@ -287,26 +230,6 @@ export default function DashboardOrdersTable() {
                           {
                             className:
                               "inline-flex items-center cursor-pointer hover:text-foreground",
-                            onClick: () => handleSort("requiredDate"),
-                            role: "button",
-                            tabIndex: 0,
-                          },
-                          t("requiredDate"),
-                          getSortIcon("requiredDate")
-                        )
-                      ),
-                      h(
-                        TableHead,
-                        {
-                          className:
-                            "text-xs font-medium text-foreground px-3 py-1 text-right",
-                          scope: "col",
-                        },
-                        h(
-                          "span",
-                          {
-                            className:
-                              "inline-flex items-center cursor-pointer hover:text-foreground justify-end w-full",
                             onClick: () => handleSort("updatedBuyerStatus"),
                             role: "button",
                             tabIndex: 0,
@@ -327,7 +250,7 @@ export default function DashboardOrdersTable() {
                           h(
                             TableCell,
                             {
-                              colSpan: 4,
+                              colSpan: 3,
                             className:
                               "px-3 py-3 text-center text-sm text-destructive",
                             },
@@ -341,7 +264,7 @@ export default function DashboardOrdersTable() {
                             h(
                               TableCell,
                               {
-                                colSpan: 4,
+                                colSpan: 3,
                                 className:
                                   "px-3 py-3 text-center text-sm text-muted-foreground",
                               },
@@ -360,30 +283,22 @@ export default function DashboardOrdersTable() {
                               h(
                                 TableCell,
                                 {
-                                  className: "px-4 py-3 text-sm text-foreground",
+                                  className: "px-4 py-3 text-sm text-foreground text-left",
                                 },
                                 order.orderIdentifier
                               ),
                               h(
                                 TableCell,
                                 {
-                                  className: "px-4 py-3 text-sm text-foreground",
+                                  className: "px-4 py-3 text-sm text-foreground text-left",
                                 },
                                 order.orderName
                               ),
+
                               h(
                                 TableCell,
                                 {
-                                  className: "px-4 py-3 text-sm text-muted-foreground",
-                                },
-                                // order.requiredDate ||
-                                //   order.createdDate?.split(" ")[0] ||
-                                ""
-                              ),
-                              h(
-                                TableCell,
-                                {
-                                  className: "px-4 py-3 text-right",
+                                  className: "px-4 py-3 text-center",
                                 },
                                 h(
                                   "span",

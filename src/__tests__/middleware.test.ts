@@ -14,21 +14,21 @@ function createMockRequest(url: string, options: {
 } = {}) {
   const headers = new Headers(options.headers || {});
   const request = new NextRequest(url, { headers });
-  
+
   // Mock cookies if provided
   if (options.cookies) {
     Object.entries(options.cookies).forEach(([key, value]) => {
       request.cookies.set(key, value);
     });
   }
-  
+
   return request;
 }
 
 describe("Middleware Tests", () => {
   // Import middleware dynamically to avoid top-level issues
   let middleware: any;
-  
+
   beforeAll(async () => {
     const mod = await import("@/middleware");
     middleware = mod.middleware;
@@ -191,7 +191,7 @@ describe("Middleware Tests", () => {
       expect(location).toContain("callbackUrl");
     });
 
-    test("TC13: Login page with auth redirects to dashboard", async () => {
+    test("TC13: Login page with auth redirects to home", async () => {
       const request = createMockRequest("http://localhost:3001/en/login", {
         cookies: { access_token: "valid_token_here" },
       });
@@ -200,7 +200,7 @@ describe("Middleware Tests", () => {
 
       expect(response.status).toBe(307);
       const location = response.headers.get("location");
-      expect(location).toContain("/en/dashboard");
+      expect(location).toBe("http://localhost:3001/en");
     });
 
     test("TC14: Auth routes preserve locale (Spanish)", async () => {
@@ -212,7 +212,7 @@ describe("Middleware Tests", () => {
 
       expect(response.status).toBe(307);
       const location = response.headers.get("location");
-      expect(location).toContain("/es/dashboard");
+      expect(location).toBe("http://localhost:3001/es");
     });
   });
 
