@@ -628,3 +628,70 @@ export function buildQueryFromSlug(
 
   return null;
 }
+
+/**
+ * Build search query for full-text search
+ * Searches across multiple product fields: product description, brand ID, and brand name
+ */
+export function buildSearchQuery(
+  searchTerm: string,
+  options: BrowseQueryOptions = {}
+): BrowseQueryResult {
+  const page = options.page || 1;
+  const pageSize = options.pageSize || 20;
+  const from = (page - 1) * pageSize;
+
+  const baseQuery = getBaseQuery();
+  const additionalFilters = buildAdditionalFilters(options.filters);
+  const catalogFilters = buildCatalogFilters(
+    options.catalogCodes,
+    options.equipmentCodes
+  );
+  const variantAttributeFilters = buildVariantAttributeFilters(
+    options.variantAttributes
+  );
+  const productSpecificationFilters = buildProductSpecificationFilters(
+    options.productSpecifications
+  );
+  const stockFilters = buildStockFilter(options.inStock);
+
+  // Build multi-match query for search term
+  const searchFilter = {
+    multi_match: {
+      query: searchTerm,
+      fields: [
+        "product_short_description^3", // Boost product description matches
+        "brand_product_id^2", // Boost product ID matches
+        "brands_name^1.5", // Boost brand name matches
+        "keywords",
+        "ean",
+      ],
+      type: "best_fields",
+      operator: "and" as const,
+      fuzziness: "AUTO",
+    },
+  };
+
+  return {
+    query: {
+      size: pageSize,
+      from,
+      _source: PRODUCT_SOURCE_FIELDS,
+      query: {
+        bool: {
+          must: [
+            ...baseQuery.must,
+            searchFilter,
+            ...additionalFilters,
+            ...catalogFilters,
+            ...variantAttributeFilters,
+            ...productSpecificationFilters,
+            ...stockFilters,
+          ],
+          must_not: baseQuery.must_not,
+        },
+      },
+      sort: buildSort(options.sortBy),
+    },
+  };
+}
