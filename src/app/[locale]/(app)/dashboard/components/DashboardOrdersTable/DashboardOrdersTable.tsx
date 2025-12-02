@@ -143,7 +143,7 @@ export default function DashboardOrdersTable() {
           },
           h(
             CardHeader,
-            { className: "px-4 pt-4 !pb-0 border-b border-border" },
+            { className: "px-4 pt-4 pb-4 border-b border-border" },
             h(
               "div",
               { className: "flex justify-start" },
@@ -182,7 +182,7 @@ export default function DashboardOrdersTable() {
                         TableHead,
                         {
                           className:
-                            "text-xs font-medium text-foreground px-3 py-1 text-center",
+                            "text-xs font-medium text-foreground px-3 py-1 text-left",
                           scope: "col",
                         },
                         h(
@@ -202,7 +202,7 @@ export default function DashboardOrdersTable() {
                         TableHead,
                         {
                           className:
-                            "text-xs font-medium text-foreground px-3 py-1 text-center",
+                            "text-xs font-medium text-foreground px-3 py-1 text-left",
                           scope: "col",
                         },
                         h(
@@ -283,7 +283,7 @@ export default function DashboardOrdersTable() {
                               h(
                                 TableCell,
                                 {
-                                  className: "px-4 py-3 text-sm text-foreground text-right",
+                                  className: "px-4 py-3 text-sm text-foreground text-left",
                                 },
                                 order.orderIdentifier
                               ),
