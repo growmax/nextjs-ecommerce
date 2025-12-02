@@ -27,8 +27,28 @@ const getCachedUserData = cache(async () => {
 async function LayoutDataContent({ children }: { children: ReactNode }) {
   // Get headers (cached per request)
   const headersList = await getCachedHeaders();
-  const tenantDomain = headersList.get("x-tenant-domain");
-  const tenantOrigin = headersList.get("x-tenant-origin");
+  const host = headersList.get("host") || "";
+  const protocol =
+    headersList.get("x-forwarded-proto") ||
+    (process.env.NODE_ENV === "production" ? "https" : "http");
+
+  // Get tenant headers with fallback to environment variables or defaults
+  let tenantDomain = headersList.get("x-tenant-domain");
+  let tenantOrigin = headersList.get("x-tenant-origin");
+
+  // Fallback logic for missing headers (common on refresh/navigation)
+  if (!tenantDomain) {
+    if (host === "localhost:3000" || host === "localhost:3001") {
+      tenantDomain = process.env.DEFAULT_DOMAIN || "sandbox.myapptino.com";
+    } else {
+      tenantDomain = host.replace("www.", "");
+    }
+  }
+
+  if (!tenantOrigin) {
+    tenantOrigin =
+      process.env.DEFAULT_ORIGIN || `${protocol}://${tenantDomain}`;
+  }
 
   // Parallel fetch access token and tenant data
   // Both are cached, so subsequent calls in the same request are instant

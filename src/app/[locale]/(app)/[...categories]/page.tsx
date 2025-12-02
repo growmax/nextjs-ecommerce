@@ -201,10 +201,29 @@ export default async function CategoryPage({
 
   // Get tenant data from API (cached, same as LayoutDataLoader)
   const headersList = await headers();
-  const tenantDomain = headersList.get("x-tenant-domain") || "";
-  const tenantOrigin = headersList.get("x-tenant-origin") || "";
   const host = headersList.get("host") || "";
-  const protocol = headersList.get("x-forwarded-proto") || "https";
+  const protocol =
+    headersList.get("x-forwarded-proto") ||
+    (process.env.NODE_ENV === "production" ? "https" : "http");
+
+  // Get tenant headers with fallback to environment variables or defaults
+  let tenantDomain = headersList.get("x-tenant-domain");
+  let tenantOrigin = headersList.get("x-tenant-origin");
+
+  // Fallback logic for missing headers (common on refresh/navigation)
+  if (!tenantDomain) {
+    if (host === "localhost:3000" || host === "localhost:3001") {
+      tenantDomain = process.env.DEFAULT_DOMAIN || "sandbox.myapptino.com";
+    } else {
+      tenantDomain = host.replace("www.", "");
+    }
+  }
+
+  if (!tenantOrigin) {
+    tenantOrigin =
+      process.env.DEFAULT_ORIGIN || `${protocol}://${tenantDomain}`;
+  }
+
   const baseUrl = `${protocol}://${host}`;
 
   // Fetch tenant data to get elasticCode (uses cache, so it's fast)
@@ -219,19 +238,8 @@ export default async function CategoryPage({
       );
       elasticCode = tenantData?.data?.tenant?.elasticCode || "";
       tenantCode = tenantData?.data?.tenant?.tenantCode || "";
-      
     } catch (error) {
       console.error("[CategoryPage] Error fetching tenant data:", error);
-    }
-  } else {
-    // Log missing headers in development
-    if (process.env.NODE_ENV === 'development') {
-      console.warn("[CategoryPage] Missing tenant headers:", {
-        tenantDomain: tenantDomain || 'MISSING',
-        tenantOrigin: tenantOrigin || 'MISSING',
-        host,
-        protocol,
-      });
     }
   }
 
@@ -273,7 +281,13 @@ export default async function CategoryPage({
   // Parse variant attributes from URL (any key that's not a known filter key)
   const variantAttributes: Record<string, string[]> = {};
   const productSpecifications: Record<string, string[]> = {};
-  const knownKeys = new Set(["page", "sort", "in_stock", "catalog_code", "equipment_code"]);
+  const knownKeys = new Set([
+    "page",
+    "sort",
+    "in_stock",
+    "catalog_code",
+    "equipment_code",
+  ]);
 
   Object.entries(filters).forEach(([key, value]) => {
     if (!knownKeys.has(key) && value) {
@@ -312,14 +326,16 @@ export default async function CategoryPage({
   const catalogCodes = filters.catalog_code
     ? (Array.isArray(filters.catalog_code)
         ? filters.catalog_code
-        : [filters.catalog_code]).filter((v): v is string => typeof v === "string")
+        : [filters.catalog_code]
+      ).filter((v): v is string => typeof v === "string")
     : undefined;
 
   // Parse equipment codes
   const equipmentCodes = filters.equipment_code
     ? (Array.isArray(filters.equipment_code)
         ? filters.equipment_code
-        : [filters.equipment_code]).filter((v): v is string => typeof v === "string")
+        : [filters.equipment_code]
+      ).filter((v): v is string => typeof v === "string")
     : undefined;
 
   // Use the last category ID in the path (most specific) for filtering
@@ -377,22 +393,29 @@ export default async function CategoryPage({
 
       if (aggregationResponse.success) {
         aggregations = aggregationResponse.aggregations as FilterAggregations;
-        
+
         // Debug logging in development
-        if (process.env.NODE_ENV === 'development') {
-          console.log('[CategoryPage] Aggregations received:', {
+        if (process.env.NODE_ENV === "development") {
+          console.log("[CategoryPage] Aggregations received:", {
             hasBrands: !!aggregations.brands,
             hasCategories: !!aggregations.categories,
             hasVariantAttributes: !!aggregations.variantAttributes,
-            variantAttributesKeys: aggregations.variantAttributes ? Object.keys(aggregations.variantAttributes) : [],
+            variantAttributesKeys: aggregations.variantAttributes
+              ? Object.keys(aggregations.variantAttributes)
+              : [],
             hasProductSpecifications: !!aggregations.productSpecifications,
-            productSpecificationsKeys: aggregations.productSpecifications ? Object.keys(aggregations.productSpecifications) : [],
+            productSpecificationsKeys: aggregations.productSpecifications
+              ? Object.keys(aggregations.productSpecifications)
+              : [],
             rawAggregations: aggregations,
           });
         }
       } else {
-        if (process.env.NODE_ENV === 'development') {
-          console.warn('[CategoryPage] Aggregation fetch failed:', aggregationResponse);
+        if (process.env.NODE_ENV === "development") {
+          console.warn(
+            "[CategoryPage] Aggregation fetch failed:",
+            aggregationResponse
+          );
         }
       }
     } catch (error) {

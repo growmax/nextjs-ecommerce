@@ -89,7 +89,8 @@ const DashboardTable = <T,>({
     <div
       className={cn(
         "border overflow-x-hidden flex flex-col w-full z-0",
-        tableHeight || ""
+        tableHeight || "",
+        "max-md:border-l-0 max-md:border-r-0 max-md:rounded-none"
       )}
       style={{
         borderRadius: "var(--radius)",
@@ -99,7 +100,7 @@ const DashboardTable = <T,>({
       <div
         className={cn(
           "overflow-x-auto overflow-y-auto relative scrollbar-thin-horizontal",
-          tableHeight ? "flex-1" : ""
+          tableHeight ? "max-md:flex-none" : ""
         )}
       >
         {/* Loading overlay - covers table content for both initial load and filter changes */}
@@ -156,7 +157,9 @@ const DashboardTable = <T,>({
                               : "text-left",
                           isSticky &&
                             "sticky left-0 z-[31] bg-muted border-r border-border",
-                          !isLastColumn && "border-r border-border"
+                          !isLastColumn && "border-r border-border",
+                          index === 0 && "max-md:pl-0",
+                          isLastColumn && "max-md:pr-0"
                         )}
                         style={{
                           width: header.getSize(),
@@ -197,7 +200,11 @@ const DashboardTable = <T,>({
               table.getRowModel().rows.map((row: Row<T>, _index: number) => (
                 <TableRow
                   key={row.id}
-                  className="group hover:bg-muted cursor-pointer"
+                  className={cn(
+                    "group hover:bg-muted cursor-pointer",
+                    _index === table.getRowModel().rows.length - 1 &&
+                      "max-md:border-b-0"
+                  )}
                   onClick={() => onRowClick?.(row.original)}
                   onMouseEnter={() => onRowHover?.(row.original)}
                 >
@@ -230,7 +237,9 @@ const DashboardTable = <T,>({
                                 : "text-left",
                             isSticky &&
                               "sticky left-0 z-20 bg-muted border-r border-border group-hover:bg-muted",
-                            !isLastColumn && "border-r border-border"
+                            !isLastColumn && "border-r border-border",
+                            index === 0 && "max-md:pl-0",
+                            isLastColumn && "max-md:pr-0"
                           )}
                           style={{
                             width: cell.column.getSize(),
@@ -264,7 +273,7 @@ const DashboardTable = <T,>({
           </TableBody>
         </Table>
       </div>
-      <div className="flex items-center justify-between px-4 py-2 border-t bg-background rounded-b-lg">
+      <div className="flex items-center justify-between px-4 py-2 border-t bg-background rounded-b-lg max-md:px-0 max-md:mt-0">
         <div className="flex items-center gap-2">
           <span className="text-xs lg:text-sm text-muted-foreground">
             {Math.min(page * rowPerPage + 1, totalDataCount)} -{" "}
@@ -282,7 +291,7 @@ const DashboardTable = <T,>({
               "px-4",
               page === 0
                 ? "text-gray-400 bg-gray-100 border-gray-200"
-                : "text-gray-600 bg-gray-100 border-gray-200 hover:bg-gray-200"
+                : "text-gray-900 bg-white border-gray-300 hover:bg-gray-50"
             )}
           >
             {t("previous")}

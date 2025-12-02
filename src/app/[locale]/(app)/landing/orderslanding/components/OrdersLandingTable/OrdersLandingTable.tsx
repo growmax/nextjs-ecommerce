@@ -46,74 +46,10 @@ const convertDateToString = (
     : String(date);
 };
 
-// Table Skeleton Component
-const TableSkeleton = ({ rows = 10 }: { rows?: number }) => {
-  const t = useTranslations("orders");
-  return (
-    <div className="border shadow overflow-hidden flex flex-col bg-background rounded-lg">
-      <div className="border-b border-border bg-muted flex-shrink-0">
-        <div className="flex font-medium text-sm text-foreground">
-          <div className="px-2 py-3 w-[150px] border-r border-border">
-            {t("orderId")}
-          </div>
-          <div className="px-2 py-3 w-[200px] border-r border-border">
-            {t("orderName")}
-          </div>
-          <div className="px-2 py-3 w-[200px] border-r border-border">
-            {t("status")}
-          </div>
-          <div className="px-2 py-3 w-[150px] border-r border-border">
-            {t("orderDate")}
-          </div>
-          <div className="px-2 py-3 w-[300px] border-r border-border">
-            {t("accountName")}
-          </div>
-          <div className="px-2 py-3 w-[150px] border-r border-border">
-            {t("totalItems")}
-          </div>
-          <div className="px-2 py-3 w-[150px] border-r border-border">
-            {t("subtotal")}
-          </div>
-          <div className="px-2 py-3 w-[150px] border-r border-border">
-            {t("taxableAmount")}
-          </div>
-          <div className="px-2 py-3 w-[150px] border-r border-border">
-            {t("total")}
-          </div>
-          <div className="px-2 py-3 w-[150px]">{t("requiredDate")}</div>
-        </div>
-      </div>
-      <div className="flex-1 overflow-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
-        {Array.from({ length: rows }).map((_, rowIndex) => (
-          <div key={`row-${rowIndex}`} className="border-b border-border flex ">
-            {Array.from({ length: 10 }).map((_, colIndex) => (
-              <div
-                key={`cell-${rowIndex}-${colIndex}`}
-                className={cn(
-                  "px-2 py-3 w-[150px] flex items-center",
-                  colIndex < 9 && "border-r border-border"
-                )}
-              >
-                <Skeleton className="h-4 w-full bg-muted" />
-              </div>
-            ))}
-          </div>
-        ))}
-      </div>
-      <div className="flex items-center justify-end gap-4 px-4 py-2 border-t border-border bg-muted/50 flex-shrink-0">
-        <Skeleton className="h-3 w-16" />
-        <Skeleton className="h-6 w-12" />
-        <Skeleton className="h-3 w-20" />
-        <Skeleton className="w-6 h-6" />
-        <Skeleton className="w-6 h-6" />
-      </div>
-    </div>
-  );
-};
-
 function OrdersLandingTable({
   refreshTrigger,
   setExportCallback,
+  onTotalCountChange,
 }: OrdersLandingTableProps) {
   // Use the page loader hook to ensure navigation spinner is hidden immediately
   usePageLoader();
@@ -127,6 +63,7 @@ function OrdersLandingTable({
   const isFetchingRef = useRef(false);
   const lastFetchParamsRef = useRef<string>("");
   const abortControllerRef = useRef<AbortController | null>(null);
+  const hasInitialFetchedRef = useRef(false);
 
   // Ref for scrollable container to reset scroll position
   const scrollContainerRef = useRef<HTMLDivElement | null>(null);
@@ -149,6 +86,8 @@ function OrdersLandingTable({
     null
   );
 
+  // Define table columns first (needed for skeleton)
+  // Define table columns first (needed for skeleton)
   const columns = useMemo<ColumnDef<Order>[]>(
     () => [
       {
@@ -312,6 +251,100 @@ function OrdersLandingTable({
     ],
     [t]
   );
+
+  // Generate skeleton based on actual columns - matches DashboardTable structure exactly
+  const TableSkeleton = ({ rows = 10 }: { rows?: number }) => {
+    const columnCount = columns.length;
+    const tableHeight = "h-[calc(103vh-180px)]";
+    return (
+      <div
+        className={cn(
+          "border overflow-x-hidden flex flex-col w-full z-0",
+          tableHeight
+        )}
+        style={{
+          borderRadius: "var(--radius)",
+        }}
+      >
+        {/* Scrollable Table Container - Header and Body together */}
+        <div
+          className={cn(
+            "overflow-x-auto overflow-y-auto relative scrollbar-thin-horizontal",
+            "flex-1"
+          )}
+        >
+          {/* Table structure matching DashboardTable */}
+          <div className="min-w-full">
+            {/* Table Header */}
+            <div className="border-b border-border bg-muted sticky top-0 z-20">
+              <div className="flex font-medium text-sm text-foreground">
+                {columns.map((column, index) => {
+                  const width = column.size || 150;
+                  const headerContent =
+                    typeof column.header === "function"
+                      ? column.header()
+                      : column.header || "";
+                  return (
+                    <div
+                      key={index}
+                      className={cn(
+                        "px-2 py-3 border-r border-border",
+                        index === columnCount - 1 && "border-r-0"
+                      )}
+                      style={{ width: `${width}px`, minWidth: `${width}px` }}
+                    >
+                      {headerContent}
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+            {/* Table Body - Only values show skeleton */}
+            <div>
+              {Array.from({ length: rows }).map((_, rowIndex) => (
+                <div
+                  key={`row-${rowIndex}`}
+                  className="border-b border-border flex"
+                >
+                  {columns.map((column, colIndex) => {
+                    const width = column.size || 150;
+                    const alignCenter = column.meta?.alignCenter;
+                    const alignRight = column.meta?.alignRight;
+                    return (
+                      <div
+                        key={`cell-${rowIndex}-${colIndex}`}
+                        className={cn(
+                          "px-2 py-3 flex items-center border-r border-border",
+                          colIndex === columnCount - 1 && "border-r-0",
+                          alignCenter && "justify-center",
+                          alignRight && "justify-end"
+                        )}
+                        style={{ width: `${width}px`, minWidth: `${width}px` }}
+                      >
+                        <Skeleton className="h-4 w-3/4 bg-muted" />
+                      </div>
+                    );
+                  })}
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+        {/* Pagination Footer - matches DashboardTable */}
+        <div className="flex items-center justify-between px-4 py-2 border-t bg-background rounded-b-lg flex-shrink-0">
+          <div className="flex items-center gap-2">
+            <span className="text-xs lg:text-sm text-muted-foreground">
+              <Skeleton className="h-3 w-24 inline-block" />
+            </span>
+          </div>
+          <div className="flex gap-2">
+            <Skeleton className="h-8 w-20" />
+            <Skeleton className="h-8 w-16" />
+          </div>
+        </div>
+      </div>
+    );
+  };
   // Create filter from form data
   const createFilterFromData = useCallback(
     (
@@ -414,7 +447,12 @@ function OrdersLandingTable({
 
     // Use deduplication to prevent concurrent duplicate requests
     return deduplicate(async () => {
-      // Prevent duplicate calls with same parameters
+      // Prevent duplicate calls with same parameters - check BEFORE starting
+      if (isFetchingRef.current && lastFetchParamsRef.current === fetchKey) {
+        return;
+      }
+
+      // Double-check after deduplication wrapper (race condition protection)
       if (isFetchingRef.current && lastFetchParamsRef.current === fetchKey) {
         return;
       }
@@ -433,6 +471,24 @@ function OrdersLandingTable({
       lastFetchParamsRef.current = fetchKey;
 
       setLoading(true);
+
+      // Add timeout safety mechanism (30 seconds)
+      const timeoutId = setTimeout(() => {
+        if (
+          isFetchingRef.current &&
+          abortControllerRef.current?.signal === signal
+        ) {
+          abortControllerRef.current.abort();
+          isFetchingRef.current = false;
+          setLoading(false);
+          if (initialLoad) {
+            setInitialLoad(false);
+          }
+          toast.error(
+            t("requestTimeout") || "Request timed out. Please try again."
+          );
+        }
+      }, 30000);
 
       const calculatedOffset = page;
       const userId = parseInt(user.userId.toString());
@@ -518,20 +574,35 @@ function OrdersLandingTable({
         if (!signal.aborted) {
           setOrders(ordersData);
           setTotalCount(totalCountData);
+          onTotalCountChange?.(totalCountData);
         }
       } catch (error: any) {
         // Don't show error if request was aborted
         if (error?.name === "AbortError" || signal.aborted) {
+          // Still reset state even for aborted requests
+          // Check if this is still the current request
+          if (abortControllerRef.current?.signal === signal) {
+            isFetchingRef.current = false;
+            setLoading(false);
+            if (initialLoad) {
+              setInitialLoad(false);
+            }
+          }
           return;
         }
         toast.error(t("failedToFetch"));
         if (!signal.aborted) {
           setOrders([]);
           setTotalCount(0);
+          onTotalCountChange?.(0);
         }
       } finally {
-        // Only update loading state if request wasn't aborted
-        if (!signal.aborted) {
+        // Clear timeout
+        clearTimeout(timeoutId);
+
+        // Always reset loading state and fetching ref
+        // Check if this is still the current request to avoid race conditions
+        if (abortControllerRef.current?.signal === signal || !signal.aborted) {
           setLoading(false);
           if (initialLoad) {
             setInitialLoad(false);
@@ -640,7 +711,6 @@ function OrdersLandingTable({
           companyId,
           filter
         );
-        // await loadFilterPreferences(); // Temporarily removed
         toast.success(t("filterSaved"));
       } catch {
         toast.error(t("filterSaveFailed"));
@@ -658,28 +728,29 @@ function OrdersLandingTable({
     setExportCallback?.(() => handleExport);
   }, [handleExport, setExportCallback]);
 
-  // Fetch orders after navigation completes - ensures instant navigation
-  usePostNavigationFetch(() => {
-    if (user?.userId && user?.companyId) {
-      fetchOrders();
-    }
-  }, [fetchOrders, user?.userId, user?.companyId]);
-
-  // Ensure fetch happens when user becomes available (fallback for initial load)
+  // Store fetchOrders in a ref to avoid dependency issues
+  const fetchOrdersRef = useRef(fetchOrders);
   useEffect(() => {
-    if (user?.userId && user?.companyId && initialLoad) {
-      // Small delay to ensure usePostNavigationFetch has a chance to run first
-      const timer = setTimeout(() => {
-        fetchOrders();
-      }, 100);
-      return () => clearTimeout(timer);
+    fetchOrdersRef.current = fetchOrders;
+  }, [fetchOrders]);
+
+  // Fetch orders after navigation completes - ensures instant navigation
+  // This is the primary fetch mechanism - it handles both initial load and navigation
+  usePostNavigationFetch(() => {
+    if (user?.userId && user?.companyId && !hasInitialFetchedRef.current) {
+      hasInitialFetchedRef.current = true;
+      fetchOrdersRef.current();
     }
-    return undefined;
-  }, [user?.userId, user?.companyId, initialLoad, fetchOrders]);
+  }, [user?.userId, user?.companyId]); // Removed fetchOrders from deps to prevent re-triggers
 
   // Trigger fetch when page or rowPerPage changes (only after initial load)
   useEffect(() => {
-    if (user?.userId && user?.companyId && !initialLoad) {
+    if (
+      user?.userId &&
+      user?.companyId &&
+      !initialLoad &&
+      hasInitialFetchedRef.current
+    ) {
       fetchOrders();
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -687,18 +758,37 @@ function OrdersLandingTable({
 
   // Trigger fetch when filterData changes (only after initial load)
   useEffect(() => {
-    if (user?.userId && user?.companyId && !initialLoad) {
+    if (
+      user?.userId &&
+      user?.companyId &&
+      !initialLoad &&
+      hasInitialFetchedRef.current
+    ) {
       fetchOrders();
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [filterData]);
+
+  // Cleanup on unmount to prevent stuck loading states
+  useEffect(() => {
+    return () => {
+      // Abort any in-flight requests
+      if (abortControllerRef.current) {
+        abortControllerRef.current.abort();
+        abortControllerRef.current = null;
+      }
+      // Reset fetching state
+      isFetchingRef.current = false;
+    };
+  }, []);
 
   useEffect(() => {
     if (refreshTrigger && refreshTrigger > 0) {
       fetchOrders();
       toast.success(t("ordersRefreshed"));
     }
-  }, [refreshTrigger, fetchOrders, t]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [refreshTrigger, t]);
 
   // Cleanup: abort any in-flight requests on unmount
   useEffect(() => {
@@ -778,9 +868,9 @@ function OrdersLandingTable({
             ref={scrollContainerRef}
             className="w-full overflow-x-auto scrollbar-thin-horizontal"
           >
-            {initialLoad && loading ? (
+            {loading ? (
               <TableSkeleton rows={rowPerPage} />
-            ) : !initialLoad && orders.length === 0 ? (
+            ) : orders.length === 0 ? (
               <div className="flex items-center justify-center text-muted-foreground py-8">
                 {t("noOrders")}
               </div>

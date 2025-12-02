@@ -30,7 +30,8 @@ export function PageLayout({
         <div
           className={cn(
             "pb-[20px]",
-            isSidebarCollapsed ? "px-[60px]" : "px-[15px]"
+            isSidebarCollapsed ? "px-[60px]" : "px-[15px]",
+            "max-md:px-0"
           )}
         >
           {children}
@@ -44,7 +45,8 @@ export function PageLayout({
       <div
         className={cn(
           "mt-[5px] mb-[10px]",
-          isSidebarCollapsed ? "px-[45px]" : "px-[0px]"
+          isSidebarCollapsed ? "px-[45px]" : "px-[0px]",
+          "max-md:px-0"
         )}
       >
         {children}
