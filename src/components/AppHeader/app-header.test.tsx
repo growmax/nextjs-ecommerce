@@ -213,10 +213,11 @@ function createWrapper() {
 describe("AppHeader", () => {
   it("navigates to search page on Ctrl/Cmd+K shortcut", () => {
     const mockPush = jest.fn();
-    jest.spyOn(require("@/hooks/useNavigationWithLoader"), "useNavigationWithLoader").mockReturnValue({
+    const mockUseNavigationWithLoader = jest.requireMock("@/hooks/useNavigationWithLoader");
+    mockUseNavigationWithLoader.useNavigationWithLoader = jest.fn(() => ({
       push: mockPush,
       replace: jest.fn(),
-    });
+    }));
     
     render(<AppHeader />, { wrapper: createWrapper() });
     fireEvent.keyDown(document, { key: "k", ctrlKey: true });
@@ -226,10 +227,11 @@ describe("AppHeader", () => {
 
   it("navigates to search page when Enter is pressed in search input", () => {
     const mockPush = jest.fn();
-    jest.spyOn(require("@/hooks/useNavigationWithLoader"), "useNavigationWithLoader").mockReturnValue({
+    const mockUseNavigationWithLoader = jest.requireMock("@/hooks/useNavigationWithLoader");
+    mockUseNavigationWithLoader.useNavigationWithLoader = jest.fn(() => ({
       push: mockPush,
       replace: jest.fn(),
-    });
+    }));
     
     render(<AppHeader />, { wrapper: createWrapper() });
     
