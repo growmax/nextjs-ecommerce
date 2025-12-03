@@ -201,10 +201,7 @@ jest.mock("@/hooks/useCart", () => ({
 
 jest.mock("@/hooks/summary/useSummaryDefault", () => ({
   __esModule: true,
-  default: () => ({
-    initialValues: mockInitialValues,
-    isLoading: false,
-  }),
+  default: jest.fn(),
 }));
 
 jest.mock("@/hooks/useCalculation/useCalculation", () => ({
@@ -872,9 +869,20 @@ function createWrapper() {
   return Wrapper;
 }
 
+// Get reference to the mocked module
+const getMockUseSummaryDefault = () => {
+  // eslint-disable-next-line @typescript-eslint/no-require-imports
+  return require("@/hooks/summary/useSummaryDefault").default as jest.Mock;
+};
+
 describe("QuoteSummaryContent", () => {
   beforeEach(() => {
     jest.clearAllMocks();
+    // Reset useSummaryDefault mock to default implementation
+    getMockUseSummaryDefault().mockReturnValue({
+      initialValues: mockInitialValues,
+      isLoading: false,
+    });
     mockGlobalCalc.mockImplementation((params: any) => ({
       cartValue: {
         totalValue: params.products.reduce(
@@ -1274,21 +1282,34 @@ describe("QuoteSummaryContent", () => {
 
   describe("Validation", () => {
     it("should show error when products have negative prices", async () => {
-      // eslint-disable-next-line @typescript-eslint/no-require-imports
-      jest
-        .spyOn(require("@/hooks/summary/useSummaryDefault"), "default")
-        .mockReturnValueOnce({
-          initialValues: {
-            ...mockInitialValues,
-            products: [
-              {
-                ...mockInitialValues.products[0],
-                totalPrice: -100,
-              },
-            ],
-          },
-          isLoading: false,
-        });
+      const baseProduct = mockInitialValues.products[0]!;
+      getMockUseSummaryDefault().mockReturnValueOnce({
+        initialValues: {
+          ...mockInitialValues,
+          products: [
+            {
+              productId: baseProduct.productId,
+              brandProductId: baseProduct.brandProductId,
+              itemCode: baseProduct.itemCode,
+              productName: baseProduct.productName,
+              unitPrice: baseProduct.unitPrice,
+              quantity: baseProduct.quantity,
+              askedQuantity: baseProduct.askedQuantity,
+              unitQuantity: baseProduct.unitQuantity,
+              totalPrice: -100,
+              showPrice: baseProduct.showPrice,
+              priceNotAvailable: baseProduct.priceNotAvailable,
+              cashdiscountValue: baseProduct.cashdiscountValue,
+              interTaxBreakup: baseProduct.interTaxBreakup,
+              intraTaxBreakup: baseProduct.intraTaxBreakup,
+              totalTax: baseProduct.totalTax,
+              hsnDetails: baseProduct.hsnDetails,
+              bundleProducts: baseProduct.bundleProducts,
+            },
+          ],
+        },
+        isLoading: false,
+      });
 
       render(<QuoteSummaryContent />, { wrapper: createWrapper() });
 
@@ -1307,17 +1328,14 @@ describe("QuoteSummaryContent", () => {
     });
 
     it("should show error when addresses are missing", async () => {
-      // eslint-disable-next-line @typescript-eslint/no-require-imports
-      jest
-        .spyOn(require("@/hooks/summary/useSummaryDefault"), "default")
-        .mockReturnValueOnce({
-          initialValues: {
-            ...mockInitialValues,
-            setBillingAddress: null,
-            setShippingAddress: null,
-          },
-          isLoading: false,
-        });
+      getMockUseSummaryDefault().mockReturnValueOnce({
+        initialValues: {
+          ...mockInitialValues,
+          setBillingAddress: undefined as any,
+          setShippingAddress: undefined as any,
+        },
+        isLoading: false,
+      });
 
       render(<QuoteSummaryContent />, { wrapper: createWrapper() });
 
@@ -1339,16 +1357,13 @@ describe("QuoteSummaryContent", () => {
     });
 
     it("should show error when cart is empty", async () => {
-      // eslint-disable-next-line @typescript-eslint/no-require-imports
-      jest
-        .spyOn(require("@/hooks/summary/useSummaryDefault"), "default")
-        .mockReturnValueOnce({
-          initialValues: {
-            ...mockInitialValues,
-            products: [],
-          },
-          isLoading: false,
-        });
+      getMockUseSummaryDefault().mockReturnValueOnce({
+        initialValues: {
+          ...mockInitialValues,
+          products: [],
+        },
+        isLoading: false,
+      });
 
       render(<QuoteSummaryContent />, { wrapper: createWrapper() });
 
@@ -1369,17 +1384,14 @@ describe("QuoteSummaryContent", () => {
 
   describe("Loading States", () => {
     it("should show loading skeleton when data is loading", async () => {
-      // eslint-disable-next-line @typescript-eslint/no-require-imports
-      jest
-        .spyOn(require("@/hooks/summary/useSummaryDefault"), "default")
-        .mockReturnValue({
-          initialValues: {
-            ...mockInitialValues,
-            products: [], // No products so hasCriticalData will be false
-            cartValue: null, // No cartValue so hasCriticalData will be false
-          },
-          isLoading: true,
-        });
+      getMockUseSummaryDefault().mockReturnValue({
+        initialValues: {
+          ...mockInitialValues,
+          products: [], // No products so hasCriticalData will be false
+          cartValue: undefined as any, // No cartValue so hasCriticalData will be false
+        },
+        isLoading: true,
+      });
 
       render(<QuoteSummaryContent />, { wrapper: createWrapper() });
 
