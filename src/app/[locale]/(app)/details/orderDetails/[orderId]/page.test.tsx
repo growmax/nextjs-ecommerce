@@ -68,6 +68,17 @@ jest.mock("react", () => {
   };
 });
 
+// Mock next/dynamic to return the mocked component directly
+jest.mock("next/dynamic", () => {
+  return () => {
+    const React = jest.requireActual("react");
+    const MockOrderDetailsClient = () => (
+      <div data-testid="order-details-client">OrderDetailsClient</div>
+    );
+    return MockOrderDetailsClient;
+  };
+});
+
 import { render, screen } from "@testing-library/react";
 import React from "react";
 import OrderDetailsPage from "./page";

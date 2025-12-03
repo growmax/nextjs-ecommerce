@@ -22,6 +22,11 @@ interface TaxDetail {
   value: number;
 }
 
+interface TaxBreakupItem {
+  taxName: string;
+  [key: string]: unknown;
+}
+
 interface OrderPriceDetailsProps {
   products?: any[];
   isInter?: boolean;
@@ -42,6 +47,30 @@ interface OrderPriceDetailsProps {
   cashDiscountValue?: number;
   // Hide P&F Rate for quote summary pages
   hidePfRate?: boolean;
+  // Volume Discount props
+  VolumeDiscountAvailable?: boolean;
+  VDapplied?: boolean;
+  VDDetails?: {
+    subTotal?: number;
+    subTotalVolume?: number;
+    volumeDiscountApplied?: number;
+    overallTax?: number;
+    taxableAmount?: number;
+    grandTotal?: number;
+    calculatedTotal?: number;
+    roundingAdjustment?: number;
+  };
+  // Already Paid
+  alreadyPaid?: number;
+  // Rounding Adjustment
+  roundingAdjustment?: number;
+  // Tax breakdown from API
+  getBreakup?: TaxBreakupItem[];
+  // Before Tax settings
+  isBeforeTax?: boolean;
+  beforeTaxPercentage?: number;
+  // Shipping Tax (calculated)
+  shippingTax?: number;
 }
 
 export default function OrderPriceDetails({
@@ -61,6 +90,14 @@ export default function OrderPriceDetails({
   totalCashDiscount: propTotalCashDiscount,
   cashDiscountValue: propCashDiscountValue,
   hidePfRate = false,
+  VolumeDiscountAvailable = false,
+  VDapplied = false,
+  VDDetails = {},
+  alreadyPaid,
+  roundingAdjustment,
+  getBreakup = [],
+  isBeforeTax = false,
+  shippingTax = 0,
 }: OrderPriceDetailsProps) {
   const t = useTranslations("components");
   const [taxExpanded, setTaxExpanded] = useState(false);
@@ -84,10 +121,16 @@ export default function OrderPriceDetails({
       let cashDiscountValueFromProducts = 0;
 
       // Use cash discount values from props if available (from cartValue), otherwise calculate from products
-      if (propTotalCashDiscount !== undefined && propTotalCashDiscount !== null) {
+      if (
+        propTotalCashDiscount !== undefined &&
+        propTotalCashDiscount !== null
+      ) {
         totalCashDiscountFromProducts = propTotalCashDiscount;
       }
-      if (propCashDiscountValue !== undefined && propCashDiscountValue !== null) {
+      if (
+        propCashDiscountValue !== undefined &&
+        propCashDiscountValue !== null
+      ) {
         cashDiscountValueFromProducts = propCashDiscountValue;
       }
 
@@ -100,7 +143,10 @@ export default function OrderPriceDetails({
 
           // Calculate cash discount if applicable (only if not provided via props)
           // Cash discount is always calculated on unitListPrice (list price), not on unitPrice
-          if (propTotalCashDiscount === undefined || propTotalCashDiscount === null) {
+          if (
+            propTotalCashDiscount === undefined ||
+            propTotalCashDiscount === null
+          ) {
             const productCashDiscountValue =
               product.cashdiscountValue || product.cashDiscountValue || 0;
             if (productCashDiscountValue > 0) {
@@ -113,7 +159,8 @@ export default function OrderPriceDetails({
               const qty = product.quantity || product.askedQuantity || 1;
               const listPrice = product.unitListPrice || product.unitLP || 0;
               // Cash discount = (unitListPrice * cashdiscountValue) / 100 * quantity
-              const cashDiscountAmount = (listPrice * productCashDiscountValue) / 100;
+              const cashDiscountAmount =
+                (listPrice * productCashDiscountValue) / 100;
               totalCashDiscountFromProducts += cashDiscountAmount * qty;
             }
           }
@@ -123,7 +170,10 @@ export default function OrderPriceDetails({
           const qty = product.quantity || product.askedQuantity || 1;
           const listPrice = product.unitListPrice || product.unitLP || 0;
           const originalPriceForBasicDiscount =
-            product.originalUnitPrice || product.unitPrice || product.discountedPrice || 0;
+            product.originalUnitPrice ||
+            product.unitPrice ||
+            product.discountedPrice ||
+            0;
           if (listPrice > originalPriceForBasicDiscount) {
             const basicDiscountAmount =
               listPrice - originalPriceForBasicDiscount;
@@ -134,16 +184,29 @@ export default function OrderPriceDetails({
 
       // If we can't calculate pfRate from products, derive it from taxableAmount and subTotal
       // But only if hidePfRate is false (for orders, not quotes)
-      const calculatedPfRate =
-        hidePfRate
-          ? 0 // Don't calculate P&F Rate for quotes
-          : pfRateFromProducts > 0
-            ? pfRateFromProducts
-            : taxableAmount -
-              subTotal -
-              (overallShipping !== undefined && overallShipping !== null
-                ? overallShipping
-                : 0);
+      const calculatedPfRate = hidePfRate
+        ? 0 // Don't calculate P&F Rate for quotes
+        : pfRateFromProducts > 0
+          ? pfRateFromProducts
+          : taxableAmount -
+            subTotal -
+            (overallShipping !== undefined && overallShipping !== null
+              ? overallShipping
+              : 0);
+
+      // Calculate cash discount from products
+      if (products && products.length > 0) {
+        products.forEach((product: any) => {
+          const qty = product.quantity || product.askedQuantity || 1;
+          const unitPrice = product.unitPrice || product.discountedPrice || 0;
+          const cashDiscount =
+            product.cashdiscountValue || product.cashDiscountValue || 0;
+          if (cashDiscount > 0) {
+            totalCashDiscountFromProducts +=
+              (unitPrice * qty * cashDiscount) / 100;
+          }
+        });
+      }
 
       return {
         totalItems: products?.length || 0,
@@ -154,10 +217,11 @@ export default function OrderPriceDetails({
         totalValue: subTotal,
         totalTax: overallTax,
         totalShipping: overallShipping !== undefined ? overallShipping : 0,
-        pfRate: hidePfRate ? 0 : (calculatedPfRate > 0 ? calculatedPfRate : 0),
+        pfRate: hidePfRate ? 0 : calculatedPfRate > 0 ? calculatedPfRate : 0,
         taxableAmount,
         grandTotal: calculatedTotal,
         hideListPricePublic: totalLPFromProducts === 0,
+        insuranceCharges: insuranceCharges || 0, // Include insuranceCharges in cartValue
       };
     }
 
@@ -175,6 +239,7 @@ export default function OrderPriceDetails({
         taxableAmount: 0,
         grandTotal: 0,
         hideListPricePublic: false,
+        insuranceCharges: insuranceCharges || 0,
       };
     }
 
@@ -344,11 +409,38 @@ export default function OrderPriceDetails({
     propTotalCashDiscount,
   ]);
 
-  // Extract tax breakdown from cartValue (pre-calculated) or fallback to manual calculation
+  // Extract tax breakdown from getBreakup prop or calculate from cartValue
   const taxBreakup = useMemo(() => {
     const breakup: TaxDetail[] = [];
 
-    // First, try to use pre-calculated tax totals from cartValue
+    // First, try to use getBreakup prop if provided
+    if (getBreakup && getBreakup.length > 0) {
+      getBreakup.forEach(breakupItem => {
+        const taxName = breakupItem.taxName || "";
+        if (taxName) {
+          // Get tax total from cartValue using the tax name
+          const taxValue = cartValue[`${taxName}Total`] || 0;
+          if (taxValue > 0) {
+            breakup.push({
+              name: taxName,
+              value: taxValue,
+            });
+          }
+        }
+      });
+
+      // Add shipping tax if applicable
+      if (shippingTax > 0 && !Settings?.itemWiseShippingTax && isBeforeTax) {
+        breakup.push({
+          name: "Shipping Tax",
+          value: shippingTax,
+        });
+      }
+
+      return breakup;
+    }
+
+    // Fallback: Try to use pre-calculated tax totals from cartValue
     const cartValueKeys = Object.keys(cartValue);
     const taxTotalKeys = cartValueKeys.filter(
       key =>
@@ -361,7 +453,8 @@ export default function OrderPriceDetails({
         key !== "totalValue" &&
         key !== "totalItems" &&
         key !== "totalBasicDiscount" &&
-        key !== "totalCashDiscount"
+        key !== "totalCashDiscount" &&
+        key !== "shippingTax"
     );
 
     if (taxTotalKeys.length > 0) {
@@ -376,6 +469,18 @@ export default function OrderPriceDetails({
           });
         }
       });
+
+      // Add shipping tax if applicable
+      if (
+        cartValue.shippingTax > 0 &&
+        !Settings?.itemWiseShippingTax &&
+        isBeforeTax
+      ) {
+        breakup.push({
+          name: "Shipping Tax",
+          value: cartValue.shippingTax,
+        });
+      }
 
       return breakup;
     }
@@ -427,6 +532,14 @@ export default function OrderPriceDetails({
           }
         });
 
+        // Add shipping tax if applicable
+        if (shippingTax > 0 && !Settings?.itemWiseShippingTax && isBeforeTax) {
+          breakup.push({
+            name: "Shipping Tax",
+            value: shippingTax,
+          });
+        }
+
         return breakup;
       }
     } catch (error) {
@@ -450,7 +563,17 @@ export default function OrderPriceDetails({
     }
 
     return breakup;
-  }, [products, isInter, cartValue, overallTax, precision]);
+  }, [
+    products,
+    isInter,
+    cartValue,
+    overallTax,
+    precision,
+    getBreakup,
+    shippingTax,
+    isBeforeTax,
+    Settings,
+  ]);
 
   // Use API values when available, otherwise use calculated values
   const finalShipping =
@@ -477,23 +600,62 @@ export default function OrderPriceDetails({
     subTotal !== undefined && subTotal !== null
       ? subTotal
       : cartValue.totalValue || 0;
+
+  const cashDiscountValue = cartValue.cashDiscountValue || 0;
+  const showShippingCharges = finalShipping > 0;
+
+  // Calculate Taxable Amount exactly as buyer-fe: pfRate + (VDapplied ? VDDetails?.subTotalVolume : cartValue?.totalValue) + (isBeforeTax ? cartValue?.totalShipping : 0)
   const finalTaxableAmount =
     taxableAmount !== undefined && taxableAmount !== null
       ? taxableAmount
-      : cartValue.taxableAmount || 0;
+      : cartValue.pfRate +
+        (VDapplied
+          ? VDDetails?.subTotalVolume || 0
+          : cartValue?.totalValue || 0) +
+        (isBeforeTax ? cartValue?.totalShipping || 0 : 0);
 
   // Calculate discounts separately (basic discount and cash discount)
   const basicDiscount = cartValue.totalBasicDiscount || 0;
   const cashDiscount = cartValue.totalCashDiscount || 0;
-  const cashDiscountValue = cartValue.cashDiscountValue || 0;
+
+  // Show fields conditionally
+
+  const showBasicDiscount = basicDiscount > 0;
+  // Hide P&F Rate if hidePfRate prop is true (for quote summary pages)
+  const showPfRate = !hidePfRate && cartValue.pfRate > 0;
+  // Calculate discount exactly as buyer-fe
+  // DISCOUNT = isNumber(cartValue?.totalBasicDiscount) ? cartValue?.totalBasicDiscount : cartValue?.totalLP - cartValue?.totalValue
+  // When VD applied: cartValue?.totalLP - VDDetails?.subTotal
+  // Note: DISCOUNT calculation removed as it's not currently used in the UI
+  // If needed in future, calculate as:
+  // const DISCOUNT = VolumeDiscountAvailable && VDapplied
+  //   ? cartValue.totalLP - (VDDetails?.subTotal || 0)
+  //   : cartValue.totalBasicDiscount !== undefined && cartValue.totalBasicDiscount !== null
+  //     ? cartValue.totalBasicDiscount
+  //     : cartValue.totalLP - cartValue.totalValue;
+
+  const CASH_DISCOUNT = cartValue.totalCashDiscount || 0;
 
   // Show fields conditionally
   const showListPrice = !cartValue.hideListPricePublic && cartValue.totalLP > 0;
-  const showBasicDiscount = basicDiscount > 0;
-  const showCashDiscount = cashDiscount > 0;
-  const showShippingCharges = finalShipping > 0;
-  // Hide P&F Rate if hidePfRate prop is true (for quote summary pages)
-  const showPfRate = !hidePfRate && cartValue.pfRate > 0;
+
+  const showCashDiscount = Boolean(CASH_DISCOUNT > 0);
+  const roundingAdjustmentEnabled = Settings?.roundingAdjustment || false;
+
+  // Get final rounding adjustment value
+  const finalRoundingAdjustment =
+    roundingAdjustment !== undefined && roundingAdjustment !== null
+      ? roundingAdjustment
+      : (VDapplied
+          ? VDDetails?.roundingAdjustment
+          : cartValue.roundingAdjustment) || 0;
+
+  // Get final calculated total
+  const finalCalculatedTotal =
+    calculatedTotal !== undefined && calculatedTotal !== null
+      ? calculatedTotal
+      : (VDapplied ? VDDetails?.calculatedTotal : cartValue.calculatedTotal) ||
+        0;
 
   return (
     <Card className="shadow-sm bg-white p-0 m-0 overflow-hidden gap-4 w-full">
@@ -546,7 +708,6 @@ export default function OrderPriceDetails({
           </div>
         )}
 
-        {/* Cash Discount - only show if there's a cash discount */}
         {showCashDiscount && (
           <div className="flex justify-between items-center gap-4 min-w-0">
             <div className="flex-shrink-0">
@@ -567,15 +728,54 @@ export default function OrderPriceDetails({
         <div className="flex justify-between items-center gap-4 min-w-0">
           <div className="flex-shrink-0">
             <h6 className="text-sm font-semibold text-gray-800">
-              {t("subtotal")}
+              {VolumeDiscountAvailable && VDapplied
+                ? t("subtotalExclVD") || "Subtotal (excl. VD)"
+                : t("subtotal")}
             </h6>
           </div>
           <div className="text-right flex-shrink-0 break-words">
             <h6 className="text-sm font-semibold text-gray-800">
-              <PricingFormat value={finalSubtotal} />
+              <PricingFormat
+                value={VDapplied ? VDDetails?.subTotal || 0 : finalSubtotal}
+              />
             </h6>
           </div>
         </div>
+
+        {/* Volume Discount - show if applied */}
+        {VolumeDiscountAvailable && VDapplied && (
+          <div className="flex justify-between items-center gap-4 min-w-0">
+            <div className="flex-shrink-0">
+              <h5 className="text-sm font-normal text-green-600">
+                {t("volumeDiscount") || "Volume Discount"}
+              </h5>
+            </div>
+            <div className="text-right flex-shrink-0 break-words">
+              <h5 className="text-sm font-normal text-green-600">
+                -<PricingFormat value={VDDetails?.volumeDiscountApplied || 0} />
+              </h5>
+            </div>
+          </div>
+        )}
+
+        {/* Subtotal (after Volume Discount) */}
+        {VolumeDiscountAvailable &&
+          VDapplied &&
+          VDDetails?.subTotalVolume &&
+          VDDetails.subTotalVolume > 0 && (
+            <div className="flex justify-between items-center gap-4 min-w-0">
+              <div className="flex-shrink-0">
+                <h6 className="text-sm font-semibold text-gray-800">
+                  {t("subtotal")}
+                </h6>
+              </div>
+              <div className="text-right flex-shrink-0 break-words">
+                <h6 className="text-sm font-semibold text-gray-800">
+                  <PricingFormat value={VDDetails.subTotalVolume} />
+                </h6>
+              </div>
+            </div>
+          )}
 
         {/* P&F Rate - show if exists */}
         {showPfRate && (
@@ -593,6 +793,20 @@ export default function OrderPriceDetails({
 
         <Separator />
 
+        {/* Shipping Charges - show before Taxable Amount if isBeforeTax */}
+        {isBeforeTax && showShippingCharges && (
+          <div className="flex justify-between items-center gap-4 min-w-0">
+            <div className="flex-shrink-0">
+              <TypographyMuted>Shipping Charges</TypographyMuted>
+            </div>
+            <div className="text-right flex-shrink-0 break-words">
+              <TypographyMuted>
+                <PricingFormat value={finalShipping} />
+              </TypographyMuted>
+            </div>
+          </div>
+        )}
+
         {/* Taxable Amount - always show if exists */}
         <div className="flex justify-between items-center gap-4 min-w-0">
           <div className="flex-shrink-0">
@@ -602,7 +816,13 @@ export default function OrderPriceDetails({
           </div>
           <div className="text-right flex-shrink-0 break-words">
             <h6 className="text-sm font-semibold text-gray-800">
-              <PricingFormat value={finalTaxableAmount} />
+              <PricingFormat
+                value={
+                  VDapplied && VDDetails?.taxableAmount !== undefined
+                    ? VDDetails.taxableAmount
+                    : finalTaxableAmount
+                }
+              />
             </h6>
           </div>
         </div>
@@ -611,27 +831,43 @@ export default function OrderPriceDetails({
         {finalTax !== undefined && finalTax !== null && (
           <div className="flex justify-between items-center gap-4 min-w-0">
             <div className="flex items-center gap-1 flex-shrink-0">
-              <TypographyMuted>{t("tax")}</TypographyMuted>
-              {taxBreakup.length > 0 && (
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className="h-4 w-4 p-0 flex-shrink-0"
-                  onClick={() => setTaxExpanded(!taxExpanded)}
-                  aria-expanded={taxExpanded}
-                  aria-label="show more"
-                >
-                  <ChevronDown
-                    className={`h-3 w-3 transition-transform ${
-                      taxExpanded ? "rotate-180" : ""
-                    }`}
-                  />
-                </Button>
-              )}
+              <TypographyMuted>
+                {taxExemption ? "N/A" : t("tax")}
+              </TypographyMuted>
+              {!taxExemption &&
+                (taxBreakup.length > 0 ||
+                  (cartValue.shippingTax > 0 &&
+                    !Settings?.itemWiseShippingTax &&
+                    isBeforeTax)) && (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="h-4 w-4 p-0 flex-shrink-0"
+                    onClick={() => setTaxExpanded(!taxExpanded)}
+                    aria-expanded={taxExpanded}
+                    aria-label="show more"
+                  >
+                    <ChevronDown
+                      className={`h-3 w-3 transition-transform ${
+                        taxExpanded ? "rotate-180" : ""
+                      }`}
+                    />
+                  </Button>
+                )}
             </div>
             <div className="text-right flex-shrink-0 break-words">
               <TypographyMuted>
-                <PricingFormat value={finalTax} />
+                {taxExemption ? (
+                  "N/A"
+                ) : (
+                  <PricingFormat
+                    value={
+                      VDapplied && VDDetails?.overallTax !== undefined
+                        ? VDDetails.overallTax
+                        : finalTax
+                    }
+                  />
+                )}
               </TypographyMuted>
             </div>
           </div>
@@ -658,8 +894,8 @@ export default function OrderPriceDetails({
           </div>
         )}
 
-        {/* Shipping Charges */}
-        {showShippingCharges && (
+        {/* Shipping Charges - show after Tax if !isBeforeTax */}
+        {!isBeforeTax && showShippingCharges && (
           <div className="flex justify-between items-center gap-4 min-w-0">
             <div className="flex-shrink-0">
               <TypographyMuted>Shipping Charges</TypographyMuted>
@@ -672,15 +908,20 @@ export default function OrderPriceDetails({
           </div>
         )}
 
-        {/* Insurance Charges */}
-        {insuranceCharges > 0 && (
+        {/* Insurance Charges - match buyer-fe: Boolean(!isCart && cartValue.insuranceCharges > 0) */}
+        {/* Check both cartValue.insuranceCharges and insuranceCharges prop */}
+        {Boolean(
+          (cartValue?.insuranceCharges ?? insuranceCharges ?? 0) > 0
+        ) && (
           <div className="flex justify-between items-center gap-4 min-w-0">
             <div className="flex-shrink-0">
               <TypographyMuted>Insurance Charges</TypographyMuted>
             </div>
             <div className="text-right flex-shrink-0 break-words">
               <TypographyMuted>
-                <PricingFormat value={insuranceCharges} />
+                <PricingFormat
+                  value={cartValue?.insuranceCharges ?? insuranceCharges ?? 0}
+                />
               </TypographyMuted>
             </div>
           </div>
@@ -688,14 +929,99 @@ export default function OrderPriceDetails({
 
         <Separator />
 
-        {/* Total */}
-        <div className="flex justify-between items-center gap-4 min-w-0">
+        {/* Already Paid Section */}
+        {alreadyPaid !== undefined &&
+          alreadyPaid !== null &&
+          alreadyPaid > 0 && (
+            <>
+              <div className="flex justify-between items-center gap-4 min-w-0">
+                <div className="flex-shrink-0">
+                  <h4 className="text-lg font-bold text-gray-800">
+                    {t("total")}
+                  </h4>
+                </div>
+                <div className="text-right flex-shrink-0 break-words">
+                  <h4 className="text-lg font-bold text-gray-800">
+                    <PricingFormat
+                      value={
+                        (VDapplied ? VDDetails?.grandTotal : finalTotal) +
+                        alreadyPaid
+                      }
+                    />
+                  </h4>
+                </div>
+              </div>
+              <div className="flex justify-between items-center gap-4 min-w-0">
+                <div className="flex-shrink-0">
+                  <TypographyMuted className="text-red-600">
+                    {t("alreadyPaid") || "Already Paid"}
+                  </TypographyMuted>
+                </div>
+                <div className="text-right flex-shrink-0 break-words">
+                  <TypographyMuted className="text-red-600">
+                    -<PricingFormat value={alreadyPaid} />
+                  </TypographyMuted>
+                </div>
+              </div>
+            </>
+          )}
+
+        {/* Calculated Total - show when rounding adjustment is enabled */}
+        {roundingAdjustmentEnabled && (
+          <div className="flex justify-between items-center gap-4 min-w-0">
+            <div className="flex-shrink-0">
+              <TypographyMuted>
+                {t("calculatedTotal") || "Calculated Total"}
+              </TypographyMuted>
+            </div>
+            <div className="text-right flex-shrink-0 break-words">
+              <TypographyMuted>
+                <PricingFormat value={finalCalculatedTotal} />
+              </TypographyMuted>
+            </div>
+          </div>
+        )}
+
+        {/* Rounding Adjustment - show when rounding adjustment is enabled */}
+        {roundingAdjustmentEnabled && (
+          <div className="flex justify-between items-center gap-4 min-w-0">
+            <div className="flex-shrink-0">
+              <TypographyMuted>
+                {t("roundingAdjustment") || "Rounding Adjustment"}
+              </TypographyMuted>
+            </div>
+            <div
+              className={`text-right flex-shrink-0 break-words ${
+                finalRoundingAdjustment > 0 ? "text-green-600" : "text-red-600"
+              }`}
+            >
+              <TypographyMuted>
+                <PricingFormat value={finalRoundingAdjustment} />
+              </TypographyMuted>
+            </div>
+          </div>
+        )}
+
+        {/* Total / To Pay */}
+        <div className="flex justify-between items-center gap-4 min-w-0 pt-2">
           <div className="flex-shrink-0">
-            <h4 className="text-lg font-bold text-gray-800">{t("total")}</h4>
+            <h4 className="text-lg font-bold text-gray-800">
+              {alreadyPaid !== undefined &&
+              alreadyPaid !== null &&
+              alreadyPaid > 0
+                ? t("toPay") || "To Pay"
+                : t("total")}
+            </h4>
           </div>
           <div className="text-right flex-shrink-0 break-words">
             <h4 className="text-lg font-bold text-gray-800">
-              <PricingFormat value={finalTotal} />
+              <PricingFormat
+                value={
+                  VDapplied && VDDetails?.grandTotal !== undefined
+                    ? VDDetails.grandTotal
+                    : finalTotal
+                }
+              />
             </h4>
           </div>
         </div>

@@ -20,12 +20,13 @@ export interface SaveCancelToolbarProps
   anchorSelector?: string;
 }
 
+import type { BaseDialogProps } from "./dialog";
+
 export interface SaveCancelDialogProps
   extends SaveCancelAction,
-    SaveCancelTexts {
-  open: boolean;
-  title?: string;
-  description?: string;
+    SaveCancelTexts,
+    Omit<BaseDialogProps, "onOpenChange"> {
+  onOpenChange?: (open: boolean) => void;
   children?: React.ReactNode;
   alertMode?: boolean;
 }

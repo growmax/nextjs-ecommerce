@@ -367,4 +367,21 @@
       scroll-behavior: smooth;
     }
   }
+
+  /* Prevent layout shift when dialogs open */
+  /* Radix UI Dialog handles body scroll locking, but we preserve scrollbar space */
+  body:has([data-slot="dialog"][data-state="open"]) {
+    overflow: hidden !important;
+  }
+
+  /* Smooth dialog transitions */
+  [data-slot="dialog-content"] {
+    transition:
+      opacity 200ms ease-in-out,
+      transform 200ms ease-in-out;
+  }
+
+  [data-slot="dialog-overlay"] {
+    transition: opacity 200ms ease-in-out;
+  }
 }

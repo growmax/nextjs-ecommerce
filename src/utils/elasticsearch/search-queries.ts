@@ -96,7 +96,9 @@ export interface ElasticSearchQuery {
   };
 }
 
-export const buildProductSearchQuery = (searchText: string): ElasticSearchQuery => {
+export const buildProductSearchQuery = (
+  searchText: string
+): ElasticSearchQuery => {
   const validatedText = searchTextSchema.parse(searchText);
   const sanitizedQuery = sanitizeSearchValue(validatedText);
 
@@ -119,7 +121,7 @@ export const buildProductSearchQuery = (searchText: string): ElasticSearchQuery 
               query: sanitizedQuery,
               analyzer: "my_analyzer",
               analyze_wildcard: true,
-              auto_generate_phrase_queries: true,
+              auto_generate_phrase_queries: false,
               default_operator: "AND",
               fields: PRODUCT_SEARCH_FIELDS,
               boost: 200,

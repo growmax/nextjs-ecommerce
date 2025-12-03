@@ -39,6 +39,7 @@ export class OpenElasticSearchService extends BaseService<OpenElasticSearchServi
     if (context) options.context = context;
 
     const response = await this.callWith("", body, options);
+    console.log(response);
 
     // Extract product data from OpenSearch response structure
     return extractOpenSearchData<ProductDetail>(response);

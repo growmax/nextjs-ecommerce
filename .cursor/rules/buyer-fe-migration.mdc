@@ -11,14 +11,14 @@ rules:
     ALWAYS reference buyer-fe codebase when implementing any feature or functionality.
   details: |
     • **MANDATORY FIRST STEP**: When asked to implement ANY feature, component, API route, or functionality:
-      1. Search buyer-fe codebase (`/Volumes/Work/Growmax-GitHub/Growmax/e2e/buyer-fe`) for existing implementation
+      1. Search buyer-fe codebase (`D:\growmax-buyer-nextjs`) for existing implementation
       2. **Extract business logic** - Understand calculations, validations, workflows
       3. **Identify UI components** - Note MUI components used
       4. **Identify state management** - Note Context usage, SWR hooks, local state
       5. **Identify API calls** - Note API routes and data fetching patterns
       6. Document the existing implementation approach
     
-    • **Reference Path**: Always check `/Volumes/Work/Growmax-GitHub/Growmax/e2e/buyer-fe` first
+    • **Reference Path**: Always check `D:\growmax-buyer-nextjs` first
     
     • **Search Strategy**:
       - Use semantic search to find related functionality

@@ -37,27 +37,19 @@ import Attachments from "@/components/summary/Attachments";
 import SPRForm from "@/components/summary/SPRForm";
 import SummaryNameCard from "@/components/summary/SummaryNameCard";
 import TargetDiscountCard from "@/components/summary/TargetDiscountCard";
-import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
+import { ConfirmationDialog } from "@/components/dialogs/common";
 import { Label } from "@/components/ui/label";
 import { FileText } from "lucide-react";
 
 // Utils
 import { useCalculation } from "@/hooks/useCalculation/useCalculation";
+import { useGlobalLoader } from "@/hooks/useGlobalLoader";
 import { formBundleProductsPayload, QuoteSubmissionService } from "@/lib/api";
 import { getAccounting } from "@/utils/calculation/salesCalculation/salesCalculation";
 import { containsXSS } from "@/utils/sanitization/sanitization.utils";
 import { summaryReqDTO } from "@/utils/summary/summaryReqDTO";
 import { BuyerQuoteSummaryValidations } from "@/utils/summary/validation";
-import { useGlobalLoader } from "@/hooks/useGlobalLoader";
 
 // Constants
 const NEGATIVE_VALUE_MSG = "Some products have negative prices";
@@ -99,9 +91,8 @@ export default function QuoteSummaryContent() {
     mode: "onChange",
     reValidateMode: "onChange",
   });
-   
+
   const {
-  
     watch,
     getValues,
     reset,
@@ -113,16 +104,19 @@ export default function QuoteSummaryContent() {
 
   // Watch specific fields that need to trigger re-renders
   const watchedProducts = watch("products");
-  const products = useMemo(() => (watchedProducts as any[]) || [], [watchedProducts]);
-  
+  const products = useMemo(
+    () => (watchedProducts as any[]) || [],
+    [watchedProducts]
+  );
+
   // Check if critical data is loaded - show UI even if some non-critical loading states are pending
   const hasCriticalData = useMemo(() => {
     return products && products.length > 0 && initialValues?.cartValue;
   }, [products, initialValues?.cartValue]);
-  
+
   // Use more lenient loading check - only show loader if critical data is not available
   const shouldShowLoader = isLoading && !hasCriticalData;
-  
+
   // Hide global navigation loader when critical data is available
   useEffect(() => {
     if (hasCriticalData) {
@@ -131,12 +125,12 @@ export default function QuoteSummaryContent() {
       hideLoading("navigation-manual");
     }
   }, [hasCriticalData, hideLoading]);
-  const sprEnabled = ((watch("sprDetails" as any) as any)?.spr) || false;
+  const sprEnabled = (watch("sprDetails" as any) as any)?.spr || false;
   const uploading = (watch("uploading" as any) as boolean) || false;
 
   // Get calculation hook for recalculating cart values when products change
   const { globalCalc } = useCalculation();
-  
+
   // Refs to prevent infinite loops during recalculation and form reset
   const isRecalculatingRef = useRef(false);
   const hasInitializedRef = useRef(false);
@@ -176,12 +170,17 @@ export default function QuoteSummaryContent() {
       });
 
       // Only reset if initialValues actually changed or this is the first load
-      if (initialValuesKey !== previousInitialValuesRef.current || !hasInitializedRef.current) {
+      if (
+        initialValuesKey !== previousInitialValuesRef.current ||
+        !hasInitializedRef.current
+      ) {
         reset({
           ...initialValues,
           loading: false,
         });
-        setQuoteName(companyName ? words(companyName)[0] + "'s Quote" : "Quote");
+        setQuoteName(
+          companyName ? words(companyName)[0] + "'s Quote" : "Quote"
+        );
         previousInitialValuesRef.current = initialValuesKey;
         hasInitializedRef.current = true;
       }
@@ -200,29 +199,38 @@ export default function QuoteSummaryContent() {
   // Reference: buyer-fe SummaryBody.js line 154 - setValue("isInter", taxResutls.inter)
   useEffect(() => {
     const billingAddress = (watch("setBillingAddress" as any) as any) || null;
-    const warehouseAddress = (watch("setWarehouseAddress" as any) as any) || null;
+    const warehouseAddress =
+      (watch("setWarehouseAddress" as any) as any) || null;
 
     if (billingAddress && warehouseAddress) {
       // Check both possible structures: billingAddress.state or billingAddress.addressId?.state
-      const billingState = billingAddress?.state || (billingAddress as any)?.addressId?.state;
+      const billingState =
+        billingAddress?.state || (billingAddress as any)?.addressId?.state;
       // Check both possible structures: warehouseAddress.addressId?.state or warehouseAddress.state
-      const warehouseState = warehouseAddress?.addressId?.state || (warehouseAddress as any)?.state;
-      
+      const warehouseState =
+        warehouseAddress?.addressId?.state || (warehouseAddress as any)?.state;
+
       if (billingState && warehouseState) {
         const newIsInter = billingState !== warehouseState;
         const currentIsInter = getValues("isInter") as boolean;
-        
+
         // Only update if the value has changed to avoid unnecessary recalculations
         if (currentIsInter !== newIsInter) {
           setValue("isInter", newIsInter, { shouldDirty: false });
-          
+
           // Recalculate cart when isInter changes to ensure correct tax calculation
           // This ensures tax is calculated with the correct isInter value (IGST vs SGST/CGST)
-          if (globalCalc && !isRecalculatingRef.current && products.length > 0) {
+          if (
+            globalCalc &&
+            !isRecalculatingRef.current &&
+            products.length > 0
+          ) {
             isRecalculatingRef.current = true;
             try {
-              const preferences = (getValues("preferences" as any) as any) || {};
-              const taxExempted = (getValues("taxExempted") as boolean) || false;
+              const preferences =
+                (getValues("preferences" as any) as any) || {};
+              const taxExempted =
+                (getValues("taxExempted") as boolean) || false;
               const insuranceCharges = Number(
                 preferences?.insuranceId?.insuranceValue || 0
               );
@@ -235,25 +243,39 @@ export default function QuoteSummaryContent() {
                 insuranceCharges,
                 precision: 2,
                 Settings: {
-                  roundingAdjustment: quoteSettings?.roundingAdjustment || false,
+                  roundingAdjustment:
+                    quoteSettings?.roundingAdjustment || false,
                   itemWiseShippingTax: false,
                 },
                 isSeller: false,
-                overallShipping: (getValues("overallShipping" as any) as number) || 0,
+                overallShipping:
+                  (getValues("overallShipping" as any) as number) || 0,
                 isBeforeTax,
               });
 
               if (calculationResult?.cartValue) {
-                setValue("cartValue" as any, calculationResult.cartValue, { shouldDirty: false });
+                setValue("cartValue" as any, calculationResult.cartValue, {
+                  shouldDirty: false,
+                });
               }
-              if (calculationResult?.products && calculationResult.products.length > 0) {
-                setValue("products", calculationResult.products, { shouldDirty: false });
+              if (
+                calculationResult?.products &&
+                calculationResult.products.length > 0
+              ) {
+                setValue("products", calculationResult.products, {
+                  shouldDirty: false,
+                });
               }
               if (calculationResult?.breakup) {
-                setValue("getBreakup" as any, calculationResult.breakup, { shouldDirty: false });
+                setValue("getBreakup" as any, calculationResult.breakup, {
+                  shouldDirty: false,
+                });
               }
             } catch (error) {
-              console.error("Error recalculating cart after isInter change:", error);
+              console.error(
+                "Error recalculating cart after isInter change:",
+                error
+              );
             } finally {
               isRecalculatingRef.current = false;
             }
@@ -261,17 +283,10 @@ export default function QuoteSummaryContent() {
         }
       }
     }
-  }, [
-    watch,
-    setValue,
-    getValues,
-    globalCalc,
-    products,
-    quoteSettings,
-  ]);
+  }, [watch, setValue, getValues, globalCalc, products, quoteSettings]);
 
   // Handle form validation errors
-  
+
   useEffect(() => {
     if (!isEmpty(formState.errors)) {
       if (formState.errors.customerRequiredDate) {
@@ -293,7 +308,8 @@ export default function QuoteSummaryContent() {
             Object.values(item).forEach((value, index) => {
               if (index === 0) {
                 const products = (getValues("products") as any[]) || [];
-                const productIndex = typeof i === "number" ? i : parseInt(String(i), 10);
+                const productIndex =
+                  typeof i === "number" ? i : parseInt(String(i), 10);
                 toast.error(
                   `${(value as any)?.message} for ${
                     products[productIndex]?.brandProductId || "product"
@@ -324,29 +340,33 @@ export default function QuoteSummaryContent() {
       displayName: userData?.displayName,
     };
     const taxExempted = (getValues("taxExempted") as boolean) || false;
-    const taxExemptionId = (getValues("taxExemptionId" as any) as any);
-    const setSellerAddress = (getValues("setSellerAddress" as any) as any);
-    const setShippingAddress = (getValues("setShippingAddress" as any) as any);
-    const setBillingAddress = (getValues("setBillingAddress" as any) as any);
-    const setRegisterAddress = (getValues("setRegisterAddress" as any) as any);
-    const setWarehouseAddress = (getValues("setWarehouseAddress" as any) as any);
-    const cartValue = (getValues("cartValue" as any) as any);
-    const cashdiscount = (getValues("cashdiscount" as any) as boolean);
-    const preferences = (getValues("preferences" as any) as any);
-    const pfRate = (getValues("pfRate" as any) as number);
-    let products = (getValues("products") as any[]);
+    const taxExemptionId = getValues("taxExemptionId" as any) as any;
+    const setSellerAddress = getValues("setSellerAddress" as any) as any;
+    const setShippingAddress = getValues("setShippingAddress" as any) as any;
+    const setBillingAddress = getValues("setBillingAddress" as any) as any;
+    const setRegisterAddress = getValues("setRegisterAddress" as any) as any;
+    const setWarehouseAddress = getValues("setWarehouseAddress" as any) as any;
+    const cartValue = getValues("cartValue" as any) as any;
+    const cashdiscount = getValues("cashdiscount" as any) as boolean;
+    const preferences = getValues("preferences" as any) as any;
+    const pfRate = getValues("pfRate" as any) as number;
+    let products = getValues("products") as any[];
     const additionalTerms = (getValues("additionalTerms") as string) || "";
-    const buyerReferenceNumber = (getValues("buyerReferenceNumber") as string | null) || null;
-    const customerRequiredDate = (getValues("customerRequiredDate") as string | null) || "";
+    const buyerReferenceNumber =
+      (getValues("buyerReferenceNumber") as string | null) || null;
+    const customerRequiredDate =
+      (getValues("customerRequiredDate") as string | null) || "";
     const VDDetails = (getValues("VDDetails" as any) as any) || {};
-    const uploadedDocumentDetails = (getValues("uploadedDocumentDetails" as any) as any);
-    const comment = (getValues("comment") as string);
-    const sprDetails = (getValues("sprDetails" as any) as any);
-    const isSPRRequested = (getValues("isSPRRequested" as any) as boolean);
-    const branchBusinessUnit = (getValues("branchBusinessUnit" as any) as any);
-    const isInter = (getValues("isInter") as boolean);
-    const deliveryPlace = (getValues("deliveryPlace" as any) as string);
-    
+    const uploadedDocumentDetails = getValues(
+      "uploadedDocumentDetails" as any
+    ) as any;
+    const comment = getValues("comment") as string;
+    const sprDetails = getValues("sprDetails" as any) as any;
+    const isSPRRequested = getValues("isSPRRequested" as any) as boolean;
+    const branchBusinessUnit = getValues("branchBusinessUnit" as any) as any;
+    const isInter = getValues("isInter") as boolean;
+    const deliveryPlace = getValues("deliveryPlace" as any) as string;
+
     // Map products - use spread operator like reference implementation, then override specific fields
     products = map(products, (prod: any) => {
       return {
@@ -365,7 +385,9 @@ export default function QuoteSummaryContent() {
             ? prod.businessUnit.id
             : prod.businessUnit
           : null,
-        cashdiscountValue: prod?.cashdiscountValue ? prod?.cashdiscountValue : 0,
+        cashdiscountValue: prod?.cashdiscountValue
+          ? prod?.cashdiscountValue
+          : 0,
         reqDeliveryDate: customerRequiredDate ? customerRequiredDate : null,
         divisionId: prod.division
           ? typeof prod.division === "object"
@@ -390,9 +412,12 @@ export default function QuoteSummaryContent() {
       };
     });
 
-    const taxExemptionMessage = taxExemptionId && typeof taxExemptionId === "object" && "taxExemptName" in taxExemptionId
-      ? (taxExemptionId as any).taxExemptName
-      : "";
+    const taxExemptionMessage =
+      taxExemptionId &&
+      typeof taxExemptionId === "object" &&
+      "taxExemptName" in taxExemptionId
+        ? (taxExemptionId as any).taxExemptName
+        : "";
 
     return {
       additionalTerms,
@@ -423,7 +448,7 @@ export default function QuoteSummaryContent() {
       cashdiscount,
     };
   }
- 
+
   /**
    * Check for errors before submission
    */
@@ -471,7 +496,9 @@ export default function QuoteSummaryContent() {
    * Request quote confirmation dialog handler
    */
   const requestQuoteConfirmationDialog = async (): Promise<boolean> => {
-    if (some((getValues("products") as any[]), (item: any) => item.totalPrice < 0)) {
+    if (
+      some(getValues("products") as any[], (item: any) => item.totalPrice < 0)
+    ) {
       toast.info(NEGATIVE_VALUE_MSG);
       return false;
     }
@@ -487,8 +514,9 @@ export default function QuoteSummaryContent() {
     // Final XSS safety check
     const finalXSSCheck = () => {
       const comment = (getValues("comment") as string | null) || "";
-      const buyerRef = (getValues("buyerReferenceNumber") as string | null) || "";
-      const sprDetails = (getValues("sprDetails" as any) as any);
+      const buyerRef =
+        (getValues("buyerReferenceNumber") as string | null) || "";
+      const sprDetails = getValues("sprDetails" as any) as any;
 
       if (comment && containsXSS(comment)) {
         toast.error("Invalid content detected in comments");
@@ -516,7 +544,9 @@ export default function QuoteSummaryContent() {
           toast.error("Invalid content detected in price justification");
           return true;
         }
-        if (sprDetails.competitorNames?.some((name: string) => containsXSS(name))) {
+        if (
+          sprDetails.competitorNames?.some((name: string) => containsXSS(name))
+        ) {
           toast.error("Invalid content detected in competitor names");
           return true;
         }
@@ -580,7 +610,9 @@ export default function QuoteSummaryContent() {
         toast.error("Invalid content detected in price justification");
         return;
       }
-      if (sprDetails.competitorNames?.some((name: string) => containsXSS(name))) {
+      if (
+        sprDetails.competitorNames?.some((name: string) => containsXSS(name))
+      ) {
         toast.error("Invalid content detected in competitor names");
         return;
       }
@@ -593,16 +625,21 @@ export default function QuoteSummaryContent() {
     try {
       // Validate required IDs before proceeding
       if (!userId || !companyId) {
-        toast.error("User or company information is missing. Please refresh the page.");
+        toast.error(
+          "User or company information is missing. Please refresh the page."
+        );
         return;
       }
 
       const bodyData = getbody();
       const body = summaryReqDTO(bodyData as any);
-      const setShippingAddress = (getValues("setShippingAddress" as any) as any);
-      const setBillingAddress = (getValues("setBillingAddress" as any) as any);
+      const setShippingAddress = getValues("setShippingAddress" as any) as any;
+      const setBillingAddress = getValues("setBillingAddress" as any) as any;
 
-      if (body.shippingAddressDetails && typeof body.shippingAddressDetails === "object") {
+      if (
+        body.shippingAddressDetails &&
+        typeof body.shippingAddressDetails === "object"
+      ) {
         Object.assign(body.shippingAddressDetails, {
           email: setShippingAddress?.email,
           lattitude: setShippingAddress?.lattitude,
@@ -613,7 +650,10 @@ export default function QuoteSummaryContent() {
         });
       }
 
-      if (body.billingAddressDetails && typeof body.billingAddressDetails === "object") {
+      if (
+        body.billingAddressDetails &&
+        typeof body.billingAddressDetails === "object"
+      ) {
         Object.assign(body.billingAddressDetails, {
           email: setBillingAddress?.email,
           lattitude: setBillingAddress?.lattitude,
@@ -627,18 +667,19 @@ export default function QuoteSummaryContent() {
       body.rfq = true;
       body.versionName = "RFQ";
       body.quoteName = quoteName;
-      body.reorder = (getValues("reorder" as any) as boolean);
+      body.reorder = getValues("reorder" as any) as boolean;
       const reorderValidityFrom = getValues("reorderValidityFrom" as any);
       const reorderValidityTill = getValues("reorderValidityTill" as any);
-      body.reorderValidityFrom = reorderValidityFrom ? String(reorderValidityFrom) : null;
-      body.reorderValidityTill = reorderValidityTill ? String(reorderValidityTill) : null;
-      const currencyObj = (getValues("currency" as any) as any);
+      body.reorderValidityFrom = reorderValidityFrom
+        ? String(reorderValidityFrom)
+        : null;
+      body.reorderValidityTill = reorderValidityTill
+        ? String(reorderValidityTill)
+        : null;
+      const currencyObj = getValues("currency" as any) as any;
       body.buyerCurrencyId = currencyObj?.id;
       const accOwners = (getValues("AccOwners" as any) as any[]) || [];
-      body.quoteUsers = map(
-        accOwners,
-        (user: any) => user?.id || user?.userId
-      );
+      body.quoteUsers = map(accOwners, (user: any) => user?.id || user?.userId);
       body.deletableQuoteUsers = [];
       body.tagsList = [];
       body.deletableTagsList = [];
@@ -658,28 +699,32 @@ export default function QuoteSummaryContent() {
               : 1;
         }
       }
-      const setSellerAddress = (getValues("setSellerAddress" as any) as any);
-      
+      const setSellerAddress = getValues("setSellerAddress" as any) as any;
+
       // Extract sellerCompanyId and sellerCompanyName from setSellerAddress
       // Matching buyer-fe QuoteSummary.js and summaryReqDTO structure
       // Reference: summaryReqDTO.ts lines 371-372
-      const sellerCompanyIdValue = 
-        (setSellerAddress?.companyId?.id) || 
-        (typeof setSellerAddress?.companyId === "object" && setSellerAddress?.companyId?.id) ||
-        (typeof setSellerAddress?.companyId === "number" ? setSellerAddress?.companyId : null) ||
+      const sellerCompanyIdValue =
+        setSellerAddress?.companyId?.id ||
+        (typeof setSellerAddress?.companyId === "object" &&
+          setSellerAddress?.companyId?.id) ||
+        (typeof setSellerAddress?.companyId === "number"
+          ? setSellerAddress?.companyId
+          : null) ||
         sellerCompanyId || // Fallback to component-level value
         null;
-      
-      const sellerCompanyNameValue = 
-        (setSellerAddress?.companyId?.name) ||
-        (setSellerAddress?.companyId?.companyName) ||
+
+      const sellerCompanyNameValue =
+        setSellerAddress?.companyId?.name ||
+        setSellerAddress?.companyId?.companyName ||
         null;
-      
+
       body.sellerCompanyId = sellerCompanyIdValue;
       body.sellerCompanyName = sellerCompanyNameValue;
       body.buyerCurrencyFactor = currencyFactorValue;
       body.currencyFactor = currencyFactorValue;
-      body.overallShipping = (getValues("overallShipping" as any) as number) || 0;
+      body.overallShipping =
+        (getValues("overallShipping" as any) as number) || 0;
       body.validityFrom = body.validityFrom
         ? body.validityFrom
         : new Date().toISOString();
@@ -688,10 +733,17 @@ export default function QuoteSummaryContent() {
         : addDays(new Date(), quoteValidity || 30).toISOString();
 
       // Ensure companyId and userId are numbers (convert if string)
-      const numericUserId = typeof userId === "string" ? parseInt(userId, 10) : userId;
-      const numericCompanyId = typeof companyId === "string" ? parseInt(companyId, 10) : companyId;
+      const numericUserId =
+        typeof userId === "string" ? parseInt(userId, 10) : userId;
+      const numericCompanyId =
+        typeof companyId === "string" ? parseInt(companyId, 10) : companyId;
 
-      if (!numericUserId || !numericCompanyId || isNaN(numericUserId) || isNaN(numericCompanyId)) {
+      if (
+        !numericUserId ||
+        !numericCompanyId ||
+        isNaN(numericUserId) ||
+        isNaN(numericCompanyId)
+      ) {
         toast.error("Invalid user or company ID. Please refresh the page.");
         return;
       }
@@ -712,7 +764,10 @@ export default function QuoteSummaryContent() {
         }
 
         // Get the selected seller ID from the form values
-        const selectedSellerId = (getValues("selectedSellerId" as any) as string | number | null);
+        const selectedSellerId = getValues("selectedSellerId" as any) as
+          | string
+          | number
+          | null;
 
         if (selectedSellerId) {
           emptyCartBySeller(selectedSellerId);
@@ -725,7 +780,9 @@ export default function QuoteSummaryContent() {
       }
     } catch (error: any) {
       console.error("Error submitting quote:", error);
-      toast.error(error?.message || "Failed to create quote. Please try again.");
+      toast.error(
+        error?.message || "Failed to create quote. Please try again."
+      );
     }
   };
 
@@ -770,7 +827,7 @@ export default function QuoteSummaryContent() {
     try {
       // Get current products
       const currentProducts = getValues("products") || [];
-      
+
       // Apply cash discount to products synchronously (like handleCDApplyBase does)
       // IMPORTANT: Preserve all tax-related fields (hsnDetails, taxBreakup, etc.)
       const updatedProducts = currentProducts.map((item: any) => {
@@ -784,13 +841,13 @@ export default function QuoteSummaryContent() {
         // These are needed for globalCalc to properly calculate tax
         return product;
       });
-      
+
       // Update payment terms if needed
       if (islatestTermAvailable && latestpaymentTerms) {
         setValue("preferences.paymentTermsId", latestpaymentTerms);
       }
       setValue("cashdiscount" as any, true);
-      
+
       // Get calculation parameters
       const preferences = (getValues("preferences" as any) as any) || {};
       const isInter = (getValues("isInter") as boolean) || false;
@@ -823,16 +880,23 @@ export default function QuoteSummaryContent() {
         // Calculate totalTax from products to ensure accuracy
         // Reference implementation sums product.totalTax values
         let totalTax = calculationResult.cartValue.totalTax ?? 0;
-        
+
         // If totalTax is 0 or missing, calculate from products
-        if (totalTax === 0 && calculationResult.products && calculationResult.products.length > 0) {
-          totalTax = calculationResult.products.reduce((sum: number, product: any) => {
-            // Use totalTax (sum of all tax values for the product)
-            // Reference: cartValue.totalTax is sum of all product.totalTax values
-            return sum + (product.totalTax || 0);
-          }, 0);
+        if (
+          totalTax === 0 &&
+          calculationResult.products &&
+          calculationResult.products.length > 0
+        ) {
+          totalTax = calculationResult.products.reduce(
+            (sum: number, product: any) => {
+              // Use totalTax (sum of all tax values for the product)
+              // Reference: cartValue.totalTax is sum of all product.totalTax values
+              return sum + (product.totalTax || 0);
+            },
+            0
+          );
         }
-        
+
         // Set entire cartValue object like reference implementation does
         // This ensures all fields including totalTax are properly set
         const updatedCartValue = {
@@ -843,13 +907,18 @@ export default function QuoteSummaryContent() {
       }
 
       // Update products with recalculated values (unitPrice will have cash discount applied)
-      if (calculationResult?.products && calculationResult.products.length > 0) {
+      if (
+        calculationResult?.products &&
+        calculationResult.products.length > 0
+      ) {
         setValue("products", calculationResult.products, { shouldDirty: true });
       }
 
       // Update getBreakup if available
       if (calculationResult?.breakup) {
-        setValue("getBreakup" as any, calculationResult.breakup, { shouldDirty: false });
+        setValue("getBreakup" as any, calculationResult.breakup, {
+          shouldDirty: false,
+        });
       }
 
       // Show success message
@@ -876,7 +945,7 @@ export default function QuoteSummaryContent() {
     try {
       // Get current products
       const currentProducts = getValues("products") || [];
-      
+
       // Remove cash discount from products - match reference implementation
       // Reference: Just sets cashdiscountValue = 0, doesn't restore originalUnitPrice manually
       // The globalCalc function will handle price restoration based on cashdiscountValue
@@ -891,7 +960,7 @@ export default function QuoteSummaryContent() {
         // hsnDetails, interTaxBreakup, intraTaxBreakup, tax, totalTax should all be preserved
         return product;
       });
-      
+
       setValue("cashdiscount" as any, false);
       if (prevTerms) {
         setValue("preferences.paymentTermsId", prevTerms);
@@ -929,16 +998,23 @@ export default function QuoteSummaryContent() {
         // Calculate totalTax from products to ensure accuracy
         // Reference implementation sums product.totalTax values
         let totalTax = calculationResult.cartValue.totalTax ?? 0;
-        
+
         // If totalTax is 0 or missing, calculate from products
-        if (totalTax === 0 && calculationResult.products && calculationResult.products.length > 0) {
-          totalTax = calculationResult.products.reduce((sum: number, product: any) => {
-            // Use totalTax (sum of all tax values for the product)
-            // Reference: cartValue.totalTax is sum of all product.totalTax values
-            return sum + (product.totalTax || 0);
-          }, 0);
+        if (
+          totalTax === 0 &&
+          calculationResult.products &&
+          calculationResult.products.length > 0
+        ) {
+          totalTax = calculationResult.products.reduce(
+            (sum: number, product: any) => {
+              // Use totalTax (sum of all tax values for the product)
+              // Reference: cartValue.totalTax is sum of all product.totalTax values
+              return sum + (product.totalTax || 0);
+            },
+            0
+          );
         }
-        
+
         // Set entire cartValue object like reference implementation does
         // This ensures all fields including totalTax are properly set
         const updatedCartValue = {
@@ -949,13 +1025,18 @@ export default function QuoteSummaryContent() {
       }
 
       // Update products with recalculated values (unitPrice will have cash discount removed)
-      if (calculationResult?.products && calculationResult.products.length > 0) {
+      if (
+        calculationResult?.products &&
+        calculationResult.products.length > 0
+      ) {
         setValue("products", calculationResult.products, { shouldDirty: true });
       }
 
       // Update getBreakup if available
       if (calculationResult?.breakup) {
-        setValue("getBreakup" as any, calculationResult.breakup, { shouldDirty: false });
+        setValue("getBreakup" as any, calculationResult.breakup, {
+          shouldDirty: false,
+        });
       }
 
       // Show success message
@@ -978,17 +1059,17 @@ export default function QuoteSummaryContent() {
 
     try {
       const currentProducts = getValues("products") || [];
-      
+
       // Update quantity in products array - match productId using multiple possible fields
       // OrderProductsTable uses: brandProductId || itemCode || orderIdentifier
       const updatedProducts = currentProducts.map((product: any) => {
-        const productIdToMatch = 
+        const productIdToMatch =
           product.brandProductId ||
           product.itemCode ||
           product.orderIdentifier ||
           product.productId ||
           "";
-        
+
         if (String(productIdToMatch) === String(productId)) {
           return {
             ...product,
@@ -1027,43 +1108,50 @@ export default function QuoteSummaryContent() {
 
       // Update all form values at once (like setValues_After_globalCalc in reference)
       if (calculationResult?.cartValue) {
-        setValue("cartValue" as any, calculationResult.cartValue, { shouldDirty: false });
+        setValue("cartValue" as any, calculationResult.cartValue, {
+          shouldDirty: false,
+        });
       }
 
       // Update products with calculated values, preserving the user's quantity
-      if (calculationResult?.products && calculationResult.products.length > 0) {
-        const finalProducts = calculationResult.products.map((calculatedProduct: any) => {
-          // Find the corresponding product from updatedProducts to preserve quantity
-          // Match using the same logic as OrderProductsTable: brandProductId || itemCode || orderIdentifier || productId
-          const calculatedProductId = 
-            calculatedProduct.brandProductId ||
-            calculatedProduct.itemCode ||
-            calculatedProduct.orderIdentifier ||
-            calculatedProduct.productId ||
-            "";
-          
-          const userProduct = updatedProducts.find((p: any) => {
-            const pId = 
-              p.brandProductId ||
-              p.itemCode ||
-              p.orderIdentifier ||
-              p.productId ||
+      if (
+        calculationResult?.products &&
+        calculationResult.products.length > 0
+      ) {
+        const finalProducts = calculationResult.products.map(
+          (calculatedProduct: any) => {
+            // Find the corresponding product from updatedProducts to preserve quantity
+            // Match using the same logic as OrderProductsTable: brandProductId || itemCode || orderIdentifier || productId
+            const calculatedProductId =
+              calculatedProduct.brandProductId ||
+              calculatedProduct.itemCode ||
+              calculatedProduct.orderIdentifier ||
+              calculatedProduct.productId ||
               "";
-            return String(pId) === String(calculatedProductId);
-          });
-          
-          if (userProduct) {
-            // Preserve the quantity the user just typed
-            return {
-              ...calculatedProduct,
-              quantity: userProduct.quantity,
-              askedQuantity: userProduct.askedQuantity,
-              unitQuantity: userProduct.quantity, // Also preserve unitQuantity
-            };
+
+            const userProduct = updatedProducts.find((p: any) => {
+              const pId =
+                p.brandProductId ||
+                p.itemCode ||
+                p.orderIdentifier ||
+                p.productId ||
+                "";
+              return String(pId) === String(calculatedProductId);
+            });
+
+            if (userProduct) {
+              // Preserve the quantity the user just typed
+              return {
+                ...calculatedProduct,
+                quantity: userProduct.quantity,
+                askedQuantity: userProduct.askedQuantity,
+                unitQuantity: userProduct.quantity, // Also preserve unitQuantity
+              };
+            }
+            return calculatedProduct;
           }
-          return calculatedProduct;
-        });
-        
+        );
+
         // Use shouldDirty: true to ensure React detects the change and re-renders
         setValue("products", finalProducts, { shouldDirty: true });
       } else {
@@ -1073,7 +1161,9 @@ export default function QuoteSummaryContent() {
 
       // Update getBreakup if available
       if (calculationResult?.breakup) {
-        setValue("getBreakup" as any, calculationResult.breakup, { shouldDirty: false });
+        setValue("getBreakup" as any, calculationResult.breakup, {
+          shouldDirty: false,
+        });
       }
     } catch (error) {
       console.error("Error recalculating cart values:", error);
@@ -1081,7 +1171,7 @@ export default function QuoteSummaryContent() {
       isRecalculatingRef.current = false;
     }
   };
-  
+
   // Handle cancel
   const handleCancel = () => {
     router.push("/cart");
@@ -1091,13 +1181,14 @@ export default function QuoteSummaryContent() {
   const sellerCompanyId = (setSellerAddress as any)?.companyId?.id;
 
   // Watch form values for pricing context (these are reactive and will trigger re-renders)
+  // Note: cartValue uses || {} fallback which creates new object references, but this is intentional
+  // as we want to react to cartValue changes from watch()
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   const cartValue = (watch("cartValue" as any) as any) || {};
   const isInter = (watch("isInter") as boolean) || false;
   const taxExempted = (watch("taxExempted") as boolean) || false;
   const preferencesForPricing = (watch("preferences" as any) as any) || {};
-   console.log(cartValue);
-   console.log(isInter);
-   console.log(products);
+
   // Get pricing context for OrderPriceDetails
   const pricingContext = useMemo(() => {
     const insuranceCharges = Number(
@@ -1110,10 +1201,13 @@ export default function QuoteSummaryContent() {
       insuranceCharges,
       cartValue,
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isInter, taxExempted, preferencesForPricing?.insuranceId?.insuranceValue, JSON.stringify(cartValue)]);
- 
- 
+  }, [
+    isInter,
+    taxExempted,
+    preferencesForPricing?.insuranceId?.insuranceValue,
+    cartValue,
+  ]);
+
   return (
     <FormProvider {...methods}>
       <ApplicationLayout>
@@ -1133,7 +1227,7 @@ export default function QuoteSummaryContent() {
                 variant: "default" as const,
                 onClick: handleSubmit(
                   requestQuoteConfirmationDialog,
-                  (errors) => {
+                  errors => {
                     // Handle validation errors
                     if (errors?.sprDetails) {
                       const sprErrors = errors.sprDetails as any;
@@ -1190,7 +1284,7 @@ export default function QuoteSummaryContent() {
                   <SummaryNameCard
                     name={quoteName}
                     onNameChange={handleNameChange}
-                    title="Quote Name"
+                    title="Name"
                     loading={shouldShowLoader}
                   />
 
@@ -1212,21 +1306,49 @@ export default function QuoteSummaryContent() {
                   {!shouldShowLoader && (
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-2 sm:gap-3 md:gap-4 mt-4">
                       {/* Contact Details Card */}
-                        <OrderContactDetails
-                        billingAddress={(watch("setBillingAddress" as any) as any) || null}
-                        shippingAddress={(watch("setShippingAddress" as any) as any) || null}
-                        registerAddress={(watch("setRegisterAddress" as any) as any) || null}
-                        sellerAddress={(watch("setSellerAddress" as any) as any) || null}
-                        warehouseName={((watch("setWarehouseAddress" as any) as any)?.wareHouseName) || undefined}
-                        warehouseAddress={((watch("setWarehouseAddress" as any) as any)?.addressId) || undefined}
-                        salesBranch={((watch("setSellerAddress" as any) as any)?.name) || undefined}
-                        requiredDate={(watch("customerRequiredDate" as any) as string) || undefined}
-                        referenceNumber={(watch("buyerReferenceNumber" as any) as string) || "-"}
+                      <OrderContactDetails
+                        billingAddress={
+                          (watch("setBillingAddress" as any) as any) || null
+                        }
+                        shippingAddress={
+                          (watch("setShippingAddress" as any) as any) || null
+                        }
+                        registerAddress={
+                          (watch("setRegisterAddress" as any) as any) || null
+                        }
+                        sellerAddress={
+                          (watch("setSellerAddress" as any) as any) || null
+                        }
+                        warehouseName={
+                          (watch("setWarehouseAddress" as any) as any)
+                            ?.wareHouseName || undefined
+                        }
+                        warehouseAddress={
+                          (watch("setWarehouseAddress" as any) as any)
+                            ?.addressId || undefined
+                        }
+                        salesBranch={
+                          (watch("setSellerAddress" as any) as any)?.name ||
+                          undefined
+                        }
+                        requiredDate={
+                          (watch("customerRequiredDate" as any) as string) ||
+                          undefined
+                        }
+                        referenceNumber={
+                          (watch("buyerReferenceNumber" as any) as string) ||
+                          "-"
+                        }
                         isEditable={true}
                         userId={user?.userId?.toString()}
-                        buyerBranchId={((watch("setBillingAddress" as any) as any)?.id) || undefined}
+                        buyerBranchId={
+                          (watch("setBillingAddress" as any) as any)?.id ||
+                          undefined
+                        }
                         buyerCompanyId={user?.companyId}
-                        productIds={products?.map((p: any) => p.productId) || []}
+                        productIds={
+                          products?.map((p: any) => p.productId) || []
+                        }
                         sellerCompanyId={sellerCompanyId}
                         onRequiredDateChange={(date: string) => {
                           setValue("customerRequiredDate" as any, date);
@@ -1246,18 +1368,25 @@ export default function QuoteSummaryContent() {
                             // Update seller address with the seller branch data
                             // Ensure companyId is an object with id and name (matching summaryReqDTO structure)
                             // Reference: summaryReqDTO.ts expects setSellerAddress.companyId.id and setSellerAddress.companyId.name
-                            const companyIdObj = sellerBranch.companyId 
-                              ? (typeof sellerBranch.companyId === "object" 
-                                  ? sellerBranch.companyId 
-                                  : { id: sellerBranch.companyId, name: sellerBranch.companyName || sellerBranch.companyId?.name || null })
+                            const companyIdObj = sellerBranch.companyId
+                              ? typeof sellerBranch.companyId === "object"
+                                ? sellerBranch.companyId
+                                : {
+                                    id: sellerBranch.companyId,
+                                    name:
+                                      sellerBranch.companyName ||
+                                      sellerBranch.companyId?.name ||
+                                      null,
+                                  }
                               : null;
-                            
+
                             setValue("setSellerAddress" as any, {
                               id: sellerBranch.id,
                               name: sellerBranch.name,
                               branchId: sellerBranch.branchId,
                               companyId: companyIdObj,
-                              salesBranchCode: sellerBranch.salesBranchCode || null,
+                              salesBranchCode:
+                                sellerBranch.salesBranchCode || null,
                             });
                           }
                         }}
@@ -1267,18 +1396,22 @@ export default function QuoteSummaryContent() {
                             // Reference: buyer-fe SummaryBody.js line 118 - setValue("deliveryPlace", response?.data?.addressId?.city)
                             setValue("setWarehouseAddress" as any, {
                               id: warehouse.id,
-                              wareHouseName: warehouse.wareHouseName || warehouse.name,
+                              wareHouseName:
+                                warehouse.wareHouseName || warehouse.name,
                               name: warehouse.name,
                               addressId: warehouse.addressId, // Preserve addressId for city access
                               ...(warehouse.wareHousecode && {
                                 wareHousecode: warehouse.wareHousecode,
                               }),
                             });
-                            
+
                             // Update deliveryPlace from warehouse city
                             // Reference: buyer-fe SummaryBody.js line 118
                             if (warehouse.addressId?.city) {
-                              setValue("deliveryPlace" as any, warehouse.addressId.city);
+                              setValue(
+                                "deliveryPlace" as any,
+                                warehouse.addressId.city
+                              );
                             }
                           }
                         }}
@@ -1289,22 +1422,33 @@ export default function QuoteSummaryContent() {
                         orderTerms={{
                           // Map preference structure to match buyer-fe TermsCard format
                           // Reference: buyer-fe TermsCard.js lines 66-154
-                          deliveryTerms: preferences?.deliveryTermsId?.description,
-                          deliveryTermsCode: preferences?.deliveryTermsId?.deliveryTermsCode,
-                          deliveryTermsCode2: (watch("deliveryPlace" as any) as string) || "", // Delivery Place
-                          paymentTerms: preferences?.paymentTermsId?.description,
-                          paymentTermsCode: preferences?.paymentTermsId?.paymentTermsCode,
+                          deliveryTerms:
+                            preferences?.deliveryTermsId?.description,
+                          deliveryTermsCode:
+                            preferences?.deliveryTermsId?.deliveryTermsCode,
+                          deliveryTermsCode2:
+                            (watch("deliveryPlace" as any) as string) || "", // Delivery Place
+                          paymentTerms:
+                            preferences?.paymentTermsId?.description,
+                          paymentTermsCode:
+                            preferences?.paymentTermsId?.paymentTermsCode,
                           packageForwarding: preferences?.pkgFwdId?.description,
-                          packageForwardingCode: preferences?.pkgFwdId?.packageForwardingCode,
-                          dispatchInstructions: preferences?.dispatchInstructionsId?.description,
-                          dispatchInstructionsCode: preferences?.dispatchInstructionsId?.dispatchInstructionsCode,
+                          packageForwardingCode:
+                            preferences?.pkgFwdId?.packageForwardingCode,
+                          dispatchInstructions:
+                            preferences?.dispatchInstructionsId?.description,
+                          dispatchInstructionsCode:
+                            preferences?.dispatchInstructionsId
+                              ?.dispatchInstructionsCode,
                           freight: preferences?.freightId?.description,
                           freightCode: preferences?.freightId?.freightCode,
                           insurance: preferences?.insuranceId?.description,
-                          insuranceCode: preferences?.insuranceId?.insuranceCode,
+                          insuranceCode:
+                            preferences?.insuranceId?.insuranceCode,
                           warranty: preferences?.warrantyId?.description,
                           warrantyCode: preferences?.warrantyId?.warrantyCode,
-                          additionalTerms: (watch("additionalTerms") as string) || "",
+                          additionalTerms:
+                            (watch("additionalTerms") as string) || "",
                         }}
                       />
                     </div>
@@ -1320,7 +1464,6 @@ export default function QuoteSummaryContent() {
                       isLoading={isLoading}
                     />
                   )} */}
-
                 </div>
 
                 {/* Right Side - Price Details, Customer Information, and Attachments - 33% */}
@@ -1338,7 +1481,9 @@ export default function QuoteSummaryContent() {
                         <CashDiscountCard
                           handleCDApply={handleCDApply}
                           handleRemoveCD={handleRemoveCD}
-                          {...(latestPaymentTerms && { latestpaymentTerms: latestPaymentTerms })}
+                          {...(latestPaymentTerms && {
+                            latestpaymentTerms: latestPaymentTerms,
+                          })}
                           isCashDiscountApplied={isCashDiscountApplied}
                           isSummaryPage={true}
                           cashDiscountValue={cashDiscountValue}
@@ -1349,7 +1494,7 @@ export default function QuoteSummaryContent() {
                           isOrder={false}
                         />
                       )}
-                      
+
                       <Suspense fallback={null}>
                         <OrderPriceDetails
                           products={products}
@@ -1362,12 +1507,12 @@ export default function QuoteSummaryContent() {
                           isSeller={false}
                           taxExemption={pricingContext.taxExemption}
                           currency={
-                            ((watch("currency" as any) as any)?.symbol) || "INR ₹"
+                            (watch("currency" as any) as any)?.symbol || "INR ₹"
                           }
-                          overallShipping={(watch("overallShipping" as any) as number) || 0}
-                          overallTax={
-                            pricingContext.cartValue?.totalTax || 0
+                          overallShipping={
+                            (watch("overallShipping" as any) as number) || 0
                           }
+                          overallTax={pricingContext.cartValue?.totalTax || 0}
                           calculatedTotal={
                             pricingContext.cartValue?.calculatedTotal ||
                             pricingContext.cartValue?.grandTotal ||
@@ -1377,12 +1522,16 @@ export default function QuoteSummaryContent() {
                           taxableAmount={
                             pricingContext.cartValue?.taxableAmount || 0
                           }
-                          totalCashDiscount={pricingContext.cartValue?.totalCashDiscount}
-                          cashDiscountValue={pricingContext.cartValue?.cashDiscountValue}
+                          totalCashDiscount={
+                            pricingContext.cartValue?.totalCashDiscount
+                          }
+                          cashDiscountValue={
+                            pricingContext.cartValue?.cashDiscountValue
+                          }
                           hidePfRate={true}
                         />
                       </Suspense>
-                      
+
                       {/* Target Discount Card - Only show for quotes, not orders */}
                       {/* Reference: buyer-fe SalesBody.js lines 370-377 - placed after CartPriceDetails */}
                       {!isOrder && (
@@ -1413,10 +1562,7 @@ export default function QuoteSummaryContent() {
                           </Label>
                         </div>
 
-                        <SPRForm
-                          isContentPage={false}
-                          isSummaryPage={true}
-                        />
+                        <SPRForm isContentPage={false} isSummaryPage={true} />
                       </div>
 
                       {/* Attachments - Comments and File Uploads */}
@@ -1441,39 +1587,17 @@ export default function QuoteSummaryContent() {
         </div>
 
         {/* Confirmation Dialog */}
-        <Dialog
+        <ConfirmationDialog
           open={openCreateRfqConfirmationDialog}
           onOpenChange={setOpenCreateRfqConfirmationDialog}
-        >
-          <DialogContent>
-            <DialogHeader>
-              <div className="flex items-center gap-2">
-                <FileText className="h-5 w-5 text-primary" />
-                <DialogTitle>Request For Quote</DialogTitle>
-              </div>
-              <DialogDescription>
-                Note: New Quote will be created
-              </DialogDescription>
-            </DialogHeader>
-            <DialogFooter>
-              <Button
-                variant="outline"
-                onClick={() => setOpenCreateRfqConfirmationDialog(false)}
-              >
-                Cancel
-              </Button>
-              <Button
-                onClick={() => {
-                  setOpenCreateRfqConfirmationDialog(false);
-                  requestQuote();
-                }}
-                disabled={formState.isSubmitting}
-              >
-                {formState.isSubmitting ? "Submitting..." : "Confirm"}
-              </Button>
-            </DialogFooter>
-          </DialogContent>
-        </Dialog>
+          title="Request For Quote"
+          description="Note: New Quote will be created"
+          onConfirm={requestQuote}
+          confirmText="Confirm"
+          cancelText="Cancel"
+          isLoading={formState.isSubmitting}
+          icon={<FileText className="h-5 w-5 text-primary" />}
+        />
       </ApplicationLayout>
     </FormProvider>
   );

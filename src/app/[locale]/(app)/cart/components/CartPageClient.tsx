@@ -1,12 +1,28 @@
 "use client";
 
+import AddMoreProducts from "@/components/Global/Products/AddMoreProducts";
 import { CartProceedButton, MultipleSellerCards } from "@/components/cart";
 import CartProductCard from "@/components/cart/CartProductCard";
 import CartPriceDetails from "@/components/sales/CartPriceDetails";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useCart as useCartContext } from "@/contexts/CartContext";
+import { useTenant } from "@/contexts/TenantContext";
 import useAccessControl from "@/hooks/useAccessControl";
 import { useCart } from "@/hooks/useCart";
 import useCartPrice from "@/hooks/useCartPrice";
@@ -15,13 +31,19 @@ import useGetCurrencyModuleSettings from "@/hooks/useGetCurrencyModuleSettings/u
 import useModuleSettings from "@/hooks/useModuleSettings";
 import { useNavigationWithLoader } from "@/hooks/useNavigationWithLoader";
 import useSelectedSellerCart from "@/hooks/useSelectedSellerCart";
+import DiscountService from "@/lib/api/services/DiscountService/DiscountService";
+import OpenElasticSearchService from "@/lib/api/services/ElacticQueryService/openElasticSearch/openElasticSearch";
 import type { CartItem } from "@/types/calculation/cart";
 import { cartCalculation } from "@/utils/calculation/cartCalculation";
 import {
-    validateCreateOrder,
-    validateRequestQuote,
+  manipulateProductsElasticData,
+} from "@/utils/calculation/salesCalculation/salesCalculation";
+import {
+  validateCreateOrder,
+  validateRequestQuote,
 } from "@/utils/cart/cartValidation";
-import { ShoppingCart } from "lucide-react";
+import { assign_pricelist_discounts_data_to_products } from "@/utils/functionalUtils";
+import { MoreVertical, ShoppingCart, Trash2 } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useState } from "react";
 import { toast } from "sonner";
@@ -31,10 +53,13 @@ export default function CartPageClient() {
   const currency = user?.currency;
   const router = useNavigationWithLoader();
   const t = useTranslations("cart");
+  const tenantData = useTenant();
   const { cart, cartCount, isLoading: isCartLoading } = useCartContext();
   const {
+    addItemToCart,
     changeQty,
     DeleteCart,
+    emptyCart,
     isCartLoading: isCartOperationLoading,
   } = useCart();
 
@@ -42,6 +67,7 @@ export default function CartPageClient() {
   const [_errorMessages, setErrorMessages] = useState<
     Record<number, string | false>
   >({});
+  const [showClearCartDialog, setShowClearCartDialog] = useState(false);
 
   // Access control
   const { hasQuotePermission, hasOrderPermission } = useAccessControl();
@@ -400,13 +426,241 @@ export default function CartPageClient() {
     router.push(`/ordersummary${query}`);
   };
 
+  // Handle callback for AddMoreProducts - adds product to cart
+  // Migrated from buyer-fe/src/components/Cart/Cart.js HandleCallback
+  // Following buyer-fe pattern: Use productIndexName to call ELASTIC_URL with GET request
+  const handleAddMoreCallback = async (product: {
+    productId: number;
+    id: string;
+    brandProductId?: string;
+    productName?: string;
+    productShortDescription?: string;
+    shortDescription?: string;
+    brandsName?: string;
+    brandName?: string;
+    productAssetss?: Array<{ source: string; isDefault?: number | boolean }>;
+    productIndexName?: string;
+  }) => {
+    if (!user?.userId || !user?.companyId) {
+      toast.error("Please login to add products to cart");
+      return;
+    }
+
+    try {
+      // Get elastic index from tenant data
+      const elasticIndex = tenantData?.tenant?.elasticCode
+        ? `${tenantData.tenant.elasticCode}pgandproducts`
+        : "schwingstetterpgandproducts";
+
+      // Get product using productIndexName via GET request (following buyer-fe pattern)
+      // Payload: { Elasticindex, ElasticBody: productIndexName, ElasticType: "pgproduct", queryType: "get" }
+      if (!product.productIndexName) {
+        toast.error("Product index name is missing");
+        return;
+      }
+
+      const elasticProduct = await OpenElasticSearchService.getProduct(
+        product.productIndexName,
+        elasticIndex,
+        "pgproduct",
+        "get"
+      );
+      console.log(elasticProduct);
+      if (!elasticProduct) {
+    
+        toast.error("Product not found");
+        return;
+      }
+    
+      // Format and manipulate Elasticsearch data
+      // getProduct returns a single ProductDetail, so we need to format it
+    
+   
+      // const pdData = formatElasticResponse(
+      //   { body: { hits: { hits: elasticProduct } } } as any
+      // );
+      const formattedData = manipulateProductsElasticData(
+        (Array.isArray(elasticProduct) ? elasticProduct : [elasticProduct]) as any
+      ) as any[];
+      const formattedDataArray = Array.isArray(formattedData)
+        ? formattedData
+        : [formattedData];
+
+      if (!formattedDataArray || formattedDataArray.length === 0) {
+        toast.error("Failed to process product data");
+        return;
+      }
+
+      const newcartdata = formattedDataArray[0] as any;
+
+      // Check for replacement/alternative products
+      if (newcartdata?.replacement || newcartdata?.alternativeProduct) {
+        // TODO: Handle replacement/alternative product dialog
+        toast.info("Product has replacement/alternative options");
+        return;
+      }
+
+      // Step 1: Call getAllSellerPrices (elastic) - following buyer-fe pattern
+      const getAllSellerPricesPayload = {
+        Productid: [product.productId],
+        CurrencyId: typeof currency?.id === "number" ? currency.id : Number(currency?.id) || 0,
+        BaseCurrencyId: typeof tenantData?.currency?.id === "number" 
+          ? tenantData.currency.id 
+          : Number(tenantData?.currency?.id) || 0,
+        CompanyId: user.companyId,
+      };
+
+      await DiscountService.getAllSellerPrices(
+        getAllSellerPricesPayload
+      ).catch(() => {
+        // If getAllSellerPrices fails, continue with discount call
+        // This is non-blocking as discount service will still work
+      });
+
+      // Step 2: Call discount service
+      const discountPayload = {
+        Productid: [product.productId],
+        CurrencyId: typeof currency?.id === "number" ? currency.id : Number(currency?.id) || 0,
+        companyId: user.companyId,
+        BaseCurrencyId: typeof tenantData?.currency?.id === "number" 
+          ? tenantData.currency.id 
+          : Number(tenantData?.currency?.id) || 0,
+      };
+
+      const discount = await DiscountService.getDiscount({
+        userId: user.userId,
+        tenantId: tenantData?.tenant?.tenantCode || "",
+        body: discountPayload,
+      });
+
+      // Assign discount data to product
+      const discountData = Array.isArray(discount?.data)
+        ? discount.data[0]
+        : discount?.data || {};
+      const enrichedProduct = assign_pricelist_discounts_data_to_products(
+        newcartdata as Record<string, unknown>,
+        (discountData as unknown) as Record<string, unknown>,
+        true
+      ) as CartItem;
+
+      // Set quantity (MOQ or packaging quantity or 1)
+      enrichedProduct.quantity = enrichedProduct.minOrderQuantity
+        ? parseFloat(String(enrichedProduct.minOrderQuantity))
+        : enrichedProduct.packagingQuantity
+          ? parseFloat(String(enrichedProduct.packagingQuantity))
+          : 1;
+      enrichedProduct.askedQuantity = enrichedProduct.quantity;
+
+      // Set product description and brand
+      enrichedProduct.shortDescription =
+        product.productShortDescription || product.shortDescription || "";
+      enrichedProduct.brandName = product.brandsName || product.brandName || "";
+
+      // Calculate DMC if applicable
+      const productCost = enrichedProduct.productCost || 0;
+      if (productCost > 0 && enrichedProduct.unitPrice > 0) {
+        enrichedProduct.dmc =
+          (productCost / enrichedProduct.unitPrice) * 100;
+        enrichedProduct.marginPercentage = 100 - enrichedProduct.dmc;
+      } else {
+        enrichedProduct.dmc = 0;
+        enrichedProduct.marginPercentage = 0;
+      }
+
+      // Add to cart using addItemToCart hook
+      const setErrorMessage = (error: string | false) => {
+        if (error) {
+          toast.error(String(error));
+        }
+      };
+
+      await addItemToCart(
+        {
+          productId: Number(enrichedProduct.productId),
+          quantity: enrichedProduct.quantity,
+          ...(enrichedProduct.packagingQuantity && {
+            packagingQty: enrichedProduct.packagingQuantity,
+          }),
+          ...(enrichedProduct.minOrderQuantity && {
+            minOrderQuantity: enrichedProduct.minOrderQuantity,
+          }),
+          ...(enrichedProduct.brandName && {
+            brandsName: enrichedProduct.brandName,
+          }),
+          ...(enrichedProduct.shortDescription && {
+            productShortDescription: enrichedProduct.shortDescription,
+          }),
+          ...(enrichedProduct.productAssetss && {
+            productAssetss: enrichedProduct.productAssetss,
+          }),
+          ...(enrichedProduct.img && { img: enrichedProduct.img }),
+          ...(discountData?.sellerId && {
+            sellerId: Number(discountData.sellerId),
+          }),
+          ...(discountData?.sellerName && {
+            sellerName: discountData.sellerName,
+          }),
+          ...((discountData as any)?.sellerLocation && {
+            sellerLocation: (discountData as any).sellerLocation,
+          }),
+          ...(enrichedProduct.unitListPrice && {
+            unitListPrice: enrichedProduct.unitListPrice,
+          }),
+        },
+        setErrorMessage,
+        false,
+        false
+      );
+
+      toast.success("Product added to cart");
+    } catch (error) {
+      console.error("Error adding product to cart:", error);
+      toast.error("Failed to add product to cart");
+    }
+  };
+
   return (
     <>
       <div className="mb-8">
-        <h1 className="text-3xl font-bold mb-2">{t("title")}</h1>
-        <p className="text-muted-foreground text-sm">
-          {t("itemsInCart", { count: cartCount })}
-        </p>
+        <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 sm:gap-6">
+          <div className="flex-shrink-0">
+            <h1 className="text-3xl font-bold mb-2">{t("title")}</h1>
+            <p className="text-muted-foreground text-sm">
+              {t("itemsInCart", { count: cartCount })}
+            </p>
+          </div>
+          {user?.companyId && !isCartLoading && (
+            <div className="w-full sm:w-auto sm:flex-1 sm:max-w-2xl flex items-center gap-2">
+              <AddMoreProducts
+                handleCallback={handleAddMoreCallback}
+                popWidth="100%"
+              />
+              {cart.length > 0 && (
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button
+                      variant="outline"
+                      size="icon"
+                      className="h-10 w-10 flex-shrink-0"
+                      aria-label="Cart options"
+                    >
+                      <MoreVertical className="h-4 w-4" />
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end" className="w-48">
+                    <DropdownMenuItem
+                      onClick={() => setShowClearCartDialog(true)}
+                      className="text-destructive focus:text-destructive cursor-pointer"
+                    >
+                      <Trash2 className="h-4 w-4 mr-2" />
+                      Clear Cart
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              )}
+            </div>
+          )}
+        </div>
       </div>
 
       <div
@@ -479,7 +733,7 @@ export default function CartPageClient() {
               <CartProceedButton
                 selectedSellerId={selectedSeller}
                 disabled={cart.length === 0 || isCartOperationLoading}
-                isLoading={isCartOperationLoading}
+                isLoading={isPricingLoading ||isCartOperationLoading}
                 onRequestQuote={() => handleQuote(selectedSeller)}
                 onPlaceOrder={() => handleOrder(selectedSeller)}
               />
@@ -487,6 +741,40 @@ export default function CartPageClient() {
           </div>
         )}
       </div>
+
+      {/* Clear Cart Confirmation Dialog */}
+      <Dialog open={showClearCartDialog} onOpenChange={setShowClearCartDialog}>
+        <DialogContent className="sm:max-w-md" showCloseButton={false}>
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Trash2 className="h-5 w-5 text-destructive" />
+              Clear Cart Items
+            </DialogTitle>
+            <DialogDescription className="text-base text-foreground pt-2">
+              Do you want to clear items in cart?
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter className="sm:justify-end gap-2">
+            <Button
+              variant="outline"
+              onClick={() => setShowClearCartDialog(false)}
+              className="min-w-[100px]"
+            >
+              CANCEL
+            </Button>
+            <Button
+              variant="default"
+              onClick={async () => {
+                await emptyCart();
+                setShowClearCartDialog(false);
+              }}
+              className="min-w-[100px] bg-gray-900 hover:bg-gray-800 text-white"
+            >
+              YES
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </>
   );
 }

@@ -1,6 +1,5 @@
 "use client";
 
-
 import { AvatarCard } from "@/components/AvatarCard/AvatarCard";
 import { LanguageSwitcher } from "@/components/LanguageSwitcher/LanguageSwitcher";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -14,17 +13,13 @@ import { useUserDetails } from "@/contexts/UserDetailsContext";
 import useLogout from "@/hooks/Auth/useLogout";
 import useUserProfile from "@/hooks/Profile/useUserProfile";
 import { useTenantData } from "@/hooks/useTenantData";
-
+import { AuthStorage } from "@/lib/auth";
 
 import { useNavigationWithLoader } from "@/hooks/useNavigationWithLoader";
 import { Link } from "@/i18n/navigation";
 import { cn } from "@/lib/utils";
 import { getUserInitials } from "@/utils/General/general";
-import {
-  Command as CommandIcon,
-  Search,
-  ShoppingCart,
-} from "lucide-react";
+import { Command as CommandIcon, Search, ShoppingCart } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useEffect, useState } from "react";
 
@@ -33,7 +28,8 @@ export function AppHeader() {
   const { userProfile } = useUserProfile();
   const { isLoggingOut, handleLogout } = useLogout();
   const router = useNavigationWithLoader();
-  const { isAuthenticated, isLoading: isAuthLoading } = useUserDetails();
+  const { isAuthenticated: contextIsAuthenticated, isLoading: isAuthLoading } =
+    useUserDetails();
 
   // Sync tenant data from context to Zustand store (early initialization)
   useTenantData();
@@ -41,6 +37,20 @@ export function AppHeader() {
   const { cartCount } = useCart();
   const tAuth = useTranslations("auth");
   const tSearch = useTranslations("search");
+
+  // During loading or transitions, check storage directly to prevent login button flash
+  // This is especially important during language switching when context might temporarily reset
+  // Strategy:
+  // - If loading: use storage (most reliable during transitions)
+  // - If context says authenticated: trust it
+  // - If context says not authenticated BUT storage says authenticated: trust storage (transition case)
+  // - If both say not authenticated: show login button
+  const storageAuthState = AuthStorage.isAuthenticated();
+  const isAuthenticated = isAuthLoading
+    ? storageAuthState
+    : contextIsAuthenticated
+      ? true
+      : storageAuthState; // Use storage as fallback only if context says not authenticated
 
   // Don't render auth-dependent UI until authentication state is determined
   // This prevents flickering between login/logout states
@@ -60,7 +70,6 @@ export function AppHeader() {
 
   const { state: sidebarState } = useSidebar();
   const isSidebarCollapsed = sidebarState === "collapsed";
-
 
   return (
     <>
@@ -118,7 +127,9 @@ export function AppHeader() {
                 onChange={e => setSearchValue(e.target.value)}
                 onKeyDown={e => {
                   if (e.key === "Enter" && searchValue.trim()) {
-                    router.push(`/search?q=${encodeURIComponent(searchValue.trim())}`);
+                    router.push(
+                      `/search?q=${encodeURIComponent(searchValue.trim())}`
+                    );
                   }
                 }}
                 className="pl-8 lg:pl-10 pr-12 lg:pr-16 text-sm h-8 lg:h-10"
@@ -132,14 +143,12 @@ export function AppHeader() {
 
           {/* ---------- RIGHT SIDE ICONS ---------- */}
           <div className="flex items-center gap-1 ml-auto">
-
             {/* Desktop */}
             <div className="hidden md:flex items-center gap-1">
               {/* Language Switcher */}
               <LanguageSwitcher />
 
               {/* Notifications - Removed */}
-
 
               <Button
                 variant="ghost"
@@ -266,9 +275,6 @@ export function AppHeader() {
         {/* Bottom Border */}
         <div className="h-px bg-border"></div>
       </header>
-
-
     </>
   );
 }
-

@@ -1,16 +1,10 @@
 "use client";
 
-import { Button } from "@/components/ui/button";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
+import { FormDialog } from "@/components/dialogs/common";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import type { BaseDialogProps } from "@/types/dialog";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Loader2 } from "lucide-react";
 import * as React from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
@@ -31,9 +25,8 @@ const orderNameSchema = z.object({
 
 type OrderNameFormData = z.infer<typeof orderNameSchema>;
 
-export interface EditOrderNameDialogProps {
-  open: boolean;
-  onOpenChange: (open: boolean) => void;
+export interface EditOrderNameDialogProps
+  extends Omit<BaseDialogProps, "title" | "description"> {
   currentOrderName: string;
   onSave: (newOrderName: string) => Promise<void>;
   loading?: boolean;
@@ -103,64 +96,44 @@ export function EditOrderNameDialog({
     onOpenChange(open);
   };
 
+  const handleFormSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    await handleSubmit(onSubmit)(e);
+  };
+
   return (
-    <Dialog open={open} onOpenChange={handleOpenChange}>
-      <DialogContent className="w-full max-w-md p-6" showCloseButton={false}>
-        <DialogHeader>
-          <DialogTitle className="text-lg font-semibold">
-            Edit Order Name
-          </DialogTitle>
-        </DialogHeader>
-
-        <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-          <div className="space-y-2">
-            <Label htmlFor="orderName" className="text-sm font-medium">
-              Order Name
-            </Label>
-            <Input
-              id="orderName"
-              {...register("orderName")}
-              placeholder="Enter order name"
-              className="w-full"
-              disabled={loading || isSubmitting}
-            />
-            {errors.orderName && (
-              <p className="text-sm text-red-600">{errors.orderName.message}</p>
-            )}
-          </div>
-
-          <div className="flex justify-end space-x-2 pt-4">
-            <Button
-              type="button"
-              variant="outline"
-              onClick={handleCancel}
-              disabled={loading || isSubmitting}
-            >
-              Cancel
-            </Button>
-            <Button
-              type="submit"
-              disabled={
-                loading ||
-                isSubmitting ||
-                !isValid ||
-                !currentFormValue ||
-                currentFormValue.trim() === currentOrderName.trim()
-              }
-              className="min-w-20"
-            >
-              {isSubmitting ? (
-                <>
-                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                  Saving...
-                </>
-              ) : (
-                "Save"
-              )}
-            </Button>
-          </div>
-        </form>
-      </DialogContent>
-    </Dialog>
+    <FormDialog
+      open={open}
+      onOpenChange={handleOpenChange}
+      title="Edit Order Name"
+      onSubmit={handleFormSubmit}
+      isLoading={loading || isSubmitting}
+      submitText="Save"
+      cancelText="Cancel"
+      size="sm"
+      showCloseButton={false}
+      onCancel={handleCancel}
+      disabled={
+        !isValid ||
+        !currentFormValue ||
+        currentFormValue.trim() === currentOrderName.trim()
+      }
+    >
+      <div className="space-y-2">
+        <Label htmlFor="orderName" className="text-sm font-medium">
+          Order Name
+        </Label>
+        <Input
+          id="orderName"
+          {...register("orderName")}
+          placeholder="Enter order name"
+          className="w-full"
+          disabled={loading || isSubmitting}
+        />
+        {errors.orderName && (
+          <p className="text-sm text-red-600">{errors.orderName.message}</p>
+        )}
+      </div>
+    </FormDialog>
   );
 }

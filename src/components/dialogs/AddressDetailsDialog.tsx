@@ -3,19 +3,28 @@
 import {
   Dialog,
   DialogContent,
+  DialogDescription,
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import {
+  Drawer,
+  DrawerContent,
+  DrawerDescription,
+  DrawerHeader,
+  DrawerTitle,
+} from "@/components/ui/drawer";
+import type { BaseDialogProps } from "@/types/dialog";
 import { useCurrentUser } from "@/hooks/useCurrentUser";
 import { BillingBranchService, type BillingAddress } from "@/lib/api";
 import ShippingBranchService from "@/lib/api/services/ShippingBranchService/ShippingBranchService";
-import { Loader2 } from "lucide-react";
+import { useMediaQuery } from "@/hooks/use-media-query";
+import { Loader2, MapPin } from "lucide-react";
 import * as React from "react";
 import { toast } from "sonner";
 
-interface AddressDetailsDialogProps {
-  open: boolean;
-  onOpenChange: (open: boolean) => void;
+export interface AddressDetailsDialogProps
+  extends Omit<BaseDialogProps, "title" | "description"> {
   onAddressSelect: (address: BillingAddress) => void;
   currentAddress?: BillingAddress | undefined;
   mode?: "billing" | "shipping";
@@ -131,18 +140,133 @@ export function AddressDetailsDialog({
     return parts;
   };
 
-  return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-2xl max-h-[80vh] flex flex-col">
-        <DialogHeader>
-          <DialogTitle className="text-xl font-semibold">
-            {mode === "shipping" ? "Shipping Address" : "Billing Address"}
-          </DialogTitle>
-        </DialogHeader>
+  const isDesktop = useMediaQuery("(min-width: 768px)");
 
-        <div className="flex-1 flex flex-col min-h-0">
+  if (isDesktop) {
+    return (
+      <Dialog open={open} onOpenChange={onOpenChange}>
+        <DialogContent
+          size="lg"
+          className="max-h-[80vh] flex flex-col"
+          showCloseButton={true}
+        >
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2 text-xl font-semibold">
+              <MapPin className="h-5 w-5 text-primary" />
+              {mode === "shipping" ? "Shipping Address" : "Billing Address"}
+            </DialogTitle>
+            <DialogDescription>
+              Select an address from the list below
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="flex-1 flex flex-col min-h-0">
+            {/* Address List */}
+            <div className="flex-1 overflow-y-auto space-y-2 min-h-0">
+              {loading ? (
+                <div className="flex items-center justify-center py-8">
+                  <Loader2 className="h-6 w-6 animate-spin" />
+                  <span className="ml-2">Loading addresses...</span>
+                </div>
+              ) : error ? (
+                <div className="flex items-center justify-center py-8 text-red-500">
+                  <span>{error}</span>
+                </div>
+              ) : addresses.length === 0 ? (
+                <div className="flex items-center justify-center py-8 text-gray-500">
+                  <span>No addresses found</span>
+                </div>
+              ) : (
+                addresses.map(address => (
+                  <div
+                    key={address.id}
+                    className={`p-4 border rounded-lg cursor-pointer transition-colors ${
+                      selectedAddressId === address.id
+                        ? "bg-primary/5 border-primary/20"
+                        : "bg-white border-gray-200 hover:bg-gray-50"
+                    }`}
+                    onClick={() => handleAddressSelect(address)}
+                  >
+                    <div className="flex items-start space-x-3">
+                      {/* Radio Button */}
+                      <div className="shrink-0 mt-1">
+                        <div
+                          className={`w-4 h-4 rounded-full border-2 ${
+                            selectedAddressId === address.id
+                              ? "border-primary bg-primary"
+                              : "border-gray-300"
+                          }`}
+                        >
+                          {selectedAddressId === address.id && (
+                            <div className="w-2 h-2 bg-white rounded-full m-0.5" />
+                          )}
+                        </div>
+                      </div>
+
+                      {/* Address Details */}
+                      <div className="flex-1 min-w-0">
+                        {/* Branch Name - Main Title */}
+                        <div className="font-semibold text-gray-900 mb-1">
+                          {address.name}
+                        </div>
+
+                        {/* Address Details - Multi-line format */}
+                        {(() => {
+                          const addressLines = formatAddress(address);
+                          return addressLines.map((line, index) => (
+                            <div
+                              key={`${address.id}-${line.substring(0, 10)}-${index}`}
+                              className="text-sm text-gray-700 mb-1"
+                            >
+                              {line}
+                            </div>
+                          ));
+                        })()}
+
+                        {/* Code - BillTo or ShipTo depending on mode */}
+                        {mode === "shipping" &&
+                          address.addressId.shipToCode && (
+                            <div className="text-xs text-gray-500 mt-1">
+                              Ship to Code: {address.addressId.shipToCode}
+                            </div>
+                          )}
+                        {mode !== "shipping" &&
+                          address.addressId.billToCode && (
+                            <div className="text-xs text-gray-500 mt-1">
+                              Bill to Code: {address.addressId.billToCode}
+                            </div>
+                          )}
+                      </div>
+                    </div>
+                  </div>
+                ))
+              )}
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+    );
+  }
+
+  return (
+    <Drawer open={open} onOpenChange={onOpenChange}>
+      <DrawerContent
+        showCloseButton={true}
+        className="max-h-[90vh] flex flex-col"
+      >
+        <DrawerHeader className="text-left">
+          <DrawerTitle className="flex items-center gap-2 text-xl font-semibold">
+            <MapPin className="h-5 w-5 text-primary" />
+            {mode === "shipping" ? "Shipping Address" : "Billing Address"}
+          </DrawerTitle>
+          <DrawerDescription>
+            Select an address from the list below
+          </DrawerDescription>
+        </DrawerHeader>
+
+        <div className="flex-1 flex flex-col min-h-0 px-4">
           {/* Address List */}
-          <div className="flex-1 overflow-y-auto space-y-2 min-h-0">
+          <div className="flex-1 overflow-y-auto space-y-2 min-h-0 pb-4">
             {loading ? (
               <div className="flex items-center justify-center py-8">
                 <Loader2 className="h-6 w-6 animate-spin" />
@@ -221,7 +345,7 @@ export function AddressDetailsDialog({
             )}
           </div>
         </div>
-      </DialogContent>
-    </Dialog>
+      </DrawerContent>
+    </Drawer>
   );
 }
