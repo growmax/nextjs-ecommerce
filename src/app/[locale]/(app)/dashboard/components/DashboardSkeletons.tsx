@@ -35,7 +35,7 @@ export function DashboardChartSkeleton() {
   ];
 
   return (
-    <Card className="h-full">
+    <Card className="h-[600px] flex flex-col">
       <CardHeader>
         <div className="space-y-2">
           <Skeleton className="h-6 w-48" />
@@ -44,7 +44,7 @@ export function DashboardChartSkeleton() {
           </CardDescription>
         </div>
       </CardHeader>
-      <CardContent className="space-y-6">
+      <CardContent className="space-y-6 flex-1 overflow-hidden">
         <div className="flex flex-wrap gap-4 text-sm">
           <Skeleton className="h-4 w-28" />
           <Skeleton className="h-4 w-24" />
@@ -80,7 +80,7 @@ export function DashboardChartSkeleton() {
 
 export function DashboardOrdersTableSkeleton() {
   return (
-    <Card className="w-full bg-background rounded-lg shadow-sm border border-border !py-0 !gap-0">
+    <Card className="w-full bg-background rounded-lg shadow-sm border border-border !py-0 !gap-0 h-[600px] flex flex-col">
       <CardHeader className="px-4 pt-4 !pb-0 border-b border-border">
         <div className="flex justify-start">
           <CardTitle className="text-sm font-medium text-foreground">
@@ -88,17 +88,17 @@ export function DashboardOrdersTableSkeleton() {
           </CardTitle>
         </div>
       </CardHeader>
-      <CardContent className="p-0">
+      <CardContent className="p-0 flex-1 overflow-hidden">
         <div className="overflow-hidden">
           <div className="overflow-x-auto">
             <Table className="w-full">
               <TableHeader>
                 <TableRow className="bg-muted border-b border-border">
-                  {Array.from({ length: 4 }).map((_, index) => (
+                  {Array.from({ length: 3 }).map((_, index) => (
                     <TableHead
                       key={`table-head-${index}`}
-                      className={`px-3 py-2 text-left text-xs font-medium text-foreground ${
-                        index === 3 ? "text-right" : ""
+                      className={`px-3 py-2 text-xs font-medium text-foreground ${
+                        index === 0 ? "text-left" : index === 1 ? "text-center" : "text-right"
                       }`}
                     >
                       <Skeleton className="h-4 w-24" />
@@ -109,17 +109,14 @@ export function DashboardOrdersTableSkeleton() {
               <TableBody className="bg-background divide-y divide-border">
                 {Array.from({ length: 8 }).map((_, rowIndex) => (
                   <TableRow key={`table-row-${rowIndex}`} className="hover:bg-transparent">
-                    <TableCell className="px-4 py-3">
+                    <TableCell className="px-4 py-3 text-left">
                       <Skeleton className="h-4 w-20" />
                     </TableCell>
-                    <TableCell className="px-4 py-3">
-                      <Skeleton className="h-4 w-32" />
-                    </TableCell>
-                    <TableCell className="px-4 py-3">
-                      <Skeleton className="h-4 w-24" />
+                    <TableCell className="px-4 py-3 text-center">
+                      <Skeleton className="h-4 w-32 mx-auto" />
                     </TableCell>
                     <TableCell className="px-4 py-3 text-right">
-                      <Skeleton className="h-5 w-16 rounded-full" />
+                      <Skeleton className="h-5 w-16 rounded-full ml-auto" />
                     </TableCell>
                   </TableRow>
                 ))}

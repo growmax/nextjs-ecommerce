@@ -114,27 +114,27 @@ export async function middleware(request: NextRequest) {
   // Extract locale from pathname or detect from headers
   const localeMatch = pathname.match(/^\/([a-z]{2}(-[A-Z]{2})?)(\/|$)/);
   const currentLocale = localeMatch ? localeMatch[1] : null;
-  
+
   // If no locale in pathname, redirect to add default locale
   if (!currentLocale) {
     // Get locale from Accept-Language header or use default
     const acceptLanguage = request.headers.get("accept-language");
     const preferredLocale = acceptLanguage?.split(",")[0]?.split("-")[0] || "en";
     const validLocale = locales.includes(preferredLocale as any) ? preferredLocale : "en";
-    
+
     // Redirect to path with locale prefix
     const url = new URL(request.url);
     url.pathname = `/${validLocale}${pathname === "/" ? "" : pathname}`;
     return NextResponse.redirect(url);
   }
-  
+
   // Validate that the locale is supported
   if (!locales.includes(currentLocale as any)) {
     const url = new URL(request.url);
     url.pathname = pathname.replace(/^\/[a-z]{2}(-[A-Z]{2})?/, "/en");
     return NextResponse.redirect(url);
   }
-  
+
   const response = NextResponse.next();
   const finalPathname = pathname;
 
@@ -156,8 +156,8 @@ export async function middleware(request: NextRequest) {
     const locale = localeMatch ? localeMatch[1] : "en";
 
     // Redirect authenticated users away from auth pages
-    const dashboardUrl = new URL(`/${locale}/dashboard`, request.url);
-    return NextResponse.redirect(dashboardUrl);
+    const homeUrl = new URL(`/${locale}`, request.url);
+    return NextResponse.redirect(homeUrl);
   }
 
   // Add pathname to headers for server-side layout decisions
