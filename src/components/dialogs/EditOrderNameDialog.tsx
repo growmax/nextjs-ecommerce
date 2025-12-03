@@ -6,7 +6,7 @@ import { Label } from "@/components/ui/label";
 import type { BaseDialogProps } from "@/types/dialog";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as React from "react";
-import { useForm, Controller } from "react-hook-form";
+import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { z } from "zod";
 
@@ -55,10 +55,8 @@ export function EditOrderNameDialog({
   const orderNameOnOpenRef = React.useRef(currentOrderName);
 
   const {
-    control,
     handleSubmit,
     formState: { errors, isValid },
-    reset,
     watch,
     setValue,
     trigger,

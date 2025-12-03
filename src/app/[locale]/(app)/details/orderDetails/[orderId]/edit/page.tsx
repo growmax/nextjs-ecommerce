@@ -541,7 +541,7 @@ export default function EditOrderPage({ params }: EditOrderPageProps) {
       // If cash discount is applied, merge cash discount values into updated products
       const currentProductsWithCD = productsWithCashDiscountRef.current;
       const orderDetail = orderDetails?.data?.orderDetails?.[0];
-      const cashDiscountValue = orderDetail?.cashdiscountValue || 0;
+      const cashDiscountValue = (orderDetail?.cashdiscountValue as number) || 0;
 
       const mergedProducts = productsWithEditedQuantities.map(
         (product: any) => {
@@ -760,9 +760,9 @@ export default function EditOrderPage({ params }: EditOrderPageProps) {
             currentOrder?.cashdiscount || cashDiscountApplied
           );
           const cashDiscountValue =
-            currentOrder?.cashdiscountValue ||
-            productsWithCashDiscount[0]?.cashdiscountValue ||
-            0;
+            ((currentOrder?.cashdiscountValue as number) ||
+              (productsWithCashDiscount[0]?.cashdiscountValue as number) ||
+              0) as number;
 
           // Merge cash discount values from productsWithCashDiscount if cash discount is applied
           let mergedProducts = updatedProducts;

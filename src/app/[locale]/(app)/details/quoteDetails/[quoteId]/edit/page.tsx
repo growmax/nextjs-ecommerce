@@ -9,7 +9,6 @@ import {
   VersionsDialog,
   type Version,
 } from "@/components/dialogs/VersionsDialog";
-import { ApplicationLayout, PageLayout } from "@/components/layout";
 import {
   DetailsSkeleton,
   OrderContactDetails,
@@ -546,7 +545,7 @@ export default function EditQuotePage({ params }: EditQuotePageProps) {
       // If cash discount is applied, merge cash discount values into updated products
       const currentProductsWithCD = productsWithCashDiscountRef.current;
       const quoteDetail = quoteDetails?.data?.quotationDetails?.[0];
-      const cashDiscountValue = quoteDetail?.cashdiscountValue || 0;
+      const cashDiscountValue = (quoteDetail?.cashdiscountValue as number) || 0;
 
       const mergedProducts = productsWithEditedQuantities.map(
         (product: any) => {
@@ -768,9 +767,9 @@ export default function EditQuotePage({ params }: EditQuotePageProps) {
             currentQuote?.cashdiscount || cashDiscountApplied
           );
           const cashDiscountValue =
-            currentQuote?.cashdiscountValue ||
-            productsWithCashDiscount[0]?.cashdiscountValue ||
-            0;
+            ((currentQuote?.cashdiscountValue as number) ||
+              (productsWithCashDiscount[0]?.cashdiscountValue as number) ||
+              0) as number;
 
           // Merge cash discount values from productsWithCashDiscount if cash discount is applied
           let mergedProducts = updatedProducts;
@@ -888,13 +887,16 @@ export default function EditQuotePage({ params }: EditQuotePageProps) {
             idx === 0
               ? {
                   ...quote,
-                  billingAddressDetails:
-                    address as unknown as typeof quote.billingAddressDetails,
+                  billingAddressDetails: address
+                    ? (address as unknown as NonNullable<
+                        typeof quote.billingAddressDetails
+                      >)
+                    : undefined,
                 }
               : quote
           ),
         },
-      };
+      } as QuotationDetailsResponse;
     });
   };
 
@@ -911,13 +913,16 @@ export default function EditQuotePage({ params }: EditQuotePageProps) {
             idx === 0
               ? {
                   ...quote,
-                  shippingAddressDetails:
-                    address as unknown as typeof quote.shippingAddressDetails,
+                  shippingAddressDetails: address
+                    ? (address as unknown as NonNullable<
+                        typeof quote.shippingAddressDetails
+                      >)
+                    : undefined,
                 }
               : quote
           ),
         },
-      };
+      } as QuotationDetailsResponse;
     });
   };
 
@@ -1324,39 +1329,37 @@ export default function EditQuotePage({ params }: EditQuotePageProps) {
     quoteDetails?.data?.updatedBuyerStatus;
 
   return (
-    <ApplicationLayout>
+    <div className="flex flex-col h-full overflow-hidden bg-gray-50">
       {/* Sales Header - Fixed at top */}
-      <div className="flex-shrink-0 sticky top-0 z-50 bg-gray-50">
-        <SalesHeader
-          title={quoteName ? decodeUnicode(quoteName) : "Edit Quote"}
-          identifier={quoteIdentifier || "..."}
-          {...(status && {
-            status: {
-              label: status,
-              className: getStatusStyle(status),
-            },
-          })}
-          onRefresh={handleRefresh}
-          onClose={handleCancel}
-          menuOptions={[]}
-          buttons={[
-            {
-              label: isPlaceOrderMode
-                ? tEcommerce("placeOrder")
-                : t("submitButton"),
-              variant: "default",
-              onClick: isPlaceOrderMode ? handlePlaceOrder : handleSaveQuote,
-              disabled: saving || isSubmitting,
-            },
-          ]}
-          showEditIcon={false}
-          loading={loading}
-        />
-      </div>
+      <SalesHeader
+        title={quoteName ? decodeUnicode(quoteName) : "Edit Quote"}
+        identifier={quoteIdentifier || "..."}
+        {...(status && {
+          status: {
+            label: status,
+            className: getStatusStyle(status),
+          },
+        })}
+        onRefresh={handleRefresh}
+        onClose={handleCancel}
+        menuOptions={[]}
+        buttons={[
+          {
+            label: isPlaceOrderMode
+              ? tEcommerce("placeOrder")
+              : t("submitButton"),
+            variant: "default",
+            onClick: isPlaceOrderMode ? handlePlaceOrder : handleSaveQuote,
+            disabled: saving || isSubmitting,
+          },
+        ]}
+        showEditIcon={false}
+        loading={loading}
+      />
 
       {/* Quote Details Content - Scrollable area */}
-      <div className="flex-1 w-full">
-        <PageLayout variant="content">
+      <div className="flex-1 overflow-y-auto overflow-x-hidden relative z-0">
+        <div className="container mx-auto px-2 sm:px-3 md:px-4 py-2 sm:py-3">
           {loading ? (
             <DetailsSkeleton
               showStatusTracker={false}
@@ -1364,8 +1367,9 @@ export default function EditQuotePage({ params }: EditQuotePageProps) {
               rightWidth="lg:w-[30%]"
             />
           ) : (
-            <div className="flex flex-col lg:flex-row gap-2 sm:gap-3 md:gap-4 w-full">
-              <div className="w-full lg:w-[70%] space-y-2 sm:space-y-3 mt-[80px]">
+            <div className="flex flex-col lg:flex-row gap-2 sm:gap-3 md:gap-4">
+              {/* Left Side - Products Table and Contact/Terms Cards - 70% */}
+              <div className="w-full lg:w-[70%] space-y-2 sm:space-y-3 mt-[60px]">
                 {!loading && !error && quoteDetails && (
                   <OrderProductsTable
                     products={effectiveProducts as any}
@@ -1507,8 +1511,9 @@ export default function EditQuotePage({ params }: EditQuotePageProps) {
                 )}
               </div>
 
+              {/* Right Side - Price Details - 30% */}
               {!loading && !error && quoteDetails && (
-                <div className="w-full lg:w-[30%] mt-[80px] space-y-3">
+                <div className="w-full lg:w-[30%] mt-[60px] space-y-3">
                   <OrderPriceDetails
                     products={effectiveProducts}
                     isInter={(() => {
@@ -1894,11 +1899,11 @@ export default function EditQuotePage({ params }: EditQuotePageProps) {
               )}
             </div>
           )}
-        </PageLayout>
+        </div>
       </div>
 
       {/* Right Sidebar Icons - Positioned just below the SalesHeader component, flush to right edge */}
-      <div className="fixed right-0 top-[127px] z-50 bg-white border-l border-t border-b border-gray-200 shadow-lg rounded-l-lg p-1">
+      <div className="fixed right-0 top-[118px] z-50 bg-white border-l border-t border-b border-gray-200 shadow-lg rounded-l-lg p-1">
         <button
           className={`p-1.5 hover:bg-gray-100 rounded transition-colors ${
             versionsDialogOpen ? "bg-primary/10" : ""
@@ -1973,6 +1978,6 @@ export default function EditQuotePage({ params }: EditQuotePageProps) {
           </DialogFooter>
         </DialogContent>
       </Dialog>
-    </ApplicationLayout>
+    </div>
   );
 }
