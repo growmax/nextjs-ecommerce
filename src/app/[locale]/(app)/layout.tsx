@@ -83,7 +83,7 @@ async function LayoutContent({ children }: { children: ReactNode }) {
 
   // Extract locale from pathname (e.g., /th/dashboard -> th)
   const localeMatch = pathname.match(/^\/([a-z]{2}(-[A-Z]{2})?)/);
-  const locale = localeMatch ? localeMatch[1] : "en";
+  const locale: string = localeMatch?.[1] ?? "en";
 
   // Load messages and cookie in parallel (both cached, non-blocking)
   const [messages, cookieHeader] = await Promise.all([

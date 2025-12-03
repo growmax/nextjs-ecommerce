@@ -280,9 +280,11 @@ function OrdersLandingTable({
               <div className="flex font-medium text-sm text-foreground">
                 {columns.map((column, index) => {
                   const width = column.size || 150;
+                  // For skeleton, render header as string or placeholder
+                  // If it's a function, we can't call it without table context, so use placeholder
                   const headerContent =
                     typeof column.header === "function"
-                      ? column.header()
+                      ? "" // Placeholder for skeleton
                       : column.header || "";
                   return (
                     <div
@@ -308,8 +310,11 @@ function OrdersLandingTable({
                 >
                   {columns.map((column, colIndex) => {
                     const width = column.size || 150;
-                    const alignCenter = column.meta?.alignCenter;
-                    const alignRight = column.meta?.alignRight;
+                    const alignCenter = (
+                      column.meta as { alignCenter?: boolean }
+                    )?.alignCenter;
+                    const alignRight = (column.meta as { alignRight?: boolean })
+                      ?.alignRight;
                     return (
                       <div
                         key={`cell-${rowIndex}-${colIndex}`}
@@ -621,6 +626,7 @@ function OrdersLandingTable({
     initialLoad,
     t,
     deduplicate,
+    onTotalCountChange,
   ]);
 
   // Export functionality

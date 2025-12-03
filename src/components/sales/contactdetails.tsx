@@ -817,21 +817,34 @@ export default function OrderContactDetails({
                   ? (() => {
                       try {
                         // Extract date part from ISO string to avoid timezone conversion affecting the day
-                        let dateStr: string;
+                        let dateStr: string | undefined;
                         if (typeof requiredDate === "string") {
                           // Extract YYYY-MM-DD from ISO string (e.g., "2023-09-28T18:30:00Z" -> "2023-09-28")
                           dateStr = requiredDate.split("T")[0];
-                        } else {
+                        } else if (requiredDate) {
                           // For Date objects, convert to ISO and extract date part
                           dateStr = new Date(requiredDate)
                             .toISOString()
                             .split("T")[0];
+                        } else {
+                          return undefined;
+                        }
+
+                        if (!dateStr) {
+                          return undefined;
                         }
 
                         // Parse as local date (YYYY-MM-DD format) to avoid timezone issues
                         const [year, month, day] = dateStr
                           .split("-")
                           .map(Number);
+                        if (
+                          year === undefined ||
+                          month === undefined ||
+                          day === undefined
+                        ) {
+                          return undefined;
+                        }
                         const date = new Date(year, month - 1, day);
 
                         if (!isValid(date)) {

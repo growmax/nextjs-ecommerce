@@ -11,7 +11,6 @@ import {
 } from "@/components/ui/dialog";
 import {
   Drawer,
-  DrawerClose,
   DrawerContent,
   DrawerDescription,
   DrawerFooter,
@@ -21,8 +20,6 @@ import {
 import { Button } from "@/components/ui/button";
 import { LoadingButton } from "./loading-button";
 import { useMediaQuery } from "@/hooks/use-media-query";
-import { cn } from "@/lib/utils";
-import type { BaseDialogProps } from "@/types/dialog";
 import type { SaveCancelDialogProps } from "@/types/save-cancel";
 
 const SaveCancelDialog = React.forwardRef<

@@ -609,6 +609,108 @@ jest.mock("@/components/ui/dialog", () => {
   };
 });
 
+jest.mock("@/components/ui/drawer", () => {
+  const React = jest.requireActual<typeof import("react")>("react");
+  const MockDrawer = ({
+    open,
+    onOpenChange,
+    children,
+  }: {
+    open: boolean;
+    onOpenChange: (open: boolean) => void;
+    children: React.ReactNode;
+  }) =>
+    open
+      ? React.createElement(
+          "div",
+          { "data-testid": "drawer" },
+          React.createElement("button", {
+            "data-testid": "drawer-close",
+            onClick: () => onOpenChange(false),
+          }),
+          children
+        )
+      : null;
+  MockDrawer.displayName = "MockDrawer";
+
+  const MockDrawerContent = ({ children }: { children: React.ReactNode }) =>
+    React.createElement("div", { "data-testid": "drawer-content" }, children);
+  MockDrawerContent.displayName = "MockDrawerContent";
+
+  const MockDrawerHeader = ({ children }: { children: React.ReactNode }) =>
+    React.createElement("div", { "data-testid": "drawer-header" }, children);
+  MockDrawerHeader.displayName = "MockDrawerHeader";
+
+  const MockDrawerTitle = ({ children }: { children: React.ReactNode }) =>
+    React.createElement("h2", { "data-testid": "drawer-title" }, children);
+  MockDrawerTitle.displayName = "MockDrawerTitle";
+
+  const MockDrawerDescription = ({ children }: { children: React.ReactNode }) =>
+    React.createElement("p", { "data-testid": "drawer-description" }, children);
+  MockDrawerDescription.displayName = "MockDrawerDescription";
+
+  const MockDrawerFooter = ({ children }: { children: React.ReactNode }) =>
+    React.createElement("div", { "data-testid": "drawer-footer" }, children);
+  MockDrawerFooter.displayName = "MockDrawerFooter";
+
+  const MockDrawerClose = ({ children }: { children?: React.ReactNode }) =>
+    React.createElement(
+      "button",
+      { "data-testid": "drawer-close-btn" },
+      children
+    );
+  MockDrawerClose.displayName = "MockDrawerClose";
+
+  return {
+    Drawer: MockDrawer,
+    DrawerContent: MockDrawerContent,
+    DrawerHeader: MockDrawerHeader,
+    DrawerTitle: MockDrawerTitle,
+    DrawerDescription: MockDrawerDescription,
+    DrawerFooter: MockDrawerFooter,
+    DrawerClose: MockDrawerClose,
+  };
+});
+
+jest.mock("@/hooks/use-media-query", () => ({
+  useMediaQuery: jest.fn(() => true), // Default to desktop (use Dialog)
+}));
+
+jest.mock("@/components/custom/loading-button", () => {
+  const React = jest.requireActual<typeof import("react")>("react");
+  const MockLoadingButton = ({
+    children,
+    onClick,
+    loading,
+    disabled,
+    variant,
+    className,
+  }: {
+    children: React.ReactNode;
+    onClick?: () => void;
+    loading?: boolean;
+    disabled?: boolean;
+    variant?: string;
+    className?: string;
+  }) =>
+    React.createElement(
+      "button",
+      {
+        "data-testid": "loading-button",
+        onClick,
+        disabled: disabled || loading,
+        "data-variant": variant,
+        "data-loading": loading ? "true" : "false",
+        className,
+      },
+      loading ? "Loading..." : children
+    );
+  MockLoadingButton.displayName = "MockLoadingButton";
+  return {
+    LoadingButton: MockLoadingButton,
+  };
+});
+
 jest.mock("@/components/ui/button", () => {
   const React = jest.requireActual<typeof import("react")>("react");
   const MockButton = ({
@@ -763,9 +865,7 @@ function createWrapper() {
 
   const Wrapper = ({ children }: { children: ReactNode }) => (
     <LoadingProvider>
-      <QueryClientProvider client={queryClient}>
-        {children}
-      </QueryClientProvider>
+      <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
     </LoadingProvider>
   );
   Wrapper.displayName = "QueryClientWrapper";
@@ -1175,7 +1275,8 @@ describe("QuoteSummaryContent", () => {
   describe("Validation", () => {
     it("should show error when products have negative prices", async () => {
       // eslint-disable-next-line @typescript-eslint/no-require-imports
-      jest.spyOn(require("@/hooks/summary/useSummaryDefault"), "default")
+      jest
+        .spyOn(require("@/hooks/summary/useSummaryDefault"), "default")
         .mockReturnValueOnce({
           initialValues: {
             ...mockInitialValues,
@@ -1207,14 +1308,16 @@ describe("QuoteSummaryContent", () => {
 
     it("should show error when addresses are missing", async () => {
       // eslint-disable-next-line @typescript-eslint/no-require-imports
-      jest.spyOn(require("@/hooks/summary/useSummaryDefault"), "default").mockReturnValueOnce({
-        initialValues: {
-          ...mockInitialValues,
-          setBillingAddress: null,
-          setShippingAddress: null,
-        },
-        isLoading: false,
-      });
+      jest
+        .spyOn(require("@/hooks/summary/useSummaryDefault"), "default")
+        .mockReturnValueOnce({
+          initialValues: {
+            ...mockInitialValues,
+            setBillingAddress: null,
+            setShippingAddress: null,
+          },
+          isLoading: false,
+        });
 
       render(<QuoteSummaryContent />, { wrapper: createWrapper() });
 
@@ -1237,7 +1340,8 @@ describe("QuoteSummaryContent", () => {
 
     it("should show error when cart is empty", async () => {
       // eslint-disable-next-line @typescript-eslint/no-require-imports
-      jest.spyOn(require("@/hooks/summary/useSummaryDefault"), "default")
+      jest
+        .spyOn(require("@/hooks/summary/useSummaryDefault"), "default")
         .mockReturnValueOnce({
           initialValues: {
             ...mockInitialValues,
@@ -1266,14 +1370,16 @@ describe("QuoteSummaryContent", () => {
   describe("Loading States", () => {
     it("should show loading skeleton when data is loading", async () => {
       // eslint-disable-next-line @typescript-eslint/no-require-imports
-      jest.spyOn(require("@/hooks/summary/useSummaryDefault"), "default").mockReturnValue({
-        initialValues: {
-          ...mockInitialValues,
-          products: [], // No products so hasCriticalData will be false
-          cartValue: null, // No cartValue so hasCriticalData will be false
-        },
-        isLoading: true,
-      });
+      jest
+        .spyOn(require("@/hooks/summary/useSummaryDefault"), "default")
+        .mockReturnValue({
+          initialValues: {
+            ...mockInitialValues,
+            products: [], // No products so hasCriticalData will be false
+            cartValue: null, // No cartValue so hasCriticalData will be false
+          },
+          isLoading: true,
+        });
 
       render(<QuoteSummaryContent />, { wrapper: createWrapper() });
 

@@ -66,7 +66,8 @@ export interface InfoDialogProps extends BaseDialogProps {
 /**
  * Action dialog props (custom actions)
  */
-export interface ActionDialogProps extends BaseDialogProps {
+export interface ActionDialogProps extends Omit<BaseDialogProps, "title"> {
+  title?: string | React.ReactNode;
   actions?: React.ReactNode;
   children: React.ReactNode;
 }

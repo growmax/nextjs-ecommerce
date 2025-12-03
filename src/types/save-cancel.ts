@@ -25,7 +25,7 @@ import type { BaseDialogProps } from "./dialog";
 export interface SaveCancelDialogProps
   extends SaveCancelAction,
     SaveCancelTexts,
-    Omit<BaseDialogProps, "title" | "description" | "onOpenChange"> {
+    Omit<BaseDialogProps, "onOpenChange"> {
   onOpenChange?: (open: boolean) => void;
   children?: React.ReactNode;
   alertMode?: boolean;

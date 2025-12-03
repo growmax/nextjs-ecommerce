@@ -264,9 +264,11 @@ function QuotesLandingTable({
               <div className="flex font-medium text-sm text-foreground">
                 {columns.map((column, index) => {
                   const width = column.size || 150;
+                  // For skeleton, render header as string or placeholder
+                  // If it's a function, we can't call it without table context, so use placeholder
                   const headerContent =
                     typeof column.header === "function"
-                      ? column.header()
+                      ? "" // Placeholder for skeleton
                       : column.header || "";
                   return (
                     <div
@@ -297,8 +299,11 @@ function QuotesLandingTable({
                 >
                   {columns.map((column, colIndex) => {
                     const width = column.size || 150;
-                    const alignCenter = column.meta?.alignCenter;
-                    const alignRight = column.meta?.alignRight;
+                    const alignCenter = (
+                      column.meta as { alignCenter?: boolean }
+                    )?.alignCenter;
+                    const alignRight = (column.meta as { alignRight?: boolean })
+                      ?.alignRight;
                     return (
                       <div
                         key={`cell-${rowIndex}-${colIndex}`}
@@ -499,7 +504,8 @@ function QuotesLandingTable({
                 activeFilter.status.length > 0
               ) {
                 filterRequest.status = activeFilter.status.filter(
-                  s => s !== null && s !== undefined
+                  (s: string | null | undefined) =>
+                    s !== null && s !== undefined
                 );
               }
 
@@ -781,6 +787,7 @@ function QuotesLandingTable({
     initialLoad,
     t,
     deduplicate,
+    onTotalCountChange,
   ]);
 
   // Store fetchQuotes in a ref to avoid dependency issues

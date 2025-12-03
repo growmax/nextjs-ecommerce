@@ -19,7 +19,7 @@ export default async function AuthLayout({
 
   // Extract locale from pathname (e.g., /th/login -> th)
   const localeMatch = pathname.match(/^\/([a-z]{2}(-[A-Z]{2})?)/);
-  const locale = localeMatch ? localeMatch[1] : "en";
+  const locale: string = localeMatch?.[1] ?? "en";
 
   const messages = await getMessages({ locale });
   const tenantCode = headersList.get("x-tenant-code");

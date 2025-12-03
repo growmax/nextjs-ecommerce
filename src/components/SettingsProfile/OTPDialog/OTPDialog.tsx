@@ -73,7 +73,7 @@ export function OTPDialog({
           {title}
         </span>
       }
-      description={description}
+      {...(description && { description })}
       size="sm"
       actions={
         <>
