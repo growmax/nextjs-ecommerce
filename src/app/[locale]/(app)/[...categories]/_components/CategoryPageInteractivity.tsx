@@ -7,6 +7,7 @@ import { ViewToggle } from "@/components/ProductList/ViewToggle";
 import { SortDropdown } from "@/components/Sort/SortDropdown";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ProductLoadingProvider } from "@/contexts/ProductLoadingContext";
+import { usePageScopedLoader } from "@/hooks/usePageScopedLoader";
 import type { CategoryPath } from "@/lib/services/CategoryResolutionService";
 import type { FilterAggregations } from "@/types/category-filters";
 import { formatAllAggregations } from "@/utils/format-aggregations";
@@ -49,6 +50,9 @@ export function CategoryPageInteractivity({
   const searchParams = useSearchParams();
   const locale = useLocale();
   const [isPending, startTransition] = useTransition();
+
+  // Auto-trigger scoped loader on transitions (Phase 1)
+  usePageScopedLoader(isPending);
 
   // Format aggregations for filter components
   const formattedFilters = useMemo(
@@ -153,7 +157,7 @@ export function CategoryPageInteractivity({
       </aside>
 
       {/* Main Content */}
-      <div className="flex-1 min-w-0">
+      <main id="page-main" className="flex-1 min-w-0 relative">
         {/* Mobile Filter Drawer */}
         <div className="lg:hidden mb-4">
           <CategoryFiltersDrawer
@@ -213,7 +217,7 @@ export function CategoryPageInteractivity({
             />
           </div>
         )}
-      </div>
+      </main>
     </div>
   );
 }
