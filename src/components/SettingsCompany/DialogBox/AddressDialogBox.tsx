@@ -662,14 +662,6 @@ const CompanyDialogBox = ({
                   required
                 />
 
-              {/* Tax ID */}
-              <FormInput
-                control={form.control}
-                name="gst"
-                label={<LabelWithAsterisk label={t("taxIdGst")} />}
-                placeholder={t("enterGstNumber")}
-              />
-
                 <Separator />
 
                 {/* Location Section */}
