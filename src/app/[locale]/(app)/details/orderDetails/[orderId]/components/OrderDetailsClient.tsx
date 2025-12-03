@@ -337,10 +337,8 @@ export default function OrderDetailsClient({
   };
 
   const handleEditOrder = () => {
-    // Navigate to edit page when edit icon is clicked - non-blocking
-    if (orderId) {
-      push(`/details/orderDetails/${orderId}/edit`);
-    }
+    // Open edit order name dialog when edit icon is clicked
+    setEditDialogOpen(true);
   };
 
   const handleSaveOrderName = async (newOrderName: string) => {

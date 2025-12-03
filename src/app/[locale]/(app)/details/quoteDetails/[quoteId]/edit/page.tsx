@@ -9,7 +9,6 @@ import {
   VersionsDialog,
   type Version,
 } from "@/components/dialogs/VersionsDialog";
-import { ApplicationLayout, PageLayout } from "@/components/layout";
 import {
   DetailsSkeleton,
   OrderContactDetails,
@@ -41,6 +40,8 @@ import useModuleSettings from "@/hooks/useModuleSettings";
 import { useOrderCalculation } from "@/hooks/useOrderCalculation/useOrderCalculation";
 import { usePageScroll } from "@/hooks/usePageScroll";
 import { useQuoteSubmission } from "@/hooks/useQuoteSubmission/useQuoteSubmission";
+import { useLoading } from "@/hooks/useGlobalLoader";
+import { usePageLoader } from "@/hooks/usePageLoader";
 
 import { useTenantData } from "@/hooks/useTenantData";
 import type { QuotationDetailsResponse } from "@/lib/api";
@@ -62,6 +63,7 @@ import { isEmpty } from "lodash";
 import some from "lodash/some";
 import { useSearchParams } from "next/navigation";
 import { useNavigationWithLoader } from "@/hooks/useNavigationWithLoader";
+import getProductIds from "@/utils/getProductIds";
 
 // Import types for proper typing
 interface AddressDetails {
@@ -112,6 +114,10 @@ export default function EditQuotePage({ params }: EditQuotePageProps) {
   const t = useTranslations("quotes");
   const tDetails = useTranslations("details");
   const tEcommerce = useTranslations("ecommerce");
+  const { showLoading, hideLoading } = useLoading();
+
+  // Hide navigation loader when page mounts
+  usePageLoader();
 
   const searchParams = useSearchParams();
   const isPlaceOrderMode = searchParams.get("placeOrder") === "true";
@@ -234,7 +240,30 @@ export default function EditQuotePage({ params }: EditQuotePageProps) {
     };
 
     fetchQuoteDetails();
-  }, [paramsLoaded, quoteIdentifier, user?.userId, user?.companyId]);
+  }, [
+    paramsLoaded,
+    quoteIdentifier,
+    user?.userId,
+    user?.companyId,
+    showLoading,
+    hideLoading,
+  ]);
+
+  // Sync loading state with global loader
+  useEffect(() => {
+    if (loading) {
+      showLoading("Loading quote details...", "quote-details-edit");
+    } else {
+      hideLoading("quote-details-edit");
+    }
+  }, [loading, showLoading, hideLoading]);
+
+  // Cleanup: Hide global loader on unmount
+  useEffect(() => {
+    return () => {
+      hideLoading("quote-details-edit");
+    };
+  }, [hideLoading]);
 
   // Use custom hook for quote details logic
   const {
@@ -502,19 +531,70 @@ export default function EditQuotePage({ params }: EditQuotePageProps) {
   >([]);
 
   // Update products with cash discount when products change
+  // Only update if cash discount is not applied, otherwise preserve cash discount values
+  const productsWithCashDiscountRef = useRef<CartItem[]>([]);
   useEffect(() => {
-    setProductsWithCashDiscount(productsWithEditedQuantities);
-  }, [productsWithEditedQuantities]);
+    productsWithCashDiscountRef.current = productsWithCashDiscount;
+  }, [productsWithCashDiscount]);
+
+  useEffect(() => {
+    if (!cashDiscountApplied) {
+      // If cash discount is not applied, sync normally
+      setProductsWithCashDiscount(productsWithEditedQuantities);
+    } else {
+      // If cash discount is applied, merge cash discount values into updated products
+      const currentProductsWithCD = productsWithCashDiscountRef.current;
+      const quoteDetail = quoteDetails?.data?.quotationDetails?.[0];
+      const cashDiscountValue = (quoteDetail?.cashdiscountValue as number) || 0;
+
+      const mergedProducts = productsWithEditedQuantities.map(
+        (product: any) => {
+          // Find matching product in current productsWithCashDiscount to preserve cash discount
+          const existingProduct = currentProductsWithCD.find(
+            (cdProduct: any) =>
+              cdProduct.productId === product.productId ||
+              cdProduct.brandProductId === product.brandProductId ||
+              cdProduct.itemCode === product.itemCode
+          );
+
+          if (existingProduct && existingProduct.cashdiscountValue) {
+            return {
+              ...product,
+              cashdiscountValue: existingProduct.cashdiscountValue,
+              originalUnitPrice:
+                existingProduct.originalUnitPrice || product.originalUnitPrice,
+            };
+          }
+
+          // If no existing product found but cash discount is applied, apply it
+          if (cashDiscountValue > 0) {
+            return {
+              ...product,
+              cashdiscountValue: cashDiscountValue,
+              originalUnitPrice: product.originalUnitPrice || product.unitPrice,
+            };
+          }
+
+          return product;
+        }
+      );
+
+      setProductsWithCashDiscount(mergedProducts);
+    }
+  }, [productsWithEditedQuantities, cashDiscountApplied, quoteDetails]);
 
   // Cash discount handlers
   const { handleCDApply, handleRemoveCD } = useCashDiscountHandlers({
     products: productsWithCashDiscount,
     setProducts: updatedProducts => {
       setProductsWithCashDiscount(updatedProducts);
+      // Update quote details with new products
       setQuoteDetails(prev => {
         if (!prev || !prev.data?.quotationDetails) return prev;
+        // Convert CartItem[] to DbProductDetail[] format
         const dbProductDetails = updatedProducts.map(product => {
           const dbProduct: Record<string, unknown> = { ...product };
+          // Ensure itemNo is a number if it exists
           if (dbProduct.itemNo !== undefined && dbProduct.itemNo !== null) {
             dbProduct.itemNo =
               typeof dbProduct.itemNo === "string"
@@ -529,12 +609,14 @@ export default function EditQuotePage({ params }: EditQuotePageProps) {
             ...prev.data,
             quotationDetails: prev.data.quotationDetails.map((quote, idx) => {
               if (idx === 0) {
-                return {
+                const updatedQuote = {
                   ...quote,
                   dbProductDetails:
                     dbProductDetails as unknown as typeof quote.dbProductDetails,
                   cashdiscount: true,
-                } as typeof quote;
+                  cashdiscountValue: updatedProducts[0]?.cashdiscountValue ?? 0,
+                };
+                return updatedQuote as typeof quote;
               }
               return quote;
             }),
@@ -551,6 +633,7 @@ export default function EditQuotePage({ params }: EditQuotePageProps) {
     (prevTerms?: QuoteTerms | Record<string, unknown>) => {
       handleRemoveCD(prevTerms);
       setCashDiscountApplied(false);
+      // Restore previous payment terms
       if (prevTerms) {
         setQuoteDetails(prev => {
           if (!prev || !prev.data?.quotationDetails) return prev;
@@ -563,6 +646,7 @@ export default function EditQuotePage({ params }: EditQuotePageProps) {
                   ? ({
                       ...quote,
                       cashdiscount: false,
+                      cashdiscountValue: 0,
                       quoteTerms:
                         prevTerms as unknown as typeof quote.quoteTerms,
                     } as typeof quote)
@@ -674,7 +758,51 @@ export default function EditQuotePage({ params }: EditQuotePageProps) {
                 (updatedProducts[idx] as Record<string, unknown>)?.productId
             )
           ) {
-            return prev;
+            return prev; // No change, return previous state
+          }
+
+          // Preserve cash discount state if it was applied
+          const currentQuote = prev.data.quotationDetails[0];
+          const isCashDiscountApplied = Boolean(
+            currentQuote?.cashdiscount || cashDiscountApplied
+          );
+          const cashDiscountValue =
+            ((currentQuote?.cashdiscountValue as number) ||
+              (productsWithCashDiscount[0]?.cashdiscountValue as number) ||
+              0) as number;
+
+          // Merge cash discount values from productsWithCashDiscount if cash discount is applied
+          let mergedProducts = updatedProducts;
+          if (isCashDiscountApplied && productsWithCashDiscount.length > 0) {
+            mergedProducts = updatedProducts.map((updatedProduct: any) => {
+              // Find matching product in productsWithCashDiscount
+              const cashDiscountProduct = productsWithCashDiscount.find(
+                (cdProduct: any) =>
+                  cdProduct.productId === updatedProduct.productId ||
+                  cdProduct.brandProductId === updatedProduct.brandProductId ||
+                  cdProduct.itemCode === updatedProduct.itemCode
+              );
+
+              if (cashDiscountProduct) {
+                return {
+                  ...updatedProduct,
+                  cashdiscountValue:
+                    cashDiscountProduct.cashdiscountValue || cashDiscountValue,
+                  originalUnitPrice:
+                    cashDiscountProduct.originalUnitPrice ||
+                    updatedProduct.originalUnitPrice,
+                };
+              }
+
+              // If no match found, still apply cash discount value if it exists
+              return {
+                ...updatedProduct,
+                cashdiscountValue:
+                  cashDiscountValue > 0
+                    ? cashDiscountValue
+                    : updatedProduct.cashdiscountValue || 0,
+              };
+            });
           }
 
           return {
@@ -685,7 +813,12 @@ export default function EditQuotePage({ params }: EditQuotePageProps) {
                 idx === 0
                   ? {
                       ...quote,
-                      dbProductDetails: updatedProducts,
+                      dbProductDetails: mergedProducts,
+                      // Preserve cash discount state
+                      ...(isCashDiscountApplied && {
+                        cashdiscount: true,
+                        cashdiscountValue: cashDiscountValue,
+                      }),
                     }
                   : quote
               ),
@@ -694,7 +827,13 @@ export default function EditQuotePage({ params }: EditQuotePageProps) {
         });
       }
     }
-  }, [updatedProducts, updatingProducts, quoteDetails]);
+  }, [
+    updatedProducts,
+    updatingProducts,
+    quoteDetails,
+    cashDiscountApplied,
+    productsWithCashDiscount,
+  ]);
 
   // Handler functions
   const handleRefresh = async () => {
@@ -737,18 +876,115 @@ export default function EditQuotePage({ params }: EditQuotePageProps) {
 
   const handleBillingAddressChange = (address: AddressDetails) => {
     setEditedBillingAddress(address);
+    // Update quote details state immediately
+    setQuoteDetails(prev => {
+      if (!prev || !prev.data?.quotationDetails) return prev;
+      return {
+        ...prev,
+        data: {
+          ...prev.data,
+          quotationDetails: prev.data.quotationDetails.map((quote, idx) =>
+            idx === 0
+              ? {
+                  ...quote,
+                  billingAddressDetails: address
+                    ? (address as unknown as NonNullable<
+                        typeof quote.billingAddressDetails
+                      >)
+                    : undefined,
+                }
+              : quote
+          ),
+        },
+      } as QuotationDetailsResponse;
+    });
   };
 
   const handleShippingAddressChange = (address: AddressDetails) => {
     setEditedShippingAddress(address);
+    // Update quote details state immediately
+    setQuoteDetails(prev => {
+      if (!prev || !prev.data?.quotationDetails) return prev;
+      return {
+        ...prev,
+        data: {
+          ...prev.data,
+          quotationDetails: prev.data.quotationDetails.map((quote, idx) =>
+            idx === 0
+              ? {
+                  ...quote,
+                  shippingAddressDetails: address
+                    ? (address as unknown as NonNullable<
+                        typeof quote.shippingAddressDetails
+                      >)
+                    : undefined,
+                }
+              : quote
+          ),
+        },
+      } as QuotationDetailsResponse;
+    });
   };
 
   const handleSellerBranchChange = (sellerBranch: SellerBranch | null) => {
     setEditedSellerBranch(sellerBranch);
+    // Update quote details state immediately
+    if (sellerBranch) {
+      setQuoteDetails(prev => {
+        if (!prev || !prev.data?.quotationDetails) return prev;
+        return {
+          ...prev,
+          data: {
+            ...prev.data,
+            quotationDetails: prev.data.quotationDetails.map((quote, idx) =>
+              idx === 0
+                ? {
+                    ...quote,
+                    sellerBranchId: sellerBranch.id,
+                    sellerBranchName: sellerBranch.name,
+                    sellerCompanyId: sellerBranch.companyId,
+                  }
+                : quote
+            ),
+          },
+        };
+      });
+    }
   };
 
   const handleWarehouseChange = (warehouse: Warehouse | null) => {
     setEditedWarehouse(warehouse);
+    // Update quote details state immediately - update warehouse in all products
+    if (warehouse) {
+      setQuoteDetails(prev => {
+        if (!prev || !prev.data?.quotationDetails) return prev;
+        return {
+          ...prev,
+          data: {
+            ...prev.data,
+            quotationDetails: prev.data.quotationDetails.map((quote, idx) => {
+              if (idx === 0 && quote.dbProductDetails) {
+                // Update warehouse in all product details
+                const updatedProducts = quote.dbProductDetails.map(product => ({
+                  ...product,
+                  wareHouse: {
+                    id: warehouse.id,
+                    wareHouseName: warehouse.name,
+                    wareHousecode: warehouse.wareHousecode,
+                  } as unknown as typeof product.wareHouse,
+                  orderWareHouseName: warehouse.name,
+                }));
+                return {
+                  ...quote,
+                  dbProductDetails: updatedProducts,
+                };
+              }
+              return quote;
+            }),
+          },
+        };
+      });
+    }
   };
 
   // Get elastic index from tenant data
@@ -1093,39 +1329,37 @@ export default function EditQuotePage({ params }: EditQuotePageProps) {
     quoteDetails?.data?.updatedBuyerStatus;
 
   return (
-    <ApplicationLayout>
+    <div className="flex flex-col h-full overflow-hidden bg-gray-50">
       {/* Sales Header - Fixed at top */}
-      <div className="flex-shrink-0 sticky top-0 z-50 bg-gray-50">
-        <SalesHeader
-          title={quoteName ? decodeUnicode(quoteName) : "Edit Quote"}
-          identifier={quoteIdentifier || "..."}
-          {...(status && {
-            status: {
-              label: status,
-              className: getStatusStyle(status),
-            },
-          })}
-          onRefresh={handleRefresh}
-          onClose={handleCancel}
-          menuOptions={[]}
-          buttons={[
-            {
-              label: isPlaceOrderMode
-                ? tEcommerce("placeOrder")
-                : t("submitButton"),
-              variant: "default",
-              onClick: isPlaceOrderMode ? handlePlaceOrder : handleSaveQuote,
-              disabled: saving || isSubmitting,
-            },
-          ]}
-          showEditIcon={false}
-          loading={loading}
-        />
-      </div>
+      <SalesHeader
+        title={quoteName ? decodeUnicode(quoteName) : "Edit Quote"}
+        identifier={quoteIdentifier || "..."}
+        {...(status && {
+          status: {
+            label: status,
+            className: getStatusStyle(status),
+          },
+        })}
+        onRefresh={handleRefresh}
+        onClose={handleCancel}
+        menuOptions={[]}
+        buttons={[
+          {
+            label: isPlaceOrderMode
+              ? tEcommerce("placeOrder")
+              : t("submitButton"),
+            variant: "default",
+            onClick: isPlaceOrderMode ? handlePlaceOrder : handleSaveQuote,
+            disabled: saving || isSubmitting,
+          },
+        ]}
+        showEditIcon={false}
+        loading={loading}
+      />
 
       {/* Quote Details Content - Scrollable area */}
-      <div className="flex-1 w-full">
-        <PageLayout variant="content">
+      <div className="flex-1 overflow-y-auto overflow-x-hidden relative z-0">
+        <div className="container mx-auto px-2 sm:px-3 md:px-4 py-2 sm:py-3">
           {loading ? (
             <DetailsSkeleton
               showStatusTracker={false}
@@ -1133,8 +1367,9 @@ export default function EditQuotePage({ params }: EditQuotePageProps) {
               rightWidth="lg:w-[30%]"
             />
           ) : (
-            <div className="flex flex-col lg:flex-row gap-2 sm:gap-3 md:gap-4 w-full">
-              <div className="w-full lg:w-[70%] space-y-2 sm:space-y-3 mt-[80px]">
+            <div className="flex flex-col lg:flex-row gap-2 sm:gap-3 md:gap-4">
+              {/* Left Side - Products Table and Contact/Terms Cards - 70% */}
+              <div className="w-full lg:w-[70%] space-y-2 sm:space-y-3 mt-[60px]">
                 {!loading && !error && quoteDetails && (
                   <OrderProductsTable
                     products={effectiveProducts as any}
@@ -1200,7 +1435,8 @@ export default function EditQuotePage({ params }: EditQuotePageProps) {
                           )?.orderWareHouseName) as string | undefined)
                       }
                       warehouseAddress={
-                        (
+                        editedWarehouse?.addressId ||
+                        ((
                           quoteDetails.data?.quotationDetails?.[0]
                             ?.dbProductDetails?.[0] as unknown as Record<
                             string,
@@ -1213,7 +1449,7 @@ export default function EditQuotePage({ params }: EditQuotePageProps) {
                           state?: string;
                           pinCodeId?: string;
                           country?: string;
-                        }
+                        })
                       }
                       salesBranch={
                         editedSellerBranch?.name ||
@@ -1247,13 +1483,12 @@ export default function EditQuotePage({ params }: EditQuotePageProps) {
                           ?.buyerBranchId as number
                       }
                       buyerCompanyId={user?.companyId}
-                      productIds={
-                        (quoteDetails.data?.quotationDetails?.[0]?.dbProductDetails
-                          ?.map(p => p.productId)
-                          .filter(
-                            (id): id is string => typeof id === "string"
-                          ) || []) as unknown as number[]
-                      }
+                      productIds={getProductIds(
+                        quoteDetails.data?.quotationDetails?.[0]
+                          ?.dbProductDetails as
+                          | Array<Record<string, unknown>>
+                          | undefined
+                      )}
                       sellerCompanyId={
                         quoteDetails.data?.quotationDetails?.[0]
                           ?.sellerCompanyId as number
@@ -1276,8 +1511,9 @@ export default function EditQuotePage({ params }: EditQuotePageProps) {
                 )}
               </div>
 
+              {/* Right Side - Price Details - 30% */}
               {!loading && !error && quoteDetails && (
-                <div className="w-full lg:w-[30%] mt-[80px] space-y-3">
+                <div className="w-full lg:w-[30%] mt-[60px] space-y-3">
                   <OrderPriceDetails
                     products={effectiveProducts}
                     isInter={(() => {
@@ -1663,11 +1899,11 @@ export default function EditQuotePage({ params }: EditQuotePageProps) {
               )}
             </div>
           )}
-        </PageLayout>
+        </div>
       </div>
 
       {/* Right Sidebar Icons - Positioned just below the SalesHeader component, flush to right edge */}
-      <div className="fixed right-0 top-[127px] z-50 bg-white border-l border-t border-b border-gray-200 shadow-lg rounded-l-lg p-1">
+      <div className="fixed right-0 top-[118px] z-50 bg-white border-l border-t border-b border-gray-200 shadow-lg rounded-l-lg p-1">
         <button
           className={`p-1.5 hover:bg-gray-100 rounded transition-colors ${
             versionsDialogOpen ? "bg-primary/10" : ""
@@ -1742,6 +1978,6 @@ export default function EditQuotePage({ params }: EditQuotePageProps) {
           </DialogFooter>
         </DialogContent>
       </Dialog>
-    </ApplicationLayout>
+    </div>
   );
 }
