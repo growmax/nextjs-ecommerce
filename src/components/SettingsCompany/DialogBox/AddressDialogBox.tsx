@@ -662,54 +662,13 @@ const CompanyDialogBox = ({
                   required
                 />
 
-                {/* Address Type Checkboxes */}
-                <div className="space-y-3 py-2">
-                  <p className="text-sm font-medium">{t("addressFor")}</p>
-                  <div className="flex gap-6">
-                    <FormField
-                      control={form.control}
-                      name="isBilling"
-                      render={({ field }) => (
-                        <FormItem className="flex items-center gap-2 space-y-0">
-                          <FormControl>
-                            <Checkbox
-                              checked={field.value}
-                              onCheckedChange={field.onChange}
-                            />
-                          </FormControl>
-                          <FormLabel className="!mt-0 cursor-pointer">
-                            {t("billing")}
-                          </FormLabel>
-                        </FormItem>
-                      )}
-                    />
-                    <FormField
-                      control={form.control}
-                      name="isShipping"
-                      render={({ field }) => (
-                        <FormItem className="flex items-center gap-2 space-y-0">
-                          <FormControl>
-                            <Checkbox
-                              checked={field.value}
-                              onCheckedChange={field.onChange}
-                            />
-                          </FormControl>
-                          <FormLabel className="!mt-0 cursor-pointer">
-                            {t("shipping")}
-                          </FormLabel>
-                        </FormItem>
-                      )}
-                    />
-                  </div>
-                </div>
-
-                {/* Tax ID */}
-                <FormInput
-                  control={form.control}
-                  name="gst"
-                  label={<LabelWithAsterisk label={t("taxIdGst")} />}
-                  placeholder={t("enterGstNumber")}
-                />
+              {/* Tax ID */}
+              <FormInput
+                control={form.control}
+                name="gst"
+                label={<LabelWithAsterisk label={t("taxIdGst")} />}
+                placeholder={t("enterGstNumber")}
+              />
 
                 <Separator />
 
@@ -717,34 +676,32 @@ const CompanyDialogBox = ({
                 <div className="space-y-4">
                   <p className="text-sm font-semibold">{t("location")}</p>
 
-                  {/* Country & State Grid */}
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <FormDropdown
-                      control={form.control}
-                      name="country"
-                      label={
-                        <LabelWithAsterisk label={t("country")} required />
-                      }
-                      placeholder={
-                        countriesLoading
-                          ? t("loadingCountries")
-                          : t("selectCountry")
-                      }
-                      options={countries.length > 0 ? countries : []}
-                      required
-                    />
+                {/* Country & State Grid */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <FormDropdown
+                    control={form.control}
+                    name="country"
+                    label={<LabelWithAsterisk label={t("country")} required />}
+                    placeholder={
+                      countriesLoading
+                        ? t("loadingCountries")
+                        : t("selectCountry")
+                    }
+                    options={countries.length > 0 ? countries : []}
+                  />
 
-                    <FormDropdown
-                      control={form.control}
-                      name="state"
-                      label={<LabelWithAsterisk label={t("state")} required />}
-                      placeholder={
-                        statesLoading ? t("loadingStates") : t("selectState")
-                      }
-                      options={states.length > 0 ? states : []}
-                      required
-                    />
-                  </div>
+                  <FormDropdown
+                    control={form.control}
+                    name="state"
+                    label={<LabelWithAsterisk label={t("state")} required />}
+                    placeholder={
+                      statesLoading
+                        ? t("loadingStates")
+                        : t("selectState")
+                    }
+                    options={states.length > 0 ? states : []}
+                  />
+                </div>
 
                   {/* District, PostalCode, City Grid */}
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -760,14 +717,13 @@ const CompanyDialogBox = ({
                       options={districts.length > 0 ? districts : []}
                     />
 
-                    <FormInput
-                      control={form.control}
-                      name="pinCode"
-                      label={t("postalCodePinCode")}
-                      placeholder={t("enterPostalCode")}
-                      required
-                    />
-                  </div>
+                  <FormInput
+                    control={form.control}
+                    name="pinCode"
+                    label={<LabelWithAsterisk label={t("enterPostalCode")} required />}
+                    placeholder={t("enterPostalCode")}
+                  />
+                </div>
 
                   {/* City, Latitude & Longitude Grid */}
                   <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">

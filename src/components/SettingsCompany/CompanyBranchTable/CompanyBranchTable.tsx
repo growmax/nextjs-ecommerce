@@ -351,6 +351,7 @@ const CompanyBranchTable = () => {
             enableSorting
             enableColumnVisibility={false}
             showPagination
+            showFirstLastButtons={false}
             pageSizeOptions={[5, 10, 20, 30]}
             manualPagination={true}
             totalCount={totalCount}
