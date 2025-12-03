@@ -7,12 +7,12 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { CustomPagination } from "@/components/ui/custom-pagination";
 import { Input } from "@/components/ui/input";
 import {
-    Table,
-    TableBody,
-    TableCell,
-    TableHead,
-    TableHeader,
-    TableRow,
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
 } from "@/components/ui/table";
 import useProductAssets from "@/hooks/useProductAssets";
 import { cn } from "@/lib/utils";
@@ -230,11 +230,18 @@ export default function OrderProductsTable({
                       (product.itemCode as string) ||
                       (product.orderIdentifier as string) ||
                       "";
-                    const discountValue =
+                    // Round discount value to 2 decimal places for display
+                    const rawDiscount =
                       product.discount ?? product.discountPercentage ?? 0;
-                    // Get cash discount value from product
-                    const cashDiscountValue: number =
-                      (product.cashdiscountValue ?? product.cashDiscountValue ?? 0) as number;
+                    const discountValue = Number.isFinite(rawDiscount)
+                      ? Number(Number(rawDiscount).toFixed(2))
+                      : 0;
+                    // Get cash discount value from product and round to 2 decimal places
+                    const rawCashDiscount =
+                      product.cashdiscountValue ?? product.cashDiscountValue ?? 0;
+                    const cashDiscountValue: number = Number.isFinite(rawCashDiscount)
+                      ? Number(Number(rawCashDiscount).toFixed(2))
+                      : 0;
                     // Use unitListPrice as primary source for base price, fallback to other fields
                     const basePrice =
                       product.unitListPrice ??
@@ -244,11 +251,6 @@ export default function OrderProductsTable({
                     // Check for valid quantity values, including askedQuantity
                     let originalQuantity = 0;
                     if (
-                      typeof product.unitQuantity === "number" &&
-                      product.unitQuantity > 0
-                    ) {
-                      originalQuantity = product.unitQuantity;
-                    } else if (
                       typeof product.quantity === "number" &&
                       product.quantity > 0
                     ) {
@@ -282,7 +284,7 @@ export default function OrderProductsTable({
                       unitPriceForCalc * quantityNum;
 
                     // Extract tax percentage from productTaxes array (from API) or fallback to existing fields
-                    let igst = 0;
+                    let rawIgst = 0;
                     if (
                       product.productTaxes &&
                       Array.isArray(product.productTaxes) &&
@@ -290,15 +292,19 @@ export default function OrderProductsTable({
                     ) {
                       // Get the first tax percentage from productTaxes array
                       const firstTax = product.productTaxes[0];
-                      igst = firstTax?.taxPercentage || 0;
+                      rawIgst = firstTax?.taxPercentage || 0;
                     } else {
                       // Fallback to existing fields
-                      igst =
+                      rawIgst =
                         product.tax ??
                         product.igst ??
                         product.igstPercentage ??
                         0;
                     }
+                    // Round IGST to 2 decimal places for display
+                    const igst = Number.isFinite(rawIgst)
+                      ? Number(Number(rawIgst).toFixed(2))
+                      : 0;
 
                     // Get product image
                     const productImage = getProductImage(product);

@@ -3,7 +3,7 @@
 import { yupResolver } from "@hookform/resolvers/yup";
 import { addDays } from "date-fns";
 import { forEach, isEmpty, map, some, words } from "lodash";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { Suspense, useEffect, useMemo, useRef, useState } from "react";
 import { FormProvider, useForm } from "react-hook-form";
 import { toast } from "sonner";
@@ -88,7 +88,8 @@ export default function QuoteSummaryContent() {
   const { quoteSettings } = useModuleSettings(user);
   const { hasQuotePermission } = useAccessControl();
   const { hideLoading } = useGlobalLoader();
-
+  const searchParams = useSearchParams();
+  const sellerCompanyIdFromUrl = searchParams?.get("sellerId");
   const isSummary = true;
   const isOrder = false; // This is a quote summary page, not an order
   const { initialValues, isLoading } = useSummaryDefault(isOrder, isSummary);
@@ -1070,6 +1071,7 @@ export default function QuoteSummaryContent() {
 
       // Update quantity in products array - match productId using multiple possible fields
       // OrderProductsTable uses: brandProductId || itemCode || orderIdentifier
+      // IMPORTANT: Preserve all cash discount related fields when updating quantity
       const updatedProducts = currentProducts.map((product: any) => {
         const productIdToMatch =
           product.brandProductId ||
@@ -1084,6 +1086,10 @@ export default function QuoteSummaryContent() {
             askedQuantity: quantity,
             quantity: quantity,
             unitQuantity: quantity, // Also update unitQuantity for consistency
+            // Preserve cash discount fields - these are critical for correct calculation
+            cashdiscountValue: product.cashdiscountValue || 0,
+            unitListPrice: product.unitListPrice, // Preserve list price for cash discount calculation
+            originalUnitPrice: product.originalUnitPrice || product.unitPrice, // Preserve original price
           };
         }
         return product;
@@ -1121,14 +1127,14 @@ export default function QuoteSummaryContent() {
         });
       }
 
-      // Update products with calculated values, preserving the user's quantity
+      // Update products with calculated values, preserving the user's quantity and cash discount fields
       if (
         calculationResult?.products &&
         calculationResult.products.length > 0
       ) {
         const finalProducts = calculationResult.products.map(
           (calculatedProduct: any) => {
-            // Find the corresponding product from updatedProducts to preserve quantity
+            // Find the corresponding product from updatedProducts to preserve quantity and cash discount fields
             // Match using the same logic as OrderProductsTable: brandProductId || itemCode || orderIdentifier || productId
             const calculatedProductId =
               calculatedProduct.brandProductId ||
@@ -1148,12 +1154,17 @@ export default function QuoteSummaryContent() {
             });
 
             if (userProduct) {
-              // Preserve the quantity the user just typed
+              // Preserve the quantity the user just typed AND cash discount related fields
+              // These fields are critical for cash discount calculation to work correctly
               return {
                 ...calculatedProduct,
                 quantity: userProduct.quantity,
                 askedQuantity: userProduct.askedQuantity,
                 unitQuantity: userProduct.quantity, // Also preserve unitQuantity
+                // Preserve cash discount fields from original product
+                cashdiscountValue: userProduct.cashdiscountValue || calculatedProduct.cashdiscountValue || 0,
+                unitListPrice: userProduct.unitListPrice || calculatedProduct.unitListPrice,
+                originalUnitPrice: userProduct.originalUnitPrice || calculatedProduct.originalUnitPrice,
               };
             }
             return calculatedProduct;
@@ -1186,7 +1197,42 @@ export default function QuoteSummaryContent() {
   };
 
   const setSellerAddress = watch("setSellerAddress");
-  const sellerCompanyId = (setSellerAddress as any)?.companyId?.id;
+  // Extract sellerCompanyId from URL params or seller address
+  const sellerCompanyIdFromAddress = (setSellerAddress as any)?.companyId?.id;
+  const sellerCompanyId = sellerCompanyIdFromUrl 
+    ? parseInt(sellerCompanyIdFromUrl, 10) || undefined
+    : sellerCompanyIdFromAddress;
+
+  // Extract sellerCompanyName using the same logic as requestQuote function (lines 726-729)
+  // and useSummarySubmission (lines 289-307) for comprehensive fallback
+  const sellerCompanyName = useMemo(() => {
+    const sellerAddr = setSellerAddress as any;
+    
+    // Priority 1: sellerAddr.companyId.name (primary source)
+    if (sellerAddr?.companyId && typeof sellerAddr.companyId === "object" && sellerAddr.companyId.name) {
+      return sellerAddr.companyId.name;
+    }
+    
+    // Priority 2: sellerAddr.companyId.companyName
+    if (sellerAddr?.companyId && typeof sellerAddr.companyId === "object" && sellerAddr.companyId.companyName) {
+      return sellerAddr.companyId.companyName;
+    }
+    
+    // Priority 3: sellerAddr.sellerCompanyName (direct property)
+    if (sellerAddr?.sellerCompanyName) {
+      return sellerAddr.sellerCompanyName;
+    }
+    
+    // Priority 4: From first product's sellerName (fallback from useSummarySubmission)
+    if (products && products.length > 0) {
+      const firstProduct = products[0] as any;
+      if (firstProduct?.sellerName) {
+        return firstProduct.sellerName;
+      }
+    }
+    
+    return undefined;
+  }, [setSellerAddress, products]);
 
   // Watch form values for pricing context (these are reactive and will trigger re-renders)
   // Note: cartValue uses || {} fallback which creates new object references, but this is intentional
@@ -1216,12 +1262,12 @@ export default function QuoteSummaryContent() {
     preferencesForPricing?.insuranceId?.insuranceValue,
     cartValue,
   ]);
-
+ 
   return (
     <FormProvider {...methods}>
       <ApplicationLayout>
         {/* Sales Header - Fixed at top */}
-        <div className="flex-shrink-0 sticky top-0 z-50 bg-gray-50">
+        <div className="flex-shrink-0 sticky top-0 z-[90] bg-gray-50">
           <SalesHeader
             title={quoteName}
             identifier=""
@@ -1340,6 +1386,7 @@ export default function QuoteSummaryContent() {
                           (watch("setSellerAddress" as any) as any)?.name ||
                           undefined
                         }
+                        sellerCompanyName={sellerCompanyName}
                         requiredDate={
                           (watch("customerRequiredDate" as any) as string) ||
                           undefined
@@ -1358,7 +1405,13 @@ export default function QuoteSummaryContent() {
                         productIds={
                           products?.map((p: any) => p.productId) || []
                         }
-                        sellerCompanyId={sellerCompanyId}
+                        sellerCompanyId={
+                          sellerCompanyId !== null && sellerCompanyId !== undefined
+                            ? (typeof sellerCompanyId === "string"
+                                ? parseInt(sellerCompanyId, 10) || undefined
+                                : sellerCompanyId)
+                            : undefined
+                        }
                         onRequiredDateChange={(date: string) => {
                           setValue("customerRequiredDate" as any, date);
                         }}

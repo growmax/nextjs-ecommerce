@@ -3,7 +3,6 @@
 import ImageWithFallback from "@/components/ImageWithFallback";
 import { Input } from "@/components/ui/input";
 import { useTenantInfo } from "@/contexts/TenantContext";
-import { useCurrentUser } from "@/hooks/useCurrentUser";
 import OpenElasticSearchService from "@/lib/api/services/ElacticQueryService/openElasticSearch/openElasticSearch";
 import { Loader2, Search } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
@@ -36,12 +35,11 @@ function AddMoreProducts({
   const [products, setProducts] = useState<Product[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const tenantInfo = useTenantInfo();
-  const { user } = useCurrentUser();
   const debounceRef = useRef<number | null>(null);
 
   // Get Elasticsearch index from tenant info or use default
-  const elasticIndex = tenantInfo?.tenant?.elasticCode
-    ? `${tenantInfo.tenant.elasticCode}pgandproducts`
+  const elasticIndex = tenantInfo?.elasticCode
+    ? `${tenantInfo.elasticCode}pgandproducts`
     : "schwingstetterpgandproducts";
 
   // Debounced search function (matching SearchDialogBox pattern)
@@ -69,7 +67,7 @@ function AddMoreProducts({
           term,
           elasticIndex
         );
-        setProducts((data.data || []) as Product[]);
+        setProducts((data.data || []) as unknown as Product[]);
       } catch {
         setProducts([]);
       } finally {

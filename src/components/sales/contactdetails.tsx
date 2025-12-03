@@ -3,16 +3,16 @@
 import { AddressDetailsDialog } from "@/components/dialogs/AddressDetailsDialog";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
-    HoverCard,
-    HoverCardContent,
-    HoverCardTrigger,
+  HoverCard,
+  HoverCardContent,
+  HoverCardTrigger,
 } from "@/components/ui/hover-card";
 import { Input } from "@/components/ui/input";
 import { Separator } from "@/components/ui/separator";
 import { type BillingAddress } from "@/lib/api";
 import SellerWarehouseService, {
-    type SellerBranch,
-    type Warehouse,
+  type SellerBranch,
+  type Warehouse,
 } from "@/lib/api/services/SellerWarehouseService/SellerWarehouseService";
 import { zoneDateTimeCalculator } from "@/utils/date-format/date-format";
 import { Pencil } from "lucide-react";
@@ -60,6 +60,7 @@ interface OrderContactDetailsProps {
   warehouseName?: string | undefined;
   warehouseAddress?: WarehouseAddressDetails;
   salesBranch?: string | undefined;
+  sellerCompanyName?: string | undefined;
   requiredDate?: string | undefined;
   referenceNumber?: string | undefined;
   isEditable?: boolean;
@@ -350,6 +351,7 @@ export default function OrderContactDetails({
   warehouseName,
   warehouseAddress,
   salesBranch,
+  sellerCompanyName,
   requiredDate,
   referenceNumber,
   isEditable = false,
@@ -368,7 +370,7 @@ export default function OrderContactDetails({
   const t = useTranslations("components");
   const [billingDialogOpen, setBillingDialogOpen] = useState(false);
   const [shippingDialogOpen, setShippingDialogOpen] = useState(false);
-
+   console.log(sellerCompanyId);
   // Memoize current billing address to prevent unnecessary recreations
   const currentBillingAddress = useMemo(() => {
     if (!billingAddress) return undefined;
@@ -752,12 +754,17 @@ export default function OrderContactDetails({
         </CardTitle>
       </CardHeader>
       <Separator />
-      <CardContent className="px-6 pt-2 pb-0 gap-0">
+      <CardContent className="px-6 pt-2 pb-4 gap-0">
         <div className="divide-y divide-gray-100 [&>div]:py-1.5 [&>div:last-child]:pb-0">
-          {/* Company */}
+          {/* Company Name */}
           <DetailRow
-            label={t("company")}
-            value={sellerAddress?.sellerCompanyName}
+            label="Company Name"
+            value={
+              sellerCompanyName ||
+              sellerAddress?.sellerCompanyName ||
+              (sellerAddress as any)?.companyId?.name ||
+              (sellerAddress as any)?.companyId?.companyName
+            }
           />
 
           {/* Warehouse */}

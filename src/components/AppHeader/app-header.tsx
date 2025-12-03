@@ -67,7 +67,7 @@ export function AppHeader() {
       {/* ---------- FIXED HEADER (FULLY RESPONSIVE) ---------- */}
       <header
         className={cn(
-          "fixed top-0 z-[10] border-b bg-background/80 backdrop-blur-md supports-[backdrop-filter]:bg-background/80 transition-all duration-200",
+          "fixed top-0 z-[100] border-b bg-background/80 backdrop-blur-md supports-[backdrop-filter]:bg-background/80 transition-all duration-200",
           // Mobile: Full width (sidebar is overlay)
           "left-0 right-0",
           // Desktop: Adjust for sidebar

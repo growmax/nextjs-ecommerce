@@ -55,6 +55,32 @@ export default function CartProductCard({
   const [isUpdating, setIsUpdating] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | false>(false);
 
+  // Extract product image source
+  const productImageSrc = useMemo(() => {
+    // Priority 1: Direct access to productAssetss array - get first image source
+    if (item.productAssetss && Array.isArray(item.productAssetss) && item.productAssetss.length > 0) {
+      // Direct access to first asset's source
+      const firstAsset = item.productAssetss[0];
+      if (firstAsset && firstAsset.source) {
+        const source = String(firstAsset.source).trim();
+        if (source && source !== "") {
+          return source;
+        }
+      }
+    }
+    
+    // Priority 2: Check item.img (which might already be set from productAssetss)
+    if (item.img) {
+      const imgSrc = String(item.img).trim();
+      if (imgSrc && imgSrc !== "") {
+        return imgSrc;
+      }
+    }
+    
+    // Priority 3: Return empty string (will show placeholder)
+    return "";
+  }, [item.productAssetss, item.img]);
+
   // Get suitable discount based on quantity
   const { suitableDiscount } = useMemo(() => {
     const discountsList = item.disc_prd_related_obj?.discounts || [];
@@ -193,7 +219,7 @@ export default function CartProductCard({
       setIsUpdating(false);
     }
   };
-
+  console.log(item);
   if (compact) {
     return (
       <div className="flex items-center justify-between p-2 border rounded">
@@ -243,7 +269,8 @@ export default function CartProductCard({
       </div>
     );
   }
-
+  console.log(pricingResult);
+ 
   return (
     <Card>
       <CardContent className="p-3 sm:p-4">
@@ -251,11 +278,12 @@ export default function CartProductCard({
           {/* Product Image - Left */}
           <div className="relative w-20 h-20 sm:w-24 sm:h-24 flex-shrink-0 bg-muted rounded-lg overflow-hidden">
             <ImageWithFallback
-              src={item.img}
+              src={productImageSrc || item.img || ""}
               alt={item.productName || `Product ${item.productId}`}
               fill
               className="object-cover rounded-lg"
               sizes="96px"
+              {...((productImageSrc?.startsWith("http") || item.img?.startsWith("http")) && { unoptimized: true })}
             />
           </div>
 
@@ -309,8 +337,14 @@ export default function CartProductCard({
                     pricingConditions={pricingConditions}
                     loading={isPricingLoading}
                     variant="default"
-                    showDiscountBadge={true}
+                    showDiscountBadge={false}
                     showMRPLabel={true}
+                    {...(item.discount || item.discountPercentage
+                      ? {
+                          discountPercentage:
+                            item.discount ?? item.discountPercentage ?? 0,
+                        }
+                      : {})}
                   />
                   {/* Tax Inclusive Note */}
                   {!taxExempted && item.taxInclusive && (
@@ -321,20 +355,57 @@ export default function CartProductCard({
                 </>
               )}
               {!pricingResult &&
-                // Fallback: show unitPrice if available when no pricingResult
-                (item.unitPrice && item.unitPrice > 0 ? (
-                  <span className="font-bold text-base">
-                    <PricingFormat value={item.unitPrice} />
-                  </span>
-                ) : item.unitListPrice && item.unitListPrice > 0 ? (
-                  <span className="font-bold text-base">
-                    <PricingFormat value={item.unitListPrice} />
-                  </span>
-                ) : (
-                  <span className="font-bold text-base">
-                    {t("requestPrice")}
-                  </span>
-                ))}
+                // Fallback: show pricing with original price and discount if available
+                (() => {
+                  const unitPrice = item.unitPrice || item.discountedPrice || 0;
+                  const originalPrice = item.unitListPrice || item.MasterPrice || 0;
+                  const discount = item.discount || item.discountPercentage || 0;
+                  const showOriginalPrice = originalPrice > 0 && originalPrice !== unitPrice && unitPrice > 0;
+                  const showDiscount = discount > 0;
+
+                  if (unitPrice > 0) {
+                    return (
+                      <div className="flex items-center gap-2 flex-wrap">
+                        {/* Current Price */}
+                        <span className="font-bold text-base">
+                          <PricingFormat value={unitPrice} />
+                        </span>
+                        {/* Original Price (Struck Through) */}
+                        {showOriginalPrice && (
+                          <div className="flex items-center gap-1.5 whitespace-nowrap">
+                            <span className="text-gray-500 line-through text-sm whitespace-nowrap">
+                              <PricingFormat value={originalPrice} />
+                            </span>
+                            {/* Discount Percentage */}
+                            {showDiscount && (
+                              <span className="font-bold text-green-600 text-sm">
+                                {Math.round(discount)}% OFF
+                              </span>
+                            )}
+                          </div>
+                        )}
+                        {/* Discount Badge (if no original price shown) */}
+                        {!showOriginalPrice && showDiscount && (
+                          <span className="font-bold text-green-600 text-sm">
+                            {Math.round(discount)}% OFF
+                          </span>
+                        )}
+                      </div>
+                    );
+                  } else if (originalPrice > 0) {
+                    return (
+                      <span className="font-bold text-base">
+                        <PricingFormat value={originalPrice} />
+                      </span>
+                    );
+                  } else {
+                    return (
+                      <span className="font-bold text-base">
+                        {t("requestPrice")}
+                      </span>
+                    );
+                  }
+                })()}
             </div>
 
             {/* Quantity, Pack of, and MOQ */}
@@ -385,16 +456,44 @@ export default function CartProductCard({
 
           {/* Right Section - Quantity Controls and Delete */}
           <div className="flex flex-col items-end gap-2 sm:gap-3 shrink-0">
-            {/* Delete Button - Top Right */}
-            <Button
-              variant="ghost"
-              size="icon"
-              className="h-7 w-7 sm:h-8 sm:w-8 rounded-md hover:bg-gray-200"
-              onClick={handleDelete}
-              disabled={isUpdating}
-            >
-              <Trash2 className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
-            </Button>
+            {/* Delete Button and Total Price - Vertical Layout */}
+            <div className="flex flex-col items-end gap-1 sm:gap-2">
+              {/* Delete Button - First (Top) */}
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-7 w-7 sm:h-8 sm:w-8 rounded-md hover:bg-gray-200 shrink-0"
+                onClick={handleDelete}
+                disabled={isUpdating}
+              >
+                <Trash2 className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
+              </Button>
+              {/* Total Price (Price × Quantity) - Second (Below) - Smaller text */}
+              <div>
+                {(() => {
+                  // Calculate total price
+                  if (isPricingLoading) {
+                    return (
+                      <Skeleton className="h-4 w-16 sm:h-4 sm:w-20" />
+                    );
+                  }
+                  
+                  const unitPrice = pricingResult
+                    ? pricingResult.final_listing_price
+                    : item.unitPrice || item.unitListPrice || 0;
+                  const totalPrice = unitPrice * item.quantity;
+                  
+                  if (totalPrice > 0) {
+                    return (
+                      <span className="font-bold text-xs sm:text-sm whitespace-nowrap">
+                        <PricingFormat value={totalPrice} />
+                      </span>
+                    );
+                  }
+                  return null;
+                })()}
+              </div>
+            </div>
 
             {/* Quantity Controls - Square rounded buttons */}
             <div className="flex items-center gap-1.5 sm:gap-2 relative">
@@ -405,7 +504,11 @@ export default function CartProductCard({
                 onClick={() => handleQuantityChange(item.quantity - 1)}
                 disabled={isUpdating || item.quantity <= 1}
               >
-                <Minus className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
+                {isUpdating ? (
+                  <Loader2 className="h-3.5 w-3.5 sm:h-4 sm:w-4 animate-spin text-primary" />
+                ) : (
+                  <Minus className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
+                )}
               </Button>
               <span className="w-7 sm:w-8 text-center font-medium text-sm sm:text-base relative">
                 {isUpdating ? (
@@ -421,7 +524,11 @@ export default function CartProductCard({
                 onClick={() => handleQuantityChange(item.quantity + 1)}
                 disabled={isUpdating}
               >
-                <Plus className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
+                {isUpdating ? (
+                  <Loader2 className="h-3.5 w-3.5 sm:h-4 sm:w-4 animate-spin text-primary" />
+                ) : (
+                  <Plus className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
+                )}
               </Button>
             </div>
           </div>

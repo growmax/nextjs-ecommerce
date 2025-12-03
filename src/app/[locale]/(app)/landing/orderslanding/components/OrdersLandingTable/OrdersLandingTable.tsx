@@ -282,7 +282,7 @@ function OrdersLandingTable({
                   const width = column.size || 150;
                   const headerContent =
                     typeof column.header === "function"
-                      ? column.header()
+                      ? "" // Skeleton placeholder - header function requires context
                       : column.header || "";
                   return (
                     <div
@@ -308,8 +308,8 @@ function OrdersLandingTable({
                 >
                   {columns.map((column, colIndex) => {
                     const width = column.size || 150;
-                    const alignCenter = column.meta?.alignCenter;
-                    const alignRight = column.meta?.alignRight;
+                    const alignCenter = (column.meta as any)?.alignCenter;
+                    const alignRight = (column.meta as any)?.alignRight;
                     return (
                       <div
                         key={`cell-${rowIndex}-${colIndex}`}
@@ -621,6 +621,7 @@ function OrdersLandingTable({
     initialLoad,
     t,
     deduplicate,
+    onTotalCountChange,
   ]);
 
   // Export functionality

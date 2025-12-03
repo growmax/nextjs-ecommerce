@@ -45,7 +45,7 @@ import {
 import { assign_pricelist_discounts_data_to_products } from "@/utils/functionalUtils";
 import { MoreVertical, ShoppingCart, Trash2 } from "lucide-react";
 import { useTranslations } from "next-intl";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { toast } from "sonner";
 
 export default function CartPageClient() {
@@ -68,6 +68,7 @@ export default function CartPageClient() {
     Record<number, string | false>
   >({});
   const [showClearCartDialog, setShowClearCartDialog] = useState(false);
+  const [addingProductId, setAddingProductId] = useState<number | null>(null);
 
   // Access control
   const { hasQuotePermission, hasOrderPermission } = useAccessControl();
@@ -144,6 +145,33 @@ export default function CartPageClient() {
   // Combine only blocking loading states - don't wait for pricing
   // Pricing loads in background and shows loaders at product/cart level
   const isLoading = userLoading || isCartLoading;
+
+  // Monitor cart changes to clear adding state when product is added
+  useEffect(() => {
+    if (addingProductId && cart) {
+      // Check if the product is now in the cart
+      const productInCart = cart.some(
+        item => Number(item.productId) === addingProductId
+      );
+
+      if (productInCart) {
+        // Product added successfully, clear adding state
+        setAddingProductId(null);
+      }
+    }
+  }, [cart, addingProductId]);
+
+  // Fallback timeout to clear adding state after 15 seconds
+  useEffect(() => {
+    if (addingProductId) {
+      const timeout = setTimeout(() => {
+        setAddingProductId(null);
+      }, 15000); // 15 seconds timeout
+
+      return () => clearTimeout(timeout);
+    }
+    return undefined;
+  }, [addingProductId]);
 
   // Show skeleton loader when any loading state is active
   if (isLoading) {
@@ -243,21 +271,6 @@ export default function CartPageClient() {
     );
   }
 
-  // If cart is empty, show empty state
-  if (!cart || cart.length === 0) {
-    return (
-      <Card>
-        <CardContent className="p-8 text-center">
-          <ShoppingCart className="h-12 w-12 mx-auto text-gray-400 mb-4" />
-          <h2 className="text-xl font-semibold mb-2">{t("empty")}</h2>
-          <p className="text-gray-600 mb-4">{t("emptyDescription")}</p>
-          <Button onClick={() => router.push("/products")}>
-            {t("continueShopping")}
-          </Button>
-        </CardContent>
-      </Card>
-    );
-  }
 
   // Update quantity handler using useCart hook
   const updateQuantity = async (item: CartItem, newQuantity: number) => {
@@ -446,6 +459,10 @@ export default function CartPageClient() {
       return;
     }
 
+    // Track product being added
+    const productId = Number(product.productId);
+    setAddingProductId(productId);
+
     try {
       // Get elastic index from tenant data
       const elasticIndex = tenantData?.tenant?.elasticCode
@@ -455,6 +472,7 @@ export default function CartPageClient() {
       // Get product using productIndexName via GET request (following buyer-fe pattern)
       // Payload: { Elasticindex, ElasticBody: productIndexName, ElasticType: "pgproduct", queryType: "get" }
       if (!product.productIndexName) {
+        setAddingProductId(null);
         toast.error("Product index name is missing");
         return;
       }
@@ -467,7 +485,7 @@ export default function CartPageClient() {
       );
       console.log(elasticProduct);
       if (!elasticProduct) {
-    
+        setAddingProductId(null);
         toast.error("Product not found");
         return;
       }
@@ -487,6 +505,7 @@ export default function CartPageClient() {
         : [formattedData];
 
       if (!formattedDataArray || formattedDataArray.length === 0) {
+        setAddingProductId(null);
         toast.error("Failed to process product data");
         return;
       }
@@ -496,6 +515,7 @@ export default function CartPageClient() {
       // Check for replacement/alternative products
       if (newcartdata?.replacement || newcartdata?.alternativeProduct) {
         // TODO: Handle replacement/alternative product dialog
+        setAddingProductId(null);
         toast.info("Product has replacement/alternative options");
         return;
       }
@@ -612,12 +632,151 @@ export default function CartPageClient() {
         false
       );
 
-      toast.success("Product added to cart");
     } catch (error) {
       console.error("Error adding product to cart:", error);
+      setAddingProductId(null);
       toast.error("Failed to add product to cart");
     }
   };
+
+  // If cart is empty, show empty state with heading and search bar
+  // OR show skeleton loaders if product is being added
+  if (!cart || cart.length === 0) {
+    // Show skeleton loaders when adding a product
+    if (addingProductId) {
+      return (
+        <>
+          <div className="mb-8">
+            <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 sm:gap-6">
+              <div className="flex-shrink-0">
+                <h1 className="text-3xl font-bold mb-2">{t("title")}</h1>
+                <p className="text-muted-foreground text-sm">
+                  {t("itemsInCart", { count: cartCount })}
+                </p>
+              </div>
+              {user?.companyId && !isCartLoading && (
+                <div className="w-full sm:w-auto sm:flex-1 sm:max-w-2xl flex items-center gap-2">
+                  <AddMoreProducts
+                    handleCallback={handleAddMoreCallback}
+                    popWidth="100%"
+                  />
+                </div>
+              )}
+            </div>
+          </div>
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            {/* Cart Items Skeleton */}
+            <div className="lg:col-span-2 space-y-4">
+              <Card>
+                <CardContent className="p-4">
+                  <div className="flex gap-6 relative">
+                    {/* Product Image Skeleton */}
+                    <Skeleton className="w-24 h-24 rounded-lg flex-shrink-0" />
+
+                    {/* Product Info - Center */}
+                    <div className="flex-1 min-w-0">
+                      {/* Title */}
+                      <Skeleton className="h-5 w-3/4 mb-1" />
+                      {/* Brand Name and Product ID */}
+                      <div className="flex items-center gap-2 mb-2">
+                        <Skeleton className="h-4 w-32" />
+                      </div>
+                      {/* Seller (optional) */}
+                      <Skeleton className="h-4 w-40 mb-2" />
+                      {/* Price Display */}
+                      <div className="flex flex-col gap-1 mb-2">
+                        <Skeleton className="h-5 w-24" />
+                      </div>
+                      {/* Quantity, Pack of, and MOQ */}
+                      <div className="flex items-center gap-2 mb-1">
+                        <Skeleton className="h-4 w-20" />
+                      </div>
+                    </div>
+
+                    {/* Right Section - Quantity Controls and Delete */}
+                    <div className="flex flex-col items-end gap-3">
+                      {/* Delete Button */}
+                      <Skeleton className="h-8 w-8 rounded-md" />
+                      {/* Quantity Controls */}
+                      <div className="flex items-center gap-2">
+                        <Skeleton className="h-8 w-8 rounded-md" />
+                        <Skeleton className="h-5 w-8" />
+                        <Skeleton className="h-8 w-8 rounded-md" />
+                      </div>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+
+            {/* Price Details Skeleton */}
+            <div>
+              <div className="sticky top-4 space-y-4">
+                <div className="border rounded-lg p-6">
+                  <Skeleton className="h-6 w-32 mb-4" />
+                  <div className="space-y-3">
+                    <div className="flex justify-between">
+                      <Skeleton className="h-4 w-20" />
+                      <Skeleton className="h-4 w-16" />
+                    </div>
+                    <div className="flex justify-between">
+                      <Skeleton className="h-4 w-16" />
+                      <Skeleton className="h-4 w-20" />
+                    </div>
+                    <div className="h-px bg-gray-200 my-2"></div>
+                    <div className="flex justify-between">
+                      <Skeleton className="h-5 w-12" />
+                      <Skeleton className="h-5 w-24" />
+                    </div>
+                    <div className="flex justify-between pt-2">
+                      <Skeleton className="h-6 w-16" />
+                      <Skeleton className="h-6 w-28" />
+                    </div>
+                  </div>
+                </div>
+                {/* CartProceedButton Skeleton */}
+                <div className="space-y-2">
+                  <Skeleton className="h-12 w-full rounded" />
+                  <Skeleton className="h-12 w-full rounded" />
+                </div>
+              </div>
+            </div>
+          </div>
+        </>
+      );
+    }
+
+    // Show empty cart state when not adding a product
+    return (
+      <>
+        <div className="mb-8">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 sm:gap-6">
+            <div className="flex-shrink-0">
+              <h1 className="text-3xl font-bold mb-2">{t("title")}</h1>
+              <p className="text-muted-foreground text-sm">
+                {t("itemsInCart", { count: cartCount })}
+              </p>
+            </div>
+            {user?.companyId && !isCartLoading && (
+              <div className="w-full sm:w-auto sm:flex-1 sm:max-w-2xl flex items-center gap-2">
+                <AddMoreProducts
+                  handleCallback={handleAddMoreCallback}
+                  popWidth="100%"
+                />
+              </div>
+            )}
+          </div>
+        </div>
+        <Card>
+          <CardContent className="p-8 text-center">
+            <ShoppingCart className="h-12 w-12 mx-auto text-gray-400 mb-4" />
+            <h2 className="text-xl font-semibold mb-2">{t("empty")}</h2>
+            <p className="text-gray-600">{t("emptyDescription")}</p>
+          </CardContent>
+        </Card>
+      </>
+    );
+  }
 
   return (
     <>

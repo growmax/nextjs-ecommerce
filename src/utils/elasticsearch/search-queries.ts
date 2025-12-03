@@ -119,6 +119,7 @@ export const buildProductSearchQuery = (searchText: string): ElasticSearchQuery 
               query: sanitizedQuery,
               analyzer: "my_analyzer",
               analyze_wildcard: true,
+              auto_generate_phrase_queries: true,
               default_operator: "AND",
               fields: PRODUCT_SEARCH_FIELDS,
               boost: 200,

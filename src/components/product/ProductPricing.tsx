@@ -21,6 +21,7 @@ interface ProductPricingProps {
   showDiscountBadge?: boolean;
   className?: string;
   showMRPLabel?: boolean;
+  discountPercentage?: number; // Optional discount percentage from discount params
 }
 
 /**
@@ -35,7 +36,8 @@ export default function ProductPricing({
   variant = "default",
   showDiscountBadge = true,
   className = "",
-  showMRPLabel = true,
+  showMRPLabel: _showMRPLabel = true,
+  discountPercentage: discountPercentageProp,
 }: ProductPricingProps) {
   // Size variants
   const sizeClasses = {
@@ -71,7 +73,7 @@ export default function ProductPricing({
       </span>
     );
   }
-
+ 
   // Show pricing if we have data
   if (pricingResult && pricingResult.final_listing_price > 0) {
     const showStrikethrough =
@@ -87,21 +89,40 @@ export default function ProductPricing({
 
     return (
       <div className={`flex items-center gap-2 flex-wrap ${className}`}>
-        {/* Final Listing Price (after discount) */}
+        {/* Final Listing Price (after discount) with inline discount percentage */}
         {pricingConditions.ShowBasePrice && (
-          <span className={`${sizeClasses[variant]} whitespace-nowrap`}>
-            <PricingFormat value={pricingResult.final_listing_price} />
-          </span>
+          <div className="flex items-center gap-1.5 whitespace-nowrap">
+            <span className={sizeClasses[variant]}>
+              <PricingFormat value={pricingResult.final_listing_price} />
+            </span>
+            {/* Discount Percentage Badge - Show next to overridden price when discount params > 0 */}
+         
+          </div>
         )}
 
         {/* Strikethrough Original Price (MRP/Master Price) */}
         {showStrikethrough && !pricingConditions.ShowRequestPrice && (
+              <div className="flex items-center gap-1.5 whitespace-nowrap">
           <span
             className={`text-gray-500 line-through ${strikethroughSizeClasses[variant]} whitespace-nowrap`}
           >
-            {showMRPLabel && "MRP "}
+            
             <PricingFormat value={pricingResult.final_Price} />
           </span>
+          {(() => {
+              // Use discount percentage from pricingResult or from prop (discount params)
+              const discountPercent =  discountPercentageProp ?? 0;
+              
+              if (discountPercent > 0) {
+                return (
+                  <span className="font-bold text-green-600 text-sm">
+                    {Math.round(discountPercent)}%
+                  </span>
+                );
+              }
+              return null;
+            })()}
+          </div>
         )}
 
         {/* Discount Badge */}

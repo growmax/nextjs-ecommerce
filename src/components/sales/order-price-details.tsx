@@ -13,8 +13,8 @@ import {
   setTaxBreakup,
 } from "@/utils/calculation/tax-breakdown";
 import { ChevronDown } from "lucide-react";
-import { useMemo, useState } from "react";
 import { useTranslations } from "next-intl";
+import { useMemo, useState } from "react";
 import PricingFormat from "../PricingFormat";
 
 interface TaxDetail {
@@ -94,7 +94,7 @@ export default function OrderPriceDetails({
   VDapplied = false,
   VDDetails = {},
   alreadyPaid,
-  roundingAdjustment,
+  roundingAdjustment: _roundingAdjustment,
   getBreakup = [],
   isBeforeTax = false,
   shippingTax = 0,
@@ -142,7 +142,7 @@ export default function OrderPriceDetails({
             (product.quantity || product.askedQuantity || 1);
 
           // Calculate cash discount if applicable (only if not provided via props)
-          // Cash discount is always calculated on unitListPrice (list price), not on unitPrice
+          // Cash discount is calculated on the price AFTER basic discount (originalUnitPrice), not on list price
           if (
             propTotalCashDiscount === undefined ||
             propTotalCashDiscount === null
@@ -154,13 +154,15 @@ export default function OrderPriceDetails({
               if (!cashDiscountValueFromProducts) {
                 cashDiscountValueFromProducts = productCashDiscountValue;
               }
-              // Calculate cash discount amount based on unitListPrice (list price)
+              // Calculate cash discount amount based on originalUnitPrice (price after basic discount)
               // This matches the calculation in cart-calculation.ts
               const qty = product.quantity || product.askedQuantity || 1;
-              const listPrice = product.unitListPrice || product.unitLP || 0;
-              // Cash discount = (unitListPrice * cashdiscountValue) / 100 * quantity
+              // Use originalUnitPrice (price after basic discount) or unitPrice as fallback
+              const basePriceForCashDiscount =
+                product.originalUnitPrice || product.unitPrice || 0;
+              // Cash discount = (originalUnitPrice * cashdiscountValue) / 100 * quantity
               const cashDiscountAmount =
-                (listPrice * productCashDiscountValue) / 100;
+                (basePriceForCashDiscount * productCashDiscountValue) / 100;
               totalCashDiscountFromProducts += cashDiscountAmount * qty;
             }
           }
@@ -194,19 +196,9 @@ export default function OrderPriceDetails({
               ? overallShipping
               : 0);
 
-      // Calculate cash discount from products
-      if (products && products.length > 0) {
-        products.forEach((product: any) => {
-          const qty = product.quantity || product.askedQuantity || 1;
-          const unitPrice = product.unitPrice || product.discountedPrice || 0;
-          const cashDiscount =
-            product.cashdiscountValue || product.cashDiscountValue || 0;
-          if (cashDiscount > 0) {
-            totalCashDiscountFromProducts +=
-              (unitPrice * qty * cashDiscount) / 100;
-          }
-        });
-      }
+      // Note: Cash discount is already calculated correctly in the loop above (lines 144-166)
+      // based on unitListPrice (list price), which matches the calculation in cart-calculation.ts.
+      // The duplicate calculation using unitPrice (discounted price) was incorrect and has been removed.
 
       return {
         totalItems: products?.length || 0,
@@ -640,22 +632,6 @@ export default function OrderPriceDetails({
   const showListPrice = !cartValue.hideListPricePublic && cartValue.totalLP > 0;
 
   const showCashDiscount = Boolean(CASH_DISCOUNT > 0);
-  const roundingAdjustmentEnabled = Settings?.roundingAdjustment || false;
-
-  // Get final rounding adjustment value
-  const finalRoundingAdjustment =
-    roundingAdjustment !== undefined && roundingAdjustment !== null
-      ? roundingAdjustment
-      : (VDapplied
-          ? VDDetails?.roundingAdjustment
-          : cartValue.roundingAdjustment) || 0;
-
-  // Get final calculated total
-  const finalCalculatedTotal =
-    calculatedTotal !== undefined && calculatedTotal !== null
-      ? calculatedTotal
-      : (VDapplied ? VDDetails?.calculatedTotal : cartValue.calculatedTotal) ||
-        0;
 
   return (
     <Card className="shadow-sm bg-white p-0 m-0 overflow-hidden gap-4 w-full">
@@ -966,41 +942,7 @@ export default function OrderPriceDetails({
             </>
           )}
 
-        {/* Calculated Total - show when rounding adjustment is enabled */}
-        {roundingAdjustmentEnabled && (
-          <div className="flex justify-between items-center gap-4 min-w-0">
-            <div className="flex-shrink-0">
-              <TypographyMuted>
-                {t("calculatedTotal") || "Calculated Total"}
-              </TypographyMuted>
-            </div>
-            <div className="text-right flex-shrink-0 break-words">
-              <TypographyMuted>
-                <PricingFormat value={finalCalculatedTotal} />
-              </TypographyMuted>
-            </div>
-          </div>
-        )}
-
-        {/* Rounding Adjustment - show when rounding adjustment is enabled */}
-        {roundingAdjustmentEnabled && (
-          <div className="flex justify-between items-center gap-4 min-w-0">
-            <div className="flex-shrink-0">
-              <TypographyMuted>
-                {t("roundingAdjustment") || "Rounding Adjustment"}
-              </TypographyMuted>
-            </div>
-            <div
-              className={`text-right flex-shrink-0 break-words ${
-                finalRoundingAdjustment > 0 ? "text-green-600" : "text-red-600"
-              }`}
-            >
-              <TypographyMuted>
-                <PricingFormat value={finalRoundingAdjustment} />
-              </TypographyMuted>
-            </div>
-          </div>
-        )}
+    
 
         {/* Total / To Pay */}
         <div className="flex justify-between items-center gap-4 min-w-0 pt-2">

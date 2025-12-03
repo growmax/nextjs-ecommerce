@@ -83,7 +83,7 @@ export default function MultipleSellerCards({
     sellerIds,
     isPricingLoading: pricingLoadingFromHook,
   } = useMultipleSellerCart(cart, calculationParams);
-
+ 
   // Determine default expanded seller (first seller when multiple sellers exist)
   // Calculate this before early returns so we can use it in useEffect
   const defaultSellerId = useMemo(() => {
@@ -240,14 +240,14 @@ export default function MultipleSellerCards({
                             key={`${item.productId}-${item.itemNo}-${itemIndex}`}
                             item={item}
                             isPricingLoading={isPricingLoadingState}
-                            onUpdate={quantity => {
+                            onUpdate={async (quantity) => {
                               if (onItemUpdate) {
-                                onItemUpdate(item, quantity);
+                                await onItemUpdate(item, quantity);
                               }
                             }}
-                            onDelete={() => {
+                            onDelete={async () => {
                               if (onItemDelete) {
-                                onItemDelete(
+                                await onItemDelete(
                                   Number(item.productId),
                                   item.itemNo || "",
                                   item.sellerId
