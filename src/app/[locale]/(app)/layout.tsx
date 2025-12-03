@@ -12,11 +12,11 @@ import { headers } from "next/headers";
 import { cache, ReactNode, Suspense } from "react";
 
 // Import the AppHeader component
+import { BlockingLoader } from "@/components/GlobalLoader/BlockingLoader";
 import LayoutWithHeader from "@/components/LayoutWithHeader";
 import { LayoutDataLoader } from "@/components/layout/LayoutDataLoader";
 import { PrefetchMainRoutes } from "@/components/layout/PrefetchMainRoutes";
 import { BlockingLoaderProvider } from "@/providers/BlockingLoaderProvider";
-import { BlockingLoader } from "@/components/GlobalLoader/BlockingLoader";
 
 // Import Global Blocking Loader (Phase 1: Page-isolated)
 import { TokenInitializer } from "@/components/TokenInitializer";
