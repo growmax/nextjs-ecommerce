@@ -662,6 +662,7 @@
     "state": "State",
     "stateProvince": "State/Province",
     "loadingStates": "Loading states...",
+    "selectState": "Select State",
     "searchAStateProvince": "Search A State/Province",
     "district": "District",
     "loadingDistricts": "Loading districts...",

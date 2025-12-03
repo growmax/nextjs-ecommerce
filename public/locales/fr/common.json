@@ -279,7 +279,10 @@
     "submit": "Soumettre",
     "submitButton": "Soumettre",
     "productAddedSuccessfullyToQuote": "Produit ajouté avec succès",
-    "failedToAddProductToQuote": "Échec de l'ajout du produit au devis"
+    "failedToAddProductToQuote": "Échec de l'ajout du produit au devis",
+    "newVersionCreatedNote": "Note: New version will be created for this quotation",
+    "cancel": "Cancel",
+    "yes": "Yes"
   },
   "products": {
     "title": "Produits",
@@ -408,15 +411,20 @@
     "boardView": "Vue tableau"
   },
   "validation": {
-    "required": "Ce champ est obligatoire",
-    "email": "Veuillez entrer une adresse email valide",
-    "phone": "Veuillez entrer un numéro de téléphone valide",
-    "minLength": "Minimum {min} caractères requis",
-    "maxLength": "Maximum {max} caractères autorisés",
-    "min": "La valeur minimale est {min}",
-    "max": "La valeur maximale est {max}",
-    "number": "Veuillez entrer un nombre valide",
-    "positive": "Veuillez entrer un nombre positif"
+    "branchNameRequired": "Le nom de la succursale est requis",
+    "addressLineRequired": "L'adresse est requise",
+    "countryRequired": "Le pays est requis",
+    "stateRequired": "L'état/province est requis",
+    "pinCodeRequired": "Le code postal est requis",
+    "required": "This field is required",
+    "email": "Please enter a valid email address",
+    "phone": "Please enter a valid phone number",
+    "minLength": "Minimum {min} characters required",
+    "maxLength": "Maximum {max} characters allowed",
+    "min": "Minimum value is {min}",
+    "max": "Maximum value is {max}",
+    "number": "Please enter a valid number",
+    "positive": "Please enter a positive number"
   },
   "errors": {
     "404": "404",
@@ -521,7 +529,7 @@
     "usc": "USC(INR₹)",
     "quantity": "QUANTITÉ",
     "invoicedQty": "QUANTITÉ FACTURÉE",
-    "amount": "MONTANT(INR₹)",
+    "amount": "Montant:",
     "igst": "IGST(%)",
     "contactDetails": "Détails de Contact",
     "company": "Entreprise",
@@ -547,7 +555,7 @@
     "pfRate": "Taux P&F",
     "taxableAmount": "Montant Imposable",
     "tax": "Taxe",
-    "total": "Total",
+    "total": "TOTAL:",
     "customerInformation": "Informations Client",
     "quoteValidity": "Validité du Devis",
     "contractEnabled": "Contrat Activé",
@@ -584,19 +592,18 @@
     "statusBooked": "Réservé",
     "statusInvoiced": "Facturé",
     "statusShipped": "Expédié",
-    "total": "TOTAL:",
     "paid": "PAYÉ:",
     "toPay": "À PAYER:",
     "lastDate": "DERNIÈRE DATE:",
     "paymentDetails": "Détails du Paiement",
-    "amount": "Montant:",
     "gateway": "Passerelle:",
     "method": "Méthode:",
     "date": "Date:",
     "referenceId": "ID de Référence:",
     "noPaymentsYet": "Aucun paiement pour le moment",
     "noDue": "Aucun échéance",
-    "other": "Autre"
+    "other": "Autre",
+    "cashDiscount": "Cash Discount"
   },
   "companySettings": {
     "companySettings": "Paramètres de l'Entreprise",
@@ -674,14 +681,12 @@
     "missingAddressIdForUpdate": "ID d'adresse manquant pour la mise à jour. Veuillez rouvrir la succursale ou actualiser la liste et réessayer.",
     "missingAuthCannotUpdateBranch": "Authentification manquante (userId/companyId) - impossible de mettre à jour la succursale",
     "companyLogo": "Logo de l'Entreprise",
-    "selectAnOption": "Sélectionner une option"
-  },
-  "validation": {
-    "branchNameRequired": "Le nom de la succursale est requis",
-    "addressLineRequired": "L'adresse est requise",
-    "countryRequired": "Le pays est requis",
-    "stateRequired": "L'état/province est requis",
-    "pinCodeRequired": "Le code postal est requis"
+    "selectAnOption": "Sélectionner une option",
+    "branchName": "Branch Name",
+    "location": "Location",
+    "selectCountry": "Select Country",
+    "state": "State",
+    "selectState": "Select State"
   },
   "profileSettings": {
     "profileSettings": "Paramètres du Profil",

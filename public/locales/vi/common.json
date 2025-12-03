@@ -279,7 +279,10 @@
     "submit": "Gửi",
     "submitButton": "Gửi",
     "productAddedSuccessfullyToQuote": "Đã thêm sản phẩm thành công",
-    "failedToAddProductToQuote": "Không thể thêm sản phẩm vào báo giá"
+    "failedToAddProductToQuote": "Không thể thêm sản phẩm vào báo giá",
+    "newVersionCreatedNote": "Note: New version will be created for this quotation",
+    "cancel": "Cancel",
+    "yes": "Yes"
   },
   "products": {
     "title": "Sản phẩm",
@@ -526,7 +529,7 @@
     "usc": "USC(INR₹)",
     "quantity": "SỐ LƯỢNG",
     "invoicedQty": "SỐ LƯỢNG ĐÃ XUẤT HÓA ĐƠN",
-    "amount": "SỐ TIỀN(INR₹)",
+    "amount": "Số tiền:",
     "igst": "IGST(%)",
     "contactDetails": "Chi tiết liên hệ",
     "company": "Công ty",
@@ -552,7 +555,7 @@
     "pfRate": "Tỷ lệ P&F",
     "taxableAmount": "Số tiền chịu thuế",
     "tax": "Thuế",
-    "total": "Tổng",
+    "total": "TỔNG:",
     "customerInformation": "Thông tin khách hàng",
     "quoteValidity": "Hiệu lực báo giá",
     "contractEnabled": "Đã bật hợp đồng",
@@ -590,18 +593,17 @@
     "statusBooked": "Đã đặt",
     "statusInvoiced": "Đã xuất hóa đơn",
     "statusShipped": "Đã giao hàng",
-    "total": "TỔNG:",
     "paid": "ĐÃ THANH TOÁN:",
     "toPay": "CẦN THANH TOÁN:",
     "lastDate": "NGÀY CUỐI:",
     "paymentDetails": "Chi tiết thanh toán",
-    "amount": "Số tiền:",
     "gateway": "Cổng thanh toán:",
     "method": "Phương thức:",
     "date": "Ngày:",
     "referenceId": "Mã tham chiếu:",
     "noPaymentsYet": "Chưa có thanh toán",
-    "noDue": "Không có nợ"
+    "noDue": "Không có nợ",
+    "cashDiscount": "Cash Discount"
   },
   "companySettings": {
     "companySettings": "Cài đặt công ty",
@@ -679,7 +681,12 @@
     "missingAddressIdForUpdate": "Thiếu ID địa chỉ để cập nhật. Vui lòng mở lại chi nhánh hoặc làm mới danh sách và thử lại.",
     "missingAuthCannotUpdateBranch": "Thiếu xác thực (userId/companyId) - không thể cập nhật chi nhánh",
     "companyLogo": "Logo công ty",
-    "selectAnOption": "Chọn một tùy chọn"
+    "selectAnOption": "Chọn một tùy chọn",
+    "branchName": "Branch Name",
+    "location": "Location",
+    "selectCountry": "Select Country",
+    "state": "State",
+    "selectState": "Select State"
   },
   "profileSettings": {
     "profileSettings": "Cài đặt hồ sơ",

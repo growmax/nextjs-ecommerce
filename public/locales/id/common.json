@@ -279,7 +279,10 @@
     "submit": "Kirim",
     "submitButton": "Kirim",
     "productAddedSuccessfullyToQuote": "Produk berhasil ditambahkan",
-    "failedToAddProductToQuote": "Gagal menambahkan produk ke penawaran"
+    "failedToAddProductToQuote": "Gagal menambahkan produk ke penawaran",
+    "newVersionCreatedNote": "Note: New version will be created for this quotation",
+    "cancel": "Cancel",
+    "yes": "Yes"
   },
   "products": {
     "title": "Produk",
@@ -526,7 +529,7 @@
     "usc": "USC(INR₹)",
     "quantity": "JUMLAH",
     "invoicedQty": "JUMLAH TERTAGIH",
-    "amount": "JUMLAH(INR₹)",
+    "amount": "Jumlah:",
     "igst": "IGST(%)",
     "contactDetails": "Detail Kontak",
     "company": "Perusahaan",
@@ -552,7 +555,7 @@
     "pfRate": "Tarif P&F",
     "taxableAmount": "Jumlah Kena Pajak",
     "tax": "Pajak",
-    "total": "Total",
+    "total": "TOTAL:",
     "customerInformation": "Informasi Pelanggan",
     "quoteValidity": "Masa Berlaku Penawaran",
     "contractEnabled": "Kontrak Diaktifkan",
@@ -590,18 +593,17 @@
     "statusBooked": "Dipesan",
     "statusInvoiced": "Tertagih",
     "statusShipped": "Terkirim",
-    "total": "TOTAL:",
     "paid": "DIBAYAR:",
     "toPay": "HARUS DIBAYAR:",
     "lastDate": "TANGGAL TERAKHIR:",
     "paymentDetails": "Detail Pembayaran",
-    "amount": "Jumlah:",
     "gateway": "Gateway:",
     "method": "Metode:",
     "date": "Tanggal:",
     "referenceId": "ID Referensi:",
     "noPaymentsYet": "Belum ada pembayaran",
-    "noDue": "Tidak ada jatuh tempo"
+    "noDue": "Tidak ada jatuh tempo",
+    "cashDiscount": "Cash Discount"
   },
   "companySettings": {
     "companySettings": "Pengaturan Perusahaan",
@@ -679,7 +681,12 @@
     "missingAddressIdForUpdate": "ID alamat tidak ada untuk pembaruan. Harap buka kembali cabang atau segarkan daftar dan coba lagi.",
     "missingAuthCannotUpdateBranch": "Autentikasi tidak ada (userId/companyId) - tidak dapat memperbarui cabang",
     "companyLogo": "Logo Perusahaan",
-    "selectAnOption": "Pilih opsi"
+    "selectAnOption": "Pilih opsi",
+    "branchName": "Branch Name",
+    "location": "Location",
+    "selectCountry": "Select Country",
+    "state": "State",
+    "selectState": "Select State"
   },
   "profileSettings": {
     "profileSettings": "Pengaturan Profil",

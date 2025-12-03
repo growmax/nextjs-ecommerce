@@ -279,7 +279,10 @@
     "submit": "Enviar",
     "submitButton": "Enviar",
     "productAddedSuccessfullyToQuote": "Producto agregado exitosamente",
-    "failedToAddProductToQuote": "Error al agregar producto a la cotización"
+    "failedToAddProductToQuote": "Error al agregar producto a la cotización",
+    "newVersionCreatedNote": "Note: New version will be created for this quotation",
+    "cancel": "Cancel",
+    "yes": "Yes"
   },
   "products": {
     "title": "Productos",
@@ -408,15 +411,20 @@
     "boardView": "Vista de tablero"
   },
   "validation": {
-    "required": "Este campo es obligatorio",
-    "email": "Por favor ingrese un correo electrónico válido",
-    "phone": "Por favor ingrese un número de teléfono válido",
-    "minLength": "Se requieren mínimo {min} caracteres",
-    "maxLength": "Se permiten máximo {max} caracteres",
-    "min": "El valor mínimo es {min}",
-    "max": "El valor máximo es {max}",
-    "number": "Por favor ingrese un número válido",
-    "positive": "Por favor ingrese un número positivo"
+    "branchNameRequired": "El nombre de la sucursal es obligatorio",
+    "addressLineRequired": "La dirección es obligatoria",
+    "countryRequired": "El país es obligatorio",
+    "stateRequired": "El estado/provincia es obligatorio",
+    "pinCodeRequired": "El código postal es obligatorio",
+    "required": "This field is required",
+    "email": "Please enter a valid email address",
+    "phone": "Please enter a valid phone number",
+    "minLength": "Minimum {min} characters required",
+    "maxLength": "Maximum {max} characters allowed",
+    "min": "Minimum value is {min}",
+    "max": "Maximum value is {max}",
+    "number": "Please enter a valid number",
+    "positive": "Please enter a positive number"
   },
   "errors": {
     "404": "404",
@@ -521,7 +529,7 @@
     "usc": "USC(INR₹)",
     "quantity": "CANTIDAD",
     "invoicedQty": "CANTIDAD FACTURADA",
-    "amount": "MONTO(INR₹)",
+    "amount": "Monto:",
     "igst": "IGST(%)",
     "contactDetails": "Detalles de Contacto",
     "company": "Empresa",
@@ -547,7 +555,7 @@
     "pfRate": "Tarifa P&F",
     "taxableAmount": "Monto Imponible",
     "tax": "Impuesto",
-    "total": "Total",
+    "total": "TOTAL:",
     "customerInformation": "Información del Cliente",
     "quoteValidity": "Validez de Cotización",
     "contractEnabled": "Contrato Habilitado",
@@ -584,19 +592,18 @@
     "statusBooked": "Reservado",
     "statusInvoiced": "Facturado",
     "statusShipped": "Enviado",
-    "total": "TOTAL:",
     "paid": "PAGADO:",
     "toPay": "A PAGAR:",
     "lastDate": "ÚLTIMA FECHA:",
     "paymentDetails": "Detalles de Pago",
-    "amount": "Monto:",
     "gateway": "Pasarela:",
     "method": "Método:",
     "date": "Fecha:",
     "referenceId": "ID de Referencia:",
     "noPaymentsYet": "Aún no hay pagos",
     "noDue": "Sin vencimiento",
-    "other": "Otro"
+    "other": "Otro",
+    "cashDiscount": "Cash Discount"
   },
   "companySettings": {
     "companySettings": "Configuración de la Empresa",
@@ -674,14 +681,12 @@
     "missingAddressIdForUpdate": "Falta el ID de dirección para actualizar. Por favor vuelva a abrir la sucursal o actualice la lista e intente de nuevo.",
     "missingAuthCannotUpdateBranch": "Falta autenticación (userId/companyId) - no se puede actualizar la sucursal",
     "companyLogo": "Logotipo de la Empresa",
-    "selectAnOption": "Seleccionar una opción"
-  },
-  "validation": {
-    "branchNameRequired": "El nombre de la sucursal es obligatorio",
-    "addressLineRequired": "La dirección es obligatoria",
-    "countryRequired": "El país es obligatorio",
-    "stateRequired": "El estado/provincia es obligatorio",
-    "pinCodeRequired": "El código postal es obligatorio"
+    "selectAnOption": "Seleccionar una opción",
+    "branchName": "Branch Name",
+    "location": "Location",
+    "selectCountry": "Select Country",
+    "state": "State",
+    "selectState": "Select State"
   },
   "profileSettings": {
     "profileSettings": "Configuración de Perfil",
