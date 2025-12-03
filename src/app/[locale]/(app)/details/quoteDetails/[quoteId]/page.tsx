@@ -1,27 +1,25 @@
 "use client";
 
-import { usePageScroll } from "@/hooks/usePageScroll";
+import { PageLoader } from "@/components/Loaders/PageLoader/page-loader";
+import dynamic from "next/dynamic";
 import { Suspense } from "react";
-import QuoteDetailsClient from "./components/QuoteDetailsClient";
+
+// Dynamic import of client component with loading state
+const QuoteDetailsClient = dynamic(
+  () => import("./components/QuoteDetailsClient"),
+  {
+    ssr: false,
+    loading: () => <PageLoader message="Loading Quote Details..." />,
+  }
+);
 
 export default function QuoteDetailsPage({
   params,
 }: {
   params: Promise<{ quoteId: string }>;
 }) {
-  usePageScroll();
-
   return (
-    <Suspense
-      fallback={
-        <div className="min-h-screen bg-background p-6">
-          <div className="space-y-4">
-            <div className="h-12 w-64 bg-muted animate-pulse rounded" />
-            <div className="h-96 w-full bg-muted animate-pulse rounded" />
-          </div>
-        </div>
-      }
-    >
+    <Suspense fallback={<PageLoader message="Loading Quote Details..." />}>
       <QuoteDetailsClient params={params} />
     </Suspense>
   );

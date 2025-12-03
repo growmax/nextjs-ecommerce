@@ -5,6 +5,8 @@ import { Layers } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
+import { usePageLoader } from "@/hooks/usePageLoader";
+import { useLoading } from "@/hooks/useGlobalLoader";
 
 import {
   VersionsDialog,
@@ -114,6 +116,10 @@ export default function EditOrderPage({ params }: EditOrderPageProps) {
   const { push } = useNavigationWithLoader();
   const t = useTranslations("orders");
   const tDetails = useTranslations("details");
+  const { showLoading, hideLoading } = useLoading();
+
+  // Hide navigation loader when page mounts
+  usePageLoader();
 
   usePageScroll();
 
@@ -521,9 +527,57 @@ export default function EditOrderPage({ params }: EditOrderPageProps) {
   >([]);
 
   // Update products with cash discount when products change
+  // Only update if cash discount is not applied, otherwise preserve cash discount values
+  const productsWithCashDiscountRef = useRef<CartItem[]>([]);
   useEffect(() => {
-    setProductsWithCashDiscount(productsWithEditedQuantities);
-  }, [productsWithEditedQuantities]);
+    productsWithCashDiscountRef.current = productsWithCashDiscount;
+  }, [productsWithCashDiscount]);
+
+  useEffect(() => {
+    if (!cashDiscountApplied) {
+      // If cash discount is not applied, sync normally
+      setProductsWithCashDiscount(productsWithEditedQuantities);
+    } else {
+      // If cash discount is applied, merge cash discount values into updated products
+      const currentProductsWithCD = productsWithCashDiscountRef.current;
+      const orderDetail = orderDetails?.data?.orderDetails?.[0];
+      const cashDiscountValue = orderDetail?.cashdiscountValue || 0;
+
+      const mergedProducts = productsWithEditedQuantities.map(
+        (product: any) => {
+          // Find matching product in current productsWithCashDiscount to preserve cash discount
+          const existingProduct = currentProductsWithCD.find(
+            (cdProduct: any) =>
+              cdProduct.productId === product.productId ||
+              cdProduct.brandProductId === product.brandProductId ||
+              cdProduct.itemCode === product.itemCode
+          );
+
+          if (existingProduct && existingProduct.cashdiscountValue) {
+            return {
+              ...product,
+              cashdiscountValue: existingProduct.cashdiscountValue,
+              originalUnitPrice:
+                existingProduct.originalUnitPrice || product.originalUnitPrice,
+            };
+          }
+
+          // If no existing product found but cash discount is applied, apply it
+          if (cashDiscountValue > 0) {
+            return {
+              ...product,
+              cashdiscountValue: cashDiscountValue,
+              originalUnitPrice: product.originalUnitPrice || product.unitPrice,
+            };
+          }
+
+          return product;
+        }
+      );
+
+      setProductsWithCashDiscount(mergedProducts);
+    }
+  }, [productsWithEditedQuantities, cashDiscountApplied, orderDetails]);
 
   // Cash discount handlers
   const { handleCDApply, handleRemoveCD } = useCashDiscountHandlers({
@@ -700,6 +754,50 @@ export default function EditOrderPage({ params }: EditOrderPageProps) {
             return prev; // No change, return previous state
           }
 
+          // Preserve cash discount state if it was applied
+          const currentOrder = prev.data.orderDetails[0];
+          const isCashDiscountApplied = Boolean(
+            currentOrder?.cashdiscount || cashDiscountApplied
+          );
+          const cashDiscountValue =
+            currentOrder?.cashdiscountValue ||
+            productsWithCashDiscount[0]?.cashdiscountValue ||
+            0;
+
+          // Merge cash discount values from productsWithCashDiscount if cash discount is applied
+          let mergedProducts = updatedProducts;
+          if (isCashDiscountApplied && productsWithCashDiscount.length > 0) {
+            mergedProducts = updatedProducts.map((updatedProduct: any) => {
+              // Find matching product in productsWithCashDiscount
+              const cashDiscountProduct = productsWithCashDiscount.find(
+                (cdProduct: any) =>
+                  cdProduct.productId === updatedProduct.productId ||
+                  cdProduct.brandProductId === updatedProduct.brandProductId ||
+                  cdProduct.itemCode === updatedProduct.itemCode
+              );
+
+              if (cashDiscountProduct) {
+                return {
+                  ...updatedProduct,
+                  cashdiscountValue:
+                    cashDiscountProduct.cashdiscountValue || cashDiscountValue,
+                  originalUnitPrice:
+                    cashDiscountProduct.originalUnitPrice ||
+                    updatedProduct.originalUnitPrice,
+                };
+              }
+
+              // If no match found, still apply cash discount value if it exists
+              return {
+                ...updatedProduct,
+                cashdiscountValue:
+                  cashDiscountValue > 0
+                    ? cashDiscountValue
+                    : updatedProduct.cashdiscountValue || 0,
+              };
+            });
+          }
+
           return {
             ...prev,
             data: {
@@ -708,7 +806,12 @@ export default function EditOrderPage({ params }: EditOrderPageProps) {
                 idx === 0
                   ? {
                       ...order,
-                      dbProductDetails: updatedProducts,
+                      dbProductDetails: mergedProducts,
+                      // Preserve cash discount state
+                      ...(isCashDiscountApplied && {
+                        cashdiscount: true,
+                        cashdiscountValue: cashDiscountValue,
+                      }),
                     }
                   : order
               ),
@@ -717,7 +820,13 @@ export default function EditOrderPage({ params }: EditOrderPageProps) {
         });
       }
     }
-  }, [updatedProducts, updatingProducts, orderDetails]);
+  }, [
+    updatedProducts,
+    updatingProducts,
+    orderDetails,
+    cashDiscountApplied,
+    productsWithCashDiscount,
+  ]);
 
   // Load params asynchronously
   useEffect(() => {
@@ -776,12 +885,19 @@ export default function EditOrderPage({ params }: EditOrderPageProps) {
     }
   }, [fetchOrderResponse]);
 
-  // Update loading state from hook
+  // Update loading state from hook and sync with global loader
   useEffect(() => {
     setLoading(fetchOrderResponseLoading);
-  }, [fetchOrderResponseLoading]);
 
-  // Update error state from hook
+    // Sync with global loader - show when API is loading, hide when done
+    if (fetchOrderResponseLoading) {
+      showLoading("Loading order details...", "order-details-edit");
+    } else {
+      hideLoading("order-details-edit");
+    }
+  }, [fetchOrderResponseLoading, showLoading, hideLoading]);
+
+  // Update error state from hook and ensure loader is hidden on error
   useEffect(() => {
     if (fetchOrderError) {
       const errorMessage =
@@ -789,10 +905,19 @@ export default function EditOrderPage({ params }: EditOrderPageProps) {
           ? fetchOrderError.message
           : t("failedToFetchOrderDetails");
       setError(errorMessage);
+      // Hide global loader on error
+      hideLoading("order-details-edit");
     } else {
       setError(null);
     }
-  }, [fetchOrderError, t]);
+  }, [fetchOrderError, t, hideLoading]);
+
+  // Cleanup: Hide global loader on unmount
+  useEffect(() => {
+    return () => {
+      hideLoading("order-details-edit");
+    };
+  }, [hideLoading]);
 
   // Handler functions
   const handleRefresh = async () => {
