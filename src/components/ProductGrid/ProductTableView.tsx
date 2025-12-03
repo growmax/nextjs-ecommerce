@@ -41,11 +41,10 @@ function transformProduct(product: FormattedProduct): ProductListItem {
     product.brandProductId || product.productIndexName || product.id || "";
 
   // Extract stock status from inventory array
-  const inventory = (product.inventory as Array<{ availableQuantity?: number; inStock?: boolean }>) || [];
-  const totalAvailable = inventory.reduce((sum, inv) => sum + (inv.availableQuantity || 0), 0);
-  const inStock = inventory.length > 0 
-    ? (inventory.some(inv => inv.inStock === true) || totalAvailable > 0)
-    : true; // Default to true if no inventory data
+  const inventory = (product.inventory as Array<{ availableQty?: number; inStock?: boolean }>) || [];
+  const totalAvailable = inventory.reduce((sum, inv) => sum + (inv.availableQty || 0), 0);
+  // Product is in stock if totalAvailable > 0
+  const inStock = totalAvailable > 0;
 
   return {
     id: productId,

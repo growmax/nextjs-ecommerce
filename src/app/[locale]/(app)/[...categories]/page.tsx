@@ -322,6 +322,8 @@ export default async function CategoryPage({
         ? false
         : undefined;
 
+
+
   // Parse catalog codes
   const catalogCodes = filters.catalog_code
     ? (Array.isArray(filters.catalog_code)
@@ -367,6 +369,8 @@ export default async function CategoryPage({
     ...(equipmentCodes && equipmentCodes.length > 0 && { equipmentCodes }),
   });
 
+
+
   // Extract base query for aggregations (need the bool object, not the full query)
   const baseQueryForAggs = queryResult.query.query.bool;
 
@@ -390,6 +394,8 @@ export default async function CategoryPage({
         Object.keys(filterState).length > 0 ? filterState : undefined,
         context
       );
+
+
 
       if (aggregationResponse.success) {
         aggregations = aggregationResponse.aggregations as FilterAggregations;
@@ -441,6 +447,8 @@ export default async function CategoryPage({
             elasticIndex,
             query: searchQuery,
           });
+
+
 
           return {
             products: result.data || [],

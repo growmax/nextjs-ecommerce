@@ -5,11 +5,11 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
 import { useCategoryFilters } from "@/hooks/useCategoryFilters";
 import type {
-  BrandFilterOption,
-  CategoryFilterOption,
-  FilterOption,
-  ProductSpecificationGroup,
-  VariantAttributeGroup,
+    BrandFilterOption,
+    CategoryFilterOption,
+    FilterOption,
+    ProductSpecificationGroup,
+    VariantAttributeGroup,
 } from "@/types/category-filters";
 import { Filter } from "lucide-react";
 import { ActiveFilters } from "./ActiveFilters";
@@ -20,6 +20,7 @@ import { EquipmentCodeFilter } from "./filters/EquipmentCodeFilter";
 import { ProductSpecificationFilter } from "./filters/ProductSpecificationFilter";
 import { StockFilter } from "./filters/StockFilter";
 import { VariantAttributeFilter } from "./filters/VariantAttributeFilter";
+import { usePageScopedLoader } from "@/hooks/usePageScopedLoader";
 
 interface CategoryFiltersProps {
   brands: BrandFilterOption[];
@@ -61,7 +62,11 @@ export function CategoryFilters({
     removeProductSpecification,
     clearAllFilters,
     activeFilterCount,
+    isPending,
   } = useCategoryFilters();
+
+  // Auto-trigger scoped loader when filters change
+  usePageScopedLoader(isPending);
 
   const handleRemoveStockFilter = () => {
     setStockFilter(undefined);

@@ -181,12 +181,16 @@ export default async function BrandPage({ params, searchParams }: PageProps) {
         ? false
         : undefined;
 
+
+
   const queryResult = buildBrandQuery(brand.name, {
     page,
     pageSize: 20,
     sortBy: { sortBy },
     ...(inStock !== undefined && { inStock }),
   });
+
+
 
   // Get elastic index from elasticCode
   const elasticIndex = elasticCode ? `${elasticCode}pgandproducts` : "";
@@ -208,6 +212,8 @@ export default async function BrandPage({ params, searchParams }: PageProps) {
             elasticIndex,
             query: searchQuery,
           });
+
+
 
           return {
             products: result.data || [],
