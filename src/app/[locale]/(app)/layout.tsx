@@ -38,8 +38,8 @@ function parseSidebarStateCookie(cookieString: string): boolean {
 
 // Cache getMessages() calls per request using React cache()
 // This ensures they're only called once per request, even if used multiple times
-const getCachedMessages = cache(async () => {
-  return await getMessages();
+const getCachedMessages = cache(async (locale: string) => {
+  return await getMessages({ locale });
 });
 
 /**
@@ -77,17 +77,24 @@ function MinimalLoadingFallback() {
  * - Translations always available to client components (fixes MISSING_MESSAGE)
  */
 async function LayoutContent({ children }: { children: ReactNode }) {
-  // Load messages and headers in parallel (both cached, non-blocking)
-  const [messages, headersList] = await Promise.all([
-    getCachedMessages(),
-    headers(),
+  // Get headers first to extract locale from pathname
+  const headersList = await headers();
+  const pathname = headersList.get("x-pathname") || "";
+
+  // Extract locale from pathname (e.g., /th/dashboard -> th)
+  const localeMatch = pathname.match(/^\/([a-z]{2}(-[A-Z]{2})?)/);
+  const locale = localeMatch ? localeMatch[1] : "en";
+
+  // Load messages and cookie in parallel (both cached, non-blocking)
+  const [messages, cookieHeader] = await Promise.all([
+    getCachedMessages(locale),
+    Promise.resolve(headersList.get("cookie") || ""),
   ]);
 
-  const cookieHeader = headersList.get("cookie") || "";
   const initialSidebarOpen = parseSidebarStateCookie(cookieHeader);
 
   return (
-    <NextIntlClientProvider messages={messages}>
+    <NextIntlClientProvider messages={messages} locale={locale}>
       <LayoutDataLoader>
         <TokenInitializer />
         <LoadingProvider>

@@ -1,29 +1,23 @@
 "use client";
 
+import { ActionDialog } from "@/components/dialogs/common";
 import { Button } from "@/components/ui/button";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import type { BaseDialogProps } from "@/types/dialog";
 import { Shield } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useState } from "react";
 
-export interface OTPDialogProps {
-  open: boolean;
-  onOpenChange: (open: boolean) => void;
+export interface OTPDialogProps
+  extends Omit<BaseDialogProps, "title" | "description"> {
   onVerify: (otp: string) => Promise<void>;
   onResend?: () => Promise<void>;
   title: string;
   description?: string;
   isLoading?: boolean;
-  otp:string;
-  setOtp:(otp:string)=>void;
+  otp: string;
+  setOtp: (otp: string) => void;
 }
 
 export function OTPDialog({
@@ -70,64 +64,64 @@ export function OTPDialog({
   };
 
   return (
-    <Dialog open={open} onOpenChange={handleClose}>
-      <DialogContent className="sm:max-w-md">
-        <DialogHeader>
-          <DialogTitle className="flex items-center gap-2">
-            <Shield className="h-5 w-5" />
-            {title}
-          </DialogTitle>
-          {description && <DialogDescription>{description}</DialogDescription>}
-        </DialogHeader>
-
-        <div className="space-y-4">
-          <div className="space-y-2">
-            <div className="flex items-center justify-between">
-              <Label htmlFor="otp">{t("enterOtp")}</Label>
-              {onResend && (
-                <Button
-                  variant="link"
-                  size="sm"
-                  onClick={handleResend}
-                  disabled={isLoading || isVerifying}
-                  className="h-auto p-0 text-xs"
-                >
-                  {t("resendOtp")}
-                </Button>
-              )}
-            </div>
-            <Input
-              id="otp"
-              type="text"
-              value={otp}
-              onChange={e => {
-                const value = e.target.value.replace(/\D/g, "").slice(0, 6);
-                setOtp(value);
-              }}
-              placeholder={t("enter6DigitOtp")}
-              maxLength={6}
-              disabled={isLoading || isVerifying}
-              autoFocus
-            />
-          </div>
-
-          <div className="flex justify-end gap-2">
+    <ActionDialog
+      open={open}
+      onOpenChange={handleClose}
+      title={
+        <span className="flex items-center gap-2">
+          <Shield className="h-5 w-5" />
+          {title}
+        </span>
+      }
+      description={description}
+      size="sm"
+      actions={
+        <>
+          <Button
+            variant="outline"
+            onClick={handleClose}
+            disabled={isLoading || isVerifying}
+          >
+            {t("cancel")}
+          </Button>
+          <Button
+            onClick={handleVerify}
+            disabled={isLoading || isVerifying || !otp || otp.length !== 6}
+          >
+            {isVerifying ? t("verifying") : t("verifyOtp")}
+          </Button>
+        </>
+      }
+    >
+      <div className="space-y-2">
+        <div className="flex items-center justify-between">
+          <Label htmlFor="otp">{t("enterOtp")}</Label>
+          {onResend && (
             <Button
-              variant="outline"
-              onClick={handleClose}
+              variant="link"
+              size="sm"
+              onClick={handleResend}
               disabled={isLoading || isVerifying}
+              className="h-auto p-0 text-xs"
             >
-              {t("cancel")}
+              {t("resendOtp")}
             </Button>
-            <Button
-              onClick={handleVerify}
-              disabled={isLoading || isVerifying || !otp || otp.length !== 6}
-            >
-              {isVerifying ? t("verifying") : t("verifyOtp")}
-            </Button>
-          </div>
+          )}
         </div>
-      </DialogContent>
-    </Dialog>
+        <Input
+          id="otp"
+          type="text"
+          value={otp}
+          onChange={e => {
+            const value = e.target.value.replace(/\D/g, "").slice(0, 6);
+            setOtp(value);
+          }}
+          placeholder={t("enter6DigitOtp")}
+          maxLength={6}
+          disabled={isLoading || isVerifying}
+          autoFocus
+        />
+      </div>
+    </ActionDialog>
   );
 }

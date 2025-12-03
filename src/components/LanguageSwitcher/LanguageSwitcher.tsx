@@ -24,6 +24,31 @@ const languageNames: Record<Locale, string> = {
   ms: "Malay",
 };
 
+/**
+ * Strips all locale segments from a pathname to ensure clean routing
+ * Handles malformed URLs like /id/vi/ms/vi/fr/es/ms/id/es -> /
+ */
+function stripAllLocales(pathname: string, locales: readonly string[]): string {
+  let cleanPath = pathname;
+
+  // Remove all locale segments from the beginning of the path
+  // This handles malformed URLs with multiple locale segments
+  let changed = true;
+  while (changed) {
+    changed = false;
+    for (const loc of locales) {
+      const localePattern = new RegExp(`^/${loc}(/|$)`);
+      if (cleanPath.match(localePattern)) {
+        cleanPath = cleanPath.replace(localePattern, "/");
+        changed = true;
+      }
+    }
+  }
+
+  // Ensure we have at least a "/"
+  return cleanPath || "/";
+}
+
 export function LanguageSwitcher() {
   const locale = useLocale() as Locale;
   const router = useRouter();
@@ -42,7 +67,27 @@ export function LanguageSwitcher() {
 
     // Navigate in a transition for instant feel
     startTransition(() => {
-      router.replace(pathname, { locale: newLocale });
+      // Get the actual pathname, handling both normal and malformed URLs
+      // usePathname() should return a clean path, but if URL is malformed,
+      // we fall back to window.location.pathname to get the actual current path
+      let currentPathname = pathname;
+
+      if (typeof window !== "undefined") {
+        const actualPath = window.location.pathname;
+        // If the actual path contains multiple locale segments (malformed URL),
+        // use it instead of the pathname from usePathname()
+        const localeMatches = actualPath.match(
+          /\/([a-z]{2}(-[A-Z]{2})?)(\/|$)/g
+        );
+        if (localeMatches && localeMatches.length > 1) {
+          currentPathname = actualPath;
+        }
+      }
+
+      // Strip all locale segments to ensure clean pathname
+      // This prevents malformed URLs when switching languages
+      const cleanPathname = stripAllLocales(currentPathname, locales);
+      router.replace(cleanPathname, { locale: newLocale });
     });
   };
 

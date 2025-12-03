@@ -867,11 +867,8 @@ export default function OrderDetailsClient({
                         requiredDate={
                           (displayOrderDetails?.orderDetails?.[0]
                             ?.customerRequiredDate ||
-                            displayOrderDetails?.orderDeliveryDate ||
                             orderDetails?.data?.orderDetails?.[0]
-                              ?.customerRequiredDate ||
-                            orderDetails?.data
-                              ?.orderDeliveryDate) as unknown as
+                              ?.customerRequiredDate) as unknown as
                             | string
                             | undefined
                         }

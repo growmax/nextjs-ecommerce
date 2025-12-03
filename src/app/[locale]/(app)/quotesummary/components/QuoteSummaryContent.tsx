@@ -47,6 +47,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { ConfirmationDialog } from "@/components/dialogs/common";
 import { Label } from "@/components/ui/label";
 import { FileText } from "lucide-react";
 
@@ -1197,7 +1198,6 @@ export default function QuoteSummaryContent() {
   const taxExempted = (watch("taxExempted") as boolean) || false;
   const preferencesForPricing = (watch("preferences" as any) as any) || {};
 
-  
   // Get pricing context for OrderPriceDetails
   const pricingContext = useMemo(() => {
     const insuranceCharges = Number(
@@ -1596,39 +1596,17 @@ export default function QuoteSummaryContent() {
         </div>
 
         {/* Confirmation Dialog */}
-        <Dialog
+        <ConfirmationDialog
           open={openCreateRfqConfirmationDialog}
           onOpenChange={setOpenCreateRfqConfirmationDialog}
-        >
-          <DialogContent>
-            <DialogHeader>
-              <div className="flex items-center gap-2">
-                <FileText className="h-5 w-5 text-primary" />
-                <DialogTitle>Request For Quote</DialogTitle>
-              </div>
-              <DialogDescription>
-                Note: New Quote will be created
-              </DialogDescription>
-            </DialogHeader>
-            <DialogFooter>
-              <Button
-                variant="outline"
-                onClick={() => setOpenCreateRfqConfirmationDialog(false)}
-              >
-                Cancel
-              </Button>
-              <Button
-                onClick={() => {
-                  setOpenCreateRfqConfirmationDialog(false);
-                  requestQuote();
-                }}
-                disabled={formState.isSubmitting}
-              >
-                {formState.isSubmitting ? "Submitting..." : "Confirm"}
-              </Button>
-            </DialogFooter>
-          </DialogContent>
-        </Dialog>
+          title="Request For Quote"
+          description="Note: New Quote will be created"
+          onConfirm={requestQuote}
+          confirmText="Confirm"
+          cancelText="Cancel"
+          isLoading={formState.isSubmitting}
+          icon={<FileText className="h-5 w-5 text-primary" />}
+        />
       </ApplicationLayout>
     </FormProvider>
   );
