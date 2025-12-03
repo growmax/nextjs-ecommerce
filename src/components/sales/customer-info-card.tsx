@@ -3,6 +3,8 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { useTranslations } from "next-intl";
+import { zoneDateTimeCalculator } from "@/utils/date-format/date-format";
+import { getUserPreferences } from "@/utils/details/orderdetails";
 
 interface CustomerInfoCardProps {
   quoteValidity?: {
@@ -46,16 +48,20 @@ export default function CustomerInfoCard({
   priceJustification,
 }: CustomerInfoCardProps) {
   const t = useTranslations("components");
-  // Format quote validity dates
+  const preferences = getUserPreferences();
+
+  // Format quote validity dates using the date formatter with user preferences
   const formatDate = (dateString?: string) => {
     if (!dateString) return "-";
     try {
-      const date = new Date(dateString);
-      return date.toLocaleDateString("en-GB", {
-        day: "2-digit",
-        month: "2-digit",
-        year: "numeric",
-      });
+      const formattedDate = zoneDateTimeCalculator(
+        dateString,
+        preferences.timeZone,
+        preferences.dateFormat,
+        preferences.timeFormat,
+        false // Don't include time for validity dates
+      );
+      return formattedDate || "-";
     } catch {
       return "-";
     }
