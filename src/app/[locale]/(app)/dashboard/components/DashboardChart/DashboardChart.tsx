@@ -3,8 +3,8 @@
 import PricingFormat from "@/components/PricingFormat";
 import { useDashboardChartData } from "@/hooks/useDashboardData";
 import { TrendingDown, TrendingUp } from "lucide-react";
-import { Area, AreaChart, CartesianGrid, XAxis, YAxis } from "recharts";
 import { useTranslations } from "next-intl";
+import { Area, AreaChart, CartesianGrid, XAxis, YAxis } from "recharts";
 
 import {
   Card,
@@ -16,6 +16,7 @@ import {
 } from "@/components/ui/card";
 import { ChartContainer, ChartTooltip } from "@/components/ui/chart";
 import { chartConfig as baseChartConfig } from "@/const/dashboard/dashboard.const";
+import { DashboardChartSkeleton } from "../DashboardSkeletons";
 
 export function DashboardChart() {
   const { data, isLoading, error, isError } = useDashboardChartData();
@@ -41,17 +42,7 @@ export function DashboardChart() {
   const dateRange = data?.dateRange || tMessages("loading");
 
   if (isLoading) {
-    return (
-      <Card>
-        <CardHeader>
-          <CardTitle>{t("revenueOverview")}</CardTitle>
-          <CardDescription>{t("loadingDashboardData")}</CardDescription>
-        </CardHeader>
-        <CardContent className="flex items-center justify-center h-[400px]">
-          <div className="text-muted-foreground">{t("loadingChart")}</div>
-        </CardContent>
-      </Card>
-    );
+    return <DashboardChartSkeleton />;
   }
 
   if (isError) {
@@ -302,15 +293,16 @@ export function DashboardChart() {
   };
 
   return (
-    <Card>
+    <Card className="h-[600px] flex flex-col [&_*]:outline-none [&_*]:ring-0">
       <CardHeader>
         <CardTitle>
           {t("revenueOverviewYear", { year: new Date().getFullYear() })}
         </CardTitle>
         <CardDescription>{t("monthlyPerformance")}</CardDescription>
       </CardHeader>
-      <CardContent>
-        <ChartContainer config={chartConfig}>
+      <CardContent className="flex-1 overflow-hidden">
+        <div className="w-full h-full [&_*]:outline-none [&_*]:focus:outline-none [&_svg]:outline-none">
+          <ChartContainer config={chartConfig}>
           <AreaChart
             accessibilityLayer
             data={chartData}
@@ -362,7 +354,8 @@ export function DashboardChart() {
               stackId="a"
             />
           </AreaChart>
-        </ChartContainer>
+          </ChartContainer>
+        </div>
       </CardContent>
       <CardFooter>
         <div className="flex w-full items-start gap-2 text-sm">

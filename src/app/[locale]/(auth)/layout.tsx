@@ -13,10 +13,15 @@ export default async function AuthLayout({
 }: {
   children: React.ReactNode;
 }) {
-  const messages = await getMessages();
-
   // Get tenant information from headers (set by middleware)
   const headersList = await headers();
+  const pathname = headersList.get("x-pathname") || "";
+
+  // Extract locale from pathname (e.g., /th/login -> th)
+  const localeMatch = pathname.match(/^\/([a-z]{2}(-[A-Z]{2})?)/);
+  const locale: string = localeMatch?.[1] ?? "en";
+
+  const messages = await getMessages({ locale });
   const tenantCode = headersList.get("x-tenant-code");
   const tenantDomain = headersList.get("x-tenant-domain");
   const tenantOrigin = headersList.get("x-tenant-origin");
@@ -48,7 +53,7 @@ export default async function AuthLayout({
   }
 
   return (
-    <NextIntlClientProvider messages={messages}>
+    <NextIntlClientProvider messages={messages} locale={locale}>
       <TenantProvider initialData={tenantData}>
         <UserDetailsProvider
           initialAuthState={authState.isAuthenticated}

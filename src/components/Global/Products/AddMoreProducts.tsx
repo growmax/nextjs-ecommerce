@@ -1,15 +1,11 @@
 "use client";
 
+import ImageWithFallback from "@/components/ImageWithFallback";
 import { Input } from "@/components/ui/input";
 import { useTenantInfo } from "@/contexts/TenantContext";
-import { useCurrentUser } from "@/hooks/useCurrentUser";
-import SearchService from "@/lib/api/services/SearchService/SearchService";
-import { serchquery } from "@/utils/elasticsearch/search-queries";
-// Use individual lodash imports for better tree-shaking
-import debounce from "lodash/debounce";
-import { ImageIcon, Loader2, Search } from "lucide-react";
-import Image from "next/image";
-import { useEffect, useState } from "react";
+import OpenElasticSearchService from "@/lib/api/services/ElacticQueryService/openElasticSearch/openElasticSearch";
+import { Loader2, Search } from "lucide-react";
+import { useEffect, useRef, useState } from "react";
 
 interface Product {
   productId: number;
@@ -20,7 +16,8 @@ interface Product {
   shortDescription?: string;
   brandsName?: string;
   brandName?: string;
-  productAssetss?: Array<{ source: string; isDefault?: boolean }>;
+  productAssetss?: Array<{ source: string; isDefault?: number | boolean }>;
+  productIndexName?: string;
   image?: string;
 }
 
@@ -38,54 +35,59 @@ function AddMoreProducts({
   const [products, setProducts] = useState<Product[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const tenantInfo = useTenantInfo();
-  const { user } = useCurrentUser();
+  const debounceRef = useRef<number | null>(null);
 
   // Get Elasticsearch index from tenant info or use default
-  const elasticIndex = "schwingstetterpgandproducts";
+  const elasticIndex = tenantInfo?.elasticCode
+    ? `${tenantInfo.elasticCode}pgandproducts`
+    : "schwingstetterpgandproducts";
 
-  // Debounced search function
+  // Debounced search function (matching SearchDialogBox pattern)
   useEffect(() => {
-    if (!searchQuery.trim() || searchQuery.length < 2) {
+    // clear any pending timeout
+    if (debounceRef.current) {
+      window.clearTimeout(debounceRef.current);
+      debounceRef.current = null;
+    }
+
+    // If query is empty, clear results and don't call API
+    const term = (searchQuery || "").trim();
+    if (!term || term.length < 2) {
       setProducts([]);
       setIsLoading(false);
       return;
     }
 
-    const search = debounce(async () => {
+    setIsLoading(true);
+
+    // Debounce the API call (matching SearchDialogBox timing)
+    debounceRef.current = window.setTimeout(async () => {
       try {
-        setIsLoading(true);
-        const context = {
-          tenantCode: tenantInfo?.tenantCode || "",
-          userId: user?.userId || 0,
-          companyId: user?.companyId || 0,
-        };
-
-        // Use serchquery to build the Elasticsearch query
-        const elasticQuery = serchquery(searchQuery.trim());
-
-        // Limit results to 10
-        elasticQuery.size = 10;
-
-        const result = await SearchService.searchProducts({
-          elasticIndex,
-          query: elasticQuery,
-          context,
-        });
-
-        setProducts(result.data as Product[]);
+        const data = await OpenElasticSearchService.searchProducts(
+          term,
+          elasticIndex
+        );
+        // Map SimpleProductSearchResult to Product format
+        const mappedProducts: Product[] = (data.data || []).map(item => ({
+          ...item,
+          id: item.productIndexName || String(item.productId),
+          productName: item.productShortDescription,
+        }));
+        setProducts(mappedProducts);
       } catch {
         setProducts([]);
       } finally {
         setIsLoading(false);
       }
-    }, 500);
-
-    search();
+    }, 300);
 
     return () => {
-      search.cancel();
+      if (debounceRef.current) {
+        window.clearTimeout(debounceRef.current);
+        debounceRef.current = null;
+      }
     };
-  }, [searchQuery, tenantInfo, user, elasticIndex]);
+  }, [searchQuery, elasticIndex]);
 
   const handleSearch = (query: string) => {
     setSearchQuery(query);
@@ -93,22 +95,13 @@ function AddMoreProducts({
   };
 
   const handleAddProduct = (product: Product) => {
+    console.log(product);
     setSearchQuery("");
     setIsSearchOpen(false);
     setProducts([]);
     if (handleCallback) {
       handleCallback(product);
     }
-  };
-
-  const getProductImage = (product: Product) => {
-    if (product.productAssetss && product.productAssetss.length > 0) {
-      const defaultImage = product.productAssetss.find(
-        asset => asset.isDefault
-      );
-      return defaultImage?.source || product.productAssetss[0]?.source;
-    }
-    return product.image;
   };
 
   return (
@@ -120,7 +113,7 @@ function AddMoreProducts({
         onChange={e => handleSearch(e.target.value)}
         onFocus={() => searchQuery && setIsSearchOpen(true)}
         onBlur={() => setTimeout(() => setIsSearchOpen(false), 200)}
-        className="h-10 w-full pr-10 text-sm"
+        className="h-10 w-full pr-10 text-sm sm:text-base"
       />
       <button
         type="button"
@@ -167,53 +160,60 @@ function AddMoreProducts({
                   </div>
                 ) : products.length > 0 ? (
                   products.map(product => {
-                    const productImage = getProductImage(product);
-                    const productName =
-                      product.brandProductId ||
-                      product.productName ||
-                      "Unknown Product";
-                    const productDescription =
-                      product.productShortDescription ||
-                      product.shortDescription ||
-                      "";
+                    // Match SearchDialogBox image logic
+                    const defaultImage = product.productAssetss?.find(
+                      asset => asset.isDefault === 1
+                    );
+                    const imageUrl =
+                      defaultImage?.source ||
+                      product.productAssetss?.[0]?.source;
 
                     return (
                       <div
-                        key={product.productId || product.id}
+                        key={
+                          product.productIndexName ||
+                          product.productId ||
+                          product.id
+                        }
                         className="flex items-center gap-3 px-4 py-3 cursor-pointer hover:bg-gray-50 transition-colors rounded-md"
                         onClick={() => handleAddProduct(product)}
                         role="button"
                         tabIndex={0}
                       >
-                        <div className="flex-shrink-0">
-                          <div className="w-10 h-10 rounded bg-gray-100 flex items-center justify-center overflow-hidden">
-                            {productImage ? (
-                              <Image
-                                src={productImage}
-                                alt={productName}
-                                width={40}
-                                height={40}
-                                className="w-full h-full object-contain"
-                              />
-                            ) : (
-                              <ImageIcon className="h-5 w-5 text-gray-400" />
+                        <div className="relative size-12 shrink-0 overflow-hidden rounded border">
+                          <ImageWithFallback
+                            src={imageUrl || "/asset/default-placeholder.png"}
+                            alt={
+                              product.productShortDescription || "product image"
+                            }
+                            className="object-cover"
+                            width={48}
+                            height={48}
+                            fallbackSrc="/asset/default-placeholder.png"
+                            unoptimized
+                          />
+                        </div>
+                        <div className="flex flex-1 flex-col gap-0.5 overflow-hidden">
+                          <span className="truncate font-medium text-sm">
+                            {product.productShortDescription ||
+                              product.productName ||
+                              "Unknown Product"}
+                          </span>
+                          <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                            {product.brandsName && (
+                              <>
+                                <span className="truncate">
+                                  {product.brandsName}
+                                </span>
+                                {product.brandProductId && <span>•</span>}
+                              </>
+                            )}
+                            {product.brandProductId && (
+                              <span className="truncate">
+                                {product.brandProductId}
+                              </span>
                             )}
                           </div>
-                        </div>
-                        <div className="flex-1 min-w-0">
-                          <div className="font-medium text-sm text-gray-900">
-                            {productName}
-                          </div>
-                          {productDescription && (
-                            <div className="text-xs text-gray-500 truncate">
-                              {productDescription}
-                            </div>
-                          )}
-                          {product.brandsName && (
-                            <div className="text-xs text-gray-400">
-                              Brand: {product.brandsName}
-                            </div>
-                          )}
                         </div>
                       </div>
                     );

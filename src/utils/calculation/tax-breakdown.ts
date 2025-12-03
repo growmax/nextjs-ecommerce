@@ -25,25 +25,31 @@ export function setTaxBreakup(productArr: any[], isInter: boolean) {
   const clonedProducts = cloneDeep(productArr);
 
   each(clonedProducts, item => {
-    if (!item.hsnDetails) return;
+    if (!item || !item.hsnDetails) return;
 
     if (isInter) {
-      if (item.hsnDetails?.interTax?.taxReqLs) {
+      if (
+        item.hsnDetails?.interTax?.taxReqLs &&
+        Array.isArray(item.hsnDetails.interTax.taxReqLs)
+      ) {
         const removed = remove(item.hsnDetails.interTax.taxReqLs, [
           "compound",
           true,
         ]);
-        if (removed[0]) {
+        if (removed && removed[0]) {
           compoundInter.push(removed[0]);
         }
       }
     } else {
-      if (item.hsnDetails?.intraTax?.taxReqLs) {
+      if (
+        item.hsnDetails?.intraTax?.taxReqLs &&
+        Array.isArray(item.hsnDetails.intraTax.taxReqLs)
+      ) {
         const removed = remove(item.hsnDetails.intraTax.taxReqLs, [
           "compound",
           true,
         ]);
-        if (removed[0]) {
+        if (removed && removed[0]) {
           compoundIntra.push(removed[0]);
         }
       }
@@ -60,26 +66,28 @@ export function setTaxBreakup(productArr: any[], isInter: boolean) {
 
   if (isInter) {
     const productWiseInter = map(productWiseHsn, item => item?.interTax).filter(
-      Boolean
+      (item): item is NonNullable<typeof item> => Boolean(item)
     );
     const interBreakup = map(productWiseInter, item => item?.taxReqLs).filter(
-      Boolean
+      (item): item is NonNullable<typeof item> =>
+        Boolean(item) && Array.isArray(item)
     );
     const breakupInterFinal = uniqBy(flatten(interBreakup), "taxName");
     if (compoundInter.length > 0) {
-      breakupInterFinal.push(uniqBy(compoundInter, "taxName"));
+      breakupInterFinal.push(...uniqBy(compoundInter, "taxName"));
     }
     breakups = compact(flatten(breakupInterFinal));
   } else {
     const productWiseIntra = map(productWiseHsn, item => item?.intraTax).filter(
-      Boolean
+      (item): item is NonNullable<typeof item> => Boolean(item)
     );
     const breakup = map(productWiseIntra, item => item?.taxReqLs).filter(
-      Boolean
+      (item): item is NonNullable<typeof item> =>
+        Boolean(item) && Array.isArray(item)
     );
     const breakupIntraFinal = uniqBy(flatten(breakup), "taxName");
     if (compoundIntra.length > 0) {
-      breakupIntraFinal.push(uniqBy(compoundIntra, "taxName"));
+      breakupIntraFinal.push(...uniqBy(compoundIntra, "taxName"));
     }
     breakups = compact(flatten(breakupIntraFinal));
   }
@@ -131,11 +139,11 @@ export function calculateShippingTax(
           // 2. From product's taxBreakup (interTaxBreakup or intraTaxBreakup)
           // 3. From taxBreakup.rate (from setTaxBreakup)
           let taxPercentage = data[taxBreakup?.taxName] || 0;
-          
+
           // If not on product, try to get from product's taxBreakup
           if (!taxPercentage && data.hsnDetails) {
-            const taxBreakupList = isInter 
-              ? data.hsnDetails?.interTax?.taxReqLs 
+            const taxBreakupList = isInter
+              ? data.hsnDetails?.interTax?.taxReqLs
               : data.hsnDetails?.intraTax?.taxReqLs;
             if (taxBreakupList) {
               const matchingTax = taxBreakupList.find(
@@ -146,20 +154,18 @@ export function calculateShippingTax(
               }
             }
           }
-          
+
           // If still not found, try from taxBreakup.rate (from setTaxBreakup result)
           if (!taxPercentage && (taxBreakup as any).rate) {
             taxPercentage = (taxBreakup as any).rate;
           }
-          
+
           // Set the tax percentage on the product if it wasn't set
           if (!data[taxBreakup.taxName] && taxPercentage > 0) {
             data[taxBreakup.taxName] = taxPercentage;
           }
-          
-          const percentage = itemWiseShippingTax
-            ? taxPercentage
-            : 0;
+
+          const percentage = itemWiseShippingTax ? taxPercentage : 0;
 
           if (index === 0) {
             tempCartValue[`${taxBreakup.taxName}Total`] = 0;
@@ -196,18 +202,14 @@ export function calculateShippingTax(
           if (!taxBreakup.compound) {
             data[`${taxBreakup.taxName}Value`] = taxPercentage
               ? parseFloat(
-                  (
-                    (taxableBase * taxPercentage) / 100
-                  ).toFixed(roundOff)
+                  ((taxableBase * taxPercentage) / 100).toFixed(roundOff)
                 )
               : 0;
             intraTotalTax += data[`${taxBreakup.taxName}Value`];
           } else {
             data[`${taxBreakup.taxName}Value`] = taxPercentage
               ? parseFloat(
-                  ((intraTotalTax * taxPercentage) / 100).toFixed(
-                    roundOff
-                  )
+                  ((intraTotalTax * taxPercentage) / 100).toFixed(roundOff)
                 )
               : 0;
           }
@@ -256,9 +258,7 @@ export function calculateShippingTax(
     const firstTax = breakup[0];
     const taxPercentage = firstTax?.rate || 0;
     tempCartValue.shippingTax = isBeforeTax
-      ? parseFloat(
-          (totalShipping * (taxPercentage / 100)).toFixed(roundOff)
-        )
+      ? parseFloat((totalShipping * (taxPercentage / 100)).toFixed(roundOff))
       : 0;
   }
 
@@ -290,10 +290,11 @@ export function calculateShippingTax(
   tempCartValue.calculatedTotal = grandTotal;
 
   // Preserve rounding adjustment settings if they exist
-  const roundingAdjustment = tempCartValue.roundingAdjustment !== undefined 
-    ? tempCartValue.roundingAdjustment 
-    : 0;
-  
+  const roundingAdjustment =
+    tempCartValue.roundingAdjustment !== undefined
+      ? tempCartValue.roundingAdjustment
+      : 0;
+
   // Only recalculate grandTotal if roundingAdjustment is enabled
   // Otherwise, grandTotal should equal calculatedTotal
   if (roundingAdjustment !== 0) {

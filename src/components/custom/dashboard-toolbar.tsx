@@ -95,14 +95,24 @@ const DashboardToolbar = forwardRef<DashboardToolbarRef, DashboardToolbarProps>(
         ) : (
           <>
             {/* Left Section - Title and Info */}
-            <div className="flex justify-between flex-1">
+            <div
+              className={cn(
+                "flex justify-between flex-1",
+                isMobile && "items-center"
+              )}
+            >
               {/* Title */}
               {title && (
-                <div className={cn("min-w-0", noWrap && "max-w-[300px]")}>
+                <div
+                  className={cn(
+                    "min-w-0",
+                    noWrap && isMobile ? "flex-1" : "max-w-[300px]"
+                  )}
+                >
                   <h1
                     className={cn(
                       "font-semibold text-foreground",
-                      isMobile ? "text-lg" : "text-xl",
+                      isMobile ? "text-base" : "text-xl",
                       noWrap && "truncate"
                     )}
                     title={title}
@@ -201,7 +211,12 @@ const DashboardToolbar = forwardRef<DashboardToolbarRef, DashboardToolbarProps>(
             </div>
 
             {/* Right Section - Actions */}
-            <div className="flex justify-center gap-2">
+            <div
+              className={cn(
+                "flex justify-center gap-2",
+                isMobile && "flex-shrink-0"
+              )}
+            >
               {/* Secondary Action */}
               {secondary.condition &&
                 (secondary.loadingButton ? (
@@ -408,8 +423,9 @@ const DashboardToolbar = forwardRef<DashboardToolbarRef, DashboardToolbarProps>(
         >
           <div
             className={cn(
-              "py-1 px-4",
-              "flex flex-col sm:flex-row sm:justify-between gap-1 sm:gap-2 sm:items-center"
+              "py-1",
+              isMobile ? "px-0" : "px-4",
+              "flex flex-row justify-between gap-2 items-center"
             )}
           >
             <ToolbarContent />
@@ -436,8 +452,9 @@ const DashboardToolbar = forwardRef<DashboardToolbarRef, DashboardToolbarProps>(
         >
           <div
             className={cn(
-              "py-1 px-4",
-              "flex flex-col sm:flex-row sm:justify-between gap-1 sm:gap-2 sm:items-center"
+              "py-1",
+              isMobile ? "px-0" : "px-4",
+              "flex flex-row justify-between gap-2 items-center"
             )}
           >
             <ToolbarContent />

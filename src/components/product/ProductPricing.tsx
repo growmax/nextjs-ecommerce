@@ -89,7 +89,7 @@ export default function ProductPricing({
       <div className={`flex items-center gap-2 flex-wrap ${className}`}>
         {/* Final Listing Price (after discount) */}
         {pricingConditions.ShowBasePrice && (
-          <span className={sizeClasses[variant]}>
+          <span className={`${sizeClasses[variant]} whitespace-nowrap`}>
             <PricingFormat value={pricingResult.final_listing_price} />
           </span>
         )}
@@ -97,7 +97,7 @@ export default function ProductPricing({
         {/* Strikethrough Original Price (MRP/Master Price) */}
         {showStrikethrough && !pricingConditions.ShowRequestPrice && (
           <span
-            className={`text-gray-500 line-through ${strikethroughSizeClasses[variant]}`}
+            className={`text-gray-500 line-through ${strikethroughSizeClasses[variant]} whitespace-nowrap`}
           >
             {showMRPLabel && "MRP "}
             <PricingFormat value={pricingResult.final_Price} />

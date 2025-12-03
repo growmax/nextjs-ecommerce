@@ -24,6 +24,38 @@ jest.mock("@/components/ui/dialog", () => {
   };
 });
 
+jest.mock("@/components/ui/drawer", () => {
+  const React = require("react");
+  return {
+    Drawer: ({ children, open }: any) =>
+      React.createElement(
+        "div",
+        { "data-testid": "drawer", "data-open": open },
+        children
+      ),
+    DrawerContent: ({ children }: any) =>
+      React.createElement("div", { "data-testid": "drawer-content" }, children),
+    DrawerDescription: ({ children }: any) =>
+      React.createElement("div", { "data-testid": "drawer-desc" }, children),
+    DrawerHeader: ({ children }: any) =>
+      React.createElement("div", { "data-testid": "drawer-header" }, children),
+    DrawerTitle: ({ children }: any) =>
+      React.createElement("h2", null, children),
+    DrawerFooter: ({ children }: any) =>
+      React.createElement("div", { "data-testid": "drawer-footer" }, children),
+    DrawerClose: ({ children }: any) =>
+      React.createElement(
+        "button",
+        { "data-testid": "drawer-close" },
+        children
+      ),
+  };
+});
+
+jest.mock("@/hooks/use-media-query", () => ({
+  useMediaQuery: jest.fn(() => true), // Default to desktop (use Dialog)
+}));
+
 jest.mock("@/components/ui/input", () => {
   const React = require("react");
   return { Input: (props: any) => React.createElement("input", props) };
@@ -77,9 +109,7 @@ describe("PasswordChangeDialog", () => {
     expect(
       screen.getByRole("heading", { name: "changePasswordTitle" })
     ).toBeInTheDocument();
-    expect(
-      screen.getByText("enterOtpAndSetPassword")
-    ).toBeInTheDocument();
+    expect(screen.getByText("enterOtpAndSetPassword")).toBeInTheDocument();
     expect(screen.getByLabelText("enterOtp")).toBeInTheDocument();
     expect(screen.getByLabelText("newPassword")).toBeInTheDocument();
     expect(screen.getByLabelText("confirmPassword")).toBeInTheDocument();
@@ -151,7 +181,9 @@ describe("PasswordChangeDialog", () => {
     const confirmInput = screen.getByLabelText(
       "confirmPassword"
     ) as HTMLInputElement;
-    const changeBtn = screen.getByRole("button", { name: "changePasswordTitle" });
+    const changeBtn = screen.getByRole("button", {
+      name: "changePasswordTitle",
+    });
 
     // initially invalid
     expect(changeBtn).toBeDisabled();
@@ -185,7 +217,9 @@ describe("PasswordChangeDialog", () => {
     const confirmInput = screen.getByLabelText(
       "confirmPassword"
     ) as HTMLInputElement;
-    const changeBtn = screen.getByRole("button", { name: "changePasswordTitle" });
+    const changeBtn = screen.getByRole("button", {
+      name: "changePasswordTitle",
+    });
 
     fireEvent.change(otpInput, { target: { value: "123456" } });
     fireEvent.change(newPasswordInput, { target: { value: "abcdef" } });
@@ -227,7 +261,9 @@ describe("PasswordChangeDialog", () => {
     fireEvent.change(newPasswordInput, { target: { value: "abcdef" } });
     fireEvent.change(confirmInput, { target: { value: "abcdef" } });
 
-    const changeBtn = screen.getByRole("button", { name: "changePasswordTitle" });
+    const changeBtn = screen.getByRole("button", {
+      name: "changePasswordTitle",
+    });
     fireEvent.click(changeBtn);
 
     // button should indicate loading (check if it's disabled, the text might be "changing" or similar)

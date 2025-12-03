@@ -3,18 +3,20 @@
 import { AddressDetailsDialog } from "@/components/dialogs/AddressDetailsDialog";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
-    HoverCard,
-    HoverCardContent,
-    HoverCardTrigger,
+  HoverCard,
+  HoverCardContent,
+  HoverCardTrigger,
 } from "@/components/ui/hover-card";
 import { Input } from "@/components/ui/input";
 import { Separator } from "@/components/ui/separator";
 import { type BillingAddress } from "@/lib/api";
 import SellerWarehouseService, {
-    type SellerBranch,
-    type Warehouse,
+  type SellerBranch,
+  type Warehouse,
 } from "@/lib/api/services/SellerWarehouseService/SellerWarehouseService";
 import { zoneDateTimeCalculator } from "@/utils/date-format/date-format";
+import { format } from "date-fns/format";
+import { isValid } from "date-fns";
 import { Pencil } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useMemo, useState } from "react";
@@ -812,13 +814,68 @@ export default function OrderContactDetails({
               label={t("requiredDate")}
               value={
                 requiredDate
-                  ? zoneDateTimeCalculator(
-                      requiredDate,
-                      preferences.timeZone,
-                      preferences.dateFormat,
-                      preferences.timeFormat,
-                      false
-                    ) || "-"
+                  ? (() => {
+                      try {
+                        // Extract date part from ISO string to avoid timezone conversion affecting the day
+                        let dateStr: string | undefined;
+                        if (typeof requiredDate === "string") {
+                          // Extract YYYY-MM-DD from ISO string (e.g., "2023-09-28T18:30:00Z" -> "2023-09-28")
+                          dateStr = requiredDate.split("T")[0];
+                        } else if (requiredDate) {
+                          // For Date objects, convert to ISO and extract date part
+                          dateStr = new Date(requiredDate)
+                            .toISOString()
+                            .split("T")[0];
+                        } else {
+                          return undefined;
+                        }
+
+                        if (!dateStr) {
+                          return undefined;
+                        }
+
+                        // Parse as local date (YYYY-MM-DD format) to avoid timezone issues
+                        const [year, month, day] = dateStr
+                          .split("-")
+                          .map(Number);
+                        if (
+                          year === undefined ||
+                          month === undefined ||
+                          day === undefined
+                        ) {
+                          return undefined;
+                        }
+                        const date = new Date(year, month - 1, day);
+
+                        if (!isValid(date)) {
+                          // Fallback to original timezone conversion if parsing fails
+                          return (
+                            zoneDateTimeCalculator(
+                              requiredDate,
+                              preferences.timeZone,
+                              preferences.dateFormat,
+                              preferences.timeFormat,
+                              false
+                            ) || "-"
+                          );
+                        }
+                        return format(
+                          date,
+                          preferences.dateFormat || "dd/MM/yyyy"
+                        );
+                      } catch {
+                        // Fallback to original timezone conversion on error
+                        return (
+                          zoneDateTimeCalculator(
+                            requiredDate,
+                            preferences.timeZone,
+                            preferences.dateFormat,
+                            preferences.timeFormat,
+                            false
+                          ) || "-"
+                        );
+                      }
+                    })()
                   : "-"
               }
             />

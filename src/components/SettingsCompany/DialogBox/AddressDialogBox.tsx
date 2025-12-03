@@ -8,8 +8,16 @@ import {
   DialogContent,
   DialogFooter,
   DialogHeader,
-  DialogTitle
+  DialogTitle,
 } from "@/components/ui/dialog";
+import {
+  Drawer,
+  DrawerContent,
+  DrawerFooter,
+  DrawerHeader,
+  DrawerTitle,
+} from "@/components/ui/drawer";
+import { useMediaQuery } from "@/hooks/use-media-query";
 import {
   Form,
   FormControl,
@@ -18,6 +26,7 @@ import {
   FormLabel,
 } from "@/components/ui/form";
 import { Separator } from "@/components/ui/separator";
+import type { BaseDialogProps } from "@/types/dialog";
 import CompanyService, {
   AddressData,
   CreateBranchRequest,
@@ -34,9 +43,8 @@ import { z } from "zod";
 import { FormDropdown } from "../../forms/FormDropdown/FormDropdown";
 import FormInput from "../../forms/FormInput/FormInput";
 
-interface CompanyDialogBoxProps {
-  open: boolean;
-  onOpenChange: (open: boolean) => void;
+export interface CompanyDialogBoxProps
+  extends Omit<BaseDialogProps, "title" | "description"> {
   mode?: "create" | "edit";
   initialData?: AddressFormData | null;
   branchId?: string | number | null;
@@ -48,13 +56,25 @@ const createAddressFormSchema = (t: (key: string) => string) =>
   z.object({
     id: z.number().optional(),
     companyName: z.string().optional(),
-    branchName: z.string().min(1, { message: t("branchNameRequired") || "Branch name is required" }),
-    addressLine: z.string().min(1, { message: t("addressLineRequired") || "Address is required" }),
+    branchName: z
+      .string()
+      .min(1, {
+        message: t("branchNameRequired") || "Branch name is required",
+      }),
+    addressLine: z
+      .string()
+      .min(1, { message: t("addressLineRequired") || "Address is required" }),
     locality: z.string().optional(),
-    country: z.string().min(1, { message: t("countryRequired") || "Country is required" }),
-    state: z.string().min(1, { message: t("stateRequired") || "State is required" }),
+    country: z
+      .string()
+      .min(1, { message: t("countryRequired") || "Country is required" }),
+    state: z
+      .string()
+      .min(1, { message: t("stateRequired") || "State is required" }),
     district: z.string().optional(),
-    pinCode: z.string().min(1, { message: t("pinCodeRequired") || "Postal code is required" }),
+    pinCode: z
+      .string()
+      .min(1, { message: t("pinCodeRequired") || "Postal code is required" }),
     city: z.string().optional(),
     lattitude: z.string().optional(),
     longitude: z.string().optional(),
@@ -261,7 +281,11 @@ const CompanyDialogBox = ({
 
         // If we don't have a valid stateId, clear districts and return
         if (!stateId || isNaN(stateId)) {
-          console.warn("Invalid stateId for loading districts:", stateValue, stateId);
+          console.warn(
+            "Invalid stateId for loading districts:",
+            stateValue,
+            stateId
+          );
           setDistricts([]);
           return;
         }
@@ -281,7 +305,10 @@ const CompanyDialogBox = ({
           .map(toDropdownOption)
           .filter(o => o.value && o.label);
 
-        console.log(`Loaded ${list.length} districts for stateId ${stateId}`, list);
+        console.log(
+          `Loaded ${list.length} districts for stateId ${stateId}`,
+          list
+        );
         setDistricts(list);
       } catch (error) {
         console.error("Error loading districts:", error, { stateValue });
@@ -596,20 +623,23 @@ const CompanyDialogBox = ({
     onOpenChange(isOpen);
   };
 
-  return (
-    <Dialog open={open} onOpenChange={handleOpenChange}>
-      <DialogContent className="w-full h-full sm:max-w-2xl sm:max-h-[90vh] sm:rounded-lg p-0 flex flex-col">
-        {/* Fixed Header */}
-        <div className="px-4 sm:px-6 pt-6 pb-4 border-b shrink-0">
-          <DialogHeader>
-            <DialogTitle>
-              {mode === "create" ? t("createAddress") : t("editAddress")}
-            </DialogTitle>
-          </DialogHeader>
-        </div>
+  const isDesktop = useMediaQuery("(min-width: 768px)");
 
-        {/* Scrollable Content */}
-        <div className="flex-1 overflow-y-auto px-4 sm:px-6 py-4">
+  if (isDesktop) {
+    return (
+      <Dialog open={open} onOpenChange={handleOpenChange}>
+        <DialogContent className="w-full h-full sm:max-w-2xl sm:max-h-[90vh] sm:rounded-lg p-0 flex flex-col border border-black/10 overflow-hidden">
+          {/* Fixed Header */}
+          <div className="px-4 sm:px-6 pt-6 pb-4 border-b shrink-0">
+            <DialogHeader>
+              <DialogTitle>
+                {mode === "create" ? t("createAddress") : t("editAddress")}
+              </DialogTitle>
+            </DialogHeader>
+          </div>
+
+          {/* Scrollable Content */}
+          <div className="flex-1 overflow-y-auto px-4 sm:px-6 py-4 min-h-0">
             <Form {...form}>
               <form
                 id="address-form"
@@ -620,21 +650,283 @@ const CompanyDialogBox = ({
                 <FormInput
                   control={form.control}
                   name="branchName"
-                  label={
-                    <LabelWithAsterisk label={t("branchName")} required />
-                  }
+                  label={<LabelWithAsterisk label={t("branchName")} required />}
                   placeholder={t("enterBranchName")}
                   required
                 />
                 <FormTextarea
                   control={form.control}
                   name="addressLine"
-                  label={
-                    <LabelWithAsterisk label={t("address")} required />
-                  }
+                  label={<LabelWithAsterisk label={t("address")} required />}
                   placeholder={t("enterAddress")}
                   required
                 />
+
+                {/* Address Type Checkboxes */}
+                <div className="space-y-3 py-2">
+                  <p className="text-sm font-medium">{t("addressFor")}</p>
+                  <div className="flex gap-6">
+                    <FormField
+                      control={form.control}
+                      name="isBilling"
+                      render={({ field }) => (
+                        <FormItem className="flex items-center gap-2 space-y-0">
+                          <FormControl>
+                            <Checkbox
+                              checked={field.value}
+                              onCheckedChange={field.onChange}
+                            />
+                          </FormControl>
+                          <FormLabel className="!mt-0 cursor-pointer">
+                            {t("billing")}
+                          </FormLabel>
+                        </FormItem>
+                      )}
+                    />
+                    <FormField
+                      control={form.control}
+                      name="isShipping"
+                      render={({ field }) => (
+                        <FormItem className="flex items-center gap-2 space-y-0">
+                          <FormControl>
+                            <Checkbox
+                              checked={field.value}
+                              onCheckedChange={field.onChange}
+                            />
+                          </FormControl>
+                          <FormLabel className="!mt-0 cursor-pointer">
+                            {t("shipping")}
+                          </FormLabel>
+                        </FormItem>
+                      )}
+                    />
+                  </div>
+                </div>
+
+                {/* Tax ID */}
+                <FormInput
+                  control={form.control}
+                  name="gst"
+                  label={<LabelWithAsterisk label={t("taxIdGst")} />}
+                  placeholder={t("enterGstNumber")}
+                />
+
+                <Separator />
+
+                {/* Location Section */}
+                <div className="space-y-4">
+                  <p className="text-sm font-semibold">{t("location")}</p>
+
+                  {/* Country & State Grid */}
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <FormDropdown
+                      control={form.control}
+                      name="country"
+                      label={
+                        <LabelWithAsterisk label={t("country")} required />
+                      }
+                      placeholder={
+                        countriesLoading
+                          ? t("loadingCountries")
+                          : t("selectCountry")
+                      }
+                      options={countries.length > 0 ? countries : []}
+                      required
+                    />
+
+                    <FormDropdown
+                      control={form.control}
+                      name="state"
+                      label={<LabelWithAsterisk label={t("state")} required />}
+                      placeholder={
+                        statesLoading ? t("loadingStates") : t("selectState")
+                      }
+                      options={states.length > 0 ? states : []}
+                      required
+                    />
+                  </div>
+
+                  {/* District, PostalCode, City Grid */}
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <FormDropdown
+                      control={form.control}
+                      name="district"
+                      label={t("district")}
+                      placeholder={
+                        districtsLoading
+                          ? t("loadingDistricts")
+                          : t("selectDistrict")
+                      }
+                      options={districts.length > 0 ? districts : []}
+                    />
+
+                    <FormInput
+                      control={form.control}
+                      name="pinCode"
+                      label={t("postalCodePinCode")}
+                      placeholder={t("enterPostalCode")}
+                      required
+                    />
+                  </div>
+
+                  {/* City, Latitude & Longitude Grid */}
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                    <FormInput
+                      control={form.control}
+                      name="city"
+                      label={t("city")}
+                      placeholder={t("enterCity")}
+                    />
+                    <FormInput
+                      control={form.control}
+                      name="lattitude"
+                      label={t("latitude")}
+                      placeholder={t("enterLatitude")}
+                    />
+
+                    <FormInput
+                      control={form.control}
+                      name="longitude"
+                      label={t("longitude")}
+                      placeholder={t("enterLongitude")}
+                    />
+                  </div>
+                </div>
+
+                <Separator />
+
+                {/* Contact Details Section */}
+                <div className="space-y-4">
+                  <p className="text-sm font-semibold">{t("contactDetails")}</p>
+
+                  {/* Contact Name & Number Grid */}
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <FormDropdown
+                      control={form.control}
+                      name="contactName"
+                      label={<LabelWithAsterisk label={t("contactName")} />}
+                      placeholder={t("enterContactName")}
+                    />
+
+                    <FormDropdown
+                      control={form.control}
+                      name="contactNumber"
+                      label={<LabelWithAsterisk label={t("contactNumber")} />}
+                      placeholder={t("enterContactNumber")}
+                    />
+                  </div>
+                </div>
+
+                <Separator />
+
+                {/* Address Type Checkboxes */}
+                <div className="space-y-3 py-2">
+                  <p className="text-sm font-medium">{t("addressFor")}</p>
+                  <div className="flex gap-6">
+                    <FormField
+                      control={form.control}
+                      name="isBilling"
+                      render={({ field }) => (
+                        <FormItem className="flex items-center gap-2 space-y-0">
+                          <FormControl>
+                            <Checkbox
+                              checked={field.value}
+                              onCheckedChange={field.onChange}
+                            />
+                          </FormControl>
+                          <FormLabel className="!mt-0 cursor-pointer">
+                            {t("billing")}
+                          </FormLabel>
+                        </FormItem>
+                      )}
+                    />
+
+                    <FormField
+                      control={form.control}
+                      name="isShipping"
+                      render={({ field }) => (
+                        <FormItem className="flex items-center gap-2 space-y-0">
+                          <FormControl>
+                            <Checkbox
+                              checked={field.value}
+                              onCheckedChange={field.onChange}
+                            />
+                          </FormControl>
+                          <FormLabel className="!mt-0 cursor-pointer">
+                            {t("shipping")}
+                          </FormLabel>
+                        </FormItem>
+                      )}
+                    />
+                  </div>
+                </div>
+
+                {/* Tax ID */}
+                <FormInput
+                  control={form.control}
+                  name="gst"
+                  label={<LabelWithAsterisk label={t("taxIdGst")} />}
+                  placeholder={t("enterGstNumber")}
+                />
+              </form>
+            </Form>
+
+            {/* Fixed Footer */}
+            <div className="px-4 sm:px-6 pt-4 pb-6 border-t shrink-0">
+              <DialogFooter className="gap-2">
+                <Button variant="outline" onClick={handleCancel} type="button">
+                  {t("cancel")}
+                </Button>
+                <Button
+                  type="submit"
+                  form="address-form"
+                  disabled={isSubmitting}
+                >
+                  {isSubmitting ? t("saving") : t("save")}
+                </Button>
+              </DialogFooter>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+    );
+  }
+
+  return (
+    <Drawer open={open} onOpenChange={handleOpenChange}>
+      <DrawerContent className="max-h-[95vh] flex flex-col overflow-hidden">
+        {/* Fixed Header */}
+        <div className="px-4 pt-6 pb-4 border-b shrink-0">
+          <DrawerHeader className="text-left p-0">
+            <DrawerTitle>
+              {mode === "create" ? t("createAddress") : t("editAddress")}
+            </DrawerTitle>
+          </DrawerHeader>
+        </div>
+
+        {/* Scrollable Content */}
+        <div className="flex-1 overflow-y-auto px-4 py-4 min-h-0">
+          <Form {...form}>
+            <form
+              id="address-form"
+              onSubmit={form.handleSubmit(onSubmit)}
+              className="space-y-4"
+            >
+              {/* Branch & Address Fields */}
+              <FormInput
+                control={form.control}
+                name="branchName"
+                label={<LabelWithAsterisk label={t("branchName")} required />}
+                placeholder={t("enterBranchName")}
+                required
+              />
+              <FormTextarea
+                control={form.control}
+                name="addressLine"
+                label={<LabelWithAsterisk label={t("address")} required />}
+                placeholder={t("enterAddress")}
+                required
+              />
 
               {/* Address Type Checkboxes */}
               <div className="space-y-3 py-2">
@@ -692,7 +984,7 @@ const CompanyDialogBox = ({
                 <p className="text-sm font-semibold">{t("location")}</p>
 
                 {/* Country & State Grid */}
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 gap-4">
                   <FormDropdown
                     control={form.control}
                     name="country"
@@ -711,9 +1003,7 @@ const CompanyDialogBox = ({
                     name="state"
                     label={<LabelWithAsterisk label={t("state")} required />}
                     placeholder={
-                      statesLoading
-                        ? t("loadingStates")
-                        : t("selectState")
+                      statesLoading ? t("loadingStates") : t("selectState")
                     }
                     options={states.length > 0 ? states : []}
                     required
@@ -721,7 +1011,7 @@ const CompanyDialogBox = ({
                 </div>
 
                 {/* District, PostalCode, City Grid */}
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 gap-4">
                   <FormDropdown
                     control={form.control}
                     name="district"
@@ -744,7 +1034,7 @@ const CompanyDialogBox = ({
                 </div>
 
                 {/* City, Latitude & Longitude Grid */}
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                <div className="grid grid-cols-1 gap-4">
                   <FormInput
                     control={form.control}
                     name="city"
@@ -774,7 +1064,7 @@ const CompanyDialogBox = ({
                 <p className="text-sm font-semibold">{t("contactDetails")}</p>
 
                 {/* Contact Name & Number Grid */}
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 gap-4">
                   <FormDropdown
                     control={form.control}
                     name="contactName"
@@ -842,23 +1132,33 @@ const CompanyDialogBox = ({
                 label={<LabelWithAsterisk label={t("taxIdGst")} />}
                 placeholder={t("enterGstNumber")}
               />
-              </form>
-            </Form>
+            </form>
+          </Form>
+        </div>
 
-          {/* Fixed Footer */}
-          <div className="px-4 sm:px-6 pt-4 pb-6 border-t shrink-0">
-            <DialogFooter className="gap-2">
-              <Button variant="outline" onClick={handleCancel} type="button">
-                {t("cancel")}
-              </Button>
-              <Button type="submit" form="address-form" disabled={isSubmitting}>
-                {isSubmitting ? t("saving") : t("save")}
-              </Button>
-            </DialogFooter>
-          </div>
-          </div>
-        </DialogContent>
-    </Dialog>
+        {/* Fixed Footer */}
+        <div className="px-4 pt-4 pb-6 border-t shrink-0">
+          <DrawerFooter className="gap-2 p-0">
+            <Button
+              variant="outline"
+              onClick={handleCancel}
+              type="button"
+              className="w-full"
+            >
+              {t("cancel")}
+            </Button>
+            <Button
+              type="submit"
+              form="address-form"
+              disabled={isSubmitting}
+              className="w-full"
+            >
+              {isSubmitting ? t("saving") : t("save")}
+            </Button>
+          </DrawerFooter>
+        </div>
+      </DrawerContent>
+    </Drawer>
   );
 };
 

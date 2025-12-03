@@ -89,7 +89,8 @@ const DashboardTable = <T,>({
     <div
       className={cn(
         "border overflow-x-hidden flex flex-col w-full z-0",
-        tableHeight || ""
+        tableHeight || "",
+        "max-md:border-l-0 max-md:border-r-0 max-md:rounded-none"
       )}
       style={{
         borderRadius: "var(--radius)",
@@ -99,7 +100,7 @@ const DashboardTable = <T,>({
       <div
         className={cn(
           "overflow-x-auto overflow-y-auto relative scrollbar-thin-horizontal",
-          tableHeight ? "flex-1" : ""
+          tableHeight ? "max-md:flex-none" : ""
         )}
       >
         {/* Loading overlay - covers table content for both initial load and filter changes */}
@@ -120,7 +121,7 @@ const DashboardTable = <T,>({
         )}
         <Table className="min-w-full table-auto">
           <TableHeader
-            className="bg-muted sticky top-0 z-20"
+            className="bg-muted sticky top-0 z-30"
             style={{
               borderTopLeftRadius: "var(--radius)",
               borderTopRightRadius: "var(--radius)",
@@ -128,56 +129,69 @@ const DashboardTable = <T,>({
           >
             {table.getHeaderGroups().map((headerGroup: HeaderGroup<T>) => (
               <TableRow key={headerGroup.id}>
-                {headerGroup.headers.map((header: Header<T, unknown>) => {
-                  const isSticky =
-                    (header.column.columnDef.meta as { sticky?: boolean })
-                      ?.sticky === true;
-                  const alignCenter =
-                    (header.column.columnDef.meta as { alignCenter?: boolean })
-                      ?.alignCenter === true;
-                  const alignRight =
-                    (header.column.columnDef.meta as { alignRight?: boolean })
-                      ?.alignRight === true;
-                  return (
-                    <TableHead
-                      key={header.id}
-                      className={cn(
-                        "px-1 py-0.5 bg-muted border-b relative align-middle",
-                        alignCenter
-                          ? "text-center"
-                          : alignRight
-                            ? "text-right"
-                            : "text-left",
-                        isSticky &&
-                          "sticky left-0 z-[31] bg-muted border-r border-border"
-                      )}
-                      style={{
-                        width: header.getSize(),
-                        maxWidth: header.getSize(),
-                        minWidth: header.getSize(),
-                        wordBreak: "break-word",
-                        lineHeight: "1.4",
-                        overflow: "hidden",
-                      }}
-                    >
-                      {header.isPlaceholder
-                        ? null
-                        : flexRender(
-                            header.column.columnDef.header,
-                            header.getContext()
+                {headerGroup.headers.map(
+                  (header: Header<T, unknown>, index: number) => {
+                    const isSticky =
+                      (header.column.columnDef.meta as { sticky?: boolean })
+                        ?.sticky === true;
+                    const alignCenter =
+                      (
+                        header.column.columnDef.meta as {
+                          alignCenter?: boolean;
+                        }
+                      )?.alignCenter === true;
+                    const alignRight =
+                      (header.column.columnDef.meta as { alignRight?: boolean })
+                        ?.alignRight === true;
+                    const isLastColumn =
+                      index === headerGroup.headers.length - 1;
+                    return (
+                      <TableHead
+                        key={header.id}
+                        className={cn(
+                          "px-1 py-0.5 bg-muted border-b relative align-middle",
+                          alignCenter
+                            ? "text-center"
+                            : alignRight
+                              ? "text-right"
+                              : "text-left",
+                          isSticky &&
+                            "sticky left-0 z-[31] bg-muted border-r border-border",
+                          !isLastColumn && "border-r border-border",
+                          index === 0 && "max-md:pl-0",
+                          isLastColumn && "max-md:pr-0"
+                        )}
+                        style={{
+                          width: header.getSize(),
+                          maxWidth: header.getSize(),
+                          minWidth: header.getSize(),
+                          wordBreak: "break-word",
+                          lineHeight: "1.4",
+                          overflow: "hidden",
+                        }}
+                      >
+                        {header.isPlaceholder
+                          ? null
+                          : flexRender(
+                              header.column.columnDef.header,
+                              header.getContext()
+                            )}
+                        {enableColumnResizing &&
+                          header.column.getCanResize() && (
+                            <div
+                              onMouseDown={header.getResizeHandler()}
+                              onTouchStart={header.getResizeHandler()}
+                              className={`absolute right-0 top-0 h-full w-1 bg-gray-300 cursor-col-resize select-none touch-none hover:bg-blue-500 ${
+                                header.column.getIsResizing()
+                                  ? "bg-blue-500"
+                                  : ""
+                              }`}
+                            />
                           )}
-                      {enableColumnResizing && header.column.getCanResize() && (
-                        <div
-                          onMouseDown={header.getResizeHandler()}
-                          onTouchStart={header.getResizeHandler()}
-                          className={`absolute right-0 top-0 h-full w-1 bg-gray-300 cursor-col-resize select-none touch-none hover:bg-blue-500 ${
-                            header.column.getIsResizing() ? "bg-blue-500" : ""
-                          }`}
-                        />
-                      )}
-                    </TableHead>
-                  );
-                })}
+                      </TableHead>
+                    );
+                  }
+                )}
               </TableRow>
             ))}
           </TableHeader>
@@ -186,50 +200,64 @@ const DashboardTable = <T,>({
               table.getRowModel().rows.map((row: Row<T>, _index: number) => (
                 <TableRow
                   key={row.id}
-                  className="group hover:bg-muted cursor-pointer"
+                  className={cn(
+                    "group hover:bg-muted cursor-pointer",
+                    _index === table.getRowModel().rows.length - 1 &&
+                      "max-md:border-b-0"
+                  )}
                   onClick={() => onRowClick?.(row.original)}
                   onMouseEnter={() => onRowHover?.(row.original)}
                 >
-                  {row.getVisibleCells().map((cell: Cell<T, unknown>) => {
-                    const isSticky =
-                      (cell.column.columnDef.meta as { sticky?: boolean })
-                        ?.sticky === true;
-                    const alignCenter =
-                      (cell.column.columnDef.meta as { alignCenter?: boolean })
-                        ?.alignCenter === true;
-                    const alignRight =
-                      (cell.column.columnDef.meta as { alignRight?: boolean })
-                        ?.alignRight === true;
-                    return (
-                      <TableCell
-                        key={cell.id}
-                        className={cn(
-                          "px-1 py-0.25 text-xs sm:text-sm align-middle",
-                          alignCenter
-                            ? "text-center"
-                            : alignRight
-                              ? "text-right"
-                              : "text-left",
-                          isSticky &&
-                            "sticky left-0 z-20 bg-muted border-r border-border group-hover:bg-muted"
-                        )}
-                        style={{
-                          width: cell.column.getSize(),
-                          maxWidth: cell.column.getSize(),
-                          minWidth: cell.column.getSize(),
-                          wordBreak: "break-word",
-                          lineHeight: "1",
-                          overflow: "hidden",
-                          whiteSpace: "normal",
-                        }}
-                      >
-                        {flexRender(
-                          cell.column.columnDef.cell,
-                          cell.getContext()
-                        )}
-                      </TableCell>
-                    );
-                  })}
+                  {row
+                    .getVisibleCells()
+                    .map((cell: Cell<T, unknown>, index: number) => {
+                      const isSticky =
+                        (cell.column.columnDef.meta as { sticky?: boolean })
+                          ?.sticky === true;
+                      const alignCenter =
+                        (
+                          cell.column.columnDef.meta as {
+                            alignCenter?: boolean;
+                          }
+                        )?.alignCenter === true;
+                      const alignRight =
+                        (cell.column.columnDef.meta as { alignRight?: boolean })
+                          ?.alignRight === true;
+                      const isLastColumn =
+                        index === row.getVisibleCells().length - 1;
+                      return (
+                        <TableCell
+                          key={cell.id}
+                          className={cn(
+                            "px-1 py-0.25 text-xs sm:text-sm align-middle",
+                            alignCenter
+                              ? "text-center"
+                              : alignRight
+                                ? "text-right"
+                                : "text-left",
+                            isSticky &&
+                              "sticky left-0 z-20 bg-muted border-r border-border group-hover:bg-muted",
+                            !isLastColumn && "border-r border-border",
+                            index === 0 && "max-md:pl-0",
+                            isLastColumn && "max-md:pr-0"
+                          )}
+                          style={{
+                            width: cell.column.getSize(),
+                            maxWidth: cell.column.getSize(),
+                            minWidth: cell.column.getSize(),
+                            wordBreak: "break-word",
+                            lineHeight: "1",
+                            overflow: "hidden",
+                            whiteSpace: "normal",
+                          }}
+                        >
+                          {flexRender(
+                            cell.column.columnDef.cell,
+                            cell.getContext()
+                          )}
+                        </TableCell>
+                      );
+                    })}
                 </TableRow>
               ))
             ) : (
@@ -245,7 +273,7 @@ const DashboardTable = <T,>({
           </TableBody>
         </Table>
       </div>
-      <div className="flex items-center justify-between px-4 py-2 border-t bg-background rounded-b-lg">
+      <div className="flex items-center justify-between px-4 py-2 border-t bg-background rounded-b-lg max-md:px-0 max-md:mt-0">
         <div className="flex items-center gap-2">
           <span className="text-xs lg:text-sm text-muted-foreground">
             {Math.min(page * rowPerPage + 1, totalDataCount)} -{" "}
@@ -263,7 +291,7 @@ const DashboardTable = <T,>({
               "px-4",
               page === 0
                 ? "text-gray-400 bg-gray-100 border-gray-200"
-                : "text-gray-600 bg-gray-100 border-gray-200 hover:bg-gray-200"
+                : "text-gray-900 bg-white border-gray-300 hover:bg-gray-50"
             )}
           >
             {t("previous")}

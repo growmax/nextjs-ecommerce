@@ -131,6 +131,18 @@ export class TenantService extends BaseService<TenantService> {
   }
 
   /**
+   * Static method wrapper for getTenantDataCached
+   * This ensures the method works whether the class or instance is imported
+   * Use this when importing TenantService as a named export from @/lib/api
+   */
+  static async getTenantDataCached(
+    domainUrl: string,
+    origin?: string
+  ): Promise<TenantApiResponse | null> {
+    return TenantService.getInstance().getTenantDataCached(domainUrl, origin);
+  }
+
+  /**
    * Legacy method for backward compatibility
    * @deprecated Use getTenantData() instead
    */

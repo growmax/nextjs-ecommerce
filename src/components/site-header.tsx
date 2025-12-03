@@ -1,13 +1,12 @@
 "use client";
 
 import {
-  Bell,
-  Building2,
-  IdCard,
-  Loader2,
-  LogOut,
-  ShoppingCart,
-  SidebarIcon,
+    Building2,
+    IdCard,
+    Loader2,
+    LogOut,
+    ShoppingCart,
+    SidebarIcon,
 } from "lucide-react";
 import { Link } from "@/i18n/navigation";
 
@@ -15,13 +14,13 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuGroup,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
+    DropdownMenu,
+    DropdownMenuContent,
+    DropdownMenuGroup,
+    DropdownMenuItem,
+    DropdownMenuLabel,
+    DropdownMenuSeparator,
+    DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Separator } from "@/components/ui/separator";
 import { useSidebar } from "@/components/ui/sidebar";
@@ -39,7 +38,6 @@ export function SiteHeader() {
   const { isLoggingOut, handleLogout } = useLogout();
 
   const { cartCount } = useCart();
-  const notificationCount = 3;
   const tNav = useTranslations("navigation");
   const tAuth = useTranslations("auth");
 
@@ -75,21 +73,8 @@ export function SiteHeader() {
         {/* E-commerce Icons */}
         <div className="flex items-center gap-1">
           {/* Notifications */}
-          <Button
-            variant="ghost"
-            size="icon"
-            className="relative h-9 w-9"
-            asChild
-          >
-            <Link href="/notification" prefetch={true}>
-              <Bell className="h-5 w-5" />
-              {notificationCount > 0 && (
-                <Badge className="absolute -right-1 -top-1 h-5 w-5 flex items-center justify-center p-0 text-xs">
-                  {notificationCount}
-                </Badge>
-              )}
-            </Link>
-          </Button>
+          {/* Notifications - Removed */}
+
 
           {/* Cart */}
           <Button

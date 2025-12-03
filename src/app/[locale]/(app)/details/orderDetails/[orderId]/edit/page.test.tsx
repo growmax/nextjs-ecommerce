@@ -607,7 +607,7 @@ describe("EditOrderPage", () => {
 
     await waitFor(() => {
       const buttons = screen.getAllByTestId("button");
-      expect(buttons.some(btn => btn.textContent === "placeOrder")).toBe(true);
+      expect(buttons.some(btn => btn.textContent === "PLACE ORDER")).toBe(true);
     });
   });
 });

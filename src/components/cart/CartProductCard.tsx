@@ -13,7 +13,7 @@ import type { CartItem } from "@/types/calculation/cart";
 import { getSuitableDiscountByQuantity } from "@/utils/calculation/discountCalculation/discountCalculation";
 import { BuildPricingCond } from "@/utils/pricing/buildPricingCond";
 import { getProductPricing } from "@/utils/pricing/getProductPricing";
-import { Minus, Plus, Trash2 } from "lucide-react";
+import { Loader2, Minus, Plus, Trash2 } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useMemo, useState } from "react";
 
@@ -130,6 +130,12 @@ export default function CartProductCard({
       return;
     }
 
+    // Prevent duplicate calls if already updating
+    if (isUpdating) {
+      console.warn("⚠️ [CartProductCard] Already updating, ignoring duplicate call");
+      return;
+    }
+
     setIsUpdating(true);
     setErrorMessage(false);
 
@@ -138,26 +144,27 @@ export default function CartProductCard({
     };
 
     try {
-
-      await changeQty(
-        {
-          productId: Number(item.productId),
-          itemNo: item.itemNo,
-          quantity: newQuantity,
-          packagingQty: item.packagingQuantity || item.packagingQty,
-          minOrderQuantity: item.minOrderQuantity,
-          sellerId: item.sellerId,
-          sellerName: item.sellerName,
-          sellerLocation: item.sellerLocation,
-          unitListPrice: item.unitListPrice,
-        } as any,
-        newQuantity,
-        setError
-      );
-
-
+      // If parent provides onUpdate callback, use it (parent handles the changeQty call)
+      // Otherwise, handle changeQty directly in this component
       if (onUpdate) {
-        onUpdate(newQuantity);
+        await onUpdate(newQuantity);
+      } else {
+        // Fallback: call changeQty directly when no parent callback
+        await changeQty(
+          {
+            productId: Number(item.productId),
+            itemNo: item.itemNo,
+            quantity: newQuantity,
+            packagingQty: item.packagingQuantity || item.packagingQty,
+            minOrderQuantity: item.minOrderQuantity,
+            sellerId: item.sellerId,
+            sellerName: item.sellerName,
+            sellerLocation: item.sellerLocation,
+            unitListPrice: item.unitListPrice,
+          } as any,
+          newQuantity,
+          setError
+        );
       }
     } catch (error) {
       console.error("❌ [CartProductCard] Error updating quantity:", error);
@@ -217,7 +224,13 @@ export default function CartProductCard({
           >
             <Minus className="h-3 w-3" />
           </Button>
-          <span className="w-8 text-center text-sm">{item.quantity}</span>
+          <span className="w-8 text-center text-sm relative flex items-center justify-center">
+            {isUpdating ? (
+              <Loader2 className="h-3 w-3 animate-spin text-primary" />
+            ) : (
+              item.quantity
+            )}
+          </span>
           <Button
             size="sm"
             variant="outline"
@@ -384,7 +397,7 @@ export default function CartProductCard({
             </Button>
 
             {/* Quantity Controls - Square rounded buttons */}
-            <div className="flex items-center gap-1.5 sm:gap-2">
+            <div className="flex items-center gap-1.5 sm:gap-2 relative">
               <Button
                 variant="outline"
                 size="icon"
@@ -394,8 +407,12 @@ export default function CartProductCard({
               >
                 <Minus className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
               </Button>
-              <span className="w-7 sm:w-8 text-center font-medium text-sm sm:text-base">
-                {item.quantity}
+              <span className="w-7 sm:w-8 text-center font-medium text-sm sm:text-base relative">
+                {isUpdating ? (
+                  <Loader2 className="h-3.5 w-3.5 sm:h-4 sm:w-4 animate-spin mx-auto text-primary" />
+                ) : (
+                  item.quantity
+                )}
               </span>
               <Button
                 variant="outline"
