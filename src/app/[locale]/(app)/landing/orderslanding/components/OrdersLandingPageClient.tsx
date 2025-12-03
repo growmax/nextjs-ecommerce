@@ -14,6 +14,7 @@ export default function OrdersLandingPageClient() {
   const t = useTranslations("orders");
 
   const [refreshTrigger] = useState(0);
+  const [totalCount, setTotalCount] = useState<number | null>(null);
 
   const [exportCallback, setExportCallback] = useState<(() => void) | null>(
     null
@@ -31,7 +32,11 @@ export default function OrdersLandingPageClient() {
     <LandingLayout>
       <PageLayout>
         <DashboardToolbar
-          title={t("title")}
+          title={
+            totalCount !== null
+              ? `${t("title")} (${totalCount.toLocaleString()})`
+              : t("title")
+          }
           primary={{
             condition: true,
             value: t("export"),
@@ -45,6 +50,7 @@ export default function OrdersLandingPageClient() {
         <OrdersLandingTable
           refreshTrigger={refreshTrigger}
           setExportCallback={setExportCallback}
+          onTotalCountChange={setTotalCount}
         />
       </PageLayout>
 

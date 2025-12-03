@@ -38,7 +38,10 @@ function DialogOverlay({
     <DialogPrimitive.Overlay
       data-slot="dialog-overlay"
       className={cn(
-        "data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0",
+        "fixed inset-0 z-50 bg-black/50 backdrop-blur-sm",
+        "data-[state=open]:animate-in data-[state=closed]:animate-out",
+        "data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0",
+        "transition-opacity duration-200",
         className
       )}
       {...props}
@@ -51,21 +54,108 @@ function DialogContent({
   children,
   showCloseButton = true,
   hideOverlay = false,
+  size = "md",
   ...props
 }: React.ComponentProps<typeof DialogPrimitive.Content> & {
   showCloseButton?: boolean;
   hideOverlay?: boolean;
+  size?: "sm" | "md" | "lg" | "xl" | "full" | "auto";
 }) {
+  const sizeClasses = {
+    sm: "sm:max-w-sm",
+    md: "sm:max-w-lg",
+    lg: "sm:max-w-2xl",
+    xl: "sm:max-w-4xl",
+    full: "sm:max-w-[95vw]",
+    auto: "sm:max-w-fit",
+  };
+
+  const contentRef = React.useRef<HTMLDivElement>(null);
+
+  // Prevent layout shift by preserving scrollbar space when dialog opens
+  React.useEffect(() => {
+    const content = contentRef.current;
+    if (!content) return;
+
+    // Calculate scrollbar width before any changes (while scrollbar is visible)
+    const calculateScrollbarWidth = () => {
+      // Create a temporary div to measure scrollbar width
+      const outer = document.createElement("div");
+      outer.style.visibility = "hidden";
+      outer.style.overflow = "scroll";
+      (outer.style as any).msOverflowStyle = "scrollbar";
+      document.body.appendChild(outer);
+
+      const inner = document.createElement("div");
+      outer.appendChild(inner);
+
+      const scrollbarWidth = outer.offsetWidth - inner.offsetWidth;
+      outer.parentNode?.removeChild(outer);
+      return scrollbarWidth;
+    };
+
+    const scrollbarWidth = calculateScrollbarWidth();
+
+    // Store original values
+    const originalBodyOverflow = document.body.style.overflow;
+    const originalBodyPaddingRight = document.body.style.paddingRight;
+    const originalHtmlPaddingRight =
+      document.documentElement.style.paddingRight;
+
+    // Check if dialog is open
+    const checkDialogState = () => {
+      const isOpen = content.getAttribute("data-state") === "open";
+
+      if (isOpen) {
+        // Preserve scrollbar space to prevent layout shift
+        if (scrollbarWidth > 0) {
+          document.body.style.paddingRight = `${scrollbarWidth}px`;
+          document.documentElement.style.paddingRight = `${scrollbarWidth}px`;
+        }
+        // Radix UI already sets overflow: hidden, but we ensure it
+        document.body.style.overflow = "hidden";
+      } else {
+        // Restore original styles
+        document.body.style.overflow = originalBodyOverflow || "";
+        document.body.style.paddingRight = originalBodyPaddingRight || "";
+        document.documentElement.style.paddingRight =
+          originalHtmlPaddingRight || "";
+      }
+    };
+
+    // Observe data-state changes
+    const observer = new MutationObserver(checkDialogState);
+    observer.observe(content, {
+      attributes: true,
+      attributeFilter: ["data-state"],
+    });
+
+    // Initial check with a small delay to ensure state is set
+    setTimeout(checkDialogState, 0);
+
+    // Cleanup function
+    return () => {
+      observer.disconnect();
+      document.body.style.overflow = originalBodyOverflow || "";
+      document.body.style.paddingRight = originalBodyPaddingRight || "";
+      document.documentElement.style.paddingRight =
+        originalHtmlPaddingRight || "";
+    };
+  }, []);
+
   return (
     <DialogPortal data-slot="dialog-portal">
       {!hideOverlay && <DialogOverlay />}
       <DialogPrimitive.Content
+        ref={contentRef}
         data-slot="dialog-content"
         className={cn(
-          "bg-background fixed top-[50%] left-[50%] z-50 grid w-full max-w-[calc(100%-2rem)] translate-x-[-50%] translate-y-[-50%] gap-4 rounded-lg p-6 shadow-lg duration-200 sm:max-w-lg",
-          "data-[state=open]:fade-in-0 data-[state=open]:zoom-in-95",
-          "data-[state=closed]:fade-out-0 data-[state=closed]:zoom-out-95",
+          "bg-background fixed top-[50%] left-[50%] z-50 grid w-full max-w-[calc(100%-2rem)] translate-x-[-50%] translate-y-[-50%] gap-4 rounded-lg p-6 shadow-lg duration-200 border border-black/10",
+          sizeClasses[size],
+          "data-[state=open]:fade-in-0 data-[state=open]:zoom-in-95 data-[state=open]:animate-in",
+          "data-[state=closed]:fade-out-0 data-[state=closed]:zoom-out-95 data-[state=closed]:animate-out",
           "origin-center",
+          "max-h-[90vh] overflow-y-auto",
           className
         )}
         {...props}
@@ -100,7 +190,7 @@ function DialogFooter({ className, ...props }: React.ComponentProps<"div">) {
     <div
       data-slot="dialog-footer"
       className={cn(
-        "flex flex-col-reverse gap-2 sm:flex-row sm:justify-end",
+        "flex flex-col-reverse gap-2 sm:flex-row sm:justify-end pt-4",
         className
       )}
       {...props}

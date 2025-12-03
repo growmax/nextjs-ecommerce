@@ -15,6 +15,7 @@ import { cache, ReactNode, Suspense } from "react";
 import LayoutWithHeader from "@/components/LayoutWithHeader";
 import { LayoutDataLoader } from "@/components/layout/LayoutDataLoader";
 import { PrefetchMainRoutes } from "@/components/layout/PrefetchMainRoutes";
+import { TokenInitializer } from "@/components/TokenInitializer";
 
 /**
  * Parse sidebar state from cookie string
@@ -37,8 +38,8 @@ function parseSidebarStateCookie(cookieString: string): boolean {
 
 // Cache getMessages() calls per request using React cache()
 // This ensures they're only called once per request, even if used multiple times
-const getCachedMessages = cache(async () => {
-  return await getMessages();
+const getCachedMessages = cache(async (locale: string) => {
+  return await getMessages({ locale });
 });
 
 /**
@@ -52,7 +53,7 @@ function MinimalLoadingFallback() {
       <div className="flex">
         {/* Sidebar placeholder */}
         <div className="w-64 border-r bg-muted/30 animate-pulse" />
-        
+
         {/* Content area with skeleton */}
         <div className="flex-1 p-6">
           <div className="space-y-4">
@@ -68,7 +69,7 @@ function MinimalLoadingFallback() {
 /**
  * Layout Content - Renders with full messages and all providers
  * This is the actual layout that users see after messages load
- * 
+ *
  * Performance Benefits:
  * - Messages loaded via cached function (only fetched once per request)
  * - Headers and messages load in parallel (non-blocking)
@@ -76,18 +77,26 @@ function MinimalLoadingFallback() {
  * - Translations always available to client components (fixes MISSING_MESSAGE)
  */
 async function LayoutContent({ children }: { children: ReactNode }) {
-  // Load messages and headers in parallel (both cached, non-blocking)
-  const [messages, headersList] = await Promise.all([
-    getCachedMessages(),
-    headers(),
+  // Get headers first to extract locale from pathname
+  const headersList = await headers();
+  const pathname = headersList.get("x-pathname") || "";
+
+  // Extract locale from pathname (e.g., /th/dashboard -> th)
+  const localeMatch = pathname.match(/^\/([a-z]{2}(-[A-Z]{2})?)/);
+  const locale: string = localeMatch?.[1] ?? "en";
+
+  // Load messages and cookie in parallel (both cached, non-blocking)
+  const [messages, cookieHeader] = await Promise.all([
+    getCachedMessages(locale),
+    Promise.resolve(headersList.get("cookie") || ""),
   ]);
-  
-  const cookieHeader = headersList.get("cookie") || "";
+
   const initialSidebarOpen = parseSidebarStateCookie(cookieHeader);
 
   return (
-    <NextIntlClientProvider messages={messages}>
+    <NextIntlClientProvider messages={messages} locale={locale}>
       <LayoutDataLoader>
+        <TokenInitializer />
         <LoadingProvider>
           <TopProgressBarProvider />
           <NavigationProgressProvider>
@@ -110,20 +119,20 @@ async function LayoutContent({ children }: { children: ReactNode }) {
 
 /**
  * App Layout - Optimized for instant navigation with streaming SSR
- * 
+ *
  * Performance Strategy (Hybrid Streaming):
  * 1. MinimalLoadingFallback renders instantly (0ms) - user sees immediate feedback
  * 2. Messages load in background via Suspense (10-20ms, cached)
  * 3. LayoutContent streams in with proper translations (30-50ms)
  * 4. Children (pages) can start rendering in parallel
- * 
+ *
  * This approach:
  * ✅ Fixes MISSING_MESSAGE errors (messages always available)
  * ✅ Fixes LoadingProvider errors (proper provider nesting)
  * ✅ Maintains streaming SSR (Suspense boundary allows progressive rendering)
  * ✅ Keeps instant navigation (fallback shows immediately)
  * ✅ Production-ready (pattern used by major Next.js apps)
- * 
+ *
  * Performance Metrics:
  * - Time to First Byte (TTFB): Instant
  * - First Contentful Paint (FCP): <100ms (skeleton)

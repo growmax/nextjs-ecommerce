@@ -429,6 +429,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { render, screen, waitFor } from "@testing-library/react";
 import React, { ReactNode } from "react";
 import { toast } from "sonner";
+import { LoadingProvider } from "@/hooks/useGlobalLoader";
 import QuoteDetailsClient from "./QuoteDetailsClient";
 
 const mockFetchQuoteDetails =
@@ -442,7 +443,7 @@ const _mockUpdateQuoteName =
   >;
 const mockToastError = toast.error as jest.MockedFunction<typeof toast.error>;
 
-// Helper to create a wrapper with QueryClient
+// Helper to create a wrapper with QueryClient and LoadingProvider
 function createWrapper() {
   const queryClient = new QueryClient({
     defaultOptions: {
@@ -453,8 +454,13 @@ function createWrapper() {
     },
   });
 
-  const Wrapper = ({ children }: { children: ReactNode }) =>
-    React.createElement(QueryClientProvider, { client: queryClient }, children);
+  const Wrapper = ({ children }: { children: ReactNode }) => (
+    <LoadingProvider>
+      <QueryClientProvider client={queryClient}>
+        {children}
+      </QueryClientProvider>
+    </LoadingProvider>
+  );
   Wrapper.displayName = "QueryClientWrapper";
   return Wrapper;
 }

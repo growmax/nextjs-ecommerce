@@ -9,6 +9,7 @@ import {
   CommandItem,
   CommandList,
 } from "@/components/ui/command";
+import type { BaseDialogProps } from "@/types/dialog";
 import OpenElasticSearchService from "@/lib/api/services/ElacticQueryService/openElasticSearch/openElasticSearch";
 import { SimpleProductSearchResult } from "@/types/OpenElasticSearch/types";
 import { generateProductUrl } from "@/utils/product/slug-generator";
@@ -21,15 +22,15 @@ type SuggestionItem = {
   href: string;
 };
 
-type Props = {
-  open: boolean;
+export interface SearchDialogBoxProps
+  extends Omit<BaseDialogProps, "title" | "description" | "onOpenChange"> {
   setOpen: (v: boolean) => void;
   elasticIndex?: string;
   suggestionItems: SuggestionItem[];
   handleSelect: (href: string) => void;
   setSearchValue: (v: string) => void;
   locale?: string;
-};
+}
 
 export function SearchDialogBox({
   open,
@@ -39,7 +40,7 @@ export function SearchDialogBox({
   handleSelect,
   setSearchValue,
   locale = "en",
-}: Props) {
+}: SearchDialogBoxProps) {
   const debounceRef = useRef<number | null>(null);
   const abortRef = useRef<AbortController | null>(null);
   const [searchResults, setSearchResults] = useState<

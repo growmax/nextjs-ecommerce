@@ -529,6 +529,40 @@ export function useCart() {
           }),
         };
 
+        // Ensure CartServices is properly initialized
+        // Try to reinitialize if needed (handles page refresh scenarios)
+        if (!CartServices || typeof CartServices.postCart !== "function") {
+          console.warn("⚠️ [addItemToCart] CartServices not initialized, attempting to reinitialize...");
+          // Force module reload by re-importing
+          try {
+            const CartServicesModule = await import("@/lib/api/CartServices");
+            const FreshCartServices = CartServicesModule.default;
+            if (FreshCartServices && typeof FreshCartServices.postCart === "function") {
+              // Use the fresh instance
+              const response = await FreshCartServices.postCart({
+                userId: Number(userId),
+                tenantId: String(tenantCode),
+                useMultiSellerCart: Boolean(finalSellerId),
+                body: requestBody,
+                method: isUpdate ? "PUT" : "POST",
+              });
+              
+              const updatedCartData = parseCartResponse(response);
+              if (updatedCartData.length > 0) {
+                setCart(updatedCartData);
+              } else {
+                await refreshCart();
+              }
+              setErrorMessage(false);
+              setIsCartLoading(false);
+              return;
+            }
+          } catch (reinitError) {
+            console.error("❌ [addItemToCart] Failed to reinitialize CartServices:", reinitError);
+          }
+          throw new Error("Cart service is not available. Please refresh the page.");
+        }
+
         const response = await CartServices.postCart({
           userId: Number(userId),
           tenantId: String(tenantCode),
@@ -690,6 +724,41 @@ export function useCart() {
             price: unitListPrice || data.unitListPrice || 0,
           }),
         };
+
+        // Ensure CartServices is properly initialized
+        // Try to reinitialize if needed (handles page refresh scenarios)
+        if (!CartServices || typeof CartServices.postCart !== "function") {
+          console.warn("⚠️ [changeQty] CartServices not initialized, attempting to reinitialize...");
+          // Force module reload by re-importing
+          try {
+            // Clear the module cache and re-import
+            const CartServicesModule = await import("@/lib/api/CartServices");
+            const FreshCartServices = CartServicesModule.default;
+            if (FreshCartServices && typeof FreshCartServices.postCart === "function") {
+              // Use the fresh instance
+              const response = await FreshCartServices.postCart({
+                userId: Number(userId),
+                tenantId: String(tenantCode),
+                useMultiSellerCart: Boolean(sellerId),
+                body: requestBody,
+                method: "PUT",
+              });
+              
+              const updatedCartData = parseCartResponse(response);
+              if (updatedCartData.length > 0) {
+                setCart(updatedCartData);
+              } else {
+                await refreshCart();
+              }
+              setErrorMessage(false);
+              setIsCartLoading(false);
+              return;
+            }
+          } catch (reinitError) {
+            console.error("❌ [changeQty] Failed to reinitialize CartServices:", reinitError);
+          }
+          throw new Error("Cart service is not available. Please refresh the page.");
+        }
 
         const response = await CartServices.postCart({
           userId: Number(userId),

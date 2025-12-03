@@ -1,6 +1,12 @@
 /* eslint-disable @typescript-eslint/no-require-imports */
 import "@testing-library/jest-dom";
-import { act, fireEvent, render, screen, waitFor } from "@testing-library/react";
+import {
+  act,
+  fireEvent,
+  render,
+  screen,
+  waitFor,
+} from "@testing-library/react";
 import React from "react";
 
 import ProfilePageClient from "./ProfilePageClient";
@@ -22,6 +28,15 @@ Object.defineProperty(window, "matchMedia", {
     dispatchEvent: jest.fn(),
   })),
 });
+
+// Mock AuthStorage for UserDetailsContext
+jest.mock("@/lib/auth", () => ({
+  AuthStorage: {
+    isAuthenticated: jest.fn(() => false),
+    getAccessToken: jest.fn(() => null),
+    clearAuth: jest.fn(),
+  },
+}));
 
 // Mock the hook used by the component by requiring the mock inside the factory.
 jest.mock("@/hooks/Profile/useProfileData", () => {
@@ -157,7 +172,9 @@ jest.mock("sonner", () => ({
 
 // Mock CompanyService
 const mockUpdateProfileFn = jest.fn().mockResolvedValue({ success: true });
-const mockSaveUserPreferencesFn = jest.fn().mockResolvedValue({ success: true });
+const mockSaveUserPreferencesFn = jest
+  .fn()
+  .mockResolvedValue({ success: true });
 
 jest.mock("@/lib/api", () => ({
   CompanyService: {
@@ -173,7 +190,13 @@ jest.mock("@/lib/api", () => ({
 
 // Mock useCurrentUser
 jest.mock("@/hooks/useCurrentUser", () => ({
-  useCurrentUser: () => ({ user: { userId: 1, defaultCountryCallingCode: "+1", defaultCountryCodeIso: "US" } }),
+  useCurrentUser: () => ({
+    user: {
+      userId: 1,
+      defaultCountryCallingCode: "+1",
+      defaultCountryCodeIso: "US",
+    },
+  }),
 }));
 
 // Mock AuthStorage
@@ -205,7 +228,7 @@ jest.mock("libphonenumber-js", () => {
     country: "US",
     nationalNumber: phone || "1234567890",
   }));
-  
+
   return {
     __esModule: true,
     default: mockParsePhoneNumber,
@@ -216,22 +239,26 @@ jest.mock("libphonenumber-js", () => {
 const renderWithProviders = (component: React.ReactElement) => {
   return render(
     <TenantProvider
-      initialData={{
-        status: "success",
-        data: {
-          tenant: { tenantCode: "test-tenant", id: 1, name: "Test Tenant" },
-          sellerCompanyId: null,
-          sellerCurrency: null,
-        },
-      } as any}
+      initialData={
+        {
+          status: "success",
+          data: {
+            tenant: { tenantCode: "test-tenant", id: 1, name: "Test Tenant" },
+            sellerCompanyId: null,
+            sellerCurrency: null,
+          },
+        } as any
+      }
     >
       <UserDetailsProvider
         initialAuthState={true}
-        initialUserData={{
-          userId: 1,
-          defaultCountryCallingCode: "+1",
-          defaultCountryCodeIso: "US",
-        } as any}
+        initialUserData={
+          {
+            userId: 1,
+            defaultCountryCallingCode: "+1",
+            defaultCountryCodeIso: "US",
+          } as any
+        }
       >
         {component}
       </UserDetailsProvider>
@@ -258,10 +285,14 @@ describe("ProfilePageClient", () => {
     mockUpdateProfileFn.mockClear();
     mockDecodeToken.mockClear();
     mockGetInstance.mockClear();
-    
+
     // Replace the mocked hook with a controllable mock that exposes spies
     const mock = createUseProfileDataMock({
-      profileDatas: { id: "123", email: "jane@example.com", phoneNumber: "+11234567890" },
+      profileDatas: {
+        id: "123",
+        email: "jane@example.com",
+        phoneNumber: "+11234567890",
+      },
     });
     jest
       .spyOn(require("@/hooks/Profile/useProfileData"), "useProfileData")
