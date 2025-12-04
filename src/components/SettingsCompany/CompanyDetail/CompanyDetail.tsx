@@ -126,31 +126,32 @@ const normalizeCompanyData = (
 
   const data: CompanyFormValues["data"] = {
     ...(response ? { ...response, subIndustryId: undefined } : {}),
-    name: response?.name ?? "",
+    name: (response?.name ?? "").trim(),
+    website: (response?.website ?? "").trim(),
     taxDetailsId: {
-      pan: response?.taxDetailsId?.pan ?? "",
+      pan: (response?.taxDetailsId?.pan ?? "").trim(),
       ...response?.taxDetailsId,
     },
     businessTypeId: {
-      name: response?.businessTypeId?.name ?? "",
+      name: (response?.businessTypeId?.name ?? "").trim(),
       ...response?.businessTypeId,
     },
     accountTypeId: {
-      name: response?.accountTypeId?.name ?? "",
+      name: (response?.accountTypeId?.name ?? "").trim(),
       ...response?.accountTypeId,
     },
     currencyId: {
-      currencyCode: response?.currencyId?.currencyCode ?? "",
+      currencyCode: (response?.currencyId?.currencyCode ?? "").trim(),
       ...response?.currencyId,
     },
     subIndustryId: {
       ...(subIndustry ?? {}),
-      name: subIndustry?.name ?? "",
+      name: (subIndustry?.name ?? "").trim(),
       id:
         subIndustry?.id !== undefined && subIndustry?.id !== null
           ? subIndustry.id
           : "",
-      description: subIndustry?.description ?? "",
+      description: (subIndustry?.description ?? "").trim(),
     },
   };
 
