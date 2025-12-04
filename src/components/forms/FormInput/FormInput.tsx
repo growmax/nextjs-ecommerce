@@ -59,7 +59,7 @@ const FormInput = ({
           </FormControl>
 
           {/* 🔥 shows "Branch name is required" */}
-          <FormMessage />
+          <FormMessage className="text-xs" />
         </FormItem>
       )}
     />

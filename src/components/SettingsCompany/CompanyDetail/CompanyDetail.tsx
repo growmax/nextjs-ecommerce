@@ -3,33 +3,111 @@ import SectionCard from "@/components/custom/SectionCard";
 import { ImageUpload } from "@/components/forms/ImageUpload/ImageUpload";
 import { Button } from "@/components/ui/button";
 import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuLabel,
-  DropdownMenuPortal,
-  DropdownMenuRadioGroup,
-  DropdownMenuRadioItem,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
+    DropdownMenu,
+    DropdownMenuContent,
+    DropdownMenuLabel,
+    DropdownMenuPortal,
+    DropdownMenuRadioGroup,
+    DropdownMenuRadioItem,
+    DropdownMenuSeparator,
+    DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import {
-  Form,
-  FormControl,
-  FormField,
-  FormItem,
-  FormLabel,
+    Form,
+    FormControl,
+    FormField,
+    FormItem,
+    FormLabel,
 } from "@/components/ui/form";
+import { useSidebar } from "@/components/ui/sidebar";
 import { CompanyService, SubIndustryService } from "@/lib/api";
 import type { CompanyApiResponse } from "@/lib/api/services/CompanyService";
 import { AuthStorage } from "@/lib/auth";
 import { JWTService } from "@/lib/services/JWTService";
+import { cn } from "@/lib/utils";
+import { zodResolver } from "@hookform/resolvers/zod";
 import { ChevronDown } from "lucide-react";
 import { useTranslations } from "next-intl";
 import React, { useEffect, useRef, useState } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
+import { z } from "zod";
 import CompanyFormInput from "../../forms/FormInput/FormInput";
 import { LabelWithAsterisk } from "../DialogBox/AddressDialogBox";
+
+const companyFormSchema = z.object({
+  data: z.object({
+    name: z
+      .string()
+      .trim()
+      .superRefine((val, ctx) => {
+        if (val.length === 0) {
+          ctx.addIssue({
+            code: z.ZodIssueCode.custom,
+            message: "Company Name is required",
+          });
+        } else if (val.length < 2) {
+          ctx.addIssue({
+            code: z.ZodIssueCode.custom,
+            message: "Company Name must be at least 2 characters",
+          });
+        } else if (val.length > 100) {
+          ctx.addIssue({
+            code: z.ZodIssueCode.custom,
+            message: "Company Name cannot exceed 100 characters",
+          });
+        }
+      }),
+    website: z
+      .string()
+      .trim()
+      .optional()
+      .nullable()
+      .refine(
+        (val) => !val || val === "" || z.string().url().safeParse(val).success,
+        {
+          message: "Invalid URL format",
+        }
+      ),
+    taxDetailsId: z.object({
+      pan: z
+        .string()
+        .trim()
+        .superRefine((val, ctx) => {
+          if (val.length === 0) {
+            ctx.addIssue({
+              code: z.ZodIssueCode.custom,
+              message: "Tax ID / GST# is required",
+            });
+          } else if (val.length < 5) {
+            ctx.addIssue({
+              code: z.ZodIssueCode.custom,
+              message: "Tax ID / GST# must be at least 5 characters",
+            });
+          } else if (val.length > 20) {
+            ctx.addIssue({
+              code: z.ZodIssueCode.custom,
+              message: "Tax ID / GST# cannot exceed 20 characters",
+            });
+          }
+        }),
+    }),
+    businessTypeId: z.object({
+      name: z.string().trim().min(1, "Business Type is required"),
+    }),
+    accountTypeId: z.object({
+      name: z.string().trim().min(1, "Account Type is required"),
+    }),
+    currencyId: z.object({
+      currencyCode: z.string().trim().min(1, "Default Currency is required"),
+    }),
+    subIndustryId: z.any().optional(),
+  }).passthrough(),
+  subIndustry: z.string().min(1, "SubIndustry is required"),
+  subIndustryOptions: z.array(z.any()).optional(),
+});
+
+type CompanyFormValues = z.infer<typeof companyFormSchema>;
 
 type SubIndustryOption = {
   id: string | number;
@@ -39,21 +117,7 @@ type SubIndustryOption = {
   [key: string]: unknown;
 };
 
-type SubIndustryFormValue = {
-  name: string;
-  id: string | number;
-  description: string;
-  [key: string]: unknown;
-};
 
-interface CompanyFormValues {
-  data: {
-    subIndustryId: SubIndustryFormValue;
-    [key: string]: unknown;
-  };
-  subIndustry: string;
-  subIndustryOptions: SubIndustryOption[];
-}
 
 const normalizeCompanyData = (
   response?: CompanyApiResponse["data"]
@@ -62,6 +126,23 @@ const normalizeCompanyData = (
 
   const data: CompanyFormValues["data"] = {
     ...(response ? { ...response, subIndustryId: undefined } : {}),
+    name: response?.name ?? "",
+    taxDetailsId: {
+      pan: response?.taxDetailsId?.pan ?? "",
+      ...response?.taxDetailsId,
+    },
+    businessTypeId: {
+      name: response?.businessTypeId?.name ?? "",
+      ...response?.businessTypeId,
+    },
+    accountTypeId: {
+      name: response?.accountTypeId?.name ?? "",
+      ...response?.accountTypeId,
+    },
+    currencyId: {
+      currencyCode: response?.currencyId?.currencyCode ?? "",
+      ...response?.currencyId,
+    },
     subIndustryId: {
       ...(subIndustry ?? {}),
       name: subIndustry?.name ?? "",
@@ -85,8 +166,15 @@ const normalizeCompanyData = (
 
 const CompanyDetail = () => {
   const t = useTranslations("companySettings");
+  const { state, isMobile } = useSidebar();
   const defaultFormValues: CompanyFormValues = {
     data: {
+      name: "",
+      website: "",
+      taxDetailsId: { pan: "" },
+      businessTypeId: { name: "" },
+      accountTypeId: { name: "" },
+      currencyId: { currencyCode: "" },
       subIndustryId: {
         name: "",
         id: "",
@@ -98,7 +186,9 @@ const CompanyDetail = () => {
   };
 
   const form = useForm<CompanyFormValues>({
+    resolver: zodResolver(companyFormSchema),
     defaultValues: defaultFormValues,
+    mode: "onChange",
   });
   // watch options from react-hook-form (keeps data in RHF only)
   const subIndustryOptions = form.watch("subIndustryOptions");
@@ -127,19 +217,6 @@ const CompanyDetail = () => {
     }
   }, []);
   
-  // Validation errors type
-  type ValidationErrors = {
-    name?: string;
-    taxId?: string;
-    businessType?: string;
-    accountType?: string;
-    currency?: string;
-    subIndustry?: string;
-  };
-
-  // Validation errors state
-  const [, setValidationErrors] = useState<ValidationErrors>({});
-
   // Store initial values in a ref to preserve them
   const defaultValuesRef = useRef<CompanyFormValues | null>(null);
   // Store initial logo URL to track changes
@@ -222,135 +299,9 @@ const CompanyDetail = () => {
     reset,
   } = form;
 
-  // Simple form watcher for dirty fields - clear validation errors when fields change
-  useEffect(() => {
-    const subscription = form.watch((_value, { name, type }) => {
-      if (type === "change" && name) {
-        // Clear validation error for the changed field
-        if (name === "data.name") {
-          setValidationErrors(prev => {
-            const newErrors = { ...prev };
-            delete newErrors.name;
-            return newErrors;
-          });
-          form.clearErrors("data.name");
-        } else if (name === "data.taxDetailsId.pan") {
-          setValidationErrors(prev => {
-            const newErrors = { ...prev };
-            delete newErrors.taxId;
-            return newErrors;
-          });
-          form.clearErrors("data.taxDetailsId.pan");
-        } else if (name === "data.businessTypeId.name") {
-          setValidationErrors(prev => {
-            const newErrors = { ...prev };
-            delete newErrors.businessType;
-            return newErrors;
-          });
-          form.clearErrors("data.businessTypeId.name");
-        } else if (name === "data.accountTypeId.name") {
-          setValidationErrors(prev => {
-            const newErrors = { ...prev };
-            delete newErrors.accountType;
-            return newErrors;
-          });
-          form.clearErrors("data.accountTypeId.name");
-        } else if (name === "data.currencyId.currencyCode") {
-          setValidationErrors(prev => {
-            const newErrors = { ...prev };
-            delete newErrors.currency;
-            return newErrors;
-          });
-          form.clearErrors("data.currencyId.currencyCode");
-        } else if (name === "subIndustry") {
-          setValidationErrors(prev => {
-            const newErrors = { ...prev };
-            delete newErrors.subIndustry;
-            return newErrors;
-          });
-          form.clearErrors("subIndustry");
-        }
-      }
-    });
 
-    return () => {
-      if (subscription && typeof subscription.unsubscribe === "function") {
-        subscription.unsubscribe();
-      }
-    };
-  }, [form]);
 
-  // Validation helper
-  const validateCompany = (): { isValid: boolean; errors: ValidationErrors } => {
-    const errors: ValidationErrors = {};
-    const formData = form.getValues();
 
-    // Clear previous errors
-    form.clearErrors();
-
-    // Validate Company Name (required)
-    if (!formData.data?.name || (formData.data.name as string).trim() === "") {
-      errors.name = t("companyName") + " is required";
-      form.setError("data.name", {
-        type: "validate",
-        message: t("companyName") + " is required",
-      });
-    }
-
-    // Validate Tax ID / GST# (required)
-    const taxDetailsId = formData.data?.taxDetailsId as { pan?: string } | undefined;
-    if (!taxDetailsId?.pan || taxDetailsId.pan.trim() === "") {
-      errors.taxId = t("taxIdGst") + " is required";
-      form.setError("data.taxDetailsId.pan", {
-        type: "validate",
-        message: t("taxIdGst") + " is required",
-      });
-    }
-
-    // Validate Business Type (required)
-    const businessTypeId = formData.data?.businessTypeId as { name?: string } | undefined;
-    if (!businessTypeId?.name || businessTypeId.name.trim() === "") {
-      errors.businessType = t("businessType") + " is required";
-      form.setError("data.businessTypeId.name", {
-        type: "validate",
-        message: t("businessType") + " is required",
-      });
-    }
-
-    // Validate Account Type (required)
-    const accountTypeId = formData.data?.accountTypeId as { name?: string } | undefined;
-    if (!accountTypeId?.name || accountTypeId.name.trim() === "") {
-      errors.accountType = t("accountType") + " is required";
-      form.setError("data.accountTypeId.name", {
-        type: "validate",
-        message: t("accountType") + " is required",
-      });
-    }
-
-    // Validate Default Currency (required)
-    const currencyId = formData.data?.currencyId as { currencyCode?: string } | undefined;
-    if (!currencyId?.currencyCode || currencyId.currencyCode.trim() === "") {
-      errors.currency = t("defaultCurrency") + " is required";
-      form.setError("data.currencyId.currencyCode", {
-        type: "validate",
-        message: t("defaultCurrency") + " is required",
-      });
-    }
-
-    // Validate SubIndustry (required)
-    if (!formData.subIndustry || formData.subIndustry.trim() === "") {
-      errors.subIndustry = t("subIndustry") + " is required";
-      form.setError("subIndustry", {
-        type: "validate",
-        message: t("subIndustry") + " is required",
-      });
-    }
-
-    return {
-      isValid: Object.keys(errors).length === 0,
-      errors,
-    };
-  };
 
   // Unified cancel handler
   const handleCancel = () => {
@@ -371,28 +322,15 @@ const CompanyDetail = () => {
     // Clear uploaded logo URL
     setUploadedLogoUrl(null);
     // Clear validation errors
-    setValidationErrors({});
+
     toast.info(t("allChangesCancelled"), {
       position: "top-right",
     });
   };
 
   // Unified save handler
-  const handleSave = async () => {
-    // Validate company data first
-    const validation = validateCompany();
-    if (!validation.isValid) {
-      // Set validation errors for display
-      setValidationErrors(validation.errors);
-      setIsSaving(false);
-      return;
-    }
-    
-    // Clear validation errors if validation passes
-    setValidationErrors({});
-
+  const onSubmit = async (formData: CompanyFormValues) => {
     // Define changedFields outside try block so it's available in catch block
-    const formData = form.getValues();
     const changedFields = Object.keys(dirtyFields).reduce((acc: any, key) => {
       const value = key
         .split(".")
@@ -426,7 +364,7 @@ const CompanyDetail = () => {
       } else {
         // If not changed, find the current selected option
         const options = form.getValues("subIndustryOptions") as Array<any>;
-        const currentSubIndustryId = formData.subIndustry || formData.data.subIndustryId.id;
+        const currentSubIndustryId = formData.subIndustry || (formData.data.subIndustryId as any)?.id;
         if (currentSubIndustryId) {
           selectedSubIndustry = options.find(
             (o: any) => String(o.id) === String(currentSubIndustryId)
@@ -435,7 +373,7 @@ const CompanyDetail = () => {
       }
 
       // API call with full formData (backend might need all fields)
-      const companyId = (formData.data?.id ?? formData.data?.companyId) as
+      const companyId = ((formData.data as any)?.id ?? (formData.data as any)?.companyId) as
         | number
         | undefined;
 
@@ -444,7 +382,7 @@ const CompanyDetail = () => {
       }
 
       const subIndustryIdValue =
-        formData.subIndustry || formData.data.subIndustryId.id;
+        formData.subIndustry || (formData.data.subIndustryId as any)?.id;
       const parsedSubIndustryId =
         subIndustryIdValue !== "" && subIndustryIdValue !== undefined
           ? Number(subIndustryIdValue)
@@ -479,7 +417,7 @@ const CompanyDetail = () => {
           id:
             parsedSubIndustryId !== undefined
               ? parsedSubIndustryId
-              : formData.data.subIndustryId.id,
+              : (formData.data.subIndustryId as any)?.id,
         };
       }
 
@@ -516,10 +454,6 @@ const CompanyDetail = () => {
       // Clear uploaded logo URL after successful save
       setUploadedLogoUrl(null);
       
-      // Clear validation errors on successful save
-      setValidationErrors({});
-      form.clearErrors();
-
       toast.success(t("changesSavedSuccessfully"));
     } catch {
       toast.error(t("failedToSaveChanges"));
@@ -534,8 +468,8 @@ const CompanyDetail = () => {
         <Form {...form}>
           <form className="grid grid-cols-1 md:grid-cols-4 gap-6 md:gap-6 lg:gap-8 items-start">
             {/* Image Upload Section */}
-            <div className="flex flex-col items-center md:items-start justify-start w-full mb-6 sm:mb-8 md:mb-0">
-              <div className="w-full max-w-[140px] sm:max-w-[160px] md:max-w-[180px] lg:max-w-[200px] mx-auto md:mx-0">
+            <div className="flex flex-col items-center justify-start w-full mb-6 sm:mb-8 md:mb-0">
+              <div className="w-full max-w-[140px] sm:max-w-[160px] md:max-w-[180px] lg:max-w-[200px] mx-auto">
                 <ImageUpload
                   currentImage={profileImage || null}
                   onImageChange={handleImageChange}
@@ -596,6 +530,7 @@ const CompanyDetail = () => {
                   label={<LabelWithAsterisk label={t("businessType")} />}
                   placeholder={t("businessType")}
                   loading={loading}
+                  disabled
                 />
               </div>
 
@@ -607,6 +542,7 @@ const CompanyDetail = () => {
                   label={<LabelWithAsterisk label={t("accountType")} />}
                   placeholder={t("accountType")}
                   loading={loading}
+                  disabled
                 />
               </div>
 
@@ -618,6 +554,7 @@ const CompanyDetail = () => {
                   label={<LabelWithAsterisk label={t("defaultCurrency")} />}
                   placeholder={t("defaultCurrency")}
                   loading={loading}
+                  disabled
                 />
               </div>
 
@@ -628,7 +565,7 @@ const CompanyDetail = () => {
                 name="subIndustry"
                 render={({ field }) => (
                   <FormItem className="space-y-1.5">
-                    <FormLabel className="text-xs font-medium">
+                    <FormLabel>
                       <LabelWithAsterisk label={t("subIndustry")} required />
                     </FormLabel>
                     <FormControl>
@@ -721,7 +658,7 @@ const CompanyDetail = () => {
               {/* Industry Description */}
               <div className="w-full min-w-0">
                 {/* prefer option data when loaded; otherwise fallback to prefilled form values */}
-                <FormLabel className="text-xs font-medium">
+                <FormLabel>
                   {t("industryDescription")}{" "}
                   {form.watch("data.subIndustryId.id")
                     ? (
@@ -734,7 +671,7 @@ const CompanyDetail = () => {
                       ""
                     : ""}
                 </FormLabel>
-                <p className="text-xs text-muted-foreground mt-1">
+                <p className="text-sm text-muted-foreground mt-1">
                   {form.watch("data.subIndustryId.id")
                     ? (
                         (subIndustryOptions ?? []).find(
@@ -755,12 +692,19 @@ const CompanyDetail = () => {
       {(isDirty || hasImageChanged) && isFormReady && !loading && (
         <SaveCancelToolbar
           show={isDirty || hasImageChanged}
-          onSave={handleSave}
+          onSave={form.handleSubmit(onSubmit)}
           onCancel={handleCancel}
           isLoading={isSaving}
           saveText={t("saveChanges")}
           cancelText={t("cancel")}
-          className="bottom-4 left-0 right-0 md:bottom-auto md:top-[69px] md:left-0 lg:left-64 z-50"
+          className={cn(
+            "bottom-4 left-0 right-0 md:bottom-auto md:top-[69px] md:left-0 z-50 transition-[left] duration-200 ease-linear",
+            isMobile
+              ? "left-0"
+              : state === "expanded"
+                ? "md:left-[16rem]"
+                : "md:left-[3rem]"
+          )}
         />
       )}
     </div>

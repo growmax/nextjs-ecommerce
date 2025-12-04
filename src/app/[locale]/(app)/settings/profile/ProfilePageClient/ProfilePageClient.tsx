@@ -1,6 +1,6 @@
 "use client";
 
-import HeaderBar from "@/components/Global/HeaderBar/HeaderBar";
+
 import { SaveCancelToolbar } from "@/components/custom/save-cancel-toolbar";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
@@ -10,6 +10,7 @@ import { PasswordChangeDialog } from "@/components/SettingsProfile/PasswordChang
 import { ProfileCard } from "@/components/SettingsProfile/ProfileCard/ProfileCard";
 import { UserPreferencesCard } from "@/components/SettingsProfile/UserPreferencesCard/UserPreferencesCard";
 import { Button } from "@/components/ui/button";
+import { useSidebar } from "@/components/ui/sidebar";
 import { useTenantInfo } from "@/contexts/TenantContext";
 import { useUserDetails } from "@/contexts/UserDetailsContext";
 import { useProfileData } from "@/hooks/Profile/useProfileData";
@@ -17,11 +18,13 @@ import { useCurrentUser } from "@/hooks/useCurrentUser";
 import { AuthService, CompanyService } from "@/lib/api";
 import { AuthStorage } from "@/lib/auth";
 import { JWTService } from "@/lib/services/JWTService";
+import { cn } from "@/lib/utils";
 import parsePhoneNumberFromString from "libphonenumber-js";
 import { Shield } from "lucide-react";
 import { useTranslations } from "next-intl";
 export default function ProfilePageClient() {
   const t = useTranslations("profileSettings");
+  const { state, isMobile } = useSidebar();
   const {
     profile,
     preferences,
@@ -457,9 +460,6 @@ export default function ProfilePageClient() {
 
   return (
     <div className="flex flex-col h-full">
-      <div id="profile-header" className="h-[48px] md:h-[64px] flex-shrink-0">
-        <HeaderBar title={t("profileSettings")} />
-      </div>
 
       <main
         className={`flex-1 px-4  sm:px-4 md:px-8 lg:px-16 pt-4 pb-4 md:pt-6 overflow-x-hidden overflow-y-auto min-h-0 ${hasChanges ? "pb-32 md:pb-24" : "pb-16"}`}
@@ -524,7 +524,14 @@ export default function ProfilePageClient() {
         isLoading={isSaving}
         saveText="save"
         cancelText={t("cancel")}
-        className="bottom-4 left-0 right-0 md:bottom-auto md:top-[69px] md:left-0 lg:left-64 z-50"
+        className={cn(
+          "bottom-4 left-0 right-0 md:bottom-auto md:top-[69px] md:left-0 z-50 transition-[left] duration-200 ease-linear",
+          isMobile
+            ? "left-0"
+            : state === "expanded"
+              ? "md:left-[16rem]"
+              : "md:left-[3rem]"
+        )}
         anchorSelector="#profile-header"
       />
 
