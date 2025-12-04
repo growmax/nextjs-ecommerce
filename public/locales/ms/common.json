@@ -645,6 +645,8 @@
     "failedToLoadBranches": "Gagal memuatkan cawangan. Sila cuba lagi.",
     "noBranchesFound": "Tiada cawangan ditemui. Tambah cawangan untuk bermula.",
     "deleteBranch": "Padam cawangan",
+    "deleteBranchConfirmation": "Adakah anda pasti mahu memadamkan cawangan ini? Tindakan ini tidak boleh dibuat asal.",
+    "delete": "Padam",
     "createAddress": "Cipta Alamat",
     "editAddress": "Edit Alamat",
     "enterBranchName": "Masukkan nama cawangan",

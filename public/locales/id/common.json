@@ -645,6 +645,8 @@
     "failedToLoadBranches": "Gagal memuat cabang. Harap coba lagi.",
     "noBranchesFound": "Tidak ada cabang ditemukan. Tambahkan cabang untuk memulai.",
     "deleteBranch": "Hapus cabang",
+    "deleteBranchConfirmation": "Apakah Anda yakin ingin menghapus cabang ini? Tindakan ini tidak dapat dibatalkan.",
+    "delete": "Hapus",
     "createAddress": "Buat Alamat",
     "editAddress": "Edit Alamat",
     "enterBranchName": "Masukkan nama cabang",

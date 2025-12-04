@@ -645,6 +645,8 @@
     "failedToLoadBranches": "โหลดสาขาไม่สำเร็จ กรุณาลองอีกครั้ง",
     "noBranchesFound": "ไม่พบสาขา เพิ่มสาขาเพื่อเริ่มต้น",
     "deleteBranch": "ลบสาขา",
+    "deleteBranchConfirmation": "คุณแน่ใจหรือไม่ว่าต้องการลบสาขานี้? การดำเนินการนี้ไม่สามารถยกเลิกได้",
+    "delete": "ลบ",
     "createAddress": "สร้างที่อยู่",
     "editAddress": "แก้ไขที่อยู่",
     "enterBranchName": "กรอกชื่อสาขา",

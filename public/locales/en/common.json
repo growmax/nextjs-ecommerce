@@ -648,6 +648,8 @@
     "failedToLoadBranches": "Failed to load branches. Please try again.",
     "noBranchesFound": "No branches found. Add a branch to get started.",
     "deleteBranch": "Delete branch",
+    "deleteBranchConfirmation": "Are you sure you want to delete this branch? This action cannot be undone.",
+    "delete": "Delete",
     "createAddress": "Create Address",
     "editAddress": "Edit Address",
     "enterBranchName": "Enter branch name",

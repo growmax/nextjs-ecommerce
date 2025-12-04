@@ -645,6 +645,8 @@
     "failedToLoadBranches": "Échec du chargement des succursales. Veuillez réessayer.",
     "noBranchesFound": "Aucune succursale trouvée. Ajoutez une succursale pour commencer.",
     "deleteBranch": "Supprimer la succursale",
+    "deleteBranchConfirmation": "Êtes-vous sûr de vouloir supprimer cette succursale ? Cette action ne peut pas être annulée.",
+    "delete": "Supprimer",
     "createAddress": "Créer une Adresse",
     "editAddress": "Modifier l'Adresse",
     "enterBranchName": "Entrez le nom de la succursale",

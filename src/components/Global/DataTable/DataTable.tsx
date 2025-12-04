@@ -1,37 +1,37 @@
 "use client";
 
 import {
-    closestCenter,
-    DndContext,
-    KeyboardSensor,
-    MouseSensor,
-    TouchSensor,
-    useSensor,
-    useSensors,
-    type DragEndEvent,
-    type UniqueIdentifier,
+  closestCenter,
+  DndContext,
+  KeyboardSensor,
+  MouseSensor,
+  TouchSensor,
+  useSensor,
+  useSensors,
+  type DragEndEvent,
+  type UniqueIdentifier,
 } from "@dnd-kit/core";
 import { restrictToVerticalAxis } from "@dnd-kit/modifiers";
 import {
-    arrayMove,
-    SortableContext,
-    verticalListSortingStrategy,
+  arrayMove,
+  SortableContext,
+  verticalListSortingStrategy,
 } from "@dnd-kit/sortable";
 import {
-    flexRender,
-    getCoreRowModel,
-    getFacetedRowModel,
-    getFacetedUniqueValues,
-    getFilteredRowModel,
-    getPaginationRowModel,
-    getSortedRowModel,
-    useReactTable,
-    type ColumnFiltersState,
-    type PaginationState,
-    type Row,
-    type RowSelectionState,
-    type SortingState,
-    type VisibilityState,
+  flexRender,
+  getCoreRowModel,
+  getFacetedRowModel,
+  getFacetedUniqueValues,
+  getFilteredRowModel,
+  getPaginationRowModel,
+  getSortedRowModel,
+  useReactTable,
+  type ColumnFiltersState,
+  type PaginationState,
+  type Row,
+  type RowSelectionState,
+  type SortingState,
+  type VisibilityState,
 } from "@tanstack/react-table";
 import { ChevronDown, Columns3, Plus } from "lucide-react";
 import * as React from "react";
@@ -39,26 +39,26 @@ import * as React from "react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
-    DropdownMenu,
-    DropdownMenuCheckboxItem,
-    DropdownMenuContent,
-    DropdownMenuTrigger,
+  DropdownMenu,
+  DropdownMenuCheckboxItem,
+  DropdownMenuContent,
+  DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Label } from "@/components/ui/label";
 import {
-    Select,
-    SelectContent,
-    SelectItem,
-    SelectTrigger,
-    SelectValue,
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
 } from "@/components/ui/select";
 import {
-    Table,
-    TableBody,
-    TableCell,
-    TableHead,
-    TableHeader,
-    TableRow,
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
 } from "@/components/ui/table";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
@@ -337,7 +337,7 @@ export function DataTable<TData>({
   // Render table content
   const renderTableContent = () => {
     const tableElement = (
-      <div className="overflow-x-auto rounded-lg border">
+      <div className="overflow-x-auto rounded-lg border relative">
         <Table className={tableClassName}>
           <TableHeader className="bg-muted sticky top-0 z-[1]">
             {table.getHeaderGroups().map(headerGroup => (
@@ -359,14 +359,32 @@ export function DataTable<TData>({
           </TableHeader>
           <TableBody className="**:data-[slot=table-cell]:first:w-8">
             {isLoading ? (
-              <TableRow>
-                <TableCell
-                  colSpan={columns.length}
-                  className="h-24 text-center"
-                >
-                  Loading...
-                </TableCell>
-              </TableRow>
+              // Skeleton loading rows - dynamic based on actual data rows
+              Array.from({ length: data.length || 1 }).map((_, rowIndex) => (
+                <TableRow key={`skeleton-${rowIndex}`}>
+                  {columns.map((_, colIndex) => (
+                    <TableCell key={`skeleton-cell-${rowIndex}-${colIndex}`}>
+                      {colIndex === 1 ? (
+                        // Address column - multi-line skeleton
+                        <div className="space-y-1.5 py-1">
+                          <div className="h-3.5 w-20 bg-muted animate-pulse rounded" />
+                          <div className="h-3 w-24 bg-muted animate-pulse rounded" />
+                          <div className="h-3 w-8 bg-muted animate-pulse rounded" />
+                          <div className="flex gap-2 pt-1">
+                            <div className="h-5 w-12 bg-muted animate-pulse rounded-full" />
+                            <div className="h-5 w-14 bg-muted animate-pulse rounded-full" />
+                          </div>
+                        </div>
+                      ) : colIndex === columns.length - 1 ? (
+                        // Delete button column - small icon skeleton
+                        <div className="h-5 w-5 bg-muted animate-pulse rounded" />
+                      ) : (
+                        <div className="h-4 w-3/4 bg-muted animate-pulse rounded" />
+                      )}
+                    </TableCell>
+                  ))}
+                </TableRow>
+              ))
             ) : table.getRowModel().rows?.length ? (
               enableDragDrop ? (
                 <SortableContext

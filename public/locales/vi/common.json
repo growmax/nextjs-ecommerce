@@ -645,6 +645,8 @@
     "failedToLoadBranches": "Không thể tải chi nhánh. Vui lòng thử lại.",
     "noBranchesFound": "Không tìm thấy chi nhánh. Thêm chi nhánh để bắt đầu.",
     "deleteBranch": "Xóa chi nhánh",
+    "deleteBranchConfirmation": "Bạn có chắc chắn muốn xóa chi nhánh này không? Hành động này không thể hoàn tác.",
+    "delete": "Xóa",
     "createAddress": "Tạo địa chỉ",
     "editAddress": "Chỉnh sửa địa chỉ",
     "enterBranchName": "Nhập tên chi nhánh",

@@ -645,6 +645,8 @@
     "failedToLoadBranches": "Error al cargar las sucursales. Por favor intente de nuevo.",
     "noBranchesFound": "No se encontraron sucursales. Agregue una sucursal para comenzar.",
     "deleteBranch": "Eliminar sucursal",
+    "deleteBranchConfirmation": "¿Está seguro de que desea eliminar esta sucursal? Esta acción no se puede deshacer.",
+    "delete": "Eliminar",
     "createAddress": "Crear Dirección",
     "editAddress": "Editar Dirección",
     "enterBranchName": "Ingrese el nombre de la sucursal",
