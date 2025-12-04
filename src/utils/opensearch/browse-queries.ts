@@ -290,9 +290,10 @@ function buildProductSpecificationFilters(
 
 /**
  * Build stock/inventory status filter
- * Uses nested query on inventory array to check availableQty
- * - In Stock: at least one inventory item has availableQty > 0
- * - Out of Stock: no inventory items have availableQty > 0 OR inventory array is empty
+ * Uses a range query on inventory.availableQuantity.
+ * The 'inventory' field is a simple array, not a nested object.
+ * - In Stock: at least one inventory item has availableQuantity > 0
+ * - Out of Stock: no inventory items have availableQuantity > 0 OR inventory array is empty
  */
 function buildStockFilter(inStock?: boolean): Array<Record<string, unknown>> {
   if (inStock === undefined) {
@@ -300,39 +301,27 @@ function buildStockFilter(inStock?: boolean): Array<Record<string, unknown>> {
   }
 
   if (inStock === true) {
-    // In Stock: at least one inventory item has availableQty > 0
+    // In Stock: any inventory item has availableQty > 0
+    // Use simple range query since inventory is NOT a nested field
     return [
       {
-        nested: {
-          path: "inventory",
-          query: {
-            range: {
-              "inventory.availableQty": {
-                gt: 0,
-              },
-            },
+        range: {
+          "inventory.availableQty": {
+            gt: 0,
           },
         },
       },
     ];
   } else {
-    // Out of Stock: products where no inventory items have availableQty > 0
-    // This single condition matches:
-    // - Products with empty inventory: [] (nested query finds nothing, so must_not matches)
-    // - Products without inventory field (nested query finds nothing, so must_not matches)
-    // - Products where all inventory items have availableQty <= 0 (nested query finds nothing, so must_not matches)
+    // Out of Stock: NO inventory items have availableQty > 0
+    // Use must_not with range query
     return [
       {
         bool: {
           must_not: {
-            nested: {
-              path: "inventory",
-              query: {
-                range: {
-                  "inventory.availableQty": {
-                    gt: 0,
-                  },
-                },
+            range: {
+              "inventory.availableQty": {
+                gt: 0,
               },
             },
           },

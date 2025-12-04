@@ -1,5 +1,5 @@
 import { CategoryBreadcrumbServer } from "@/components/Breadcrumb/CategoryBreadcrumbServer";
-import { ProductGridServer } from "@/components/ProductGrid/ProductGridServer";
+import { ProductViewSwitcher } from "@/components/ProductGrid/ProductViewSwitcher";
 import { StructuredDataServer } from "@/components/seo/StructuredDataServer";
 import type { RequestContext } from "@/lib/api/client";
 import SearchService, {
@@ -322,6 +322,8 @@ export default async function CategoryPage({
         ? false
         : undefined;
 
+
+
   // Parse catalog codes
   const catalogCodes = filters.catalog_code
     ? (Array.isArray(filters.catalog_code)
@@ -367,6 +369,8 @@ export default async function CategoryPage({
     ...(equipmentCodes && equipmentCodes.length > 0 && { equipmentCodes }),
   });
 
+
+
   // Extract base query for aggregations (need the bool object, not the full query)
   const baseQueryForAggs = queryResult.query.query.bool;
 
@@ -390,6 +394,8 @@ export default async function CategoryPage({
         Object.keys(filterState).length > 0 ? filterState : undefined,
         context
       );
+
+
 
       if (aggregationResponse.success) {
         aggregations = aggregationResponse.aggregations as FilterAggregations;
@@ -441,6 +447,8 @@ export default async function CategoryPage({
             elasticIndex,
             query: searchQuery,
           });
+
+
 
           return {
             products: result.data || [],
@@ -498,18 +506,20 @@ export default async function CategoryPage({
       {/* Structured Data for SEO - Server-rendered */}
       <StructuredDataServer data={structuredData} />
 
-      {/* Breadcrumbs - Server-rendered */}
-      <CategoryBreadcrumbServer breadcrumbs={breadcrumbs} />
+      {/* Responsive Container Wrapper */}
+      <div className="max-w-screen-2xl mx-auto px-4 sm:px-6 lg:px-8">
+        {/* Breadcrumbs - Server-rendered */}
+        <CategoryBreadcrumbServer breadcrumbs={breadcrumbs} />
 
-      {/* Category Header - Server-rendered */}
-      <div className="mb-6">
-        <h1 className="text-3xl font-bold text-slate-800 dark:text-slate-100 mb-2">
-          {lastNode?.name || "Category"}
-        </h1>
-      </div>
+        {/* Category Header - Server-rendered */}
+        <div className="mb-4 sm:mb-6">
+          <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-slate-800 dark:text-slate-100 mb-2 break-words">
+            {lastNode?.name || "Category"}
+          </h1>
+        </div>
 
-      {/* Interactivity Controls - Client component for pagination/sorting/filters */}
-      <CategoryPageInteractivity
+        {/* Interactivity Controls - Client component for pagination/sorting/filters */}
+        <CategoryPageInteractivity
         initialFilters={{
           page,
           sort: sortBy,
@@ -518,14 +528,14 @@ export default async function CategoryPage({
         categoryPath={categoryPath}
         aggregations={aggregations}
         currentCategoryPath={categories}
-      />
+      >
 
       {/* Product Grid - Server-rendered for SEO with Suspense for streaming */}
       <div className="relative">
         <Suspense
           fallback={
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 md:gap-6">
-              {Array.from({ length: 8 }).map((_, i) => (
+              {Array.from({ length: 20 }).map((_, i) => (
                 <div
                   key={i}
                   className="h-[380px] bg-muted animate-pulse rounded-lg"
@@ -539,6 +549,8 @@ export default async function CategoryPage({
             locale={locale}
           />
         </Suspense>
+        </div>
+        </CategoryPageInteractivity>
       </div>
     </>
   );
@@ -565,5 +577,5 @@ async function ProductGridWrapper({
     );
   }
 
-  return <ProductGridServer products={products} locale={locale} />;
+  return <ProductViewSwitcher products={products} locale={locale} />;
 }

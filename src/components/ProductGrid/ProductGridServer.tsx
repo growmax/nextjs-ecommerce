@@ -1,12 +1,12 @@
+import ImageWithFallback from "@/components/ImageWithFallback";
 import { ProductPrice } from "@/components/product/ProductPrice";
+import { Card, CardContent } from "@/components/ui/card";
 import { Link } from "@/i18n/navigation";
 import { DiscountItem } from "@/lib/api/services/DiscountService/DiscountService";
 import { FormattedProduct } from "@/lib/api/services/SearchService/SearchService";
 import { ProductListItem } from "@/types/product-listing";
-import Image from "next/image";
-import AddToCartButton from "./AddToCartButton";
-import { Card, CardContent } from "@/components/ui/card";
 import { Package } from "lucide-react";
+import AddToCartButton from "./AddToCartButton";
 
 /**
  * Transform FormattedProduct to ProductListItem
@@ -40,20 +40,18 @@ function transformProduct(product: FormattedProduct): ProductListItem {
   const sku =
     product.brandProductId || product.productIndexName || product.id || "";
 
-  // Extract stock status from inventory array
   const inventory =
     (product.inventory as Array<{
-      availableQuantity?: number;
+      availableQty?: number;
       inStock?: boolean;
     }>) || [];
   const totalAvailable = inventory.reduce(
-    (sum, inv) => sum + (inv.availableQuantity || 0),
+    (sum, inv) => sum + (inv.availableQty || 0),
     0
   );
-  const inStock =
-    inventory.length > 0
-      ? inventory.some(inv => inv.inStock === true) || totalAvailable > 0
-      : true; // Default to true if no inventory data
+  // Product is in stock if totalAvailable > 0
+  // If no inventory data exists, default to false (out of stock)
+  const inStock = totalAvailable > 0;
 
   return {
     id: productId,
@@ -108,7 +106,7 @@ export function ProductGridServer({
   }
 
   return (
-    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4 md:gap-6">
+    <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3 sm:gap-4 md:gap-6">
       {products.map(product => {
         const productListItem = transformProduct(product);
         const productSlug = product.productIndexName || product.id || "";
@@ -117,17 +115,17 @@ export function ProductGridServer({
         return (
           <div
             key={productListItem.id}
-            className="group transition-shadow hover:shadow-lg overflow-hidden h-full flex flex-col min-h-[380px] border rounded-lg"
+            className="group transition-shadow hover:shadow-lg overflow-hidden h-full flex flex-col min-h-[320px] sm:min-h-[380px] border rounded-lg"
           >
             <div className="p-0 flex flex-col h-full">
               {/* Product Image */}
-              <div className="relative w-full aspect-[16/10]">
+              <div className="relative w-full bg-white flex items-center justify-center min-h-[140px] sm:min-h-[180px] md:min-h-[220px] aspect-square rounded-t-lg overflow-hidden">
                 <Link href={productUrl} prefetch={true}>
-                  <Image
+                  <ImageWithFallback
                     src={productListItem.image}
                     alt={productListItem.title}
                     fill
-                    className="object-cover"
+                    className="object-contain p-2"
                     sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, (max-width: 1280px) 33vw, 25vw"
                   />
                 </Link>
@@ -139,10 +137,10 @@ export function ProductGridServer({
               </div>
 
               {/* Product Info */}
-              <div className="flex-1 p-2 md:p-5 flex flex-col justify-between">
-                <div className="space-y-3">
+              <div className="flex-1 p-2 sm:p-3 md:p-5 flex flex-col justify-between">
+                <div className="space-y-2 sm:space-y-3">
                   <Link href={productUrl} prefetch={true}>
-                    <h3 className="line-clamp-2 text-base font-medium leading-tight hover:text-blue-600">
+                    <h3 className="line-clamp-2 text-xs sm:text-sm md:text-base font-medium leading-tight hover:text-blue-600">
                       {productListItem.title}
                     </h3>
                   </Link>
@@ -156,23 +154,23 @@ export function ProductGridServer({
                     {...(discountError && { discountError })}
                   />
 
-                  <p className="text-sm text-muted-foreground">
-                    Brand: {productListItem.brand}
+                  <p className="text-xs sm:text-sm text-gray-700 dark:text-gray-300 truncate">
+                    {productListItem.brand}
                   </p>
-                  <p className="text-sm text-muted-foreground">
-                    SKU: {productListItem.sku}
+                  <p className="text-xs sm:text-sm text-gray-700 dark:text-gray-300 truncate hidden sm:block">
+                    {productListItem.sku}
                   </p>
 
                   {/* Stock Status */}
                   {!productListItem.inStock && (
-                    <span className="text-xs px-2 py-1 rounded bg-red-100 text-red-800 w-fit">
+                    <span className="text-xs px-1.5 sm:px-2 py-0.5 sm:py-1 rounded bg-red-100 text-red-800 w-fit">
                       Out of Stock
                     </span>
                   )}
                 </div>
 
                 {/* Add to Cart Button */}
-                <div className="pt-5 mt-auto">
+                <div className="pt-3 sm:pt-5 mt-auto">
                   <AddToCartButton
                     productId={productListItem.id}
                     productTitle={productListItem.title}

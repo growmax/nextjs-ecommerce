@@ -26,6 +26,38 @@ jest.mock("@/components/ui/dialog", () => {
   };
 });
 
+jest.mock("@/components/ui/drawer", () => {
+  const React = require("react");
+  return {
+    Drawer: ({ children, open }: any) =>
+      React.createElement(
+        "div",
+        { "data-testid": "drawer", "data-open": open },
+        children
+      ),
+    DrawerContent: ({ children }: any) =>
+      React.createElement("div", { "data-testid": "drawer-content" }, children),
+    DrawerDescription: ({ children }: any) =>
+      React.createElement("div", { "data-testid": "drawer-desc" }, children),
+    DrawerHeader: ({ children }: any) =>
+      React.createElement("div", { "data-testid": "drawer-header" }, children),
+    DrawerTitle: ({ children }: any) =>
+      React.createElement("h2", null, children),
+    DrawerFooter: ({ children }: any) =>
+      React.createElement("div", { "data-testid": "drawer-footer" }, children),
+    DrawerClose: ({ children }: any) =>
+      React.createElement(
+        "button",
+        { "data-testid": "drawer-close" },
+        children
+      ),
+  };
+});
+
+jest.mock("@/hooks/use-media-query", () => ({
+  useMediaQuery: jest.fn(() => true), // Default to desktop (use Dialog)
+}));
+
 jest.mock("@/components/ui/input", () => {
   const React = require("react");
   return { Input: (props: any) => React.createElement("input", props) };
@@ -69,7 +101,9 @@ const defaultProps = {
 };
 
 // Create a test wrapper that manages OTP state
-const OTPDialogWrapper = (props: Omit<import("./OTPDialog").OTPDialogProps, "otp" | "setOtp">) => {
+const OTPDialogWrapper = (
+  props: Omit<import("./OTPDialog").OTPDialogProps, "otp" | "setOtp">
+) => {
   const React = require("react");
   const [otp, setOtp] = React.useState("");
   return React.createElement(OTPDialog, { ...props, otp, setOtp });

@@ -12,9 +12,13 @@ import { headers } from "next/headers";
 import { cache, ReactNode, Suspense } from "react";
 
 // Import the AppHeader component
+import { BlockingLoader } from "@/components/GlobalLoader/BlockingLoader";
 import LayoutWithHeader from "@/components/LayoutWithHeader";
 import { LayoutDataLoader } from "@/components/layout/LayoutDataLoader";
 import { PrefetchMainRoutes } from "@/components/layout/PrefetchMainRoutes";
+import { BlockingLoaderProvider } from "@/providers/BlockingLoaderProvider";
+
+// Import Global Blocking Loader (Phase 1: Page-isolated)
 import { TokenInitializer } from "@/components/TokenInitializer";
 
 /**
@@ -38,8 +42,8 @@ function parseSidebarStateCookie(cookieString: string): boolean {
 
 // Cache getMessages() calls per request using React cache()
 // This ensures they're only called once per request, even if used multiple times
-const getCachedMessages = cache(async () => {
-  return await getMessages();
+const getCachedMessages = cache(async (locale: string) => {
+  return await getMessages({ locale });
 });
 
 /**
@@ -77,36 +81,47 @@ function MinimalLoadingFallback() {
  * - Translations always available to client components (fixes MISSING_MESSAGE)
  */
 async function LayoutContent({ children }: { children: ReactNode }) {
-  // Load messages and headers in parallel (both cached, non-blocking)
-  const [messages, headersList] = await Promise.all([
-    getCachedMessages(),
-    headers(),
+  // Get headers first to extract locale from pathname
+  const headersList = await headers();
+  const pathname = headersList.get("x-pathname") || "";
+
+  // Extract locale from pathname (e.g., /th/dashboard -> th)
+  const localeMatch = pathname.match(/^\/([a-z]{2}(-[A-Z]{2})?)/);
+  const locale: string = localeMatch?.[1] ?? "en";
+
+  // Load messages and cookie in parallel (both cached, non-blocking)
+  const [messages, cookieHeader] = await Promise.all([
+    getCachedMessages(locale),
+    Promise.resolve(headersList.get("cookie") || ""),
   ]);
 
-  const cookieHeader = headersList.get("cookie") || "";
   const initialSidebarOpen = parseSidebarStateCookie(cookieHeader);
 
   return (
-    <NextIntlClientProvider messages={messages}>
-      <LayoutDataLoader>
-        <TokenInitializer />
+    <BlockingLoaderProvider>
+      <NextIntlClientProvider messages={messages} locale={locale}>
+        <LayoutDataLoader>
+          <TokenInitializer />
         <LoadingProvider>
-          <TopProgressBarProvider />
-          <NavigationProgressProvider>
-            <PrefetchMainRoutes />
-            <CartProviderWrapper>
-              <SidebarProviderWrapper defaultOpen={initialSidebarOpen}>
-                <AppSidebar />
-                <SidebarInset className="flex flex-col w-full overflow-x-hidden">
-                  <LayoutWithHeader>{children}</LayoutWithHeader>
-                </SidebarInset>
-              </SidebarProviderWrapper>
-            </CartProviderWrapper>
-            <Toaster richColors position="top-right" theme="light" />
-          </NavigationProgressProvider>
-        </LoadingProvider>
-      </LayoutDataLoader>
-    </NextIntlClientProvider>
+            <TopProgressBarProvider />
+            <NavigationProgressProvider>
+              <PrefetchMainRoutes />
+              <CartProviderWrapper>
+                <SidebarProviderWrapper defaultOpen={initialSidebarOpen}>
+                  <AppSidebar />
+                  <SidebarInset className="flex flex-col w-full overflow-x-hidden">
+                    <LayoutWithHeader>{children}</LayoutWithHeader>
+                  </SidebarInset>
+                </SidebarProviderWrapper>
+              </CartProviderWrapper>
+              <Toaster richColors position="top-right" theme="light" />
+            </NavigationProgressProvider>
+          </LoadingProvider>
+        </LayoutDataLoader>
+      </NextIntlClientProvider>
+      {/* Global Blocking Loader - Phase 1: Only active in product pages */}
+      <BlockingLoader />
+    </BlockingLoaderProvider>
   );
 }
 

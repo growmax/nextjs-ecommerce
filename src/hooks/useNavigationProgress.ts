@@ -251,44 +251,42 @@ export function useNavigationProgress({
       prevPathnameRef.current !== null &&
       prevPathnameRef.current !== currentPathname
     ) {
-      // If we were navigating, wait for GET request completion
-      if (isNavigatingRef.current) {
-        // For Next.js App Router: pathname change means route navigation started
-        // We wait a small amount (50-100ms) to ensure GET response is fully received
-        // This accounts for the time between route fetch and response processing
-
-        pathnameChangeTimeoutRef.current = setTimeout(() => {
-          if (mountedRef.current && isNavigatingRef.current) {
-            // GET request should be complete by now
-            // Hide progress bar immediately
+      // ALWAYS hide loader on pathname change
+      // This handles cases where:
+      // 1. This hook instance started navigation (isNavigatingRef = true)
+      // 2. Another hook instance (e.g. useNavigationWithLoader) started it but died (unmounted)
+      
+      pathnameChangeTimeoutRef.current = setTimeout(() => {
+        if (mountedRef.current) {
+          // Force hide the loader regardless of who started it
+          // This acts as a "garbage collector" for zombie loaders
+          hideLoading(loadingId);
+          
+          // Also reset local state if needed
+          if (isNavigatingRef.current) {
             endNavigation("get_request_complete");
           }
+        }
+        pathnameChangeTimeoutRef.current = null;
+      }, 50) as any; // Reduced from 200ms to 50ms for faster handoff to loading.tsx
+
+      // Update previous pathname immediately to prevent duplicate processing
+      prevPathnameRef.current = currentPathname;
+      pendingPathnameRef.current = null;
+      lastClickPathRef.current = null;
+
+      return () => {
+        if (pathnameChangeTimeoutRef.current) {
+          clearTimeout(pathnameChangeTimeoutRef.current);
           pathnameChangeTimeoutRef.current = null;
-        }, 200) as any; // Reduced from 600ms to 200ms for faster handoff to loading.tsx
-
-        // Update previous pathname immediately to prevent duplicate processing
-        prevPathnameRef.current = currentPathname;
-        pendingPathnameRef.current = null;
-        lastClickPathRef.current = null;
-
-        return () => {
-          if (pathnameChangeTimeoutRef.current) {
-            clearTimeout(pathnameChangeTimeoutRef.current);
-            pathnameChangeTimeoutRef.current = null;
-          }
-        };
-      } else {
-        // Navigation completed but we weren't tracking it (e.g., browser back/forward)
-        prevPathnameRef.current = currentPathname;
-        pendingPathnameRef.current = null;
-        lastClickPathRef.current = null;
-      }
+        }
+      };
     } else if (prevPathnameRef.current === null) {
       // Initialize on first mount
       prevPathnameRef.current = currentPathname;
     }
     return undefined;
-  }, [pathname, endNavigation]);
+  }, [pathname, endNavigation, hideLoading, loadingId]);
 
   // Additional safety: monitor for potential stuck states
   useEffect(() => {

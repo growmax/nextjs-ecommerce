@@ -280,6 +280,8 @@ function OrdersLandingTable({
               <div className="flex font-medium text-sm text-foreground">
                 {columns.map((column, index) => {
                   const width = column.size || 150;
+                  // For skeleton, render header as string or placeholder
+                  // If it's a function, we can't call it without table context, so use placeholder
                   const headerContent =
                     typeof column.header === "function"
                       ? "" // Skeleton placeholder - header function requires context

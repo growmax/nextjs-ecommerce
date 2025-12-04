@@ -337,10 +337,8 @@ export default function OrderDetailsClient({
   };
 
   const handleEditOrder = () => {
-    // Navigate to edit page when edit icon is clicked - non-blocking
-    if (orderId) {
-      push(`/details/orderDetails/${orderId}/edit`);
-    }
+    // Open edit order name dialog when edit icon is clicked
+    setEditDialogOpen(true);
   };
 
   const handleSaveOrderName = async (newOrderName: string) => {
@@ -867,11 +865,8 @@ export default function OrderDetailsClient({
                         requiredDate={
                           (displayOrderDetails?.orderDetails?.[0]
                             ?.customerRequiredDate ||
-                            displayOrderDetails?.orderDeliveryDate ||
                             orderDetails?.data?.orderDetails?.[0]
-                              ?.customerRequiredDate ||
-                            orderDetails?.data
-                              ?.orderDeliveryDate) as unknown as
+                              ?.customerRequiredDate) as unknown as
                             | string
                             | undefined
                         }

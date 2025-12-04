@@ -1,16 +1,10 @@
 "use client";
 
-import { Button } from "@/components/ui/button";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
+import { FormDialog } from "@/components/dialogs/common";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import type { BaseDialogProps } from "@/types/dialog";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Loader2 } from "lucide-react";
 import * as React from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
@@ -31,12 +25,16 @@ const orderNameSchema = z.object({
 
 type OrderNameFormData = z.infer<typeof orderNameSchema>;
 
-export interface EditOrderNameDialogProps {
-  open: boolean;
-  onOpenChange: (open: boolean) => void;
+export interface EditOrderNameDialogProps
+  extends Omit<BaseDialogProps, "title" | "description"> {
   currentOrderName: string;
   onSave: (newOrderName: string) => Promise<void>;
   loading?: boolean;
+  title?: string;
+  label?: string;
+  placeholder?: string;
+  successMessage?: string;
+  errorMessage?: string;
 }
 
 export function EditOrderNameDialog({
@@ -45,17 +43,26 @@ export function EditOrderNameDialog({
   currentOrderName,
   onSave,
   loading = false,
+  title = "Edit Order Name",
+  label = "Order Name",
+  placeholder = "Enter order name",
+  successMessage = "Order name updated successfully",
+  errorMessage = "Failed to update order name",
 }: EditOrderNameDialogProps) {
   const [isSubmitting, setIsSubmitting] = React.useState(false);
+  const [inputValue, setInputValue] = React.useState(currentOrderName);
+  const prevOpenRef = React.useRef(open);
+  const orderNameOnOpenRef = React.useRef(currentOrderName);
 
   const {
-    register,
     handleSubmit,
     formState: { errors, isValid },
-    reset,
     watch,
+    setValue,
+    trigger,
   } = useForm<OrderNameFormData>({
     resolver: zodResolver(orderNameSchema),
+    mode: "onChange",
     defaultValues: {
       orderName: currentOrderName,
     },
@@ -64,12 +71,19 @@ export function EditOrderNameDialog({
   // Watch the current form value to compare with original
   const currentFormValue = watch("orderName");
 
-  // Ensure the input always shows the latest order name when dialog opens
+  // Sync local state with form when dialog opens
   React.useEffect(() => {
-    if (open) {
-      reset({ orderName: currentOrderName });
+    if (open && !prevOpenRef.current) {
+      // Store the order name when dialog opens
+      orderNameOnOpenRef.current = currentOrderName;
+      // Set both local state and form value
+      setInputValue(currentOrderName);
+      setValue("orderName", currentOrderName, { shouldValidate: true });
     }
-  }, [open, currentOrderName, reset]);
+    prevOpenRef.current = open;
+    // Only depend on 'open' to prevent resets while dialog is open
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open]);
 
   const onSubmit = async (data: OrderNameFormData) => {
     if (data.orderName === currentOrderName) {
@@ -77,90 +91,93 @@ export function EditOrderNameDialog({
       return;
     }
 
+    // Prevent duplicate submissions
+    if (isSubmitting) {
+      return;
+    }
+
     try {
       setIsSubmitting(true);
       await onSave(data.orderName);
-      toast.success("Order name updated successfully");
+      toast.success(successMessage, {
+        id: "edit-name-success", // Use ID to prevent duplicates
+      });
       onOpenChange(false);
     } catch (error) {
-      const errorMessage =
-        error instanceof Error ? error.message : "Failed to update order name";
-      toast.error(errorMessage);
+      const errorMsg = error instanceof Error ? error.message : errorMessage;
+      toast.error(errorMsg, {
+        id: "edit-name-error", // Use ID to prevent duplicates
+      });
     } finally {
       setIsSubmitting(false);
     }
   };
 
   const handleCancel = () => {
-    reset({ orderName: currentOrderName });
+    setInputValue(orderNameOnOpenRef.current);
+    setValue("orderName", orderNameOnOpenRef.current, {
+      shouldValidate: false,
+    });
     onOpenChange(false);
   };
 
   const handleOpenChange = (open: boolean) => {
     if (!open && !isSubmitting) {
-      reset({ orderName: currentOrderName });
+      setInputValue(orderNameOnOpenRef.current);
+      setValue("orderName", orderNameOnOpenRef.current, {
+        shouldValidate: false,
+      });
     }
     onOpenChange(open);
   };
 
+  // Handle input change - update both local state and form
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const newValue = e.target.value;
+    setInputValue(newValue);
+    setValue("orderName", newValue, { shouldValidate: true });
+    trigger("orderName"); // Trigger validation
+  };
+
+  const handleFormSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    await handleSubmit(onSubmit)(e);
+  };
+
   return (
-    <Dialog open={open} onOpenChange={handleOpenChange}>
-      <DialogContent className="w-full max-w-md p-6" showCloseButton={false}>
-        <DialogHeader>
-          <DialogTitle className="text-lg font-semibold">
-            Edit Order Name
-          </DialogTitle>
-        </DialogHeader>
-
-        <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-          <div className="space-y-2">
-            <Label htmlFor="orderName" className="text-sm font-medium">
-              Order Name
-            </Label>
-            <Input
-              id="orderName"
-              {...register("orderName")}
-              placeholder="Enter order name"
-              className="w-full"
-              disabled={loading || isSubmitting}
-            />
-            {errors.orderName && (
-              <p className="text-sm text-red-600">{errors.orderName.message}</p>
-            )}
-          </div>
-
-          <div className="flex justify-end space-x-2 pt-4">
-            <Button
-              type="button"
-              variant="outline"
-              onClick={handleCancel}
-              disabled={loading || isSubmitting}
-            >
-              Cancel
-            </Button>
-            <Button
-              type="submit"
-              disabled={
-                loading ||
-                isSubmitting ||
-                !isValid ||
-                !currentFormValue ||
-                currentFormValue.trim() === currentOrderName.trim()
-              }
-              className="min-w-20"
-            >
-              {isSubmitting ? (
-                <>
-                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                  Saving...
-                </>
-              ) : (
-                "Save"
-              )}
-            </Button>
-          </div>
-        </form>
-      </DialogContent>
-    </Dialog>
+    <FormDialog
+      open={open}
+      onOpenChange={handleOpenChange}
+      title={title}
+      onSubmit={handleFormSubmit}
+      isLoading={loading || isSubmitting}
+      submitText="Save"
+      cancelText="Cancel"
+      size="sm"
+      showCloseButton={false}
+      onCancel={handleCancel}
+      disabled={
+        !isValid ||
+        !currentFormValue ||
+        currentFormValue.trim() === orderNameOnOpenRef.current.trim()
+      }
+    >
+      <div className="space-y-2">
+        <Label htmlFor="orderName" className="text-sm font-medium">
+          {label}
+        </Label>
+        <Input
+          id="orderName"
+          value={inputValue}
+          onChange={handleInputChange}
+          placeholder={placeholder}
+          className="w-full"
+          disabled={loading || isSubmitting}
+        />
+        {errors.orderName && (
+          <p className="text-sm text-red-600">{errors.orderName.message}</p>
+        )}
+      </div>
+    </FormDialog>
   );
 }

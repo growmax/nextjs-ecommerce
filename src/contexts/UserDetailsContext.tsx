@@ -86,19 +86,84 @@ export function UserDetailsProvider({
   const [user, setUser] = useState<UserDetails | null>(() => {
     return initialUserData || null;
   });
+  // Use a ref to preserve auth state during navigation transitions
+  // This prevents the login button from flashing during language switching
+  const authStateRef = React.useRef<boolean>(
+    initialAuthState !== undefined ? initialAuthState : false
+  );
+  // Update ref when initialAuthState changes
+  React.useEffect(() => {
+    if (initialAuthState !== undefined) {
+      authStateRef.current = initialAuthState;
+    }
+  }, [initialAuthState]);
+
   const [isAuthenticated, setIsAuthenticated] = useState(() => {
     // Use server state if provided, otherwise check client-side
     if (initialAuthState !== undefined) {
+      authStateRef.current = initialAuthState;
       return initialAuthState;
     }
-    return AuthStorage.isAuthenticated();
+    const authenticated = AuthStorage.isAuthenticated();
+    authStateRef.current = authenticated;
+    return authenticated;
   });
-  // Loading state: true during hydration, false after mount
-  const [isLoading, setIsLoading] = useState(true);
 
-  // Set loading to false after hydration
+  // Sync auth state from storage on mount and preserve during transitions
+  // This ensures auth state is preserved during language switching
   React.useEffect(() => {
-    setIsLoading(false);
+    const checkAuthState = () => {
+      // Defensive check for test environments where AuthStorage might not be available
+      try {
+        if (
+          typeof AuthStorage === "undefined" ||
+          !AuthStorage ||
+          typeof AuthStorage.isAuthenticated !== "function"
+        ) {
+          // In test environments, use the initial auth state
+          return;
+        }
+        const authenticated = AuthStorage.isAuthenticated();
+        // Only update if state actually changed to prevent unnecessary re-renders
+        if (authStateRef.current !== authenticated) {
+          authStateRef.current = authenticated;
+          setIsAuthenticated(authenticated);
+        }
+      } catch (error) {
+        // Silently fail in test environments
+        if (process.env.NODE_ENV !== "test") {
+          console.error("Error checking auth state:", error);
+        }
+      }
+    };
+
+    // Check immediately on mount
+    checkAuthState();
+
+    // Also check when storage changes (e.g., during navigation)
+    // Use a small delay to batch multiple checks
+    const timeoutId = setTimeout(checkAuthState, 50);
+
+    return () => clearTimeout(timeoutId);
+  }, []);
+  // Loading state: true during hydration, false after mount
+  // Use a ref to track if we've already hydrated to prevent resetting during navigation
+  const hasHydratedRef = React.useRef(false);
+  const [isLoading, setIsLoading] = useState(() => {
+    // If we have initial auth state, we're not loading
+    if (initialAuthState !== undefined) {
+      hasHydratedRef.current = true;
+      return false;
+    }
+    return true;
+  });
+
+  // Set loading to false after hydration (only once)
+  React.useEffect(() => {
+    if (!hasHydratedRef.current) {
+      setIsLoading(false);
+      hasHydratedRef.current = true;
+    }
   }, []);
 
   const login = useCallback(

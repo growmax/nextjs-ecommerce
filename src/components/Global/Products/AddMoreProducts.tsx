@@ -67,7 +67,13 @@ function AddMoreProducts({
           term,
           elasticIndex
         );
-        setProducts((data.data || []) as unknown as Product[]);
+        // Map SimpleProductSearchResult to Product format
+        const mappedProducts: Product[] = (data.data || []).map(item => ({
+          ...item,
+          id: item.productIndexName || String(item.productId),
+          productName: item.productShortDescription,
+        }));
+        setProducts(mappedProducts);
       } catch {
         setProducts([]);
       } finally {
@@ -97,7 +103,6 @@ function AddMoreProducts({
       handleCallback(product);
     }
   };
-
 
   return (
     <div className="relative w-full">
@@ -160,11 +165,16 @@ function AddMoreProducts({
                       asset => asset.isDefault === 1
                     );
                     const imageUrl =
-                      defaultImage?.source || product.productAssetss?.[0]?.source;
+                      defaultImage?.source ||
+                      product.productAssetss?.[0]?.source;
 
                     return (
                       <div
-                        key={product.productIndexName || product.productId || product.id}
+                        key={
+                          product.productIndexName ||
+                          product.productId ||
+                          product.id
+                        }
                         className="flex items-center gap-3 px-4 py-3 cursor-pointer hover:bg-gray-50 transition-colors rounded-md"
                         onClick={() => handleAddProduct(product)}
                         role="button"
@@ -173,7 +183,9 @@ function AddMoreProducts({
                         <div className="relative size-12 shrink-0 overflow-hidden rounded border">
                           <ImageWithFallback
                             src={imageUrl || "/asset/default-placeholder.png"}
-                            alt={product.productShortDescription || "product image"}
+                            alt={
+                              product.productShortDescription || "product image"
+                            }
                             className="object-cover"
                             width={48}
                             height={48}
@@ -183,12 +195,16 @@ function AddMoreProducts({
                         </div>
                         <div className="flex flex-1 flex-col gap-0.5 overflow-hidden">
                           <span className="truncate font-medium text-sm">
-                            {product.productShortDescription || product.productName || "Unknown Product"}
+                            {product.productShortDescription ||
+                              product.productName ||
+                              "Unknown Product"}
                           </span>
                           <div className="flex items-center gap-2 text-xs text-muted-foreground">
                             {product.brandsName && (
                               <>
-                                <span className="truncate">{product.brandsName}</span>
+                                <span className="truncate">
+                                  {product.brandsName}
+                                </span>
                                 {product.brandProductId && <span>•</span>}
                               </>
                             )}

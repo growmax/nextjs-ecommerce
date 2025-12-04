@@ -9,6 +9,14 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import {
+  Drawer,
+  DrawerContent,
+  DrawerFooter,
+  DrawerHeader,
+  DrawerTitle,
+} from "@/components/ui/drawer";
+import { useMediaQuery } from "@/hooks/use-media-query";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
@@ -20,6 +28,7 @@ import {
 } from "@/components/ui/select";
 import { Separator } from "@/components/ui/separator";
 import { Textarea } from "@/components/ui/textarea";
+import type { BaseDialogProps } from "@/types/dialog";
 import { AuthStorage } from "@/lib/auth";
 import { JWTService } from "@/lib/services/JWTService";
 import { Country, District, State } from "@/types/address";
@@ -174,9 +183,8 @@ const addressFormSchema = z
 
 type AddressFormData = z.infer<typeof addressFormSchema>;
 
-export interface AddressDialogProps {
-  open: boolean;
-  onOpenChange: (open: boolean) => void;
+export interface AddressDialogProps
+  extends Omit<BaseDialogProps, "title" | "description"> {
   onSuccess?: (data: AddressFormData) => void;
   mode?: "add" | "edit";
   initialData?: Partial<AddressFormData>;
@@ -765,16 +773,682 @@ export function AddAddressDialog({
     onOpenChange(false);
   };
 
-  return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="w-full max-w-3xl h-[90vh] sm:h-[85vh] p-0 flex flex-col">
-        <DialogHeader className="px-3 sm:px-4 py-2 sm:py-2.5 border-b shrink-0">
-          <DialogTitle className="text-base sm:text-lg">
-            {mode === "edit" ? "Edit Address" : "Add New Address"}
-          </DialogTitle>
-        </DialogHeader>
+  const isDesktop = useMediaQuery("(min-width: 768px)");
 
-        <div className="flex-1 overflow-y-auto px-3 sm:px-4 py-1.5 sm:py-2 min-h-0 overscroll-contain pb-14">
+  if (isDesktop) {
+    return (
+      <Dialog open={open} onOpenChange={onOpenChange}>
+        <DialogContent className="w-full max-w-3xl h-[90vh] sm:h-[85vh] p-0 flex flex-col border border-black/10 overflow-hidden">
+          <DialogHeader className="px-3 sm:px-4 py-2 sm:py-2.5 border-b shrink-0">
+            <DialogTitle className="text-base sm:text-lg">
+              {mode === "edit" ? "Edit Address" : "Add New Address"}
+            </DialogTitle>
+          </DialogHeader>
+
+          <div className="flex-1 overflow-y-auto px-3 sm:px-4 py-1.5 sm:py-2 min-h-0 overscroll-contain">
+            <Card className="border-0 shadow-none h-full">
+              <CardContent className="p-0 space-y-2 h-full">
+                {/* Company Search */}
+                <div className="pb-0.5">
+                  <Label
+                    htmlFor="company-search"
+                    className="text-xs font-normal mb-0 block"
+                  >
+                    Company Name
+                  </Label>
+                  <div className="relative">
+                    <Input
+                      id="company-search"
+                      placeholder="Search company name"
+                      value={searchTerm}
+                      onChange={e => setSearchTerm(e.target.value)}
+                      className="w-full pr-10 h-8 text-sm px-3"
+                    />
+                    <Search className="absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground pointer-events-none" />
+                  </div>
+                </div>
+
+                <Separator className="my-1.5" />
+
+                <form
+                  id="address-form"
+                  onSubmit={handleSubmit(onSubmit as any)}
+                  className="space-y-1"
+                >
+                  {/* Address Details Section */}
+                  <div className="space-y-4">
+                    <div className="grid grid-cols-1 gap-2">
+                      <div>
+                        <Label
+                          htmlFor="branch"
+                          className="text-xs font-normal mb-0 block"
+                        >
+                          Branch{" "}
+                          <span
+                            className="text-red-500 text-xs"
+                            aria-label="required"
+                          >
+                            *
+                          </span>
+                        </Label>
+                        <Input
+                          id="branch"
+                          {...register("branch")}
+                          className="h-8 text-sm px-3"
+                          aria-invalid={!!errors.branch}
+                          aria-describedby={
+                            errors.branch ? "branch-error" : undefined
+                          }
+                        />
+                        {errors.branch && (
+                          <p
+                            id="branch-error"
+                            className="text-xs text-red-500 mt-0.5"
+                          >
+                            {errors.branch.message}
+                          </p>
+                        )}
+                      </div>
+
+                      <div>
+                        <Label
+                          htmlFor="address"
+                          className="text-xs font-normal mb-0 block"
+                        >
+                          Street Address{" "}
+                          <span
+                            className="text-red-500 text-xs"
+                            aria-label="required"
+                          >
+                            *
+                          </span>
+                        </Label>
+                        <Textarea
+                          id="address"
+                          {...register("address")}
+                          className="min-h-[70px] text-sm px-3 resize-none"
+                          aria-invalid={!!errors.address}
+                          aria-describedby={
+                            errors.address ? "address-error" : undefined
+                          }
+                          placeholder="Enter street address"
+                        />
+                        {errors.address && (
+                          <p
+                            id="address-error"
+                            className="text-xs text-red-500 mt-0.5"
+                          >
+                            {errors.address.message}
+                          </p>
+                        )}
+                      </div>
+
+                      <div>
+                        <Label
+                          htmlFor="locality"
+                          className="text-xs font-normal mb-0 block"
+                        >
+                          Locality
+                        </Label>
+                        <Input
+                          id="locality"
+                          {...register("locality")}
+                          className="h-8 text-sm px-3"
+                          placeholder="Area, neighborhood"
+                          aria-invalid={!!errors.locality}
+                          aria-describedby={
+                            errors.locality ? "locality-error" : undefined
+                          }
+                        />
+                        {errors.locality && (
+                          <p
+                            id="locality-error"
+                            className="text-xs text-red-500 mt-0.5"
+                          >
+                            {errors.locality.message}
+                          </p>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Location Section */}
+                  <div className="space-y-1">
+                    {/* Country and State - 50% each */}
+                    <div className="grid grid-cols-2 gap-2">
+                      <div>
+                        <Label className="text-xs font-normal mb-0 block">
+                          Country{" "}
+                          <span
+                            className="text-red-500 text-xs"
+                            aria-label="required"
+                          >
+                            *
+                          </span>
+                        </Label>
+                        <Controller
+                          name="country"
+                          control={control}
+                          render={() => (
+                            <Select
+                              value={selectedCountryId}
+                              onValueChange={value => {
+                                handleCountryChange(value);
+                              }}
+                              disabled={dataLoading}
+                            >
+                              <SelectTrigger className="w-full h-8 text-sm">
+                                <SelectValue
+                                  placeholder={
+                                    dataLoading
+                                      ? "Loading..."
+                                      : "Select country"
+                                  }
+                                />
+                              </SelectTrigger>
+                              <SelectContent>
+                                {countryOptions.length > 0 ? (
+                                  countryOptions.map(country => (
+                                    <SelectItem
+                                      key={country.value}
+                                      value={country.value}
+                                    >
+                                      {country.label}
+                                    </SelectItem>
+                                  ))
+                                ) : (
+                                  <SelectItem value="no-countries" disabled>
+                                    {dataLoading
+                                      ? "Loading..."
+                                      : "No countries available"}
+                                  </SelectItem>
+                                )}
+                              </SelectContent>
+                            </Select>
+                          )}
+                        />
+                        {errors.country && (
+                          <p className="text-xs text-red-500 mt-0">
+                            {errors.country.message}
+                          </p>
+                        )}
+                      </div>
+
+                      <div>
+                        <Label className="text-xs font-normal mb-0 block">
+                          State/Province{" "}
+                          <span
+                            className="text-red-500 text-xs"
+                            aria-label="required"
+                          >
+                            *
+                          </span>
+                        </Label>
+                        <Controller
+                          name="state"
+                          control={control}
+                          render={() => (
+                            <Select
+                              value={selectedStateId}
+                              onValueChange={value => {
+                                handleStateChange(value);
+                              }}
+                              disabled={dataLoading || !selectedCountryId}
+                            >
+                              <SelectTrigger className="w-full h-8 text-sm">
+                                <SelectValue
+                                  placeholder={
+                                    !selectedCountryId
+                                      ? "Select country first"
+                                      : dataLoading
+                                        ? "Loading..."
+                                        : "Select state"
+                                  }
+                                />
+                              </SelectTrigger>
+                              <SelectContent>
+                                {stateOptions.length > 0 ? (
+                                  stateOptions.map(state => (
+                                    <SelectItem
+                                      key={state.value}
+                                      value={state.value}
+                                    >
+                                      {state.label}
+                                    </SelectItem>
+                                  ))
+                                ) : (
+                                  <SelectItem value="no-states" disabled>
+                                    {!selectedCountryId
+                                      ? "Select a country first"
+                                      : dataLoading
+                                        ? "Loading..."
+                                        : "No states available"}
+                                  </SelectItem>
+                                )}
+                              </SelectContent>
+                            </Select>
+                          )}
+                        />
+                        {errors.state && (
+                          <p className="text-xs text-red-500 mt-0">
+                            {errors.state.message}
+                          </p>
+                        )}
+                      </div>
+                    </div>
+
+                    {/* District and Postal Code - 50% each */}
+                    <div className="grid grid-cols-2 gap-2">
+                      <div>
+                        <Label className="text-xs font-normal mb-0 block">
+                          District
+                        </Label>
+                        <Controller
+                          name="district"
+                          control={control}
+                          render={({ field }) => (
+                            <Select
+                              value={
+                                // Find the district ID for the current form value (name)
+                                field.value
+                                  ? allData.districts
+                                      .find(d => d.name === field.value)
+                                      ?.id.toString() || field.value
+                                  : ""
+                              }
+                              onValueChange={handleDistrictChange}
+                              disabled={dataLoading || !selectedStateId}
+                            >
+                              <SelectTrigger className="w-full h-8 text-sm">
+                                <SelectValue
+                                  placeholder={
+                                    !selectedStateId
+                                      ? "Select state first"
+                                      : dataLoading
+                                        ? "Loading..."
+                                        : "Select district"
+                                  }
+                                />
+                              </SelectTrigger>
+                              <SelectContent>
+                                {districtOptions.length > 0 ? (
+                                  districtOptions.map(district => (
+                                    <SelectItem
+                                      key={district.value}
+                                      value={district.value}
+                                    >
+                                      {district.label}
+                                    </SelectItem>
+                                  ))
+                                ) : (
+                                  <SelectItem value="no-districts" disabled>
+                                    {!selectedStateId
+                                      ? "Select a state first"
+                                      : dataLoading
+                                        ? "Loading..."
+                                        : "No districts available"}
+                                  </SelectItem>
+                                )}
+                              </SelectContent>
+                            </Select>
+                          )}
+                        />
+                      </div>
+
+                      <div>
+                        <Label
+                          htmlFor="postalCode"
+                          className="text-xs font-normal mb-0 block"
+                        >
+                          Postal/Pin Code{" "}
+                          <span
+                            className="text-red-500 text-xs"
+                            aria-label="required"
+                          >
+                            *
+                          </span>
+                        </Label>
+                        <Input
+                          id="postalCode"
+                          {...register("postalCode")}
+                          type="tel"
+                          inputMode="numeric"
+                          className="h-8 text-sm px-3"
+                        />
+                        {errors.postalCode && (
+                          <p className="text-xs text-red-500 mt-0">
+                            {errors.postalCode.message}
+                          </p>
+                        )}
+                      </div>
+                    </div>
+                    {/* City 50%, Latitude 25%, Longitude 25% */}
+                    <div className="grid grid-cols-4 gap-2">
+                      <div className="col-span-2">
+                        <Label
+                          htmlFor="city"
+                          className="text-xs font-normal mb-0 block"
+                        >
+                          City
+                        </Label>
+                        <Input
+                          id="city"
+                          {...register("city")}
+                          className="h-8 text-sm px-3"
+                          placeholder="City name"
+                          aria-invalid={!!errors.city}
+                          aria-describedby={
+                            errors.city ? "city-error" : undefined
+                          }
+                        />
+                        {errors.city && (
+                          <p
+                            id="city-error"
+                            className="text-xs text-red-500 mt-0.5"
+                          >
+                            {errors.city.message}
+                          </p>
+                        )}
+                      </div>
+                      <div className="col-span-1">
+                        <Label
+                          htmlFor="latitude"
+                          className="text-xs font-normal mb-0 block"
+                        >
+                          Latitude
+                        </Label>
+                        <Input
+                          id="latitude"
+                          {...register("latitude")}
+                          type="number"
+                          step="any"
+                          min="-90"
+                          max="90"
+                          inputMode="decimal"
+                          className="h-8 text-sm px-3"
+                          placeholder="0.00"
+                          aria-invalid={!!errors.latitude}
+                          aria-describedby={
+                            errors.latitude ? "latitude-error" : undefined
+                          }
+                        />
+                        {errors.latitude && (
+                          <p
+                            id="latitude-error"
+                            className="text-xs text-red-500 mt-0.5"
+                          >
+                            {errors.latitude.message}
+                          </p>
+                        )}
+                      </div>
+                      <div className="col-span-1">
+                        <Label
+                          htmlFor="longitude"
+                          className="text-xs font-normal mb-0 block"
+                        >
+                          Longitude
+                        </Label>
+                        <Input
+                          id="longitude"
+                          {...register("longitude")}
+                          type="number"
+                          step="any"
+                          min="-180"
+                          max="180"
+                          inputMode="decimal"
+                          className="h-8 text-sm px-3"
+                          placeholder="0.00"
+                          aria-invalid={!!errors.longitude}
+                          aria-describedby={
+                            errors.longitude ? "longitude-error" : undefined
+                          }
+                        />
+                        {errors.longitude && (
+                          <p
+                            id="longitude-error"
+                            className="text-xs text-red-500 mt-0.5"
+                          >
+                            {errors.longitude.message}
+                          </p>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Additional Information Section */}
+                  <div className="space-y-3">
+                    <div>
+                      <Label className="text-sm font-medium mb-3 block">
+                        Address Type <span className="text-red-500">*</span>
+                      </Label>
+                      <div className="flex flex-col sm:flex-row gap-4">
+                        <Controller
+                          name="isBilling"
+                          control={control}
+                          render={({ field }) => (
+                            <div className="flex items-start space-x-3 p-3 rounded-lg border border-border bg-card hover:bg-accent/5 transition-colors">
+                              <Checkbox
+                                id="billing"
+                                checked={field.value || false}
+                                onCheckedChange={field.onChange}
+                                className="h-5 w-5 mt-0.5"
+                                aria-describedby="billing-description"
+                              />
+                              <div className="flex-1">
+                                <Label
+                                  htmlFor="billing"
+                                  className="text-sm font-medium cursor-pointer leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+                                >
+                                  Billing Address
+                                </Label>
+                                <p
+                                  id="billing-description"
+                                  className="text-xs text-muted-foreground mt-1"
+                                >
+                                  Use this address for invoicing and payments
+                                </p>
+                              </div>
+                            </div>
+                          )}
+                        />
+                        <Controller
+                          name="isShipping"
+                          control={control}
+                          render={({ field }) => (
+                            <div className="flex items-start space-x-3 p-3 rounded-lg border border-border bg-card hover:bg-accent/5 transition-colors">
+                              <Checkbox
+                                id="shipping"
+                                checked={field.value || false}
+                                onCheckedChange={field.onChange}
+                                className="h-5 w-5 mt-0.5"
+                                aria-describedby="shipping-description"
+                              />
+                              <div className="flex-1">
+                                <Label
+                                  htmlFor="shipping"
+                                  className="text-sm font-medium cursor-pointer leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+                                >
+                                  Shipping Address
+                                </Label>
+                                <p
+                                  id="shipping-description"
+                                  className="text-xs text-muted-foreground mt-1"
+                                >
+                                  Use this address for product deliveries
+                                </p>
+                              </div>
+                            </div>
+                          )}
+                        />
+                      </div>
+                      {errors.isBilling && (
+                        <p className="text-xs text-red-500 mt-2">
+                          {errors.isBilling.message}
+                        </p>
+                      )}
+                    </div>
+
+                    {/* Tax ID */}
+                    <div>
+                      <Label
+                        htmlFor="taxId"
+                        className="text-xs font-normal mb-0 block"
+                      >
+                        Tax ID / GST Number
+                      </Label>
+                      <Input
+                        id="taxId"
+                        {...register("taxId")}
+                        className="h-8 text-sm px-3"
+                        placeholder="Enter tax identification number"
+                        aria-invalid={!!errors.taxId}
+                        aria-describedby={
+                          errors.taxId ? "taxId-error" : undefined
+                        }
+                      />
+                      {errors.taxId && (
+                        <p
+                          id="taxId-error"
+                          className="text-xs text-red-500 mt-0.5"
+                        >
+                          {errors.taxId.message}
+                        </p>
+                      )}
+                    </div>
+
+                    <Separator className="my-1.5" />
+
+                    {/* Contact Details */}
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                      <div>
+                        <Label
+                          htmlFor="contactName"
+                          className="text-xs font-normal mb-0 block"
+                        >
+                          Contact Person
+                        </Label>
+                        <Input
+                          id="contactName"
+                          {...register("contactName")}
+                          className="h-8 text-sm px-3"
+                          placeholder="Enter contact person name"
+                          aria-invalid={!!errors.contactName}
+                          aria-describedby={
+                            errors.contactName ? "contactName-error" : undefined
+                          }
+                        />
+                        {errors.contactName && (
+                          <p
+                            id="contactName-error"
+                            className="text-xs text-red-500 mt-0.5"
+                          >
+                            {errors.contactName.message}
+                          </p>
+                        )}
+                      </div>
+
+                      <div>
+                        <Label
+                          htmlFor="contactNumber"
+                          className="text-xs font-normal mb-0 block"
+                        >
+                          Phone Number
+                        </Label>
+                        <div className="relative">
+                          <div className="absolute left-2 top-1/2 -translate-y-1/2 flex items-center gap-1 pointer-events-none z-10">
+                            {}
+                            <img
+                              src={selectedCountryInfo.flag}
+                              alt={selectedCountryInfo.iso2}
+                              className="w-4 h-3 object-cover"
+                            />
+                            <span className="text-sm text-gray-600">
+                              {selectedCountryInfo.callingCode}
+                            </span>
+                          </div>
+                          <Input
+                            id="contactNumber"
+                            {...register("contactNumber")}
+                            type="tel"
+                            inputMode="tel"
+                            className="h-8 text-sm pl-20 pr-3"
+                            placeholder=""
+                            value={(watch("contactNumber") || "").replace(
+                              /^\+\d+\s*/,
+                              ""
+                            )}
+                            onChange={e => {
+                              // Save only the local number (without country code)
+                              setValue("contactNumber", e.target.value);
+                            }}
+                          />
+                          {/* Custom placeholder that doesn't overlap */}
+                          {!watch("contactNumber") && (
+                            <div className="absolute left-20 top-1/2 -translate-y-1/2 text-sm text-gray-400 pointer-events-none">
+                              123456789
+                            </div>
+                          )}
+                        </div>
+                        {errors.contactNumber && (
+                          <p className="text-xs text-red-500 mt-0.5">
+                            {errors.contactNumber.message}
+                          </p>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                </form>
+              </CardContent>
+            </Card>
+          </div>
+
+          {/* Fixed Action Buttons at Bottom */}
+          <div className="border-t bg-background px-3 sm:px-4 py-2 shrink-0">
+            <div className="flex flex-row justify-end gap-2">
+              <Button
+                type="button"
+                variant="outline"
+                onClick={handleCancel}
+                disabled={isLoading}
+                className="min-h-[32px] px-4 text-sm"
+              >
+                Cancel
+              </Button>
+              <Button
+                form="address-form"
+                type="submit"
+                disabled={isLoading}
+                variant="default"
+                className="min-h-[32px] px-4 text-sm"
+              >
+                {isLoading ? (
+                  <>
+                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                    {mode === "edit" ? "Updating..." : "Adding..."}
+                  </>
+                ) : mode === "edit" ? (
+                  "Update Address"
+                ) : (
+                  "Add Address"
+                )}
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+    );
+  }
+
+  return (
+    <Drawer open={open} onOpenChange={onOpenChange}>
+      <DrawerContent className="max-h-[95vh] flex flex-col overflow-hidden">
+        <DrawerHeader className="text-left px-3 py-2.5 border-b shrink-0">
+          <DrawerTitle className="text-base">
+            {mode === "edit" ? "Edit Address" : "Add New Address"}
+          </DrawerTitle>
+        </DrawerHeader>
+
+        <div className="flex-1 overflow-y-auto px-3 py-1.5 min-h-0 overscroll-contain">
           <Card className="border-0 shadow-none h-full">
             <CardContent className="p-0 space-y-2 h-full">
               {/* Company Search */}
@@ -804,12 +1478,12 @@ export function AddAddressDialog({
                 onSubmit={handleSubmit(onSubmit as any)}
                 className="space-y-1"
               >
-                {/* Address Details Section */}
+                {/* Address Details Section - Same as desktop version */}
                 <div className="space-y-4">
                   <div className="grid grid-cols-1 gap-2">
                     <div>
                       <Label
-                        htmlFor="branch"
+                        htmlFor="branch-mobile"
                         className="text-xs font-normal mb-0 block"
                       >
                         Branch{" "}
@@ -821,17 +1495,17 @@ export function AddAddressDialog({
                         </span>
                       </Label>
                       <Input
-                        id="branch"
+                        id="branch-mobile"
                         {...register("branch")}
                         className="h-8 text-sm px-3"
                         aria-invalid={!!errors.branch}
                         aria-describedby={
-                          errors.branch ? "branch-error" : undefined
+                          errors.branch ? "branch-error-mobile" : undefined
                         }
                       />
                       {errors.branch && (
                         <p
-                          id="branch-error"
+                          id="branch-error-mobile"
                           className="text-xs text-red-500 mt-0.5"
                         >
                           {errors.branch.message}
@@ -841,7 +1515,7 @@ export function AddAddressDialog({
 
                     <div>
                       <Label
-                        htmlFor="address"
+                        htmlFor="address-mobile"
                         className="text-xs font-normal mb-0 block"
                       >
                         Street Address{" "}
@@ -853,18 +1527,18 @@ export function AddAddressDialog({
                         </span>
                       </Label>
                       <Textarea
-                        id="address"
+                        id="address-mobile"
                         {...register("address")}
                         className="min-h-[70px] text-sm px-3 resize-none"
                         aria-invalid={!!errors.address}
                         aria-describedby={
-                          errors.address ? "address-error" : undefined
+                          errors.address ? "address-error-mobile" : undefined
                         }
                         placeholder="Enter street address"
                       />
                       {errors.address && (
                         <p
-                          id="address-error"
+                          id="address-error-mobile"
                           className="text-xs text-red-500 mt-0.5"
                         >
                           {errors.address.message}
@@ -874,24 +1548,24 @@ export function AddAddressDialog({
 
                     <div>
                       <Label
-                        htmlFor="locality"
+                        htmlFor="locality-mobile"
                         className="text-xs font-normal mb-0 block"
                       >
                         Locality
                       </Label>
                       <Input
-                        id="locality"
+                        id="locality-mobile"
                         {...register("locality")}
                         className="h-8 text-sm px-3"
                         placeholder="Area, neighborhood"
                         aria-invalid={!!errors.locality}
                         aria-describedby={
-                          errors.locality ? "locality-error" : undefined
+                          errors.locality ? "locality-error-mobile" : undefined
                         }
                       />
                       {errors.locality && (
                         <p
-                          id="locality-error"
+                          id="locality-error-mobile"
                           className="text-xs text-red-500 mt-0.5"
                         >
                           {errors.locality.message}
@@ -901,10 +1575,9 @@ export function AddAddressDialog({
                   </div>
                 </div>
 
-                {/* Location Section */}
+                {/* Location Section - Mobile optimized (single column) */}
                 <div className="space-y-1">
-                  {/* Country and State - 50% each */}
-                  <div className="grid grid-cols-2 gap-2">
+                  <div className="grid grid-cols-1 gap-2">
                     <div>
                       <Label className="text-xs font-normal mb-0 block">
                         Country{" "}
@@ -1022,10 +1695,7 @@ export function AddAddressDialog({
                         </p>
                       )}
                     </div>
-                  </div>
 
-                  {/* District and Postal Code - 50% each */}
-                  <div className="grid grid-cols-2 gap-2">
                     <div>
                       <Label className="text-xs font-normal mb-0 block">
                         District
@@ -1036,7 +1706,6 @@ export function AddAddressDialog({
                         render={({ field }) => (
                           <Select
                             value={
-                              // Find the district ID for the current form value (name)
                               field.value
                                 ? allData.districts
                                     .find(d => d.name === field.value)
@@ -1084,7 +1753,7 @@ export function AddAddressDialog({
 
                     <div>
                       <Label
-                        htmlFor="postalCode"
+                        htmlFor="postalCode-mobile"
                         className="text-xs font-normal mb-0 block"
                       >
                         Postal/Pin Code{" "}
@@ -1096,7 +1765,7 @@ export function AddAddressDialog({
                         </span>
                       </Label>
                       <Input
-                        id="postalCode"
+                        id="postalCode-mobile"
                         {...register("postalCode")}
                         type="tel"
                         inputMode="numeric"
@@ -1108,44 +1777,43 @@ export function AddAddressDialog({
                         </p>
                       )}
                     </div>
-                  </div>
-                  {/* City 50%, Latitude 25%, Longitude 25% */}
-                  <div className="grid grid-cols-4 gap-2">
-                    <div className="col-span-2">
+
+                    <div>
                       <Label
-                        htmlFor="city"
+                        htmlFor="city-mobile"
                         className="text-xs font-normal mb-0 block"
                       >
                         City
                       </Label>
                       <Input
-                        id="city"
+                        id="city-mobile"
                         {...register("city")}
                         className="h-8 text-sm px-3"
                         placeholder="City name"
                         aria-invalid={!!errors.city}
                         aria-describedby={
-                          errors.city ? "city-error" : undefined
+                          errors.city ? "city-error-mobile" : undefined
                         }
                       />
                       {errors.city && (
                         <p
-                          id="city-error"
+                          id="city-error-mobile"
                           className="text-xs text-red-500 mt-0.5"
                         >
                           {errors.city.message}
                         </p>
                       )}
                     </div>
-                    <div className="col-span-1">
+
+                    <div>
                       <Label
-                        htmlFor="latitude"
+                        htmlFor="latitude-mobile"
                         className="text-xs font-normal mb-0 block"
                       >
                         Latitude
                       </Label>
                       <Input
-                        id="latitude"
+                        id="latitude-mobile"
                         {...register("latitude")}
                         type="number"
                         step="any"
@@ -1156,27 +1824,28 @@ export function AddAddressDialog({
                         placeholder="0.00"
                         aria-invalid={!!errors.latitude}
                         aria-describedby={
-                          errors.latitude ? "latitude-error" : undefined
+                          errors.latitude ? "latitude-error-mobile" : undefined
                         }
                       />
                       {errors.latitude && (
                         <p
-                          id="latitude-error"
+                          id="latitude-error-mobile"
                           className="text-xs text-red-500 mt-0.5"
                         >
                           {errors.latitude.message}
                         </p>
                       )}
                     </div>
-                    <div className="col-span-1">
+
+                    <div>
                       <Label
-                        htmlFor="longitude"
+                        htmlFor="longitude-mobile"
                         className="text-xs font-normal mb-0 block"
                       >
                         Longitude
                       </Label>
                       <Input
-                        id="longitude"
+                        id="longitude-mobile"
                         {...register("longitude")}
                         type="number"
                         step="any"
@@ -1187,12 +1856,14 @@ export function AddAddressDialog({
                         placeholder="0.00"
                         aria-invalid={!!errors.longitude}
                         aria-describedby={
-                          errors.longitude ? "longitude-error" : undefined
+                          errors.longitude
+                            ? "longitude-error-mobile"
+                            : undefined
                         }
                       />
                       {errors.longitude && (
                         <p
-                          id="longitude-error"
+                          id="longitude-error-mobile"
                           className="text-xs text-red-500 mt-0.5"
                         >
                           {errors.longitude.message}
@@ -1208,28 +1879,28 @@ export function AddAddressDialog({
                     <Label className="text-sm font-medium mb-3 block">
                       Address Type <span className="text-red-500">*</span>
                     </Label>
-                    <div className="flex flex-col sm:flex-row gap-4">
+                    <div className="flex flex-col gap-4">
                       <Controller
                         name="isBilling"
                         control={control}
                         render={({ field }) => (
                           <div className="flex items-start space-x-3 p-3 rounded-lg border border-border bg-card hover:bg-accent/5 transition-colors">
                             <Checkbox
-                              id="billing"
+                              id="billing-mobile"
                               checked={field.value || false}
                               onCheckedChange={field.onChange}
                               className="h-5 w-5 mt-0.5"
-                              aria-describedby="billing-description"
+                              aria-describedby="billing-description-mobile"
                             />
                             <div className="flex-1">
                               <Label
-                                htmlFor="billing"
+                                htmlFor="billing-mobile"
                                 className="text-sm font-medium cursor-pointer leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
                               >
                                 Billing Address
                               </Label>
                               <p
-                                id="billing-description"
+                                id="billing-description-mobile"
                                 className="text-xs text-muted-foreground mt-1"
                               >
                                 Use this address for invoicing and payments
@@ -1244,21 +1915,21 @@ export function AddAddressDialog({
                         render={({ field }) => (
                           <div className="flex items-start space-x-3 p-3 rounded-lg border border-border bg-card hover:bg-accent/5 transition-colors">
                             <Checkbox
-                              id="shipping"
+                              id="shipping-mobile"
                               checked={field.value || false}
                               onCheckedChange={field.onChange}
                               className="h-5 w-5 mt-0.5"
-                              aria-describedby="shipping-description"
+                              aria-describedby="shipping-description-mobile"
                             />
                             <div className="flex-1">
                               <Label
-                                htmlFor="shipping"
+                                htmlFor="shipping-mobile"
                                 className="text-sm font-medium cursor-pointer leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
                               >
                                 Shipping Address
                               </Label>
                               <p
-                                id="shipping-description"
+                                id="shipping-description-mobile"
                                 className="text-xs text-muted-foreground mt-1"
                               >
                                 Use this address for product deliveries
@@ -1275,27 +1946,26 @@ export function AddAddressDialog({
                     )}
                   </div>
 
-                  {/* Tax ID */}
                   <div>
                     <Label
-                      htmlFor="taxId"
+                      htmlFor="taxId-mobile"
                       className="text-xs font-normal mb-0 block"
                     >
                       Tax ID / GST Number
                     </Label>
                     <Input
-                      id="taxId"
+                      id="taxId-mobile"
                       {...register("taxId")}
                       className="h-8 text-sm px-3"
                       placeholder="Enter tax identification number"
                       aria-invalid={!!errors.taxId}
                       aria-describedby={
-                        errors.taxId ? "taxId-error" : undefined
+                        errors.taxId ? "taxId-error-mobile" : undefined
                       }
                     />
                     {errors.taxId && (
                       <p
-                        id="taxId-error"
+                        id="taxId-error-mobile"
                         className="text-xs text-red-500 mt-0.5"
                       >
                         {errors.taxId.message}
@@ -1305,28 +1975,29 @@ export function AddAddressDialog({
 
                   <Separator className="my-1.5" />
 
-                  {/* Contact Details */}
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                  <div className="grid grid-cols-1 gap-2">
                     <div>
                       <Label
-                        htmlFor="contactName"
+                        htmlFor="contactName-mobile"
                         className="text-xs font-normal mb-0 block"
                       >
                         Contact Person
                       </Label>
                       <Input
-                        id="contactName"
+                        id="contactName-mobile"
                         {...register("contactName")}
                         className="h-8 text-sm px-3"
                         placeholder="Enter contact person name"
                         aria-invalid={!!errors.contactName}
                         aria-describedby={
-                          errors.contactName ? "contactName-error" : undefined
+                          errors.contactName
+                            ? "contactName-error-mobile"
+                            : undefined
                         }
                       />
                       {errors.contactName && (
                         <p
-                          id="contactName-error"
+                          id="contactName-error-mobile"
                           className="text-xs text-red-500 mt-0.5"
                         >
                           {errors.contactName.message}
@@ -1336,14 +2007,13 @@ export function AddAddressDialog({
 
                     <div>
                       <Label
-                        htmlFor="contactNumber"
+                        htmlFor="contactNumber-mobile"
                         className="text-xs font-normal mb-0 block"
                       >
                         Phone Number
                       </Label>
                       <div className="relative">
                         <div className="absolute left-2 top-1/2 -translate-y-1/2 flex items-center gap-1 pointer-events-none z-10">
-                          {}
                           <img
                             src={selectedCountryInfo.flag}
                             alt={selectedCountryInfo.iso2}
@@ -1354,7 +2024,7 @@ export function AddAddressDialog({
                           </span>
                         </div>
                         <Input
-                          id="contactNumber"
+                          id="contactNumber-mobile"
                           {...register("contactNumber")}
                           type="tel"
                           inputMode="tel"
@@ -1365,11 +2035,9 @@ export function AddAddressDialog({
                             ""
                           )}
                           onChange={e => {
-                            // Save only the local number (without country code)
                             setValue("contactNumber", e.target.value);
                           }}
                         />
-                        {/* Custom placeholder that doesn't overlap */}
                         {!watch("contactNumber") && (
                           <div className="absolute left-20 top-1/2 -translate-y-1/2 text-sm text-gray-400 pointer-events-none">
                             123456789
@@ -1389,40 +2057,37 @@ export function AddAddressDialog({
           </Card>
         </div>
 
-        {/* Fixed Action Buttons at Bottom */}
-        <div className="border-t bg-background px-3 sm:px-4 py-2 shrink-0">
-          <div className="flex flex-col sm:flex-row justify-end gap-2">
-            <Button
-              type="button"
-              variant="outline"
-              onClick={handleCancel}
-              disabled={isLoading}
-              className="w-full sm:w-auto min-h-[32px] px-4 text-sm"
-            >
-              Cancel
-            </Button>
-            <Button
-              form="address-form"
-              type="submit"
-              disabled={isLoading}
-              variant="default"
-              className="w-full sm:w-auto min-h-[32px] px-4 text-sm order-first sm:order-last"
-            >
-              {isLoading ? (
-                <>
-                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                  {mode === "edit" ? "Updating..." : "Adding..."}
-                </>
-              ) : mode === "edit" ? (
-                "Update Address"
-              ) : (
-                "Add Address"
-              )}
-            </Button>
-          </div>
-        </div>
-      </DialogContent>
-    </Dialog>
+        <DrawerFooter className="border-t bg-background px-3 py-2 shrink-0 gap-2 p-0">
+          <Button
+            type="button"
+            variant="outline"
+            onClick={handleCancel}
+            disabled={isLoading}
+            className="w-full min-h-[32px] px-4 text-sm"
+          >
+            Cancel
+          </Button>
+          <Button
+            form="address-form"
+            type="submit"
+            disabled={isLoading}
+            variant="default"
+            className="w-full min-h-[32px] px-4 text-sm"
+          >
+            {isLoading ? (
+              <>
+                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                {mode === "edit" ? "Updating..." : "Adding..."}
+              </>
+            ) : mode === "edit" ? (
+              "Update Address"
+            ) : (
+              "Add Address"
+            )}
+          </Button>
+        </DrawerFooter>
+      </DrawerContent>
+    </Drawer>
   );
 }
 

@@ -248,18 +248,23 @@ export default function OrderProductsTable({
                       product.itemTaxableAmount ??
                       product.unitPrice ??
                       product.basePrice;
-                    // Check for valid quantity values, including askedQuantity
+                    // Check for valid quantity values, prioritizing askedQuantity first
                     let originalQuantity = 0;
                     if (
-                      typeof product.quantity === "number" &&
-                      product.quantity > 0
-                    ) {
-                      originalQuantity = product.quantity;
-                    } else if (
                       typeof product.askedQuantity === "number" &&
                       product.askedQuantity > 0
                     ) {
                       originalQuantity = product.askedQuantity;
+                    } else if (
+                      typeof product.unitQuantity === "number" &&
+                      product.unitQuantity > 0
+                    ) {
+                      originalQuantity = product.unitQuantity;
+                    } else if (
+                      typeof product.quantity === "number" &&
+                      product.quantity > 0
+                    ) {
+                      originalQuantity = product.quantity;
                     }
                     const productId =
                       product.brandProductId ||
@@ -360,7 +365,9 @@ export default function OrderProductsTable({
                           {`${discountValue}%`}
                         </TableCell>
                         <TableCell className="text-right min-w-[120px] py-3 font-normal text-sm text-gray-700">
-                          {cashDiscountValue > 0 ? `${cashDiscountValue}%` : "-"}
+                          {cashDiscountValue > 0
+                            ? `${cashDiscountValue}%`
+                            : "-"}
                         </TableCell>
                         <TableCell className="text-right min-w-[140px] py-3 font-normal text-sm text-gray-700">
                           <PricingFormat value={product.unitPrice ?? 0} />

@@ -271,4 +271,133 @@
       margin-top: var(--details-section-margin-md);
     }
   }
+
+  /* ========================================
+   * Product Table Stabilization Styles
+   * Scoped to .product-table-wrapper to prevent global side effects
+   * Responsive column widths for different breakpoints
+   * ======================================== */
+  :root {
+    /* Product table column width tokens - optimized for no horizontal scroll */
+    --product-table-min-w: 100%;
+    /* Mobile/Tablet (md): Product + Price + Actions only */
+    --product-table-col-product: 47%;
+    --product-table-col-price: 23%;
+    --product-table-col-actions: 30%;
+    /* Desktop (lg): Add Brand and Stock columns */
+    --product-table-col-brand: 15%;
+    --product-table-col-stock: 14%;
+    /* Extra Large (xl): Add SKU column */
+    --product-table-col-sku: 12%;
+  }
+
+  /* Responsive column width adjustments */
+  @media (min-width: 1024px) {
+    /* lg breakpoint - show Brand and Stock */
+    :root {
+      --product-table-col-product: 35%;
+      --product-table-col-price: 18%;
+      --product-table-col-actions: 18%;
+    }
+  }
+
+  @media (min-width: 1280px) {
+    /* xl breakpoint - show all columns including SKU */
+    :root {
+      --product-table-col-product: 32%;
+      --product-table-col-brand: 14%;
+      --product-table-col-sku: 11%;
+      --product-table-col-price: 15%;
+      --product-table-col-stock: 12%;
+      --product-table-col-actions: 16%;
+    }
+  }
+
+  /* Product table wrapper - deterministic layout */
+  .product-table-wrapper {
+    min-width: var(--product-table-min-w);
+  }
+
+  /* Ensure table cells don't wrap unexpectedly and maintain vertical alignment */
+  .product-table-wrapper table td,
+  .product-table-wrapper table th {
+    vertical-align: middle;
+  }
+
+  /* Prevent layout shift during view transitions */
+  .product-table-transition {
+    transition: opacity 200ms ease-linear;
+  }
+
+  /* ========================================
+   * Smooth Transitions for Responsive UI
+   * ======================================== */
+
+  /* Sidebar transitions */
+  .sidebar-transition {
+    transition: all 300ms ease-in-out;
+  }
+
+  /* Filter collapse transitions */
+  .filter-collapse-transition {
+    transition: all 300ms ease-in-out;
+  }
+
+  /* View mode toggle transitions */
+  .view-toggle-transition {
+    transition: all 300ms ease-in-out;
+  }
+
+  /* Responsive container max-widths */
+  .responsive-container {
+    @apply max-w-screen-2xl mx-auto px-4 sm:px-6 lg:px-8;
+  }
+
+  /* Prevent overflow on small screens */
+  @media (max-width: 640px) {
+    .product-table-wrapper {
+      overflow-x: auto;
+      -webkit-overflow-scrolling: touch;
+    }
+  }
+
+  /* Smooth scrolling for better UX */
+  @media (prefers-reduced-motion: no-preference) {
+    html {
+      scroll-behavior: smooth;
+    }
+    /* Prevent layout shift when dialogs open */
+    /* Radix UI Dialog handles body scroll locking, but we preserve scrollbar space */
+    body:has([data-slot="dialog"][data-state="open"]) {
+      overflow: hidden !important;
+    }
+
+    /* Smooth dialog transitions */
+    [data-slot="dialog-content"] {
+      transition:
+        opacity 200ms ease-in-out,
+        transform 200ms ease-in-out;
+    }
+
+    [data-slot="dialog-overlay"] {
+      transition: opacity 200ms ease-in-out;
+    }
+  }
+
+  /* Prevent layout shift when dialogs open */
+  /* Radix UI Dialog handles body scroll locking, but we preserve scrollbar space */
+  body:has([data-slot="dialog"][data-state="open"]) {
+    overflow: hidden !important;
+  }
+
+  /* Smooth dialog transitions */
+  [data-slot="dialog-content"] {
+    transition:
+      opacity 200ms ease-in-out,
+      transform 200ms ease-in-out;
+  }
+
+  [data-slot="dialog-overlay"] {
+    transition: opacity 200ms ease-in-out;
+  }
 }

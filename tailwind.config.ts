@@ -84,6 +84,16 @@ const config: Config = {
       fontFamily: {
         sans: ["var(--font-sans)", "sans-serif"],
       },
+      spacing: {
+        "sidebar-open": "16rem", // 256px
+        "sidebar-collapsed": "3rem", // 48px
+      },
+      minWidth: {
+        "product-table": "600px",
+      },
+      transitionProperty: {
+        "spacing": "margin, padding, width",
+      },
       keyframes: {
         "accordion-down": {
           from: {
