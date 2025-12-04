@@ -2,7 +2,6 @@
 
 import { useNavigationProgress } from "@/hooks/useNavigationProgress";
 import { useRouter } from "@/i18n/navigation";
-import { useBlockingLoader } from "@/providers/BlockingLoaderProvider";
 import { useCallback, useRef, useTransition } from "react";
 
 // Global navigation deduplication tracker
@@ -26,7 +25,6 @@ const NAVIGATION_DEBOUNCE_MS = 300; // Prevent duplicate navigations within 300m
 export function useNavigationWithLoader() {
   const router = useRouter();
   const { startNavigation } = useNavigationProgress();
-  const { showLoader, hideLoader } = useBlockingLoader();
   const [isPending, startTransition] = useTransition();
   const activeNavigationRef = useRef<string | null>(null);
 
@@ -63,22 +61,20 @@ export function useNavigationWithLoader() {
       activeNavigationRef.current = href;
       navigationTracker.set(href, now);
 
-      // Start navigation loader immediately (both progress bar and blocking loader)
+      // Start navigation loader immediately
       startNavigation("Loading page...");
-      showLoader({ mode: "global", message: "Loading..." });
 
       // Navigate
       startTransition(() => {
         router.push(href);
       });
 
-      // Clear active navigation and hide loader after a delay
+      // Clear active navigation after a delay
       setTimeout(() => {
         activeNavigationRef.current = null;
-        hideLoader();
       }, 1000);
     },
-    [router, startNavigation, showLoader, hideLoader]
+    [router, startNavigation]
   );
 
   const replace = useCallback(
@@ -116,20 +112,18 @@ export function useNavigationWithLoader() {
 
       // Start navigation loader immediately (both progress bar and blocking loader)
       startNavigation("Loading page...");
-      showLoader({ mode: "global", message: "Loading..." });
 
       // Navigate
       startTransition(() => {
         router.replace(href);
       });
 
-      // Clear active navigation and hide loader after a delay
+      // Clear active navigation after a delay
       setTimeout(() => {
         activeNavigationRef.current = null;
-        hideLoader();
       }, 1000);
     },
-    [router, startNavigation, showLoader, hideLoader]
+    [router, startNavigation]
   );
 
   return {

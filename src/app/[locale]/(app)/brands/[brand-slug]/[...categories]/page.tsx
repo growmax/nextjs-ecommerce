@@ -224,7 +224,13 @@ export default async function BrandCategoryPage({
   // Parse filters from URL (same as categories page)
   const variantAttributes: Record<string, string[]> = {};
   const productSpecifications: Record<string, string[]> = {};
-  const knownKeys = new Set(["page", "sort", "in_stock", "catalog_code", "equipment_code"]);
+  const knownKeys = new Set([
+    "page",
+    "sort",
+    "in_stock",
+    "catalog_code",
+    "equipment_code",
+  ]);
 
   Object.entries(filters).forEach(([key, value]) => {
     if (!knownKeys.has(key) && value) {
@@ -263,14 +269,16 @@ export default async function BrandCategoryPage({
   const catalogCodes = filters.catalog_code
     ? (Array.isArray(filters.catalog_code)
         ? filters.catalog_code
-        : [filters.catalog_code]).filter((v): v is string => typeof v === "string")
+        : [filters.catalog_code]
+      ).filter((v): v is string => typeof v === "string")
     : undefined;
 
   // Parse equipment codes
   const equipmentCodes = filters.equipment_code
     ? (Array.isArray(filters.equipment_code)
         ? filters.equipment_code
-        : [filters.equipment_code]).filter((v): v is string => typeof v === "string")
+        : [filters.equipment_code]
+      ).filter((v): v is string => typeof v === "string")
     : undefined;
 
   let queryResult;
@@ -350,9 +358,10 @@ export default async function BrandCategoryPage({
   // Build base query for aggregations (with brand and category filters if applicable)
   const baseQuery = getBaseQuery();
   const brandFilter = buildBrandFilter(brand.name);
-  const categoryFilters = categoryPath && categoryPath.ids.categoryIds.length > 0
-    ? buildCategoryFilter(categoryPath.ids.categoryIds)
-    : [];
+  const categoryFilters =
+    categoryPath && categoryPath.ids.categoryIds.length > 0
+      ? buildCategoryFilter(categoryPath.ids.categoryIds)
+      : [];
   const baseQueryForAggs = {
     must: [...baseQuery.must, brandFilter, ...categoryFilters],
     must_not: baseQuery.must_not,
@@ -383,7 +392,10 @@ export default async function BrandCategoryPage({
         aggregations = aggregationResponse.aggregations as FilterAggregations;
       }
     } catch (error) {
-      console.error("Error fetching aggregations for brand category page:", error);
+      console.error(
+        "Error fetching aggregations for brand category page:",
+        error
+      );
       // Continue without aggregations - filters will show loading state
     }
   }
@@ -488,39 +500,38 @@ export default async function BrandCategoryPage({
 
         {/* Interactivity Controls - Client component for pagination/sorting/filters */}
         <BrandCategoryPageInteractivity
-        initialFilters={{
-          page,
-          sort: sortBy,
-        }}
-        total={initialProducts.total}
-        aggregations={aggregations}
-        brandName={brand.name}
-        locale={locale}
-        currentCategoryPath={categories}
-        categoryPath={categoryPath}
-      >
-        {/* Product Grid - Server-rendered for SEO with Suspense for streaming */}
-        <div className="relative">
-          <Suspense
-            fallback={
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4 md:gap-6">
-                {Array.from({ length: 20 }).map((_, i) => (
-                  <div
-                    key={i}
-                    className="h-[380px] bg-muted animate-pulse rounded-lg"
-                  />
-                ))}
-              </div>
-            }
-          >
-            <BrandProductGridWrapper
-              productsPromise={productsPromise}
-              brandName={brand.name}
-              categoryName={categoryName}
-              locale={locale}
-            />
-          </Suspense>
-        </div>
+          initialFilters={{
+            page,
+            sort: sortBy,
+          }}
+          total={initialProducts.total}
+          aggregations={aggregations}
+          brandName={brand.name}
+          currentCategoryPath={categories}
+          categoryPath={categoryPath}
+        >
+          {/* Product Grid - Server-rendered for SEO with Suspense for streaming */}
+          <div className="relative">
+            <Suspense
+              fallback={
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4 md:gap-6">
+                  {Array.from({ length: 20 }).map((_, i) => (
+                    <div
+                      key={i}
+                      className="h-[380px] bg-muted animate-pulse rounded-lg"
+                    />
+                  ))}
+                </div>
+              }
+            >
+              <BrandProductGridWrapper
+                productsPromise={productsPromise}
+                brandName={brand.name}
+                categoryName={categoryName}
+                locale={locale}
+              />
+            </Suspense>
+          </div>
         </BrandCategoryPageInteractivity>
       </div>
     </>

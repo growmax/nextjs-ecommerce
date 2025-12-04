@@ -11,7 +11,6 @@ import { usePageScopedLoader } from "@/hooks/usePageScopedLoader";
 import type { CategoryPath } from "@/lib/services/CategoryResolutionService";
 import type { FilterAggregations } from "@/types/category-filters";
 import { formatAllAggregations } from "@/utils/format-aggregations";
-import { useLocale } from "next-intl";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useCallback, useMemo, useTransition } from "react";
 
@@ -34,7 +33,7 @@ interface CategoryPageInteractivityProps {
  * - Pagination controls
  * - Sort dropdown
  * - URL updates
- * 
+ *
  * Does NOT render products (products are server-rendered for SEO)
  */
 export function CategoryPageInteractivity({
@@ -48,7 +47,6 @@ export function CategoryPageInteractivity({
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
-  const locale = useLocale();
   const [isPending, startTransition] = useTransition();
 
   // Auto-trigger scoped loader on transitions (Phase 1)
@@ -57,17 +55,19 @@ export function CategoryPageInteractivity({
   // Format aggregations for filter components
   const formattedFilters = useMemo(
     () =>
-      formatAllAggregations(aggregations, categoryPath, currentCategoryPath, locale),
-    [aggregations, categoryPath, currentCategoryPath, locale]
+      formatAllAggregations(aggregations, categoryPath, currentCategoryPath),
+    [aggregations, categoryPath, currentCategoryPath]
   );
 
-  if (process.env.NODE_ENV === 'development') {
-    console.log('[CategoryPageInteractivity] Formatted filters:', {
+  if (process.env.NODE_ENV === "development") {
+    console.log("[CategoryPageInteractivity] Formatted filters:", {
       brandsCount: formattedFilters.brands.length,
       childCategoriesCount: formattedFilters.childCategories.length,
       siblingCategoriesCount: formattedFilters.siblingCategories.length,
-      variantAttributeGroupsCount: formattedFilters.variantAttributeGroups.length,
-      productSpecificationGroupsCount: formattedFilters.productSpecificationGroups.length,
+      variantAttributeGroupsCount:
+        formattedFilters.variantAttributeGroups.length,
+      productSpecificationGroupsCount:
+        formattedFilters.productSpecificationGroups.length,
       catalogCodesCount: formattedFilters.catalogCodes.length,
       equipmentCodesCount: formattedFilters.equipmentCodes.length,
     });
@@ -149,7 +149,9 @@ export function CategoryPageInteractivity({
           siblingCategories={formattedFilters.siblingCategories}
           currentCategoryPath={currentCategoryPath}
           variantAttributeGroups={formattedFilters.variantAttributeGroups}
-          productSpecificationGroups={formattedFilters.productSpecificationGroups}
+          productSpecificationGroups={
+            formattedFilters.productSpecificationGroups
+          }
           catalogCodes={formattedFilters.catalogCodes}
           equipmentCodes={formattedFilters.equipmentCodes}
           isLoading={!aggregations}
@@ -166,7 +168,9 @@ export function CategoryPageInteractivity({
             siblingCategories={formattedFilters.siblingCategories}
             currentCategoryPath={currentCategoryPath}
             variantAttributeGroups={formattedFilters.variantAttributeGroups}
-            productSpecificationGroups={formattedFilters.productSpecificationGroups}
+            productSpecificationGroups={
+              formattedFilters.productSpecificationGroups
+            }
             catalogCodes={formattedFilters.catalogCodes}
             equipmentCodes={formattedFilters.equipmentCodes}
             isLoading={!aggregations}
@@ -181,12 +185,11 @@ export function CategoryPageInteractivity({
             ) : (
               <>
                 <span className="hidden sm:inline">
-                  Showing {((currentFilters.page - 1) * 20) + 1} -{" "}
-                  {Math.min(currentFilters.page * 20, total)} of {total} products
+                  Showing {(currentFilters.page - 1) * 20 + 1} -{" "}
+                  {Math.min(currentFilters.page * 20, total)} of {total}{" "}
+                  products
                 </span>
-                <span className="sm:hidden">
-                  {total} products
-                </span>
+                <span className="sm:hidden">{total} products</span>
               </>
             )}
           </div>
@@ -221,4 +224,3 @@ export function CategoryPageInteractivity({
     </div>
   );
 }
-
