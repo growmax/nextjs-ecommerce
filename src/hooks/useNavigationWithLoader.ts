@@ -1,8 +1,9 @@
 "use client";
 
-import { useRouter } from "@/i18n/navigation";
 import { useNavigationProgress } from "@/hooks/useNavigationProgress";
-import { useTransition, useRef, useCallback } from "react";
+import { useRouter } from "@/i18n/navigation";
+import { useBlockingLoader } from "@/providers/BlockingLoaderProvider";
+import { useCallback, useRef, useTransition } from "react";
 
 // Global navigation deduplication tracker
 const navigationTracker = new Map<string, number>();
@@ -25,6 +26,7 @@ const NAVIGATION_DEBOUNCE_MS = 300; // Prevent duplicate navigations within 300m
 export function useNavigationWithLoader() {
   const router = useRouter();
   const { startNavigation } = useNavigationProgress();
+  const { showLoader, hideLoader } = useBlockingLoader();
   const [isPending, startTransition] = useTransition();
   const activeNavigationRef = useRef<string | null>(null);
 
@@ -61,20 +63,22 @@ export function useNavigationWithLoader() {
       activeNavigationRef.current = href;
       navigationTracker.set(href, now);
 
-      // Start navigation loader immediately
+      // Start navigation loader immediately (both progress bar and blocking loader)
       startNavigation("Loading page...");
+      showLoader({ mode: "global", message: "Loading..." });
 
       // Navigate
       startTransition(() => {
         router.push(href);
       });
 
-      // Clear active navigation after a delay
+      // Clear active navigation and hide loader after a delay
       setTimeout(() => {
         activeNavigationRef.current = null;
+        hideLoader();
       }, 1000);
     },
-    [router, startNavigation]
+    [router, startNavigation, showLoader, hideLoader]
   );
 
   const replace = useCallback(
@@ -110,20 +114,22 @@ export function useNavigationWithLoader() {
       activeNavigationRef.current = href;
       navigationTracker.set(`replace:${href}`, now);
 
-      // Start navigation loader immediately
+      // Start navigation loader immediately (both progress bar and blocking loader)
       startNavigation("Loading page...");
+      showLoader({ mode: "global", message: "Loading..." });
 
       // Navigate
       startTransition(() => {
         router.replace(href);
       });
 
-      // Clear active navigation after a delay
+      // Clear active navigation and hide loader after a delay
       setTimeout(() => {
         activeNavigationRef.current = null;
+        hideLoader();
       }, 1000);
     },
-    [router, startNavigation]
+    [router, startNavigation, showLoader, hideLoader]
   );
 
   return {

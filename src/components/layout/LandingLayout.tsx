@@ -16,7 +16,7 @@ export function LandingLayout({ children, className }: LandingLayoutProps) {
   return (
     <div
       className={cn(
-        "landing-page flex flex-col w-full overflow-x-hidden z-0",
+        "landing-page flex flex-col w-full min-w-0 overflow-x-auto z-0",
         className
       )}
     >

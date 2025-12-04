@@ -459,6 +459,7 @@ import { render, screen, waitFor } from "@testing-library/react";
 import React, { ReactNode } from "react";
 import { toast } from "sonner";
 import { LoadingProvider } from "@/hooks/useGlobalLoader";
+import { BlockingLoaderProvider } from "@/providers/BlockingLoaderProvider";
 import OrderDetailsClient from "./OrderDetailsClient";
 
 const mockFetchOrderDetails =
@@ -499,7 +500,11 @@ function createWrapper() {
     return React.createElement(
       QueryClientProvider,
       { client: queryClient },
-      React.createElement(LoadingProvider, null, children)
+      React.createElement(
+        LoadingProvider,
+        null,
+        React.createElement(BlockingLoaderProvider, null, children)
+      )
     );
   };
   Wrapper.displayName = "QueryClientWrapper";

@@ -1,6 +1,7 @@
 import { CategoryBreadcrumbServer } from "@/components/Breadcrumb/CategoryBreadcrumbServer";
 import { ProductViewSwitcher } from "@/components/ProductGrid/ProductViewSwitcher";
 import { StructuredDataServer } from "@/components/seo/StructuredDataServer";
+import { Card, CardContent } from "@/components/ui/card";
 import type { RequestContext } from "@/lib/api/client";
 import SearchService, {
   ElasticSearchQuery,
@@ -10,13 +11,12 @@ import TenantService from "@/lib/api/services/TenantService";
 import BrandResolutionService from "@/lib/services/BrandResolutionService";
 import type { FilterAggregations } from "@/types/category-filters";
 import { buildBrandFilter, buildBrandQuery, getBaseQuery } from "@/utils/opensearch/browse-queries";
+import { Package } from "lucide-react";
 import { Metadata } from "next";
 import { headers } from "next/headers";
 import { notFound } from "next/navigation";
 import { Suspense } from "react";
 import { BrandCategoryPageInteractivity } from "./[...categories]/_components/BrandCategoryPageInteractivity";
-import { Card, CardContent } from "@/components/ui/card";
-import { Package } from "lucide-react";
 
 interface PageProps {
   params: Promise<{
@@ -181,12 +181,16 @@ export default async function BrandPage({ params, searchParams }: PageProps) {
         ? false
         : undefined;
 
+
+
   const queryResult = buildBrandQuery(brand.name, {
     page,
     pageSize: 20,
     sortBy: { sortBy },
     ...(inStock !== undefined && { inStock }),
   });
+
+
 
   // Get elastic index from elasticCode
   const elasticIndex = elasticCode ? `${elasticCode}pgandproducts` : "";
@@ -208,6 +212,8 @@ export default async function BrandPage({ params, searchParams }: PageProps) {
             elasticIndex,
             query: searchQuery,
           });
+
+
 
           return {
             products: result.data || [],
@@ -306,27 +312,29 @@ export default async function BrandPage({ params, searchParams }: PageProps) {
       {/* Structured Data for SEO - Server-rendered */}
       <StructuredDataServer data={structuredData} />
 
-      {/* Breadcrumbs - Server-rendered */}
-      <CategoryBreadcrumbServer breadcrumbs={breadcrumbs} />
+      {/* Responsive Container Wrapper */}
+      <div className="max-w-screen-2xl mx-auto px-4 sm:px-6 lg:px-8">
+        {/* Breadcrumbs - Server-rendered */}
+        <CategoryBreadcrumbServer breadcrumbs={breadcrumbs} />
 
-      {/* Brand Header - Server-rendered */}
-      <div className="mb-6">
-        <div className="flex items-center gap-4 mb-2">
-          {brand.logoUrl && (
-            <img
-              src={brand.logoUrl}
-              alt={brand.name}
-              className="h-12 w-auto object-contain"
-            />
-          )}
-          <h1 className="text-3xl font-bold text-slate-800 dark:text-slate-100">
-            {brand.name}
-          </h1>
+        {/* Brand Header - Server-rendered */}
+        <div className="mb-4 sm:mb-6">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3 sm:gap-4 mb-2">
+            {brand.logoUrl && (
+              <img
+                src={brand.logoUrl}
+                alt={brand.name}
+                className="h-10 sm:h-12 lg:h-14 w-auto object-contain"
+              />
+            )}
+            <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-slate-800 dark:text-slate-100 break-words">
+              {brand.name}
+            </h1>
+          </div>
         </div>
-      </div>
 
-      {/* Interactivity Controls - Client component for pagination/sorting/filters */}
-      <BrandCategoryPageInteractivity
+        {/* Interactivity Controls - Client component for pagination/sorting/filters */}
+        <BrandCategoryPageInteractivity
         initialFilters={{
           page,
           sort: sortBy,
@@ -342,7 +350,7 @@ export default async function BrandPage({ params, searchParams }: PageProps) {
           <Suspense
             fallback={
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4 md:gap-6">
-                {Array.from({ length: 8 }).map((_, i) => (
+                {Array.from({ length: 20 }).map((_, i) => (
                   <div
                     key={i}
                     className="h-[380px] bg-muted animate-pulse rounded-lg"
@@ -358,7 +366,8 @@ export default async function BrandPage({ params, searchParams }: PageProps) {
             />
           </Suspense>
         </div>
-      </BrandCategoryPageInteractivity>
+        </BrandCategoryPageInteractivity>
+      </div>
     </>
   );
 }

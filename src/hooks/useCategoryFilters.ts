@@ -155,8 +155,8 @@ export function useCategoryFilters() {
       inStockParam === "true"
         ? true
         : inStockParam === "false"
-        ? false
-        : undefined;
+          ? false
+          : undefined;
 
     // Parse catalog codes
     const catalogCodes = searchParams.getAll("catalog_code").filter(Boolean);
@@ -300,7 +300,7 @@ export function useCategoryFilters() {
    */
   const clearAllFilters = useCallback(() => {
     const params = new URLSearchParams(searchParams);
-    
+
     // Remove all filter params except page and sort
     const keysToRemove: string[] = [];
     params.forEach((_, key) => {

@@ -6,11 +6,13 @@ import { CategoryPagination } from "@/components/Pagination/CategoryPagination";
 import { ViewToggle } from "@/components/ProductList/ViewToggle";
 import { SortDropdown } from "@/components/Sort/SortDropdown";
 import { Skeleton } from "@/components/ui/skeleton";
+import { ProductLoadingProvider } from "@/contexts/ProductLoadingContext";
+import { usePageScopedLoader } from "@/hooks/usePageScopedLoader";
 import type { CategoryPath } from "@/lib/services/CategoryResolutionService";
 import type { FilterAggregations } from "@/types/category-filters";
 import { formatAllAggregations } from "@/utils/format-aggregations";
-import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useLocale } from "next-intl";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useCallback, useMemo, useTransition } from "react";
 
 interface CategoryPageInteractivityProps {
@@ -48,6 +50,9 @@ export function CategoryPageInteractivity({
   const searchParams = useSearchParams();
   const locale = useLocale();
   const [isPending, startTransition] = useTransition();
+
+  // Auto-trigger scoped loader on transitions (Phase 1)
+  usePageScopedLoader(isPending);
 
   // Format aggregations for filter components
   const formattedFilters = useMemo(
@@ -152,7 +157,7 @@ export function CategoryPageInteractivity({
       </aside>
 
       {/* Main Content */}
-      <div className="flex-1 min-w-0">
+      <main id="page-main" className="flex-1 min-w-0 relative">
         {/* Mobile Filter Drawer */}
         <div className="lg:hidden mb-4">
           <CategoryFiltersDrawer
@@ -169,19 +174,24 @@ export function CategoryPageInteractivity({
         </div>
 
         {/* Controls Bar */}
-        <div className="mb-6 flex items-center justify-between gap-4">
-          <div className="text-sm text-gray-600 dark:text-gray-400">
+        <div className="mb-4 md:mb-6 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 sm:gap-4">
+          <div className="text-xs sm:text-sm text-gray-600 dark:text-gray-400 order-2 sm:order-1">
             {isLoading ? (
               <Skeleton className="h-4 w-32" />
             ) : (
               <>
-                Showing {((currentFilters.page - 1) * 20) + 1} -{" "}
-                {Math.min(currentFilters.page * 20, total)} of {total} products
+                <span className="hidden sm:inline">
+                  Showing {((currentFilters.page - 1) * 20) + 1} -{" "}
+                  {Math.min(currentFilters.page * 20, total)} of {total} products
+                </span>
+                <span className="sm:hidden">
+                  {total} products
+                </span>
               </>
             )}
           </div>
 
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2 sm:gap-3 order-1 sm:order-2 w-full sm:w-auto justify-between sm:justify-end">
             <ViewToggle />
             <SortDropdown
               value={currentFilters.sort}
@@ -191,8 +201,10 @@ export function CategoryPageInteractivity({
           </div>
         </div>
 
-        {/* Product Grid - Passed as children */}
-        {children}
+        {/* Product Grid - Broadcast loading state via context */}
+        <ProductLoadingProvider value={{ isLoading }}>
+          {children}
+        </ProductLoadingProvider>
 
         {/* Pagination */}
         {totalPages > 1 && (
@@ -205,7 +217,7 @@ export function CategoryPageInteractivity({
             />
           </div>
         )}
-      </div>
+      </main>
     </div>
   );
 }
