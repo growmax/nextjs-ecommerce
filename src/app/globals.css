@@ -366,38 +366,87 @@
     html {
       scroll-behavior: smooth;
     }
-    /* Prevent layout shift when dialogs open */
-    /* Radix UI Dialog handles body scroll locking, but we preserve scrollbar space */
-    body:has([data-slot="dialog"][data-state="open"]) {
-      overflow: hidden !important;
+
+    /* Enhanced dialog animations for smooth transitions */
+    @keyframes dialog-content-show {
+      from {
+        opacity: 0;
+        transform: translate(-50%, -50%) scale(0.95);
+      }
+      to {
+        opacity: 1;
+        transform: translate(-50%, -50%) scale(1);
+      }
     }
 
-    /* Smooth dialog transitions */
-    [data-slot="dialog-content"] {
-      transition:
-        opacity 200ms ease-in-out,
-        transform 200ms ease-in-out;
+    @keyframes dialog-content-hide {
+      from {
+        opacity: 1;
+        transform: translate(-50%, -50%) scale(1);
+      }
+      to {
+        opacity: 0;
+        transform: translate(-50%, -50%) scale(0.95);
+      }
     }
 
-    [data-slot="dialog-overlay"] {
-      transition: opacity 200ms ease-in-out;
+    @keyframes dialog-overlay-show {
+      from {
+        opacity: 0;
+      }
+      to {
+        opacity: 1;
+      }
+    }
+
+    @keyframes dialog-overlay-hide {
+      from {
+        opacity: 1;
+      }
+      to {
+        opacity: 0;
+      }
+    }
+
+    /* Apply animations to dialog elements */
+    [data-slot="dialog-content"][data-state="open"] {
+      animation: dialog-content-show 200ms cubic-bezier(0.16, 1, 0.3, 1)
+        forwards;
+    }
+
+    [data-slot="dialog-content"][data-state="closed"] {
+      animation: dialog-content-hide 150ms ease-in forwards;
+    }
+
+    [data-slot="dialog-overlay"][data-state="open"] {
+      animation: dialog-overlay-show 200ms ease-out forwards;
+    }
+
+    [data-slot="dialog-overlay"][data-state="closed"] {
+      animation: dialog-overlay-hide 150ms ease-in forwards;
+    }
+  }
+
+  /* For users who prefer reduced motion */
+  @media (prefers-reduced-motion: reduce) {
+    [data-slot="dialog-content"][data-state="open"] {
+      animation: dialog-overlay-show 100ms ease-out forwards;
+    }
+
+    [data-slot="dialog-content"][data-state="closed"] {
+      animation: dialog-overlay-hide 100ms ease-in forwards;
+    }
+
+    [data-slot="dialog-overlay"][data-state="open"] {
+      animation: dialog-overlay-show 100ms ease-out forwards;
+    }
+
+    [data-slot="dialog-overlay"][data-state="closed"] {
+      animation: dialog-overlay-hide 100ms ease-in forwards;
     }
   }
 
   /* Prevent layout shift when dialogs open */
-  /* Radix UI Dialog handles body scroll locking, but we preserve scrollbar space */
-  body:has([data-slot="dialog"][data-state="open"]) {
-    overflow: hidden !important;
-  }
-
-  /* Smooth dialog transitions */
-  [data-slot="dialog-content"] {
-    transition:
-      opacity 200ms ease-in-out,
-      transform 200ms ease-in-out;
-  }
-
-  [data-slot="dialog-overlay"] {
-    transition: opacity 200ms ease-in-out;
-  }
+  /* This matches buyer-fe behavior where UI doesn't shift when dialogs open */
+  /* Note: Scrollbar compensation is handled programmatically in DialogContent component */
 }

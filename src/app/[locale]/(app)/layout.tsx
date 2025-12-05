@@ -12,11 +12,9 @@ import { headers } from "next/headers";
 import { cache, ReactNode, Suspense } from "react";
 
 // Import the AppHeader component
-import { BlockingLoader } from "@/components/GlobalLoader/BlockingLoader";
 import LayoutWithHeader from "@/components/LayoutWithHeader";
 import { LayoutDataLoader } from "@/components/layout/LayoutDataLoader";
 import { PrefetchMainRoutes } from "@/components/layout/PrefetchMainRoutes";
-import { BlockingLoaderProvider } from "@/providers/BlockingLoaderProvider";
 
 // Import Global Blocking Loader (Phase 1: Page-isolated)
 import { TokenInitializer } from "@/components/TokenInitializer";
@@ -98,30 +96,26 @@ async function LayoutContent({ children }: { children: ReactNode }) {
   const initialSidebarOpen = parseSidebarStateCookie(cookieHeader);
 
   return (
-    <BlockingLoaderProvider>
-      <NextIntlClientProvider messages={messages} locale={locale}>
-        <LayoutDataLoader>
-          <TokenInitializer />
+    <NextIntlClientProvider messages={messages} locale={locale}>
+      <LayoutDataLoader>
+        <TokenInitializer />
         <LoadingProvider>
-            <TopProgressBarProvider />
-            <NavigationProgressProvider>
-              <PrefetchMainRoutes />
-              <CartProviderWrapper>
-                <SidebarProviderWrapper defaultOpen={initialSidebarOpen}>
-                  <AppSidebar />
-                  <SidebarInset className="flex flex-col w-full overflow-x-hidden">
-                    <LayoutWithHeader>{children}</LayoutWithHeader>
-                  </SidebarInset>
-                </SidebarProviderWrapper>
-              </CartProviderWrapper>
-              <Toaster richColors position="top-right" theme="light" />
-            </NavigationProgressProvider>
-          </LoadingProvider>
-        </LayoutDataLoader>
-      </NextIntlClientProvider>
-      {/* Global Blocking Loader - Phase 1: Only active in product pages */}
-      <BlockingLoader />
-    </BlockingLoaderProvider>
+          <TopProgressBarProvider />
+          <NavigationProgressProvider>
+            <PrefetchMainRoutes />
+            <CartProviderWrapper>
+              <SidebarProviderWrapper defaultOpen={initialSidebarOpen}>
+                <AppSidebar />
+                <SidebarInset className="flex flex-col w-full overflow-x-hidden">
+                  <LayoutWithHeader>{children}</LayoutWithHeader>
+                </SidebarInset>
+              </SidebarProviderWrapper>
+            </CartProviderWrapper>
+            <Toaster richColors position="top-right" theme="light" />
+          </NavigationProgressProvider>
+        </LoadingProvider>
+      </LayoutDataLoader>
+    </NextIntlClientProvider>
   );
 }
 

@@ -22,7 +22,6 @@ interface BrandCategoryPageInteractivityProps {
   total: number;
   aggregations?: FilterAggregations | null;
   brandName: string;
-  locale: string;
   currentCategoryPath: string[];
   categoryPath?: CategoryPath | null;
   children?: React.ReactNode;
@@ -35,7 +34,7 @@ interface BrandCategoryPageInteractivityProps {
  * - Sort dropdown
  * - Filters (including brand filter for uniformity)
  * - URL updates
- * 
+ *
  * Does NOT render products (products are server-rendered for SEO)
  */
 export function BrandCategoryPageInteractivity({
@@ -43,7 +42,6 @@ export function BrandCategoryPageInteractivity({
   total,
   aggregations = null,
   brandName: _brandName,
-  locale,
   currentCategoryPath,
   categoryPath = null,
   children,
@@ -57,25 +55,21 @@ export function BrandCategoryPageInteractivity({
   usePageScopedLoader(isPending);
 
   // Format aggregations for filter components
-  const formattedFilters = useMemo(
-    () => {
-      // Use empty CategoryPath if categoryPath is null (for brand landing page)
-      const categoryPathForFormatting: CategoryPath = categoryPath || {
-        nodes: [],
-        ids: { categoryIds: [] },
-        slugs: [],
-        fullPath: "",
-      };
-      
-      return formatAllAggregations(
-        aggregations,
-        categoryPathForFormatting,
-        currentCategoryPath,
-        locale
-      );
-    },
-    [aggregations, categoryPath, currentCategoryPath, locale]
-  );
+  const formattedFilters = useMemo(() => {
+    // Use empty CategoryPath if categoryPath is null (for brand landing page)
+    const categoryPathForFormatting: CategoryPath = categoryPath || {
+      nodes: [],
+      ids: { categoryIds: [] },
+      slugs: [],
+      fullPath: "",
+    };
+
+    return formatAllAggregations(
+      aggregations,
+      categoryPathForFormatting,
+      currentCategoryPath
+    );
+  }, [aggregations, categoryPath, currentCategoryPath]);
 
   // Parse current filters from URL
   const currentFilters = useMemo(
@@ -153,7 +147,9 @@ export function BrandCategoryPageInteractivity({
           siblingCategories={formattedFilters.siblingCategories}
           currentCategoryPath={currentCategoryPath}
           variantAttributeGroups={formattedFilters.variantAttributeGroups}
-          productSpecificationGroups={formattedFilters.productSpecificationGroups}
+          productSpecificationGroups={
+            formattedFilters.productSpecificationGroups
+          }
           catalogCodes={formattedFilters.catalogCodes}
           equipmentCodes={formattedFilters.equipmentCodes}
           isLoading={!aggregations}
@@ -170,7 +166,9 @@ export function BrandCategoryPageInteractivity({
             siblingCategories={formattedFilters.siblingCategories}
             currentCategoryPath={currentCategoryPath}
             variantAttributeGroups={formattedFilters.variantAttributeGroups}
-            productSpecificationGroups={formattedFilters.productSpecificationGroups}
+            productSpecificationGroups={
+              formattedFilters.productSpecificationGroups
+            }
             catalogCodes={formattedFilters.catalogCodes}
             equipmentCodes={formattedFilters.equipmentCodes}
             isLoading={!aggregations}
@@ -185,12 +183,11 @@ export function BrandCategoryPageInteractivity({
             ) : (
               <>
                 <span className="hidden sm:inline">
-                  Showing {((currentFilters.page - 1) * 20) + 1} -{" "}
-                  {Math.min(currentFilters.page * 20, total)} of {total} products
+                  Showing {(currentFilters.page - 1) * 20 + 1} -{" "}
+                  {Math.min(currentFilters.page * 20, total)} of {total}{" "}
+                  products
                 </span>
-                <span className="sm:hidden">
-                  {total} products
-                </span>
+                <span className="sm:hidden">{total} products</span>
               </>
             )}
           </div>
@@ -225,4 +222,3 @@ export function BrandCategoryPageInteractivity({
     </div>
   );
 }
-
