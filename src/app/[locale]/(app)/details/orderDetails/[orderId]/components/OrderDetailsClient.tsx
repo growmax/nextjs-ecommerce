@@ -1,5 +1,4 @@
 "use client";
-import { Skeleton } from "@/components/ui/skeleton";
 import { Toaster } from "@/components/ui/sonner";
 import { FileText, Layers } from "lucide-react";
 import { useTranslations } from "next-intl";
@@ -13,13 +12,12 @@ import {
   type Version,
 } from "@/components/dialogs/VersionsDialog";
 import {
-  DetailsSkeleton,
   OrderContactDetails,
-  OrderProductsTable,
   OrderPriceDetails,
+  OrderProductsTable,
   OrderStatusTracker,
   OrderTermsCard,
-  SalesHeader,
+  SalesHeader
 } from "@/components/sales";
 import { useOrderDetails } from "@/hooks/details/orderdetails/useOrderDetails";
 import { useCurrentUser } from "@/hooks/useCurrentUser";
@@ -589,7 +587,7 @@ export default function OrderDetailsClient({
       ];
 
   const lastDateToPay = getLastDateToPay(paymentDueData, preferences);
-
+ 
   return (
     <div className="flex flex-col h-full overflow-hidden bg-gray-50">
       {/* Sales Header - Fixed at top */}
@@ -623,9 +621,7 @@ export default function OrderDetailsClient({
       {/* Order Details Content - Scrollable area */}
       <div className="flex-1 overflow-y-auto overflow-x-hidden  relative z-0">
         <div className="container mx-auto px-2 sm:px-3 md:px-4 py-2 sm:py-3">
-          {orderLoading ? (
-            <DetailsSkeleton />
-          ) : (
+        
             <div className="flex flex-col lg:flex-row gap-2 sm:gap-3 md:gap-4">
               {/* Left Side - Status Tracker and Products Table - 60% */}
               <div className="w-full lg:w-[65%] space-y-2 sm:space-y-3">
@@ -667,15 +663,9 @@ export default function OrderDetailsClient({
                     </div>
                   )}
 
-                {/* Status Tracker - Always reserve space */}
-                {orderLoading ? (
-                  <div className="mt-[55px]">
-                    <Skeleton className="h-48 w-full" />
-                  </div>
-                ) : orderError ? null : (
-                  !cancelled && (
+             
                     <div className="mt-[55px]">
-                      {(orderDetails || displayOrderDetails) && (
+                     
                         <OrderStatusTracker
                           {...(orderId && { orderId })}
                           {...(displayOrderDetails?.createdDate && {
@@ -708,19 +698,13 @@ export default function OrderDetailsClient({
                           })}
                           {...(paymentHistory && { paymentHistory })}
                           {...(lastDateToPay && { lastDateToPay })}
+                          loading={orderLoading}
                         />
-                      )}
+                    
                     </div>
-                  )
-                )}
+               
 
-                {/* Products Table - Always reserve space */}
-                {orderLoading ? (
-                  <Skeleton className="h-96 w-full min-h-[400px]" />
-                ) : orderError ? (
-                  <div className="h-96 min-h-[400px]" />
-                ) : (
-                  (orderDetails || displayOrderDetails) && (
+              
                     <OrderProductsTable
                       products={
                         displayOrderDetails?.orderDetails?.[0]
@@ -752,23 +736,13 @@ export default function OrderDetailsClient({
                           products as ProductCsvRow[],
                           filename
                         );
+                      
                       }}
+                      loading={orderLoading}
                     />
-                  )
-                )}
+                
 
-                {/* Contact Details and Terms Cards - Always reserve space */}
-                {orderLoading ? (
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-2 sm:gap-3">
-                    <Skeleton className="h-64 w-full" />
-                    <Skeleton className="h-64 w-full" />
-                  </div>
-                ) : orderError ? (
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-2 sm:gap-3 min-h-[256px]" />
-                ) : (
-                  (orderDetails || displayOrderDetails) &&
-                  (displayOrderDetails?.orderDetails?.[0] ||
-                    orderDetails?.data?.orderDetails?.[0]) && (
+              
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-2 sm:gap-3">
                       {/* Contact Details Card */}
                       <OrderContactDetails
@@ -867,12 +841,14 @@ export default function OrderDetailsClient({
                             orderDetails?.data
                               ?.buyerReferenceNumber) as string) || "-"
                         }
+                        loading={orderLoading}
                       />
 
                       {/* Terms Card */}
                       <OrderTermsCard
                         orderTerms={
                           {
+                            loading: orderLoading,
                             ...(displayOrderDetails?.orderDetails?.[0]
                               ?.orderTerms ||
                               orderDetails?.data?.orderDetails?.[0]
@@ -884,21 +860,14 @@ export default function OrderDetailsClient({
                                 ?.additionalTerms) as string | undefined,
                           } as OrderTerms
                         }
+                       
                       />
                     </div>
-                  )
-                )}
+                
               </div>
 
-              {/* Right Side - Price Details - Always reserve space */}
-              {orderLoading ? (
-                <div className="w-full lg:w-[33%] mt-[55px]">
-                  <Skeleton className="h-96 w-full" />
-                </div>
-              ) : orderError ? (
-                <div className="w-full lg:w-[33%] mt-[55px] min-h-[384px]" />
-              ) : (
-                (orderDetails || displayOrderDetails) && (
+          
+                
                   <div className="w-full lg:w-[33%] mt-[55px]">
                     <OrderPriceDetails
                       products={
@@ -1002,6 +971,7 @@ export default function OrderDetailsClient({
                             ),
                           }
                         : {})}
+                        loading={orderLoading}
                     />
 
                     {/* Attachments Card */}
@@ -1094,10 +1064,9 @@ export default function OrderDetailsClient({
                       </div>
                     )}
                   </div>
-                )
-              )}
+              
             </div>
-          )}
+        
         </div>
       </div>
 

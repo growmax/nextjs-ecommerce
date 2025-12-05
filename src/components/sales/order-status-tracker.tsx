@@ -2,20 +2,21 @@
 
 import { Card } from "@/components/ui/card";
 import {
-    HoverCard,
-    HoverCardContent,
-    HoverCardTrigger,
+  HoverCard,
+  HoverCardContent,
+  HoverCardTrigger,
 } from "@/components/ui/hover-card";
 import {
-    Popover,
-    PopoverContent,
-    PopoverTrigger,
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
 } from "@/components/ui/popover";
 import { cn } from "@/lib/utils";
 import { zoneDateTimeCalculator } from "@/utils/date-format/date-format";
 import { Info } from "lucide-react";
 import { useTranslations } from "next-intl";
 import PricingFormat from "../PricingFormat";
+import { Skeleton } from "../ui/skeleton";
 
 export interface OrderStatusStep {
   key: string;
@@ -40,6 +41,7 @@ export interface OrderStatusTrackerProps {
   lastDateToPay?: string;
   currencySymbol?: string;
   paymentHistory?: PaymentHistoryItem[];
+  loading?:boolean;
 }
 
 type PaymentHistoryItem = {
@@ -90,6 +92,7 @@ export default function OrderStatusTracker({
   lastDateToPay,
   currencySymbol: _currencySymbol = "INR ₹",
   paymentHistory,
+  loading,
 }: OrderStatusTrackerProps) {
   const t = useTranslations("components");
 
@@ -154,7 +157,12 @@ export default function OrderStatusTracker({
     <Card className={cn("p-3 sm:p-4", className)}>
       {/* Order ID and Date at top left, Financial Summary at top right */}
       <div className="flex flex-col sm:flex-row justify-between items-start gap-3 mb-3">
-        {(orderId || createdDate) && (
+        {loading ? (
+          <div className="flex-shrink-0">
+            <Skeleton className="h-4 w-32 mb-1" />
+            <Skeleton className="h-3 w-40" />
+          </div>
+        ) :(orderId || createdDate) && (
           <div className="flex-shrink-0">
             {orderId && (
               <p className="text-xs sm:text-sm font-semibold text-gray-900">
@@ -182,7 +190,11 @@ export default function OrderStatusTracker({
               <div className="flex flex-col min-w-[70px]">
                 <span className="text-gray-600 font-medium">{t("total")}</span>
                 <span className="text-gray-900 font-semibold">
+                  {loading ? (
+                    <Skeleton className="h-3 w-12 mb-1" />
+                  ) : (
                   <PricingFormat value={total} />
+                  )}
                 </span>
               </div>
             )}
@@ -190,82 +202,89 @@ export default function OrderStatusTracker({
               <div className="flex flex-col min-w-[70px]">
                 <span className="text-gray-600 font-medium inline-flex items-center gap-1">
                   {t("paid")}
-                  <Popover>
-                    <PopoverTrigger asChild>
-                      <Info
-                        className="h-3 w-3 text-gray-400 cursor-pointer"
-                        aria-hidden="true"
-                      />
-                    </PopoverTrigger>
-                    <PopoverContent className="w-[300px] sm:w-[360px] p-3">
-                      <div className="text-sm font-semibold mb-2">
-                        {t("paymentDetails")}
-                      </div>
-                      {Array.isArray(paymentHistory) &&
-                      paymentHistory.length > 0 ? (
-                        <div className="space-y-2 max-h-48 overflow-auto pr-1">
-                          {paymentHistory.map(
-                            (p: PaymentHistoryItem, idx: number) => (
-                              <div
-                                key={`payment-${p.referenceNumber || p.paymentDate || idx}`}
-                                className="grid grid-cols-[100px_1fr] gap-x-2 text-xs"
-                              >
-                                <div className="text-gray-600">
-                                  {t("amount")}
-                                </div>
-                                <div className="text-gray-900 font-medium">
-                                  <PricingFormat
-                                    value={p.amountReceived || 0}
-                                  />
-                                </div>
-
-                                <div className="text-gray-600">
-                                  {t("gateway")}
-                                </div>
-                                <div className="text-gray-900">
-                                  {p.gatewayName || "-"}
-                                </div>
-
-                                <div className="text-gray-600">
-                                  {t("method")}
-                                </div>
-                                <div className="text-gray-900">
-                                  {p.paymentMode || "-"}
-                                </div>
-
-                                <div className="text-gray-600">{t("date")}</div>
-                                <div className="text-gray-900">
-                                  {p.paymentDate
-                                    ? zoneDateTimeCalculator(
-                                        p.paymentDate,
-                                        preferences.timeZone,
-                                        preferences.dateFormat,
-                                        preferences.timeFormat,
-                                        true
-                                      ) || "-"
-                                    : "-"}
-                                </div>
-
-                                <div className="text-gray-600">
-                                  {t("referenceId")}
-                                </div>
-                                <div className="text-gray-900 break-all">
-                                  {p.referenceNumber || "-"}
-                                </div>
-                              </div>
-                            )
-                          )}
-                        </div>
-                      ) : (
-                        <div className="text-xs text-gray-600">
-                          {t("noPaymentsYet")}
-                        </div>
-                      )}
-                    </PopoverContent>
-                  </Popover>
+                  {!loading && (
+                       <Popover>
+                       <PopoverTrigger asChild>
+                         <Info
+                           className="h-3 w-3 text-gray-400 cursor-pointer"
+                           aria-hidden="true"
+                         />
+                       </PopoverTrigger>
+                       <PopoverContent className="w-[300px] sm:w-[360px] p-3">
+                         <div className="text-sm font-semibold mb-2">
+                           {t("paymentDetails")}
+                         </div>
+                         {Array.isArray(paymentHistory) &&
+                         paymentHistory.length > 0 ? (
+                           <div className="space-y-2 max-h-48 overflow-auto pr-1">
+                             {paymentHistory.map(
+                               (p: PaymentHistoryItem, idx: number) => (
+                                 <div
+                                   key={`payment-${p.referenceNumber || p.paymentDate || idx}`}
+                                   className="grid grid-cols-[100px_1fr] gap-x-2 text-xs"
+                                 >
+                                   <div className="text-gray-600">
+                                     {t("amount")}
+                                   </div>
+                                   <div className="text-gray-900 font-medium">
+                                     <PricingFormat
+                                       value={p.amountReceived || 0}
+                                     />
+                                   </div>
+   
+                                   <div className="text-gray-600">
+                                     {t("gateway")}
+                                   </div>
+                                   <div className="text-gray-900">
+                                     {p.gatewayName || "-"}
+                                   </div>
+   
+                                   <div className="text-gray-600">
+                                     {t("method")}
+                                   </div>
+                                   <div className="text-gray-900">
+                                     {p.paymentMode || "-"}
+                                   </div>
+   
+                                   <div className="text-gray-600">{t("date")}</div>
+                                   <div className="text-gray-900">
+                                     {p.paymentDate
+                                       ? zoneDateTimeCalculator(
+                                           p.paymentDate,
+                                           preferences.timeZone,
+                                           preferences.dateFormat,
+                                           preferences.timeFormat,
+                                           true
+                                         ) || "-"
+                                       : "-"}
+                                   </div>
+   
+                                   <div className="text-gray-600">
+                                     {t("referenceId")}
+                                   </div>
+                                   <div className="text-gray-900 break-all">
+                                     {p.referenceNumber || "-"}
+                                   </div>
+                                 </div>
+                               )
+                             )}
+                           </div>
+                         ) : (
+                           <div className="text-xs text-gray-600">
+                             {t("noPaymentsYet")}
+                           </div>
+                         )}
+                       </PopoverContent>
+                     </Popover>
+                  )}
+               
                 </span>
                 <span className="text-gray-900 font-semibold">
+                  {loading ? (
+                    <Skeleton className="h-3 w-12 mb-1" />
+                  ) : (
                   <PricingFormat value={paid} />
+                  )}
                 </span>
               </div>
             )}
@@ -273,7 +292,11 @@ export default function OrderStatusTracker({
               <div className="flex flex-col min-w-[70px]">
                 <span className="text-gray-600 font-medium">{t("toPay")}</span>
                 <span className="text-red-600 font-semibold">
+                  {loading ? (
+                    <Skeleton className="h-3 w-12 mb-1" />
+                  ) : (
                   <PricingFormat value={computedToPay || 0} />
+                  )}
                 </span>
               </div>
             )}
@@ -282,20 +305,26 @@ export default function OrderStatusTracker({
                 {t("lastDate")}
               </span>
               <span className="text-red-600 font-semibold text-[10px] sm:text-xs">
-                {lastDateToPay
-                  ? // Check if the string is already formatted (contains "Overdue" or starts with "-")
-                    lastDateToPay.startsWith("Overdue") ||
-                    lastDateToPay.startsWith("-")
-                    ? lastDateToPay
-                    : zoneDateTimeCalculator(
-                        lastDateToPay,
-                        preferences.timeZone,
-                        preferences.dateFormat,
-                        preferences.timeFormat,
-                        false
-                      ) || t("noDue")
-                  : t("noDue")}
-              </span>
+  {loading ? (
+    <Skeleton className="h-3 w-12 mb-1" />
+  ) : lastDateToPay ? (
+    // Check if string is already formatted
+    lastDateToPay.startsWith("Overdue") || lastDateToPay.startsWith("-") ? (
+      lastDateToPay
+    ) : (
+      zoneDateTimeCalculator(
+        lastDateToPay,
+        preferences.timeZone,
+        preferences.dateFormat,
+        preferences.timeFormat,
+        false
+      ) || t("noDue")
+    )
+  ) : (
+    t("noDue")
+  )}
+</span>
+
             </div>
           </div>
         )}

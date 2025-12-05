@@ -13,12 +13,11 @@ import {
 import PricingFormat from "@/components/PricingFormat";
 import {
   CustomerInfoCard,
-  DetailsSkeleton,
   OrderContactDetails,
-  OrderProductsTable,
   OrderPriceDetails,
+  OrderProductsTable,
   OrderTermsCard,
-  SalesHeader,
+  SalesHeader
 } from "@/components/sales";
 import { Label } from "@/components/ui/label";
 import { useQuoteDetails } from "@/hooks/details/quotedetails/useQuoteDetails";
@@ -52,7 +51,6 @@ export default function QuoteDetailsClient({
   const [quoteDetails, setQuoteDetails] =
     useState<QuotationDetailsResponse | null>(null);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
   const [editDialogOpen, setEditDialogOpen] = useState(false);
   const [versionsDialogOpen, setVersionsDialogOpen] = useState(false);
   const [selectedVersion, setSelectedVersion] =
@@ -103,7 +101,6 @@ export default function QuoteDetailsClient({
 
     try {
       setLoading(true);
-      setError(null);
 
       const response = await QuotationDetailsService.fetchQuotationDetails({
         userId,
@@ -121,7 +118,6 @@ export default function QuoteDetailsClient({
     } catch (err) {
       const errorMessage =
         err instanceof Error ? err.message : t("failedToFetchQuoteDetails");
-      setError(errorMessage);
       toast.error(errorMessage);
       // Ensure loading is set to false even on error
       setLoading(false);
@@ -523,19 +519,11 @@ export default function QuoteDetailsClient({
 
       {/* Quote Details Content - Scrollable area */}
       <div className="flex-1 overflow-y-auto overflow-x-hidden relative z-0">
-        <div className="container mx-auto px-2 sm:px-3 md:px-4 py-2 sm:py-3">
-          {loading ? (
-            <DetailsSkeleton
-              showStatusTracker={false}
-              leftWidth="lg:w-[65%]"
-              rightWidth="lg:w-[33%]"
-            />
-          ) : (
+      
             <div className="flex flex-col lg:flex-row gap-2 sm:gap-3 md:gap-4">
               {/* Left Side - Products Table, Contact & Terms - 65% */}
               <div className="w-full lg:w-[65%] space-y-2 sm:space-y-3">
-                {/* Products Table */}
-                {!loading && !error && quoteDetails && (
+              
                   <div className="mt-[55px]">
                     <OrderProductsTable
                       products={products}
@@ -550,12 +538,12 @@ export default function QuoteDetailsClient({
                           filename
                         );
                       }}
+                      loading={loading}
                     />
                   </div>
-                )}
+              
 
-                {/* Contact Details and Terms Cards - Side by Side */}
-                {!loading && !error && quoteDetails && (
+             
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-2 sm:gap-3">
                     {/* Contact Details Card */}
                     <OrderContactDetails
@@ -638,12 +626,14 @@ export default function QuoteDetailsClient({
                         (quoteDetails?.data?.buyerReferenceNumber as string) ||
                         "-"
                       }
+                      loading={loading}
                     />
 
                     {/* Terms Card */}
                     <OrderTermsCard
                       orderTerms={
                         {
+                          loading: loading,
                           ...(quoteDetailData?.quoteTerms as unknown as Record<
                             string,
                             unknown
@@ -655,11 +645,10 @@ export default function QuoteDetailsClient({
                       }
                     />
                   </div>
-                )}
+                
               </div>
 
-              {/* Right Side - Price Details - 33% */}
-              {!loading && !error && quoteDetails && (
+            
                 <div className="w-full lg:w-[33%] mt-[55px]">
                   <OrderPriceDetails
                     products={products}
@@ -709,6 +698,7 @@ export default function QuoteDetailsClient({
                     )}
                     subTotal={Number(quoteDetailData?.subTotal || 0)}
                     taxableAmount={Number(quoteDetailData?.taxableAmount || 0)}
+                    loading={loading}
                   />
 
                   {/* Target Discount Card - Display only on detail page */}
@@ -797,6 +787,7 @@ export default function QuoteDetailsClient({
                             | undefined
                         )?.priceJustification || undefined
                       }
+                      loading={loading}
                     />
                   </div>
 
@@ -883,10 +874,9 @@ export default function QuoteDetailsClient({
                     </div>
                   )}
                 </div>
-              )}
+            
             </div>
-          )}
-        </div>
+          
       </div>
 
       {/* Right Sidebar Icons - Positioned just below the SalesHeader component, flush to right edge */}
