@@ -1,11 +1,11 @@
 "use client";
 
-import { useState, useCallback } from "react";
-import { AuthStorage } from "@/lib/auth";
 import { useUserDetails } from "@/contexts/UserDetailsContext";
+import { AuthStorage } from "@/lib/auth";
+import { useCallback, useState } from "react";
 
 export function useAuthToken() {
-  const { logout } = useUserDetails();
+  const { logout, checkAuth } = useUserDetails();
   const [isRefreshing, setIsRefreshing] = useState(false);
 
   const getValidToken = useCallback(async (): Promise<string | null> => {
@@ -41,6 +41,15 @@ export function useAuthToken() {
         logout();
         return null;
       }
+      // Update context after successful refresh to sync UI state
+      // Add a small delay to ensure cookie is available in document.cookie
+      setTimeout(() => {
+        checkAuth();
+        // Dispatch custom event to notify other components
+        if (typeof window !== "undefined") {
+          window.dispatchEvent(new CustomEvent("token-refreshed"));
+        }
+      }, 100);
       return refreshed.accessToken;
     } catch {
       logout();
@@ -48,7 +57,7 @@ export function useAuthToken() {
     } finally {
       setIsRefreshing(false);
     }
-  }, [isRefreshing, logout]);
+  }, [isRefreshing, logout, checkAuth]);
 
   return {
     getValidToken,
