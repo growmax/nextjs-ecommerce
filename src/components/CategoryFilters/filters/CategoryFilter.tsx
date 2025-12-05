@@ -2,9 +2,11 @@
 
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { useBlockingLoader } from "@/providers/BlockingLoaderProvider";
 import type { CategoryFilterOption } from "@/types/category-filters";
 import { FolderTree } from "lucide-react";
 import { useRouter } from "next/navigation";
+import { useEffect, useTransition } from "react";
 
 interface CategoryFilterProps {
   childCategories: CategoryFilterOption[];
@@ -24,11 +26,24 @@ export function CategoryFilter({
   isLoading,
 }: CategoryFilterProps) {
   const router = useRouter();
+  const [isPending, startTransition] = useTransition();
+  const { showLoader, hideLoader } = useBlockingLoader();
+
+  // Show/hide blocking loader when transition state changes
+  useEffect(() => {
+    if (isPending) {
+      showLoader({ message: "Loading category..." });
+    } else {
+      hideLoader();
+    }
+  }, [isPending, showLoader, hideLoader]);
 
   const handleCategoryClick = (category: CategoryFilterOption) => {
+    let targetPath: string;
+
     if (category.isChild) {
       // Navigate to full path: /parentCategory/child1/child2/...
-      router.push(`/${category.categoryPath}`);
+      targetPath = `/${category.categoryPath}`;
     } else if (category.isSibling) {
       // Navigate preserving parent path: /parentCategory/clickedCategory
       // Get parent path from current path (remove last segment)
@@ -36,14 +51,18 @@ export function CategoryFilter({
         currentCategoryPath.length > 1
           ? currentCategoryPath.slice(0, -1).join("/")
           : "";
-      const newPath = parentPath
+      targetPath = parentPath
         ? `/${parentPath}/${category.categorySlug}`
         : `/${category.categorySlug}`;
-      router.push(newPath);
     } else {
       // Root category
-      router.push(`/${category.categorySlug}`);
+      targetPath = `/${category.categorySlug}`;
     }
+
+    // Wrap navigation in startTransition to trigger loader
+    startTransition(() => {
+      router.push(targetPath);
+    });
   };
 
   if (isLoading) {
@@ -51,7 +70,7 @@ export function CategoryFilter({
       <div className="space-y-3">
         <div className="h-5 bg-muted animate-pulse rounded" />
         <div className="space-y-1.5">
-          {[1, 2, 3].map((i) => (
+          {[1, 2, 3].map(i => (
             <div key={i} className="h-4 bg-muted animate-pulse rounded" />
           ))}
         </div>
@@ -81,7 +100,7 @@ export function CategoryFilter({
           </h4>
           <ScrollArea className="h-[140px]">
             <div className="space-y-0.5 pr-4">
-              {childCategories.map((category) => (
+              {childCategories.map(category => (
                 <Button
                   key={category.categoryId}
                   variant="ghost"
@@ -110,7 +129,7 @@ export function CategoryFilter({
           </h4>
           <ScrollArea className="h-[140px]">
             <div className="space-y-0.5 pr-4">
-              {siblingCategories.map((category) => (
+              {siblingCategories.map(category => (
                 <Button
                   key={category.categoryId}
                   variant="ghost"
@@ -132,4 +151,3 @@ export function CategoryFilter({
     </div>
   );
 }
-

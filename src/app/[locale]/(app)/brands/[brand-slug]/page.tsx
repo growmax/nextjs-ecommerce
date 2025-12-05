@@ -1,4 +1,5 @@
 import { CategoryBreadcrumbServer } from "@/components/Breadcrumb/CategoryBreadcrumbServer";
+import { BlockingLoader } from "@/components/GlobalLoader/BlockingLoader";
 import { ProductViewSwitcher } from "@/components/ProductGrid/ProductViewSwitcher";
 import { StructuredDataServer } from "@/components/seo/StructuredDataServer";
 import { Card, CardContent } from "@/components/ui/card";
@@ -9,8 +10,13 @@ import SearchService, {
 } from "@/lib/api/services/SearchService/SearchService";
 import TenantService from "@/lib/api/services/TenantService";
 import BrandResolutionService from "@/lib/services/BrandResolutionService";
+import { BlockingLoaderProvider } from "@/providers/BlockingLoaderProvider";
 import type { FilterAggregations } from "@/types/category-filters";
-import { buildBrandFilter, buildBrandQuery, getBaseQuery } from "@/utils/opensearch/browse-queries";
+import {
+  buildBrandFilter,
+  buildBrandQuery,
+  getBaseQuery,
+} from "@/utils/opensearch/browse-queries";
 import { Package } from "lucide-react";
 import { Metadata } from "next";
 import { headers } from "next/headers";
@@ -181,16 +187,12 @@ export default async function BrandPage({ params, searchParams }: PageProps) {
         ? false
         : undefined;
 
-
-
   const queryResult = buildBrandQuery(brand.name, {
     page,
     pageSize: 20,
     sortBy: { sortBy },
     ...(inStock !== undefined && { inStock }),
   });
-
-
 
   // Get elastic index from elasticCode
   const elasticIndex = elasticCode ? `${elasticCode}pgandproducts` : "";
@@ -212,8 +214,6 @@ export default async function BrandPage({ params, searchParams }: PageProps) {
             elasticIndex,
             query: searchQuery,
           });
-
-
 
           return {
             products: result.data || [],
@@ -286,7 +286,7 @@ export default async function BrandPage({ params, searchParams }: PageProps) {
     },
   };
 
-  console.log(initialProducts,"initialProducts")
+  console.log(initialProducts, "initialProducts");
 
   return (
     <>
@@ -317,56 +317,43 @@ export default async function BrandPage({ params, searchParams }: PageProps) {
         {/* Breadcrumbs - Server-rendered */}
         <CategoryBreadcrumbServer breadcrumbs={breadcrumbs} />
 
-        {/* Brand Header - Server-rendered */}
-        <div className="mb-4 sm:mb-6">
-          <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3 sm:gap-4 mb-2">
-            {brand.logoUrl && (
-              <img
-                src={brand.logoUrl}
-                alt={brand.name}
-                className="h-10 sm:h-12 lg:h-14 w-auto object-contain"
-              />
-            )}
-            <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-slate-800 dark:text-slate-100 break-words">
-              {brand.name}
-            </h1>
-          </div>
-        </div>
-
         {/* Interactivity Controls - Client component for pagination/sorting/filters */}
-        <BrandCategoryPageInteractivity
-        initialFilters={{
-          page,
-          sort: sortBy,
-        }}
-        total={initialProducts.total}
-        aggregations={aggregations}
-        brandName={brand.name}
-        locale={locale}
-        currentCategoryPath={[]}
-      >
-        {/* Product Grid - Server-rendered for SEO with Suspense for streaming */}
-        <div className="relative">
-          <Suspense
-            fallback={
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4 md:gap-6">
-                {Array.from({ length: 20 }).map((_, i) => (
-                  <div
-                    key={i}
-                    className="h-[380px] bg-muted animate-pulse rounded-lg"
-                  />
-                ))}
-              </div>
-            }
+        <BlockingLoaderProvider>
+          <BrandCategoryPageInteractivity
+            initialFilters={{
+              page,
+              sort: sortBy,
+            }}
+            total={initialProducts.total}
+            aggregations={aggregations}
+            brandName={brand.name}
+            currentCategoryPath={[]}
+            displayName={brand.name}
           >
-            <BrandProductGridWrapper
-              productsPromise={productsPromise}
-              brandName={brand.name}
-              locale={locale}
-            />
-          </Suspense>
-        </div>
-        </BrandCategoryPageInteractivity>
+            {/* Product Grid - Server-rendered for SEO with Suspense for streaming */}
+            <div className="relative">
+              <Suspense
+                fallback={
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4 md:gap-6">
+                    {Array.from({ length: 20 }).map((_, i) => (
+                      <div
+                        key={i}
+                        className="h-[380px] bg-muted animate-pulse rounded-lg"
+                      />
+                    ))}
+                  </div>
+                }
+              >
+                <BrandProductGridWrapper
+                  productsPromise={productsPromise}
+                  brandName={brand.name}
+                  locale={locale}
+                />
+              </Suspense>
+            </div>
+            <BlockingLoader />
+          </BrandCategoryPageInteractivity>
+        </BlockingLoaderProvider>
       </div>
     </>
   );

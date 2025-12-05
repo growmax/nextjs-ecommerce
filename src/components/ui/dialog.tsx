@@ -5,6 +5,7 @@ import { XIcon } from "lucide-react";
 import * as React from "react";
 
 import { cn } from "@/lib/utils";
+import { useScrollLock } from "@/utils/scrollLock";
 
 function Dialog({
   ...props
@@ -39,9 +40,6 @@ function DialogOverlay({
       data-slot="dialog-overlay"
       className={cn(
         "fixed inset-0 z-50 bg-black/50 backdrop-blur-sm",
-        "data-[state=open]:animate-in data-[state=closed]:animate-out",
-        "data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0",
-        "transition-opacity duration-200",
         className
       )}
       {...props}
@@ -70,76 +68,40 @@ function DialogContent({
     auto: "sm:max-w-fit",
   };
 
-  const contentRef = React.useRef<HTMLDivElement>(null);
+  // Use scroll lock hook to prevent layout shift when dialog opens
+  // This matches the buyer-fe behavior where dialogs don't cause UI shifting
+  const [isOpen, setIsOpen] = React.useState(false);
+  useScrollLock(isOpen);
 
-  // Prevent layout shift by preserving scrollbar space when dialog opens
+  // Track dialog state to manage scroll lock
   React.useEffect(() => {
-    const content = contentRef.current;
-    if (!content) return;
-
-    // Calculate scrollbar width before any changes (while scrollbar is visible)
-    const calculateScrollbarWidth = () => {
-      // Create a temporary div to measure scrollbar width
-      const outer = document.createElement("div");
-      outer.style.visibility = "hidden";
-      outer.style.overflow = "scroll";
-      (outer.style as any).msOverflowStyle = "scrollbar";
-      document.body.appendChild(outer);
-
-      const inner = document.createElement("div");
-      outer.appendChild(inner);
-
-      const scrollbarWidth = outer.offsetWidth - inner.offsetWidth;
-      outer.parentNode?.removeChild(outer);
-      return scrollbarWidth;
-    };
-
-    const scrollbarWidth = calculateScrollbarWidth();
-
-    // Store original values
-    const originalBodyOverflow = document.body.style.overflow;
-    const originalBodyPaddingRight = document.body.style.paddingRight;
-    const originalHtmlPaddingRight =
-      document.documentElement.style.paddingRight;
-
-    // Check if dialog is open
     const checkDialogState = () => {
-      const isOpen = content.getAttribute("data-state") === "open";
-
-      if (isOpen) {
-        // Preserve scrollbar space to prevent layout shift
-        if (scrollbarWidth > 0) {
-          document.body.style.paddingRight = `${scrollbarWidth}px`;
-          document.documentElement.style.paddingRight = `${scrollbarWidth}px`;
-        }
-        // Radix UI already sets overflow: hidden, but we ensure it
-        document.body.style.overflow = "hidden";
-      } else {
-        // Restore original styles
-        document.body.style.overflow = originalBodyOverflow || "";
-        document.body.style.paddingRight = originalBodyPaddingRight || "";
-        document.documentElement.style.paddingRight =
-          originalHtmlPaddingRight || "";
+      const dialogElement = document.querySelector(
+        '[data-slot="dialog-content"]'
+      );
+      if (dialogElement) {
+        const dialogState = dialogElement.getAttribute("data-state");
+        setIsOpen(dialogState === "open");
       }
     };
 
-    // Observe data-state changes
+    // Check immediately
+    checkDialogState();
+
+    // Set up observer for dialog state changes
     const observer = new MutationObserver(checkDialogState);
-    observer.observe(content, {
-      attributes: true,
-      attributeFilter: ["data-state"],
-    });
+    const dialogRoot = document.querySelector('[data-slot="dialog"]');
 
-    // Initial check with a small delay to ensure state is set
-    setTimeout(checkDialogState, 0);
+    if (dialogRoot) {
+      observer.observe(dialogRoot, {
+        attributes: true,
+        attributeFilter: ["data-state"],
+        subtree: true,
+      });
+    }
 
-    // Cleanup function
     return () => {
       observer.disconnect();
-      document.body.style.overflow = originalBodyOverflow || "";
-      document.body.style.paddingRight = originalBodyPaddingRight || "";
-      document.documentElement.style.paddingRight =
-        originalHtmlPaddingRight || "";
     };
   }, []);
 
@@ -147,15 +109,18 @@ function DialogContent({
     <DialogPortal data-slot="dialog-portal">
       {!hideOverlay && <DialogOverlay />}
       <DialogPrimitive.Content
-        ref={contentRef}
         data-slot="dialog-content"
         className={cn(
-          "bg-background fixed top-[50%] left-[50%] z-50 grid w-full max-w-[calc(100%-2rem)] translate-x-[-50%] translate-y-[-50%] gap-4 rounded-lg p-6 shadow-lg duration-200 border border-black/10",
+          "fixed left-[50%] top-[50%] z-50 grid w-full translate-x-[-50%] translate-y-[-50%] gap-4 border bg-background p-6 shadow-lg duration-200",
+          // Standard shadcn animations
+          "data-[state=open]:animate-in data-[state=closed]:animate-out",
+          "data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0",
+          "data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95",
+          "data-[state=closed]:slide-out-to-left-1/2 data-[state=closed]:slide-out-to-top-[48%]",
+          "data-[state=open]:slide-in-from-left-1/2 data-[state=open]:slide-in-from-top-[48%]",
+          "sm:rounded-lg",
           sizeClasses[size],
-          "data-[state=open]:fade-in-0 data-[state=open]:zoom-in-95 data-[state=open]:animate-in",
-          "data-[state=closed]:fade-out-0 data-[state=closed]:zoom-out-95 data-[state=closed]:animate-out",
-          "origin-center",
-          "max-h-[90vh] overflow-y-auto",
+          "max-h-[90vh] overflow-y-auto max-w-[calc(100%-2rem)]",
           className
         )}
         {...props}
@@ -164,9 +129,9 @@ function DialogContent({
         {showCloseButton && (
           <DialogPrimitive.Close
             data-slot="dialog-close"
-            className="ring-offset-background focus:ring-ring data-[state=open]:bg-accent data-[state=open]:text-muted-foreground absolute top-4 right-6 z-10 flex items-center justify-center h-5 w-5 rounded-sm opacity-70 transition-opacity hover:opacity-100 focus:ring-2 focus:ring-offset-2 focus:outline-hidden disabled:pointer-events-none"
+            className="absolute right-4 top-4 rounded-sm opacity-70 ring-offset-background transition-opacity hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:pointer-events-none data-[state=open]:bg-accent data-[state=open]:text-muted-foreground"
           >
-            <XIcon className="h-4 w-4 text-gray-500" />
+            <XIcon className="h-4 w-4" />
             <span className="sr-only">Close</span>
           </DialogPrimitive.Close>
         )}

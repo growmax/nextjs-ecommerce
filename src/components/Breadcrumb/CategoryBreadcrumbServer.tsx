@@ -1,6 +1,6 @@
 import { Link } from "@/i18n/navigation";
-import { Home } from "lucide-react";
 import { BreadcrumbItem } from "@/lib/services/CategoryResolutionService";
+import { Home } from "lucide-react";
 
 interface CategoryBreadcrumbServerProps {
   breadcrumbs: BreadcrumbItem[];
@@ -18,7 +18,7 @@ export function CategoryBreadcrumbServer({
   }
 
   return (
-    <nav aria-label="Breadcrumb" className="mb-6">
+    <nav aria-label="Breadcrumb" className="mb-3">
       <ol className="flex items-center space-x-2 text-sm">
         {breadcrumbs.map((crumb, index) => {
           const isLast = index === breadcrumbs.length - 1;

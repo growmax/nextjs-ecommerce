@@ -7,13 +7,12 @@ import { ViewToggle } from "@/components/ProductList/ViewToggle";
 import { SortDropdown } from "@/components/Sort/SortDropdown";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ProductLoadingProvider } from "@/contexts/ProductLoadingContext";
-import { usePageScopedLoader } from "@/hooks/usePageScopedLoader";
 import type { CategoryPath } from "@/lib/services/CategoryResolutionService";
+import { useBlockingLoader } from "@/providers/BlockingLoaderProvider";
 import type { FilterAggregations } from "@/types/category-filters";
 import { formatAllAggregations } from "@/utils/format-aggregations";
-import { useLocale } from "next-intl";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
-import { useCallback, useMemo, useTransition } from "react";
+import { useCallback, useEffect, useMemo, useTransition } from "react";
 
 interface CategoryPageInteractivityProps {
   initialFilters: {
@@ -24,6 +23,7 @@ interface CategoryPageInteractivityProps {
   categoryPath: CategoryPath;
   aggregations: FilterAggregations | null;
   currentCategoryPath: string[];
+  categoryName?: string;
   children?: React.ReactNode; // Product grid will be passed as children
   _onProductsUpdate?: (products: unknown[]) => void;
 }
@@ -34,7 +34,7 @@ interface CategoryPageInteractivityProps {
  * - Pagination controls
  * - Sort dropdown
  * - URL updates
- * 
+ *
  * Does NOT render products (products are server-rendered for SEO)
  */
 export function CategoryPageInteractivity({
@@ -43,31 +43,40 @@ export function CategoryPageInteractivity({
   categoryPath,
   aggregations,
   currentCategoryPath,
+  categoryName = "Category",
   children,
 }: CategoryPageInteractivityProps) {
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
-  const locale = useLocale();
   const [isPending, startTransition] = useTransition();
+  const { showLoader, hideLoader } = useBlockingLoader();
 
-  // Auto-trigger scoped loader on transitions (Phase 1)
-  usePageScopedLoader(isPending);
+  // Show/hide blocking loader when transition state changes
+  useEffect(() => {
+    if (isPending) {
+      showLoader({ message: "Loading products..." });
+    } else {
+      hideLoader();
+    }
+  }, [isPending, showLoader, hideLoader]);
 
   // Format aggregations for filter components
   const formattedFilters = useMemo(
     () =>
-      formatAllAggregations(aggregations, categoryPath, currentCategoryPath, locale),
-    [aggregations, categoryPath, currentCategoryPath, locale]
+      formatAllAggregations(aggregations, categoryPath, currentCategoryPath),
+    [aggregations, categoryPath, currentCategoryPath]
   );
 
-  if (process.env.NODE_ENV === 'development') {
-    console.log('[CategoryPageInteractivity] Formatted filters:', {
+  if (process.env.NODE_ENV === "development") {
+    console.log("[CategoryPageInteractivity] Formatted filters:", {
       brandsCount: formattedFilters.brands.length,
       childCategoriesCount: formattedFilters.childCategories.length,
       siblingCategoriesCount: formattedFilters.siblingCategories.length,
-      variantAttributeGroupsCount: formattedFilters.variantAttributeGroups.length,
-      productSpecificationGroupsCount: formattedFilters.productSpecificationGroups.length,
+      variantAttributeGroupsCount:
+        formattedFilters.variantAttributeGroups.length,
+      productSpecificationGroupsCount:
+        formattedFilters.productSpecificationGroups.length,
       catalogCodesCount: formattedFilters.catalogCodes.length,
       equipmentCodesCount: formattedFilters.equipmentCodes.length,
     });
@@ -140,85 +149,95 @@ export function CategoryPageInteractivity({
   const totalPages = Math.ceil(total / 20);
 
   return (
-    <div className="flex gap-6">
-      {/* Filters Sidebar - Desktop */}
-      <aside className="hidden lg:block w-64 shrink-0">
-        <CategoryFilters
-          brands={formattedFilters.brands}
-          childCategories={formattedFilters.childCategories}
-          siblingCategories={formattedFilters.siblingCategories}
-          currentCategoryPath={currentCategoryPath}
-          variantAttributeGroups={formattedFilters.variantAttributeGroups}
-          productSpecificationGroups={formattedFilters.productSpecificationGroups}
-          catalogCodes={formattedFilters.catalogCodes}
-          equipmentCodes={formattedFilters.equipmentCodes}
-          isLoading={!aggregations}
-        />
-      </aside>
-
-      {/* Main Content */}
-      <main id="page-main" className="flex-1 min-w-0 relative">
-        {/* Mobile Filter Drawer */}
-        <div className="lg:hidden mb-4">
-          <CategoryFiltersDrawer
-            brands={formattedFilters.brands}
-            childCategories={formattedFilters.childCategories}
-            siblingCategories={formattedFilters.siblingCategories}
-            currentCategoryPath={currentCategoryPath}
-            variantAttributeGroups={formattedFilters.variantAttributeGroups}
-            productSpecificationGroups={formattedFilters.productSpecificationGroups}
-            catalogCodes={formattedFilters.catalogCodes}
-            equipmentCodes={formattedFilters.equipmentCodes}
-            isLoading={!aggregations}
-          />
-        </div>
-
-        {/* Controls Bar */}
-        <div className="mb-4 md:mb-6 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 sm:gap-4">
-          <div className="text-xs sm:text-sm text-gray-600 dark:text-gray-400 order-2 sm:order-1">
+    <>
+      {/* Header + Controls Bar - All on One Line */}
+      <div className="mb-6 flex flex-col lg:flex-row lg:items-center lg:justify-between gap-3">
+        <div className="flex items-center gap-2 sm:gap-3">
+          <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-slate-800 dark:text-slate-100 break-words">
+            {categoryName}
+          </h1>
+          <span className="text-xs sm:text-sm text-gray-600 dark:text-gray-400 border-l pl-2 sm:pl-3">
             {isLoading ? (
               <Skeleton className="h-4 w-32" />
             ) : (
               <>
                 <span className="hidden sm:inline">
-                  Showing {((currentFilters.page - 1) * 20) + 1} -{" "}
-                  {Math.min(currentFilters.page * 20, total)} of {total} products
+                  Showing {(currentFilters.page - 1) * 20 + 1} -{" "}
+                  {Math.min(currentFilters.page * 20, total)} of {total}{" "}
+                  products
                 </span>
-                <span className="sm:hidden">
-                  {total} products
-                </span>
+                <span className="sm:hidden">{total} products</span>
               </>
             )}
-          </div>
-
-          <div className="flex items-center gap-2 sm:gap-3 order-1 sm:order-2 w-full sm:w-auto justify-between sm:justify-end">
-            <ViewToggle />
-            <SortDropdown
-              value={currentFilters.sort}
-              onChange={handleSortChange}
-              disabled={isLoading}
-            />
-          </div>
+          </span>
         </div>
 
-        {/* Product Grid - Broadcast loading state via context */}
-        <ProductLoadingProvider value={{ isLoading }}>
-          {children}
-        </ProductLoadingProvider>
+        <div className="flex items-center gap-2 sm:gap-3 w-full lg:w-auto justify-between lg:justify-end">
+          <ViewToggle />
+          <SortDropdown
+            value={currentFilters.sort}
+            onChange={handleSortChange}
+            disabled={isLoading}
+          />
+        </div>
+      </div>
 
-        {/* Pagination */}
-        {totalPages > 1 && (
-          <div className="mt-8 flex justify-center">
-            <CategoryPagination
-              currentPage={currentFilters.page}
-              totalPages={totalPages}
-              onPageChange={handlePageChange}
-              disabled={isLoading}
+      {/* Main Layout - Filters and Products Side by Side */}
+      <div className="flex gap-6">
+        {/* Filters Sidebar - Desktop */}
+        <aside className="hidden lg:block w-64 shrink-0">
+          <CategoryFilters
+            brands={formattedFilters.brands}
+            childCategories={formattedFilters.childCategories}
+            siblingCategories={formattedFilters.siblingCategories}
+            currentCategoryPath={currentCategoryPath}
+            variantAttributeGroups={formattedFilters.variantAttributeGroups}
+            productSpecificationGroups={
+              formattedFilters.productSpecificationGroups
+            }
+            catalogCodes={formattedFilters.catalogCodes}
+            equipmentCodes={formattedFilters.equipmentCodes}
+            isLoading={!aggregations}
+          />
+        </aside>
+
+        {/* Main Content */}
+        <main id="page-main" className="flex-1 min-w-0 relative">
+          {/* Mobile Filter Drawer */}
+          <div className="lg:hidden mb-4">
+            <CategoryFiltersDrawer
+              brands={formattedFilters.brands}
+              childCategories={formattedFilters.childCategories}
+              siblingCategories={formattedFilters.siblingCategories}
+              currentCategoryPath={currentCategoryPath}
+              variantAttributeGroups={formattedFilters.variantAttributeGroups}
+              productSpecificationGroups={
+                formattedFilters.productSpecificationGroups
+              }
+              catalogCodes={formattedFilters.catalogCodes}
+              equipmentCodes={formattedFilters.equipmentCodes}
+              isLoading={!aggregations}
             />
           </div>
-        )}
-      </main>
-    </div>
+
+          {/* Product Grid - Broadcast loading state via context */}
+          <ProductLoadingProvider value={{ isLoading }}>
+            {children}
+          </ProductLoadingProvider>
+
+          {/* Pagination */}
+          {totalPages > 1 && (
+            <div className="mt-8 flex justify-center">
+              <CategoryPagination
+                currentPage={currentFilters.page}
+                totalPages={totalPages}
+                onPageChange={handlePageChange}
+                disabled={isLoading}
+              />
+            </div>
+          )}
+        </main>
+      </div>
+    </>
   );
 }
-

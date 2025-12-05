@@ -1,6 +1,6 @@
 /**
  * Format Aggregations Utility
- * 
+ *
  * Formats OpenSearch aggregation results into filter-friendly structures
  */
 
@@ -20,30 +20,31 @@ import type {
  */
 export function formatBrandsAggregation(
   aggregation: AggregationResult | undefined,
-  currentCategoryPath: string[],
-  locale: string
+  currentCategoryPath: string[]
 ): BrandFilterOption[] {
   if (!aggregation?.data?.buckets) {
     return [];
   }
 
-  return aggregation.data.buckets.map((bucket) => {
+  return aggregation.data.buckets.map(bucket => {
     // Build navigation path preserving category context
     let navigationPath: string;
-    
+
     // Validate currentCategoryPath is an array
-    const categoryPath = Array.isArray(currentCategoryPath) ? currentCategoryPath : [];
-    
+    const categoryPath = Array.isArray(currentCategoryPath)
+      ? currentCategoryPath
+      : [];
+
     if (categoryPath.length === 0) {
       // No category context - navigate to brand landing page
-      navigationPath = `/${locale}/brands/${encodeURIComponent(bucket.key)}`;
+      navigationPath = `/brands/${encodeURIComponent(bucket.key)}`;
     } else {
       // Preserve full category path
       // Normalize category path (remove leading/trailing slashes, filter empty strings)
       const normalizedPath = categoryPath
         .filter(slug => slug && slug.trim().length > 0)
         .map(slug => slug.trim());
-      
+
       const categoryPathStr = normalizedPath.join("/");
       navigationPath = `/brands/${encodeURIComponent(bucket.key)}/${categoryPathStr}`;
     }
@@ -124,20 +125,22 @@ export function formatCategoriesAggregation(
 
   // Try multiple paths to find the nested categories data
   // Priority: filter.nested_categories > nested_categories > direct data
-  let nestedCategories: {
-    data?: {
-      buckets?: Array<{
-        key: string;
-        doc_count: number;
-        category_id?: { buckets?: Array<{ key: number }> };
-        category_slug?: { buckets?: Array<{ key: string }> };
-        category_path?: { buckets?: Array<{ key: string }> };
-        category_level?: { buckets?: Array<{ key: number }> };
-        ancestor_ids?: { buckets?: Array<{ key: number }> };
-      }>;
-    };
-  } | undefined;
-  
+  let nestedCategories:
+    | {
+        data?: {
+          buckets?: Array<{
+            key: string;
+            doc_count: number;
+            category_id?: { buckets?: Array<{ key: number }> };
+            category_slug?: { buckets?: Array<{ key: string }> };
+            category_path?: { buckets?: Array<{ key: string }> };
+            category_level?: { buckets?: Array<{ key: number }> };
+            ancestor_ids?: { buckets?: Array<{ key: number }> };
+          }>;
+        };
+      }
+    | undefined;
+
   if (nestedAgg?.filter?.nested_categories) {
     // Most common case: filter wrapper with nested_categories
     nestedCategories = nestedAgg.filter.nested_categories;
@@ -151,23 +154,26 @@ export function formatCategoriesAggregation(
   }
 
   // Debug logging in development to help diagnose structure issues
-  if (process.env.NODE_ENV === 'development') {
+  if (process.env.NODE_ENV === "development") {
     if (!nestedCategories?.data?.buckets && aggregation) {
-      console.warn('[formatCategoriesAggregation] No category buckets found. Aggregation structure:', {
-        hasFilter: !!nestedAgg?.filter,
-        hasNestedCategories: !!nestedAgg?.nested_categories,
-        hasData: !!nestedAgg?.data,
-        aggregationKeys: Object.keys(aggregation || {}),
-        fullAggregation: aggregation, // Log full structure for debugging
-      });
+      console.warn(
+        "[formatCategoriesAggregation] No category buckets found. Aggregation structure:",
+        {
+          hasFilter: !!nestedAgg?.filter,
+          hasNestedCategories: !!nestedAgg?.nested_categories,
+          hasData: !!nestedAgg?.data,
+          aggregationKeys: Object.keys(aggregation || {}),
+          fullAggregation: aggregation, // Log full structure for debugging
+        }
+      );
     } else if (nestedCategories?.data?.buckets) {
-      console.log('[formatCategoriesAggregation] Found categories:', {
+      console.log("[formatCategoriesAggregation] Found categories:", {
         bucketCount: nestedCategories.data.buckets.length,
         firstBucket: nestedCategories.data.buckets[0],
       });
     }
   }
-  
+
   if (!nestedCategories?.data?.buckets) {
     return { childCategories, siblingCategories };
   }
@@ -187,13 +193,15 @@ export function formatCategoriesAggregation(
       : undefined;
 
   // Process each category bucket
-  nestedCategories.data.buckets.forEach((bucket) => {
+  nestedCategories.data.buckets.forEach(bucket => {
     // Extract metadata
     const categoryId = bucket.category_id?.buckets?.[0]?.key || 0;
-    const categorySlug = bucket.category_slug?.buckets?.[0]?.key || bucket.key.toLowerCase().replace(/\s+/g, '-');
-    const categoryPathStr = bucket.category_path?.buckets?.[0]?.key || '';
+    const categorySlug =
+      bucket.category_slug?.buckets?.[0]?.key ||
+      bucket.key.toLowerCase().replace(/\s+/g, "-");
+    const categoryPathStr = bucket.category_path?.buckets?.[0]?.key || "";
     const categoryLevel = bucket.category_level?.buckets?.[0]?.key || 1;
-    const ancestorIds = bucket.ancestor_ids?.buckets?.map((b) => b.key) || [];
+    const ancestorIds = bucket.ancestor_ids?.buckets?.map(b => b.key) || [];
 
     // Exclude current category
     if (currentCategoryId && categoryId === currentCategoryId) {
@@ -212,15 +220,25 @@ export function formatCategoriesAggregation(
       }
     } else {
       // Child category: categoryLevel is currentLevel + 1 AND currentCategoryId is in ancestorIds
-      if (categoryLevel === currentCategoryLevel + 1 && currentCategoryId !== undefined && ancestorIds.includes(currentCategoryId)) {
+      if (
+        categoryLevel === currentCategoryLevel + 1 &&
+        currentCategoryId !== undefined &&
+        ancestorIds.includes(currentCategoryId)
+      ) {
         isChild = true;
       }
       // Sibling category: same level, different parent, not current category
-      else if (categoryLevel === currentCategoryLevel && !currentCategoryIds.includes(categoryId)) {
+      else if (
+        categoryLevel === currentCategoryLevel &&
+        !currentCategoryIds.includes(categoryId)
+      ) {
         // Check if it has the same parent (or is at root level)
         if (parentCategoryId) {
           // If current category has a parent, sibling should also have the same parent
-          if (ancestorIds.includes(parentCategoryId) || ancestorIds.length === 0) {
+          if (
+            ancestorIds.includes(parentCategoryId) ||
+            ancestorIds.length === 0
+          ) {
             isSibling = true;
           }
         } else {
@@ -240,7 +258,11 @@ export function formatCategoriesAggregation(
         count: bucket.doc_count,
         selected: false,
         categoryId,
-        categoryPath: categoryPathStr || (isChild ? `${currentCategoryPath.join("/")}/${categorySlug}` : `/${categorySlug}`),
+        categoryPath:
+          categoryPathStr ||
+          (isChild
+            ? `${currentCategoryPath.join("/")}/${categorySlug}`
+            : `/${categorySlug}`),
         categorySlug,
         isChild,
         isSibling,
@@ -269,7 +291,7 @@ export function formatVariantAttributesAggregation(
 
   return Object.entries(aggregations).map(([attributeName, aggregation]) => {
     const options =
-      aggregation?.data?.buckets?.map((bucket) => ({
+      aggregation?.data?.buckets?.map(bucket => ({
         label: bucket.key,
         value: bucket.key,
         count: bucket.doc_count,
@@ -304,7 +326,7 @@ export function formatProductSpecificationsAggregation(
     };
 
     const options =
-      nestedAgg?.nested_specs?.filtered_by_key?.data?.buckets?.map((bucket) => ({
+      nestedAgg?.nested_specs?.filtered_by_key?.data?.buckets?.map(bucket => ({
         label: bucket.key,
         value: bucket.key,
         count: bucket.doc_count,
@@ -329,7 +351,7 @@ export function formatCatalogCodesAggregation(
     return [];
   }
 
-  return aggregation.data.buckets.map((bucket) => ({
+  return aggregation.data.buckets.map(bucket => ({
     label: bucket.key,
     value: bucket.key,
     count: bucket.doc_count,
@@ -347,7 +369,7 @@ export function formatEquipmentCodesAggregation(
     return [];
   }
 
-  return aggregation.data.buckets.map((bucket) => ({
+  return aggregation.data.buckets.map(bucket => ({
     label: bucket.key,
     value: bucket.key,
     count: bucket.doc_count,
@@ -361,8 +383,7 @@ export function formatEquipmentCodesAggregation(
 export function formatAllAggregations(
   aggregations: FilterAggregations | null,
   categoryPath: CategoryPath,
-  currentCategoryPath: string[],
-  locale: string
+  currentCategoryPath: string[]
 ): {
   brands: BrandFilterOption[];
   childCategories: CategoryFilterOption[];
@@ -373,8 +394,8 @@ export function formatAllAggregations(
   equipmentCodes: FilterOption[];
 } {
   if (!aggregations) {
-    if (process.env.NODE_ENV === 'development') {
-      console.warn('[formatAllAggregations] No aggregations provided');
+    if (process.env.NODE_ENV === "development") {
+      console.warn("[formatAllAggregations] No aggregations provided");
     }
     return {
       brands: [],
@@ -390,8 +411,7 @@ export function formatAllAggregations(
   try {
     const brands = formatBrandsAggregation(
       aggregations.brands,
-      currentCategoryPath,
-      locale
+      currentCategoryPath
     );
 
     const { childCategories, siblingCategories } = formatCategoriesAggregation(
@@ -401,18 +421,26 @@ export function formatAllAggregations(
     );
 
     const variantAttributeGroups = formatVariantAttributesAggregation(
-      aggregations.variantAttributes as Record<string, AggregationResult> | undefined
+      aggregations.variantAttributes as
+        | Record<string, AggregationResult>
+        | undefined
     );
 
     const productSpecificationGroups = formatProductSpecificationsAggregation(
-      aggregations.productSpecifications as Record<string, AggregationResult> | undefined
+      aggregations.productSpecifications as
+        | Record<string, AggregationResult>
+        | undefined
     );
 
-    const catalogCodes = formatCatalogCodesAggregation(aggregations.catalogCodes);
-    const equipmentCodes = formatEquipmentCodesAggregation(aggregations.equipmentCodes);
+    const catalogCodes = formatCatalogCodesAggregation(
+      aggregations.catalogCodes
+    );
+    const equipmentCodes = formatEquipmentCodesAggregation(
+      aggregations.equipmentCodes
+    );
 
-    if (process.env.NODE_ENV === 'development') {
-      console.log('[formatAllAggregations] Formatted filters:', {
+    if (process.env.NODE_ENV === "development") {
+      console.log("[formatAllAggregations] Formatted filters:", {
         brandsCount: brands.length,
         childCategoriesCount: childCategories.length,
         siblingCategoriesCount: siblingCategories.length,
@@ -434,7 +462,10 @@ export function formatAllAggregations(
       equipmentCodes,
     };
   } catch (error) {
-    console.error('[formatAllAggregations] Error formatting aggregations:', error);
+    console.error(
+      "[formatAllAggregations] Error formatting aggregations:",
+      error
+    );
     // Return empty arrays on error to prevent UI crash
     return {
       brands: [],
@@ -447,4 +478,3 @@ export function formatAllAggregations(
     };
   }
 }
-

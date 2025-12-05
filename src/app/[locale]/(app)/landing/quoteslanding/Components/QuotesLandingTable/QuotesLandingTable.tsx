@@ -224,15 +224,6 @@ function QuotesLandingTable({
           </span>
         ),
       },
-      {
-        accessorKey: "requiredDate",
-        header: t("requiredDate"),
-        size: 150,
-        cell: ({ row }) => {
-          const date = row.original.customerRequiredDate;
-          return date ? new Date(date).toLocaleDateString() : "-";
-        },
-      },
     ],
     [t]
   );
@@ -241,6 +232,26 @@ function QuotesLandingTable({
   const TableSkeleton = ({ rows = 10 }: { rows?: number }) => {
     const columnCount = columns.length;
     const tableHeight = "h-[calc(103vh-180px)] max-md:h-[calc(100vh-140px)]";
+
+    // Map accessorKey to translation key for function headers
+    const getHeaderText = (column: ColumnDef<QuoteItem>) => {
+      if (typeof column.header === "string") {
+        return column.header;
+      }
+      if (typeof column.header === "function") {
+        // Map accessorKey to translation keys for function headers
+        const headerMap: Record<string, string> = {
+          quotationIdentifier: t("quoteId"),
+          quoteName: t("quoteName"),
+          updatedBuyerStatus: t("status"),
+        };
+        const accessorKey =
+          "accessorKey" in column ? (column.accessorKey as string) : undefined;
+        return accessorKey ? headerMap[accessorKey] || "" : "";
+      }
+      return "";
+    };
+
     return (
       <div
         className={cn(
@@ -256,22 +267,20 @@ function QuotesLandingTable({
         <div
           className={cn(
             "overflow-x-auto overflow-y-auto relative scrollbar-thin-horizontal",
+            "flex-1",
             "max-md:flex-none"
           )}
         >
           {/* Table structure matching DashboardTable */}
           <div className="min-w-full">
             {/* Table Header */}
-            <div className="border-b border-border bg-muted sticky top-0 z-20">
+            <div className="border-b border-border bg-muted sticky top-0 z-30">
               <div className="flex font-medium text-sm text-foreground">
                 {columns.map((column, index) => {
                   const width = column.size || 150;
-                  // For skeleton, render header as string or placeholder
-                  // If it's a function, we can't call it without table context, so use placeholder
-                  const headerContent =
-                    typeof column.header === "function"
-                      ? "" // Skeleton placeholder - header function requires context
-                      : column.header || "";
+                  const headerContent = getHeaderText(column);
+                  const isSticky = (column.meta as { sticky?: boolean })
+                    ?.sticky;
                   return (
                     <div
                       key={index}
@@ -279,44 +288,64 @@ function QuotesLandingTable({
                         "px-2 py-3 border-r border-border",
                         index === columnCount - 1 && "border-r-0",
                         index === 0 && "max-md:pl-0",
-                        index === columnCount - 1 && "max-md:pr-0"
+                        index === columnCount - 1 && "max-md:pr-0",
+                        isSticky &&
+                          "sticky left-0 bg-muted z-[31] border-r border-border"
                       )}
                       style={{ width: `${width}px`, minWidth: `${width}px` }}
                     >
-                      {headerContent}
+                      {headerContent || <Skeleton className="h-4 w-20" />}
                     </div>
                   );
                 })}
               </div>
             </div>
             {/* Table Body - Only values show skeleton */}
-            <div>
+            <div className="bg-background">
               {Array.from({ length: rows }).map((_, rowIndex) => (
                 <div
                   key={`row-${rowIndex}`}
                   className={cn(
-                    "border-b border-border flex",
+                    "border-b border-border flex bg-background hover:bg-muted/50 transition-colors",
                     rowIndex === rows - 1 && "max-md:border-b-0"
                   )}
                 >
                   {columns.map((column, colIndex) => {
                     const width = column.size || 150;
-                    const alignCenter = (column.meta as any)?.alignCenter;
-                    const alignRight = (column.meta as any)?.alignRight;
+                    const alignCenter = (
+                      column.meta as { alignCenter?: boolean }
+                    )?.alignCenter;
+                    const alignRight = (column.meta as { alignRight?: boolean })
+                      ?.alignRight;
+                    const isSticky = (column.meta as { sticky?: boolean })
+                      ?.sticky;
+                    // Determine skeleton width based on alignment and column type
+                    const skeletonWidth =
+                      alignCenter || alignRight
+                        ? "w-20" // Fixed width for centered/right-aligned
+                        : "w-full max-w-[80%]"; // Full width with max constraint for left-aligned
                     return (
                       <div
                         key={`cell-${rowIndex}-${colIndex}`}
                         className={cn(
-                          "px-2 py-3 flex items-center border-r border-border",
+                          "px-2 py-3 flex items-center border-r border-border min-h-[44px]",
                           colIndex === columnCount - 1 && "border-r-0",
                           alignCenter && "justify-center",
                           alignRight && "justify-end",
                           colIndex === 0 && "max-md:pl-0",
-                          colIndex === columnCount - 1 && "max-md:pr-0"
+                          colIndex === columnCount - 1 && "max-md:pr-0",
+                          isSticky &&
+                            "sticky left-0 z-20 bg-muted border-r border-border"
                         )}
                         style={{ width: `${width}px`, minWidth: `${width}px` }}
                       >
-                        <Skeleton className="h-4 w-3/4 bg-muted" />
+                        <Skeleton
+                          className={cn(
+                            "h-4 bg-muted animate-pulse",
+                            skeletonWidth,
+                            "min-w-[60px]"
+                          )}
+                        />
                       </div>
                     );
                   })}
@@ -326,7 +355,7 @@ function QuotesLandingTable({
           </div>
         </div>
         {/* Pagination Footer - matches DashboardTable */}
-        <div className="flex items-center justify-between px-4 py-2 border-t bg-background rounded-b-lg flex-shrink-0 max-md:px-0 max-md:mt-0">
+        <div className="flex items-center justify-between px-4 py-2 border-t bg-background rounded-b-lg flex-shrink-0 max-md:px-0">
           <div className="flex items-center gap-2">
             <span className="text-xs lg:text-sm text-muted-foreground">
               <Skeleton className="h-3 w-24 inline-block" />
@@ -373,7 +402,6 @@ function QuotesLandingTable({
 
   const fetchQuotes = useCallback(async () => {
     // Don't fetch if we don't have user info yet
-   
 
     // Create a unique key for this fetch request
     const fetchKey = `quotes-${JSON.stringify({
@@ -795,12 +823,12 @@ function QuotesLandingTable({
   useEffect(() => {
     fetchQuotesRef.current = fetchQuotes;
   }, [fetchQuotes]);
-  
-  useEffect(()=>{
-    if(userId !== undefined && companyId !== undefined){
+
+  useEffect(() => {
+    if (userId !== undefined && companyId !== undefined) {
       fetchQuotesRef.current();
     }
-  },[userId,companyId])
+  }, [userId, companyId]);
 
   // Fetch quotes after navigation completes - ensures instant navigation
   // This is the primary fetch mechanism - it handles both initial load and navigation
@@ -809,16 +837,27 @@ function QuotesLandingTable({
       hasInitialFetchedRef.current = true;
       fetchQuotesRef.current();
     }
-  }, [userId,companyId]); // Removed fetchQuotes from deps to prevent re-triggers
+  }, [userId, companyId]); // Removed fetchQuotes from deps to prevent re-triggers
+
+  // Fallback useEffect to ensure fetch happens on page reload when user data becomes available
+  // This handles the case where usePostNavigationFetch doesn't trigger on reload
+  useEffect(() => {
+    if (user?.userId && user?.companyId && !hasInitialFetchedRef.current) {
+      // Add a small delay to ensure usePostNavigationFetch has a chance to run first
+      const timer = setTimeout(() => {
+        if (!hasInitialFetchedRef.current) {
+          hasInitialFetchedRef.current = true;
+          fetchQuotesRef.current();
+        }
+      }, 100);
+      return () => clearTimeout(timer);
+    }
+    return undefined;
+  }, [user?.userId, user?.companyId]);
 
   // Trigger fetch when page or rowPerPage changes (only after initial load)
   useEffect(() => {
-    if (
-      userId &&
-      companyId &&
-    
-      hasInitialFetchedRef.current
-    ) {
+    if (userId && companyId && hasInitialFetchedRef.current) {
       fetchQuotesRef.current();
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -830,12 +869,7 @@ function QuotesLandingTable({
   }, [userId, companyId]);
   // Trigger fetch when filterData changes (only after initial load)
   useEffect(() => {
-    if (
-      userId &&
-      companyId &&
-     
-      hasInitialFetchedRef.current
-    ) {
+    if (userId && companyId && hasInitialFetchedRef.current) {
       fetchQuotesRef.current();
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -908,7 +942,6 @@ function QuotesLandingTable({
           q.curencySymbol || undefined
         ),
         [t("status")]: q.updatedBuyerStatus || "",
-        [t("requiredDate")]: formatDate(q.customerRequiredDate || undefined),
       }));
 
       // Create workbook and worksheet
@@ -927,7 +960,6 @@ function QuotesLandingTable({
         { wch: 15 }, // Taxable Amount
         { wch: 15 }, // Total
         { wch: 12 }, // Status
-        { wch: 15 }, // Required Date
       ];
       ws["!cols"] = colWidths;
 

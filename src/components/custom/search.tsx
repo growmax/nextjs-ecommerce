@@ -1,12 +1,12 @@
 "use client";
 
-import { Search, X, Loader2 } from "lucide-react";
-import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { cn } from "@/lib/utils";
+import { Loader2, Search, X } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useRouter } from "next/navigation";
-import { useState, useCallback, useMemo, forwardRef } from "react";
-import { cn } from "@/lib/utils";
+import { forwardRef, useCallback, useMemo, useState } from "react";
 
 interface SearchBoxProps {
   /** Placeholder text for the search input */
@@ -216,7 +216,7 @@ const SearchBox = forwardRef<HTMLInputElement, SearchBoxProps>(
             showClearButton && "pr-14 sm:pr-16",
             "transition-all duration-200 w-full",
             hasValue && "ring-1 ring-primary/20",
-            "focus:ring-2 focus:ring-primary/30"
+            "focus:ring-0 focus:shadow-sm focus-visible:ring-0 focus-visible:shadow-sm focus-visible:outline-none"
           )}
           aria-label={placeholder || t("search.button")}
           {...inputProps}

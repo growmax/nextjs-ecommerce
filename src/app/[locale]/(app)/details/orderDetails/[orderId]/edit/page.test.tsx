@@ -22,6 +22,11 @@ jest.mock("@/hooks/usePageScroll", () => ({
 }));
 
 jest.mock("@/hooks/useGlobalLoader", () => ({
+  useGlobalLoader: () => ({
+    showLoading: jest.fn(),
+    hideLoading: jest.fn(),
+    isLoading: false,
+  }),
   useLoading: () => ({
     showLoading: jest.fn(),
     hideLoading: jest.fn(),
@@ -491,7 +496,6 @@ jest.mock("lucide-react", () => {
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { render, screen, waitFor } from "@testing-library/react";
 import React, { ReactNode } from "react";
-import { BlockingLoaderProvider } from "@/providers/BlockingLoaderProvider";
 import EditOrderPage from "./page";
 
 // Helper to create a wrapper with QueryClient
@@ -506,11 +510,7 @@ function createWrapper() {
   });
 
   const Wrapper = ({ children }: { children: ReactNode }) =>
-    React.createElement(
-      QueryClientProvider,
-      { client: queryClient },
-      React.createElement(BlockingLoaderProvider, null, children)
-    );
+    React.createElement(QueryClientProvider, { client: queryClient }, children);
   Wrapper.displayName = "QueryClientWrapper";
   return Wrapper;
 }

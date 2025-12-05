@@ -3,8 +3,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Toaster } from "@/components/ui/sonner";
 import { FileText, Layers } from "lucide-react";
 import { useTranslations } from "next-intl";
-import dynamic from "next/dynamic";
-import { Suspense, useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
 
 import { EditOrderNameDialog } from "@/components/dialogs/EditOrderNameDialog";
@@ -16,6 +15,9 @@ import {
 import {
   DetailsSkeleton,
   OrderContactDetails,
+  OrderProductsTable,
+  OrderPriceDetails,
+  OrderStatusTracker,
   OrderTermsCard,
   SalesHeader,
 } from "@/components/sales";
@@ -52,26 +54,6 @@ import {
 } from "@/utils/details/orderdetails";
 import { decodeUnicode } from "@/utils/General/general";
 import { useQuery } from "@tanstack/react-query";
-const OrderProductsTable = dynamic(
-  () => import("@/components/sales").then(mod => mod.OrderProductsTable),
-  {
-    ssr: false,
-  }
-);
-
-const OrderPriceDetails = dynamic(
-  () => import("@/components/sales").then(mod => mod.OrderPriceDetails),
-  {
-    ssr: false,
-  }
-);
-
-const OrderStatusTracker = dynamic(
-  () => import("@/components/sales").then(mod => mod.OrderStatusTracker),
-  {
-    ssr: false,
-  }
-);
 
 export default function OrderDetailsClient({
   params,
@@ -642,11 +624,7 @@ export default function OrderDetailsClient({
       <div className="flex-1 overflow-y-auto overflow-x-hidden  relative z-0">
         <div className="container mx-auto px-2 sm:px-3 md:px-4 py-2 sm:py-3">
           {orderLoading ? (
-            <DetailsSkeleton
-              showStatusTracker={true}
-              leftWidth="lg:w-[65%]"
-              rightWidth="lg:w-[33%]"
-            />
+            <DetailsSkeleton />
           ) : (
             <div className="flex flex-col lg:flex-row gap-2 sm:gap-3 md:gap-4">
               {/* Left Side - Status Tracker and Products Table - 60% */}
@@ -688,13 +666,16 @@ export default function OrderDetailsClient({
                       </div>
                     </div>
                   )}
-                {/* Status Tracker */}
-                {!orderLoading &&
-                  !orderError &&
-                  (orderDetails || displayOrderDetails) &&
+
+                {/* Status Tracker - Always reserve space */}
+                {orderLoading ? (
+                  <div className="mt-[55px]">
+                    <Skeleton className="h-48 w-full" />
+                  </div>
+                ) : orderError ? null : (
                   !cancelled && (
                     <div className="mt-[55px]">
-                      <Suspense fallback={<Skeleton className="h-48 w-full" />}>
+                      {(orderDetails || displayOrderDetails) && (
                         <OrderStatusTracker
                           {...(orderId && { orderId })}
                           {...(displayOrderDetails?.createdDate && {
@@ -728,55 +709,66 @@ export default function OrderDetailsClient({
                           {...(paymentHistory && { paymentHistory })}
                           {...(lastDateToPay && { lastDateToPay })}
                         />
-                      </Suspense>
+                      )}
                     </div>
-                  )}
+                  )
+                )}
 
-                {/* Products Table */}
-                {!orderLoading &&
-                  !orderError &&
+                {/* Products Table - Always reserve space */}
+                {orderLoading ? (
+                  <Skeleton className="h-96 w-full min-h-[400px]" />
+                ) : orderError ? (
+                  <div className="h-96 min-h-[400px]" />
+                ) : (
                   (orderDetails || displayOrderDetails) && (
-                    <Suspense fallback={<Skeleton className="h-64 w-full" />}>
-                      <OrderProductsTable
-                        products={
+                    <OrderProductsTable
+                      products={
+                        displayOrderDetails?.orderDetails?.[0]
+                          ?.dbProductDetails ||
+                        orderDetails?.data?.orderDetails?.[0]
+                          ?.dbProductDetails ||
+                        []
+                      }
+                      {...((displayOrderDetails?.orderDetails?.[0]
+                        ?.dbProductDetails?.length ||
+                        orderDetails?.data?.orderDetails?.[0]?.dbProductDetails
+                          ?.length) && {
+                        totalCount:
+                          displayOrderDetails?.orderDetails?.[0]
+                            ?.dbProductDetails?.length ||
+                          orderDetails?.data?.orderDetails?.[0]
+                            ?.dbProductDetails?.length ||
+                          0,
+                      })}
+                      onExport={() => {
+                        const products =
                           displayOrderDetails?.orderDetails?.[0]
                             ?.dbProductDetails ||
                           orderDetails?.data?.orderDetails?.[0]
                             ?.dbProductDetails ||
-                          []
-                        }
-                        {...((displayOrderDetails?.orderDetails?.[0]
-                          ?.dbProductDetails?.length ||
-                          orderDetails?.data?.orderDetails?.[0]
-                            ?.dbProductDetails?.length) && {
-                          totalCount:
-                            displayOrderDetails?.orderDetails?.[0]
-                              ?.dbProductDetails?.length ||
-                            orderDetails?.data?.orderDetails?.[0]
-                              ?.dbProductDetails?.length ||
-                            0,
-                        })}
-                        onExport={() => {
-                          const products =
-                            displayOrderDetails?.orderDetails?.[0]
-                              ?.dbProductDetails ||
-                            orderDetails?.data?.orderDetails?.[0]
-                              ?.dbProductDetails ||
-                            [];
-                          const filename = `Order_${orderId}_Products.csv`;
-                          exportProductsToCsv(
-                            products as ProductCsvRow[],
-                            filename
-                          );
-                        }}
-                      />
-                    </Suspense>
-                  )}
+                          [];
+                        const filename = `Order_${orderId}_Products.csv`;
+                        exportProductsToCsv(
+                          products as ProductCsvRow[],
+                          filename
+                        );
+                      }}
+                    />
+                  )
+                )}
 
-                {/* Contact Details and Terms Cards - Side by Side */}
-                {!orderLoading &&
-                  !orderError &&
-                  (orderDetails || displayOrderDetails) && (
+                {/* Contact Details and Terms Cards - Always reserve space */}
+                {orderLoading ? (
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-2 sm:gap-3">
+                    <Skeleton className="h-64 w-full" />
+                    <Skeleton className="h-64 w-full" />
+                  </div>
+                ) : orderError ? (
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-2 sm:gap-3 min-h-[256px]" />
+                ) : (
+                  (orderDetails || displayOrderDetails) &&
+                  (displayOrderDetails?.orderDetails?.[0] ||
+                    orderDetails?.data?.orderDetails?.[0]) && (
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-2 sm:gap-3">
                       {/* Contact Details Card */}
                       <OrderContactDetails
@@ -894,119 +886,123 @@ export default function OrderDetailsClient({
                         }
                       />
                     </div>
-                  )}
+                  )
+                )}
               </div>
 
-              {/* Right Side - Price Details - 40% */}
-              {!orderLoading &&
-                !orderError &&
+              {/* Right Side - Price Details - Always reserve space */}
+              {orderLoading ? (
+                <div className="w-full lg:w-[33%] mt-[55px]">
+                  <Skeleton className="h-96 w-full" />
+                </div>
+              ) : orderError ? (
+                <div className="w-full lg:w-[33%] mt-[55px] min-h-[384px]" />
+              ) : (
                 (orderDetails || displayOrderDetails) && (
                   <div className="w-full lg:w-[33%] mt-[55px]">
-                    <Suspense fallback={<Skeleton className="h-96 w-full" />}>
-                      <OrderPriceDetails
-                        products={
+                    <OrderPriceDetails
+                      products={
+                        displayOrderDetails?.orderDetails?.[0]
+                          ?.dbProductDetails ||
+                        orderDetails?.data?.orderDetails?.[0]
+                          ?.dbProductDetails ||
+                        []
+                      }
+                      isInter={pricingContext.isInter}
+                      insuranceCharges={pricingContext.insuranceCharges}
+                      precision={2}
+                      Settings={{
+                        roundingAdjustment:
                           displayOrderDetails?.orderDetails?.[0]
-                            ?.dbProductDetails ||
+                            ?.roundingAdjustmentEnabled ||
                           orderDetails?.data?.orderDetails?.[0]
-                            ?.dbProductDetails ||
-                          []
-                        }
-                        isInter={pricingContext.isInter}
-                        insuranceCharges={pricingContext.insuranceCharges}
-                        precision={2}
-                        Settings={{
-                          roundingAdjustment:
-                            displayOrderDetails?.orderDetails?.[0]
-                              ?.roundingAdjustmentEnabled ||
-                            orderDetails?.data?.orderDetails?.[0]
-                              ?.roundingAdjustmentEnabled ||
-                            false,
-                        }}
-                        isSeller={
-                          (user as { isSeller?: boolean })?.isSeller || false
-                        }
-                        taxExemption={pricingContext.taxExemption}
-                        currency={
-                          (
-                            (displayOrderDetails?.buyerCurrencySymbol ||
-                              orderDetails?.data?.buyerCurrencySymbol) as {
-                              symbol?: string;
-                            }
-                          )?.symbol || "INR ₹"
-                        }
-                        {...(displayOrderDetails?.orderDetails?.[0]
-                          ?.overallShipping !== undefined ||
-                        orderDetails?.data?.orderDetails?.[0]
-                          ?.overallShipping !== undefined
-                          ? {
-                              overallShipping: pricingContext.overallShipping,
-                            }
-                          : {})}
-                        {...(displayOrderDetails?.orderDetails?.[0]
-                          ?.overallTax !== undefined ||
-                        orderDetails?.data?.orderDetails?.[0]?.overallTax !==
-                          undefined
-                          ? {
-                              overallTax: Number(
-                                displayOrderDetails?.orderDetails?.[0]
+                            ?.roundingAdjustmentEnabled ||
+                          false,
+                      }}
+                      isSeller={
+                        (user as { isSeller?: boolean })?.isSeller || false
+                      }
+                      taxExemption={pricingContext.taxExemption}
+                      currency={
+                        (
+                          (displayOrderDetails?.buyerCurrencySymbol ||
+                            orderDetails?.data?.buyerCurrencySymbol) as {
+                            symbol?: string;
+                          }
+                        )?.symbol || "INR ₹"
+                      }
+                      {...(displayOrderDetails?.orderDetails?.[0]
+                        ?.overallShipping !== undefined ||
+                      orderDetails?.data?.orderDetails?.[0]?.overallShipping !==
+                        undefined
+                        ? {
+                            overallShipping: pricingContext.overallShipping,
+                          }
+                        : {})}
+                      {...(displayOrderDetails?.orderDetails?.[0]
+                        ?.overallTax !== undefined ||
+                      orderDetails?.data?.orderDetails?.[0]?.overallTax !==
+                        undefined
+                        ? {
+                            overallTax: Number(
+                              displayOrderDetails?.orderDetails?.[0]
+                                ?.overallTax ||
+                                orderDetails?.data?.orderDetails?.[0]
                                   ?.overallTax ||
-                                  orderDetails?.data?.orderDetails?.[0]
-                                    ?.overallTax ||
-                                  0
-                              ),
-                            }
-                          : {})}
-                        {...(displayOrderDetails?.orderDetails?.[0]
-                          ?.calculatedTotal !== undefined ||
-                        orderDetails?.data?.orderDetails?.[0]
-                          ?.calculatedTotal !== undefined ||
-                        displayOrderDetails?.orderDetails?.[0]?.grandTotal !==
-                          undefined ||
-                        orderDetails?.data?.orderDetails?.[0]?.grandTotal !==
-                          undefined
-                          ? {
-                              calculatedTotal: Number(
-                                displayOrderDetails?.orderDetails?.[0]
+                                0
+                            ),
+                          }
+                        : {})}
+                      {...(displayOrderDetails?.orderDetails?.[0]
+                        ?.calculatedTotal !== undefined ||
+                      orderDetails?.data?.orderDetails?.[0]?.calculatedTotal !==
+                        undefined ||
+                      displayOrderDetails?.orderDetails?.[0]?.grandTotal !==
+                        undefined ||
+                      orderDetails?.data?.orderDetails?.[0]?.grandTotal !==
+                        undefined
+                        ? {
+                            calculatedTotal: Number(
+                              displayOrderDetails?.orderDetails?.[0]
+                                ?.calculatedTotal ||
+                                orderDetails?.data?.orderDetails?.[0]
                                   ?.calculatedTotal ||
-                                  orderDetails?.data?.orderDetails?.[0]
-                                    ?.calculatedTotal ||
-                                  orderDetails?.data?.orderDetails?.[0]
-                                    ?.calculatedTotal ||
-                                  displayOrderDetails?.orderDetails?.[0]
-                                    ?.grandTotal ||
-                                  orderDetails?.data?.orderDetails?.[0]
-                                    ?.grandTotal ||
-                                  0
-                              ),
-                            }
-                          : {})}
-                        {...(displayOrderDetails?.orderDetails?.[0]
-                          ?.subTotal !== undefined ||
-                        orderDetails?.data?.orderDetails?.[0]?.subTotal !==
-                          undefined
-                          ? {
-                              subTotal: Number(
+                                orderDetails?.data?.orderDetails?.[0]
+                                  ?.calculatedTotal ||
                                 displayOrderDetails?.orderDetails?.[0]
+                                  ?.grandTotal ||
+                                orderDetails?.data?.orderDetails?.[0]
+                                  ?.grandTotal ||
+                                0
+                            ),
+                          }
+                        : {})}
+                      {...(displayOrderDetails?.orderDetails?.[0]?.subTotal !==
+                        undefined ||
+                      orderDetails?.data?.orderDetails?.[0]?.subTotal !==
+                        undefined
+                        ? {
+                            subTotal: Number(
+                              displayOrderDetails?.orderDetails?.[0]
+                                ?.subTotal ||
+                                orderDetails?.data?.orderDetails?.[0]
                                   ?.subTotal ||
-                                  orderDetails?.data?.orderDetails?.[0]
-                                    ?.subTotal ||
-                                  0
-                              ),
-                            }
-                          : {})}
-                        {...(displayOrderDetails?.orderDetails?.[0]
-                          ?.taxableAmount !== undefined ||
-                        orderDetails?.data?.orderDetails?.[0]?.taxableAmount !==
-                          undefined
-                          ? {
-                              taxableAmount: Number(
-                                displayOrderDetails?.orderDetails?.[0]
-                                  ?.taxableAmount || 0
-                              ),
-                            }
-                          : {})}
-                      />
-                    </Suspense>
+                                0
+                            ),
+                          }
+                        : {})}
+                      {...(displayOrderDetails?.orderDetails?.[0]
+                        ?.taxableAmount !== undefined ||
+                      orderDetails?.data?.orderDetails?.[0]?.taxableAmount !==
+                        undefined
+                        ? {
+                            taxableAmount: Number(
+                              displayOrderDetails?.orderDetails?.[0]
+                                ?.taxableAmount || 0
+                            ),
+                          }
+                        : {})}
+                    />
 
                     {/* Attachments Card */}
                     {(() => {
@@ -1025,84 +1021,81 @@ export default function OrderDetailsClient({
                       );
                     })() && (
                       <div className="mt-4">
-                        <Suspense fallback={null}>
-                          <div className="bg-white rounded-lg border border-gray-200 shadow-sm">
-                            <div className="px-6 py-4 bg-gray-50 rounded-t-lg border-b">
-                              <h3 className="text-xl font-semibold text-gray-900">
-                                Attachments
-                              </h3>
-                            </div>
-                            <div className="px-6 py-4">
-                              <div className="space-y-2">
-                                {(
-                                  (displayOrderDetails?.orderDetails?.[0]
+                        <div className="bg-white rounded-lg border border-gray-200 shadow-sm">
+                          <div className="px-6 py-4 bg-gray-50 rounded-t-lg border-b">
+                            <h3 className="text-xl font-semibold text-gray-900">
+                              Attachments
+                            </h3>
+                          </div>
+                          <div className="px-6 py-4">
+                            <div className="space-y-2">
+                              {(
+                                (displayOrderDetails?.orderDetails?.[0]
+                                  ?.uploadedDocumentDetails ||
+                                  displayOrderDetails?.uploadedDocumentDetails ||
+                                  orderDetails?.data?.orderDetails?.[0]
                                     ?.uploadedDocumentDetails ||
-                                    displayOrderDetails?.uploadedDocumentDetails ||
-                                    orderDetails?.data?.orderDetails?.[0]
-                                      ?.uploadedDocumentDetails ||
-                                    orderDetails?.data
-                                      ?.uploadedDocumentDetails ||
-                                    []) as any[]
-                                ).map((attachment: any, index: number) => {
-                                  const fileUrl =
-                                    attachment.source ||
-                                    attachment.filePath ||
-                                    attachment.attachment;
-                                  const fileName =
-                                    attachment.name || `File ${index + 1}`;
-                                  const attachedBy =
-                                    attachment.width?.split(",")[0] ||
-                                    "Unknown";
-                                  const attachedDate = attachment.width?.split(
-                                    ","
-                                  )[1]
-                                    ? new Date(
-                                        attachment.width.split(",")[1]
-                                      ).toLocaleString("en-IN", {
-                                        day: "2-digit",
-                                        month: "2-digit",
-                                        year: "numeric",
-                                        hour: "2-digit",
-                                        minute: "2-digit",
-                                        hour12: true,
-                                      })
-                                    : null;
+                                  orderDetails?.data?.uploadedDocumentDetails ||
+                                  []) as any[]
+                              ).map((attachment: any, index: number) => {
+                                const fileUrl =
+                                  attachment.source ||
+                                  attachment.filePath ||
+                                  attachment.attachment;
+                                const fileName =
+                                  attachment.name || `File ${index + 1}`;
+                                const attachedBy =
+                                  attachment.width?.split(",")[0] || "Unknown";
+                                const attachedDate = attachment.width?.split(
+                                  ","
+                                )[1]
+                                  ? new Date(
+                                      attachment.width.split(",")[1]
+                                    ).toLocaleString("en-IN", {
+                                      day: "2-digit",
+                                      month: "2-digit",
+                                      year: "numeric",
+                                      hour: "2-digit",
+                                      minute: "2-digit",
+                                      hour12: true,
+                                    })
+                                  : null;
 
-                                  return (
-                                    <div
-                                      key={index}
-                                      className="flex items-center justify-between p-3 border rounded-md bg-gray-50 hover:bg-gray-100 transition-colors cursor-pointer"
-                                      onClick={() => {
-                                        if (fileUrl) {
-                                          window.open(fileUrl, "_blank");
-                                        }
-                                      }}
-                                    >
-                                      <div className="flex items-center gap-3 flex-1 min-w-0">
-                                        <FileText className="h-5 w-5 text-muted-foreground flex-shrink-0" />
-                                        <div className="flex-1 min-w-0">
-                                          <p className="text-sm font-medium text-gray-900 truncate">
-                                            {fileName}
+                                return (
+                                  <div
+                                    key={index}
+                                    className="flex items-center justify-between p-3 border rounded-md bg-gray-50 hover:bg-gray-100 transition-colors cursor-pointer"
+                                    onClick={() => {
+                                      if (fileUrl) {
+                                        window.open(fileUrl, "_blank");
+                                      }
+                                    }}
+                                  >
+                                    <div className="flex items-center gap-3 flex-1 min-w-0">
+                                      <FileText className="h-5 w-5 text-muted-foreground flex-shrink-0" />
+                                      <div className="flex-1 min-w-0">
+                                        <p className="text-sm font-medium text-gray-900 truncate">
+                                          {fileName}
+                                        </p>
+                                        {attachedBy && attachedDate && (
+                                          <p className="text-xs text-muted-foreground">
+                                            Attached By {attachedBy}{" "}
+                                            {attachedDate}
                                           </p>
-                                          {attachedBy && attachedDate && (
-                                            <p className="text-xs text-muted-foreground">
-                                              Attached By {attachedBy}{" "}
-                                              {attachedDate}
-                                            </p>
-                                          )}
-                                        </div>
+                                        )}
                                       </div>
                                     </div>
-                                  );
-                                })}
-                              </div>
+                                  </div>
+                                );
+                              })}
                             </div>
                           </div>
-                        </Suspense>
+                        </div>
                       </div>
                     )}
                   </div>
-                )}
+                )
+              )}
             </div>
           )}
         </div>

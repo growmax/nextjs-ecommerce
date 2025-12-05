@@ -39,22 +39,63 @@ export function AppHeader() {
   const tSearch = useTranslations("search");
 
   // During loading or transitions, check storage directly to prevent login button flash
-  // This is especially important during language switching when context might temporarily reset
+  // This is especially important during page reloads and navigation when context might temporarily reset
   // Strategy:
-  // - If loading: use storage (most reliable during transitions)
-  // - If context says authenticated: trust it
-  // - If context says not authenticated BUT storage says authenticated: trust storage (transition case)
-  // - If both say not authenticated: show login button
-  const storageAuthState = AuthStorage.isAuthenticated();
-  const isAuthenticated = isAuthLoading
-    ? storageAuthState
-    : contextIsAuthenticated
-      ? true
-      : storageAuthState; // Use storage as fallback only if context says not authenticated
+  // - Always prioritize storage check when it says authenticated (most reliable during transitions)
+  // - If storage says authenticated: always trust it (prevents login button flash)
+  // - If storage says not authenticated AND context says authenticated: trust context (user just logged in)
+  // - If both say not authenticated: show login button (but only after verification delay)
+  // - During loading: always use storage to prevent flash
+  // Wrap in try-catch to handle any storage access errors gracefully
+  let storageAuthState = false;
+  try {
+    storageAuthState = AuthStorage.isAuthenticated();
+  } catch (error) {
+    // If storage check fails, fall back to context state
+    // This prevents errors from causing UI issues
+    if (process.env.NODE_ENV !== "test") {
+      console.warn("AuthStorage check failed, using context state:", error);
+    }
+    storageAuthState = contextIsAuthenticated;
+  }
 
-  // Don't render auth-dependent UI until authentication state is determined
-  // This prevents flickering between login/logout states
-  const showAuthUI = !isAuthLoading;
+  // Determine authenticated state with storage as primary source during transitions
+  // Priority: storage (if authenticated) > context > storage (if not authenticated)
+  // This ensures we never show login button if storage indicates user is authenticated
+  const isAuthenticated = storageAuthState
+    ? true // If storage says authenticated, always trust it (prevents flash during reloads)
+    : isAuthLoading
+      ? storageAuthState // During loading, use storage
+      : contextIsAuthenticated || storageAuthState; // Trust context or storage
+
+  // Track if we've had enough time to verify auth state
+  // This prevents race conditions during fast page transitions
+  const [hasVerifiedAuth, setHasVerifiedAuth] = useState(false);
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+    // Give a small delay to ensure auth state is properly initialized
+    // This prevents login button from flashing during fast page transitions
+    const timer = setTimeout(() => {
+      setHasVerifiedAuth(true);
+    }, 200);
+    return () => clearTimeout(timer);
+  }, []);
+
+  // Only show login button if:
+  // 1. Component is mounted (prevents SSR mismatch) AND
+  // 2. We've verified auth state (after delay) AND
+  // 3. Not loading AND
+  // 4. Context says not authenticated AND
+  // 5. Storage also says not authenticated
+  // This ensures login button only shows when we're absolutely certain user is not authenticated
+  const shouldShowLoginButton =
+    mounted &&
+    hasVerifiedAuth &&
+    !isAuthLoading &&
+    !contextIsAuthenticated &&
+    !storageAuthState;
 
   // Keyboard shortcut to navigate to search (Cmd/Ctrl + K)
   useEffect(() => {
@@ -170,7 +211,7 @@ export function AppHeader() {
               />
 
               {/* Profile Dropdown with Real Data */}
-              {!showAuthUI ? (
+              {isAuthLoading ? (
                 <Skeleton className="h-7 w-7 md:h-8 md:w-8 rounded-full" />
               ) : isAuthenticated ? (
                 <AvatarCard
@@ -195,7 +236,7 @@ export function AppHeader() {
                     </Button>
                   }
                 />
-              ) : (
+              ) : shouldShowLoginButton ? (
                 <Button
                   variant="ghost"
                   onClick={() => router.push("/login")}
@@ -207,6 +248,8 @@ export function AppHeader() {
                     </span>
                   </div>
                 </Button>
+              ) : (
+                <Skeleton className="h-7 w-7 md:h-8 md:w-8 rounded-full" />
               )}
             </div>
 
@@ -230,7 +273,7 @@ export function AppHeader() {
               </Button>
 
               {/* Profile Dropdown with Real Data */}
-              {!showAuthUI ? (
+              {isAuthLoading ? (
                 <Skeleton className="h-7 w-7 sm:h-8 sm:w-8 rounded-full" />
               ) : isAuthenticated ? (
                 <AvatarCard
@@ -255,7 +298,7 @@ export function AppHeader() {
                     </Button>
                   }
                 />
-              ) : (
+              ) : shouldShowLoginButton ? (
                 <Button
                   variant="ghost"
                   onClick={() => router.push("/login")}
@@ -267,6 +310,8 @@ export function AppHeader() {
                     </span>
                   </div>
                 </Button>
+              ) : (
+                <Skeleton className="h-7 w-7 sm:h-8 sm:w-8 rounded-full" />
               )}
             </div>
           </div>

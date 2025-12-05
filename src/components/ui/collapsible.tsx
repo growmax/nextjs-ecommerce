@@ -33,25 +33,27 @@ function CollapsibleSection({
 
   return (
     <Collapsible open={isOpen} onOpenChange={setIsOpen}>
-      <div className={cn("border border-border/50 rounded-md shadow-sm", className)}>
-        <CollapsibleTrigger className="flex w-full items-center justify-between p-3 hover:bg-muted/50 transition-colors rounded-md">
+      <div
+        className={cn("border-b border-border/40 last:border-b-0", className)}
+      >
+        <CollapsibleTrigger className="flex w-full items-center justify-between py-3 hover:opacity-80 transition-opacity">
           <div className="flex items-center gap-2 text-left">
             {icon && <div className="text-muted-foreground">{icon}</div>}
-            <h3 className="text-sm font-semibold">{title}</h3>
+            <h3 className="text-base font-semibold">{title}</h3>
             {badge && (
-              <span className="inline-flex items-center justify-center px-1.5 py-0.5 text-xs font-medium bg-primary/10 text-primary rounded-full">
-                {badge}
+              <span className="inline-flex items-center justify-center px-1.5 py-0.5 text-xs font-medium text-muted-foreground">
+                ({badge})
               </span>
             )}
           </div>
           {isOpen ? (
-            <ChevronUp className="h-4 w-4 text-muted-foreground" />
+            <ChevronUp className="h-4 w-4 text-muted-foreground shrink-0" />
           ) : (
-            <ChevronDown className="h-4 w-4 text-muted-foreground" />
+            <ChevronDown className="h-4 w-4 text-muted-foreground shrink-0" />
           )}
         </CollapsibleTrigger>
         <CollapsibleContent className="overflow-hidden data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:duration-200 data-[state=open]:duration-300">
-          <div className="border-t border-border/50 bg-muted/20 p-3">{children}</div>
+          <div className="pb-4">{children}</div>
         </CollapsibleContent>
       </div>
     </Collapsible>
@@ -62,6 +64,5 @@ export {
   Collapsible,
   CollapsibleContent,
   CollapsibleSection,
-  CollapsibleTrigger
+  CollapsibleTrigger,
 };
-

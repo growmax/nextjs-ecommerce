@@ -1,8 +1,8 @@
 import { CategoryBreadcrumbServer } from "@/components/Breadcrumb/CategoryBreadcrumbServer";
+import { BlockingLoader } from "@/components/GlobalLoader/BlockingLoader";
 import { ProductViewSwitcher } from "@/components/ProductGrid/ProductViewSwitcher";
 import { StructuredDataServer } from "@/components/seo/StructuredDataServer";
 import { Card, CardContent } from "@/components/ui/card";
-import { Link } from "@/i18n/navigation";
 import type { RequestContext } from "@/lib/api/client";
 import SearchService, {
   ElasticSearchQuery,
@@ -11,6 +11,7 @@ import SearchService, {
 import TenantService from "@/lib/api/services/TenantService";
 import BrandResolutionService from "@/lib/services/BrandResolutionService";
 import CategoryResolutionService from "@/lib/services/CategoryResolutionService";
+import { BlockingLoaderProvider } from "@/providers/BlockingLoaderProvider";
 import type { FilterAggregations } from "@/types/category-filters";
 import {
   buildBrandFilter,
@@ -224,7 +225,13 @@ export default async function BrandCategoryPage({
   // Parse filters from URL (same as categories page)
   const variantAttributes: Record<string, string[]> = {};
   const productSpecifications: Record<string, string[]> = {};
-  const knownKeys = new Set(["page", "sort", "in_stock", "catalog_code", "equipment_code"]);
+  const knownKeys = new Set([
+    "page",
+    "sort",
+    "in_stock",
+    "catalog_code",
+    "equipment_code",
+  ]);
 
   Object.entries(filters).forEach(([key, value]) => {
     if (!knownKeys.has(key) && value) {
@@ -263,14 +270,16 @@ export default async function BrandCategoryPage({
   const catalogCodes = filters.catalog_code
     ? (Array.isArray(filters.catalog_code)
         ? filters.catalog_code
-        : [filters.catalog_code]).filter((v): v is string => typeof v === "string")
+        : [filters.catalog_code]
+      ).filter((v): v is string => typeof v === "string")
     : undefined;
 
   // Parse equipment codes
   const equipmentCodes = filters.equipment_code
     ? (Array.isArray(filters.equipment_code)
         ? filters.equipment_code
-        : [filters.equipment_code]).filter((v): v is string => typeof v === "string")
+        : [filters.equipment_code]
+      ).filter((v): v is string => typeof v === "string")
     : undefined;
 
   let queryResult;
@@ -350,9 +359,10 @@ export default async function BrandCategoryPage({
   // Build base query for aggregations (with brand and category filters if applicable)
   const baseQuery = getBaseQuery();
   const brandFilter = buildBrandFilter(brand.name);
-  const categoryFilters = categoryPath && categoryPath.ids.categoryIds.length > 0
-    ? buildCategoryFilter(categoryPath.ids.categoryIds)
-    : [];
+  const categoryFilters =
+    categoryPath && categoryPath.ids.categoryIds.length > 0
+      ? buildCategoryFilter(categoryPath.ids.categoryIds)
+      : [];
   const baseQueryForAggs = {
     must: [...baseQuery.must, brandFilter, ...categoryFilters],
     must_not: baseQuery.must_not,
@@ -383,7 +393,10 @@ export default async function BrandCategoryPage({
         aggregations = aggregationResponse.aggregations as FilterAggregations;
       }
     } catch (error) {
-      console.error("Error fetching aggregations for brand category page:", error);
+      console.error(
+        "Error fetching aggregations for brand category page:",
+        error
+      );
       // Continue without aggregations - filters will show loading state
     }
   }
@@ -401,9 +414,9 @@ export default async function BrandCategoryPage({
       : null;
 
   // Build category URL for "View all brands" link
-  const categoryUrl = categoryPath
-    ? `/${locale}/${categoryPath.slugs.join("/")}`
-    : null;
+  // const categoryUrl = categoryPath
+  //   ? `/${locale}/${categoryPath.slugs.join("/")}`
+  //   : null;
 
   // Generate structured data for SEO
   const structuredData = {
@@ -455,73 +468,45 @@ export default async function BrandCategoryPage({
         {/* Breadcrumbs - Server-rendered */}
         <CategoryBreadcrumbServer breadcrumbs={breadcrumbs} />
 
-        {/* Brand Header - Server-rendered */}
-        <div className="mb-4 sm:mb-6">
-          <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3 sm:gap-4 mb-2">
-            {brand.logoUrl && (
-              <img
-                src={brand.logoUrl}
-                alt={brand.name}
-                className="h-10 sm:h-12 lg:h-14 w-auto object-contain"
-              />
-            )}
-            <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-slate-800 dark:text-slate-100 break-words">
-              {brand.name}
-              {categoryName && ` ${categoryName}`}
-            </h1>
-          </div>
-          {categoryPath && categoryPath.nodes.length > 0 && (
-            <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-400 break-words">
-              {categoryPath.fullPath}
-            </p>
-          )}
-          {categoryUrl && (
-            <Link
-              href={categoryUrl}
-              prefetch={true}
-              className="text-xs sm:text-sm text-blue-600 hover:underline mt-2 inline-block transition-colors"
-            >
-              View all brands in this category →
-            </Link>
-          )}
-        </div>
-
         {/* Interactivity Controls - Client component for pagination/sorting/filters */}
-        <BrandCategoryPageInteractivity
-        initialFilters={{
-          page,
-          sort: sortBy,
-        }}
-        total={initialProducts.total}
-        aggregations={aggregations}
-        brandName={brand.name}
-        locale={locale}
-        currentCategoryPath={categories}
-        categoryPath={categoryPath}
-      >
-        {/* Product Grid - Server-rendered for SEO with Suspense for streaming */}
-        <div className="relative">
-          <Suspense
-            fallback={
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4 md:gap-6">
-                {Array.from({ length: 20 }).map((_, i) => (
-                  <div
-                    key={i}
-                    className="h-[380px] bg-muted animate-pulse rounded-lg"
-                  />
-                ))}
-              </div>
-            }
+        <BlockingLoaderProvider>
+          <BrandCategoryPageInteractivity
+            initialFilters={{
+              page,
+              sort: sortBy,
+            }}
+            total={initialProducts.total}
+            aggregations={aggregations}
+            brandName={brand.name}
+            currentCategoryPath={categories}
+            categoryPath={categoryPath}
+            displayName={`${brand.name}${categoryName ? ` ${categoryName}` : ""}`}
           >
-            <BrandProductGridWrapper
-              productsPromise={productsPromise}
-              brandName={brand.name}
-              categoryName={categoryName}
-              locale={locale}
-            />
-          </Suspense>
-        </div>
-        </BrandCategoryPageInteractivity>
+            {/* Product Grid - Server-rendered for SEO with Suspense for streaming */}
+            <div className="relative">
+              <Suspense
+                fallback={
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4 md:gap-6">
+                    {Array.from({ length: 20 }).map((_, i) => (
+                      <div
+                        key={i}
+                        className="h-[380px] bg-muted animate-pulse rounded-lg"
+                      />
+                    ))}
+                  </div>
+                }
+              >
+                <BrandProductGridWrapper
+                  productsPromise={productsPromise}
+                  brandName={brand.name}
+                  categoryName={categoryName}
+                  locale={locale}
+                />
+              </Suspense>
+            </div>
+            <BlockingLoader />
+          </BrandCategoryPageInteractivity>
+        </BlockingLoaderProvider>
       </div>
     </>
   );

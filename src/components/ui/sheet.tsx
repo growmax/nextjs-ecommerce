@@ -1,5 +1,6 @@
 "use client";
 
+import { useScrollLock } from "@/utils/scrollLock";
 import * as SheetPrimitive from "@radix-ui/react-dialog";
 import { XIcon } from "lucide-react";
 import * as React from "react";
@@ -52,6 +53,10 @@ function SheetContent({
 }: React.ComponentProps<typeof SheetPrimitive.Content> & {
   side?: "top" | "right" | "bottom" | "left";
 }) {
+  // Prevent body scroll and UI shifting when sheet is open
+  // This matches the buyer-fe behavior where sheets don't shift the UI
+  useScrollLock();
+
   return (
     <SheetPortal>
       <SheetOverlay />

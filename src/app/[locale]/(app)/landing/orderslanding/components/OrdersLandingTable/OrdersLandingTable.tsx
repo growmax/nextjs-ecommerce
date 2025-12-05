@@ -47,25 +47,24 @@ const convertDateToString = (
 };
 
 function OrdersLandingTable({
-
   setExportCallback,
   onTotalCountChange,
 }: OrdersLandingTableProps) {
   // Use the page loader hook to ensure navigation spinner is hidden immediately
   usePageLoader();
 
-  const { user} = useCurrentUser();
+  const { user } = useCurrentUser();
   const router = useNavigationWithLoader();
   const t = useTranslations("orders");
   const { deduplicate } = useRequestDeduplication();
-  const userId= user?.userId;
+  const userId = user?.userId;
   const companyId = user?.companyId;
   // Refs to prevent duplicate API calls
   const isFetchingRef = useRef(false);
   const lastFetchParamsRef = useRef<string>("");
   const abortControllerRef = useRef<AbortController | null>(null);
   const hasInitialFetchedRef = useRef(false);
-  
+
   // Ref for scrollable container to reset scroll position
   const scrollContainerRef = useRef<HTMLDivElement | null>(null);
 
@@ -243,12 +242,6 @@ function OrdersLandingTable({
           </span>
         ),
       },
-      {
-        accessorKey: "requiredDate",
-        header: t("requiredDate"),
-        size: 150,
-        cell: ({ row }) => formatDate(row.original.requiredDate),
-      },
     ],
     [t]
   );
@@ -257,11 +250,32 @@ function OrdersLandingTable({
   const TableSkeleton = ({ rows = 10 }: { rows?: number }) => {
     const columnCount = columns.length;
     const tableHeight = "h-[calc(103vh-180px)]";
+
+    // Map accessorKey to translation key for function headers
+    const getHeaderText = (column: ColumnDef<Order>) => {
+      if (typeof column.header === "string") {
+        return column.header;
+      }
+      if (typeof column.header === "function") {
+        // Map accessorKey to translation keys for function headers
+        const headerMap: Record<string, string> = {
+          orderIdentifier: t("orderId"),
+          orderName: t("orderName"),
+          status: t("status"),
+        };
+        const accessorKey =
+          "accessorKey" in column ? (column.accessorKey as string) : undefined;
+        return accessorKey ? headerMap[accessorKey] || "" : "";
+      }
+      return "";
+    };
+
     return (
       <div
         className={cn(
           "border overflow-x-hidden flex flex-col w-full z-0",
-          tableHeight
+          tableHeight,
+          "max-md:border-l-0 max-md:border-r-0 max-md:rounded-none"
         )}
         style={{
           borderRadius: "var(--radius)",
@@ -271,60 +285,85 @@ function OrdersLandingTable({
         <div
           className={cn(
             "overflow-x-auto overflow-y-auto relative scrollbar-thin-horizontal",
-            "flex-1"
+            "flex-1",
+            "max-md:flex-none"
           )}
         >
           {/* Table structure matching DashboardTable */}
           <div className="min-w-full">
             {/* Table Header */}
-            <div className="border-b border-border bg-muted sticky top-0 z-20">
+            <div className="border-b border-border bg-muted sticky top-0 z-30">
               <div className="flex font-medium text-sm text-foreground">
                 {columns.map((column, index) => {
                   const width = column.size || 150;
-                  // For skeleton, render header as string or placeholder
-                  // If it's a function, we can't call it without table context, so use placeholder
-                  const headerContent =
-                    typeof column.header === "function"
-                      ? "" // Skeleton placeholder - header function requires context
-                      : column.header || "";
+                  const headerContent = getHeaderText(column);
+                  const isSticky = (column.meta as { sticky?: boolean })
+                    ?.sticky;
                   return (
                     <div
                       key={index}
                       className={cn(
                         "px-2 py-3 border-r border-border",
-                        index === columnCount - 1 && "border-r-0"
+                        index === columnCount - 1 && "border-r-0",
+                        index === 0 && "max-md:pl-0",
+                        index === columnCount - 1 && "max-md:pr-0",
+                        isSticky &&
+                          "sticky left-0 bg-muted z-[31] border-r border-border"
                       )}
                       style={{ width: `${width}px`, minWidth: `${width}px` }}
                     >
-                      {headerContent}
+                      {headerContent || <Skeleton className="h-4 w-20" />}
                     </div>
                   );
                 })}
               </div>
             </div>
             {/* Table Body - Only values show skeleton */}
-            <div>
+            <div className="bg-background">
               {Array.from({ length: rows }).map((_, rowIndex) => (
                 <div
                   key={`row-${rowIndex}`}
-                  className="border-b border-border flex"
+                  className={cn(
+                    "border-b border-border flex bg-background hover:bg-muted/50 transition-colors",
+                    rowIndex === rows - 1 && "max-md:border-b-0"
+                  )}
                 >
                   {columns.map((column, colIndex) => {
                     const width = column.size || 150;
-                    const alignCenter = (column.meta as any)?.alignCenter;
-                    const alignRight = (column.meta as any)?.alignRight;
+                    const alignCenter = (
+                      column.meta as { alignCenter?: boolean }
+                    )?.alignCenter;
+                    const alignRight = (column.meta as { alignRight?: boolean })
+                      ?.alignRight;
+                    const isSticky = (column.meta as { sticky?: boolean })
+                      ?.sticky;
+                    // Determine skeleton width based on alignment and column type
+                    const skeletonWidth =
+                      alignCenter || alignRight
+                        ? "w-20" // Fixed width for centered/right-aligned
+                        : "w-full max-w-[80%]"; // Full width with max constraint for left-aligned
                     return (
                       <div
                         key={`cell-${rowIndex}-${colIndex}`}
                         className={cn(
-                          "px-2 py-3 flex items-center border-r border-border",
+                          "px-2 py-3 flex items-center border-r border-border min-h-[44px]",
                           colIndex === columnCount - 1 && "border-r-0",
                           alignCenter && "justify-center",
-                          alignRight && "justify-end"
+                          alignRight && "justify-end",
+                          colIndex === 0 && "max-md:pl-0",
+                          colIndex === columnCount - 1 && "max-md:pr-0",
+                          isSticky &&
+                            "sticky left-0 z-20 bg-muted border-r border-border"
                         )}
                         style={{ width: `${width}px`, minWidth: `${width}px` }}
                       >
-                        <Skeleton className="h-4 w-3/4 bg-muted" />
+                        <Skeleton
+                          className={cn(
+                            "h-4 bg-muted animate-pulse",
+                            skeletonWidth,
+                            "min-w-[60px]"
+                          )}
+                        />
                       </div>
                     );
                   })}
@@ -334,7 +373,7 @@ function OrdersLandingTable({
           </div>
         </div>
         {/* Pagination Footer - matches DashboardTable */}
-        <div className="flex items-center justify-between px-4 py-2 border-t bg-background rounded-b-lg flex-shrink-0">
+        <div className="flex items-center justify-between px-4 py-2 border-t bg-background rounded-b-lg flex-shrink-0 max-md:px-0">
           <div className="flex items-center gap-2">
             <span className="text-xs lg:text-sm text-muted-foreground">
               <Skeleton className="h-3 w-24 inline-block" />
@@ -396,7 +435,6 @@ function OrdersLandingTable({
         "subTotal",
         "grandTotal",
         "updatedBuyerStatus",
-        "requiredDate",
         "taxableAmount",
         "orderIdentifier",
         "orderName",
@@ -413,10 +451,9 @@ function OrdersLandingTable({
         { id: "taxableAmount", width: 245 },
         { id: "grandTotal", width: 245 },
         { id: "updatedBuyerStatus", width: 270 },
-        { id: "requiredDate", width: 260 },
       ],
       columnPosition:
-        '["orderName","lastUpdatedDate","orderIdentifier","createdDate","sellerCompanyName","itemcount","subTotal","taxableAmount","grandTotal","updatedBuyerStatus","requiredDate"]',
+        '["orderName","lastUpdatedDate","orderIdentifier","createdDate","sellerCompanyName","itemcount","subTotal","taxableAmount","grandTotal","updatedBuyerStatus"]',
       accountId: [],
       accountOwners: [],
       approvalAwaiting: [],
@@ -430,12 +467,12 @@ function OrdersLandingTable({
     }),
     [rowPerPage, page]
   );
- 
+
   // Fetch orders
 
   const fetchOrders = useCallback(async () => {
     console.log(userId, companyId);
-  
+
     const fetchKey = `orders-${JSON.stringify({
       page,
       rowPerPage,
@@ -443,34 +480,36 @@ function OrdersLandingTable({
       companyId,
       filterData,
     })}`;
-  
+
     return deduplicate(async () => {
       // If same request already running → skip
       if (isFetchingRef.current && lastFetchParamsRef.current === fetchKey) {
         return;
       }
-  
+
       // Abort any previous in-flight request
       if (abortControllerRef.current) {
         abortControllerRef.current.abort();
       }
-  
+
       const controller = new AbortController();
       abortControllerRef.current = controller;
       const { signal } = controller;
-  
+
       isFetchingRef.current = true;
       lastFetchParamsRef.current = fetchKey;
       setLoading(true);
-  
+
       // Timeout fallback
       const timeoutId = setTimeout(() => {
         if (!signal.aborted) {
           controller.abort();
-          toast.error(t("requestTimeout") || "Request timed out. Please try again.");
+          toast.error(
+            t("requestTimeout") || "Request timed out. Please try again."
+          );
         }
       }, 30000);
-  
+
       try {
         // Early return if userId or companyId are undefined
         if (userId === undefined || companyId === undefined) {
@@ -479,7 +518,7 @@ function OrdersLandingTable({
 
         const offset = page;
         let response: any;
-  
+
         // SIMPLE STATUS FILTER
         const isSimpleStatus =
           filterData &&
@@ -487,7 +526,7 @@ function OrdersLandingTable({
           (Object.keys(filterData) as Array<keyof typeof filterData>).every(
             k => k === "status" || !filterData[k] // all others undefined/falsy
           );
-  
+
         if (!filterData) {
           response = await ordersFilterService.getAllOrders(
             userId,
@@ -495,9 +534,13 @@ function OrdersLandingTable({
             offset,
             rowPerPage
           );
-        } else if (isSimpleStatus && filterData.status && filterData.status.length > 0) {
-          const statusValue = Array.isArray(filterData.status) 
-            ? filterData.status[0] 
+        } else if (
+          isSimpleStatus &&
+          filterData.status &&
+          filterData.status.length > 0
+        ) {
+          const statusValue = Array.isArray(filterData.status)
+            ? filterData.status[0]
             : filterData.status;
           if (statusValue) {
             response = await ordersFilterService.getOrdersByStatus(
@@ -516,36 +559,28 @@ function OrdersLandingTable({
             filter
           );
         }
-  
+
         if (signal.aborted) return;
-  
+
         const res = (response as any)?.data || response;
-  
-        const ordersList =
-          res?.ordersResponse ||
-          res?.orders ||
-          [];
-  
-        const total =
-          res?.totalOrderCount ||
-          res?.totalCount ||
-          0;
-  
+
+        const ordersList = res?.ordersResponse || res?.orders || [];
+
+        const total = res?.totalOrderCount || res?.totalCount || 0;
+
         setOrders(ordersList);
         setTotalCount(total);
         onTotalCountChange?.(total);
-  
       } catch (err: any) {
         if (err?.name === "AbortError") return;
-  
+
         toast.error(t("failedToFetch"));
         setOrders([]);
         setTotalCount(0);
         onTotalCountChange?.(0);
-  
       } finally {
         clearTimeout(timeoutId);
-  
+
         if (abortControllerRef.current?.signal === signal) {
           isFetchingRef.current = false;
           setLoading(false);
@@ -553,36 +588,37 @@ function OrdersLandingTable({
         }
       }
     }, fetchKey);
-  }, [userId, companyId, page, rowPerPage, filterData, createFilterFromData, deduplicate, t, onTotalCountChange, initialLoad]);
-   // Store fetchOrders in a ref to avoid dependency issues
-   const fetchOrdersRef = useRef(fetchOrders);
-   useEffect(() => {
+  }, [
+    userId,
+    companyId,
+    page,
+    rowPerPage,
+    filterData,
+    createFilterFromData,
+    deduplicate,
+    t,
+    onTotalCountChange,
+    initialLoad,
+  ]);
+  // Store fetchOrders in a ref to avoid dependency issues
+  const fetchOrdersRef = useRef(fetchOrders);
+  useEffect(() => {
     fetchOrdersRef.current = fetchOrders;
   }, [fetchOrders]);
-   
-   useEffect(()=>{
-     if(userId !== undefined && companyId !== undefined){
-      fetchOrdersRef.current();
-     }
-   },[userId,companyId])
+
   useEffect(() => {
-    if (
-      userId &&
-      companyId &&
-     
-      hasInitialFetchedRef.current
-    ) {
+    if (userId !== undefined && companyId !== undefined) {
+      fetchOrdersRef.current();
+    }
+  }, [userId, companyId]);
+  useEffect(() => {
+    if (userId && companyId && hasInitialFetchedRef.current) {
       fetchOrdersRef.current();
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [page, rowPerPage]);
   useEffect(() => {
-    if (
-      userId &&
-      companyId &&
-     
-      hasInitialFetchedRef.current
-    ) {
+    if (userId && companyId && hasInitialFetchedRef.current) {
       setPage(0); // Reset to first page when filter changes
       fetchOrdersRef.current();
     }
@@ -620,12 +656,11 @@ function OrdersLandingTable({
           order.currencySymbol || undefined
         ),
         [t("status")]: order.updatedBuyerStatus || "-",
-        [t("requiredDate")]: formatDate(order.requiredDate),
       }));
 
       const wb = XLSX.utils.book_new();
       const ws = XLSX.utils.json_to_sheet(exportData);
-      ws["!cols"] = Array.from({ length: 11 }, () => ({ wch: 15 }));
+      ws["!cols"] = Array.from({ length: 10 }, () => ({ wch: 15 }));
       XLSX.utils.book_append_sheet(wb, ws, t("title"));
       XLSX.writeFile(
         wb,
@@ -667,7 +702,6 @@ function OrdersLandingTable({
       }
 
       try {
-    
         const filter = createFilterFromData(filterData, 0);
 
         await ordersFilterService.saveCustomOrderFilter(
@@ -680,7 +714,7 @@ function OrdersLandingTable({
         toast.error(t("filterSaveFailed"));
       }
     },
-    [userId,companyId, createFilterFromData, t]
+    [userId, companyId, createFilterFromData, t]
   );
 
   // Effects
@@ -699,13 +733,27 @@ function OrdersLandingTable({
       hasInitialFetchedRef.current = true;
       fetchOrdersRef.current();
     }
-  }, [userId,companyId]); // Removed fetchOrders from deps to prevent re-triggers
+  }, [userId, companyId]); // Removed fetchOrders from deps to prevent re-triggers
+
+  // Fallback useEffect to ensure fetch happens on page reload when user data becomes available
+  // This handles the case where usePostNavigationFetch doesn't trigger on reload
+  useEffect(() => {
+    if (user?.userId && user?.companyId && !hasInitialFetchedRef.current) {
+      // Add a small delay to ensure usePostNavigationFetch has a chance to run first
+      const timer = setTimeout(() => {
+        if (!hasInitialFetchedRef.current) {
+          hasInitialFetchedRef.current = true;
+          fetchOrdersRef.current();
+        }
+      }, 100);
+      return () => clearTimeout(timer);
+    }
+    return undefined;
+  }, [user?.userId, user?.companyId]);
 
   // Trigger fetch when page or rowPerPage changes (only after initial load)
 
-
   // Trigger fetch when filterData changes (only after initial load)
-  
 
   // Cleanup on unmount to prevent stuck loading states
   useEffect(() => {
@@ -724,7 +772,6 @@ function OrdersLandingTable({
       hasInitialFetchedRef.current = true;
     }
   }, [userId, companyId]);
-
 
   // Cleanup: abort any in-flight requests on unmount
   useEffect(() => {
