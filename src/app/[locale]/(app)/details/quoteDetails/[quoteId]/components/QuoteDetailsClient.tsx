@@ -21,7 +21,6 @@ import {
   SalesHeader,
 } from "@/components/sales";
 import { Label } from "@/components/ui/label";
-import { Skeleton } from "@/components/ui/skeleton";
 import { useQuoteDetails } from "@/hooks/details/quotedetails/useQuoteDetails";
 import { useCurrentUser } from "@/hooks/useCurrentUser";
 import { useGetVersionDetails } from "@/hooks/useGetVersionDetails/useGetVersionDetails";

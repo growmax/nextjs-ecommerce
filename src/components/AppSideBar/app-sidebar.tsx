@@ -6,7 +6,7 @@ import { Link, useRouter } from "@/i18n/navigation";
 import { Map, PieChart, Settings2, SquareTerminal } from "lucide-react";
 import { useTranslations } from "next-intl";
 import * as React from "react";
-import { startTransition, useEffect, useState } from "react";
+import { startTransition } from "react";
 
 import { NavMain } from "@/components/nav-main";
 import { NavUser } from "@/components/nav-user";

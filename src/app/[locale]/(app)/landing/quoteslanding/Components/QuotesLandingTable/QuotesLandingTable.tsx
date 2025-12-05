@@ -243,7 +243,9 @@ function QuotesLandingTable({
           quoteName: t("quoteName"),
           updatedBuyerStatus: t("status"),
         };
-        return headerMap[column.accessorKey as string] || "";
+        const accessorKey =
+          "accessorKey" in column ? (column.accessorKey as string) : undefined;
+        return accessorKey ? headerMap[accessorKey] || "" : "";
       }
       return "";
     };
@@ -842,6 +844,7 @@ function QuotesLandingTable({
       }, 100);
       return () => clearTimeout(timer);
     }
+    return undefined;
   }, [user?.userId, user?.companyId]);
 
   // Trigger fetch when page or rowPerPage changes (only after initial load)
