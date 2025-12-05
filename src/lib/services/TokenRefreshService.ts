@@ -136,6 +136,14 @@ export class TokenRefreshService {
         // Process all queued requests with success
         await this.processQueuedRequests(true);
 
+        // Dispatch custom event to notify React components about token refresh
+        // Add a small delay to ensure cookie is available
+        if (typeof window !== "undefined") {
+          setTimeout(() => {
+            window.dispatchEvent(new CustomEvent("token-refreshed"));
+          }, 150);
+        }
+
         return {
           success: true,
           newAccessToken: refreshData.accessToken,

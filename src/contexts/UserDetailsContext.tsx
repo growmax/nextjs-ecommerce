@@ -144,7 +144,21 @@ export function UserDetailsProvider({
     // Use a small delay to batch multiple checks
     const timeoutId = setTimeout(checkAuthState, 50);
 
-    return () => clearTimeout(timeoutId);
+    // Listen for token refresh events
+    const handleTokenRefresh = () => {
+      // Delay slightly to ensure cookie is available
+      setTimeout(checkAuthState, 150);
+    };
+    window.addEventListener("token-refreshed", handleTokenRefresh);
+
+    // Periodic check to catch any missed updates (every 2 seconds)
+    const intervalId = setInterval(checkAuthState, 2000);
+
+    return () => {
+      clearTimeout(timeoutId);
+      clearInterval(intervalId);
+      window.removeEventListener("token-refreshed", handleTokenRefresh);
+    };
   }, []);
   // Loading state: true during hydration, false after mount
   // Use a ref to track if we've already hydrated to prevent resetting during navigation
