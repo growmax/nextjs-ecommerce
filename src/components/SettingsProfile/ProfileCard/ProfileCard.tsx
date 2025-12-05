@@ -39,6 +39,7 @@ interface ProfileCardProps {
     name?: string;
     phone?: string;
     altEmail?: string;
+    altPhone?: string;
   };
 }
 
@@ -194,6 +195,7 @@ export function ProfileCard({
                 {...(countryCode ? { countryCode } : {})}
                 {...(originalAltPhone ? { originalValue: originalAltPhone } : {})}
                 disabled={isLoading}
+                {...(validationErrors.altPhone && { error: validationErrors.altPhone })}
               />
             </div>
 

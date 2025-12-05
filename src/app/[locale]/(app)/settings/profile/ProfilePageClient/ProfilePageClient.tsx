@@ -4,6 +4,7 @@
 import { SaveCancelToolbar } from "@/components/custom/save-cancel-toolbar";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
+import { z } from "zod";
 // Import our new modular components
 import { OTPDialog } from "@/components/SettingsProfile/OTPDialog/OTPDialog";
 import { PasswordChangeDialog } from "@/components/SettingsProfile/PasswordChangeDialog/PasswordChangeDialog";
@@ -22,6 +23,14 @@ import { cn } from "@/lib/utils";
 import parsePhoneNumberFromString from "libphonenumber-js";
 import { Shield } from "lucide-react";
 import { useTranslations } from "next-intl";
+
+// Profile validation schema
+const profileSchema = z.object({
+  name: z.string().min(2, "Name must be at least 2 characters").max(50, "Name must be less than 50 characters"),
+  phone: z.string().min(10, "Phone number must be at least 10 characters").regex(/^[\d+\-\s()]+$/, "Invalid phone number format"),
+  altEmail: z.string().email("Invalid email address").or(z.literal("")),
+  altPhone: z.string().min(10, "Phone number must be at least 10 characters").regex(/^[\d+\-\s()]+$/, "Invalid phone number format").or(z.literal("")),
+});
 export default function ProfilePageClient() {
   const t = useTranslations("profileSettings");
   const { state, isMobile } = useSidebar();
@@ -77,6 +86,7 @@ export default function ProfilePageClient() {
     name?: string;
     phone?: string;
     altEmail?: string;
+    altPhone?: string;
   }>({});
 
   // Original values for reset functionality
@@ -173,41 +183,29 @@ export default function ProfilePageClient() {
     setHasChanges(false);
   };
 
-  // Email validation helper
-  const isValidEmail = (email: string): boolean => {
-    if (!email || email.trim() === "") return true; // Empty is allowed for optional fields
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    return emailRegex.test(email.trim());
-  };
+  // Validate profile using Zod schema
+  const validateProfile = (): boolean => {
+    if (!profile) return false;
 
-  // Validation helper
-  const validateProfile = (): { isValid: boolean; errors: string[] } => {
-    const errors: string[] = [];
+    const result = profileSchema.safeParse({
+      name: profile.name?.trim() || "",
+      phone: profile.phone?.trim() || "",
+      altEmail: profile.altEmail?.trim() || "",
+      altPhone: profile.altPhone?.trim() || "",
+    });
 
-    if (!profile) {
-      return { isValid: false, errors: [t("profile") + " data is missing"] };
+    if (!result.success) {
+      const errors: typeof validationErrors = {};
+      result.error.issues.forEach((issue) => {
+        const field = issue.path[0] as keyof typeof validationErrors;
+        if (field) errors[field] = issue.message;
+      });
+      setValidationErrors(errors);
+      return false;
     }
 
-    // Validate required fields
-    if (!profile.name || profile.name.trim() === "") {
-      errors.push(t("name") + " is required");
-    }
-
-    if (!profile.phone || profile.phone.trim() === "") {
-      errors.push(t("mobileNumber") + " is required");
-    }
-
-    // Validate email format for alternate email
-    if (profile.altEmail && profile.altEmail.trim() !== "") {
-      if (!isValidEmail(profile.altEmail)) {
-        errors.push(t("alternateEmail") + " must be a valid email address");
-      }
-    }
-
-    return {
-      isValid: errors.length === 0,
-      errors,
-    };
+    setValidationErrors({});
+    return true;
   };
 
   // Unified save handler
@@ -223,23 +221,11 @@ export default function ProfilePageClient() {
       return;
     }
 
-    // Validate profile data
-    const validation = validateProfile();
-    if (!validation.isValid) {
-      // Set validation errors for display (no toast notifications)
-      const errors: typeof validationErrors = {};
-      validation.errors.forEach(error => {
-        if (error.includes("Name")) errors.name = error;
-        if (error.includes("Mobile Number")) errors.phone = error;
-        if (error.includes("Alternate Email")) errors.altEmail = error;
-      });
-      setValidationErrors(errors);
+    // Validate profile data using Zod
+    if (!validateProfile()) {
       setIsSaving(false);
       return;
     }
-
-    // Clear validation errors if validation passes
-    setValidationErrors({});
 
     setIsSaving(true);
     const phoneWithCountryCode = profile?.phone
