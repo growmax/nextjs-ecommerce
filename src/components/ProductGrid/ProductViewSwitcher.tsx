@@ -50,7 +50,7 @@ export function ProductViewSwitcher({
     <div className="product-table-transition opacity-100">
       {viewMode === "list" && <ProductListViewClient products={products} locale={locale} />}
       {viewMode === "table" && <ProductTableViewClient products={products} locale={locale} />}
-      {(viewMode === "grid" || !viewMode) && <ProductGridServerClient products={products} locale={locale} />}
+      {(viewMode === "grid" || !viewMode) && <ProductGridServerClient products={products} />}
     </div>
   );
 }

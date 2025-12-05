@@ -5,11 +5,11 @@ import { Separator } from "@/components/ui/separator";
 import { useCategoryFilters } from "@/hooks/useCategoryFilters";
 import { useBlockingLoader } from "@/providers/BlockingLoaderProvider";
 import type {
-    BrandFilterOption,
-    CategoryFilterOption,
-    FilterOption,
-    ProductSpecificationGroup,
-    VariantAttributeGroup,
+  BrandFilterOption,
+  CategoryFilterOption,
+  FilterOption,
+  ProductSpecificationGroup,
+  VariantAttributeGroup,
 } from "@/types/category-filters";
 import { Filter } from "lucide-react";
 import { useEffect } from "react";
@@ -82,8 +82,8 @@ export function CategoryFilters({
 
   return (
     <div className="flex flex-col bg-background border rounded-lg shadow-sm">
-      {/* Sticky Header */}
-      <div className="sticky top-0 z-10 flex items-center justify-between border-b bg-background/95 backdrop-blur-sm py-4 px-4 rounded-t-lg">
+      {/* Filter Header - Static (no sticky to prevent overlap) */}
+      <div className="flex items-center justify-between border-b bg-background py-4 px-4 rounded-t-lg">
         <div className="flex items-center gap-2">
           <Filter className="h-5 w-5 text-foreground" />
           <h2 className="text-lg font-semibold tracking-tight">Filters</h2>
