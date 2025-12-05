@@ -180,6 +180,36 @@ export function useNavigationProgress({
         return path.replace(/^\/([a-z]{2}(-[A-Z]{2})?)(?=\/|$)/, "") || "/";
       };
 
+      // Check if target path is a product listing page (category, brand, brand+category)
+      const isProductListingPage = (path: string): boolean => {
+        const pathWithoutLocale = getPathWithoutLocale(path);
+
+        // Brand pages: /brands/[slug] or /brands/[slug]/[...categories]
+        if (pathWithoutLocale.startsWith("/brands/")) return true;
+
+        // Category page: /category (legacy route)
+        if (pathWithoutLocale.startsWith("/category")) return true;
+
+        // Define all known non-product-listing routes
+        const knownRoutes = [
+          "/", "/dashboard", "/search", "/products", "/quotesummary",
+          "/checkout", "/notification", "/settings", "/landing",
+          "/ordersummary", "/details", "/categories", "/cart"
+        ];
+
+        // Exact match for root
+        if (pathWithoutLocale === "/") return false;
+
+        // Check if it's a known non-product route
+        const isKnownRoute = knownRoutes.some(route =>
+          pathWithoutLocale === route || pathWithoutLocale.startsWith(route + "/")
+        );
+
+        // If it's not a known route, it's handled by the catch-all [...categories] route
+        // This includes: /category-name, /brand-name, /category/subcategory, etc.
+        return !isKnownRoute;
+      };
+
       const currentPathWithoutLocale = getPathWithoutLocale(currentPath);
       const targetPathWithoutLocale = getPathWithoutLocale(targetPath);
 
@@ -205,9 +235,13 @@ export function useNavigationProgress({
         lastClickPathRef.current = targetPathWithoutLocale;
         pendingPathnameRef.current = targetPathWithoutLocale;
 
-        // Start navigation loader immediately on click, before pathname changes
-        // Note: We don't prevent default - let Next.js handle the actual navigation
-        startNavigation("Loading page...");
+        // Skip loading for product listing pages (category, brand, brand+category)
+        // These pages should have smooth, instant transitions
+        if (!isProductListingPage(targetPathWithoutLocale)) {
+          // Start navigation loader immediately on click, before pathname changes
+          // Note: We don't prevent default - let Next.js handle the actual navigation
+          startNavigation("Loading page...");
+        }
       }
     };
 
@@ -255,13 +289,13 @@ export function useNavigationProgress({
       // This handles cases where:
       // 1. This hook instance started navigation (isNavigatingRef = true)
       // 2. Another hook instance (e.g. useNavigationWithLoader) started it but died (unmounted)
-      
+
       pathnameChangeTimeoutRef.current = setTimeout(() => {
         if (mountedRef.current) {
           // Force hide the loader regardless of who started it
           // This acts as a "garbage collector" for zombie loaders
           hideLoading(loadingId);
-          
+
           // Also reset local state if needed
           if (isNavigatingRef.current) {
             endNavigation("get_request_complete");

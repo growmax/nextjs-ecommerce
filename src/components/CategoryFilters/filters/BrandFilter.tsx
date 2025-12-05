@@ -1,13 +1,12 @@
 "use client";
 
 import { Checkbox } from "@/components/ui/checkbox";
-import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { useNavigationWithLoader } from "@/hooks/useNavigationWithLoader";
+import { useBlockingLoader } from "@/providers/BlockingLoaderProvider";
 import type { BrandFilterOption } from "@/types/category-filters";
-import { Search } from "lucide-react";
-import { useState } from "react";
+import { useRouter } from "next/navigation";
+import { useEffect, useTransition } from "react";
 
 interface BrandFilterProps {
   brands: BrandFilterOption[];
@@ -19,18 +18,25 @@ interface BrandFilterProps {
  * Shows brands with navigation to brand pages when clicked
  */
 export function BrandFilter({ brands, isLoading }: BrandFilterProps) {
-  const { push } = useNavigationWithLoader();
-  const [searchQuery, setSearchQuery] = useState("");
+  const router = useRouter();
+  const [isPending, startTransition] = useTransition();
+  const { showLoader, hideLoader } = useBlockingLoader();
 
-  // Filter brands based on search
-  const filteredBrands = brands.filter((brand) =>
-    brand.label.toLowerCase().includes(searchQuery.toLowerCase())
-  );
+  // Show/hide blocking loader when transition state changes
+  useEffect(() => {
+    if (isPending) {
+      showLoader({ message: "Loading brand..." });
+    } else {
+      hideLoader();
+    }
+  }, [isPending, showLoader, hideLoader]);
 
   const handleBrandClick = (brand: BrandFilterOption) => {
     // Navigate to brand page with loading state
     // The navigationPath already includes locale prefix from formatBrandsAggregation
-    push(brand.navigationPath);
+    startTransition(() => {
+      router.push(brand.navigationPath);
+    });
   };
 
   if (isLoading) {
@@ -55,31 +61,19 @@ export function BrandFilter({ brands, isLoading }: BrandFilterProps) {
   }
 
   return (
-    <div className="space-y-2">
-      {/* Search */}
-      <div className="relative">
-        <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
-        <Input
-          type="text"
-          placeholder="Search brands..."
-          value={searchQuery}
-          onChange={(e) => setSearchQuery(e.target.value)}
-          className="pl-8 h-8 text-sm"
-        />
-      </div>
-
+    <div>
       {/* Brand List */}
-      <ScrollArea className="h-[180px]">
-        <div className="space-y-1.5 pr-4">
-          {filteredBrands.length === 0 ? (
+      <ScrollArea className="h-[200px]">
+        <div className="space-y-2 pr-4">
+          {brands.length === 0 ? (
             <div className="text-sm text-muted-foreground py-2">
               No brands found
             </div>
           ) : (
-            filteredBrands.map((brand) => (
+            brands.map((brand) => (
               <div
                 key={brand.value}
-                className="flex items-center space-x-2 rounded-md p-1.5 transition-colors hover:bg-accent/50 cursor-pointer"
+                className="flex items-center space-x-3 py-1 transition-colors hover:bg-accent/20 cursor-pointer rounded-sm px-1"
                 onClick={() => handleBrandClick(brand)}
               >
                 <Checkbox
@@ -87,11 +81,11 @@ export function BrandFilter({ brands, isLoading }: BrandFilterProps) {
                   checked={brand.selected ?? false}
                   onCheckedChange={() => handleBrandClick(brand)}
                   onClick={(e) => e.stopPropagation()}
-                  className="shrink-0"
+                  className="shrink-0 h-[18px] w-[18px]"
                 />
                 <Label
                   htmlFor={`brand-${brand.value}`}
-                  className="flex-1 cursor-pointer text-sm font-normal leading-tight"
+                  className="flex-1 cursor-pointer text-sm font-normal leading-relaxed"
                 >
                   {brand.label}
                 </Label>
