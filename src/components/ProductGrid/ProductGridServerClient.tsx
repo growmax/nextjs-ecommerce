@@ -1,12 +1,11 @@
 "use client";
 
-import { FormattedProduct } from "@/lib/api/services/SearchService/SearchService";
 import useProductDiscounts from "@/hooks/useProductDiscounts";
+import { FormattedProduct } from "@/lib/api/services/SearchService/SearchService";
 import { ProductGridServer } from "./ProductGridServer";
 
 interface ProductGridServerClientProps {
   products: FormattedProduct[];
-  locale?: string;
 }
 
 /**
@@ -16,7 +15,6 @@ interface ProductGridServerClientProps {
  */
 export function ProductGridServerClient({
   products,
-  locale = "en",
 }: ProductGridServerClientProps) {
   // Extract product IDs for batch discount fetching
   const productIds = products.map(
@@ -31,7 +29,6 @@ export function ProductGridServerClient({
   return (
     <ProductGridServer
       products={products}
-      locale={locale}
       discountData={discountdata}
       discountLoading={discountdataLoading}
       discountError={discountDataError}

@@ -45,12 +45,12 @@ export function generateProductSlug(
   product:
     | ProductDetail
     | {
-        brand_name?: string;
-        brands_name?: string;
-        title: string;
-        product_index_name: string;
-        product_id?: number;
-      },
+      brand_name?: string;
+      brands_name?: string;
+      title: string;
+      product_index_name: string;
+      product_id?: number;
+    },
   maxLength: number = 100
 ): string {
   const brandName = product.brand_name || product.brands_name || "product";
@@ -76,8 +76,8 @@ export function generateProductSlug(
     }
   }
 
-  // Add product index name at the end - KEEP ORIGINAL CASE
-  const slug = `${combinedSlug}-${productIndexName}`;
+  // Add product index name at the end - LOWERCASE for URL consistency
+  const slug = `${combinedSlug}-${productIndexName.toLowerCase()}`;
 
   return slug;
 }
@@ -112,14 +112,14 @@ export function parseProductSlug(slug: string): string | null {
       // Always capitalize 'Prod' and normalize zero padding
       // Database expects: Prod0000064097 (5 zeros, total 10 digits after 'Prod')
       // Search might return: prod00000064097 (6+ zeros)
-      
+
       // Extract just the numeric part
       const numericPart = part.substring(4); // Remove 'prod' prefix
-      
+
       // Convert to number to remove leading zeros, then pad to 10 digits
       const productNumber = parseInt(numericPart, 10);
       const normalizedNumber = productNumber.toString().padStart(10, '0');
-      
+
       const productId = `Prod${normalizedNumber}`;
       return productId;
     }
@@ -155,12 +155,12 @@ export function generateProductUrl(
   product:
     | ProductDetail
     | {
-        brand_name?: string;
-        brands_name?: string;
-        title: string;
-        product_index_name: string;
-        product_id?: number;
-      },
+      brand_name?: string;
+      brands_name?: string;
+      title: string;
+      product_index_name: string;
+      product_id?: number;
+    },
   locale: string = "en"
 ): string {
   const slug = generateProductSlug(product);
@@ -199,12 +199,12 @@ export function generateProductCanonicalUrl(
   product:
     | ProductDetail
     | {
-        brand_name?: string;
-        brands_name?: string;
-        title: string;
-        product_index_name: string;
-        product_id?: number;
-      },
+      brand_name?: string;
+      brands_name?: string;
+      title: string;
+      product_index_name: string;
+      product_id?: number;
+    },
   locale: string,
   baseUrl: string
 ): string {

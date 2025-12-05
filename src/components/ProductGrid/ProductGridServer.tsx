@@ -5,6 +5,7 @@ import { Link } from "@/i18n/navigation";
 import { DiscountItem } from "@/lib/api/services/DiscountService/DiscountService";
 import { FormattedProduct } from "@/lib/api/services/SearchService/SearchService";
 import { ProductListItem } from "@/types/product-listing";
+import { generateProductSlug } from "@/utils/product/slug-generator";
 import { Package } from "lucide-react";
 import AddToCartButton from "./AddToCartButton";
 
@@ -69,7 +70,6 @@ function transformProduct(product: FormattedProduct): ProductListItem {
 
 interface ProductGridServerProps {
   products: FormattedProduct[];
-  locale?: string;
   discountData?: DiscountItem[]; // Optional - passed from client wrapper
   discountLoading?: boolean;
   discountError?: Error | null;
@@ -82,7 +82,6 @@ interface ProductGridServerProps {
  */
 export function ProductGridServer({
   products,
-  locale = "en",
   discountData,
   discountLoading = false,
   discountError,
@@ -109,8 +108,16 @@ export function ProductGridServer({
     <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3 sm:gap-4 md:gap-6">
       {products.map(product => {
         const productListItem = transformProduct(product);
-        const productSlug = product.productIndexName || product.id || "";
-        const productUrl = `/${locale}/products/${productSlug}`;
+        // Generate proper slug with brand name and lowercase product index
+        const productSlug = generateProductSlug({
+          brand_name: product.brandName || product.brandsName || "product",
+          brands_name: product.brandName || product.brandsName || "product",
+          title: product.productShortDescription || product.shortDescription || product.productName || "Product",
+          product_index_name: String(product.productIndexName || product.id || "unknown"),
+          product_id: product.productId || parseInt(product.id || "0", 10),
+        });
+        // Don't include locale in URL - Link component from i18n/navigation adds it automatically
+        const productUrl = `/products/${productSlug}`;
 
         return (
           <div

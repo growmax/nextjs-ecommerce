@@ -9,10 +9,10 @@ import {
   CommandItem,
   CommandList,
 } from "@/components/ui/command";
-import type { BaseDialogProps } from "@/types/dialog";
 import OpenElasticSearchService from "@/lib/api/services/ElacticQueryService/openElasticSearch/openElasticSearch";
+import type { BaseDialogProps } from "@/types/dialog";
 import { SimpleProductSearchResult } from "@/types/OpenElasticSearch/types";
-import { generateProductUrl } from "@/utils/product/slug-generator";
+import { generateProductSlug } from "@/utils/product/slug-generator";
 import React, { useEffect, useRef, useState } from "react";
 
 type SuggestionItem = {
@@ -38,8 +38,7 @@ export function SearchDialogBox({
   elasticIndex = "",
   suggestionItems,
   handleSelect,
-  setSearchValue,
-  locale = "en",
+  setSearchValue
 }: SearchDialogBoxProps) {
   const debounceRef = useRef<number | null>(null);
   const abortRef = useRef<AbortController | null>(null);
@@ -168,17 +167,16 @@ export function SearchDialogBox({
                   <CommandItem
                     key={product.productIndexName}
                     onSelect={() => {
-                      // Generate proper product URL with locale and slug
-                      const productUrl = generateProductUrl(
-                        {
-                          brand_name: product.brandsName,
-                          brands_name: product.brandsName,
-                          title: product.productShortDescription,
-                          product_index_name: product.productIndexName,
-                          product_id: product.productId,
-                        },
-                        locale
-                      );
+                      // Generate product slug without locale prefix
+                      // The handleSelect function uses i18n router which adds locale automatically
+                      const slug = generateProductSlug({
+                        brand_name: product.brandsName,
+                        brands_name: product.brandsName,
+                        title: product.productShortDescription,
+                        product_index_name: product.productIndexName,
+                        product_id: product.productId,
+                      });
+                      const productUrl = `/products/${slug}`;
                       handleSelect(productUrl);
                       setSearchValue("");
                       setOpen(false);
