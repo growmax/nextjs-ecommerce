@@ -1,37 +1,37 @@
 "use client";
 
 import {
-  closestCenter,
-  DndContext,
-  KeyboardSensor,
-  MouseSensor,
-  TouchSensor,
-  useSensor,
-  useSensors,
-  type DragEndEvent,
-  type UniqueIdentifier,
+    closestCenter,
+    DndContext,
+    KeyboardSensor,
+    MouseSensor,
+    TouchSensor,
+    useSensor,
+    useSensors,
+    type DragEndEvent,
+    type UniqueIdentifier,
 } from "@dnd-kit/core";
 import { restrictToVerticalAxis } from "@dnd-kit/modifiers";
 import {
-  arrayMove,
-  SortableContext,
-  verticalListSortingStrategy,
+    arrayMove,
+    SortableContext,
+    verticalListSortingStrategy,
 } from "@dnd-kit/sortable";
 import {
-  flexRender,
-  getCoreRowModel,
-  getFacetedRowModel,
-  getFacetedUniqueValues,
-  getFilteredRowModel,
-  getPaginationRowModel,
-  getSortedRowModel,
-  useReactTable,
-  type ColumnFiltersState,
-  type PaginationState,
-  type Row,
-  type RowSelectionState,
-  type SortingState,
-  type VisibilityState,
+    flexRender,
+    getCoreRowModel,
+    getFacetedRowModel,
+    getFacetedUniqueValues,
+    getFilteredRowModel,
+    getPaginationRowModel,
+    getSortedRowModel,
+    useReactTable,
+    type ColumnFiltersState,
+    type PaginationState,
+    type Row,
+    type RowSelectionState,
+    type SortingState,
+    type VisibilityState,
 } from "@tanstack/react-table";
 import { ChevronDown, Columns3, Plus } from "lucide-react";
 import * as React from "react";
@@ -39,26 +39,26 @@ import * as React from "react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
-  DropdownMenu,
-  DropdownMenuCheckboxItem,
-  DropdownMenuContent,
-  DropdownMenuTrigger,
+    DropdownMenu,
+    DropdownMenuCheckboxItem,
+    DropdownMenuContent,
+    DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Label } from "@/components/ui/label";
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
 } from "@/components/ui/select";
 import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
+    Table,
+    TableBody,
+    TableCell,
+    TableHead,
+    TableHeader,
+    TableRow,
 } from "@/components/ui/table";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
@@ -359,8 +359,8 @@ export function DataTable<TData>({
           </TableHeader>
           <TableBody className="**:data-[slot=table-cell]:first:w-8">
             {isLoading ? (
-              // Skeleton loading rows - dynamic based on actual data rows
-              Array.from({ length: data.length || 1 }).map((_, rowIndex) => (
+              // Skeleton loading rows - dynamic based on pageSize or actual data
+              Array.from({ length: data.length || pagination.pageSize || 5 }).map((_, rowIndex) => (
                 <TableRow key={`skeleton-${rowIndex}`}>
                   {columns.map((_, colIndex) => (
                     <TableCell key={`skeleton-cell-${rowIndex}-${colIndex}`}>

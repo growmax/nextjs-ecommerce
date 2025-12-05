@@ -708,13 +708,6 @@ const CompanyDialogBox = ({
                   label={t("locality")}
                   placeholder={t("enterLocality")}
                 />
-
-                <Separator />
-
-                {/* Location Section */}
-                <div className="space-y-4">
-                  <p className="text-sm font-semibold">{t("location")}</p>
-
                 {/* Country & State Grid */}
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <FormDropdown
@@ -786,32 +779,7 @@ const CompanyDialogBox = ({
                       placeholder={t("enterLongitude")}
                     />
                   </div>
-                </div>
-
-                <Separator />
-
-                {/* Contact Details Section */}
-                <div className="space-y-4">
-                  <p className="text-sm font-semibold">{t("contactDetails")}</p>
-
-                  {/* Contact Name & Number Grid */}
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <FormInput
-                      control={form.control}
-                      name="contactName"
-                      label={<LabelWithAsterisk label={t("contactName")} />}
-                      placeholder={t("enterContactName")}
-                    />
-
-                    <FormInput
-                      control={form.control}
-                      name="contactNumber"
-                      label={<LabelWithAsterisk label={t("contactNumber")} />}
-                      placeholder={t("enterContactNumber")}
-                    />
-                  </div>
-                </div>
-
+                  
                 <Separator />
 
                 {/* Address Type Checkboxes */}
@@ -863,6 +831,31 @@ const CompanyDialogBox = ({
                   label={<LabelWithAsterisk label={t("taxIdGst")} />}
                   placeholder={t("enterGstNumber")}
                 />
+
+                <Separator />
+
+                {/* Contact Details Section */}
+                <div className="space-y-4">
+                  <p className="text-sm font-semibold">{t("contactDetails")}</p>
+
+                  {/* Contact Name & Number Grid */}
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <FormInput
+                      control={form.control}
+                      name="contactName"
+                      label={<LabelWithAsterisk label={t("contactName")} />}
+                      placeholder={t("enterContactName")}
+                    />
+
+                    <FormInput
+                      control={form.control}
+                      name="contactNumber"
+                      label={<LabelWithAsterisk label={t("contactNumber")} />}
+                      placeholder={t("enterContactNumber")}
+                    />
+                  </div>
+                </div>
+
               </form>
             </Form>
           </div>

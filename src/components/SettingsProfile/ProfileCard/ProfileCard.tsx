@@ -200,7 +200,7 @@ export function ProfileCard({
             </div>
 
             {/* Alternate Email */}
-            <div className="w-full min-w-0 sm:col-span-2 mt-0">
+            <div className="w-full min-w-0 mt-0 mb-6">
               <FormField 
                 label={t("alternateEmail")}
                 {...(validationErrors.altEmail && { error: validationErrors.altEmail })}

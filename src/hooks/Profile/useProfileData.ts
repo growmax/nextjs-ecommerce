@@ -90,6 +90,7 @@ export function useProfileData() {
         const phoneNumber = apiData.phoneNumber || "";
         const cleanedPhone = phoneNumber
           .replace(/^\+91/, "")
+          .replace(/^\+/, "")
           .replace(/^\+null/, "")
           .replace(/^null/, "")
           .trim();
