@@ -210,16 +210,10 @@ export default function CartPageClient() {
                       </div>
                     </div>
 
-                    {/* Right Section - Quantity Controls and Delete */}
+                    {/* Right Section - Delete Button Only (No skeleton for quantity controls or total price) */}
                     <div className="flex flex-col items-end gap-3">
                       {/* Delete Button */}
                       <Skeleton className="h-8 w-8 rounded-md" />
-                      {/* Quantity Controls */}
-                      <div className="flex items-center gap-2">
-                        <Skeleton className="h-8 w-8 rounded-md" />
-                        <Skeleton className="h-5 w-8" />
-                        <Skeleton className="h-8 w-8 rounded-md" />
-                      </div>
                     </div>
                   </div>
                 </CardContent>
@@ -693,16 +687,10 @@ export default function CartPageClient() {
                       </div>
                     </div>
 
-                    {/* Right Section - Quantity Controls and Delete */}
+                    {/* Right Section - Delete Button Only (No skeleton for quantity controls or total price) */}
                     <div className="flex flex-col items-end gap-3">
                       {/* Delete Button */}
                       <Skeleton className="h-8 w-8 rounded-md" />
-                      {/* Quantity Controls */}
-                      <div className="flex items-center gap-2">
-                        <Skeleton className="h-8 w-8 rounded-md" />
-                        <Skeleton className="h-5 w-8" />
-                        <Skeleton className="h-8 w-8 rounded-md" />
-                      </div>
                     </div>
                   </div>
                 </CardContent>

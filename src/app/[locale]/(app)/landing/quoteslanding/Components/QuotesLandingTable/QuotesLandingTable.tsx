@@ -44,6 +44,8 @@ function QuotesLandingTable({
   usePageLoader();
 
   const { user } = useCurrentUser();
+  const userId = user?.userId;
+  const companyId = user?.companyId;
   const router = useNavigationWithLoader();
   const t = useTranslations("quotes");
   const { deduplicate } = useRequestDeduplication();
@@ -371,17 +373,14 @@ function QuotesLandingTable({
 
   const fetchQuotes = useCallback(async () => {
     // Don't fetch if we don't have user info yet
-    if (!user?.userId || !user?.companyId) {
-      // Keep loading true while waiting for user data
-      return;
-    }
+   
 
     // Create a unique key for this fetch request
     const fetchKey = `quotes-${JSON.stringify({
       page,
       rowPerPage,
-      userId: user.userId,
-      companyId: user.companyId,
+      userId,
+      companyId,
       filterData,
       filterPreferences: filterPreferences?.preference?.selected,
     })}`;
@@ -432,12 +431,17 @@ function QuotesLandingTable({
       }, 30000);
 
       try {
+        // Early return if userId or companyId are undefined
+        if (userId === undefined || companyId === undefined) {
+          return;
+        }
+
         // 0-based offset: Calculate proper starting record number
         const calculatedOffset = page;
 
         const queryParams = {
-          userId: user.userId,
-          companyId: user.companyId,
+          userId,
+          companyId,
           offset: calculatedOffset,
           limit: rowPerPage,
         };
@@ -777,7 +781,8 @@ function QuotesLandingTable({
   }, [
     page,
     rowPerPage,
-    user,
+    userId,
+    companyId,
     filterPreferences,
     filterData,
     initialLoad,
@@ -785,44 +790,53 @@ function QuotesLandingTable({
     deduplicate,
     onTotalCountChange,
   ]);
-
   // Store fetchQuotes in a ref to avoid dependency issues
   const fetchQuotesRef = useRef(fetchQuotes);
   useEffect(() => {
     fetchQuotesRef.current = fetchQuotes;
   }, [fetchQuotes]);
+  
+  useEffect(()=>{
+    if(userId !== undefined && companyId !== undefined){
+      fetchQuotesRef.current();
+    }
+  },[userId,companyId])
 
   // Fetch quotes after navigation completes - ensures instant navigation
   // This is the primary fetch mechanism - it handles both initial load and navigation
   usePostNavigationFetch(() => {
-    if (user?.userId && user?.companyId && !hasInitialFetchedRef.current) {
+    if (userId && companyId && !hasInitialFetchedRef.current) {
       hasInitialFetchedRef.current = true;
       fetchQuotesRef.current();
     }
-  }, [user?.userId, user?.companyId]); // Removed fetchQuotes from deps to prevent re-triggers
+  }, [userId,companyId]); // Removed fetchQuotes from deps to prevent re-triggers
 
   // Trigger fetch when page or rowPerPage changes (only after initial load)
   useEffect(() => {
     if (
-      user?.userId &&
-      user?.companyId &&
-      !initialLoad &&
+      userId &&
+      companyId &&
+    
       hasInitialFetchedRef.current
     ) {
-      fetchQuotes();
+      fetchQuotesRef.current();
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [page, rowPerPage]);
-
+  useEffect(() => {
+    if (userId && companyId) {
+      hasInitialFetchedRef.current = true;
+    }
+  }, [userId, companyId]);
   // Trigger fetch when filterData changes (only after initial load)
   useEffect(() => {
     if (
-      user?.userId &&
-      user?.companyId &&
-      !initialLoad &&
+      userId &&
+      companyId &&
+     
       hasInitialFetchedRef.current
     ) {
-      fetchQuotes();
+      fetchQuotesRef.current();
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [filterData]);
@@ -842,10 +856,9 @@ function QuotesLandingTable({
 
   useEffect(() => {
     if (refreshTrigger && refreshTrigger > 0) {
-      fetchQuotes();
+      fetchQuotesRef.current();
       toast.success(t("quotesRefreshed"));
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [refreshTrigger, t]);
 
   // Cleanup: abort any in-flight requests on unmount
@@ -1015,8 +1028,8 @@ function QuotesLandingTable({
         onSave={handleQuoteFilterSave}
         title={t("quoteFilters")}
         filterType="Quote"
-        userId={user?.userId}
-        companyId={user?.companyId}
+        userId={userId}
+        companyId={companyId}
         module="quote"
         initialFilterData={undefined}
         mode="filter"

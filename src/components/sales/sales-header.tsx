@@ -82,7 +82,7 @@ export default function SalesHeader({
   return (
     <div
       className={cn(
-        "fixed top-14 left-0 right-0 z-[90] flex flex-col md:flex-row md:items-center justify-between gap-2 md:gap-4 px-3 md:px-4 py-2 md:py-3 bg-white border-b shadow-sm transition-all duration-200",
+        "fixed top-14 left-0 right-0 z-[90] flex  md:items-center justify-between gap-2 md:gap-4 px-3 md:px-4 py-4 bg-white border-b shadow-sm transition-all duration-200",
         className
       )}
       style={{ left: leftOffset }}
@@ -90,7 +90,7 @@ export default function SalesHeader({
       {/* Left Section - Title, Identifier, and Status */}
       <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-3 flex-1 min-w-0">
         {/* Title with Edit Icon */}
-        <div className="flex items-center justify-center sm:justify-start gap-2 min-w-0">
+        <div className="flex items-center justify-start gap-2 min-w-0">
           {loading ? (
             <Skeleton className="h-6 w-48" />
           ) : (

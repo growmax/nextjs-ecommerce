@@ -59,12 +59,14 @@ export const calculateCart = ({
       // This ensures cash discount is calculated on the discounted price, not the list price
       const basePriceForCashDiscount = data.originalUnitPrice || data.unitPrice;
       const cashDiscountAmount = (basePriceForCashDiscount * data.cashdiscountValue) / 100;
-      // Apply cash discount: subtract cash discount amount from current unitPrice
-      data.unitPrice = round(data.unitPrice - cashDiscountAmount, precision);
+
+      data.unitPrice = data.unitPrice - cashDiscountAmount;
     }
 
     if (!data.volumeDiscountApplied) {
+
       data.totalPrice = data.quantity * data.unitPrice;
+
     }
 
     if (!data.itemNo) {

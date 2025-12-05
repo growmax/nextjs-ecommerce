@@ -20,12 +20,11 @@ import useUser from "@/hooks/useUser";
 // Components
 import { ApplicationLayout, PageLayout } from "@/components/layout";
 import {
-  DetailsSkeleton,
   OrderContactDetails,
   OrderPriceDetails,
   OrderProductsTable,
   OrderTermsCard,
-  SalesHeader,
+  SalesHeader
 } from "@/components/sales";
 import CashDiscountCard from "@/components/sales/CashDiscountCard";
 import ApplyVolumeDiscountBtn from "@/components/summary/ApplyVolumeDiscountBtn";
@@ -34,9 +33,9 @@ import SummaryNameCard from "@/components/summary/SummaryNameCard";
 
 // Utils
 import { useCalculation } from "@/hooks/useCalculation/useCalculation";
+import { useGlobalLoader } from "@/hooks/useGlobalLoader";
 import { containsXSS } from "@/utils/sanitization/sanitization.utils";
 import { BuyerOrderSummaryValidations } from "@/utils/summary/validation";
-import { useGlobalLoader } from "@/hooks/useGlobalLoader";
 
 // Constants
 const NEGATIVE_VALUE_MSG = "Some products have negative prices";
@@ -100,7 +99,7 @@ export default function OrderSummaryContent() {
   }, [products, initialValues?.cartValue]);
   
   // Use more lenient loading check - only show loader if critical data is not available
-  const shouldShowLoader = isLoading && !hasCriticalData;
+
   
   // Hide global navigation loader when critical data is available
   useEffect(() => {
@@ -827,20 +826,14 @@ export default function OrderSummaryContent() {
                 disabled: formState.isSubmitting || isSubmitting,
               },
             ]}
-            loading={shouldShowLoader}
+           loading={isLoading}
           />
         </div>
 
         {/* Order Summary Content - Scrollable area */}
         <div className="flex-1 w-full">
           <PageLayout variant="content">
-            {shouldShowLoader ? (
-              <DetailsSkeleton
-                showStatusTracker={false}
-                leftWidth="lg:w-[65%]"
-                rightWidth="lg:w-[33%]"
-              />
-            ) : (
+        
               <div className="flex flex-col lg:flex-row gap-2 sm:gap-3 md:gap-4 w-full">
                 {/* Left Side - Products Table, Address & Terms - 65% */}
                 <div className="w-full lg:w-[65%] space-y-2 sm:space-y-3 mt-[80px]">
@@ -849,11 +842,11 @@ export default function OrderSummaryContent() {
                     name={orderName}
                     onNameChange={handleNameChange}
                     title="Order Name"
-                    loading={shouldShowLoader}
+                     loading={isLoading}
                   />
 
                   {/* Products Table */}
-                  {!shouldShowLoader && products && products.length > 0 && (
+                
                     <Suspense fallback={null}>
                       <OrderProductsTable
                         products={products}
@@ -862,12 +855,13 @@ export default function OrderSummaryContent() {
                         editedQuantities={{}}
                         showInvoicedQty={false}
                         itemsPerPage={5}
+                        loading={isLoading}
                       />
                     </Suspense>
-                  )}
+                  
 
                   {/* Contact Details and Terms Cards - Side by Side */}
-                  {!shouldShowLoader && (
+                
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-2 sm:gap-3 md:gap-4 mt-4">
                       {/* Contact Details Card */}
                       <OrderContactDetails
@@ -926,6 +920,7 @@ export default function OrderSummaryContent() {
                             }
                           }
                         }}
+                        loading={isLoading}
                       />
 
                       {/* Terms Card */}
@@ -947,21 +942,22 @@ export default function OrderSummaryContent() {
                           warranty: preferences?.warrantyId?.description,
                           warrantyCode: preferences?.warrantyId?.warrantyCode,
                           additionalTerms: (watch("additionalTerms") as string) || "",
+                          loading:isLoading
                         }}
                       />
                     </div>
-                  )}
+                
 
                 </div>
 
                 {/* Right Side - Price Details - 33% */}
-                {!shouldShowLoader && (
+               
                   <div className="w-full lg:w-[33%] mt-[80px]">
                     <div className="space-y-4">
                       <ApplyVolumeDiscountBtn
                         uploading={formState.isSubmitting || isSubmitting}
                         isSummary={true}
-                        isLoading={shouldShowLoader}
+                       
                       />
                       {/* Show cash discount card if cash discount is enabled in settings */}
                       {quoteSettings?.showCashDiscount && (
@@ -1010,6 +1006,7 @@ export default function OrderSummaryContent() {
                           totalCashDiscount={pricingContext.cartValue?.totalCashDiscount}
                           cashDiscountValue={pricingContext.cartValue?.cashDiscountValue}
                           hidePfRate={true}
+                          loading={isLoading}
                         />
                       </Suspense>
 
@@ -1028,9 +1025,9 @@ export default function OrderSummaryContent() {
                       />
                     </div>
                   </div>
-                )}
+                
               </div>
-            )}
+            
           </PageLayout>
         </div>
       </ApplicationLayout>

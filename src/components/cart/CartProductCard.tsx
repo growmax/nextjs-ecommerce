@@ -58,9 +58,9 @@ export default function CartProductCard({
   // Extract product image source
   const productImageSrc = useMemo(() => {
     // Priority 1: Direct access to productAssetss array - get first image source
-    if (item.productAssetss && Array.isArray(item.productAssetss) && item.productAssetss.length > 0) {
+    if (item.productAsset && Array.isArray(item.productAsset) && item.productAsset.length > 0) {
       // Direct access to first asset's source
-      const firstAsset = item.productAssetss[0];
+      const firstAsset = item.productAsset[0];
       if (firstAsset && firstAsset.source) {
         const source = String(firstAsset.source).trim();
         if (source && source !== "") {
@@ -79,7 +79,7 @@ export default function CartProductCard({
     
     // Priority 3: Return empty string (will show placeholder)
     return "";
-  }, [item.productAssetss, item.img]);
+  }, [item.productAsset, item.img]);
 
   // Get suitable discount based on quantity
   const { suitableDiscount } = useMemo(() => {
@@ -219,7 +219,7 @@ export default function CartProductCard({
       setIsUpdating(false);
     }
   };
-  console.log(item);
+  
   if (compact) {
     return (
       <div className="flex items-center justify-between p-2 border rounded">
@@ -269,12 +269,12 @@ export default function CartProductCard({
       </div>
     );
   }
-  console.log(pricingResult);
+ 
  
   return (
     <Card>
       <CardContent className="p-3 sm:p-4">
-        <div className="flex gap-3 sm:gap-6 relative">
+        <div className="flex items-start gap-3 sm:gap-6 relative">
           {/* Product Image - Left */}
           <div className="relative w-20 h-20 sm:w-24 sm:h-24 flex-shrink-0 bg-muted rounded-lg overflow-hidden">
             <ImageWithFallback
@@ -288,7 +288,7 @@ export default function CartProductCard({
           </div>
 
           {/* Product Info - Center */}
-          <div className="flex-1 min-w-0">
+          <div className="flex-1 min-w-0 flex flex-col">
             {/* Title - Product Short Description */}
             <h3 className="font-bold text-sm sm:text-base mb-1 line-clamp-2">
               {item.productShortDescription ||
@@ -298,7 +298,7 @@ export default function CartProductCard({
             </h3>
 
             {/* Brand Name and Product ID */}
-            <div className="flex items-center gap-1.5 sm:gap-2 text-xs sm:text-sm text-gray-500 mb-1.5 sm:mb-2">
+            <div className="flex items-center gap-1.5 sm:gap-2 text-xs sm:text-sm text-gray-500 mb-1 sm:mb-1.5">
               {item.brandName || item.brandsName ? (
                 <>
                   <span className="truncate">{item.brandName || item.brandsName}</span>
@@ -308,47 +308,49 @@ export default function CartProductCard({
               {item.itemNo && <span className="truncate">{item.itemNo}</span>}
             </div>
 
-            {/* Seller */}
+            {/* Seller - Hidden on mobile */}
             {item.sellerName && (
-              <p className="text-xs sm:text-sm text-gray-500 mb-1.5 sm:mb-2 line-clamp-1">
+              <p className="hidden sm:block text-xs sm:text-sm text-gray-500 mb-1.5 sm:mb-2 line-clamp-1">
                 {t("seller")}: {item.sellerName}
                 {item.sellerLocation && ` - ${item.sellerLocation}`}
               </p>
             )}
 
-            {/* Price Display */}
-            <div className="flex flex-col gap-1 mb-2">
+            {/* Price Display - Reduced font size on mobile */}
+            <div className="flex flex-col gap-1 mb-2.5 sm:mb-2">
               {pricingResult && (
                 <>
-                  <ProductPricing
-                    pricingResult={{
-                      final_Price: pricingResult.final_Price,
-                      final_listing_price: pricingResult.final_listing_price,
-                      ...(pricingResult.discounted_Price !== undefined && {
-                        discounted_Price: pricingResult.discounted_Price,
-                      }),
-                      ...(pricingResult.discount_Percentage !== undefined && {
-                        discount_Percentage: pricingResult.discount_Percentage,
-                      }),
-                      ...(pricingResult.isPriceNotAvailable !== undefined && {
-                        isPriceNotAvailable: pricingResult.isPriceNotAvailable,
-                      }),
-                    }}
-                    pricingConditions={pricingConditions}
-                    loading={isPricingLoading}
-                    variant="default"
-                    showDiscountBadge={false}
-                    showMRPLabel={true}
-                    {...(item.discount || item.discountPercentage
-                      ? {
-                          discountPercentage:
-                            item.discount ?? item.discountPercentage ?? 0,
-                        }
-                      : {})}
-                  />
+                  <div className="text-xs sm:text-base">
+                    <ProductPricing
+                      pricingResult={{
+                        final_Price: pricingResult.final_Price,
+                        final_listing_price: pricingResult.final_listing_price,
+                        ...(pricingResult.discounted_Price !== undefined && {
+                          discounted_Price: pricingResult.discounted_Price,
+                        }),
+                        ...(pricingResult.discount_Percentage !== undefined && {
+                          discount_Percentage: pricingResult.discount_Percentage,
+                        }),
+                        ...(pricingResult.isPriceNotAvailable !== undefined && {
+                          isPriceNotAvailable: pricingResult.isPriceNotAvailable,
+                        }),
+                      }}
+                      pricingConditions={pricingConditions}
+                      loading={isPricingLoading}
+                      variant="default"
+                      showDiscountBadge={false}
+                      showMRPLabel={true}
+                      {...(item.discount || item.discountPercentage
+                        ? {
+                            discountPercentage:
+                              item.discount ?? item.discountPercentage ?? 0,
+                          }
+                        : {})}
+                    />
+                  </div>
                   {/* Tax Inclusive Note */}
                   {!taxExempted && item.taxInclusive && (
-                    <span className="text-xs text-blue-600">
+                    <span className="text-[10px] sm:text-xs text-blue-600">
                       {t("inclusiveOfAllTaxes")}
                     </span>
                   )}
@@ -365,20 +367,20 @@ export default function CartProductCard({
 
                   if (unitPrice > 0) {
                     return (
-                      <div className="flex items-center gap-2 flex-wrap">
-                        {/* Current Price */}
-                        <span className="font-bold text-base">
+                      <div className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-2">
+                        {/* Current Price - Reduced size on mobile */}
+                        <span className="font-bold text-xs sm:text-base">
                           <PricingFormat value={unitPrice} />
                         </span>
                         {/* Original Price (Struck Through) */}
                         {showOriginalPrice && (
-                          <div className="flex items-center gap-1.5 whitespace-nowrap">
-                            <span className="text-gray-500 line-through text-sm whitespace-nowrap">
+                          <div className="flex items-center gap-1.5 flex-wrap">
+                            <span className="text-gray-500 line-through text-[10px] sm:text-sm">
                               <PricingFormat value={originalPrice} />
                             </span>
                             {/* Discount Percentage */}
                             {showDiscount && (
-                              <span className="font-bold text-green-600 text-sm">
+                              <span className="font-semibold text-green-600 text-[10px] sm:text-sm">
                                 {Math.round(discount)}% OFF
                               </span>
                             )}
@@ -386,7 +388,7 @@ export default function CartProductCard({
                         )}
                         {/* Discount Badge (if no original price shown) */}
                         {!showOriginalPrice && showDiscount && (
-                          <span className="font-bold text-green-600 text-sm">
+                          <span className="font-semibold text-green-600 text-[10px] sm:text-sm">
                             {Math.round(discount)}% OFF
                           </span>
                         )}
@@ -394,13 +396,13 @@ export default function CartProductCard({
                     );
                   } else if (originalPrice > 0) {
                     return (
-                      <span className="font-bold text-base">
+                      <span className="font-bold text-xs sm:text-base">
                         <PricingFormat value={originalPrice} />
                       </span>
                     );
                   } else {
                     return (
-                      <span className="font-bold text-base">
+                      <span className="font-bold text-xs sm:text-base">
                         {t("requestPrice")}
                       </span>
                     );
@@ -408,8 +410,45 @@ export default function CartProductCard({
                 })()}
             </div>
 
+            {/* Quantity Controls - Mobile: At bottom of price detail */}
+            <div className="flex items-center gap-2.5 sm:hidden mb-2.5">
+              <Button
+                variant="outline"
+                size="icon"
+                className="h-10 w-10 rounded-md border-gray-300 hover:bg-gray-100 active:bg-gray-200"
+                onClick={() => handleQuantityChange(item.quantity - 1)}
+                disabled={isUpdating || item.quantity <= 1}
+              >
+                {isUpdating ? (
+                  <Loader2 className="h-5 w-5 animate-spin text-primary" />
+                ) : (
+                  <Minus className="h-5 w-5" />
+                )}
+              </Button>
+              <span className="w-12 text-center font-semibold text-base relative">
+                {isUpdating ? (
+                  <Loader2 className="h-5 w-5 animate-spin mx-auto text-primary" />
+                ) : (
+                  item.quantity
+                )}
+              </span>
+              <Button
+                variant="outline"
+                size="icon"
+                className="h-10 w-10 rounded-md border-gray-300 hover:bg-gray-100 active:bg-gray-200"
+                onClick={() => handleQuantityChange(item.quantity + 1)}
+                disabled={isUpdating}
+              >
+                {isUpdating ? (
+                  <Loader2 className="h-5 w-5 animate-spin text-primary" />
+                ) : (
+                  <Plus className="h-5 w-5" />
+                )}
+              </Button>
+            </div>
+
             {/* Quantity, Pack of, and MOQ */}
-            <div className="flex items-center gap-1 sm:gap-1.5 text-[10px] sm:text-xs text-gray-500 mb-1 whitespace-nowrap overflow-hidden">
+            <div className="flex items-center gap-1 sm:gap-1.5 text-[10px] sm:text-xs text-gray-500 mb-1.5 sm:mb-1 whitespace-nowrap overflow-hidden">
               <span className="shrink-0">{item.quantity}</span>
               {(item.packagingQuantity || item.packagingQty) && (
                 <>
@@ -432,7 +471,7 @@ export default function CartProductCard({
             {/* Inventory Status */}
             {item.inventoryResponse !== undefined && (
               <p
-                className={`text-xs sm:text-sm font-bold ${
+                className={`text-xs sm:text-sm font-semibold mb-0.5 ${
                   item.inventoryResponse.inStock
                     ? "text-green-600"
                     : "text-red-600"
@@ -445,58 +484,51 @@ export default function CartProductCard({
             )}
 
             {item.replacement && (
-              <p className="text-xs text-orange-600 mb-1 mt-1">
+              <p className="text-xs text-orange-600 mb-0.5 mt-0.5">
                 {t("replacementProduct")}
               </p>
             )}
             {errorMessage && (
-              <p className="text-xs text-red-600 mt-1">{errorMessage}</p>
+              <p className="text-xs text-red-600 mt-0.5">{errorMessage}</p>
             )}
           </div>
 
-          {/* Right Section - Quantity Controls and Delete */}
-          <div className="flex flex-col items-end gap-2 sm:gap-3 shrink-0">
+          {/* Right Section - Delete Button and Total Price (Desktop: includes quantity controls) */}
+          <div className="flex flex-col items-end gap-2.5 sm:gap-3 shrink-0 self-start">
             {/* Delete Button and Total Price - Vertical Layout */}
-            <div className="flex flex-col items-end gap-1 sm:gap-2">
+            <div className="flex flex-col items-end gap-2 sm:gap-2">
               {/* Delete Button - First (Top) */}
               <Button
                 variant="ghost"
                 size="icon"
-                className="h-7 w-7 sm:h-8 sm:w-8 rounded-md hover:bg-gray-200 shrink-0"
+                className="h-8 w-8 sm:h-8 sm:w-8 rounded-md hover:bg-gray-200 active:bg-gray-300 shrink-0"
                 onClick={handleDelete}
                 disabled={isUpdating}
               >
-                <Trash2 className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
+                <Trash2 className="h-4 w-4 sm:h-4 sm:w-4" />
               </Button>
-              {/* Total Price (Price × Quantity) - Second (Below) - Smaller text */}
-              <div>
-                {(() => {
-                  // Calculate total price
-                  if (isPricingLoading) {
-                    return (
-                      <Skeleton className="h-4 w-16 sm:h-4 sm:w-20" />
-                    );
-                  }
-                  
-                  const unitPrice = pricingResult
-                    ? pricingResult.final_listing_price
-                    : item.unitPrice || item.unitListPrice || 0;
-                  const totalPrice = unitPrice * item.quantity;
-                  
-                  if (totalPrice > 0) {
-                    return (
-                      <span className="font-bold text-xs sm:text-sm whitespace-nowrap">
+              {/* Total Price (Price × Quantity) - Hidden on mobile, no skeleton */}
+              {!isPricingLoading && (() => {
+                const unitPrice = pricingResult
+                  ? pricingResult.final_listing_price
+                  : item.unitPrice || item.unitListPrice || 0;
+                const totalPrice = unitPrice * item.quantity;
+                
+                if (totalPrice > 0) {
+                  return (
+                    <div className="hidden sm:block text-right">
+                      <span className="font-semibold text-xs sm:text-sm whitespace-nowrap">
                         <PricingFormat value={totalPrice} />
                       </span>
-                    );
-                  }
-                  return null;
-                })()}
-              </div>
+                    </div>
+                  );
+                }
+                return null;
+              })()}
             </div>
 
-            {/* Quantity Controls - Square rounded buttons */}
-            <div className="flex items-center gap-1.5 sm:gap-2 relative">
+            {/* Quantity Controls - Desktop only (hidden on mobile) */}
+            <div className="hidden sm:flex items-center gap-1.5 sm:gap-2 relative">
               <Button
                 variant="outline"
                 size="icon"

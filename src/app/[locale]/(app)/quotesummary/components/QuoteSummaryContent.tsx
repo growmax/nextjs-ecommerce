@@ -22,14 +22,14 @@ import useModuleSettings from "@/hooks/useModuleSettings";
 import useUser from "@/hooks/useUser";
 
 // Components
+import { ConfirmationDialog } from "@/components/dialogs/common";
 import { ApplicationLayout, PageLayout } from "@/components/layout";
 import {
-  DetailsSkeleton,
   OrderContactDetails,
   OrderPriceDetails,
   OrderProductsTable,
   OrderTermsCard,
-  SalesHeader,
+  SalesHeader
 } from "@/components/sales";
 import CashDiscountCard from "@/components/sales/CashDiscountCard";
 import ApplyVolumeDiscountBtn from "@/components/summary/ApplyVolumeDiscountBtn";
@@ -38,7 +38,6 @@ import SPRForm from "@/components/summary/SPRForm";
 import SummaryNameCard from "@/components/summary/SummaryNameCard";
 import TargetDiscountCard from "@/components/summary/TargetDiscountCard";
 import { Checkbox } from "@/components/ui/checkbox";
-import { ConfirmationDialog } from "@/components/dialogs/common";
 import { Label } from "@/components/ui/label";
 import { FileText } from "lucide-react";
 
@@ -116,7 +115,7 @@ export default function QuoteSummaryContent() {
   }, [products, initialValues?.cartValue]);
 
   // Use more lenient loading check - only show loader if critical data is not available
-  const shouldShowLoader = isLoading && !hasCriticalData;
+ 
 
   // Hide global navigation loader when critical data is available
   useEffect(() => {
@@ -1253,7 +1252,7 @@ export default function QuoteSummaryContent() {
     preferencesForPricing?.insuranceId?.insuranceValue,
     cartValue,
   ]);
- 
+   console.log(isLoading);
   return (
     <FormProvider {...methods}>
       <ApplicationLayout>
@@ -1309,21 +1308,14 @@ export default function QuoteSummaryContent() {
                 disabled: formState.isSubmitting || !hasQuotePermission,
               },
             ]}
-            loading={shouldShowLoader}
+            
           />
         </div>
 
         {/* Quote Summary Content - Scrollable area */}
         <div className="flex-1 w-full">
           <PageLayout variant="content">
-            {shouldShowLoader ? (
-              <DetailsSkeleton
-                showStatusTracker={false}
-                leftWidth="lg:w-[65%]"
-                rightWidth="lg:w-[33%]"
-              />
-            ) : (
-              <div className="flex flex-col lg:flex-row gap-2 sm:gap-3 md:gap-4 w-full">
+          <div className="flex flex-col lg:flex-row gap-2 sm:gap-3 md:gap-4 w-full px-0.5">
                 {/* Left Side - Products Table, Address & Terms - 65% */}
                 <div className="w-full lg:w-[65%] space-y-2 sm:space-y-3 mt-[80px]">
                   {/* Quote Name Card */}
@@ -1331,12 +1323,12 @@ export default function QuoteSummaryContent() {
                     name={quoteName}
                     onNameChange={handleNameChange}
                     title="Name"
-                    loading={shouldShowLoader}
+                    loading={isLoading}
                   />
 
                   {/* Products Table */}
-                  {!shouldShowLoader && products && products.length > 0 && (
-                    <Suspense fallback={null}>
+               
+                    
                       <OrderProductsTable
                         products={products}
                         isEditable={true}
@@ -1344,15 +1336,16 @@ export default function QuoteSummaryContent() {
                         editedQuantities={{}}
                         showInvoicedQty={false}
                         itemsPerPage={5}
+                        loading={isLoading}
                       />
-                    </Suspense>
-                  )}
+                 
 
                   {/* Contact Details and Terms Cards - Side by Side */}
-                  {!shouldShowLoader && (
+                 
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-2 sm:gap-3 md:gap-4 mt-4">
                       {/* Contact Details Card */}
                       <OrderContactDetails
+                        loading={isLoading}
                         billingAddress={
                           (watch("setBillingAddress" as any) as any) || null
                         }
@@ -1473,6 +1466,7 @@ export default function QuoteSummaryContent() {
                       {/* Terms Card */}
                       <OrderTermsCard
                         orderTerms={{
+                          loading :isLoading,
                           // Map preference structure to match buyer-fe TermsCard format
                           // Reference: buyer-fe TermsCard.js lines 66-154
                           deliveryTerms:
@@ -1505,7 +1499,7 @@ export default function QuoteSummaryContent() {
                         }}
                       />
                     </div>
-                  )}
+                
 
                   {/* End Customer Info - Required Date and Buyer Reference Number */}
                   {/* {!isLoading && (
@@ -1520,13 +1514,13 @@ export default function QuoteSummaryContent() {
                 </div>
 
                 {/* Right Side - Price Details, Customer Information, and Attachments - 33% */}
-                {!shouldShowLoader && (
+                
                   <div className="w-full lg:w-[33%] mt-[80px]">
                     <div className="space-y-4">
                       <ApplyVolumeDiscountBtn
                         uploading={formState.isSubmitting}
                         isSummary={true}
-                        isLoading={shouldShowLoader}
+                       
                       />
                       {/* Show cash discount card if cash discount is enabled in settings */}
                       {/* The card component itself handles visibility based on cashDiscountValue and isSummaryPage */}
@@ -1582,6 +1576,7 @@ export default function QuoteSummaryContent() {
                             pricingContext.cartValue?.cashDiscountValue
                           }
                           hidePfRate={true}
+                          loading={isLoading}
                         />
                       </Suspense>
 
@@ -1592,6 +1587,7 @@ export default function QuoteSummaryContent() {
                           <TargetDiscountCard
                             isContentPage={false}
                             isSummaryPage={true}
+                            loading = {isLoading}
                           />
                         </div>
                       )}
@@ -1633,9 +1629,9 @@ export default function QuoteSummaryContent() {
                       />
                     </div>
                   </div>
-                )}
+              
               </div>
-            )}
+            
           </PageLayout>
         </div>
 

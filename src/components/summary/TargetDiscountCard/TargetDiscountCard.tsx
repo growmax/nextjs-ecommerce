@@ -6,13 +6,14 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import useModuleSettings from "@/hooks/useModuleSettings";
 import useUser from "@/hooks/useUser";
+import isNaN from "lodash/isNaN";
 import { useEffect, useMemo, useRef } from "react";
 import { useFormContext } from "react-hook-form";
-import isNaN from "lodash/isNaN";
 
 interface TargetDiscountCardProps {
   isContentPage?: boolean;
   isSummaryPage?: boolean;
+  loading?:boolean;
 }
 
 /**
@@ -25,6 +26,7 @@ interface TargetDiscountCardProps {
 export default function TargetDiscountCard({
   isContentPage = false,
   isSummaryPage = true,
+  loading
 }: TargetDiscountCardProps) {
   const { setValue, watch, trigger, formState: { errors } } = useFormContext();
   const { companydata } = useUser();
@@ -264,7 +266,7 @@ export default function TargetDiscountCard({
               <Input
                 id="targetDiscount"
                 type="number"
-                value={sprRequestedDiscount || 0}
+                value={loading ? 0 : sprRequestedDiscount || 0}
                 onChange={handleTargetDiscountChange}
                 className={targetDiscountError ? "border-red-500" : ""}
               />
@@ -294,7 +296,7 @@ export default function TargetDiscountCard({
               <Input
                 id="targetPrice"
                 type="number"
-                value={targetPrice || ""}
+                value={loading ? 0 :targetPrice || ""}
                 onChange={handleTargetPriceChange}
                 className={targetPriceError ? "border-red-500" : ""}
               />

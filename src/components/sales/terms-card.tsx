@@ -2,6 +2,7 @@
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
+import { Skeleton } from "@/components/ui/skeleton";
 import { useTranslations } from "next-intl";
 
 interface OrderTerms {
@@ -40,6 +41,7 @@ interface OrderTerms {
   payOnDelivery?: boolean;
   bnplEnabled?: boolean;
   additionalTerms?: string;
+  loading?: boolean;
 }
 
 interface OrderTermsCardProps {
@@ -59,19 +61,26 @@ const TermRow = ({
 
   return (
     <div className="grid grid-cols-2 gap-4 py-1.5">
-      <div>
-        <p className="text-sm font-normal text-gray-900">{label}</p>
-      </div>
-      <div>
-        <p className="text-sm font-semibold text-gray-900">{value || "-"}</p>
-      </div>
+      <p className="text-sm font-normal text-gray-900">{label}</p>
+      <p className="text-sm font-semibold text-gray-900">{value || "-"}</p>
     </div>
   );
 };
 
+// 👉 Skeleton Row Component
+const SkeletonRow = () => (
+  <div className="grid grid-cols-2 gap-4 py-1.5">
+    <Skeleton className="h-4 w-32" />
+    <Skeleton className="h-4 w-48" />
+  </div>
+);
+
 export default function OrderTermsCard({ orderTerms }: OrderTermsCardProps) {
   const t = useTranslations("components");
+
   if (!orderTerms) return null;
+
+  const isLoading = orderTerms.loading;
 
   return (
     <Card className="shadow-sm pb-0 py-0 gap-0">
@@ -80,78 +89,89 @@ export default function OrderTermsCard({ orderTerms }: OrderTermsCardProps) {
           {t("terms")}
         </CardTitle>
       </CardHeader>
+
       <Separator />
+
       <CardContent className="px-6 pt-2 gap-0">
         <div className="divide-y divide-gray-100 [&>div:last-child]:pb-4">
-          {/* Delivery Place */}
-          <TermRow
-            label={t("deliveryPlace")}
-            value={orderTerms.deliveryTermsCode2}
-            showEmpty={true}
-          />
+          {isLoading ? (
+            // ⭐ Show 7 skeleton rows ⭐
+            <>
+              <SkeletonRow />
+              <SkeletonRow />
+              <SkeletonRow />
+              <SkeletonRow />
+              <SkeletonRow />
+              <SkeletonRow />
+              <SkeletonRow />
+            </>
+          ) : (
+            <>
+              <TermRow
+                label={t("deliveryPlace")}
+                value={orderTerms.deliveryTermsCode2}
+                showEmpty={true}
+              />
 
-          {/* Payment Terms */}
-          <TermRow
-            label={t("paymentTerms")}
-            value={
-              orderTerms.paymentTerms && orderTerms.paymentTermsCode
-                ? `${orderTerms.paymentTerms} - (${orderTerms.paymentTermsCode})`
-                : orderTerms.paymentTerms
-            }
-            showEmpty={true}
-          />
+              <TermRow
+                label={t("paymentTerms")}
+                value={
+                  orderTerms.paymentTerms && orderTerms.paymentTermsCode
+                    ? `${orderTerms.paymentTerms} - (${orderTerms.paymentTermsCode})`
+                    : orderTerms.paymentTerms
+                }
+                showEmpty={true}
+              />
 
-          {/* Packing & Forwarding */}
-          <TermRow
-            label={t("packingForwarding")}
-            value={
-              orderTerms.packageForwarding && orderTerms.packageForwardingCode
-                ? `${orderTerms.packageForwarding} - (${orderTerms.packageForwardingCode})`
-                : orderTerms.packageForwarding
-            }
-            showEmpty={true}
-          />
+              <TermRow
+                label={t("packingForwarding")}
+                value={
+                  orderTerms.packageForwarding &&
+                  orderTerms.packageForwardingCode
+                    ? `${orderTerms.packageForwarding} - (${orderTerms.packageForwardingCode})`
+                    : orderTerms.packageForwarding
+                }
+                showEmpty={true}
+              />
 
-          {/* Mode of Dispatch */}
-          <TermRow
-            label={t("modeOfDispatch")}
-            value={
-              orderTerms.dispatchInstructions &&
-              orderTerms.dispatchInstructionsCode
-                ? `${orderTerms.dispatchInstructions} - (${orderTerms.dispatchInstructionsCode})`
-                : orderTerms.dispatchInstructions
-            }
-            showEmpty={true}
-          />
+              <TermRow
+                label={t("modeOfDispatch")}
+                value={
+                  orderTerms.dispatchInstructions &&
+                  orderTerms.dispatchInstructionsCode
+                    ? `${orderTerms.dispatchInstructions} - (${orderTerms.dispatchInstructionsCode})`
+                    : orderTerms.dispatchInstructions
+                }
+                showEmpty={true}
+              />
 
-          {/* Freight */}
-          <TermRow
-            label={t("freight")}
-            value={
-              orderTerms.freight && orderTerms.freightCode
-                ? `${orderTerms.freight} - (${orderTerms.freightCode})`
-                : orderTerms.freight
-            }
-            showEmpty={true}
-          />
+              <TermRow
+                label={t("freight")}
+                value={
+                  orderTerms.freight && orderTerms.freightCode
+                    ? `${orderTerms.freight} - (${orderTerms.freightCode})`
+                    : orderTerms.freight
+                }
+                showEmpty={true}
+              />
 
-          {/* Insurance */}
-          <TermRow
-            label={t("insurance")}
-            value={
-              orderTerms.insurance && orderTerms.insuranceCode
-                ? `${orderTerms.insurance} - (${orderTerms.insuranceCode})`
-                : orderTerms.insurance
-            }
-            showEmpty={true}
-          />
+              <TermRow
+                label={t("insurance")}
+                value={
+                  orderTerms.insurance && orderTerms.insuranceCode
+                    ? `${orderTerms.insurance} - (${orderTerms.insuranceCode})`
+                    : orderTerms.insurance
+                }
+                showEmpty={true}
+              />
 
-          {/* Additional Terms */}
-          <TermRow
-            label={t("additionalTerms")}
-            value={orderTerms.additionalTerms}
-            showEmpty={true}
-          />
+              <TermRow
+                label={t("additionalTerms")}
+                value={orderTerms.additionalTerms}
+                showEmpty={true}
+              />
+            </>
+          )}
         </div>
       </CardContent>
     </Card>

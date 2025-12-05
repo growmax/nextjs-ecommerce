@@ -19,6 +19,7 @@ import { cn } from "@/lib/utils";
 import { Download } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useState } from "react";
+import { Skeleton } from "../ui/skeleton";
 import type { ProductSearchResult } from "./ProductSearchInput";
 import ProductSearchInput from "./ProductSearchInput";
 
@@ -65,6 +66,7 @@ export interface OrderProductsTableProps {
   onProductAdd?: (product: ProductSearchResult) => void;
   elasticIndex?: string | undefined;
   showInvoicedQty?: boolean;
+  loading?:boolean;
 }
 
 //
@@ -80,6 +82,7 @@ export default function OrderProductsTable({
   onProductAdd,
   elasticIndex,
   showInvoicedQty = true,
+  loading = false,
 }: OrderProductsTableProps) {
   const t = useTranslations("components");
   const [currentPage, setCurrentPage] = useState(1);
@@ -137,33 +140,43 @@ export default function OrderProductsTable({
     <Card className={cn("gap-0 py-0", className)}>
       {/* Header */}
       <CardHeader className="pt-2 pb-2 px-4 gap-0 flex flex-row items-center justify-between">
-        <div className="flex-1 flex items-center justify-between">
-          <CardTitle className="text-base font-semibold py-0 my-0 leading-tight -mt-0.5">
-            {t("products")} ({displayCount})
-          </CardTitle>
-          {/* Show search input in edit mode, export button in view mode */}
-          {onProductAdd ? (
-            <div className="w-full max-w-[calc(28rem-120px)] ml-4">
-              <ProductSearchInput
-                onProductSelect={onProductAdd}
-                placeholder={t("searchAndAddProducts")}
-                elasticIndex={elasticIndex}
-              />
-            </div>
+          {loading ? (
+             <div className="flex-1 flex items-center justify-between">
+               <CardTitle className="text-base font-semibold py-0 my-0 leading-tight -mt-0.5">
+                <Skeleton className="h-4 w-20 mb-2" />
+               </CardTitle>
+             </div>
           ) : (
-            onExport && (
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={onExport}
-                className="h-7 px-3 text-xs font-medium"
-              >
-                <Download className="h-3.5 w-3.5 mr-1.5" />
-                {t("export")}
-              </Button>
-            )
+             <div className="flex-1 flex items-center justify-between">
+
+             <CardTitle className="text-base font-semibold py-0 my-0 leading-tight -mt-0.5">
+               {t("products")} ({displayCount})
+             </CardTitle>
+             {/* Show search input in edit mode, export button in view mode */}
+             {onProductAdd ? (
+               <div className="w-full max-w-[calc(28rem-120px)] ml-4">
+                 <ProductSearchInput
+                   onProductSelect={onProductAdd}
+                   placeholder={t("searchAndAddProducts")}
+                   elasticIndex={elasticIndex}
+                 />
+               </div>
+             ) : (
+               onExport && (
+                 <Button
+                   variant="outline"
+                   size="sm"
+                   onClick={onExport}
+                   className="h-7 px-3 text-xs font-medium"
+                 >
+                   <Download className="h-3.5 w-3.5 mr-1.5" />
+                   {t("export")}
+                 </Button>
+               )
+             )}
+           </div>
           )}
-        </div>
+       
       </CardHeader>
 
       {/* Products Table */}
@@ -171,6 +184,26 @@ export default function OrderProductsTable({
         <div className="overflow-x-auto relative">
           <Table>
             <TableHeader>
+              {loading ? (
+                <TableRow className="bg-muted hover:bg-muted">
+                  <TableHead className="font-medium text-primary sticky left-0 bg-muted z-20 min-w-[150px] sm:min-w-[200px] shadow-[2px_0_4px_-2px_rgba(0,0,0,0.1)] py-3 before:absolute before:inset-0 before:bg-muted before:-z-10">
+                    <Skeleton className="h-4 w-20 mb-2" />
+                  </TableHead>
+                  <TableHead className="font-medium text-primary text-right min-w-[140px] py-3">
+                    <Skeleton className="h-4 w-20 mb-2" />
+                  </TableHead>
+                  <TableHead className="font-medium text-primary text-right min-w-[120px] py-3">
+                    <Skeleton className="h-4 w-20 mb-2" />
+                  </TableHead>
+                  <TableHead className="font-medium text-primary text-right min-w-[120px] py-3">
+                    <Skeleton className="h-4 w-20 mb-2" />
+                  </TableHead>
+                  <TableHead className="font-medium text-primary text-right min-w-[140px] py-3">
+                    <Skeleton className="h-4 w-20 mb-2" />
+                  </TableHead>
+                
+                </TableRow>
+              ) : (
               <TableRow className="bg-muted hover:bg-muted">
                 <TableHead className="font-medium text-primary sticky left-0 bg-muted z-20 min-w-[150px] sm:min-w-[200px] shadow-[2px_0_4px_-2px_rgba(0,0,0,0.1)] py-3 before:absolute before:inset-0 before:bg-muted before:-z-10">
                   <span className="relative z-10">{t("items")}</span>
@@ -204,10 +237,47 @@ export default function OrderProductsTable({
                 <TableHead className="font-medium text-primary text-right min-w-[100px] py-3 pr-5">
                   {t("igst")}
                 </TableHead>
-              </TableRow>
+              </TableRow>)}
             </TableHeader>
             <TableBody className="min-h-60">
-              {currentPageProducts.length === 0 ? (
+              {loading ? (
+                <>
+                    {Array.from({ length: 5 }).map((_, rowIndex) => (
+        <TableRow
+          key={`skeleton-row-${rowIndex}`}
+          className="h-12 border-b"
+        >
+          {/* Product column skeleton */}
+          <TableCell className="sticky left-0 bg-white dark:bg-gray-950 z-10 min-w-[150px] sm:min-w-[200px] shadow-[2px_0_4px_-2px_rgba(0,0,0,0.1)] py-3">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-lg bg-gray-200 dark:bg-gray-800 animate-pulse"></div>
+              <div className="flex flex-col gap-1 w-full">
+                <div className="h-4 bg-gray-200 dark:bg-gray-800 rounded animate-pulse w-3/4"></div>
+                <div className="h-3 bg-gray-200 dark:bg-gray-800 rounded animate-pulse w-1/2"></div>
+              </div>
+            </div>
+          </TableCell>
+
+          {/* Other table columns skeleton */}
+          {[
+            140, 120, 120, 140, 120, 100, // always
+            showInvoicedQty ? 140 : null, // conditional
+            150, 100, // last 2 columns
+          ]
+            .filter(Boolean)
+            .map((width, colIndex) => (
+              <TableCell
+                key={`skeleton-col-${rowIndex}-${colIndex}`}
+                className={`min-w-[${width}px] py-3`}
+              >
+                <div className="h-4 bg-gray-200 dark:bg-gray-800 rounded animate-pulse w-3/4 mx-auto"></div>
+              </TableCell>
+            ))}
+        </TableRow>
+      ))}
+                </>
+              ) :
+              currentPageProducts.length === 0 ? (
                 <TableRow>
                   <TableCell
                     colSpan={showInvoicedQty ? 10 : 9}

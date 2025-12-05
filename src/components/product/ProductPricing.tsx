@@ -39,23 +39,23 @@ export default function ProductPricing({
   showMRPLabel: _showMRPLabel = true,
   discountPercentage: discountPercentageProp,
 }: ProductPricingProps) {
-  // Size variants
+  // Size variants - Responsive for mobile
   const sizeClasses = {
-    large: "text-3xl font-bold",
-    default: "text-xl font-bold",
-    compact: "text-base font-bold",
+    large: "text-2xl sm:text-3xl font-bold",
+    default: "text-xs sm:text-xl font-bold",
+    compact: "text-sm sm:text-base font-bold",
   };
 
   const strikethroughSizeClasses = {
-    large: "text-base",
-    default: "text-sm",
-    compact: "text-xs",
+    large: "text-sm sm:text-base",
+    default: "text-[10px] sm:text-sm",
+    compact: "text-[10px] sm:text-xs",
   };
 
   const discountSizeClasses = {
-    large: "text-sm",
-    default: "text-sm",
-    compact: "text-xs",
+    large: "text-xs sm:text-sm",
+    default: "text-[10px] sm:text-sm",
+    compact: "text-[10px] sm:text-xs",
   };
 
   if (loading) {
@@ -115,7 +115,7 @@ export default function ProductPricing({
               
               if (discountPercent > 0) {
                 return (
-                  <span className="font-bold text-green-600 text-sm">
+                  <span className={`font-bold text-green-600 ${discountSizeClasses[variant]}`}>
                     {Math.round(discountPercent)}%
                   </span>
                 );

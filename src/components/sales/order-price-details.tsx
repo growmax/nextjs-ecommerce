@@ -16,6 +16,7 @@ import { ChevronDown } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useMemo, useState } from "react";
 import PricingFormat from "../PricingFormat";
+import { Skeleton } from "../ui/skeleton";
 
 interface TaxDetail {
   name: string;
@@ -71,6 +72,7 @@ interface OrderPriceDetailsProps {
   beforeTaxPercentage?: number;
   // Shipping Tax (calculated)
   shippingTax?: number;
+  loading?:boolean;
 }
 
 export default function OrderPriceDetails({
@@ -98,6 +100,7 @@ export default function OrderPriceDetails({
   getBreakup = [],
   isBeforeTax = false,
   shippingTax = 0,
+  loading
 }: OrderPriceDetailsProps) {
   const t = useTranslations("components");
   const [taxExpanded, setTaxExpanded] = useState(false);
@@ -400,6 +403,7 @@ export default function OrderPriceDetails({
     propCashDiscountValue,
     propTotalCashDiscount,
   ]);
+ 
 
   // Extract tax breakdown from getBreakup prop or calculate from cartValue
   const taxBreakup = useMemo(() => {
@@ -632,7 +636,7 @@ export default function OrderPriceDetails({
   const showListPrice = !cartValue.hideListPricePublic && cartValue.totalLP > 0;
 
   const showCashDiscount = Boolean(CASH_DISCOUNT > 0);
-
+  
   return (
     <Card className="shadow-sm bg-white p-0 m-0 overflow-hidden gap-4 w-full">
       <CardHeader className="px-4 py-2 bg-green-100 rounded-t-lg m-0 p-0 space-y-0">
@@ -643,30 +647,59 @@ export default function OrderPriceDetails({
 
       <CardContent className="px-4 space-y-3 pt-0 pb-4 overflow-x-auto">
         {/* Total Items */}
-        {cartValue.totalItems > 0 && (
+        {loading ?  (
+             <div className="flex justify-between items-center gap-4 min-w-0">
+             <div className="flex-shrink-0">
+               <TypographyMuted>{t("totalItems")}</TypographyMuted>
+             </div>
+             <div className="text-right flex-shrink-0">
+              
+             <Skeleton className="h-4 w-20 mb-2" />
+ 
+             </div>
+           </div>
+        ) : cartValue.totalItems > 0 && (
           <div className="flex justify-between items-center gap-4 min-w-0">
             <div className="flex-shrink-0">
               <TypographyMuted>{t("totalItems")}</TypographyMuted>
             </div>
             <div className="text-right flex-shrink-0">
+             
               <TypographyMuted>{cartValue.totalItems}</TypographyMuted>
+
             </div>
           </div>
         )}
 
         {/* Total LP - only show if list price should be shown */}
-        {showListPrice && (
-          <div className="flex justify-between items-center gap-4 min-w-0">
-            <div className="flex-shrink-0">
-              <TypographyMuted>{t("totalLP")}</TypographyMuted>
-            </div>
-            <div className="text-right flex-shrink-0 break-words">
-              <TypographyMuted>
-                <PricingFormat value={cartValue.totalLP || 0} />
-              </TypographyMuted>
-            </div>
-          </div>
+        {loading ? (
+  <div className="flex justify-between items-center gap-4 min-w-0">
+    <div className="flex-shrink-0">
+      <TypographyMuted>{t("totalLP")}</TypographyMuted>
+    </div>
+    <div className="text-right flex-shrink-0">
+      <Skeleton className="h-4 w-20 mb-2" />
+    </div>
+  </div>
+) : (
+  showListPrice && (
+    <div className="flex justify-between items-center gap-4 min-w-0">
+      <div className="flex-shrink-0">
+        <TypographyMuted>{t("totalLP")}</TypographyMuted>
+      </div>
+      <div className="text-right flex-shrink-0 break-words">
+        {loading ? (
+          <Skeleton className="h-4 w-20 mb-2" />
+        ) : (
+          <TypographyMuted>
+            <PricingFormat value={cartValue.totalLP || 0} />
+          </TypographyMuted>
         )}
+      </div>
+    </div>
+  )
+)}
+
 
         {/* Basic Discount - only show if there's a basic discount */}
         {showBasicDiscount && (
@@ -677,9 +710,10 @@ export default function OrderPriceDetails({
               </h5>
             </div>
             <div className="text-right flex-shrink-0 break-words">
+              {loading ? <Skeleton className="h-4 w-20 mb-2" /> :
               <h5 className="text-sm font-normal text-green-600">
                 -<PricingFormat value={basicDiscount} />
-              </h5>
+              </h5>}
             </div>
           </div>
         )}
@@ -693,9 +727,10 @@ export default function OrderPriceDetails({
               </h5>
             </div>
             <div className="text-right flex-shrink-0 break-words">
+              {loading ? <Skeleton className="h-4 w-20 mb-2" /> :
               <h5 className="text-sm font-normal text-green-600">
                 -<PricingFormat value={cashDiscount} />
-              </h5>
+              </h5>}
             </div>
           </div>
         )}
@@ -710,11 +745,12 @@ export default function OrderPriceDetails({
             </h6>
           </div>
           <div className="text-right flex-shrink-0 break-words">
+            {loading ? <Skeleton className="h-4 w-20 mb-2" /> :
             <h6 className="text-sm font-semibold text-gray-800">
               <PricingFormat
                 value={VDapplied ? VDDetails?.subTotal || 0 : finalSubtotal}
               />
-            </h6>
+            </h6>}
           </div>
         </div>
 
@@ -727,9 +763,10 @@ export default function OrderPriceDetails({
               </h5>
             </div>
             <div className="text-right flex-shrink-0 break-words">
+              {loading ? <Skeleton className="h-4 w-20 mb-2" /> :
               <h5 className="text-sm font-normal text-green-600">
                 -<PricingFormat value={VDDetails?.volumeDiscountApplied || 0} />
-              </h5>
+              </h5>}
             </div>
           </div>
         )}
@@ -746,9 +783,10 @@ export default function OrderPriceDetails({
                 </h6>
               </div>
               <div className="text-right flex-shrink-0 break-words">
+                {loading ? <Skeleton className="h-4 w-20 mb-2" /> :
                 <h6 className="text-sm font-semibold text-gray-800">
                   <PricingFormat value={VDDetails.subTotalVolume} />
-                </h6>
+                </h6>}
               </div>
             </div>
           )}
@@ -760,9 +798,10 @@ export default function OrderPriceDetails({
               <TypographyMuted>{t("pfRate")}</TypographyMuted>
             </div>
             <div className="text-right flex-shrink-0 break-words">
+              {loading ? <Skeleton className="h-4 w-20 mb-2" /> :
               <TypographyMuted>
                 <PricingFormat value={cartValue.pfRate || 0} />
-              </TypographyMuted>
+              </TypographyMuted>}
             </div>
           </div>
         )}
@@ -776,9 +815,10 @@ export default function OrderPriceDetails({
               <TypographyMuted>Shipping Charges</TypographyMuted>
             </div>
             <div className="text-right flex-shrink-0 break-words">
+              {loading ? <Skeleton className="h-4 w-20 mb-2" /> :
               <TypographyMuted>
                 <PricingFormat value={finalShipping} />
-              </TypographyMuted>
+              </TypographyMuted>}
             </div>
           </div>
         )}
@@ -791,6 +831,7 @@ export default function OrderPriceDetails({
             </h6>
           </div>
           <div className="text-right flex-shrink-0 break-words">
+            {loading ? <Skeleton className="h-4 w-20 mb-2" /> :
             <h6 className="text-sm font-semibold text-gray-800">
               <PricingFormat
                 value={
@@ -799,7 +840,7 @@ export default function OrderPriceDetails({
                     : finalTaxableAmount
                 }
               />
-            </h6>
+            </h6>}
           </div>
         </div>
 
@@ -833,17 +874,20 @@ export default function OrderPriceDetails({
             </div>
             <div className="text-right flex-shrink-0 break-words">
               <TypographyMuted>
-                {taxExemption ? (
-                  "N/A"
-                ) : (
-                  <PricingFormat
-                    value={
-                      VDapplied && VDDetails?.overallTax !== undefined
-                        ? VDDetails.overallTax
-                        : finalTax
-                    }
-                  />
-                )}
+              {taxExemption ? (
+  "N/A"
+) : loading ? (
+  <Skeleton className="h-4 w-20 mb-2" />
+) : (
+  <PricingFormat
+    value={
+      VDapplied && VDDetails?.overallTax !== undefined
+        ? VDDetails.overallTax
+        : finalTax
+    }
+  />
+)}
+
               </TypographyMuted>
             </div>
           </div>
@@ -861,9 +905,10 @@ export default function OrderPriceDetails({
                   {taxDetail.name}
                 </TypographyMuted>
                 <div className="text-right flex-shrink-0 break-words">
+                  {loading ? <Skeleton className="h-4 w-20 mb-2" /> :
                   <TypographyMuted>
                     <PricingFormat value={taxDetail.value} />
-                  </TypographyMuted>
+                  </TypographyMuted>}
                 </div>
               </div>
             ))}
@@ -877,9 +922,10 @@ export default function OrderPriceDetails({
               <TypographyMuted>Shipping Charges</TypographyMuted>
             </div>
             <div className="text-right flex-shrink-0 break-words">
+              {loading ? <Skeleton className="h-4 w-20 mb-2" /> :
               <TypographyMuted>
                 <PricingFormat value={finalShipping} />
-              </TypographyMuted>
+              </TypographyMuted>}
             </div>
           </div>
         )}
@@ -894,11 +940,12 @@ export default function OrderPriceDetails({
               <TypographyMuted>Insurance Charges</TypographyMuted>
             </div>
             <div className="text-right flex-shrink-0 break-words">
+              {loading ? <Skeleton className="h-4 w-20 mb-2" /> :
               <TypographyMuted>
                 <PricingFormat
                   value={cartValue?.insuranceCharges ?? insuranceCharges ?? 0}
                 />
-              </TypographyMuted>
+              </TypographyMuted>}
             </div>
           </div>
         )}
@@ -917,6 +964,7 @@ export default function OrderPriceDetails({
                   </h4>
                 </div>
                 <div className="text-right flex-shrink-0 break-words">
+                  {loading ? <Skeleton className="h-4 w-20 mb-2" /> :
                   <h4 className="text-lg font-bold text-gray-800">
                     <PricingFormat
                       value={
@@ -925,6 +973,7 @@ export default function OrderPriceDetails({
                       }
                     />
                   </h4>
+}
                 </div>
               </div>
               <div className="flex justify-between items-center gap-4 min-w-0">
@@ -934,9 +983,11 @@ export default function OrderPriceDetails({
                   </TypographyMuted>
                 </div>
                 <div className="text-right flex-shrink-0 break-words">
+                  {loading ? <Skeleton className="h-4 w-20 mb-2" /> :
                   <TypographyMuted className="text-red-600">
                     -<PricingFormat value={alreadyPaid} />
                   </TypographyMuted>
+}
                 </div>
               </div>
             </>
@@ -956,6 +1007,7 @@ export default function OrderPriceDetails({
             </h4>
           </div>
           <div className="text-right flex-shrink-0 break-words">
+            {loading ? <Skeleton className="h-4 w-20 mb-2" /> :
             <h4 className="text-lg font-bold text-gray-800">
               <PricingFormat
                 value={
@@ -965,6 +1017,7 @@ export default function OrderPriceDetails({
                 }
               />
             </h4>
+}
           </div>
         </div>
       </CardContent>
