@@ -631,6 +631,11 @@
     "missingCompanyIdentifier": "Identifiant d'entreprise manquant",
     "changesSavedSuccessfully": "Changements enregistrés avec succès!",
     "failedToSaveChanges": "Échec de l'enregistrement des changements. Veuillez réessayer.",
+    "companyDetailsUpdatedSuccessfully": "Détails de l'entreprise mis à jour avec succès",
+    "failedToUpdateCompanyDetails": "Échec de la mise à jour des détails de l'entreprise",
+    "companyChangesCancelled": "Modifications de l'entreprise annulées",
+    "branchUpdatedSuccessfully": "Succursale mise à jour avec succès",
+    "failedToUpdateBranch": "Échec de la mise à jour de la succursale",
     "saveChanges": "Enregistrer les Changements",
     "cancel": "Annuler",
     "companyBranches": "Succursales de l'Entreprise",
@@ -745,6 +750,17 @@
     "verified": "Vérifié",
     "saveChanges": "Enregistrer les Modifications",
     "cancel": "Annuler",
-    "selectAnOption": "Sélectionner une option"
+    "selectAnOption": "Sélectionner une option",
+    "userIdRequired": "ID utilisateur requis",
+    "tenantIdRequired": "ID locataire requis",
+    "mobileNumberRequired": "Numéro de téléphone requis",
+    "emailRequiredForPasswordChange": "E-mail requis pour changer le mot de passe",
+    "imageUploadedSuccessfully": "Image téléchargée avec succès",
+    "profileUpdatedSuccessfully": "Profil mis à jour avec succès",
+    "failedToUpdateProfile": "Échec de la mise à jour du profil",
+    "profileChangesCancelled": "Modifications du profil annulées",
+    "preferencesUpdatedSuccessfully": "Préférences mises à jour avec succès",
+    "failedToUpdatePreferences": "Échec de la mise à jour des préférences",
+    "preferencesChangesCancelled": "Modifications des préférences annulées"
   }
 }

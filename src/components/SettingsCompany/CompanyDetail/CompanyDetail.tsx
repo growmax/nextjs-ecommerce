@@ -324,7 +324,7 @@ const CompanyDetail = () => {
     setUploadedLogoUrl(null);
     // Clear validation errors
 
-    toast.info(t("allChangesCancelled"), {
+    toast.info(t("companyChangesCancelled"), {
       position: "top-right",
     });
   };
@@ -455,9 +455,9 @@ const CompanyDetail = () => {
       // Clear uploaded logo URL after successful save
       setUploadedLogoUrl(null);
       
-      toast.success(t("changesSavedSuccessfully"));
+      toast.success(t("companyDetailsUpdatedSuccessfully"));
     } catch {
-      toast.error(t("failedToSaveChanges"));
+      toast.error(t("failedToUpdateCompanyDetails"));
     } finally {
       setIsSaving(false);
     }

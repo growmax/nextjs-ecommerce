@@ -118,7 +118,7 @@ export function ProfileCard({
                 currentImage={profile.picture || profile.avatar || profileImage || null}
                 onImageChange={onImageChange}
                 onUploadSuccess={() => {
-                  toast.success("Image uploaded successfully", {
+                  toast.success(t("imageUploadedSuccessfully"), {
                     description: t("profile") + " updated.",
                     duration: 3000,
                   });

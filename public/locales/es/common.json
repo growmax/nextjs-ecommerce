@@ -631,6 +631,11 @@
     "missingCompanyIdentifier": "Falta el identificador de la empresa",
     "changesSavedSuccessfully": "¡Cambios guardados exitosamente!",
     "failedToSaveChanges": "Error al guardar los cambios. Por favor intente de nuevo.",
+    "companyDetailsUpdatedSuccessfully": "Detalles de la empresa actualizados exitosamente",
+    "failedToUpdateCompanyDetails": "Error al actualizar detalles de la empresa",
+    "companyChangesCancelled": "Cambios de la empresa cancelados",
+    "branchUpdatedSuccessfully": "Sucursal actualizada exitosamente",
+    "failedToUpdateBranch": "Error al actualizar sucursal",
     "saveChanges": "Guardar Cambios",
     "cancel": "Cancelar",
     "companyBranches": "Sucursales de la Empresa",
@@ -745,6 +750,17 @@
     "verified": "Verificado",
     "saveChanges": "Guardar Cambios",
     "cancel": "Cancelar",
-    "selectAnOption": "Seleccionar una opción"
+    "selectAnOption": "Seleccionar una opción",
+    "userIdRequired": "Se requiere ID de usuario",
+    "tenantIdRequired": "Se requiere ID de inquilino",
+    "mobileNumberRequired": "Se requiere número móvil",
+    "emailRequiredForPasswordChange": "Se requiere correo electrónico para cambiar contraseña",
+    "imageUploadedSuccessfully": "Imagen subida exitosamente",
+    "profileUpdatedSuccessfully": "Perfil actualizado exitosamente",
+    "failedToUpdateProfile": "Error al actualizar perfil",
+    "profileChangesCancelled": "Cambios de perfil cancelados",
+    "preferencesUpdatedSuccessfully": "Preferencias actualizadas exitosamente",
+    "failedToUpdatePreferences": "Error al actualizar preferencias",
+    "preferencesChangesCancelled": "Cambios de preferencias cancelados"
   }
 }

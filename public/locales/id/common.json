@@ -631,6 +631,11 @@
     "missingCompanyIdentifier": "Pengenal perusahaan tidak ada",
     "changesSavedSuccessfully": "Perubahan berhasil disimpan!",
     "failedToSaveChanges": "Gagal menyimpan perubahan. Harap coba lagi.",
+    "companyDetailsUpdatedSuccessfully": "Detail perusahaan berhasil diperbarui",
+    "failedToUpdateCompanyDetails": "Gagal memperbarui detail perusahaan",
+    "companyChangesCancelled": "Perubahan perusahaan dibatalkan",
+    "branchUpdatedSuccessfully": "Cabang berhasil diperbarui",
+    "failedToUpdateBranch": "Gagal memperbarui cabang",
     "saveChanges": "Simpan Perubahan",
     "cancel": "Batal",
     "companyBranches": "Cabang Perusahaan",
@@ -745,6 +750,17 @@
     "verified": "Terverifikasi",
     "saveChanges": "Simpan Perubahan",
     "cancel": "Batal",
-    "selectAnOption": "Pilih opsi"
+    "selectAnOption": "Pilih opsi",
+    "userIdRequired": "ID pengguna wajib diisi",
+    "tenantIdRequired": "ID penyewa wajib diisi",
+    "mobileNumberRequired": "Nomor ponsel wajib diisi",
+    "emailRequiredForPasswordChange": "Email wajib diisi untuk mengubah kata sandi",
+    "imageUploadedSuccessfully": "Gambar berhasil diunggah",
+    "profileUpdatedSuccessfully": "Profil berhasil diperbarui",
+    "failedToUpdateProfile": "Gagal memperbarui profil",
+    "profileChangesCancelled": "Perubahan profil dibatalkan",
+    "preferencesUpdatedSuccessfully": "Preferensi berhasil diperbarui",
+    "failedToUpdatePreferences": "Gagal memperbarui preferensi",
+    "preferencesChangesCancelled": "Perubahan preferensi dibatalkan"
   }
 }

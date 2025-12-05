@@ -42,7 +42,6 @@ export default function ProfilePageClient() {
     isLoading: dataLoading,
     setProfile,
     setPreferences,
-    savePreferences,
     loadProfile,
     loadPreferences,
   } = useProfileData();
@@ -78,7 +77,7 @@ export default function ProfilePageClient() {
   // Unified change tracking
   const [hasChanges, setHasChanges] = useState(false);
   const [changedSections, setChangedSections] = useState<
-    Set<"profile" | "preferences">
+    Set<"profile">
   >(new Set());
 
   // Validation errors state
@@ -91,7 +90,7 @@ export default function ProfilePageClient() {
 
   // Original values for reset functionality
   const [originalProfile, setOriginalProfile] = useState(profile);
-  const [originalPreferences, setOriginalPreferences] = useState(preferences);
+
 
   // Update originals when data loads - using useEffect to avoid render issues
   useEffect(() => {
@@ -100,18 +99,10 @@ export default function ProfilePageClient() {
     }
   }, [profile, originalProfile]);
 
-  useEffect(() => {
-    if (
-      preferences &&
-      (!originalPreferences || !originalPreferences.timeZone)
-    ) {
-      setOriginalPreferences(preferences);
-    }
-  }, [preferences, originalPreferences]);
 
   // Unified change tracking helper
   // Unified change tracking helper: add or remove a section from the changed set
-  const setSectionDirty = (section: "profile" | "preferences", isDirty: boolean) => {
+  const setSectionDirty = (section: "profile", isDirty: boolean) => {
     setChangedSections(prev => {
       const newSet = new Set(prev);
       if (isDirty) newSet.add(section);
@@ -170,22 +161,17 @@ export default function ProfilePageClient() {
     field: keyof typeof preferences,
     value: string
   ) => {
+    // Just update local state - no dirty tracking
+    // UserPreferencesCard handles its own save/cancel
     const updatedPreferences = { ...preferences, [field]: value };
     setPreferences(updatedPreferences);
-
-    // Determine whether preferences differ from originalPreferences
-    const isDirty = JSON.stringify(updatedPreferences) !== JSON.stringify(originalPreferences || {});
-    setSectionDirty("preferences", isDirty);
   };
 
   // Reset all changes helper - restore original values
   const resetAllChanges = () => {
-    // Only reset sections that actually changed and have original values
+    // Only reset profile section (preferences has its own reset)
     if (changedSections.has("profile") && originalProfile) {
       setProfile(originalProfile);
-    }
-    if (changedSections.has("preferences") && originalPreferences) {
-      setPreferences(originalPreferences);
     }
     // Clear validation errors when canceling
     setValidationErrors({});
@@ -223,11 +209,11 @@ export default function ProfilePageClient() {
     if (!hasChanges) return;
     if (!profile) return;
     if (!sub && !userId) {
-      toast.error("User ID is required"); // TODO: Add translation key
+      toast.error(t("userIdRequired"));
       return;
     }
     if (!tenantId) {
-      toast.error("Tenant ID is required"); // TODO: Add translation key
+      toast.error(t("tenantIdRequired"));
       return;
     }
 
@@ -299,7 +285,7 @@ export default function ProfilePageClient() {
       if (changedSections.has("profile")) {
         const userIdToUse = sub;
         if (!userIdToUse) {
-          toast.error("User ID is required"); // TODO: Add translation key
+          toast.error(t("userIdRequired"));
           setIsSaving(false);
           return;
         }
@@ -313,10 +299,6 @@ export default function ProfilePageClient() {
         );
       }
 
-      // Save preferences if changed
-      if (changedSections.has("preferences") && preferences) {
-        promises.push(savePreferences(preferences));
-      }
 
       // If no promises to execute, return early
       if (promises.length === 0) {
@@ -337,21 +319,18 @@ export default function ProfilePageClient() {
           // Clear uploaded picture URL after successful save
           setUploadedPictureUrl(null);
         }
-        if (changedSections.has("preferences")) {
-          await loadPreferences(true); // Force reload
-          setOriginalPreferences(preferences);
-        }
+
 
         // Clear change tracking
         setChangedSections(new Set());
         setHasChanges(false);
-        toast.success(t("changesSavedSuccessfully"));
+        toast.success(t("profileUpdatedSuccessfully"));
       } else {
         toast.error(t("someChangesFailedToSave"));
       }
     } catch (error) {
       console.error("Failed to save profile:", error);
-      toast.error(t("failedToSaveChanges"));
+      toast.error(t("failedToUpdateProfile"));
     } finally {
       setIsSaving(false);
     }
@@ -360,12 +339,12 @@ export default function ProfilePageClient() {
   // Unified cancel handler
   const handleCancel = () => {
     resetAllChanges();
-    toast.info(t("allChangesCancelled"));
+    toast.info(t("profileChangesCancelled"));
   };
 
   const handleVerifyPhone = async (phone: string) => {
     if (!phone) {
-      toast.error(t("mobileNumber") + " is required");
+      toast.error(t("mobileNumberRequired"));
       return;
     }
 
@@ -395,12 +374,12 @@ export default function ProfilePageClient() {
     }
 
     if (!phoneNumber) {
-      toast.error(t("mobileNumber") + " is required");
+      toast.error(t("mobileNumberRequired"));
       return;
     }
 
     if (!userId) {
-      toast.error("User ID is required");
+      toast.error(t("userIdRequired"));
       return;
     }
 
@@ -429,7 +408,7 @@ export default function ProfilePageClient() {
     newPassword: string;
   }) => {
     if (!profile?.email) {
-      toast.error(t("email") + " is required for password change");
+      toast.error(t("emailRequiredForPasswordChange"));
       return;
     }
 

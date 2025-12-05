@@ -159,10 +159,10 @@ const CompanyBranchTable = () => {
         addressId: Number(branchToDelete),
       });
 
-      toast.success(t("changesSavedSuccessfully"));
+      toast.success(t("branchUpdatedSuccessfully"));
       reloadTable();
     } catch {
-      toast.error(t("failedToSaveChanges"));
+      toast.error(t("failedToUpdateBranch"));
     } finally {
       setDeletingAddressId(null);
       setBranchToDelete(null);
@@ -380,7 +380,7 @@ const CompanyBranchTable = () => {
           branchId={selectedBranch?.addressId?.id || selectedBranch?.id || null}
           onSuccess={() => {
             reloadTable();
-            toast.success(t("changesSavedSuccessfully"));
+            toast.success(t("branchUpdatedSuccessfully"));
           }}
         />
 

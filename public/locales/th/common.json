@@ -745,6 +745,18 @@
     "verified": "ยืนยันแล้ว",
     "saveChanges": "บันทึกการเปลี่ยนแปลง",
     "cancel": "ยกเลิก",
-    "selectAnOption": "เลือกตัวเลือก"
+    "selectAnOption": "เลือกตัวเลือก",
+    "userIdRequired": "ต้องระบุ ID ผู้ใช้",
+    "tenantIdRequired": "ต้องระบุ ID ผู้เช่า",
+    "mobileNumberRequired": "ต้องระบุหมายเลขโทรศัพท์มือถือ",
+    "emailRequiredForPasswordChange": "ต้องระบุอีเมลเพื่อเปลี่ยนรหัสผ่าน",
+    "imageUploadedSuccessfully": "อัปโหลดรูปภาพสำเร็จ"
+    ,
+    "profileUpdatedSuccessfully": "อัปเดตโปรไฟล์สำเร็จ",
+    "failedToUpdateProfile": "ไม่สามารถอัปเดตโปรไฟล์",
+    "profileChangesCancelled": "ยกเลิกการเปลี่ยนแปลงโปรไฟล์",
+    "preferencesUpdatedSuccessfully": "อัปเดตการตั้งค่าสำเร็จ",
+    "failedToUpdatePreferences": "ไม่สามารถอัปเดตการตั้งค่า",
+    "preferencesChangesCancelled": "ยกเลิกการเปลี่ยนแปลงการตั้งค่า"
   }
 }

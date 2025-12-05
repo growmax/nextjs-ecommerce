@@ -643,6 +643,11 @@
     "missingCompanyIdentifier": "Missing company identifier",
     "changesSavedSuccessfully": "Changes saved successfully!",
     "failedToSaveChanges": "Failed to save changes. Please try again.",
+    "companyDetailsUpdatedSuccessfully": "Company details updated successfully",
+    "failedToUpdateCompanyDetails": "Failed to update company details",
+    "companyChangesCancelled": "Company changes cancelled",
+    "branchUpdatedSuccessfully": "Branch updated successfully",
+    "failedToUpdateBranch": "Failed to update branch",
     "saveChanges": "Save Changes",
     "cancel": "Cancel",
     "companyBranches": "Company Branches",
@@ -757,6 +762,17 @@
     "verified": "Verified",
     "saveChanges": "Save Changes",
     "cancel": "Cancel",
-    "selectAnOption": "Select an option"
+    "selectAnOption": "Select an option",
+    "userIdRequired": "User ID is required",
+    "tenantIdRequired": "Tenant ID is required",
+    "mobileNumberRequired": "Mobile number is required",
+    "emailRequiredForPasswordChange": "Email is required for password change",
+    "imageUploadedSuccessfully": "Image uploaded successfully",
+    "profileUpdatedSuccessfully": "Profile updated successfully",
+    "failedToUpdateProfile": "Failed to update profile",
+    "profileChangesCancelled": "Profile changes cancelled",
+    "preferencesUpdatedSuccessfully": "Preferences updated successfully",
+    "failedToUpdatePreferences": "Failed to update preferences",
+    "preferencesChangesCancelled": "Preferences changes cancelled"
   }
 }

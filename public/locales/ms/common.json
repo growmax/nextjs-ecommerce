@@ -631,6 +631,11 @@
     "missingCompanyIdentifier": "Pengenal syarikat tidak ada",
     "changesSavedSuccessfully": "Perubahan berjaya disimpan!",
     "failedToSaveChanges": "Gagal menyimpan perubahan. Sila cuba lagi.",
+    "companyDetailsUpdatedSuccessfully": "Butiran syarikat berjaya dikemaskini",
+    "failedToUpdateCompanyDetails": "Gagal mengemas kini butiran syarikat",
+    "companyChangesCancelled": "Perubahan syarikat dibatalkan",
+    "branchUpdatedSuccessfully": "Cawangan berjaya dikemaskini",
+    "failedToUpdateBranch": "Gagal mengemas kini cawangan",
     "saveChanges": "Simpan Perubahan",
     "cancel": "Batal",
     "companyBranches": "Cawangan Syarikat",
@@ -745,6 +750,17 @@
     "verified": "Telah disahkan",
     "saveChanges": "Simpan Perubahan",
     "cancel": "Batal",
-    "selectAnOption": "Pilih pilihan"
+    "selectAnOption": "Pilih pilihan",
+    "userIdRequired": "ID pengguna diperlukan",
+    "tenantIdRequired": "ID penyewa diperlukan",
+    "mobileNumberRequired": "Nombor telefon diperlukan",
+    "emailRequiredForPasswordChange": "E-mel diperlukan untuk menukar kata laluan",
+    "imageUploadedSuccessfully": "Imej berjaya dimuat naik",
+    "profileUpdatedSuccessfully": "Profil berjaya dikemaskini",
+    "failedToUpdateProfile": "Gagal mengemas kini profil",
+    "profileChangesCancelled": "Perubahan profil dibatalkan",
+    "preferencesUpdatedSuccessfully": "Keutamaan berjaya dikemaskini",
+    "failedToUpdatePreferences": "Gagal mengemas kini keutamaan",
+    "preferencesChangesCancelled": "Perubahan keutamaan dibatalkan"
   }
 }

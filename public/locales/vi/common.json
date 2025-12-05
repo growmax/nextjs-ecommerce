@@ -631,6 +631,11 @@
     "missingCompanyIdentifier": "Thiếu mã định danh công ty",
     "changesSavedSuccessfully": "Đã lưu thay đổi thành công!",
     "failedToSaveChanges": "Lưu thay đổi thất bại. Vui lòng thử lại.",
+    "companyDetailsUpdatedSuccessfully": "Cập nhật thông tin công ty thành công",
+    "failedToUpdateCompanyDetails": "Không thể cập nhật thông tin công ty",
+    "companyChangesCancelled": "Đã hủy thay đổi công ty",
+    "branchUpdatedSuccessfully": "Cập nhật chi nhánh thành công",
+    "failedToUpdateBranch": "Không thể cập nhật chi nhánh",
     "saveChanges": "Lưu thay đổi",
     "cancel": "Hủy",
     "companyBranches": "Chi nhánh công ty",
@@ -745,6 +750,17 @@
     "verified": "Đã xác minh",
     "saveChanges": "Lưu thay đổi",
     "cancel": "Hủy",
-    "selectAnOption": "Chọn một tùy chọn"
+    "selectAnOption": "Chọn một tùy chọn",
+    "userIdRequired": "ID người dùng là bắt buộc",
+    "tenantIdRequired": "ID người thuê là bắt buộc",
+    "mobileNumberRequired": "Số điện thoại di động là bắt buộc",
+    "emailRequiredForPasswordChange": "Email là bắt buộc để đổi mật khẩu",
+    "imageUploadedSuccessfully": "Tải ảnh lên thành công",
+    "profileUpdatedSuccessfully": "Cập nhật hồ sơ thành công",
+    "failedToUpdateProfile": "Không thể cập nhật hồ sơ",
+    "profileChangesCancelled": "Đã hủy thay đổi hồ sơ",
+    "preferencesUpdatedSuccessfully": "Cập nhật tùy chọn thành công",
+    "failedToUpdatePreferences": "Không thể cập nhật tùy chọn",
+    "preferencesChangesCancelled": "Đã hủy thay đổi tùy chọn"
   }
 }
