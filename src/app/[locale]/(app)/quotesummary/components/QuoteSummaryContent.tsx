@@ -37,8 +37,6 @@ import ApplyVolumeDiscountBtn from "@/components/summary/ApplyVolumeDiscountBtn"
 import Attachments from "@/components/summary/Attachments";
 import SPRForm from "@/components/summary/SPRForm";
 import TargetDiscountCard from "@/components/summary/TargetDiscountCard";
-import { Checkbox } from "@/components/ui/checkbox";
-import { Label } from "@/components/ui/label";
 import { FileText } from "lucide-react";
 
 // Utils
@@ -1277,7 +1275,7 @@ export default function QuoteSummaryContent() {
     <FormProvider {...methods}>
       <ApplicationLayout>
         {/* Sales Header - Fixed at top */}
-        <div className="flex-shrink-0 sticky top-0 z-[90] bg-gray-50">
+        <div className="flex-shrink-0  z-[90] bg-gray-50">
           <SalesHeader
             title={quoteName}
             identifier=""
@@ -1331,6 +1329,7 @@ export default function QuoteSummaryContent() {
             onEdit={() => setIsEditNameDialogOpen(true)}
             showEditIcon={true}
             loading={isLoading}
+            hideAppHeader={!!sellerCompanyIdFromUrl}
           />
         </div>
 
@@ -1339,7 +1338,7 @@ export default function QuoteSummaryContent() {
           <PageLayout variant="content">
             <div className="flex flex-col lg:flex-row gap-2 sm:gap-3 md:gap-4 w-full px-0.5">
               {/* Left Side - Products Table, Address & Terms - 65% */}
-              <div className="w-full lg:w-[65%] space-y-2 sm:space-y-3 mt-[80px]">
+              <div className={sellerCompanyIdFromUrl ? "w-full lg:w-[65%] space-y-2 sm:space-y-3 mt-[16px]" : "w-full lg:w-[65%] space-y-2 sm:space-y-3 mt-[80px]"}>
                 {/* Products Table */}
 
                 <OrderProductsTable
@@ -1519,7 +1518,7 @@ export default function QuoteSummaryContent() {
 
               {/* Right Side - Price Details, Customer Information, and Attachments - 33% */}
 
-              <div className="w-full lg:w-[33%] mt-[80px]">
+              <div className={sellerCompanyIdFromUrl ? "w-full lg:w-[33%] mt-[16px]" : "w-full lg:w-[33%] mt-[80px]"}>
                 <div className="space-y-4">
                   <ApplyVolumeDiscountBtn
                     uploading={formState.isSubmitting}
@@ -1599,22 +1598,7 @@ export default function QuoteSummaryContent() {
 
                   {/* SPR Form Section - Customer Information (End Customer Name, Project Name, Competitors, Price Justification) */}
                   <div className="mt-4 space-y-4" id="sprDetails">
-                    <div className="flex items-center space-x-2">
-                      <Checkbox
-                        id="spr-toggle"
-                        checked={sprEnabled || false}
-                        onCheckedChange={checked => {
-                          setValue("sprDetails.spr", checked === true);
-                          trigger("sprDetails");
-                        }}
-                      />
-                      <Label
-                        htmlFor="spr-toggle"
-                        className="text-sm font-medium cursor-pointer"
-                      >
-                        Request Special Price (SPR)
-                      </Label>
-                    </div>
+                   
 
                     <SPRForm isContentPage={false} isSummaryPage={true} />
                   </div>

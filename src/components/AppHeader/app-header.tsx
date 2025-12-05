@@ -21,16 +21,19 @@ import { cn } from "@/lib/utils";
 import { getUserInitials } from "@/utils/General/general";
 import { Command as CommandIcon, Search, ShoppingCart } from "lucide-react";
 import { useTranslations } from "next-intl";
+import { usePathname, useSearchParams } from "next/navigation";
 import { useEffect, useState } from "react";
 
 export function AppHeader() {
   const [searchValue, setSearchValue] = useState("");
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
   const { userProfile } = useUserProfile();
   const { isLoggingOut, handleLogout } = useLogout();
   const router = useNavigationWithLoader();
   const { isAuthenticated: contextIsAuthenticated, isLoading: isAuthLoading } =
     useUserDetails();
-
+ 
   // Sync tenant data from context to Zustand store (early initialization)
   useTenantData();
 
@@ -111,6 +114,17 @@ export function AppHeader() {
 
   const { state: sidebarState } = useSidebar();
   const isSidebarCollapsed = sidebarState === "collapsed";
+
+  // Check if we should hide the header (after all hooks are called)
+  const sellerId = searchParams.get("sellerId");
+  const shouldHideHeader = 
+    (pathname.includes("/quotesummary") || pathname.includes("/ordersummary")) &&
+    sellerId !== null;
+
+  // Return null if header should be hidden (after all hooks)
+  if (shouldHideHeader) {
+    return null;
+  }
 
   return (
     <>

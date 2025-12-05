@@ -289,9 +289,9 @@ export default function TargetDiscountCard({
   const targetPriceError = sprDetailsErrors?.targetPrice;
 
   return (
-    <Card className="shadow-sm mt-4">
-      <CardHeader className="gap-0 flex flex-col bg-gray-50 rounded-t-sm m-0!">
-        <CardTitle className="text-xl font-semibold text-gray-900">
+    <Card className="shadow-sm pb-0 py-0 gap-0">
+    <CardHeader className="px-6 py-2 bg-muted rounded-t-lg items-end gap-0">
+      <CardTitle className="text-xl font-semibold text-gray-900 m-0!">
           Target Discount
         </CardTitle>
       </CardHeader>

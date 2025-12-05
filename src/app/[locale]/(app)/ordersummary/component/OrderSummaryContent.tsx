@@ -2,7 +2,7 @@
 
 import { yupResolver } from "@hookform/resolvers/yup";
 import { forEach, isEmpty, some, words } from "lodash";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { Suspense, useEffect, useMemo, useRef, useState } from "react";
 import { FormProvider, useForm } from "react-hook-form";
 import { toast } from "sonner";
@@ -60,6 +60,8 @@ export const scrollToErrorField = (path: string) => {
  */
 export default function OrderSummaryContent() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const sellerId = searchParams?.get("sellerId");
   const { user } = useCurrentUser();
   const { companydata } = useUser();
   const { emptyCart, emptyCartBySeller } = useCart();
@@ -880,6 +882,9 @@ export default function OrderSummaryContent() {
   const taxExempted = (watch("taxExempted") as boolean) || false;
   const preferencesForPricing = (watch("preferences" as any) as any) || {};
 
+  // Extract cartValue stringified for dependency array
+  const cartValueStringified = JSON.stringify(cartValue);
+
   // Get pricing context for OrderPriceDetails
   const pricingContext = useMemo(() => {
     const insuranceCharges = Number(
@@ -897,14 +902,14 @@ export default function OrderSummaryContent() {
     isInter,
     taxExempted,
     preferencesForPricing?.insuranceId?.insuranceValue,
-    JSON.stringify(cartValue),
+    cartValueStringified,
   ]);
 
   return (
     <FormProvider {...methods}>
       <ApplicationLayout>
         {/* Sales Header - Fixed at top */}
-        <div className="flex-shrink-0 sticky top-0 z-50 bg-gray-50">
+        <div className="flex-shrink-0  z-50 bg-gray-50">
           <SalesHeader
             title={orderName}
             identifier=""
@@ -929,6 +934,7 @@ export default function OrderSummaryContent() {
             onEdit={() => setIsEditNameDialogOpen(true)}
             showEditIcon={true}
             loading={isLoading}
+            hideAppHeader={!!sellerId}
           />
         </div>
 
@@ -937,7 +943,7 @@ export default function OrderSummaryContent() {
           <PageLayout variant="content">
             <div className="flex flex-col lg:flex-row gap-2 sm:gap-3 md:gap-4 w-full">
               {/* Left Side - Products Table, Address & Terms - 65% */}
-              <div className="w-full lg:w-[65%] space-y-2 sm:space-y-3 mt-[80px]">
+              <div className={sellerId ? "w-full lg:w-[65%] space-y-2 sm:space-y-3 mt-[16px]" : "w-full lg:w-[65%] space-y-2 sm:space-y-3 mt-[80px]"}>
                 {/* Products Table */}
 
                 <Suspense fallback={null}>
@@ -1079,7 +1085,7 @@ export default function OrderSummaryContent() {
 
               {/* Right Side - Price Details - 33% */}
 
-              <div className="w-full lg:w-[33%] mt-[80px]">
+              <div className={sellerId ? "w-full lg:w-[33%] mt-[16px]" : "w-full lg:w-[33%] mt-[80px]"}>
                 <div className="space-y-4">
                   <ApplyVolumeDiscountBtn
                     uploading={formState.isSubmitting || isSubmitting}

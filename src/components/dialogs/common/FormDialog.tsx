@@ -120,7 +120,7 @@ export function FormDialog({
               e.preventDefault();
             }
           }}
-          onOpenAutoFocus={onOpenAutoFocus}
+          {...(onOpenAutoFocus && { onOpenAutoFocus })}
         >
           {(title || description) && (
             <DialogHeader className={className}>

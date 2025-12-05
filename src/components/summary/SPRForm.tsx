@@ -144,9 +144,9 @@ export default function SPRForm({
     : (errors?.quotationDetails as any)?.[0]?.sprDetails;
 
   return (
-    <Card className="shadow-sm mt-4" id="endCustomerInfo">
-      <CardHeader className="px-6 py-4 bg-gray-50 rounded-t-lg">
-        <CardTitle className="text-xl font-semibold text-gray-900">
+    <Card className="shadow-sm pb-0 py-0 gap-0">
+      <CardHeader className="px-6 py-2 bg-muted rounded-t-lg items-end gap-0">
+        <CardTitle className="text-xl font-semibold text-gray-900 m-0!">
           Customer Information
         </CardTitle>
       </CardHeader>

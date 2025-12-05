@@ -28,8 +28,13 @@ jest.mock("@/components/LanguageSwitcher/LanguageSwitcher", () => ({
   ),
 }));
 
+const mockUsePathname = jest.fn();
+const mockUseSearchParams = jest.fn();
+
 jest.mock("next/navigation", () => ({
   useRouter: () => ({ push: jest.fn() }),
+  usePathname: () => mockUsePathname(),
+  useSearchParams: () => mockUseSearchParams(),
 }));
 
 jest.mock("@/hooks/useNavigationWithLoader", () => ({
@@ -211,6 +216,14 @@ function createWrapper() {
 }
 
 describe("AppHeader", () => {
+  beforeEach(() => {
+    // Setup navigation hooks mocks
+    mockUsePathname.mockReturnValue('/test-path');
+    mockUseSearchParams.mockReturnValue({
+      get: jest.fn(() => null),
+    });
+  });
+
   it("navigates to search page on Ctrl/Cmd+K shortcut", () => {
     const mockPush = jest.fn();
     const mockUseNavigationWithLoader = jest.requireMock("@/hooks/useNavigationWithLoader");

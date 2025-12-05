@@ -201,6 +201,12 @@ export default function OrderProductsTable({
                   <TableHead className="font-medium text-primary text-right min-w-[140px] py-3">
                     <Skeleton className="h-4 w-20 mb-2" />
                   </TableHead>
+                  <TableHead className="font-medium text-primary text-right min-w-[140px] py-3">
+                    <Skeleton className="h-4 w-20 mb-2" />
+                  </TableHead>
+                  <TableHead className="font-medium text-primary text-right min-w-[140px] py-3">
+                    <Skeleton className="h-4 w-20 mb-2" />
+                  </TableHead>
                 
                 </TableRow>
               ) : (
