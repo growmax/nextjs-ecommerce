@@ -1,5 +1,7 @@
 "use client";
 
+import { useSidebar } from "@/components/ui/sidebar";
+import { cn } from "@/lib/utils";
 import { useBlockingLoader } from "@/providers/BlockingLoaderProvider";
 import { useEffect, useState } from "react";
 
@@ -11,18 +13,22 @@ import { useEffect, useState } from "react";
  *
  * Two modes:
  * - 'global': Fixed full-screen overlay (locks body scroll)
- * - 'scoped': Fixed viewport overlay (for page sections)
- *
+ * - 'scoped': Fixed content area overlay (between sidebar and header, no scroll lock)
+ * 
  * Features:
  * - Ultra-smooth bounce animation with elastic easing
  * - Perfectly timed three-dot cascade
  * - Minimal, elegant design
  * - Smooth fade + scale transitions
+ * - Responsive sidebar positioning
  */
 export function BlockingLoader() {
   const { isActive, mode } = useBlockingLoader();
+  const { state: sidebarState } = useSidebar();
   const [shouldRender, setShouldRender] = useState(false);
   const [isVisible, setIsVisible] = useState(false);
+
+  const isSidebarCollapsed = sidebarState === "collapsed";
 
   // Handle smooth enter/exit transitions with scale effect
   useEffect(() => {
@@ -37,7 +43,7 @@ export function BlockingLoader() {
     }
   }, [isActive]);
 
-  // Lock body scroll when in global mode and active
+  // Lock body scroll only when in global mode and active
   useEffect(() => {
     if (mode === "global" && isActive) {
       const originalOverflow = document.body.style.overflow;
@@ -56,7 +62,23 @@ export function BlockingLoader() {
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center transition-all duration-300 ease-out pointer-events-auto backdrop-blur-sm"
+      className={cn(
+        "z-50 flex items-center justify-center transition-all duration-300 ease-out pointer-events-auto backdrop-blur-sm",
+        mode === "global" 
+          ? "fixed inset-0" // Full screen for global mode with fixed positioning
+          : cn(
+              // Content area mode: position within the main content area using fixed positioning
+              "fixed right-0",
+              // Position below header (same as MainContentLoader)
+              "top-[calc(3.5rem+1px)] sm:top-[calc(4rem+1px)]",
+              "bottom-0",
+              // Mobile: Full width (sidebar is overlay)
+              "left-0",
+              // Desktop: Adjust for sidebar
+              "md:left-[var(--sidebar-width-icon)]",
+              !isSidebarCollapsed && "md:left-[var(--sidebar-width)]"
+            )
+      )}
       style={{
         opacity: isVisible ? 1 : 0,
         backgroundColor: isVisible
