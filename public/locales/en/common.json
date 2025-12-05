@@ -423,8 +423,18 @@
     "branchNameRequired": "Branch name is required",
     "addressLineRequired": "Address is required",
     "countryRequired": "Country is required",
-    "stateRequired": "State/Province is required",
-    "pinCodeRequired": "Postal code is required"
+    "pinCodeRequired": "Postal code is required",
+    "pinCodeTooLong": "Postal code is too long",
+    "invalidPinCode": "Invalid postal code format",
+    "invalidLatitude": "Invalid latitude",
+    "invalidLongitude": "Invalid longitude",
+    "invalidGst": "Invalid GST format",
+    "invalidContactName": "Invalid contact name",
+    "invalidContactNumber": "Invalid phone number",
+    "branchNameTooLong": "Branch name is too long",
+    "invalidBranchName": "Invalid characters in branch name",
+    "addressLineTooLong": "Address is too long",
+    "stateRequired": "State is required"
   },
   "errors": {
     "404": "404",

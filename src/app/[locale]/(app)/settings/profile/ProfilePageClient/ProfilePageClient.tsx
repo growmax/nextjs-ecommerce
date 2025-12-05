@@ -110,10 +110,13 @@ export default function ProfilePageClient() {
   }, [preferences, originalPreferences]);
 
   // Unified change tracking helper
-  const updateChangedSections = (section: "profile" | "preferences") => {
+  // Unified change tracking helper: add or remove a section from the changed set
+  const setSectionDirty = (section: "profile" | "preferences", isDirty: boolean) => {
     setChangedSections(prev => {
       const newSet = new Set(prev);
-      newSet.add(section);
+      if (isDirty) newSet.add(section);
+      else newSet.delete(section);
+      // update overall flag
       setHasChanges(newSet.size > 0);
       return newSet;
     });
@@ -136,7 +139,10 @@ export default function ProfilePageClient() {
 
     const updatedProfile = { ...profile, [field]: value };
     setProfile(updatedProfile);
-    updateChangedSections("profile");
+
+    // Determine whether profile differs from originalProfile
+    const isDirty = JSON.stringify(updatedProfile) !== JSON.stringify(originalProfile || {});
+    setSectionDirty("profile", isDirty);
   };
 
   // Store the uploaded image URL separately for the picture parameter
@@ -156,7 +162,8 @@ export default function ProfilePageClient() {
       setUploadedPictureUrl(image);
     }
 
-    updateChangedSections("profile");
+    const isDirty = JSON.stringify(updatedProfile) !== JSON.stringify(originalProfile || {});
+    setSectionDirty("profile", isDirty);
   };
 
   const handlePreferenceChange = (
@@ -165,7 +172,10 @@ export default function ProfilePageClient() {
   ) => {
     const updatedPreferences = { ...preferences, [field]: value };
     setPreferences(updatedPreferences);
-    // updateChangedSections("preferences");
+
+    // Determine whether preferences differ from originalPreferences
+    const isDirty = JSON.stringify(updatedPreferences) !== JSON.stringify(originalPreferences || {});
+    setSectionDirty("preferences", isDirty);
   };
 
   // Reset all changes helper - restore original values
