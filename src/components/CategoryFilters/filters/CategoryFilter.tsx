@@ -2,9 +2,11 @@
 
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { useBlockingLoader } from "@/providers/BlockingLoaderProvider";
 import type { CategoryFilterOption } from "@/types/category-filters";
 import { FolderTree } from "lucide-react";
 import { useRouter } from "next/navigation";
+import { useEffect, useTransition } from "react";
 
 interface CategoryFilterProps {
   childCategories: CategoryFilterOption[];
@@ -24,11 +26,24 @@ export function CategoryFilter({
   isLoading,
 }: CategoryFilterProps) {
   const router = useRouter();
+  const [isPending, startTransition] = useTransition();
+  const { showLoader, hideLoader } = useBlockingLoader();
+
+  // Show/hide blocking loader when transition state changes
+  useEffect(() => {
+    if (isPending) {
+      showLoader({ message: "Loading category..." });
+    } else {
+      hideLoader();
+    }
+  }, [isPending, showLoader, hideLoader]);
 
   const handleCategoryClick = (category: CategoryFilterOption) => {
+    let targetPath: string;
+    
     if (category.isChild) {
       // Navigate to full path: /parentCategory/child1/child2/...
-      router.push(`/${category.categoryPath}`);
+      targetPath = `/${category.categoryPath}`;
     } else if (category.isSibling) {
       // Navigate preserving parent path: /parentCategory/clickedCategory
       // Get parent path from current path (remove last segment)
@@ -36,14 +51,18 @@ export function CategoryFilter({
         currentCategoryPath.length > 1
           ? currentCategoryPath.slice(0, -1).join("/")
           : "";
-      const newPath = parentPath
+      targetPath = parentPath
         ? `/${parentPath}/${category.categorySlug}`
         : `/${category.categorySlug}`;
-      router.push(newPath);
     } else {
       // Root category
-      router.push(`/${category.categorySlug}`);
+      targetPath = `/${category.categorySlug}`;
     }
+
+    // Wrap navigation in startTransition to trigger loader
+    startTransition(() => {
+      router.push(targetPath);
+    });
   };
 
   if (isLoading) {
