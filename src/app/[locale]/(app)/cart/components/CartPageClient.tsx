@@ -3,7 +3,7 @@
 import AddMoreProducts from "@/components/Global/Products/AddMoreProducts";
 import { CartProceedButton, MultipleSellerCards } from "@/components/cart";
 import CartProductCard from "@/components/cart/CartProductCard";
-import CartPriceDetails from "@/components/sales/CartPriceDetails";
+import { OrderPriceDetails } from "@/components/sales";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import {
@@ -96,13 +96,14 @@ export default function CartPageClient() {
   // This hook already fetches discount data, applies it, and calculates pricing
   // Use selectedSellerId state to sync with accordion selection
   const {
+    selectedSellerItems,
     hasMultipleSellers,
     selectedSellerId: selectedSeller,
     selectedSellerPricing,
     isPricingLoading: isMultiSellerPricingLoading,
   } = useSelectedSellerCart(cart, selectedSellerId);
 
- 
+
 
   // Use useCartPrice for single-seller scenarios to ensure discount calculation is applied
   // This follows the buyer-fe pattern: fetch discounts -> apply to items -> calculate totals
@@ -172,7 +173,7 @@ export default function CartPageClient() {
     }
     return undefined;
   }, [addingProductId]);
-
+  console.log(cartCalculationResult);
   // Show skeleton loader when any loading state is active
   if (isLoading) {
     return (
@@ -632,7 +633,7 @@ export default function CartPageClient() {
       toast.error("Failed to add product to cart");
     }
   };
-
+  
   // If cart is empty, show empty state with heading and search bar
   // OR show skeleton loaders if product is being added
   if (!cart || cart.length === 0) {
@@ -839,6 +840,8 @@ export default function CartPageClient() {
               onSellerSelect={handleSellerSelection}
               handleOrder={handleOrder}
               handleQuote={handleQuote}
+              products={selectedSellerItems}
+              cartCalculationResult={cartCalculationResult}
             />
           ) : (
             /* Single seller or no seller - show all items */
@@ -868,14 +871,36 @@ export default function CartPageClient() {
         {!hasMultipleSellers && (
           <div>
             <div className="sticky top-4 space-y-4">
-              {cartCalculationResult && currency && (
+              {/* {cartCalculationResult && currency && (
                 <CartPriceDetails
                   cartValue={cartCalculationResult}
                   currency={currency}
                   isCart={true}
                   isPricingLoading={isPricingLoading || isCartOperationLoading}
                 />
-              )}
+              )} */}
+              <OrderPriceDetails
+                products={selectedSellerItems}
+                isInter={false}
+                insuranceCharges={cartCalculationResult?.insuranceCharges || 0}
+                loading={isPricingLoading || isCartOperationLoading}
+                precision={2}
+                Settings={{
+                  roundingAdjustment: true,
+                }}
+                isSeller={false}
+                taxExemption={false}
+                currency={currency?.symbol || "INR ₹"}
+                overallShipping={cartCalculationResult?.totalShipping || 0}
+                overallTax={cartCalculationResult?.totalTax || 0}
+                calculatedTotal={cartCalculationResult?.grandTotal || 0}
+                subTotal={cartCalculationResult?.totalValue || 0}
+                taxableAmount={cartCalculationResult?.taxableAmount || 0}
+                totalCashDiscount={cartCalculationResult?.totalCashDiscount || 0}
+                cashDiscountValue={cartCalculationResult?.cashDiscountValue || 0}
+                totalBasicDiscount={cartCalculationResult?.totalBasicDiscount || 0}
+                isCart ={true}
+              />
 
               <CartProceedButton
                 selectedSellerId={selectedSeller}

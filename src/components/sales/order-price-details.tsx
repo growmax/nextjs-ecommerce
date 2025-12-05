@@ -71,8 +71,10 @@ interface OrderPriceDetailsProps {
   isBeforeTax?: boolean;
   beforeTaxPercentage?: number;
   // Shipping Tax (calculated)
+  isCart?:boolean;
   shippingTax?: number;
   loading?:boolean;
+  totalBasicDiscount?:number;
 }
 
 export default function OrderPriceDetails({
@@ -89,6 +91,7 @@ export default function OrderPriceDetails({
   calculatedTotal,
   subTotal,
   taxableAmount,
+  totalBasicDiscount,
   totalCashDiscount: propTotalCashDiscount,
   cashDiscountValue: propCashDiscountValue,
   hidePfRate = false,
@@ -100,8 +103,10 @@ export default function OrderPriceDetails({
   getBreakup = [],
   isBeforeTax = false,
   shippingTax = 0,
+  isCart = false,
   loading
 }: OrderPriceDetailsProps) {
+
   const t = useTranslations("components");
   const [taxExpanded, setTaxExpanded] = useState(false);
 
@@ -119,7 +124,7 @@ export default function OrderPriceDetails({
       // Calculate pfRate and totalLP from products if available
       let pfRateFromProducts = 0;
       let totalLPFromProducts = 0;
-      let totalBasicDiscountFromProducts = 0;
+      let totalBasicDiscountFromProducts =  0;
       let totalCashDiscountFromProducts = 0;
       let cashDiscountValueFromProducts = 0;
 
@@ -179,11 +184,16 @@ export default function OrderPriceDetails({
             product.unitPrice ||
             product.discountedPrice ||
             0;
-          if (listPrice > originalPriceForBasicDiscount) {
+           
+          if (listPrice > originalPriceForBasicDiscount && isCart === false) {
             const basicDiscountAmount =
               listPrice - originalPriceForBasicDiscount;
             totalBasicDiscountFromProducts += basicDiscountAmount * qty;
           }
+          else{
+            totalBasicDiscountFromProducts = totalBasicDiscount || 0;
+          }
+          
         });
       }
 
@@ -402,6 +412,8 @@ export default function OrderPriceDetails({
     hidePfRate,
     propCashDiscountValue,
     propTotalCashDiscount,
+    isCart,
+    totalBasicDiscount,
   ]);
  
 
