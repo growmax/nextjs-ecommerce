@@ -71,6 +71,10 @@ export function EditOrderNameDialog({
   // Watch the current form value to compare with original
   const currentFormValue = watch("orderName");
 
+  // Ref for input element to prevent auto-focus and auto-select
+  const inputRef = React.useRef<HTMLInputElement>(null);
+  const shouldPreventFocusRef = React.useRef(true);
+
   // Sync local state with form when dialog opens
   React.useEffect(() => {
     if (open && !prevOpenRef.current) {
@@ -79,6 +83,35 @@ export function EditOrderNameDialog({
       // Set both local state and form value
       setInputValue(currentOrderName);
       setValue("orderName", currentOrderName, { shouldValidate: true });
+
+      // Prevent auto-focus and auto-selection
+      // Use multiple attempts to ensure we catch it after dialog animation
+      shouldPreventFocusRef.current = true;
+
+      const preventFocus = () => {
+        if (inputRef.current) {
+          // Blur if focused
+          if (document.activeElement === inputRef.current) {
+            inputRef.current.blur();
+          }
+          // Move cursor to end without selecting text
+          const length = inputRef.current.value.length;
+          inputRef.current.setSelectionRange(length, length);
+        }
+      };
+
+      // Try multiple times to catch any auto-focus behavior
+      setTimeout(preventFocus, 0);
+      setTimeout(preventFocus, 50);
+      setTimeout(preventFocus, 100);
+      setTimeout(preventFocus, 200);
+
+      // After dialog is fully open, allow normal focus
+      setTimeout(() => {
+        shouldPreventFocusRef.current = false;
+      }, 300);
+    } else if (!open) {
+      shouldPreventFocusRef.current = true;
     }
     prevOpenRef.current = open;
     // Only depend on 'open' to prevent resets while dialog is open
@@ -161,18 +194,59 @@ export function EditOrderNameDialog({
         !currentFormValue ||
         currentFormValue.trim() === orderNameOnOpenRef.current.trim()
       }
+      onOpenAutoFocus={e => {
+        // Prevent auto-focus on dialog open
+        e.preventDefault();
+      }}
     >
       <div className="space-y-2">
         <Label htmlFor="orderName" className="text-sm font-medium">
           {label}
         </Label>
         <Input
+          ref={inputRef}
           id="orderName"
           value={inputValue}
           onChange={handleInputChange}
           placeholder={placeholder}
           className="w-full"
           disabled={loading || isSubmitting}
+          autoFocus={false}
+          tabIndex={0}
+          onFocus={e => {
+            // Prevent text selection on focus
+            if (shouldPreventFocusRef.current) {
+              e.target.blur();
+              return;
+            }
+            const length = e.target.value.length;
+            e.target.setSelectionRange(length, length);
+          }}
+          onMouseDown={e => {
+            // Prevent text selection on mouse down if we're still preventing focus
+            if (shouldPreventFocusRef.current) {
+              e.preventDefault();
+              // Allow focus after a short delay
+              setTimeout(() => {
+                shouldPreventFocusRef.current = false;
+                if (inputRef.current) {
+                  inputRef.current.focus();
+                  const length = inputRef.current.value.length;
+                  inputRef.current.setSelectionRange(length, length);
+                }
+              }, 0);
+            }
+          }}
+          onClick={() => {
+            // Ensure cursor is at end when clicking
+            if (
+              inputRef.current &&
+              document.activeElement === inputRef.current
+            ) {
+              const length = inputRef.current.value.length;
+              inputRef.current.setSelectionRange(length, length);
+            }
+          }}
         />
         {errors.orderName && (
           <p className="text-sm text-red-600">{errors.orderName.message}</p>
