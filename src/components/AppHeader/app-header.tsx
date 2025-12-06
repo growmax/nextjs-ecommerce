@@ -33,7 +33,7 @@ export function AppHeader() {
   const router = useNavigationWithLoader();
   const { isAuthenticated: contextIsAuthenticated, isLoading: isAuthLoading } =
     useUserDetails();
- 
+
   // Sync tenant data from context to Zustand store (early initialization)
   useTenantData();
 

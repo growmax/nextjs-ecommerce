@@ -139,49 +139,40 @@ export default function OrderProductsTable({
   return (
     <Card className={cn("gap-0 py-0", className)}>
       {/* Header */}
-      <CardHeader className="pt-2 pb-2 px-4 gap-0 flex flex-row items-center justify-between">
-          {loading ? (
-             <div className="flex-1 flex items-center justify-between">
-               <CardTitle className="text-base font-semibold py-0 my-0 leading-tight -mt-0.5">
-                <Skeleton className="h-4 w-20 mb-2" />
-               </CardTitle>
-             </div>
-          ) : (
-             <div className="flex-1 flex items-center justify-between">
+      <CardHeader className="px-4 py-3 border-b">
+ 
+    <div className="flex items-center justify-between">
+      {/* Title */}
+      <CardTitle className="text-base font-semibold">
+        {t("products")} {displayCount > 0  &&`(${displayCount})`}
+      </CardTitle>
 
-             <CardTitle className="text-base font-semibold py-0 my-0 leading-tight -mt-0.5">
-               {t("products")} ({displayCount})
-             </CardTitle>
-             {/* Show search input in edit mode, export button in view mode */}
-             {onProductAdd ? (
-               <div className="w-full max-w-[calc(28rem-120px)] ml-4">
-                 <ProductSearchInput
-                   onProductSelect={onProductAdd}
-                   placeholder={t("searchAndAddProducts")}
-                   elasticIndex={elasticIndex}
-                 />
-               </div>
-             ) : (
-               onExport && (
-                 <Button
-                   variant="outline"
-                   size="sm"
-                   onClick={onExport}
-                   className="h-7 px-3 text-xs font-medium"
-                 >
-                   <Download className="h-3.5 w-3.5 mr-1.5" />
-                   {t("export")}
-                 </Button>
-               )
-             )}
-           </div>
-          )}
-       
-      </CardHeader>
+      {/* Right section - Search or Export */}
+      <div className="flex items-center">
+        {onProductAdd ? (
+          <div className="w-[26rem]">
+            <ProductSearchInput
+              onProductSelect={onProductAdd}
+              placeholder={t("searchAndAddProducts")}
+              elasticIndex={elasticIndex}
+            />
+          </div>
+        ) : onExport ? (
+          <Button variant="outline" size="sm" onClick={onExport} className="h-7 px-3 text-xs font-medium">
+            <Download className="h-3.5 w-3.5 mr-1.5" />
+            {t("export")}
+          </Button>
+        ) : null}
+      </div>
+    </div>
+
+</CardHeader>
+
+
 
       {/* Products Table */}
-      <CardContent className="p-0">
-        <div className="overflow-x-auto relative">
+      <CardContent className="p-0 overflow-visible">
+        <div className="overflow-x-auto relative rounded-b-lg">
           <Table>
             <TableHeader>
               {loading ? (
@@ -211,36 +202,36 @@ export default function OrderProductsTable({
                 </TableRow>
               ) : (
               <TableRow className="bg-muted hover:bg-muted">
-                <TableHead className="font-medium text-primary sticky left-0 bg-muted z-20 min-w-[150px] sm:min-w-[200px] shadow-[2px_0_4px_-2px_rgba(0,0,0,0.1)] py-3 before:absolute before:inset-0 before:bg-muted before:-z-10">
+                <TableHead className="font-medium text-primary sticky left-0 bg-muted z-20 min-w-[150px] sm:min-w-[200px] shadow-[2px_0_4px_-2px_rgba(0,0,0,0.1)] py-3 before:absolute before:inset-0 before:bg-muted before:-z-10 border-r border-gray-200">
                   <span className="relative z-10">{t("items")}</span>
                 </TableHead>
-                <TableHead className="font-medium text-primary text-right min-w-[140px] py-3">
+                <TableHead className="font-medium text-primary text-right min-w-[140px] px-4 py-3 border-r border-gray-200">
                   {t("basePrice")}
                 </TableHead>
-                <TableHead className="font-medium text-primary text-right min-w-[120px] py-3">
+                <TableHead className="font-medium text-primary text-right min-w-[120px] px-4 py-3 border-r border-gray-200">
                   {t("discount")}
                 </TableHead>
-                <TableHead className="font-medium text-primary text-right min-w-[120px] py-3">
+                <TableHead className="font-medium text-primary text-right min-w-[120px] px-4 py-3 border-r border-gray-200">
                   {t("cashDiscount")}
                 </TableHead>
-                <TableHead className="font-medium text-primary text-right min-w-[140px] py-3">
+                <TableHead className="font-medium text-primary text-right min-w-[140px] px-4 py-3 border-r border-gray-200">
                   {t("unitPrice")}
                 </TableHead>
-                <TableHead className="font-medium text-primary text-right min-w-[120px] py-3">
+                <TableHead className="font-medium text-primary text-right min-w-[120px] px-4 py-3 border-r border-gray-200">
                   {t("usc")}
                 </TableHead>
-                <TableHead className="font-medium text-primary text-center min-w-[100px] py-3">
+                <TableHead className="font-medium text-primary text-right min-w-[120px] px-4 py-3 border-r border-gray-200">
                   {t("quantity")}
                 </TableHead>
                 {showInvoicedQty && (
-                  <TableHead className="font-medium text-primary text-center min-w-[140px] py-3">
+                  <TableHead className="font-medium text-primary text-right min-w-[140px] px-4 py-3 border-r border-gray-200">
                     {t("invoicedQty")}
                   </TableHead>
                 )}
-                <TableHead className="font-medium text-primary text-right min-w-[150px] py-3">
+                <TableHead className="font-medium text-primary text-right min-w-[150px] px-4 py-3 border-r border-gray-200">
                   {t("amount")}
                 </TableHead>
-                <TableHead className="font-medium text-primary text-right min-w-[100px] py-3 pr-5">
+                <TableHead className="font-medium text-primary text-right min-w-[100px] px-4 py-3 pr-5 border-r border-gray-200">
                   {t("igst")}
                 </TableHead>
               </TableRow>)}
@@ -251,7 +242,7 @@ export default function OrderProductsTable({
                     {Array.from({ length: 5 }).map((_, rowIndex) => (
         <TableRow
           key={`skeleton-row-${rowIndex}`}
-          className="h-12 border-b"
+          className="h-12 border-b hover:bg-transparent"
         >
           {/* Product column skeleton */}
           <TableCell className="sticky left-0 bg-white dark:bg-gray-950 z-10 min-w-[150px] sm:min-w-[200px] shadow-[2px_0_4px_-2px_rgba(0,0,0,0.1)] py-3">
@@ -398,91 +389,88 @@ export default function OrderProductsTable({
 
                     return (
                       <TableRow
-                        key={product.itemNo || index}
-                        className="group hover:bg-muted h-12 border-b"
+                      key={product.itemNo || index}
+                      className="h-12 border-b hover:bg-transparent"
+                    >
+                      <TableCell
+                        className="sticky left-0 bg-white dark:bg-gray-950 z-10
+                        min-w-[150px] sm:min-w-[200px]
+                        shadow-[2px_0_4px_-2px_rgba(0,0,0,0.1)]
+                        py-3
+                        before:absolute before:inset-0 before:bg-white dark:before:bg-gray-950 before:-z-10 border-r border-gray-200"
                       >
-                        <TableCell className="sticky left-0 bg-white dark:bg-gray-950 group-hover:bg-muted/30 z-10 min-w-[150px] sm:min-w-[200px] shadow-[2px_0_4px_-2px_rgba(0,0,0,0.1)] transition-colors py-3 before:absolute before:inset-0 before:bg-white dark:before:bg-gray-950 before:-z-10">
-                          <div className="flex items-center gap-3 relative z-10">
-                            {/* Product Image or Placeholder */}
-                            {productImage ? (
-                              <div className="shrink-0 w-10 h-10 rounded-lg overflow-hidden flex items-center justify-center bg-gray-100">
-                                <ImageWithFallback
-                                  src={productImage}
-                                  alt={itemName}
-                                  width={40}
-                                  height={40}
-                                  className="w-full h-full object-cover rounded-lg"
-                                />
-                              </div>
-                            ) : (
-                              <div className="shrink-0 w-10 h-10 rounded-lg bg-gray-300 flex items-center justify-center">
-                                <span className="text-white font-medium text-sm">
-                                  {firstLetter}
-                                </span>
-                              </div>
-                            )}
-                            {/* Product Name and Code */}
-                            <div className="flex flex-col gap-0.5 min-w-0 flex-1">
-                              <span className="font-normal text-sm text-gray-900 truncate">
-                                {itemName}
-                              </span>
-                              {itemCode && (
-                                <span className="text-xs text-gray-500 truncate">
-                                  {itemCode}
-                                </span>
-                              )}
+                        <div className="flex items-center gap-3 relative z-10">
+                          {/* Product Image or Placeholder */}
+                          
+                            <div className="shrink-0 w-10 h-10 rounded-lg overflow-hidden flex items-center justify-center bg-gray-100 ">
+                              <ImageWithFallback
+                                src={productImage}
+                                alt={itemName}
+                                width={40}
+                                height={40}
+                                className="w-full h-full object-cover rounded-lg"
+                              />
                             </div>
+                          
+                    
+                        
+                          <div className="flex flex-col gap-0.5 min-w-0 flex-1">
+                            <span className="font-normal text-sm text-gray-900 truncate">
+                              {itemName}
+                            </span>
+                    
+                            {itemCode && (
+                              <span className="text-xs text-gray-500 truncate">
+                                {itemCode}
+                              </span>
+                            )}
                           </div>
-                        </TableCell>
-                        <TableCell className="text-right min-w-[140px] py-3 font-normal text-sm text-gray-700">
-                          <PricingFormat value={basePrice ?? 0} />
-                        </TableCell>
-                        <TableCell className="text-right min-w-[120px] py-3 font-normal text-sm text-gray-700">
-                          {`${discountValue}%`}
-                        </TableCell>
-                        <TableCell className="text-right min-w-[120px] py-3 font-normal text-sm text-gray-700">
-                          {cashDiscountValue > 0
-                            ? `${cashDiscountValue}%`
-                            : "-"}
-                        </TableCell>
-                        <TableCell className="text-right min-w-[140px] py-3 font-normal text-sm text-gray-700">
-                          <PricingFormat value={product.unitPrice ?? 0} />
-                        </TableCell>
-                        <TableCell className="text-right min-w-[120px] py-3 font-normal text-sm text-gray-700">
-                          <PricingFormat value={product.usc ?? 0} />
-                        </TableCell>
-                        <TableCell className="text-center min-w-[100px] py-3 font-normal text-sm text-gray-700">
-                          {isEditable ? (
+                        </div>
+                      </TableCell>
+                    
+                      <TableCell className="text-right min-w-[140px] px-4 py-3 font-normal text-sm text-gray-700 border-r border-gray-200">
+                        <PricingFormat value={basePrice ?? 0} />
+                      </TableCell>
+                    
+                      <TableCell className="text-right min-w-[120px] px-4 py-3 font-normal text-sm text-gray-700 border-r border-gray-200">
+                        {`${discountValue}%`}
+                      </TableCell>
+                    
+                      <TableCell className="text-right min-w-[120px] px-4 py-3 font-normal text-sm text-gray-700 border-r border-gray-200">
+                        {cashDiscountValue > 0 ? `${cashDiscountValue}%` : "-"}
+                      </TableCell>
+                    
+                      <TableCell className="text-right min-w-[140px] px-4 py-3 font-normal text-sm text-gray-700 border-r border-gray-200">
+                        <PricingFormat value={product.unitPrice ?? 0} />
+                      </TableCell>
+                    
+                      <TableCell className="text-right min-w-[120px] px-4 py-3 font-normal text-sm text-gray-700 border-r border-gray-200">
+                        <PricingFormat value={product.usc ?? 0} />
+                      </TableCell>
+                    
+                      <TableCell className="text-right min-w-[120px] px-4 py-3 font-normal text-sm text-gray-700 border-r border-gray-200">
+                        {isEditable ? (
+                          <div className="flex justify-end">
                             <Input
                               type="number"
                               value={quantity}
                               onChange={e => {
                                 const inputValue = e.target.value;
-                                // Remove leading zeros and handle empty input
+                    
                                 let newQuantity = 0;
                                 if (inputValue !== "") {
-                                  // Remove leading zeros (e.g., "033" becomes "33")
-                                  const cleanValue =
-                                    inputValue.replace(/^0+/, "") || "0";
+                                  const cleanValue = inputValue.replace(/^0+/, "") || "0";
                                   newQuantity = parseInt(cleanValue) || 0;
                                 }
                                 onQuantityChange?.(productId, newQuantity);
                               }}
                               onKeyDown={e => {
-                                // If current value is "0" and user presses backspace, clear the field
-                                if (
-                                  e.key === "Backspace" &&
-                                  e.currentTarget.value === "0"
-                                ) {
+                                if (e.key === "Backspace" && e.currentTarget.value === "0") {
                                   e.currentTarget.value = "";
                                   onQuantityChange?.(productId, 0);
                                 }
-                                // If user types a number when field shows "0", replace it
-                                if (
-                                  e.key >= "0" &&
-                                  e.key <= "9" &&
-                                  e.currentTarget.value === "0"
-                                ) {
+                    
+                                if (e.key >= "0" && e.key <= "9" && e.currentTarget.value === "0") {
                                   e.currentTarget.value = "";
                                 }
                               }}
@@ -499,29 +487,38 @@ export default function OrderProductsTable({
                                   { passive: false }
                                 );
                               }}
-                              className={`w-20 h-8 text-center text-sm focus:ring-1 [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none [-moz-appearance:textfield] ${
-                                quantity === 0
-                                  ? "border-red-500 focus:border-red-500 focus:ring-red-500"
-                                  : "border-gray-300 focus:border-blue-500 focus:ring-blue-500"
-                              }`}
+                              className={`w-20 h-8 text-right text-sm focus:ring-1 
+                                [&::-webkit-outer-spin-button]:appearance-none 
+                                [&::-webkit-inner-spin-button]:appearance-none 
+                                [-moz-appearance:textfield]
+                                ${
+                                  quantity === 0
+                                    ? "border-red-500 focus:border-red-500 focus:ring-red-500"
+                                    : "border-gray-300 focus:border-blue-500 focus:ring-blue-500"
+                                }`}
                               min="0"
                             />
-                          ) : (
-                            quantity
-                          )}
-                        </TableCell>
-                        {showInvoicedQty && (
-                          <TableCell className="text-center min-w-[140px] py-3 font-normal text-sm text-gray-700">
-                            {invoicedQty}
-                          </TableCell>
+                          </div>
+                        ) : (
+                          quantity
                         )}
-                        <TableCell className="text-right min-w-[150px] py-3 font-normal text-sm text-gray-700">
-                          <PricingFormat value={amount ?? 0} />
+                      </TableCell>
+                    
+                      {showInvoicedQty && (
+                        <TableCell className="text-right min-w-[140px] px-4 py-3 font-normal text-sm text-gray-700 border-r border-gray-200">
+                          {invoicedQty}
                         </TableCell>
-                        <TableCell className="text-right min-w-[100px] py-3 pr-5 font-normal text-sm text-gray-700">
-                          {igst}%
-                        </TableCell>
-                      </TableRow>
+                      )}
+                    
+                      <TableCell className="text-right min-w-[150px] px-4 py-3 font-normal text-sm text-gray-700 border-r border-gray-200">
+                        <PricingFormat value={amount ?? 0} />
+                      </TableCell>
+                    
+                      <TableCell className="text-right min-w-[100px] px-4 py-3 pr-5 font-normal text-sm text-gray-700 border-r border-gray-200">
+                        {igst}%
+                      </TableCell>
+                    </TableRow>
+                    
                     );
                   })}
                   {/* Add empty rows to maintain consistent height when there are fewer than 5 products */}
@@ -535,7 +532,7 @@ export default function OrderProductsTable({
                       key={`empty-row-${currentPage}-${startIndex + index}`}
                       className="h-12 border-b-0 hover:bg-transparent"
                     >
-                      <TableCell className="sticky left-0 bg-white dark:bg-gray-950 z-10 min-w-[150px] sm:min-w-[200px] shadow-[2px_0_4px_-2px_rgba(0,0,0,0.1)] py-3 before:absolute before:inset-0 before:bg-white dark:before:bg-gray-950 before:-z-10">
+                      <TableCell className="sticky left-0 bg-white dark:bg-gray-950 z-10 min-w-[150px] sm:min-w-[200px] shadow-[2px_0_4px_-2px_rgba(0,0,0,0.1)] py-3 before:absolute before:inset-0 before:bg-white dark:before:bg-gray-950 before:-z-10 rounded-b-lg">
                         <div className="h-6"></div>
                       </TableCell>
                       <TableCell className="min-w-[140px] py-3">
