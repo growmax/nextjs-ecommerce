@@ -5,6 +5,9 @@ import { useTranslations } from "next-intl";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
 
+import SectionCardDetail, {
+  InfoRow,
+} from "@/components/custom/SectionCardDetail";
 import { EditOrderNameDialog } from "@/components/dialogs/EditOrderNameDialog";
 import {
   VersionsDialog,
@@ -17,9 +20,8 @@ import {
   OrderPriceDetails,
   OrderProductsTable,
   OrderTermsCard,
-  SalesHeader
+  SalesHeader,
 } from "@/components/sales";
-import { Label } from "@/components/ui/label";
 import { useQuoteDetails } from "@/hooks/details/quotedetails/useQuoteDetails";
 import { useCurrentUser } from "@/hooks/useCurrentUser";
 import { useGetVersionDetails } from "@/hooks/useGetVersionDetails/useGetVersionDetails";
@@ -519,364 +521,313 @@ export default function QuoteDetailsClient({
 
       {/* Quote Details Content - Scrollable area */}
       <div className="flex-1 overflow-y-auto overflow-x-hidden relative z-0">
-      
-            <div className="flex flex-col lg:flex-row gap-2 sm:gap-3 md:gap-4">
-              {/* Left Side - Products Table, Contact & Terms - 65% */}
-              <div className="w-full lg:w-[65%] space-y-2 sm:space-y-3">
-              
-                  <div className="mt-[55px]">
-                    <OrderProductsTable
-                      products={products}
-                      {...(products.length && {
-                        totalCount: products.length,
-                      })}
-                      showInvoicedQty={false}
-                      onExport={() => {
-                        const filename = `Quote_${quoteIdentifier}_Products.csv`;
-                        exportProductsToCsv(
-                          products as ProductCsvRow[],
-                          filename
-                        );
-                      }}
-                      loading={loading}
-                    />
-                  </div>
-              
-
-             
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-2 sm:gap-3">
-                    {/* Contact Details Card */}
-                    <OrderContactDetails
-                      billingAddress={
-                        quoteDetailData?.billingAddressDetails as unknown as Record<
-                          string,
-                          unknown
-                        >
-                      }
-                      shippingAddress={
-                        quoteDetailData?.shippingAddressDetails as unknown as Record<
-                          string,
-                          unknown
-                        >
-                      }
-                      registerAddress={
-                        quoteDetailData?.registerAddressDetails as unknown as Record<
-                          string,
-                          unknown
-                        >
-                      }
-                      sellerAddress={
-                        quoteDetailData?.sellerAddressDetail as unknown as Record<
-                          string,
-                          unknown
-                        >
-                      }
-                      buyerCompanyName={
-                        (quoteDetailData?.buyerCompanyName as string) || ""
-                      }
-                      buyerBranchName={
-                        (quoteDetailData?.buyerBranchName as string) || ""
-                      }
-                      warehouseName={
-                        (
-                          (
-                            quoteDetailData?.dbProductDetails as Array<
-                              Record<string, unknown>
-                            >
-                          )?.[0] as Record<string, Record<string, string>>
-                        )?.wareHouse?.wareHouseName ||
-                        (
-                          (
-                            quoteDetailData?.dbProductDetails as Array<
-                              Record<string, unknown>
-                            >
-                          )?.[0] as Record<string, string>
-                        )?.orderWareHouseName
-                      }
-                      warehouseAddress={
-                        (
-                          (
-                            quoteDetailData?.dbProductDetails as Array<
-                              Record<string, unknown>
-                            >
-                          )?.[0] as Record<
-                            string,
-                            Record<string, Record<string, string>>
-                          >
-                        )?.wareHouse?.addressId as unknown as {
-                          addressLine?: string;
-                          district?: string;
-                          city?: string;
-                          state?: string;
-                          pinCodeId?: string;
-                          country?: string;
-                        }
-                      }
-                      salesBranch={
-                        (quoteDetailData?.sellerBranchName as string) ||
-                        undefined
-                      }
-                      requiredDate={
-                        (quoteDetailData?.customerRequiredDate ||
-                          quoteDetails?.data?.validityTill) as
-                          | string
-                          | undefined
-                      }
-                      referenceNumber={
-                        (quoteDetails?.data?.buyerReferenceNumber as string) ||
-                        "-"
-                      }
-                      loading={loading}
-                    />
-
-                    {/* Terms Card */}
-                    <OrderTermsCard
-                      orderTerms={
-                        {
-                          loading: loading,
-                          ...(quoteDetailData?.quoteTerms as unknown as Record<
-                            string,
-                            unknown
-                          >),
-                          // Add additionalTerms from quotationDetails level
-                          additionalTerms:
-                            quoteDetailData?.additionalTerms as string,
-                        } as unknown as Record<string, unknown>
-                      }
-                    />
-                  </div>
-                
-              </div>
-
-            
-                <div className="w-full lg:w-[33%] mt-[55px]">
-                  <OrderPriceDetails
-                    products={products}
-                    isInter={(() => {
-                      // Determine if inter-state based on product taxes (IGST = inter-state, SGST/CGST = intra-state)
-                      if (products.length > 0 && products[0]) {
-                        const firstProduct = products[0] as Record<
-                          string,
-                          unknown
-                        >;
-                        if (
-                          firstProduct.productTaxes &&
-                          Array.isArray(firstProduct.productTaxes)
-                        ) {
-                          const hasIGST = firstProduct.productTaxes.some(
-                            (t: Record<string, unknown>) => t.taxName === "IGST"
-                          );
-                          return hasIGST;
-                        }
-                      }
-                      return false;
-                    })()}
-                    insuranceCharges={
-                      Number(quoteDetailData?.insuranceCharges) || 0
-                    }
-                    precision={2}
-                    Settings={{
-                      roundingAdjustment:
-                        quoteDetailData?.roundingAdjustmentEnabled || false,
-                    }}
-                    isSeller={
-                      (user as { isSeller?: boolean })?.isSeller || false
-                    }
-                    taxExemption={
-                      (user as { taxExemption?: boolean })?.taxExemption ||
-                      false
-                    }
-                    currency={buyerCurrencySymbol?.symbol || "INR ₹"}
-                    overallShipping={Number(
-                      quoteDetailData?.overallShipping || 0
-                    )}
-                    overallTax={Number(quoteDetailData?.overallTax || 0)}
-                    calculatedTotal={Number(
-                      quoteDetailData?.calculatedTotal ||
-                        quoteDetailData?.grandTotal ||
-                        0
-                    )}
-                    subTotal={Number(quoteDetailData?.subTotal || 0)}
-                    taxableAmount={Number(quoteDetailData?.taxableAmount || 0)}
-                    loading={loading}
-                  />
-
-                  {/* Target Discount Card - Display only on detail page */}
-                  {showTargetDiscount && (
-                    <div className="mt-4">
-                      <div className="bg-white rounded-lg border border-gray-200 shadow-sm">
-                        <div className="px-6 py-4 bg-gray-50 rounded-t-lg border-b">
-                          <h3 className="text-xl font-semibold text-gray-900">
-                            Target Discount
-                          </h3>
-                        </div>
-                        <div className="px-6 py-4">
-                          <div className="space-y-4">
-                            {/* Target Discount Display */}
-                            <div className="flex justify-between items-center py-2">
-                              <Label className="text-sm font-normal text-gray-900 w-1/2">
-                                Total Discount
-                              </Label>
-                              <div className="text-sm font-semibold text-gray-900 w-1/2 text-right">
-                                {(
-                                  sprDetails?.sprRequestedDiscount || 0
-                                ).toFixed(2)}
-                                %
-                              </div>
-                            </div>
-                            {/* Target Price Display */}
-                            <div className="flex justify-between items-center py-2">
-                              <Label className="text-sm font-normal text-gray-900 w-1/2">
-                                Target Price (Excl. taxes)
-                              </Label>
-                              <div className="text-sm font-semibold text-gray-900 w-1/2 text-right">
-                                <PricingFormat
-                                  value={sprDetails?.targetPrice || 0}
-                                />
-                              </div>
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  )}
-
-                  {/* Customer Information Card */}
-                  <div className="mt-4">
-                    <CustomerInfoCard
-                      quoteValidity={{
-                        from:
-                          ((displayQuoteDetails?.validityFrom ||
-                            quoteDetails?.data?.validityFrom) as string) ||
-                          undefined,
-                        till:
-                          ((displayQuoteDetails?.validityTill ||
-                            quoteDetails?.data?.validityTill) as string) ||
-                          undefined,
-                      }}
-                      contractEnabled={
-                        ((displayQuoteDetails?.purchaseOrder ||
-                          quoteDetails?.data?.purchaseOrder) as boolean) ||
-                        false
-                      }
-                      endCustomerName={
-                        (
-                          quoteDetailData?.sprDetails as
-                            | { companyName?: string }
-                            | undefined
-                        )?.companyName || undefined
-                      }
-                      projectName={
-                        (
-                          quoteDetailData?.sprDetails as
-                            | { projectName?: string }
-                            | undefined
-                        )?.projectName || undefined
-                      }
-                      competitorNames={
-                        (
-                          quoteDetailData?.sprDetails as
-                            | { competitorNames?: string[] }
-                            | undefined
-                        )?.competitorNames || []
-                      }
-                      priceJustification={
-                        (
-                          quoteDetailData?.sprDetails as
-                            | { priceJustification?: string }
-                            | undefined
-                        )?.priceJustification || undefined
-                      }
-                      loading={loading}
-                    />
-                  </div>
-
-                  {/* Attachments Card */}
-                  {(() => {
-                    const attachments =
-                      (displayQuoteDetails?.uploadedDocumentDetails ||
-                        quoteDetails?.data?.uploadedDocumentDetails) as
-                        | any[]
-                        | undefined;
-                    return (
-                      attachments &&
-                      Array.isArray(attachments) &&
-                      attachments.length > 0
-                    );
-                  })() && (
-                    <div className="mt-4">
-                      <div className="bg-white rounded-lg border border-gray-200 shadow-sm">
-                        <div className="px-6 py-4 bg-gray-50 rounded-t-lg border-b">
-                          <h3 className="text-xl font-semibold text-gray-900">
-                            Attachments
-                          </h3>
-                        </div>
-                        <div className="px-6 py-4">
-                          <div className="space-y-2">
-                            {(
-                              (displayQuoteDetails?.uploadedDocumentDetails ||
-                                quoteDetails?.data?.uploadedDocumentDetails ||
-                                []) as any[]
-                            ).map((attachment: any, index: number) => {
-                              const fileUrl =
-                                attachment.source ||
-                                attachment.filePath ||
-                                attachment.attachment;
-                              const fileName =
-                                attachment.name || `File ${index + 1}`;
-                              const attachedBy =
-                                attachment.width?.split(",")[0] || "Unknown";
-                              const attachedDate = attachment.width?.split(
-                                ","
-                              )[1]
-                                ? new Date(
-                                    attachment.width.split(",")[1]
-                                  ).toLocaleString("en-IN", {
-                                    day: "2-digit",
-                                    month: "2-digit",
-                                    year: "numeric",
-                                    hour: "2-digit",
-                                    minute: "2-digit",
-                                    hour12: true,
-                                  })
-                                : null;
-
-                              return (
-                                <div
-                                  key={index}
-                                  className="flex items-center justify-between p-3 border rounded-md bg-gray-50 hover:bg-gray-100 transition-colors cursor-pointer"
-                                  onClick={() => {
-                                    if (fileUrl) {
-                                      window.open(fileUrl, "_blank");
-                                    }
-                                  }}
-                                >
-                                  <div className="flex items-center gap-3 flex-1 min-w-0">
-                                    <FileText className="h-5 w-5 text-muted-foreground flex-shrink-0" />
-                                    <div className="flex-1 min-w-0">
-                                      <p className="text-sm font-medium text-gray-900 truncate">
-                                        {fileName}
-                                      </p>
-                                      {attachedBy && attachedDate && (
-                                        <p className="text-xs text-muted-foreground">
-                                          Attached By {attachedBy}{" "}
-                                          {attachedDate}
-                                        </p>
-                                      )}
-                                    </div>
-                                  </div>
-                                </div>
-                              );
-                            })}
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  )}
-                </div>
-            
+        <div className="flex flex-col lg:flex-row gap-2 sm:gap-3 md:gap-4">
+          {/* Left Side - Products Table, Contact & Terms - 65% */}
+          <div className="w-full lg:w-[65%] space-y-2 sm:space-y-3">
+            <div className="mt-[55px]">
+              <OrderProductsTable
+                products={products}
+                {...(products.length && {
+                  totalCount: products.length,
+                })}
+                showInvoicedQty={false}
+                onExport={() => {
+                  const filename = `Quote_${quoteIdentifier}_Products.csv`;
+                  exportProductsToCsv(products as ProductCsvRow[], filename);
+                }}
+                loading={loading}
+              />
             </div>
-          
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-2 sm:gap-3">
+              {/* Contact Details Card */}
+              <OrderContactDetails
+                billingAddress={
+                  quoteDetailData?.billingAddressDetails as unknown as Record<
+                    string,
+                    unknown
+                  >
+                }
+                shippingAddress={
+                  quoteDetailData?.shippingAddressDetails as unknown as Record<
+                    string,
+                    unknown
+                  >
+                }
+                registerAddress={
+                  quoteDetailData?.registerAddressDetails as unknown as Record<
+                    string,
+                    unknown
+                  >
+                }
+                sellerAddress={
+                  quoteDetailData?.sellerAddressDetail as unknown as Record<
+                    string,
+                    unknown
+                  >
+                }
+                buyerCompanyName={
+                  (quoteDetailData?.buyerCompanyName as string) || ""
+                }
+                buyerBranchName={
+                  (quoteDetailData?.buyerBranchName as string) || ""
+                }
+                warehouseName={
+                  (
+                    (
+                      quoteDetailData?.dbProductDetails as Array<
+                        Record<string, unknown>
+                      >
+                    )?.[0] as Record<string, Record<string, string>>
+                  )?.wareHouse?.wareHouseName ||
+                  (
+                    (
+                      quoteDetailData?.dbProductDetails as Array<
+                        Record<string, unknown>
+                      >
+                    )?.[0] as Record<string, string>
+                  )?.orderWareHouseName
+                }
+                warehouseAddress={
+                  (
+                    (
+                      quoteDetailData?.dbProductDetails as Array<
+                        Record<string, unknown>
+                      >
+                    )?.[0] as Record<
+                      string,
+                      Record<string, Record<string, string>>
+                    >
+                  )?.wareHouse?.addressId as unknown as {
+                    addressLine?: string;
+                    district?: string;
+                    city?: string;
+                    state?: string;
+                    pinCodeId?: string;
+                    country?: string;
+                  }
+                }
+                salesBranch={
+                  (quoteDetailData?.sellerBranchName as string) || undefined
+                }
+                requiredDate={
+                  (quoteDetailData?.customerRequiredDate ||
+                    quoteDetails?.data?.validityTill) as string | undefined
+                }
+                referenceNumber={
+                  (quoteDetails?.data?.buyerReferenceNumber as string) || "-"
+                }
+                loading={loading}
+              />
+
+              {/* Terms Card */}
+              <OrderTermsCard
+                orderTerms={
+                  {
+                    loading: loading,
+                    ...(quoteDetailData?.quoteTerms as unknown as Record<
+                      string,
+                      unknown
+                    >),
+                    // Add additionalTerms from quotationDetails level
+                    additionalTerms: quoteDetailData?.additionalTerms as string,
+                  } as unknown as Record<string, unknown>
+                }
+              />
+            </div>
+          </div>
+
+          <div className="w-full lg:w-[33%] mt-[55px]">
+            <OrderPriceDetails
+              products={products}
+              isInter={(() => {
+                // Determine if inter-state based on product taxes (IGST = inter-state, SGST/CGST = intra-state)
+                if (products.length > 0 && products[0]) {
+                  const firstProduct = products[0] as Record<string, unknown>;
+                  if (
+                    firstProduct.productTaxes &&
+                    Array.isArray(firstProduct.productTaxes)
+                  ) {
+                    const hasIGST = firstProduct.productTaxes.some(
+                      (t: Record<string, unknown>) => t.taxName === "IGST"
+                    );
+                    return hasIGST;
+                  }
+                }
+                return false;
+              })()}
+              insuranceCharges={Number(quoteDetailData?.insuranceCharges) || 0}
+              precision={2}
+              Settings={{
+                roundingAdjustment:
+                  quoteDetailData?.roundingAdjustmentEnabled || false,
+              }}
+              isSeller={(user as { isSeller?: boolean })?.isSeller || false}
+              taxExemption={
+                (user as { taxExemption?: boolean })?.taxExemption || false
+              }
+              currency={buyerCurrencySymbol?.symbol || "INR ₹"}
+              overallShipping={Number(quoteDetailData?.overallShipping || 0)}
+              overallTax={Number(quoteDetailData?.overallTax || 0)}
+              calculatedTotal={Number(
+                quoteDetailData?.calculatedTotal ||
+                  quoteDetailData?.grandTotal ||
+                  0
+              )}
+              subTotal={Number(quoteDetailData?.subTotal || 0)}
+              taxableAmount={Number(quoteDetailData?.taxableAmount || 0)}
+              loading={loading}
+            />
+
+            {/* Target Discount Card - Display only on detail page */}
+            {showTargetDiscount && (
+              <div className="mt-4">
+                <SectionCardDetail
+                  title="Target Discount"
+                  headerColor="muted"
+                  shadow="sm"
+                  showSeparator={false}
+                >
+                  <div className="divide-y divide-gray-100">
+                    <InfoRow
+                      label="Total Discount"
+                      value={`${(sprDetails?.sprRequestedDiscount || 0).toFixed(2)}%`}
+                    />
+                    <InfoRow
+                      label="Target Price (Excl. taxes)"
+                      value={
+                        <PricingFormat value={sprDetails?.targetPrice || 0} />
+                      }
+                    />
+                  </div>
+                </SectionCardDetail>
+              </div>
+            )}
+
+            {/* Customer Information Card */}
+            <div className="mt-4">
+              <CustomerInfoCard
+                quoteValidity={{
+                  from:
+                    ((displayQuoteDetails?.validityFrom ||
+                      quoteDetails?.data?.validityFrom) as string) || undefined,
+                  till:
+                    ((displayQuoteDetails?.validityTill ||
+                      quoteDetails?.data?.validityTill) as string) || undefined,
+                }}
+                contractEnabled={
+                  ((displayQuoteDetails?.purchaseOrder ||
+                    quoteDetails?.data?.purchaseOrder) as boolean) || false
+                }
+                endCustomerName={
+                  (
+                    quoteDetailData?.sprDetails as
+                      | { companyName?: string }
+                      | undefined
+                  )?.companyName || undefined
+                }
+                projectName={
+                  (
+                    quoteDetailData?.sprDetails as
+                      | { projectName?: string }
+                      | undefined
+                  )?.projectName || undefined
+                }
+                competitorNames={
+                  (
+                    quoteDetailData?.sprDetails as
+                      | { competitorNames?: string[] }
+                      | undefined
+                  )?.competitorNames || []
+                }
+                priceJustification={
+                  (
+                    quoteDetailData?.sprDetails as
+                      | { priceJustification?: string }
+                      | undefined
+                  )?.priceJustification || undefined
+                }
+                loading={loading}
+              />
+            </div>
+
+            {/* Attachments Card */}
+            {(() => {
+              const attachments =
+                (displayQuoteDetails?.uploadedDocumentDetails ||
+                  quoteDetails?.data?.uploadedDocumentDetails) as
+                  | any[]
+                  | undefined;
+              return (
+                attachments &&
+                Array.isArray(attachments) &&
+                attachments.length > 0
+              );
+            })() && (
+              <div className="mt-4">
+                <SectionCardDetail
+                  title="Attachments"
+                  headerColor="muted"
+                  shadow="sm"
+                >
+                  <div className="space-y-2">
+                    {(
+                      (displayQuoteDetails?.uploadedDocumentDetails ||
+                        quoteDetails?.data?.uploadedDocumentDetails ||
+                        []) as any[]
+                    ).map((attachment: any, index: number) => {
+                      const fileUrl =
+                        attachment.source ||
+                        attachment.filePath ||
+                        attachment.attachment;
+                      const fileName = attachment.name || `File ${index + 1}`;
+                      const attachedBy =
+                        attachment.width?.split(",")[0] || "Unknown";
+                      const attachedDate = attachment.width?.split(",")[1]
+                        ? new Date(
+                            attachment.width.split(",")[1]
+                          ).toLocaleString("en-IN", {
+                            day: "2-digit",
+                            month: "2-digit",
+                            year: "numeric",
+                            hour: "2-digit",
+                            minute: "2-digit",
+                            hour12: true,
+                          })
+                        : null;
+
+                      return (
+                        <div
+                          key={index}
+                          className="flex items-center justify-between p-3 border rounded-md bg-gray-50 hover:bg-gray-100 transition-colors cursor-pointer"
+                          onClick={() => {
+                            if (fileUrl) {
+                              window.open(fileUrl, "_blank");
+                            }
+                          }}
+                        >
+                          <div className="flex items-center gap-3 flex-1 min-w-0">
+                            <FileText className="h-5 w-5 text-muted-foreground flex-shrink-0" />
+                            <div className="flex-1 min-w-0">
+                              <p className="text-sm font-medium text-gray-900 truncate">
+                                {fileName}
+                              </p>
+                              {attachedBy && attachedDate && (
+                                <p className="text-xs text-muted-foreground">
+                                  Attached By {attachedBy} {attachedDate}
+                                </p>
+                              )}
+                            </div>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </SectionCardDetail>
+              </div>
+            )}
+          </div>
+        </div>
       </div>
 
       {/* Right Sidebar Icons - Positioned just below the SalesHeader component, flush to right edge */}

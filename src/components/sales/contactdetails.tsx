@@ -1,14 +1,17 @@
 "use client";
 
+import SectionCardDetail, {
+  EditableDateRow,
+  EditableTextRow,
+  InfoRow,
+  SkeletonRow,
+} from "@/components/custom/SectionCardDetail";
 import { AddressDetailsDialog } from "@/components/dialogs/AddressDetailsDialog";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   HoverCard,
   HoverCardContent,
   HoverCardTrigger,
 } from "@/components/ui/hover-card";
-import { Input } from "@/components/ui/input";
-import { Separator } from "@/components/ui/separator";
 import { type BillingAddress } from "@/lib/api";
 import SellerWarehouseService, {
   type SellerBranch,
@@ -21,7 +24,6 @@ import { Pencil } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useMemo, useState } from "react";
 import { toast } from "sonner";
-import { Skeleton } from "../ui/skeleton";
 
 interface AddressDetails {
   addressLine?: string | undefined;
@@ -78,86 +80,15 @@ interface OrderContactDetailsProps {
   onShippingAddressChange?: (address: AddressDetails) => void;
   onSellerBranchChange?: (sellerBranch: SellerBranch | null) => void;
   onWarehouseChange?: (warehouse: Warehouse | null) => void;
-  loading?:boolean;
+  loading?: boolean;
 }
 
-const DetailRow = ({
-  label,
-  value,
-  showEmpty = false,
-}: {
-  label: string;
-  value?: string | undefined;
-  showEmpty?: boolean;
-}) => {
-  if (!value && !showEmpty) return null;
+// DetailRow is now replaced with InfoRow from SectionCard
+// Keeping this alias for backward compatibility if needed
+const DetailRow = InfoRow;
 
-  return (
-    <div className="grid grid-cols-2 gap-4 py-1.5">
-      <div>
-        <p className="text-sm font-normal text-gray-900">{label}</p>
-      </div>
-      <div>
-        <p className="text-sm font-semibold text-gray-900">{value || "-"}</p>
-      </div>
-    </div>
-  );
-};
-
-const EditableDateRow = ({
-  label,
-  value,
-  onChange,
-}: {
-  label: string;
-  value?: string | undefined;
-  onChange?: ((date: string) => void) | undefined;
-}) => {
-  return (
-    <div className="grid grid-cols-2 gap-4 py-1.5 items-center">
-      <div>
-        <p className="text-sm font-normal text-gray-900">{label}</p>
-      </div>
-      <div className="relative">
-        <Input
-          type="date"
-          value={value || ""}
-          onChange={e => onChange?.(e.target.value)}
-          className="text-sm h-9 border-gray-300 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 bg-gray-50 pr-10"
-        />
-      </div>
-    </div>
-  );
-};
-
-const EditableTextRow = ({
-  label,
-  value,
-  onChange,
-  placeholder,
-}: {
-  label: string;
-  value?: string | undefined;
-  onChange?: ((value: string) => void) | undefined;
-  placeholder?: string | undefined;
-}) => {
-  return (
-    <div className="grid grid-cols-2 gap-4 py-1.5 items-center">
-      <div>
-        <p className="text-sm font-normal text-gray-900">{label}</p>
-      </div>
-      <div>
-        <Input
-          type="text"
-          value={value || ""}
-          onChange={e => onChange?.(e.target.value)}
-          className="text-sm h-9 border-gray-300 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 bg-gray-50"
-          placeholder={placeholder || label}
-        />
-      </div>
-    </div>
-  );
-};
+// EditableDateRow and EditableTextRow are now imported from SectionCard
+// No need for local definitions
 
 const WarehouseRow = ({
   warehouseName,
@@ -179,16 +110,7 @@ const WarehouseRow = ({
       warehouseAddress.country);
 
   if (!hasAddressDetails) {
-    return (
-      <div className="grid grid-cols-2 gap-4 py-1.5">
-        <div>
-          <p className="text-sm font-normal text-gray-900">{t("warehouse")}</p>
-        </div>
-        <div>
-          <p className="text-sm font-semibold text-gray-900">{warehouseName}</p>
-        </div>
-      </div>
-    );
+    return <InfoRow label={t("warehouse")} value={warehouseName} />;
   }
 
   return (
@@ -266,9 +188,7 @@ const AddressRow = ({
           <p className="text-sm font-normal text-gray-900">{label}</p>
         </div>
         <div className="flex items-center gap-2 min-w-0">
-          <p
-            className={`${isEditable ? "text-xs" : "text-sm"} font-semibold text-gray-900 truncate`}
-          >
+          <p className="text-sm font-semibold text-gray-900 truncate">
             {addressName}
           </p>
           {isEditable && (
@@ -293,9 +213,7 @@ const AddressRow = ({
       <div className="flex items-center gap-2 min-w-0">
         <HoverCard>
           <HoverCardTrigger asChild>
-            <p
-              className={`${isEditable ? "text-xs" : "text-sm"} font-semibold text-gray-900 cursor-pointer underline truncate`}
-            >
+            <p className="text-sm font-semibold text-gray-900 cursor-pointer underline truncate">
               {addressName}
             </p>
           </HoverCardTrigger>
@@ -370,12 +288,12 @@ export default function OrderContactDetails({
   onShippingAddressChange,
   onSellerBranchChange,
   onWarehouseChange,
-  loading
+  loading,
 }: OrderContactDetailsProps) {
   const t = useTranslations("components");
   const [billingDialogOpen, setBillingDialogOpen] = useState(false);
   const [shippingDialogOpen, setShippingDialogOpen] = useState(false);
-   console.log(sellerCompanyId);
+  console.log(sellerCompanyId);
   // Memoize current billing address to prevent unnecessary recreations
   const currentBillingAddress = useMemo(() => {
     if (!billingAddress) return undefined;
@@ -751,215 +669,202 @@ export default function OrderContactDetails({
       }
     }
   };
-  const SkeletonRow = () => (
-    <div className="grid grid-cols-2 gap-4 py-1.5">
-      <Skeleton className="h-4 w-32" />
-      <Skeleton className="h-4 w-48" />
-    </div>
-  );
   return (
-  <>
-  {loading ? (
-    <><Card className="shadow-sm pb-0 py-0 gap-0">
-    <CardHeader className="px-6 py-2 bg-muted rounded-t-lg items-end gap-0">
-      <CardTitle className="text-xl font-semibold text-gray-900 m-0!">
-      {t("contactDetails")}
-      </CardTitle>
-    </CardHeader>
-    <Separator />
-    <CardContent className="px-6 pt-2 pb-4 gap-0">
     <>
-              <SkeletonRow />
-              <SkeletonRow />
-              <SkeletonRow />
-              <SkeletonRow />
-              <SkeletonRow />
-              <SkeletonRow />
-              <SkeletonRow />
-            </>
-      </CardContent>
-    </Card>
+      {loading ? (
+        <SectionCardDetail
+          title={t("contactDetails")}
+          headerColor="muted"
+          shadow="sm"
+        >
+          <div className="divide-y divide-gray-100 [&>div]:py-1.5 [&>div:last-child]:pb-0">
+            <SkeletonRow />
+            <SkeletonRow />
+            <SkeletonRow />
+            <SkeletonRow />
+            <SkeletonRow />
+            <SkeletonRow />
+            <SkeletonRow />
+          </div>
+        </SectionCardDetail>
+      ) : (
+        <SectionCardDetail
+          title={t("contactDetails")}
+          headerColor="muted"
+          shadow="sm"
+          showSeparator={false}
+        >
+          <div className="divide-y divide-gray-100 [&>div]:py-1.5 [&>div:last-child]:pb-0">
+            {/* Company Name */}
+            <DetailRow
+              label="Company Name"
+              value={
+                sellerCompanyName ||
+                sellerAddress?.sellerCompanyName ||
+                (sellerAddress as any)?.companyId?.name ||
+                (sellerAddress as any)?.companyId?.companyName
+              }
+            />
 
+            {/* Warehouse */}
+            <WarehouseRow
+              warehouseName={warehouseName}
+              warehouseAddress={warehouseAddress}
+            />
+
+            {/* Sales Branch */}
+            <DetailRow
+              label={t("salesBranch")}
+              value={salesBranch || sellerAddress?.sellerBranchName}
+            />
+
+            {/* Bill To */}
+            <AddressRow
+              label={t("billTo")}
+              addressName={
+                billingAddress?.branchName && billingAddress?.billToCode
+                  ? `${billingAddress.branchName} - ${billingAddress.billToCode}`
+                  : billingAddress?.branchName || billingAddress?.billToCode
+              }
+              addressDetails={billingAddress}
+              isEditable={isEditable}
+              onEditClick={() => {
+                setBillingDialogOpen(true);
+              }}
+            />
+
+            {/* Ship To */}
+            <AddressRow
+              label={t("shipTo")}
+              addressName={
+                shippingAddress?.branchName && shippingAddress?.shipToCode
+                  ? `${shippingAddress.branchName} - ${shippingAddress.shipToCode}`
+                  : shippingAddress?.branchName || shippingAddress?.shipToCode
+              }
+              addressDetails={shippingAddress}
+              isEditable={isEditable}
+              onEditClick={() => setShippingDialogOpen(true)}
+            />
+
+            {/* Required Date */}
+            {isEditable ? (
+              <EditableDateRow
+                label={t("requiredDate")}
+                value={requiredDate || ""}
+                {...(onRequiredDateChange && {
+                  onChange: onRequiredDateChange,
+                })}
+              />
+            ) : (
+              <DetailRow
+                label={t("requiredDate")}
+                value={
+                  requiredDate
+                    ? (() => {
+                        try {
+                          // Extract date part from ISO string to avoid timezone conversion affecting the day
+                          let dateStr: string | undefined;
+                          if (typeof requiredDate === "string") {
+                            // Extract YYYY-MM-DD from ISO string (e.g., "2023-09-28T18:30:00Z" -> "2023-09-28")
+                            dateStr = requiredDate.split("T")[0];
+                          } else if (requiredDate) {
+                            // For Date objects, convert to ISO and extract date part
+                            dateStr = new Date(requiredDate)
+                              .toISOString()
+                              .split("T")[0];
+                          } else {
+                            return undefined;
+                          }
+
+                          if (!dateStr) {
+                            return undefined;
+                          }
+
+                          // Parse as local date (YYYY-MM-DD format) to avoid timezone issues
+                          const [year, month, day] = dateStr
+                            .split("-")
+                            .map(Number);
+                          if (
+                            year === undefined ||
+                            month === undefined ||
+                            day === undefined
+                          ) {
+                            return undefined;
+                          }
+                          const date = new Date(year, month - 1, day);
+
+                          if (!isValid(date)) {
+                            // Fallback to original timezone conversion if parsing fails
+                            return (
+                              zoneDateTimeCalculator(
+                                requiredDate,
+                                preferences.timeZone,
+                                preferences.dateFormat,
+                                preferences.timeFormat,
+                                false
+                              ) || "-"
+                            );
+                          }
+                          return format(
+                            date,
+                            preferences.dateFormat || "dd/MM/yyyy"
+                          );
+                        } catch {
+                          // Fallback to original timezone conversion on error
+                          return (
+                            zoneDateTimeCalculator(
+                              requiredDate,
+                              preferences.timeZone,
+                              preferences.dateFormat,
+                              preferences.timeFormat,
+                              false
+                            ) || "-"
+                          );
+                        }
+                      })()
+                    : "-"
+                }
+              />
+            )}
+
+            {/* Reference Number */}
+            {isEditable ? (
+              <EditableTextRow
+                label={t("referenceNumber")}
+                value={referenceNumber || ""}
+                {...(onReferenceNumberChange && {
+                  onChange: onReferenceNumberChange,
+                })}
+                placeholder={t("referenceNumber")}
+              />
+            ) : (
+              <DetailRow
+                label={t("referenceNumber")}
+                value={referenceNumber}
+                showEmpty={true}
+              />
+            )}
+          </div>
+        </SectionCardDetail>
+      )}
+
+      {/* Billing Address Dialog */}
+      <AddressDetailsDialog
+        open={billingDialogOpen}
+        onOpenChange={setBillingDialogOpen}
+        onAddressSelect={handleBillingAddressSelect}
+        mode="billing"
+        currentAddress={currentBillingAddress}
+      />
+
+      {/* Shipping Address Dialog */}
+      <AddressDetailsDialog
+        open={shippingDialogOpen}
+        onOpenChange={setShippingDialogOpen}
+        onAddressSelect={handleShippingAddressSelect}
+        mode="shipping"
+        currentAddress={currentShippingAddress}
+      />
     </>
-  ) : (
-    <Card className="shadow-sm pb-0 py-0 gap-0">
-    <CardHeader className="px-6 py-2 bg-muted rounded-t-lg items-end gap-0">
-      <CardTitle className="text-xl font-semibold text-gray-900 m-0!">
-        {t("contactDetails")}
-      </CardTitle>
-    </CardHeader>
-    <Separator />
-    <CardContent className="px-6 pt-2 pb-4 gap-0">
-      <div className="divide-y divide-gray-100 [&>div]:py-1.5 [&>div:last-child]:pb-0">
-        {/* Company Name */}
-        <DetailRow
-          label="Company Name"
-          value={
-            sellerCompanyName ||
-            sellerAddress?.sellerCompanyName ||
-            (sellerAddress as any)?.companyId?.name ||
-            (sellerAddress as any)?.companyId?.companyName
-          }
-        />
-
-        {/* Warehouse */}
-        <WarehouseRow
-          warehouseName={warehouseName}
-          warehouseAddress={warehouseAddress}
-        />
-
-        {/* Sales Branch */}
-        <DetailRow
-          label={t("salesBranch")}
-          value={salesBranch || sellerAddress?.sellerBranchName}
-        />
-
-        {/* Bill To */}
-        <AddressRow
-          label={t("billTo")}
-          addressName={
-            billingAddress?.branchName && billingAddress?.billToCode
-              ? `${billingAddress.branchName} - ${billingAddress.billToCode}`
-              : billingAddress?.branchName || billingAddress?.billToCode
-          }
-          addressDetails={billingAddress}
-          isEditable={isEditable}
-          onEditClick={() => {
-            setBillingDialogOpen(true);
-          }}
-        />
-
-        {/* Ship To */}
-        <AddressRow
-          label={t("shipTo")}
-          addressName={
-            shippingAddress?.branchName && shippingAddress?.shipToCode
-              ? `${shippingAddress.branchName} - ${shippingAddress.shipToCode}`
-              : shippingAddress?.branchName || shippingAddress?.shipToCode
-          }
-          addressDetails={shippingAddress}
-          isEditable={isEditable}
-          onEditClick={() => setShippingDialogOpen(true)}
-        />
-
-        {/* Required Date */}
-        {isEditable ? (
-          <EditableDateRow
-            label={t("requiredDate")}
-            value={requiredDate}
-            onChange={onRequiredDateChange}
-          />
-        ) : (
-          <DetailRow
-            label={t("requiredDate")}
-            value={
-              requiredDate
-                ? (() => {
-                    try {
-                      // Extract date part from ISO string to avoid timezone conversion affecting the day
-                      let dateStr: string | undefined;
-                      if (typeof requiredDate === "string") {
-                        // Extract YYYY-MM-DD from ISO string (e.g., "2023-09-28T18:30:00Z" -> "2023-09-28")
-                        dateStr = requiredDate.split("T")[0];
-                      } else if (requiredDate) {
-                        // For Date objects, convert to ISO and extract date part
-                        dateStr = new Date(requiredDate)
-                          .toISOString()
-                          .split("T")[0];
-                      } else {
-                        return undefined;
-                      }
-
-                      if (!dateStr) {
-                        return undefined;
-                      }
-
-                      // Parse as local date (YYYY-MM-DD format) to avoid timezone issues
-                      const [year, month, day] = dateStr
-                        .split("-")
-                        .map(Number);
-                      if (
-                        year === undefined ||
-                        month === undefined ||
-                        day === undefined
-                      ) {
-                        return undefined;
-                      }
-                      const date = new Date(year, month - 1, day);
-
-                      if (!isValid(date)) {
-                        // Fallback to original timezone conversion if parsing fails
-                        return (
-                          zoneDateTimeCalculator(
-                            requiredDate,
-                            preferences.timeZone,
-                            preferences.dateFormat,
-                            preferences.timeFormat,
-                            false
-                          ) || "-"
-                        );
-                      }
-                      return format(
-                        date,
-                        preferences.dateFormat || "dd/MM/yyyy"
-                      );
-                    } catch {
-                      // Fallback to original timezone conversion on error
-                      return (
-                        zoneDateTimeCalculator(
-                          requiredDate,
-                          preferences.timeZone,
-                          preferences.dateFormat,
-                          preferences.timeFormat,
-                          false
-                        ) || "-"
-                      );
-                    }
-                  })()
-                : "-"
-            }
-          />
-        )}
-
-        {/* Reference Number */}
-        {isEditable ? (
-          <EditableTextRow
-            label={t("referenceNumber")}
-            value={referenceNumber}
-            onChange={onReferenceNumberChange}
-            placeholder={t("referenceNumber")}
-          />
-        ) : (
-          <DetailRow
-            label={t("referenceNumber")}
-            value={referenceNumber}
-            showEmpty={true}
-          />
-        )}
-      </div>
-    </CardContent>
-
-    {/* Billing Address Dialog */}
-    <AddressDetailsDialog
-      open={billingDialogOpen}
-      onOpenChange={setBillingDialogOpen}
-      onAddressSelect={handleBillingAddressSelect}
-      mode="billing"
-      currentAddress={currentBillingAddress}
-    />
-
-    {/* Shipping Address Dialog */}
-    <AddressDetailsDialog
-      open={shippingDialogOpen}
-      onOpenChange={setShippingDialogOpen}
-      onAddressSelect={handleShippingAddressSelect}
-      mode="shipping"
-      currentAddress={currentShippingAddress}
-    />
-  </Card>
-  )}
- 
-  </>
-   
   );
 }

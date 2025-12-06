@@ -1,7 +1,7 @@
 "use client";
 
+import SectionCardDetail from "@/components/custom/SectionCardDetail";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { TypographyMuted } from "@/components/ui/typography";
 import {
@@ -71,10 +71,18 @@ interface OrderPriceDetailsProps {
   isBeforeTax?: boolean;
   beforeTaxPercentage?: number;
   // Shipping Tax (calculated)
-  isCart?:boolean;
+  isCart?: boolean;
   shippingTax?: number;
-  loading?:boolean;
-  totalBasicDiscount?:number;
+  loading?: boolean;
+  totalBasicDiscount?: number;
+  // Header color prop
+  headerColor?:
+    | "default"
+    | "muted"
+    | "accent"
+    | "primary"
+    | "secondary"
+    | "green";
 }
 
 export default function OrderPriceDetails({
@@ -104,9 +112,9 @@ export default function OrderPriceDetails({
   isBeforeTax = false,
   shippingTax = 0,
   isCart = false,
-  loading
+  loading,
+  headerColor = "green",
 }: OrderPriceDetailsProps) {
-
   const t = useTranslations("components");
   const [taxExpanded, setTaxExpanded] = useState(false);
 
@@ -124,7 +132,7 @@ export default function OrderPriceDetails({
       // Calculate pfRate and totalLP from products if available
       let pfRateFromProducts = 0;
       let totalLPFromProducts = 0;
-      let totalBasicDiscountFromProducts =  0;
+      let totalBasicDiscountFromProducts = 0;
       let totalCashDiscountFromProducts = 0;
       let cashDiscountValueFromProducts = 0;
 
@@ -184,16 +192,14 @@ export default function OrderPriceDetails({
             product.unitPrice ||
             product.discountedPrice ||
             0;
-           
+
           if (listPrice > originalPriceForBasicDiscount && isCart === false) {
             const basicDiscountAmount =
               listPrice - originalPriceForBasicDiscount;
             totalBasicDiscountFromProducts += basicDiscountAmount * qty;
-          }
-          else{
+          } else {
             totalBasicDiscountFromProducts = totalBasicDiscount || 0;
           }
-          
         });
       }
 
@@ -415,7 +421,6 @@ export default function OrderPriceDetails({
     isCart,
     totalBasicDiscount,
   ]);
- 
 
   // Extract tax breakdown from getBreakup prop or calculate from cartValue
   const taxBreakup = useMemo(() => {
@@ -648,203 +653,231 @@ export default function OrderPriceDetails({
   const showListPrice = !cartValue.hideListPricePublic && cartValue.totalLP > 0;
 
   const showCashDiscount = Boolean(CASH_DISCOUNT > 0);
-  
+
   return (
-    <Card className="shadow-sm bg-white p-0 m-0 overflow-hidden gap-4 w-full">
-      <CardHeader className="px-4 py-2 bg-green-100 rounded-t-lg m-0 p-0 space-y-0">
-        <CardTitle className="text-lg font-semibold text-gray-800 py-2 px-4">
-          {t("priceDetails")}
-        </CardTitle>
-      </CardHeader>
-
-      <CardContent className="px-4 space-y-3 pt-0 pb-4 overflow-x-auto">
-        {/* Total Items */}
-        {loading ?  (
-             <div className="flex justify-between items-center gap-4 min-w-0">
-             <div className="flex-shrink-0">
-               <TypographyMuted>{t("totalItems")}</TypographyMuted>
-             </div>
-             <div className="text-right flex-shrink-0">
-              
-             <Skeleton className="h-4 w-20 mb-2" />
- 
-             </div>
-           </div>
-        ) : cartValue.totalItems > 0 && (
-          <div className="flex justify-between items-center gap-4 min-w-0">
-            <div className="flex-shrink-0">
-              <TypographyMuted>{t("totalItems")}</TypographyMuted>
-            </div>
-            <div className="text-right flex-shrink-0">
-             
-              <TypographyMuted>{cartValue.totalItems}</TypographyMuted>
-
-            </div>
-          </div>
-        )}
-
-        {/* Total LP - only show if list price should be shown */}
-        {loading ? (
-  <div className="flex justify-between items-center gap-4 min-w-0">
-    <div className="flex-shrink-0">
-      <TypographyMuted>{t("totalLP")}</TypographyMuted>
-    </div>
-    <div className="text-right flex-shrink-0">
-      <Skeleton className="h-4 w-20 mb-2" />
-    </div>
-  </div>
-) : (
-  showListPrice && (
-    <div className="flex justify-between items-center gap-4 min-w-0">
-      <div className="flex-shrink-0">
-        <TypographyMuted>{t("totalLP")}</TypographyMuted>
-      </div>
-      <div className="text-right flex-shrink-0 break-words">
-        {loading ? (
-          <Skeleton className="h-4 w-20 mb-2" />
-        ) : (
-          <TypographyMuted>
-            <PricingFormat value={cartValue.totalLP || 0} />
-          </TypographyMuted>
-        )}
-      </div>
-    </div>
-  )
-)}
-
-
-        {/* Basic Discount - only show if there's a basic discount */}
-        {showBasicDiscount && (
-          <div className="flex justify-between items-center gap-4 min-w-0">
-            <div className="flex-shrink-0">
-              <h5 className="text-sm font-normal text-green-600">
-                {t("discountLabel")}
-              </h5>
-            </div>
-            <div className="text-right flex-shrink-0 break-words">
-              {loading ? <Skeleton className="h-4 w-20 mb-2" /> :
-              <h5 className="text-sm font-normal text-green-600">
-                -<PricingFormat value={basicDiscount} />
-              </h5>}
-            </div>
-          </div>
-        )}
-
-        {showCashDiscount && (
-          <div className="flex justify-between items-center gap-4 min-w-0">
-            <div className="flex-shrink-0">
-              <h5 className="text-sm font-normal text-green-600">
-                {t("cashDiscount")}{" "}
-                {cashDiscountValue > 0 ? `(${cashDiscountValue}%)` : ""}
-              </h5>
-            </div>
-            <div className="text-right flex-shrink-0 break-words">
-              {loading ? <Skeleton className="h-4 w-20 mb-2" /> :
-              <h5 className="text-sm font-normal text-green-600">
-                -<PricingFormat value={cashDiscount} />
-              </h5>}
-            </div>
-          </div>
-        )}
-
-        {/* Subtotal */}
+    <SectionCardDetail
+      title={t("priceDetails")}
+      headerColor={headerColor}
+      shadow="sm"
+      contentClassName="px-6 space-y-3 pt-2 pb-4 overflow-x-auto"
+    >
+      {/* Total Items */}
+      {loading ? (
         <div className="flex justify-between items-center gap-4 min-w-0">
           <div className="flex-shrink-0">
-            <h6 className="text-sm font-semibold text-gray-800">
-              {VolumeDiscountAvailable && VDapplied
-                ? t("subtotalExclVD") || "Subtotal (excl. VD)"
-                : t("subtotal")}
-            </h6>
+            <p className="text-sm font-normal text-gray-900">
+              {t("totalItems")}
+            </p>
+          </div>
+          <div className="text-right flex-shrink-0">
+            <Skeleton className="h-4 w-20 mb-2" />
+          </div>
+        </div>
+      ) : (
+        cartValue.totalItems > 0 && (
+          <div className="flex justify-between items-center gap-4 min-w-0">
+            <div className="flex-shrink-0">
+              <p className="text-sm font-normal text-gray-900">
+                {t("totalItems")}
+              </p>
+            </div>
+            <div className="text-right flex-shrink-0">
+              <p className="text-sm font-semibold text-gray-900">
+                {cartValue.totalItems}
+              </p>
+            </div>
+          </div>
+        )
+      )}
+
+      {/* Total LP - only show if list price should be shown */}
+      {loading ? (
+        <div className="flex justify-between items-center gap-4 min-w-0">
+          <div className="flex-shrink-0">
+            <p className="text-sm font-normal text-gray-900">{t("totalLP")}</p>
+          </div>
+          <div className="text-right flex-shrink-0">
+            <Skeleton className="h-4 w-20 mb-2" />
+          </div>
+        </div>
+      ) : (
+        showListPrice && (
+          <div className="flex justify-between items-center gap-4 min-w-0">
+            <div className="flex-shrink-0">
+              <p className="text-sm font-normal text-gray-900">
+                {t("totalLP")}
+              </p>
+            </div>
+            <div className="text-right flex-shrink-0 break-words">
+              {loading ? (
+                <Skeleton className="h-4 w-20 mb-2" />
+              ) : (
+                <p className="text-sm font-semibold text-gray-900">
+                  <PricingFormat value={cartValue.totalLP || 0} />
+                </p>
+              )}
+            </div>
+          </div>
+        )
+      )}
+
+      {/* Basic Discount - only show if there's a basic discount */}
+      {showBasicDiscount && (
+        <div className="flex justify-between items-center gap-4 min-w-0">
+          <div className="flex-shrink-0">
+            <h5 className="text-sm font-normal text-green-600">
+              {t("discountLabel")}
+            </h5>
           </div>
           <div className="text-right flex-shrink-0 break-words">
-            {loading ? <Skeleton className="h-4 w-20 mb-2" /> :
-            <h6 className="text-sm font-semibold text-gray-800">
+            {loading ? (
+              <Skeleton className="h-4 w-20 mb-2" />
+            ) : (
+              <h5 className="text-sm font-normal text-green-600">
+                -<PricingFormat value={basicDiscount} />
+              </h5>
+            )}
+          </div>
+        </div>
+      )}
+
+      {showCashDiscount && (
+        <div className="flex justify-between items-center gap-4 min-w-0">
+          <div className="flex-shrink-0">
+            <h5 className="text-sm font-normal text-green-600">
+              {t("cashDiscount")}{" "}
+              {cashDiscountValue > 0 ? `(${cashDiscountValue}%)` : ""}
+            </h5>
+          </div>
+          <div className="text-right flex-shrink-0 break-words">
+            {loading ? (
+              <Skeleton className="h-4 w-20 mb-2" />
+            ) : (
+              <h5 className="text-sm font-normal text-green-600">
+                -<PricingFormat value={cashDiscount} />
+              </h5>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* Subtotal */}
+      <div className="flex justify-between items-center gap-4 min-w-0">
+        <div className="flex-shrink-0">
+          <p className="text-sm font-normal text-gray-900">
+            {VolumeDiscountAvailable && VDapplied
+              ? t("subtotalExclVD") || "Subtotal (excl. VD)"
+              : t("subtotal")}
+          </p>
+        </div>
+        <div className="text-right flex-shrink-0 break-words">
+          {loading ? (
+            <Skeleton className="h-4 w-20 mb-2" />
+          ) : (
+            <p className="text-sm font-semibold text-gray-900">
               <PricingFormat
                 value={VDapplied ? VDDetails?.subTotal || 0 : finalSubtotal}
               />
-            </h6>}
-          </div>
-        </div>
-
-        {/* Volume Discount - show if applied */}
-        {VolumeDiscountAvailable && VDapplied && (
-          <div className="flex justify-between items-center gap-4 min-w-0">
-            <div className="flex-shrink-0">
-              <h5 className="text-sm font-normal text-green-600">
-                {t("volumeDiscount") || "Volume Discount"}
-              </h5>
-            </div>
-            <div className="text-right flex-shrink-0 break-words">
-              {loading ? <Skeleton className="h-4 w-20 mb-2" /> :
-              <h5 className="text-sm font-normal text-green-600">
-                -<PricingFormat value={VDDetails?.volumeDiscountApplied || 0} />
-              </h5>}
-            </div>
-          </div>
-        )}
-
-        {/* Subtotal (after Volume Discount) */}
-        {VolumeDiscountAvailable &&
-          VDapplied &&
-          VDDetails?.subTotalVolume &&
-          VDDetails.subTotalVolume > 0 && (
-            <div className="flex justify-between items-center gap-4 min-w-0">
-              <div className="flex-shrink-0">
-                <h6 className="text-sm font-semibold text-gray-800">
-                  {t("subtotal")}
-                </h6>
-              </div>
-              <div className="text-right flex-shrink-0 break-words">
-                {loading ? <Skeleton className="h-4 w-20 mb-2" /> :
-                <h6 className="text-sm font-semibold text-gray-800">
-                  <PricingFormat value={VDDetails.subTotalVolume} />
-                </h6>}
-              </div>
-            </div>
+            </p>
           )}
+        </div>
+      </div>
 
-        {/* P&F Rate - show if exists */}
-        {showPfRate && (
-          <div className="flex justify-between items-center gap-4 min-w-0">
-            <div className="flex-shrink-0">
-              <TypographyMuted>{t("pfRate")}</TypographyMuted>
-            </div>
-            <div className="text-right flex-shrink-0 break-words">
-              {loading ? <Skeleton className="h-4 w-20 mb-2" /> :
-              <TypographyMuted>
-                <PricingFormat value={cartValue.pfRate || 0} />
-              </TypographyMuted>}
-            </div>
-          </div>
-        )}
-
-        <Separator />
-
-        {/* Shipping Charges - show before Taxable Amount if isBeforeTax */}
-        {isBeforeTax && showShippingCharges && (
-          <div className="flex justify-between items-center gap-4 min-w-0">
-            <div className="flex-shrink-0">
-              <TypographyMuted>Shipping Charges</TypographyMuted>
-            </div>
-            <div className="text-right flex-shrink-0 break-words">
-              {loading ? <Skeleton className="h-4 w-20 mb-2" /> :
-              <TypographyMuted>
-                <PricingFormat value={finalShipping} />
-              </TypographyMuted>}
-            </div>
-          </div>
-        )}
-
-        {/* Taxable Amount - always show if exists */}
+      {/* Volume Discount - show if applied */}
+      {VolumeDiscountAvailable && VDapplied && (
         <div className="flex justify-between items-center gap-4 min-w-0">
           <div className="flex-shrink-0">
-            <h6 className="text-sm font-semibold text-gray-800">
-              {t("taxableAmount")}
-            </h6>
+            <h5 className="text-sm font-normal text-green-600">
+              {t("volumeDiscount") || "Volume Discount"}
+            </h5>
           </div>
           <div className="text-right flex-shrink-0 break-words">
-            {loading ? <Skeleton className="h-4 w-20 mb-2" /> :
-            <h6 className="text-sm font-semibold text-gray-800">
+            {loading ? (
+              <Skeleton className="h-4 w-20 mb-2" />
+            ) : (
+              <h5 className="text-sm font-normal text-green-600">
+                -<PricingFormat value={VDDetails?.volumeDiscountApplied || 0} />
+              </h5>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* Subtotal (after Volume Discount) */}
+      {VolumeDiscountAvailable &&
+        VDapplied &&
+        VDDetails?.subTotalVolume &&
+        VDDetails.subTotalVolume > 0 && (
+          <div className="flex justify-between items-center gap-4 min-w-0">
+            <div className="flex-shrink-0">
+              <p className="text-sm font-normal text-gray-900">
+                {t("subtotal")}
+              </p>
+            </div>
+            <div className="text-right flex-shrink-0 break-words">
+              {loading ? (
+                <Skeleton className="h-4 w-20 mb-2" />
+              ) : (
+                <p className="text-sm font-semibold text-gray-900">
+                  <PricingFormat value={VDDetails.subTotalVolume} />
+                </p>
+              )}
+            </div>
+          </div>
+        )}
+
+      {/* P&F Rate - show if exists */}
+      {showPfRate && (
+        <div className="flex justify-between items-center gap-4 min-w-0">
+          <div className="flex-shrink-0">
+            <p className="text-sm font-normal text-gray-900">{t("pfRate")}</p>
+          </div>
+          <div className="text-right flex-shrink-0 break-words">
+            {loading ? (
+              <Skeleton className="h-4 w-20 mb-2" />
+            ) : (
+              <p className="text-sm font-semibold text-gray-900">
+                <PricingFormat value={cartValue.pfRate || 0} />
+              </p>
+            )}
+          </div>
+        </div>
+      )}
+
+      <Separator />
+
+      {/* Shipping Charges - show before Taxable Amount if isBeforeTax */}
+      {isBeforeTax && showShippingCharges && (
+        <div className="flex justify-between items-center gap-4 min-w-0">
+          <div className="flex-shrink-0">
+            <p className="text-sm font-normal text-gray-900">
+              Shipping Charges
+            </p>
+          </div>
+          <div className="text-right flex-shrink-0 break-words">
+            {loading ? (
+              <Skeleton className="h-4 w-20 mb-2" />
+            ) : (
+              <p className="text-sm font-semibold text-gray-900">
+                <PricingFormat value={finalShipping} />
+              </p>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* Taxable Amount - always show if exists */}
+      <div className="flex justify-between items-center gap-4 min-w-0">
+        <div className="flex-shrink-0">
+          <p className="text-sm font-normal text-gray-900">
+            {t("taxableAmount")}
+          </p>
+        </div>
+        <div className="text-right flex-shrink-0 break-words">
+          {loading ? (
+            <Skeleton className="h-4 w-20 mb-2" />
+          ) : (
+            <p className="text-sm font-semibold text-gray-900">
               <PricingFormat
                 value={
                   VDapplied && VDDetails?.taxableAmount !== undefined
@@ -852,174 +885,185 @@ export default function OrderPriceDetails({
                     : finalTaxableAmount
                 }
               />
-            </h6>}
+            </p>
+          )}
+        </div>
+      </div>
+
+      {/* Tax + expand button */}
+      {finalTax !== undefined && finalTax !== null && (
+        <div className="flex justify-between items-center gap-4 min-w-0">
+          <div className="flex items-center gap-1 flex-shrink-0">
+            <p className="text-sm font-normal text-gray-900">
+              {taxExemption ? "N/A" : t("tax")}
+            </p>
+            {!taxExemption &&
+              (taxBreakup.length > 0 ||
+                (cartValue.shippingTax > 0 &&
+                  !Settings?.itemWiseShippingTax &&
+                  isBeforeTax)) && (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="h-4 w-4 p-0 flex-shrink-0"
+                  onClick={() => setTaxExpanded(!taxExpanded)}
+                  aria-expanded={taxExpanded}
+                  aria-label="show more"
+                >
+                  <ChevronDown
+                    className={`h-3 w-3 transition-transform ${
+                      taxExpanded ? "rotate-180" : ""
+                    }`}
+                  />
+                </Button>
+              )}
+          </div>
+          <div className="text-right flex-shrink-0 break-words">
+            {taxExemption ? (
+              <p className="text-sm font-semibold text-gray-900">N/A</p>
+            ) : loading ? (
+              <Skeleton className="h-4 w-20 mb-2" />
+            ) : (
+              <p className="text-sm font-semibold text-gray-900">
+                <PricingFormat
+                  value={
+                    VDapplied && VDDetails?.overallTax !== undefined
+                      ? VDDetails.overallTax
+                      : finalTax
+                  }
+                />
+              </p>
+            )}
           </div>
         </div>
+      )}
 
-        {/* Tax + expand button */}
-        {finalTax !== undefined && finalTax !== null && (
-          <div className="flex justify-between items-center gap-4 min-w-0">
-            <div className="flex items-center gap-1 flex-shrink-0">
-              <TypographyMuted>
-                {taxExemption ? "N/A" : t("tax")}
-              </TypographyMuted>
-              {!taxExemption &&
-                (taxBreakup.length > 0 ||
-                  (cartValue.shippingTax > 0 &&
-                    !Settings?.itemWiseShippingTax &&
-                    isBeforeTax)) && (
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    className="h-4 w-4 p-0 flex-shrink-0"
-                    onClick={() => setTaxExpanded(!taxExpanded)}
-                    aria-expanded={taxExpanded}
-                    aria-label="show more"
-                  >
-                    <ChevronDown
-                      className={`h-3 w-3 transition-transform ${
-                        taxExpanded ? "rotate-180" : ""
-                      }`}
-                    />
-                  </Button>
-                )}
-            </div>
-            <div className="text-right flex-shrink-0 break-words">
-              <TypographyMuted>
-              {taxExemption ? (
-  "N/A"
-) : loading ? (
-  <Skeleton className="h-4 w-20 mb-2" />
-) : (
-  <PricingFormat
-    value={
-      VDapplied && VDDetails?.overallTax !== undefined
-        ? VDDetails.overallTax
-        : finalTax
-    }
-  />
-)}
-
-              </TypographyMuted>
-            </div>
-          </div>
-        )}
-
-        {/* Collapsible Tax Breakdown */}
-        {taxExpanded && taxBreakup.length > 0 && (
-          <div className="ml-4 mt-2 space-y-1">
-            {taxBreakup.map(taxDetail => (
-              <div
-                key={taxDetail.name}
-                className="flex justify-between items-center gap-4 min-w-0"
-              >
-                <TypographyMuted className="flex-shrink-0">
-                  {taxDetail.name}
-                </TypographyMuted>
-                <div className="text-right flex-shrink-0 break-words">
-                  {loading ? <Skeleton className="h-4 w-20 mb-2" /> :
-                  <TypographyMuted>
+      {/* Collapsible Tax Breakdown */}
+      {taxExpanded && taxBreakup.length > 0 && (
+        <div className="ml-4 mt-2 space-y-1">
+          {taxBreakup.map(taxDetail => (
+            <div
+              key={taxDetail.name}
+              className="flex justify-between items-center gap-4 min-w-0"
+            >
+              <p className="text-sm font-normal text-gray-900 flex-shrink-0">
+                {taxDetail.name}
+              </p>
+              <div className="text-right flex-shrink-0 break-words">
+                {loading ? (
+                  <Skeleton className="h-4 w-20 mb-2" />
+                ) : (
+                  <p className="text-sm font-semibold text-gray-900">
                     <PricingFormat value={taxDetail.value} />
-                  </TypographyMuted>}
-                </div>
+                  </p>
+                )}
               </div>
-            ))}
-          </div>
-        )}
-
-        {/* Shipping Charges - show after Tax if !isBeforeTax */}
-        {!isBeforeTax && showShippingCharges && (
-          <div className="flex justify-between items-center gap-4 min-w-0">
-            <div className="flex-shrink-0">
-              <TypographyMuted>Shipping Charges</TypographyMuted>
             </div>
-            <div className="text-right flex-shrink-0 break-words">
-              {loading ? <Skeleton className="h-4 w-20 mb-2" /> :
-              <TypographyMuted>
+          ))}
+        </div>
+      )}
+
+      {/* Shipping Charges - show after Tax if !isBeforeTax */}
+      {!isBeforeTax && showShippingCharges && (
+        <div className="flex justify-between items-center gap-4 min-w-0">
+          <div className="flex-shrink-0">
+            <p className="text-sm font-normal text-gray-900">
+              Shipping Charges
+            </p>
+          </div>
+          <div className="text-right flex-shrink-0 break-words">
+            {loading ? (
+              <Skeleton className="h-4 w-20 mb-2" />
+            ) : (
+              <p className="text-sm font-semibold text-gray-900">
                 <PricingFormat value={finalShipping} />
-              </TypographyMuted>}
-            </div>
+              </p>
+            )}
           </div>
-        )}
+        </div>
+      )}
 
-        {/* Insurance Charges - match buyer-fe: Boolean(!isCart && cartValue.insuranceCharges > 0) */}
-        {/* Check both cartValue.insuranceCharges and insuranceCharges prop */}
-        {Boolean(
-          (cartValue?.insuranceCharges ?? insuranceCharges ?? 0) > 0
-        ) && (
-          <div className="flex justify-between items-center gap-4 min-w-0">
-            <div className="flex-shrink-0">
-              <TypographyMuted>Insurance Charges</TypographyMuted>
-            </div>
-            <div className="text-right flex-shrink-0 break-words">
-              {loading ? <Skeleton className="h-4 w-20 mb-2" /> :
+      {/* Insurance Charges - match buyer-fe: Boolean(!isCart && cartValue.insuranceCharges > 0) */}
+      {/* Check both cartValue.insuranceCharges and insuranceCharges prop */}
+      {Boolean((cartValue?.insuranceCharges ?? insuranceCharges ?? 0) > 0) && (
+        <div className="flex justify-between items-center gap-4 min-w-0">
+          <div className="flex-shrink-0">
+            <TypographyMuted>Insurance Charges</TypographyMuted>
+          </div>
+          <div className="text-right flex-shrink-0 break-words">
+            {loading ? (
+              <Skeleton className="h-4 w-20 mb-2" />
+            ) : (
               <TypographyMuted>
                 <PricingFormat
                   value={cartValue?.insuranceCharges ?? insuranceCharges ?? 0}
                 />
-              </TypographyMuted>}
+              </TypographyMuted>
+            )}
+          </div>
+        </div>
+      )}
+
+      <Separator />
+
+      {/* Already Paid Section */}
+      {alreadyPaid !== undefined && alreadyPaid !== null && alreadyPaid > 0 && (
+        <>
+          <div className="flex justify-between items-center gap-4 min-w-0">
+            <div className="flex-shrink-0">
+              <h4 className="text-lg font-bold text-gray-800">
+                {t("total").replace(":", "")}
+              </h4>
+            </div>
+            <div className="text-right flex-shrink-0 break-words">
+              {loading ? (
+                <Skeleton className="h-4 w-20 mb-2" />
+              ) : (
+                <h4 className="text-lg font-bold text-gray-800">
+                  <PricingFormat
+                    value={
+                      (VDapplied ? VDDetails?.grandTotal : finalTotal) +
+                      alreadyPaid
+                    }
+                  />
+                </h4>
+              )}
             </div>
           </div>
-        )}
-
-        <Separator />
-
-        {/* Already Paid Section */}
-        {alreadyPaid !== undefined &&
-          alreadyPaid !== null &&
-          alreadyPaid > 0 && (
-            <>
-              <div className="flex justify-between items-center gap-4 min-w-0">
-                <div className="flex-shrink-0">
-                  <h4 className="text-lg font-bold text-gray-800">
-                    {t("total")}
-                  </h4>
-                </div>
-                <div className="text-right flex-shrink-0 break-words">
-                  {loading ? <Skeleton className="h-4 w-20 mb-2" /> :
-                  <h4 className="text-lg font-bold text-gray-800">
-                    <PricingFormat
-                      value={
-                        (VDapplied ? VDDetails?.grandTotal : finalTotal) +
-                        alreadyPaid
-                      }
-                    />
-                  </h4>
-}
-                </div>
-              </div>
-              <div className="flex justify-between items-center gap-4 min-w-0">
-                <div className="flex-shrink-0">
-                  <TypographyMuted className="text-red-600">
-                    {t("alreadyPaid") || "Already Paid"}
-                  </TypographyMuted>
-                </div>
-                <div className="text-right flex-shrink-0 break-words">
-                  {loading ? <Skeleton className="h-4 w-20 mb-2" /> :
-                  <TypographyMuted className="text-red-600">
-                    -<PricingFormat value={alreadyPaid} />
-                  </TypographyMuted>
-}
-                </div>
-              </div>
-            </>
-          )}
-
-    
-
-        {/* Total / To Pay */}
-        <div className="flex justify-between items-center gap-4 min-w-0 pt-2">
-          <div className="flex-shrink-0">
-            <h4 className="text-lg font-bold text-gray-800">
-              {alreadyPaid !== undefined &&
-              alreadyPaid !== null &&
-              alreadyPaid > 0
-                ? t("toPay") || "To Pay"
-                : t("total")}
-            </h4>
+          <div className="flex justify-between items-center gap-4 min-w-0">
+            <div className="flex-shrink-0">
+              <TypographyMuted className="text-red-600">
+                {t("alreadyPaid") || "Already Paid"}
+              </TypographyMuted>
+            </div>
+            <div className="text-right flex-shrink-0 break-words">
+              {loading ? (
+                <Skeleton className="h-4 w-20 mb-2" />
+              ) : (
+                <TypographyMuted className="text-red-600">
+                  -<PricingFormat value={alreadyPaid} />
+                </TypographyMuted>
+              )}
+            </div>
           </div>
-          <div className="text-right flex-shrink-0 break-words">
-            {loading ? <Skeleton className="h-4 w-20 mb-2" /> :
+        </>
+      )}
+
+      {/* Total / To Pay */}
+      <div className="flex justify-between items-center gap-4 min-w-0 pt-2">
+        <div className="flex-shrink-0">
+          <h4 className="text-lg font-bold text-gray-800">
+            {alreadyPaid !== undefined &&
+            alreadyPaid !== null &&
+            alreadyPaid > 0
+              ? t("toPay") || "To Pay"
+              : t("total").replace(":", "")}
+          </h4>
+        </div>
+        <div className="text-right flex-shrink-0 break-words">
+          {loading ? (
+            <Skeleton className="h-4 w-20 mb-2" />
+          ) : (
             <h4 className="text-lg font-bold text-gray-800">
               <PricingFormat
                 value={
@@ -1029,10 +1073,9 @@ export default function OrderPriceDetails({
                 }
               />
             </h4>
-}
-          </div>
+          )}
         </div>
-      </CardContent>
-    </Card>
+      </div>
+    </SectionCardDetail>
   );
 }

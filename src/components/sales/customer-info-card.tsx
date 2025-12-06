@@ -1,11 +1,12 @@
 "use client";
 
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Separator } from "@/components/ui/separator";
+import SectionCardDetail, {
+  InfoRow,
+  SkeletonRow,
+} from "@/components/custom/SectionCardDetail";
 import { zoneDateTimeCalculator } from "@/utils/date-format/date-format";
 import { getUserPreferences } from "@/utils/details/orderdetails";
 import { useTranslations } from "next-intl";
-import { Skeleton } from "../ui/skeleton";
 
 interface CustomerInfoCardProps {
   quoteValidity?: {
@@ -17,29 +18,8 @@ interface CustomerInfoCardProps {
   projectName?: string | undefined;
   competitorNames?: string[];
   priceJustification?: string | undefined;
-  loading?:boolean;
+  loading?: boolean;
 }
-
-const InfoRow = ({
-  label,
-  value,
-}: {
-  label: string;
-  value?: string | React.ReactNode;
-}) => {
-  return (
-    <div className="grid grid-cols-2 gap-4 py-2">
-      <div>
-        <p className="text-sm font-normal text-gray-900">{label}</p>
-      </div>
-      <div>
-        <p className="text-xs font-semibold text-gray-900 whitespace-nowrap overflow-hidden text-ellipsis">
-          {value || "-"}
-        </p>
-      </div>
-    </div>
-  );
-};
 
 export default function CustomerInfoCard({
   quoteValidity,
@@ -81,37 +61,50 @@ export default function CustomerInfoCard({
       : "-";
 
   return (
-    <Card className="shadow-sm py-0 gap-0">
-      <CardHeader className="px-6 py-2 bg-muted rounded-t-lg items-end">
-        <CardTitle className="text-xl font-semibold text-gray-900 m-0!">
-          {t("customerInformation")}
-        </CardTitle>
-      </CardHeader>
-      <Separator />
-      <CardContent className="px-6 pt-2 pb-0">
-        <div className="divide-y divide-gray-100">
-          {/* Quote Validity */}
-          <InfoRow label={t("quoteValidity")} value={loading ? <Skeleton className="h-4 w-32" /> : validityDisplay} />
+    <SectionCardDetail
+      title={t("customerInformation")}
+      headerColor="muted"
+      shadow="sm"
+      contentClassName="px-6 pt-2 pb-0"
+    >
+      <div className="divide-y divide-gray-100">
+        {loading ? (
+          <>
+            <SkeletonRow />
+            <SkeletonRow />
+            <SkeletonRow />
+            <SkeletonRow />
+            <SkeletonRow />
+            <SkeletonRow />
+          </>
+        ) : (
+          <>
+            {/* Quote Validity */}
+            <InfoRow label={t("quoteValidity")} value={validityDisplay} />
 
-          {/* Contract Enabled */}
-          <InfoRow
-            label={t("contractEnabled")}
-            value={loading ? <Skeleton className="h-4 w-32" /> : contractEnabled ? t("yesLabel") : t("no")}
-          />
+            {/* Contract Enabled */}
+            <InfoRow
+              label={t("contractEnabled")}
+              value={contractEnabled ? t("yesLabel") : t("no")}
+            />
 
-          {/* End Customer Name */}
-          <InfoRow label={t("endCustomerName")} value={loading ? <Skeleton className="h-4 w-32" /> : endCustomerName} />
+            {/* End Customer Name */}
+            <InfoRow label={t("endCustomerName")} value={endCustomerName} />
 
-          {/* Project Name */}
-          <InfoRow label={t("projectName")} value={loading ? <Skeleton className="h-4 w-32" /> :projectName} />
+            {/* Project Name */}
+            <InfoRow label={t("projectName")} value={projectName} />
 
-          {/* Competitor Names */}
-          <InfoRow label={t("competitorNames")} value={loading ? <Skeleton className="h-4 w-32" /> : competitorsDisplay} />
+            {/* Competitor Names */}
+            <InfoRow label={t("competitorNames")} value={competitorsDisplay} />
 
-          {/* Price Justification */}
-          <InfoRow label={t("priceJustification")} value={loading ? <Skeleton className="h-4 w-32" /> :priceJustification} />
-        </div>
-      </CardContent>
-    </Card>
+            {/* Price Justification */}
+            <InfoRow
+              label={t("priceJustification")}
+              value={priceJustification}
+            />
+          </>
+        )}
+      </div>
+    </SectionCardDetail>
   );
 }
