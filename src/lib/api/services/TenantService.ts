@@ -9,28 +9,13 @@ export interface TenantInfo {
   tenantCode: string | null;
 }
 
-/**
- * TenantService - Handles all tenant-related API calls
- *
- * Follows standard service pattern with BaseService.
- * Provides tenant configuration, data fetching, and utility methods.
- */
 export class TenantService extends BaseService<TenantService> {
-  // Use homePageClient for public tenant endpoints
   protected defaultClient = homePageClient;
-
-  /**
-   * Extract tenant information from host
-   */
   extractTenantFromHost(host: string): TenantInfo {
-    // Extract subdomain from host
-    // e.g., schwingstetter.myapptino.com → schwingstetter
     const parts = host.split(".");
     const subdomain = parts[0];
 
-    // Handle localhost development
     if (host.includes("localhost")) {
-      // For development, use environment variables
       return {
         domainUrl: process.env.DEFAULT_DOMAIN!,
         origin: process.env.DEFAULT_ORIGIN!,
@@ -45,10 +30,6 @@ export class TenantService extends BaseService<TenantService> {
     };
   }
 
-  /**
-   * Get tenant configuration (TenantConfigResponse format)
-   * Uses standard BaseService call() method
-   */
   async getTenantConfig(domainUrl: string): Promise<TenantConfigResponse> {
     return this.call(
       `/getTenantCodeCurrencyCompany?domainUrl=${domainUrl}`,
@@ -57,10 +38,6 @@ export class TenantService extends BaseService<TenantService> {
     ) as Promise<TenantConfigResponse>;
   }
 
-  /**
-   * Get tenant data (TenantApiResponse format) - Main method for layout
-   * Uses BaseService callWith() for custom context with origin header
-   */
   async getTenantData(
     domainUrl: string,
     origin?: string
@@ -81,10 +58,6 @@ export class TenantService extends BaseService<TenantService> {
     ) as Promise<TenantApiResponse>;
   }
 
-  /**
-   * Server-side safe version - returns null on error
-   * Uses callWithSafe() for graceful error handling in server components
-   */
   async getTenantDataServerSide(
     domainUrl: string,
     origin?: string
@@ -115,8 +88,6 @@ export class TenantService extends BaseService<TenantService> {
 
     try {
       const { withRedisCache } = await import("@/lib/cache");
-      // Include origin in cache key for better cache isolation
-      // Tenant data rarely changes, so use longer TTL (2 hours = 7200 seconds)
       const cacheKey = origin
         ? `tenant:${domainUrl}:${origin}`
         : `tenant:${domainUrl}`;
@@ -130,11 +101,6 @@ export class TenantService extends BaseService<TenantService> {
     }
   }
 
-  /**
-   * Static method wrapper for getTenantDataCached
-   * This ensures the method works whether the class or instance is imported
-   * Use this when importing TenantService as a named export from @/lib/api
-   */
   static async getTenantDataCached(
     domainUrl: string,
     origin?: string
@@ -142,10 +108,23 @@ export class TenantService extends BaseService<TenantService> {
     return TenantService.getInstance().getTenantDataCached(domainUrl, origin);
   }
 
-  /**
-   * Legacy method for backward compatibility
-   * @deprecated Use getTenantData() instead
-   */
+  static extractTenantFromHost(host: string): TenantInfo {
+    return TenantService.getInstance().extractTenantFromHost(host);
+  }
+
+  static async getTenantConfig(
+    domainUrl: string
+  ): Promise<TenantConfigResponse> {
+    return TenantService.getInstance().getTenantConfig(domainUrl);
+  }
+
+  static async getTenantData(
+    domainUrl: string,
+    origin?: string
+  ): Promise<TenantApiResponse> {
+    return TenantService.getInstance().getTenantData(domainUrl, origin);
+  }
+
   async fetchTenantFromExternalAPI(
     domainUrl: string,
     origin: string
@@ -160,9 +139,6 @@ export class TenantService extends BaseService<TenantService> {
     return `tenant_${tenantId}_${key}`;
   }
 
-  /**
-   * Tenant-specific localStorage utilities
-   */
   storage = {
     setItem: (key: string, value: unknown, tenantId: number) => {
       if (typeof window !== "undefined") {
@@ -203,10 +179,6 @@ export class TenantService extends BaseService<TenantService> {
     },
   };
 
-  /**
-   * Validate tenant domain - returns true if domain exists
-   * Uses callSafe() to gracefully handle non-existent domains
-   */
   async validateTenantDomain(domain: string): Promise<boolean> {
     const result = await this.callSafe(
       `/getTenantCodeCurrencyCompany?domainUrl=${domain}`,
@@ -217,4 +189,6 @@ export class TenantService extends BaseService<TenantService> {
   }
 }
 
-export default TenantService.getInstance();
+// Export the class as default for static method access
+// This ensures static methods like getTenantDataCached() work correctly in production builds
+export default TenantService;

@@ -2,17 +2,17 @@
 
 // Export clients
 export {
-    apiClient,
-    ApiClientError,
-    authClient,
-    catalogClient,
-    coreCommerceClient,
-    createClientWithContext,
-    homePageClient,
-    storefrontClient,
-    type ApiClientConfig,
-    type ApiError,
-    type RequestContext
+  apiClient,
+  ApiClientError,
+  authClient,
+  catalogClient,
+  coreCommerceClient,
+  createClientWithContext,
+  homePageClient,
+  storefrontClient,
+  type ApiClientConfig,
+  type ApiError,
+  type RequestContext,
 } from "./client";
 
 // Import services
@@ -24,6 +24,7 @@ import CompanyService from "./services/CompanyService";
 import DiscountService from "./services/DiscountService/DiscountService";
 import OpenSearchService from "./services/OpenSearchService/OpenSearchService";
 import StoreFrontService from "./services/StoreFrontService";
+// TenantService is the class (not an instance) - allows static method access
 import TenantService from "./services/TenantService";
 import UserService from "./services/UserService";
 
@@ -71,314 +72,311 @@ import UploadService from "./services/UploadService/UploadService";
 
 // Export services
 export {
-    AccountOwnerService,
-    AuthService,
-    AuthTokenService,
-    BillingBranchService,
-    BrandsService,
-    CartService,
-    CatalogService,
-    CompanyService,
-    CurrencyService,
-    DashboardService,
-    DiscountService,
-    LocationService,
-    ManufacturerCompetitorService,
-    OpenSearchService,
-    OrderDetailsService,
-    OrderNameService,
-    OrdersFilterService,
-    OrdersService,
-    OrderStatusService,
-    OrderVersionService,
-    PaymentService,
-    PreferenceService,
-    ProductAssetsService,
-    ProductListService,
-    ProductPageService,
-    QuotationDetailsService,
-    QuotationNameService,
-    QuotationVersionService,
-    QuotesService,
-    QuoteStatusService,
-    QuoteSubmissionService,
-    RequestEditService,
-    RequestQueueService,
-    SalesService,
-    SearchService,
-    SellerWarehouseService,
-    StoreFrontService,
-    SubIndustryService,
-    TenantService,
-    TokenRefreshService,
-    UploadService,
-    UserService
+  AccountOwnerService,
+  AuthService,
+  AuthTokenService,
+  BillingBranchService,
+  BrandsService,
+  CartService,
+  CatalogService,
+  CompanyService,
+  CurrencyService,
+  DashboardService,
+  DiscountService,
+  LocationService,
+  ManufacturerCompetitorService,
+  OpenSearchService,
+  OrderDetailsService,
+  OrderNameService,
+  OrdersFilterService,
+  OrdersService,
+  OrderStatusService,
+  OrderVersionService,
+  PaymentService,
+  PreferenceService,
+  ProductAssetsService,
+  ProductListService,
+  ProductPageService,
+  QuotationDetailsService,
+  QuotationNameService,
+  QuotationVersionService,
+  QuotesService,
+  QuoteStatusService,
+  QuoteSubmissionService,
+  RequestEditService,
+  RequestQueueService,
+  SalesService,
+  SearchService,
+  SellerWarehouseService,
+  StoreFrontService,
+  SubIndustryService,
+  TenantService,
+  TokenRefreshService,
+  UploadService,
+  UserService,
 };
 
 // Export service types
-    export type {
-        LoginRequest,
-        LoginResponse,
-        RefreshTokenResponse
-    } from "./services/AuthService";
+export type {
+  LoginRequest,
+  LoginResponse,
+  RefreshTokenResponse,
+} from "./services/AuthService";
 
 export type { TenantInfo } from "./services/TenantService";
 
 export type {
-    CompanyDetails,
-    UserDetails,
-    UserProfile
+  CompanyDetails,
+  UserDetails,
+  UserProfile,
 } from "./services/UserService";
 
 export type {
-    CatalogSettings,
-    Category,
-    ProductSearchOptions
+  CatalogSettings,
+  Category,
+  ProductSearchOptions,
 } from "./services/CatalogService";
 
-export type {
-    Brand,
-    BrandsResponse
-} from "./services/BrandsService";
+export type { Brand, BrandsResponse } from "./services/BrandsService";
 
 export type {
-    GraphQLQuery,
-    GraphQLResponse,
-    StoreFrontConfig
+  GraphQLQuery,
+  GraphQLResponse,
+  StoreFrontConfig,
 } from "./services/StoreFrontService";
 
 export type {
-    Cart,
-    CartCount,
-    CartParams
+  Cart,
+  CartCount,
+  CartParams,
 } from "./services/CartService/CartService";
 
 // Export dashboard service types
 export type {
-    DashboardApiResponse,
-    DashboardFilterParams,
-    TopPerformerItem
+  DashboardApiResponse,
+  DashboardFilterParams,
+  TopPerformerItem,
 } from "@/types/dashboard";
 
 export type {
-    FilterColumn,
-    OrderFilter,
-    OrdersFilterParams
+  FilterColumn,
+  OrderFilter,
+  OrdersFilterParams,
 } from "./services/OrdersFilterService/OrdersFilterService";
 export type { OrdersParams } from "./services/OrdersService/OrdersService";
 export type {
-    ElasticSearchOptions,
-    ElasticSearchQuery,
-    FormattedProduct,
-    SearchProductsResponse
+  ElasticSearchOptions,
+  ElasticSearchQuery,
+  FormattedProduct,
+  SearchProductsResponse,
 } from "./services/SearchService/SearchService";
 
 export type {
-    OrderStatusResponse,
-    StatusOption
+  OrderStatusResponse,
+  StatusOption,
 } from "./services/OrderStatusService/OrderStatusService";
 
 export type {
-    PreferenceModule,
-    UserPreference
+  PreferenceModule,
+  UserPreference,
 } from "./services/PreferenceService/PreferenceService";
 
 export type {
-    CheckVolumeDiscountEnabledResponse,
-    Discount,
-    DiscountApiResponse,
-    DiscountItem,
-    DiscountRequest,
-    VolumeDiscountRequest,
-    VolumeDiscountRequestItem,
-    VolumeDiscountResponse
+  CheckVolumeDiscountEnabledResponse,
+  Discount,
+  DiscountApiResponse,
+  DiscountItem,
+  DiscountRequest,
+  VolumeDiscountRequest,
+  VolumeDiscountRequestItem,
+  VolumeDiscountResponse,
 } from "./services/DiscountService/DiscountService";
 
 // Export CompanyService types
 export type {
-    AddressData,
-    Branch,
-    BranchAddress,
-    BranchApiResponse,
-    BranchPaginationParams,
-    BusinessUnit,
-    CompanyApiResponse,
-    CountryData,
-    CreateBranchRequest,
-    CreateBranchResponse,
-    DashboardData,
-    DashboardQueryParams,
-    DashboardRequest,
-    DashboardResponse,
-    DeleteAddressResponse,
-    DeleteBranchParams,
-    DistrictData,
-    getSubIndustrysbyid,
-    Industry,
-    OrderGraphItem,
-    QuoteGraphItem,
-    QuoteStatusGraphItem,
-    StateData,
-    SubIndustryApiResponse,
-    TopDataItem,
-    UpdateBranchRequest,
-    UpdateBranchResponse,
-    Warehouse,
-    Zone,
-    ZoneInfo
+  AddressData,
+  Branch,
+  BranchAddress,
+  BranchApiResponse,
+  BranchPaginationParams,
+  BusinessUnit,
+  CompanyApiResponse,
+  CountryData,
+  CreateBranchRequest,
+  CreateBranchResponse,
+  DashboardData,
+  DashboardQueryParams,
+  DashboardRequest,
+  DashboardResponse,
+  DeleteAddressResponse,
+  DeleteBranchParams,
+  DistrictData,
+  getSubIndustrysbyid,
+  Industry,
+  OrderGraphItem,
+  QuoteGraphItem,
+  QuoteStatusGraphItem,
+  StateData,
+  SubIndustryApiResponse,
+  TopDataItem,
+  UpdateBranchRequest,
+  UpdateBranchResponse,
+  Warehouse,
+  Zone,
+  ZoneInfo,
 } from "./services/CompanyService";
 
 // Export LocationService types
 export type {
-    CountryData as LocationCountryData,
-    DistrictData as LocationDistrictData,
-    LocationResponse,
-    StateData as LocationStateData
+  CountryData as LocationCountryData,
+  DistrictData as LocationDistrictData,
+  LocationResponse,
+  StateData as LocationStateData,
 } from "./services/LocationService/LocationService";
 
 export type {
-    ApprovalGroup,
-    CurrencySymbol,
-    QuoteItem,
-    QuotesApiResponse,
-    QuotesQueryParams,
-    QuotesRequestBody,
-    QuotesResponseData,
-    QuoteUser
+  ApprovalGroup,
+  CurrencySymbol,
+  QuoteItem,
+  QuotesApiResponse,
+  QuotesQueryParams,
+  QuotesRequestBody,
+  QuotesResponseData,
+  QuoteUser,
 } from "./services/QuotesService/QuotesService";
 
 export type {
-    QuoteStatusApiResponse,
-    QuoteStatusParams,
-    QuoteStatusResponse
+  QuoteStatusApiResponse,
+  QuoteStatusParams,
+  QuoteStatusResponse,
 } from "./services/StatusService/StatusService";
 
 // Export BillingBranchService types
 export type {
-    BillingAddress,
-    BillingBranchResponse
+  BillingAddress,
+  BillingBranchResponse,
 } from "./services/BillingBranchService/BillingBranchService";
 
 // Export ProductAssetsService types
 export type {
-    ProductAsset,
-    ProductAssetsResponse
+  ProductAsset,
+  ProductAssetsResponse,
 } from "./services/ProductAssetsService/ProductAssetsService";
 
 // Export OrderDetailsService types
 export type {
-    DbProductDetail,
-    FetchOrderDetailsParams,
-    OrderDetailItem,
-    OrderDetailsData,
-    OrderDetailsResponse
+  DbProductDetail,
+  FetchOrderDetailsParams,
+  OrderDetailItem,
+  OrderDetailsData,
+  OrderDetailsResponse,
 } from "./services/OrderDetailsService/OrderDetailsService";
 
 // Export ManufacturerCompetitorService types
 export type {
-    CompetitorDetail,
-    FetchCompetitorsRequest,
-    FetchCompetitorsResponse
+  CompetitorDetail,
+  FetchCompetitorsRequest,
+  FetchCompetitorsResponse,
 } from "./services/ManufacturerCompetitorService/ManufacturerCompetitorService";
 
 // Export PaymentService types
 export type {
-    OverallPaymentsResponse,
-    PaymentDueBreakup,
-    PaymentDueDataItem,
-    PaymentDueOrderData,
-    PaymentDueResponse,
-    PaymentHistoryItem,
-    PaymentTerm,
-    PaymentTermsResponse
+  OverallPaymentsResponse,
+  PaymentDueBreakup,
+  PaymentDueDataItem,
+  PaymentDueOrderData,
+  PaymentDueResponse,
+  PaymentHistoryItem,
+  PaymentTerm,
+  PaymentTermsResponse,
 } from "./services/PaymentService/PaymentService";
 
 // Export OrderNameService types
 export type {
-    UpdateOrderNameRequest,
-    UpdateOrderNameResponse
+  UpdateOrderNameRequest,
+  UpdateOrderNameResponse,
 } from "./services/OrderNameService/OrderNameService";
 
 // Export OrderVersionService types
 export type {
-    CreateOrderVersionRequest,
-    CreateOrderVersionResponse
+  CreateOrderVersionRequest,
+  CreateOrderVersionResponse,
 } from "./services/OrderVersionService/OrderVersionService";
 
 // Export RequestEditService types
 export type {
-    RequestEditParams,
-    RequestEditResponse
+  RequestEditParams,
+  RequestEditResponse,
 } from "./services/RequestEditService/RequestEditService";
 
 // Export QuotationDetailsService types
 export type {
-    FetchQuotationDetailsRequest,
-    QuotationData,
-    QuotationDetail,
-    QuotationDetailsResponse,
-    QuotationProductDetail
+  FetchQuotationDetailsRequest,
+  QuotationData,
+  QuotationDetail,
+  QuotationDetailsResponse,
+  QuotationProductDetail,
 } from "./services/QuotationDetailsService/QuotationDetailsService";
 
 // Export QuotationNameService types
 export type {
-    UpdateQuotationNameRequest,
-    UpdateQuotationNameResponse
+  UpdateQuotationNameRequest,
+  UpdateQuotationNameResponse,
 } from "./services/QuotationNameService/QuotationNameService";
 
 // Export QuotationVersionService types
 export type {
-    CreateQuotationVersionRequest,
-    CreateQuotationVersionResponse
+  CreateQuotationVersionRequest,
+  CreateQuotationVersionResponse,
 } from "./services/QuotationVersionService/QuotationVersionService";
 
 // Export QuoteSubmissionService types
 export type {
-    QuoteSubmissionPayload,
-    QuoteSubmissionRequest,
-    QuoteSubmissionResponse
+  QuoteSubmissionPayload,
+  QuoteSubmissionRequest,
+  QuoteSubmissionResponse,
 } from "./services/QuoteSubmissionService/QuoteSubmissionService";
 
 // Export SellerWarehouseService types
 export type {
-    FindSellerBranchRequest,
-    FindWarehouseRequest,
-    SellerBranch,
-    Warehouse as SellerWarehouse
+  FindSellerBranchRequest,
+  FindWarehouseRequest,
+  SellerBranch,
+  Warehouse as SellerWarehouse,
 } from "./services/SellerWarehouseService/SellerWarehouseService";
 
 // Export token management service types
 export type {
-    QueuedRequest,
-    RefreshTokenResult
+  QueuedRequest,
+  RefreshTokenResult,
 } from "../services/TokenRefreshService";
 
 export type {
-    EnhancedQueuedRequest,
-    QueuedRequestOptions
+  EnhancedQueuedRequest,
+  QueuedRequestOptions,
 } from "../services/RequestQueueService";
 
 // Export utility functions
 export {
-    getCommonApiHeaders,
-    getOriginHeader,
-    getTenantApiHeaders
+  getCommonApiHeaders,
+  getOriginHeader,
+  getTenantApiHeaders,
 } from "../utils/originUtils";
 
 export type {
-    OrdersApiResponse,
-    OrdersRequestParams,
-    OrdersResponse
+  OrdersApiResponse,
+  OrdersRequestParams,
+  OrdersResponse,
 } from "./services/Dasboard/DashboardOrdersTable";
 
 // Export order utility functions and types
 export {
-    checkIsBundleProduct,
-    formBundleProductsPayload,
-    orderPaymentDTO,
-    quoteSubmitDTO,
-    validatePlaceOrder,
-    type PlaceOrderValidation
+  checkIsBundleProduct,
+  formBundleProductsPayload,
+  orderPaymentDTO,
+  quoteSubmitDTO,
+  validatePlaceOrder,
+  type PlaceOrderValidation,
 } from "@/utils/order/orderUtils/orderUtils";
 
 // Convenience re-exports for common patterns
