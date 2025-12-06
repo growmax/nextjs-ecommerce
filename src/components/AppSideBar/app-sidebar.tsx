@@ -1,8 +1,8 @@
 "use client";
 
 import { useUserDetails } from "@/contexts/UserDetailsContext";
-import { AuthStorage } from "@/lib/auth";
 import { Link, useRouter } from "@/i18n/navigation";
+import { AuthStorage } from "@/lib/auth";
 import { Map, PieChart, Settings2, SquareTerminal } from "lucide-react";
 import { useTranslations } from "next-intl";
 import * as React from "react";
@@ -72,13 +72,14 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         icon: SquareTerminal,
         items: [
           {
-            title: t("orders"),
-            url: "/landing/orderslanding",
-          },
-          {
             title: t("quotes"),
             url: "/landing/quoteslanding",
           },
+          {
+            title: t("orders"),
+            url: "/landing/orderslanding",
+          },
+      
         ],
       },
       {

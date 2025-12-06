@@ -369,7 +369,7 @@ export default function CartPageClient() {
 
       // Redirect to login if not authenticated
       if (validation.errorMessage?.includes("login")) {
-        router.push(`/auth/login?from=Cart&back=${window.history.length}`);
+        router.push(`/login?from=Cart&back=${window.history.length}`);
       }
 
       return;
@@ -423,7 +423,7 @@ export default function CartPageClient() {
 
       // Redirect to login if not authenticated
       if (validation.errorMessage?.includes("login")) {
-        router.push(`/auth/login?from=Cart&back=${window.history.length}`);
+        router.push(`/login?from=Cart&back=${window.history.length}`);
       }
 
       return;
