@@ -41,6 +41,35 @@ jest.mock("@/components/ui/badge", () => {
 // Mock Toaster so it doesn't render heavy UI
 jest.mock("@/components/ui/sonner", () => ({ Toaster: () => null }));
 
+// Mock drawer components.
+jest.mock("@/components/ui/drawer", () => {
+  const React = require("react");
+  return {
+    Drawer: ({ children, open }: any) =>
+      React.createElement(
+        "div",
+        { "data-testid": "drawer", "data-open": open },
+        children
+      ),
+    DrawerContent: ({ children }: any) =>
+      React.createElement("div", { "data-testid": "drawer-content" }, children),
+    DrawerDescription: ({ children }: any) =>
+      React.createElement("div", { "data-testid": "drawer-desc" }, children),
+    DrawerHeader: ({ children }: any) =>
+      React.createElement("div", { "data-testid": "drawer-header" }, children),
+    DrawerTitle: ({ children }: any) =>
+      React.createElement("h2", null, children),
+    DrawerFooter: ({ children }: any) =>
+      React.createElement("div", { "data-testid": "drawer-footer" }, children),
+    DrawerClose: ({ children }: any) =>
+      React.createElement(
+        "button",
+        { "data-testid": "drawer-close" },
+        children
+      ),
+  };
+});
+
 // Mock CompanyService
 const mockGetAll = jest.fn();
 const mockDelete = jest.fn();
@@ -173,6 +202,15 @@ describe("CompanyBranchTable", () => {
     // assert btnToClick exists
     const btn = btnToClick!;
     fireEvent.click(btn);
+
+    // Wait for the drawer to open and then click the confirmation button
+    await waitFor(() => expect(screen.getByTestId("drawer")).toHaveAttribute("data-open", "true"));
+    
+    // Find the destructive button in the drawer footer and click it
+    const confirmDeleteBtn = screen.getAllByRole("button").find(
+      b => b.getAttribute("variant") === "destructive"
+    );
+    fireEvent.click(confirmDeleteBtn!);
 
     await waitFor(() => expect(mockDelete).toHaveBeenCalled());
   });

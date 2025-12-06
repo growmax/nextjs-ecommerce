@@ -82,6 +82,52 @@ jest.mock("../../forms/FormInput/FormInput", () => ({
   },
 }));
 
+// Mock drawer components.
+jest.mock("@/components/ui/drawer", () => {
+  const React = require("react");
+  return {
+    Drawer: ({ children, open }: any) =>
+      React.createElement(
+        "div",
+        { "data-testid": "drawer", "data-open": open },
+        children
+      ),
+    DrawerContent: ({ children }: any) =>
+      React.createElement("div", { "data-testid": "drawer-content" }, children),
+    DrawerDescription: ({ children }: any) =>
+      React.createElement("div", { "data-testid": "drawer-desc" }, children),
+    DrawerHeader: ({ children }: any) =>
+      React.createElement("div", { "data-testid": "drawer-header" }, children),
+    DrawerTitle: ({ children }: any) =>
+      React.createElement("h2", null, children),
+    DrawerFooter: ({ children }: any) =>
+      React.createElement("div", { "data-testid": "drawer-footer" }, children),
+    DrawerClose: ({ children }: any) =>
+      React.createElement(
+        "button",
+        { "data-testid": "drawer-close" },
+        children
+      ),
+  };
+});
+
+// Mock sidebar components
+jest.mock("@/components/ui/sidebar", () => {
+  const React = require("react");
+  return {
+    SidebarProvider: ({ children }: any) => React.createElement("div", null, children),
+    useSidebar: () => ({
+      state: "expanded",
+      open: true,
+      setOpen: jest.fn(),
+      openMobile: false,
+      setOpenMobile: jest.fn(),
+      isMobile: false,
+      toggleSidebar: jest.fn(),
+    }),
+  };
+});
+
 // Mock dropdown menu components. DropdownMenu's trigger will call onOpenChange(true) when clicked.
 jest.mock("@/components/ui/dropdown-menu", () => {
   const React = require("react");

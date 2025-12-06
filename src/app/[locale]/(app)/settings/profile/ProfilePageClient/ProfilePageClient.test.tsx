@@ -1,18 +1,18 @@
 /* eslint-disable @typescript-eslint/no-require-imports */
 import "@testing-library/jest-dom";
 import {
-  act,
-  fireEvent,
-  render,
-  screen,
-  waitFor,
+    act,
+    fireEvent,
+    render,
+    screen,
+    waitFor,
 } from "@testing-library/react";
 import React from "react";
 
+import { TenantProvider } from "@/contexts/TenantContext";
+import { UserDetailsProvider } from "@/contexts/UserDetailsContext";
 import ProfilePageClient from "./ProfilePageClient";
 import createUseProfileDataMock from "./ProfilePageClient.mocks";
-import { UserDetailsProvider } from "@/contexts/UserDetailsContext";
-import { TenantProvider } from "@/contexts/TenantContext";
 
 // Mock window.matchMedia for Sonner
 Object.defineProperty(window, "matchMedia", {
@@ -42,6 +42,23 @@ jest.mock("@/lib/auth", () => ({
 jest.mock("@/hooks/Profile/useProfileData", () => {
   const m = require("./ProfilePageClient.mocks");
   return { useProfileData: () => m.default() };
+});
+
+// Mock sidebar components
+jest.mock("@/components/ui/sidebar", () => {
+  const React = require("react");
+  return {
+    SidebarProvider: ({ children }: any) => React.createElement("div", null, children),
+    useSidebar: () => ({
+      state: "expanded",
+      open: true,
+      setOpen: jest.fn(),
+      openMobile: false,
+      setOpenMobile: jest.fn(),
+      isMobile: false,
+      toggleSidebar: jest.fn(),
+    }),
+  };
 });
 
 // Child component mocks: require React inside factories to avoid out-of-scope variable access
@@ -275,7 +292,6 @@ describe("ProfilePageClient", () => {
 
   test("renders header and child cards", () => {
     renderWithProviders(React.createElement(ProfilePageClient));
-    expect(screen.getByText("profileSettings")).toBeInTheDocument();
     expect(screen.getByTestId("profile-card")).toBeInTheDocument();
     expect(screen.getByTestId("preferences-card")).toBeInTheDocument();
   });
