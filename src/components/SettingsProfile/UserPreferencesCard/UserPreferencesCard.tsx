@@ -169,7 +169,7 @@ export function UserPreferencesCard({
   const handleSave = async () => {
     if (!hasChanges) return;
     if (!userId) {
-      toast.error("User ID is required"); // TODO: Add translation key
+      toast.error(t("userIdRequired"));
       return;
     }
 
@@ -214,12 +214,12 @@ export function UserPreferencesCard({
       }
 
       // Show success message - ensure it's called after all operations
-      toast.success(t("changesSavedSuccessfully"), {
+      toast.success(t("preferencesUpdatedSuccessfully"), {
         duration: 3000,
       });
     } catch (error) {
       console.error("Failed to save preferences:", error);
-      toast.error(t("failedToSaveChanges"));
+      toast.error(t("failedToUpdatePreferences"));
     } finally {
       setIsSaving(false);
     }
@@ -249,7 +249,7 @@ export function UserPreferencesCard({
       isCancellingRef.current = false;
     }, 100);
 
-    toast.info(t("allChangesCancelled"));
+    toast.info(t("preferencesChangesCancelled"));
   };
 
   // Show skeleton when loading or data is not available

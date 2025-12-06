@@ -279,7 +279,10 @@
     "submit": "ส่ง",
     "submitButton": "ส่ง",
     "productAddedSuccessfullyToQuote": "เพิ่มสินค้าสำเร็จแล้ว",
-    "failedToAddProductToQuote": "เพิ่มสินค้าในใบเสนอราคาไม่สำเร็จ"
+    "failedToAddProductToQuote": "เพิ่มสินค้าในใบเสนอราคาไม่สำเร็จ",
+    "newVersionCreatedNote": "Note: New version will be created for this quotation",
+    "cancel": "Cancel",
+    "yes": "Yes"
   },
   "products": {
     "title": "สินค้า",
@@ -526,7 +529,7 @@
     "usc": "USC(INR₹)",
     "quantity": "จำนวน",
     "invoicedQty": "จำนวนที่ออกใบแจ้งหนี้",
-    "amount": "จำนวนเงิน(INR₹)",
+    "amount": "จำนวนเงิน:",
     "igst": "IGST(%)",
     "contactDetails": "รายละเอียดการติดต่อ",
     "company": "บริษัท",
@@ -552,7 +555,7 @@
     "pfRate": "อัตรา P&F",
     "taxableAmount": "จำนวนที่ต้องเสียภาษี",
     "tax": "ภาษี",
-    "total": "รวม",
+    "total": "รวม:",
     "customerInformation": "ข้อมูลลูกค้า",
     "quoteValidity": "อายุใบเสนอราคา",
     "contractEnabled": "เปิดใช้งานสัญญา",
@@ -590,18 +593,17 @@
     "statusBooked": "จองแล้ว",
     "statusInvoiced": "ออกใบแจ้งหนี้แล้ว",
     "statusShipped": "จัดส่งแล้ว",
-    "total": "รวม:",
     "paid": "จ่ายแล้ว:",
     "toPay": "ต้องจ่าย:",
     "lastDate": "วันที่ล่าสุด:",
     "paymentDetails": "รายละเอียดการชำระเงิน",
-    "amount": "จำนวนเงิน:",
     "gateway": "เกตเวย์:",
     "method": "วิธีการ:",
     "date": "วันที่:",
     "referenceId": "รหัสอ้างอิง:",
     "noPaymentsYet": "ยังไม่มีการชำระเงิน",
-    "noDue": "ไม่มีหนี้"
+    "noDue": "ไม่มีหนี้",
+    "cashDiscount": "Cash Discount"
   },
   "companySettings": {
     "companySettings": "การตั้งค่าบริษัท",
@@ -643,6 +645,8 @@
     "failedToLoadBranches": "โหลดสาขาไม่สำเร็จ กรุณาลองอีกครั้ง",
     "noBranchesFound": "ไม่พบสาขา เพิ่มสาขาเพื่อเริ่มต้น",
     "deleteBranch": "ลบสาขา",
+    "deleteBranchConfirmation": "คุณแน่ใจหรือไม่ว่าต้องการลบสาขานี้? การดำเนินการนี้ไม่สามารถยกเลิกได้",
+    "delete": "ลบ",
     "createAddress": "สร้างที่อยู่",
     "editAddress": "แก้ไขที่อยู่",
     "enterBranchName": "กรอกชื่อสาขา",
@@ -679,7 +683,12 @@
     "missingAddressIdForUpdate": "ไม่มี ID ที่อยู่สำหรับการอัปเดต กรุณาเปิดสาขาใหม่หรือรีเฟรชรายการและลองอีกครั้ง",
     "missingAuthCannotUpdateBranch": "ไม่มีข้อมูลยืนยันตัวตน (userId/companyId) - ไม่สามารถอัปเดตสาขาได้",
     "companyLogo": "โลโก้บริษัท",
-    "selectAnOption": "เลือกตัวเลือก"
+    "selectAnOption": "เลือกตัวเลือก",
+    "branchName": "Branch Name",
+    "location": "Location",
+    "selectCountry": "Select Country",
+    "state": "State",
+    "selectState": "Select State"
   },
   "profileSettings": {
     "profileSettings": "การตั้งค่าโปรไฟล์",
@@ -736,6 +745,18 @@
     "verified": "ยืนยันแล้ว",
     "saveChanges": "บันทึกการเปลี่ยนแปลง",
     "cancel": "ยกเลิก",
-    "selectAnOption": "เลือกตัวเลือก"
+    "selectAnOption": "เลือกตัวเลือก",
+    "userIdRequired": "ต้องระบุ ID ผู้ใช้",
+    "tenantIdRequired": "ต้องระบุ ID ผู้เช่า",
+    "mobileNumberRequired": "ต้องระบุหมายเลขโทรศัพท์มือถือ",
+    "emailRequiredForPasswordChange": "ต้องระบุอีเมลเพื่อเปลี่ยนรหัสผ่าน",
+    "imageUploadedSuccessfully": "อัปโหลดรูปภาพสำเร็จ"
+    ,
+    "profileUpdatedSuccessfully": "อัปเดตโปรไฟล์สำเร็จ",
+    "failedToUpdateProfile": "ไม่สามารถอัปเดตโปรไฟล์",
+    "profileChangesCancelled": "ยกเลิกการเปลี่ยนแปลงโปรไฟล์",
+    "preferencesUpdatedSuccessfully": "อัปเดตการตั้งค่าสำเร็จ",
+    "failedToUpdatePreferences": "ไม่สามารถอัปเดตการตั้งค่า",
+    "preferencesChangesCancelled": "ยกเลิกการเปลี่ยนแปลงการตั้งค่า"
   }
 }

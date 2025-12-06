@@ -39,6 +39,7 @@ interface ProfileCardProps {
     name?: string;
     phone?: string;
     altEmail?: string;
+    altPhone?: string;
   };
 }
 
@@ -111,13 +112,13 @@ export function ProfileCard({
       <div className="w-full">
         <div className="grid grid-cols-1 md:grid-cols-12 gap-6 md:gap-6 lg:gap-8 items-start">
           {/* Profile Image */}
-          <div className="flex flex-col items-center md:items-start justify-start md:col-span-3 w-full mb-6 sm:mb-8 md:mb-0">
-            <div className="w-full max-w-[140px] sm:max-w-[160px] md:max-w-[180px] lg:max-w-[200px] mx-auto md:mx-0">
+          <div className="flex flex-col items-center justify-center md:col-span-3 w-full mb-6 sm:mb-8 md:mb-0">
+            <div className="w-full max-w-[140px] sm:max-w-[160px] md:max-w-[180px] lg:max-w-[200px] mx-auto">
               <ImageUpload
                 currentImage={profile.picture || profile.avatar || profileImage || null}
                 onImageChange={onImageChange}
                 onUploadSuccess={() => {
-                  toast.success("Image uploaded successfully", {
+                  toast.success(t("imageUploadedSuccessfully"), {
                     description: t("profile") + " updated.",
                     duration: 3000,
                   });
@@ -194,11 +195,12 @@ export function ProfileCard({
                 {...(countryCode ? { countryCode } : {})}
                 {...(originalAltPhone ? { originalValue: originalAltPhone } : {})}
                 disabled={isLoading}
+                {...(validationErrors.altPhone && { error: validationErrors.altPhone })}
               />
             </div>
 
             {/* Alternate Email */}
-            <div className="w-full min-w-0 sm:col-span-2 mt-0">
+            <div className="w-full min-w-0 mt-0 mb-6">
               <FormField 
                 label={t("alternateEmail")}
                 {...(validationErrors.altEmail && { error: validationErrors.altEmail })}

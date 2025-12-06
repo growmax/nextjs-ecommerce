@@ -1,15 +1,17 @@
 "use client";
 
-import HeaderBar from "@/components/Global/HeaderBar/HeaderBar";
+
 import { SaveCancelToolbar } from "@/components/custom/save-cancel-toolbar";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
+import { z } from "zod";
 // Import our new modular components
 import { OTPDialog } from "@/components/SettingsProfile/OTPDialog/OTPDialog";
 import { PasswordChangeDialog } from "@/components/SettingsProfile/PasswordChangeDialog/PasswordChangeDialog";
 import { ProfileCard } from "@/components/SettingsProfile/ProfileCard/ProfileCard";
 import { UserPreferencesCard } from "@/components/SettingsProfile/UserPreferencesCard/UserPreferencesCard";
 import { Button } from "@/components/ui/button";
+import { useSidebar } from "@/components/ui/sidebar";
 import { useTenantInfo } from "@/contexts/TenantContext";
 import { useUserDetails } from "@/contexts/UserDetailsContext";
 import { useProfileData } from "@/hooks/Profile/useProfileData";
@@ -17,11 +19,21 @@ import { useCurrentUser } from "@/hooks/useCurrentUser";
 import { AuthService, CompanyService } from "@/lib/api";
 import { AuthStorage } from "@/lib/auth";
 import { JWTService } from "@/lib/services/JWTService";
+import { cn } from "@/lib/utils";
 import parsePhoneNumberFromString from "libphonenumber-js";
 import { Shield } from "lucide-react";
 import { useTranslations } from "next-intl";
+
+// Profile validation schema
+const profileSchema = z.object({
+  name: z.string().min(2, "Name must be at least 2 characters").max(50, "Name must be less than 50 characters"),
+  phone: z.string().min(10, "Phone number must be at least 10 characters").regex(/^[\d+\-\s()]+$/, "Invalid phone number format"),
+  altEmail: z.string().email("Invalid email address").or(z.literal("")),
+  altPhone: z.string().min(10, "Phone number must be at least 10 characters").regex(/^[\d+\-\s()]+$/, "Invalid phone number format").or(z.literal("")),
+});
 export default function ProfilePageClient() {
   const t = useTranslations("profileSettings");
+  const { state, isMobile } = useSidebar();
   const {
     profile,
     preferences,
@@ -30,7 +42,6 @@ export default function ProfilePageClient() {
     isLoading: dataLoading,
     setProfile,
     setPreferences,
-    savePreferences,
     loadProfile,
     loadPreferences,
   } = useProfileData();
@@ -66,7 +77,7 @@ export default function ProfilePageClient() {
   // Unified change tracking
   const [hasChanges, setHasChanges] = useState(false);
   const [changedSections, setChangedSections] = useState<
-    Set<"profile" | "preferences">
+    Set<"profile">
   >(new Set());
 
   // Validation errors state
@@ -74,11 +85,12 @@ export default function ProfilePageClient() {
     name?: string;
     phone?: string;
     altEmail?: string;
+    altPhone?: string;
   }>({});
 
   // Original values for reset functionality
   const [originalProfile, setOriginalProfile] = useState(profile);
-  const [originalPreferences, setOriginalPreferences] = useState(preferences);
+
 
   // Update originals when data loads - using useEffect to avoid render issues
   useEffect(() => {
@@ -87,20 +99,15 @@ export default function ProfilePageClient() {
     }
   }, [profile, originalProfile]);
 
-  useEffect(() => {
-    if (
-      preferences &&
-      (!originalPreferences || !originalPreferences.timeZone)
-    ) {
-      setOriginalPreferences(preferences);
-    }
-  }, [preferences, originalPreferences]);
 
   // Unified change tracking helper
-  const updateChangedSections = (section: "profile" | "preferences") => {
+  // Unified change tracking helper: add or remove a section from the changed set
+  const setSectionDirty = (section: "profile", isDirty: boolean) => {
     setChangedSections(prev => {
       const newSet = new Set(prev);
-      newSet.add(section);
+      if (isDirty) newSet.add(section);
+      else newSet.delete(section);
+      // update overall flag
       setHasChanges(newSet.size > 0);
       return newSet;
     });
@@ -123,7 +130,10 @@ export default function ProfilePageClient() {
 
     const updatedProfile = { ...profile, [field]: value };
     setProfile(updatedProfile);
-    updateChangedSections("profile");
+
+    // Determine whether profile differs from originalProfile
+    const isDirty = JSON.stringify(updatedProfile) !== JSON.stringify(originalProfile || {});
+    setSectionDirty("profile", isDirty);
   };
 
   // Store the uploaded image URL separately for the picture parameter
@@ -143,26 +153,25 @@ export default function ProfilePageClient() {
       setUploadedPictureUrl(image);
     }
 
-    updateChangedSections("profile");
+    const isDirty = JSON.stringify(updatedProfile) !== JSON.stringify(originalProfile || {});
+    setSectionDirty("profile", isDirty);
   };
 
   const handlePreferenceChange = (
     field: keyof typeof preferences,
     value: string
   ) => {
+    // Just update local state - no dirty tracking
+    // UserPreferencesCard handles its own save/cancel
     const updatedPreferences = { ...preferences, [field]: value };
     setPreferences(updatedPreferences);
-    // updateChangedSections("preferences");
   };
 
   // Reset all changes helper - restore original values
   const resetAllChanges = () => {
-    // Only reset sections that actually changed and have original values
+    // Only reset profile section (preferences has its own reset)
     if (changedSections.has("profile") && originalProfile) {
       setProfile(originalProfile);
-    }
-    if (changedSections.has("preferences") && originalPreferences) {
-      setPreferences(originalPreferences);
     }
     // Clear validation errors when canceling
     setValidationErrors({});
@@ -170,41 +179,29 @@ export default function ProfilePageClient() {
     setHasChanges(false);
   };
 
-  // Email validation helper
-  const isValidEmail = (email: string): boolean => {
-    if (!email || email.trim() === "") return true; // Empty is allowed for optional fields
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    return emailRegex.test(email.trim());
-  };
+  // Validate profile using Zod schema
+  const validateProfile = (): boolean => {
+    if (!profile) return false;
 
-  // Validation helper
-  const validateProfile = (): { isValid: boolean; errors: string[] } => {
-    const errors: string[] = [];
+    const result = profileSchema.safeParse({
+      name: profile.name?.trim() || "",
+      phone: profile.phone?.trim() || "",
+      altEmail: profile.altEmail?.trim() || "",
+      altPhone: profile.altPhone?.trim() || "",
+    });
 
-    if (!profile) {
-      return { isValid: false, errors: [t("profile") + " data is missing"] };
+    if (!result.success) {
+      const errors: typeof validationErrors = {};
+      result.error.issues.forEach((issue) => {
+        const field = issue.path[0] as keyof typeof validationErrors;
+        if (field) errors[field] = issue.message;
+      });
+      setValidationErrors(errors);
+      return false;
     }
 
-    // Validate required fields
-    if (!profile.name || profile.name.trim() === "") {
-      errors.push(t("name") + " is required");
-    }
-
-    if (!profile.phone || profile.phone.trim() === "") {
-      errors.push(t("mobileNumber") + " is required");
-    }
-
-    // Validate email format for alternate email
-    if (profile.altEmail && profile.altEmail.trim() !== "") {
-      if (!isValidEmail(profile.altEmail)) {
-        errors.push(t("alternateEmail") + " must be a valid email address");
-      }
-    }
-
-    return {
-      isValid: errors.length === 0,
-      errors,
-    };
+    setValidationErrors({});
+    return true;
   };
 
   // Unified save handler
@@ -212,31 +209,19 @@ export default function ProfilePageClient() {
     if (!hasChanges) return;
     if (!profile) return;
     if (!sub && !userId) {
-      toast.error("User ID is required"); // TODO: Add translation key
+      toast.error(t("userIdRequired"));
       return;
     }
     if (!tenantId) {
-      toast.error("Tenant ID is required"); // TODO: Add translation key
+      toast.error(t("tenantIdRequired"));
       return;
     }
 
-    // Validate profile data
-    const validation = validateProfile();
-    if (!validation.isValid) {
-      // Set validation errors for display (no toast notifications)
-      const errors: typeof validationErrors = {};
-      validation.errors.forEach(error => {
-        if (error.includes("Name")) errors.name = error;
-        if (error.includes("Mobile Number")) errors.phone = error;
-        if (error.includes("Alternate Email")) errors.altEmail = error;
-      });
-      setValidationErrors(errors);
+    // Validate profile data using Zod
+    if (!validateProfile()) {
       setIsSaving(false);
       return;
     }
-
-    // Clear validation errors if validation passes
-    setValidationErrors({});
 
     setIsSaving(true);
     const phoneWithCountryCode = profile?.phone
@@ -300,7 +285,7 @@ export default function ProfilePageClient() {
       if (changedSections.has("profile")) {
         const userIdToUse = sub;
         if (!userIdToUse) {
-          toast.error("User ID is required"); // TODO: Add translation key
+          toast.error(t("userIdRequired"));
           setIsSaving(false);
           return;
         }
@@ -314,10 +299,6 @@ export default function ProfilePageClient() {
         );
       }
 
-      // Save preferences if changed
-      if (changedSections.has("preferences") && preferences) {
-        promises.push(savePreferences(preferences));
-      }
 
       // If no promises to execute, return early
       if (promises.length === 0) {
@@ -338,21 +319,18 @@ export default function ProfilePageClient() {
           // Clear uploaded picture URL after successful save
           setUploadedPictureUrl(null);
         }
-        if (changedSections.has("preferences")) {
-          await loadPreferences(true); // Force reload
-          setOriginalPreferences(preferences);
-        }
+
 
         // Clear change tracking
         setChangedSections(new Set());
         setHasChanges(false);
-        toast.success(t("changesSavedSuccessfully"));
+        toast.success(t("profileUpdatedSuccessfully"));
       } else {
         toast.error(t("someChangesFailedToSave"));
       }
     } catch (error) {
       console.error("Failed to save profile:", error);
-      toast.error(t("failedToSaveChanges"));
+      toast.error(t("failedToUpdateProfile"));
     } finally {
       setIsSaving(false);
     }
@@ -361,12 +339,12 @@ export default function ProfilePageClient() {
   // Unified cancel handler
   const handleCancel = () => {
     resetAllChanges();
-    toast.info(t("allChangesCancelled"));
+    toast.info(t("profileChangesCancelled"));
   };
 
   const handleVerifyPhone = async (phone: string) => {
     if (!phone) {
-      toast.error(t("mobileNumber") + " is required");
+      toast.error(t("mobileNumberRequired"));
       return;
     }
 
@@ -396,12 +374,12 @@ export default function ProfilePageClient() {
     }
 
     if (!phoneNumber) {
-      toast.error(t("mobileNumber") + " is required");
+      toast.error(t("mobileNumberRequired"));
       return;
     }
 
     if (!userId) {
-      toast.error("User ID is required");
+      toast.error(t("userIdRequired"));
       return;
     }
 
@@ -430,7 +408,7 @@ export default function ProfilePageClient() {
     newPassword: string;
   }) => {
     if (!profile?.email) {
-      toast.error(t("email") + " is required for password change");
+      toast.error(t("emailRequiredForPasswordChange"));
       return;
     }
 
@@ -457,9 +435,6 @@ export default function ProfilePageClient() {
 
   return (
     <div className="flex flex-col h-full">
-      <div id="profile-header" className="h-[48px] md:h-[64px] flex-shrink-0">
-        <HeaderBar title={t("profileSettings")} />
-      </div>
 
       <main
         className={`flex-1 px-4  sm:px-4 md:px-8 lg:px-16 pt-4 pb-4 md:pt-6 overflow-x-hidden overflow-y-auto min-h-0 ${hasChanges ? "pb-32 md:pb-24" : "pb-16"}`}
@@ -524,7 +499,14 @@ export default function ProfilePageClient() {
         isLoading={isSaving}
         saveText="save"
         cancelText={t("cancel")}
-        className="bottom-4 left-0 right-0 md:bottom-auto md:top-[69px] md:left-0 lg:left-64 z-50"
+        className={cn(
+          "bottom-4 left-0 right-0 md:bottom-auto md:top-[69px] md:left-0 z-50 transition-[left] duration-200 ease-linear",
+          isMobile
+            ? "left-0"
+            : state === "expanded"
+              ? "md:left-[16rem]"
+              : "md:left-[3rem]"
+        )}
         anchorSelector="#profile-header"
       />
 

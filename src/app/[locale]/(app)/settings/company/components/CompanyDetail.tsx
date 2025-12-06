@@ -200,7 +200,7 @@ const CompanyDetail = () => {
     }
     // Reset image if needed
     setProfileImage(null);
-    toast.info(t("allChangesCancelled"));
+    toast.info(t("companyChangesCancelled"));
   };
 
   // Unified save handler
@@ -277,9 +277,9 @@ const CompanyDetail = () => {
       // Reset form state after successful save
       reset(normalizedData);
 
-      toast.success(t("changesSavedSuccessfully"));
+      toast.success(t("companyDetailsUpdatedSuccessfully"));
     } catch {
-      toast.error(t("failedToSaveChanges"));
+      toast.error(t("failedToUpdateCompanyDetails"));
     } finally {
       setIsSaving(false);
     }

@@ -112,7 +112,7 @@ export function PhoneInput({
           {canVerify && (
             <Button
               size="sm"
-              className="absolute right-1 top-1/2 -translate-y-1/2 h-7 text-xs px-2"
+              className="absolute right-2 top-1/2 -translate-y-1/2 h-6 text-xs px-4"
               onClick={handleVerify}
               disabled={disabled}
             >

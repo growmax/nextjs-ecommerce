@@ -279,7 +279,10 @@
     "submit": "Hantar",
     "submitButton": "Hantar",
     "productAddedSuccessfullyToQuote": "Produk berjaya ditambah",
-    "failedToAddProductToQuote": "Gagal menambah produk ke sebut harga"
+    "failedToAddProductToQuote": "Gagal menambah produk ke sebut harga",
+    "newVersionCreatedNote": "Note: New version will be created for this quotation",
+    "cancel": "Cancel",
+    "yes": "Yes"
   },
   "products": {
     "title": "Produk",
@@ -526,7 +529,7 @@
     "usc": "USC(INR₹)",
     "quantity": "KUANTITI",
     "invoicedQty": "KUANTITI DITAGIH",
-    "amount": "JUMLAH(INR₹)",
+    "amount": "Jumlah:",
     "igst": "IGST(%)",
     "contactDetails": "Butiran Hubungan",
     "company": "Syarikat",
@@ -552,7 +555,7 @@
     "pfRate": "Kadar P&F",
     "taxableAmount": "Jumlah Bercukai",
     "tax": "Cukai",
-    "total": "Jumlah",
+    "total": "JUMLAH:",
     "customerInformation": "Maklumat Pelanggan",
     "quoteValidity": "Tempoh Sah Sebut Harga",
     "contractEnabled": "Kontrak Diaktifkan",
@@ -590,18 +593,17 @@
     "statusBooked": "Ditempah",
     "statusInvoiced": "Ditagih",
     "statusShipped": "Dihantar",
-    "total": "JUMLAH:",
     "paid": "DIBAYAR:",
     "toPay": "PERLU DIBAYAR:",
     "lastDate": "TARIKH TERAKHIR:",
     "paymentDetails": "Butiran Pembayaran",
-    "amount": "Jumlah:",
     "gateway": "Gerbang:",
     "method": "Kaedah:",
     "date": "Tarikh:",
     "referenceId": "ID Rujukan:",
     "noPaymentsYet": "Belum ada pembayaran",
-    "noDue": "Tiada perlu dibayar"
+    "noDue": "Tiada perlu dibayar",
+    "cashDiscount": "Cash Discount"
   },
   "companySettings": {
     "companySettings": "Tetapan Syarikat",
@@ -629,6 +631,11 @@
     "missingCompanyIdentifier": "Pengenal syarikat tidak ada",
     "changesSavedSuccessfully": "Perubahan berjaya disimpan!",
     "failedToSaveChanges": "Gagal menyimpan perubahan. Sila cuba lagi.",
+    "companyDetailsUpdatedSuccessfully": "Butiran syarikat berjaya dikemaskini",
+    "failedToUpdateCompanyDetails": "Gagal mengemas kini butiran syarikat",
+    "companyChangesCancelled": "Perubahan syarikat dibatalkan",
+    "branchUpdatedSuccessfully": "Cawangan berjaya dikemaskini",
+    "failedToUpdateBranch": "Gagal mengemas kini cawangan",
     "saveChanges": "Simpan Perubahan",
     "cancel": "Batal",
     "companyBranches": "Cawangan Syarikat",
@@ -643,6 +650,8 @@
     "failedToLoadBranches": "Gagal memuatkan cawangan. Sila cuba lagi.",
     "noBranchesFound": "Tiada cawangan ditemui. Tambah cawangan untuk bermula.",
     "deleteBranch": "Padam cawangan",
+    "deleteBranchConfirmation": "Adakah anda pasti mahu memadamkan cawangan ini? Tindakan ini tidak boleh dibuat asal.",
+    "delete": "Padam",
     "createAddress": "Cipta Alamat",
     "editAddress": "Edit Alamat",
     "enterBranchName": "Masukkan nama cawangan",
@@ -679,7 +688,12 @@
     "missingAddressIdForUpdate": "ID alamat tidak ada untuk kemas kini. Sila buka semula cawangan atau muat semula senarai dan cuba lagi.",
     "missingAuthCannotUpdateBranch": "Pengesahan tidak ada (userId/companyId) - tidak boleh mengemas kini cawangan",
     "companyLogo": "Logo Syarikat",
-    "selectAnOption": "Pilih pilihan"
+    "selectAnOption": "Pilih pilihan",
+    "branchName": "Branch Name",
+    "location": "Location",
+    "selectCountry": "Select Country",
+    "state": "State",
+    "selectState": "Select State"
   },
   "profileSettings": {
     "profileSettings": "Tetapan Profil",
@@ -736,6 +750,17 @@
     "verified": "Telah disahkan",
     "saveChanges": "Simpan Perubahan",
     "cancel": "Batal",
-    "selectAnOption": "Pilih pilihan"
+    "selectAnOption": "Pilih pilihan",
+    "userIdRequired": "ID pengguna diperlukan",
+    "tenantIdRequired": "ID penyewa diperlukan",
+    "mobileNumberRequired": "Nombor telefon diperlukan",
+    "emailRequiredForPasswordChange": "E-mel diperlukan untuk menukar kata laluan",
+    "imageUploadedSuccessfully": "Imej berjaya dimuat naik",
+    "profileUpdatedSuccessfully": "Profil berjaya dikemaskini",
+    "failedToUpdateProfile": "Gagal mengemas kini profil",
+    "profileChangesCancelled": "Perubahan profil dibatalkan",
+    "preferencesUpdatedSuccessfully": "Keutamaan berjaya dikemaskini",
+    "failedToUpdatePreferences": "Gagal mengemas kini keutamaan",
+    "preferencesChangesCancelled": "Perubahan keutamaan dibatalkan"
   }
 }

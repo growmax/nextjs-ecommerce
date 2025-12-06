@@ -279,7 +279,10 @@
     "submit": "Kirim",
     "submitButton": "Kirim",
     "productAddedSuccessfullyToQuote": "Produk berhasil ditambahkan",
-    "failedToAddProductToQuote": "Gagal menambahkan produk ke penawaran"
+    "failedToAddProductToQuote": "Gagal menambahkan produk ke penawaran",
+    "newVersionCreatedNote": "Note: New version will be created for this quotation",
+    "cancel": "Cancel",
+    "yes": "Yes"
   },
   "products": {
     "title": "Produk",
@@ -526,7 +529,7 @@
     "usc": "USC(INR₹)",
     "quantity": "JUMLAH",
     "invoicedQty": "JUMLAH TERTAGIH",
-    "amount": "JUMLAH(INR₹)",
+    "amount": "Jumlah:",
     "igst": "IGST(%)",
     "contactDetails": "Detail Kontak",
     "company": "Perusahaan",
@@ -552,7 +555,7 @@
     "pfRate": "Tarif P&F",
     "taxableAmount": "Jumlah Kena Pajak",
     "tax": "Pajak",
-    "total": "Total",
+    "total": "TOTAL:",
     "customerInformation": "Informasi Pelanggan",
     "quoteValidity": "Masa Berlaku Penawaran",
     "contractEnabled": "Kontrak Diaktifkan",
@@ -590,18 +593,17 @@
     "statusBooked": "Dipesan",
     "statusInvoiced": "Tertagih",
     "statusShipped": "Terkirim",
-    "total": "TOTAL:",
     "paid": "DIBAYAR:",
     "toPay": "HARUS DIBAYAR:",
     "lastDate": "TANGGAL TERAKHIR:",
     "paymentDetails": "Detail Pembayaran",
-    "amount": "Jumlah:",
     "gateway": "Gateway:",
     "method": "Metode:",
     "date": "Tanggal:",
     "referenceId": "ID Referensi:",
     "noPaymentsYet": "Belum ada pembayaran",
-    "noDue": "Tidak ada jatuh tempo"
+    "noDue": "Tidak ada jatuh tempo",
+    "cashDiscount": "Cash Discount"
   },
   "companySettings": {
     "companySettings": "Pengaturan Perusahaan",
@@ -629,6 +631,11 @@
     "missingCompanyIdentifier": "Pengenal perusahaan tidak ada",
     "changesSavedSuccessfully": "Perubahan berhasil disimpan!",
     "failedToSaveChanges": "Gagal menyimpan perubahan. Harap coba lagi.",
+    "companyDetailsUpdatedSuccessfully": "Detail perusahaan berhasil diperbarui",
+    "failedToUpdateCompanyDetails": "Gagal memperbarui detail perusahaan",
+    "companyChangesCancelled": "Perubahan perusahaan dibatalkan",
+    "branchUpdatedSuccessfully": "Cabang berhasil diperbarui",
+    "failedToUpdateBranch": "Gagal memperbarui cabang",
     "saveChanges": "Simpan Perubahan",
     "cancel": "Batal",
     "companyBranches": "Cabang Perusahaan",
@@ -643,6 +650,8 @@
     "failedToLoadBranches": "Gagal memuat cabang. Harap coba lagi.",
     "noBranchesFound": "Tidak ada cabang ditemukan. Tambahkan cabang untuk memulai.",
     "deleteBranch": "Hapus cabang",
+    "deleteBranchConfirmation": "Apakah Anda yakin ingin menghapus cabang ini? Tindakan ini tidak dapat dibatalkan.",
+    "delete": "Hapus",
     "createAddress": "Buat Alamat",
     "editAddress": "Edit Alamat",
     "enterBranchName": "Masukkan nama cabang",
@@ -679,7 +688,12 @@
     "missingAddressIdForUpdate": "ID alamat tidak ada untuk pembaruan. Harap buka kembali cabang atau segarkan daftar dan coba lagi.",
     "missingAuthCannotUpdateBranch": "Autentikasi tidak ada (userId/companyId) - tidak dapat memperbarui cabang",
     "companyLogo": "Logo Perusahaan",
-    "selectAnOption": "Pilih opsi"
+    "selectAnOption": "Pilih opsi",
+    "branchName": "Branch Name",
+    "location": "Location",
+    "selectCountry": "Select Country",
+    "state": "State",
+    "selectState": "Select State"
   },
   "profileSettings": {
     "profileSettings": "Pengaturan Profil",
@@ -736,6 +750,17 @@
     "verified": "Terverifikasi",
     "saveChanges": "Simpan Perubahan",
     "cancel": "Batal",
-    "selectAnOption": "Pilih opsi"
+    "selectAnOption": "Pilih opsi",
+    "userIdRequired": "ID pengguna wajib diisi",
+    "tenantIdRequired": "ID penyewa wajib diisi",
+    "mobileNumberRequired": "Nomor ponsel wajib diisi",
+    "emailRequiredForPasswordChange": "Email wajib diisi untuk mengubah kata sandi",
+    "imageUploadedSuccessfully": "Gambar berhasil diunggah",
+    "profileUpdatedSuccessfully": "Profil berhasil diperbarui",
+    "failedToUpdateProfile": "Gagal memperbarui profil",
+    "profileChangesCancelled": "Perubahan profil dibatalkan",
+    "preferencesUpdatedSuccessfully": "Preferensi berhasil diperbarui",
+    "failedToUpdatePreferences": "Gagal memperbarui preferensi",
+    "preferencesChangesCancelled": "Perubahan preferensi dibatalkan"
   }
 }

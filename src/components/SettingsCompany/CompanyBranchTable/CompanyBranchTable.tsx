@@ -1,4 +1,5 @@
 import SectionCard from "@/components/custom/SectionCard";
+import { ConfirmationDialog } from "@/components/dialogs/common/ConfirmationDialog";
 import { DataTable } from "@/components/Global/DataTable";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -56,6 +57,8 @@ const CompanyBranchTable = () => {
   const [dialogMode, setDialogMode] = useState<"create" | "edit">("create");
   const [selectedBranch, setSelectedBranch] = useState<Branch | null>(null);
   const [reloadTrigger, setReloadTrigger] = useState(false);
+  const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
+  const [branchToDelete, setBranchToDelete] = useState<string | number | null>(null);
 
   const [pagination, setPagination] = useState({
     pageIndex: 0,
@@ -141,20 +144,28 @@ const CompanyBranchTable = () => {
     setIsDialogOpen(true);
   };
 
-  const handleDelete = async (id: string | number) => {
-    setDeletingAddressId(id);
+  const handleDeleteClick = (id: string | number) => {
+    setBranchToDelete(id);
+    setDeleteConfirmOpen(true);
+  };
+
+  const confirmDelete = async () => {
+    if (!branchToDelete) return;
+    
+    setDeletingAddressId(branchToDelete);
 
     try {
       await CompanyService.deleteRecordBranchesWithPagination({
-        addressId: Number(id),
+        addressId: Number(branchToDelete),
       });
 
-      toast.success(t("changesSavedSuccessfully"));
+      toast.success(t("branchUpdatedSuccessfully"));
       reloadTable();
     } catch {
-      toast.error(t("failedToSaveChanges"));
+      toast.error(t("failedToUpdateBranch"));
     } finally {
       setDeletingAddressId(null);
+      setBranchToDelete(null);
     }
   };
 
@@ -201,8 +212,8 @@ const CompanyBranchTable = () => {
               <div className="flex gap-1.5 mt-2">
                 {branch.addressId?.isBilling && (
                   <Badge
-                    variant="secondary"
-                    className="text-xs font-medium px-2.5 py-0.5 bg-primary/10 text-primary"
+                    variant="outline"
+                    className="text-xs font-medium px-2.5 py-0.5"
                   >
                     {t("billing")}
                   </Badge>
@@ -228,19 +239,8 @@ const CompanyBranchTable = () => {
           const gstValues = gst ? gst.split(",").map(s => s.trim()) : [];
 
           return (
-            <div className="text-xs sm:text-sm whitespace-nowrap flex flex-wrap gap-1 items-center">
-              {gstValues.length > 0
-                ? gstValues.map((value, index) => (
-                    <React.Fragment key={index}>
-                      <span className="inline-block px-2 py-0.5 rounded-full bg-gray-100 dark:bg-gray-800 text-gray-800 dark:text-gray-200">
-                        {value}
-                      </span>
-                      {index < gstValues.length - 1 && (
-                        <span className="text-muted-foreground / "></span>
-                      )}
-                    </React.Fragment>
-                  ))
-                : "-"}
+            <div className="text-xs sm:text-sm whitespace-nowrap">
+              {gstValues.length > 0 ? gstValues.join(", ") : "-"}
             </div>
           );
         },
@@ -331,7 +331,7 @@ const CompanyBranchTable = () => {
                 }
                 onClick={e => {
                   e.stopPropagation();
-                  handleDelete(row.original.addressId?.id || row.original.id);
+                  handleDeleteClick(row.original.addressId?.id || row.original.id);
                 }}
               >
                 {deletingAddressId ===
@@ -351,6 +351,7 @@ const CompanyBranchTable = () => {
             enableSorting
             enableColumnVisibility={false}
             showPagination
+            showFirstLastButtons={false}
             pageSizeOptions={[5, 10, 20, 30]}
             manualPagination={true}
             totalCount={totalCount}
@@ -379,8 +380,20 @@ const CompanyBranchTable = () => {
           branchId={selectedBranch?.addressId?.id || selectedBranch?.id || null}
           onSuccess={() => {
             reloadTable();
-            toast.success(t("changesSavedSuccessfully"));
+            toast.success(t("branchUpdatedSuccessfully"));
           }}
+        />
+
+        <ConfirmationDialog
+          open={deleteConfirmOpen}
+          onOpenChange={setDeleteConfirmOpen}
+          title={t("deleteBranch")}
+          description={t("deleteBranchConfirmation")}
+          confirmText={t("delete")}
+          cancelText={t("cancel")}
+          confirmVariant="destructive"
+          isLoading={deletingAddressId !== null}
+          onConfirm={confirmDelete}
         />
       
     

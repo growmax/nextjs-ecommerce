@@ -337,7 +337,7 @@ export function DataTable<TData>({
   // Render table content
   const renderTableContent = () => {
     const tableElement = (
-      <div className="overflow-x-auto rounded-lg border">
+      <div className="overflow-x-auto rounded-lg border relative">
         <Table className={tableClassName}>
           <TableHeader className="bg-muted sticky top-0 z-[1]">
             {table.getHeaderGroups().map(headerGroup => (
@@ -359,14 +359,32 @@ export function DataTable<TData>({
           </TableHeader>
           <TableBody className="**:data-[slot=table-cell]:first:w-8">
             {isLoading ? (
-              <TableRow>
-                <TableCell
-                  colSpan={columns.length}
-                  className="h-24 text-center"
-                >
-                  Loading...
-                </TableCell>
-              </TableRow>
+              // Skeleton loading rows - dynamic based on pageSize or actual data
+              Array.from({ length: data.length || pagination.pageSize || 5 }).map((_, rowIndex) => (
+                <TableRow key={`skeleton-${rowIndex}`}>
+                  {columns.map((_, colIndex) => (
+                    <TableCell key={`skeleton-cell-${rowIndex}-${colIndex}`}>
+                      {colIndex === 1 ? (
+                        // Address column - multi-line skeleton
+                        <div className="space-y-1.5 py-1">
+                          <div className="h-3.5 w-20 bg-muted animate-pulse rounded" />
+                          <div className="h-3 w-24 bg-muted animate-pulse rounded" />
+                          <div className="h-3 w-8 bg-muted animate-pulse rounded" />
+                          <div className="flex gap-2 pt-1">
+                            <div className="h-5 w-12 bg-muted animate-pulse rounded-full" />
+                            <div className="h-5 w-14 bg-muted animate-pulse rounded-full" />
+                          </div>
+                        </div>
+                      ) : colIndex === columns.length - 1 ? (
+                        // Delete button column - small icon skeleton
+                        <div className="h-5 w-5 bg-muted animate-pulse rounded" />
+                      ) : (
+                        <div className="h-4 w-3/4 bg-muted animate-pulse rounded" />
+                      )}
+                    </TableCell>
+                  ))}
+                </TableRow>
+              ))
             ) : table.getRowModel().rows?.length ? (
               enableDragDrop ? (
                 <SortableContext

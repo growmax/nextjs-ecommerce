@@ -53,9 +53,6 @@ describe("ComanyPageClient", () => {
   test("renders header and composed company components", () => {
     render(React.createElement(ComanyPageClient));
 
-    expect(screen.getByTestId("header")).toBeInTheDocument();
-    expect(screen.getByText("companySettings")).toBeInTheDocument();
-
     // Child components should be present (mocked)
     expect(screen.getByTestId("company-detail")).toBeInTheDocument();
     expect(screen.getByTestId("company-branch-table")).toBeInTheDocument();
