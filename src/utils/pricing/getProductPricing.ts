@@ -68,7 +68,7 @@ export function getProductPricing(
 
     // Add additional discount if available
     if (appliedDiscount > 0) {
-      discount_Percentage = overrideDiscountPercent + appliedDiscount;
+      discount_Percentage = productData?.discount ?? productData?.discountPercentage ?? overrideDiscountPercent;
       discounted_Price =
         MASTER_PRICE - (MASTER_PRICE * discount_Percentage) / 100;
     } else {
@@ -78,9 +78,21 @@ export function getProductPricing(
   } else {
     // Apply discount directly to base price
     if (appliedDiscount > 0) {
-      discounted_Price =
-        adjustedBasePrice - (adjustedBasePrice * appliedDiscount) / 100;
-      discount_Percentage = appliedDiscount;
+      discounted_Price = productData?.unitPrice ?? productData?.discountedPrice;
+      discount_Percentage = productData?.discount ?? productData?.discountPercentage;
+    }
+
+    // If no discount but we have unitPrice different from MasterPrice, use unitPrice as discounted price
+    if (!discounted_Price && productData?.unitPrice && productData?.unitPrice !== MASTER_PRICE) {
+      discounted_Price = productData.unitPrice;
+      if (MASTER_PRICE > 0 && productData.unitPrice < MASTER_PRICE) {
+        discount_Percentage = ((MASTER_PRICE - productData.unitPrice) / MASTER_PRICE) * 100;
+      }
+    }
+
+    // Set final_Price to MasterPrice if available, otherwise use BasePrice
+    if (MASTER_PRICE > 0) {
+      final_Price = MASTER_PRICE;
     }
   }
 

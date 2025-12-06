@@ -31,29 +31,42 @@ export function NavigationLoadingProvider({
       // Check if target pathname is a product listing page
       const isProductListingPage = (path: string): boolean => {
         // Remove locale prefix for comparison
-        const pathWithoutLocale = path.replace(/^\/([a-z]{2}(-[A-Z]{2})?)(?=\/|$)/, "") || "/";
-        
+        const pathWithoutLocale =
+          path.replace(/^\/([a-z]{2}(-[A-Z]{2})?)(?=\/|$)/, "") || "/";
+
         // Brand pages: /brands/[slug] or /brands/[slug]/[...categories]
         if (pathWithoutLocale.startsWith("/brands/")) return true;
-        
+
         // Category page: /category (legacy route)
         if (pathWithoutLocale.startsWith("/category")) return true;
-        
+
         // Define all known non-product-listing routes
         const knownRoutes = [
-          "/", "/dashboard", "/search", "/products", "/quotesummary",
-          "/checkout", "/notification", "/settings", "/landing",
-          "/ordersummary", "/details", "/categories", "/cart"
+          "/",
+          "/dashboard",
+          "/search",
+          "/products",
+          "/quotesummary",
+          "/checkout",
+          "/notification",
+          "/settings",
+          "/landing",
+          "/ordersummary",
+          "/details",
+          "/categories",
+          "/cart",
         ];
-        
+
         // Exact match for root
         if (pathWithoutLocale === "/") return false;
-        
+
         // Check if it's a known non-product route
-        const isKnownRoute = knownRoutes.some(route =>
-          pathWithoutLocale === route || pathWithoutLocale.startsWith(route + "/")
+        const isKnownRoute = knownRoutes.some(
+          route =>
+            pathWithoutLocale === route ||
+            pathWithoutLocale.startsWith(route + "/")
         );
-        
+
         // If it's not a known route, it's handled by the catch-all [...categories] route
         return !isKnownRoute;
       };

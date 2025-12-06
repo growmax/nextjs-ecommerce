@@ -40,7 +40,7 @@ export function CategoryFilter({
 
   const handleCategoryClick = (category: CategoryFilterOption) => {
     let targetPath: string;
-    
+
     if (category.isChild) {
       // Navigate to full path: /parentCategory/child1/child2/...
       targetPath = `/${category.categoryPath}`;
@@ -70,7 +70,7 @@ export function CategoryFilter({
       <div className="space-y-3">
         <div className="h-5 bg-muted animate-pulse rounded" />
         <div className="space-y-1.5">
-          {[1, 2, 3].map((i) => (
+          {[1, 2, 3].map(i => (
             <div key={i} className="h-4 bg-muted animate-pulse rounded" />
           ))}
         </div>
@@ -100,7 +100,7 @@ export function CategoryFilter({
           </h4>
           <ScrollArea className="h-[140px]">
             <div className="space-y-0.5 pr-4">
-              {childCategories.map((category) => (
+              {childCategories.map(category => (
                 <Button
                   key={category.categoryId}
                   variant="ghost"
@@ -129,7 +129,7 @@ export function CategoryFilter({
           </h4>
           <ScrollArea className="h-[140px]">
             <div className="space-y-0.5 pr-4">
-              {siblingCategories.map((category) => (
+              {siblingCategories.map(category => (
                 <Button
                   key={category.categoryId}
                   variant="ghost"
@@ -151,4 +151,3 @@ export function CategoryFilter({
     </div>
   );
 }
-

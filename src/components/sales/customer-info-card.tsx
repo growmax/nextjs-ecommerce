@@ -2,9 +2,10 @@
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
-import { useTranslations } from "next-intl";
 import { zoneDateTimeCalculator } from "@/utils/date-format/date-format";
 import { getUserPreferences } from "@/utils/details/orderdetails";
+import { useTranslations } from "next-intl";
+import { Skeleton } from "../ui/skeleton";
 
 interface CustomerInfoCardProps {
   quoteValidity?: {
@@ -16,6 +17,7 @@ interface CustomerInfoCardProps {
   projectName?: string | undefined;
   competitorNames?: string[];
   priceJustification?: string | undefined;
+  loading?:boolean;
 }
 
 const InfoRow = ({
@@ -46,6 +48,7 @@ export default function CustomerInfoCard({
   projectName,
   competitorNames,
   priceJustification,
+  loading,
 }: CustomerInfoCardProps) {
   const t = useTranslations("components");
   const preferences = getUserPreferences();
@@ -88,25 +91,25 @@ export default function CustomerInfoCard({
       <CardContent className="px-6 pt-2 pb-0">
         <div className="divide-y divide-gray-100">
           {/* Quote Validity */}
-          <InfoRow label={t("quoteValidity")} value={validityDisplay} />
+          <InfoRow label={t("quoteValidity")} value={loading ? <Skeleton className="h-4 w-32" /> : validityDisplay} />
 
           {/* Contract Enabled */}
           <InfoRow
             label={t("contractEnabled")}
-            value={contractEnabled ? t("yesLabel") : t("no")}
+            value={loading ? <Skeleton className="h-4 w-32" /> : contractEnabled ? t("yesLabel") : t("no")}
           />
 
           {/* End Customer Name */}
-          <InfoRow label={t("endCustomerName")} value={endCustomerName} />
+          <InfoRow label={t("endCustomerName")} value={loading ? <Skeleton className="h-4 w-32" /> : endCustomerName} />
 
           {/* Project Name */}
-          <InfoRow label={t("projectName")} value={projectName} />
+          <InfoRow label={t("projectName")} value={loading ? <Skeleton className="h-4 w-32" /> :projectName} />
 
           {/* Competitor Names */}
-          <InfoRow label={t("competitorNames")} value={competitorsDisplay} />
+          <InfoRow label={t("competitorNames")} value={loading ? <Skeleton className="h-4 w-32" /> : competitorsDisplay} />
 
           {/* Price Justification */}
-          <InfoRow label={t("priceJustification")} value={priceJustification} />
+          <InfoRow label={t("priceJustification")} value={loading ? <Skeleton className="h-4 w-32" /> :priceJustification} />
         </div>
       </CardContent>
     </Card>

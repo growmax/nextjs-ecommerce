@@ -63,7 +63,10 @@ export function FormDialog({
   preventCloseOnEscape = false,
   className,
   contentClassName,
-}: FormDialogProps) {
+  onOpenAutoFocus,
+}: FormDialogProps & {
+  onOpenAutoFocus?: (event: Event) => void;
+}) {
   const isDesktop = useMediaQuery("(min-width: 768px)");
   const [isSubmitting, setIsSubmitting] = React.useState(false);
 
@@ -117,6 +120,7 @@ export function FormDialog({
               e.preventDefault();
             }
           }}
+          {...(onOpenAutoFocus && { onOpenAutoFocus })}
         >
           {(title || description) && (
             <DialogHeader className={className}>

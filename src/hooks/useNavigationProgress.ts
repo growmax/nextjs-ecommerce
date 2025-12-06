@@ -192,17 +192,29 @@ export function useNavigationProgress({
 
         // Define all known non-product-listing routes
         const knownRoutes = [
-          "/", "/dashboard", "/search", "/products", "/quotesummary",
-          "/checkout", "/notification", "/settings", "/landing",
-          "/ordersummary", "/details", "/categories", "/cart"
+          "/",
+          "/dashboard",
+          "/search",
+          "/products",
+          "/quotesummary",
+          "/checkout",
+          "/notification",
+          "/settings",
+          "/landing",
+          "/ordersummary",
+          "/details",
+          "/categories",
+          "/cart",
         ];
 
         // Exact match for root
         if (pathWithoutLocale === "/") return false;
 
         // Check if it's a known non-product route
-        const isKnownRoute = knownRoutes.some(route =>
-          pathWithoutLocale === route || pathWithoutLocale.startsWith(route + "/")
+        const isKnownRoute = knownRoutes.some(
+          route =>
+            pathWithoutLocale === route ||
+            pathWithoutLocale.startsWith(route + "/")
         );
 
         // If it's not a known route, it's handled by the catch-all [...categories] route

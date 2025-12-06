@@ -33,7 +33,9 @@ function CollapsibleSection({
 
   return (
     <Collapsible open={isOpen} onOpenChange={setIsOpen}>
-      <div className={cn("border-b border-border/40 last:border-b-0", className)}>
+      <div
+        className={cn("border-b border-border/40 last:border-b-0", className)}
+      >
         <CollapsibleTrigger className="flex w-full items-center justify-between py-3 hover:opacity-80 transition-opacity">
           <div className="flex items-center gap-2 text-left">
             {icon && <div className="text-muted-foreground">{icon}</div>}
@@ -59,9 +61,8 @@ function CollapsibleSection({
 }
 
 export {
-    Collapsible,
-    CollapsibleContent,
-    CollapsibleSection,
-    CollapsibleTrigger
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleSection,
+  CollapsibleTrigger,
 };
-

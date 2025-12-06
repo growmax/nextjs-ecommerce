@@ -47,7 +47,6 @@ const convertDateToString = (
 };
 
 function OrdersLandingTable({
-  refreshTrigger,
   setExportCallback,
   onTotalCountChange,
 }: OrdersLandingTableProps) {
@@ -58,7 +57,8 @@ function OrdersLandingTable({
   const router = useNavigationWithLoader();
   const t = useTranslations("orders");
   const { deduplicate } = useRequestDeduplication();
-
+  const userId = user?.userId;
+  const companyId = user?.companyId;
   // Refs to prevent duplicate API calls
   const isFetchingRef = useRef(false);
   const lastFetchParamsRef = useRef<string>("");
@@ -469,201 +469,161 @@ function OrdersLandingTable({
   );
 
   // Fetch orders
-  const fetchOrders = useCallback(async () => {
-    // Don't fetch if we don't have user info yet
-    if (!user?.userId || !user?.companyId) {
-      // Keep loading true while waiting for user data
-      return;
-    }
 
-    // Create a unique key for this fetch request
+  const fetchOrders = useCallback(async () => {
+    console.log(userId, companyId);
+
     const fetchKey = `orders-${JSON.stringify({
       page,
       rowPerPage,
-      userId: user.userId,
-      companyId: user.companyId,
+      userId,
+      companyId,
       filterData,
     })}`;
 
-    // Use deduplication to prevent concurrent duplicate requests
     return deduplicate(async () => {
-      // Prevent duplicate calls with same parameters - check BEFORE starting
+      // If same request already running → skip
       if (isFetchingRef.current && lastFetchParamsRef.current === fetchKey) {
         return;
       }
 
-      // Double-check after deduplication wrapper (race condition protection)
-      if (isFetchingRef.current && lastFetchParamsRef.current === fetchKey) {
-        return;
-      }
-
-      // Cancel any in-flight request
+      // Abort any previous in-flight request
       if (abortControllerRef.current) {
         abortControllerRef.current.abort();
       }
 
-      // Create new abort controller for this request
-      abortControllerRef.current = new AbortController();
-      const signal = abortControllerRef.current.signal;
+      const controller = new AbortController();
+      abortControllerRef.current = controller;
+      const { signal } = controller;
 
-      // Mark as fetching and store params
       isFetchingRef.current = true;
       lastFetchParamsRef.current = fetchKey;
-
       setLoading(true);
 
-      // Add timeout safety mechanism (30 seconds)
+      // Timeout fallback
       const timeoutId = setTimeout(() => {
-        if (
-          isFetchingRef.current &&
-          abortControllerRef.current?.signal === signal
-        ) {
-          abortControllerRef.current.abort();
-          isFetchingRef.current = false;
-          setLoading(false);
-          if (initialLoad) {
-            setInitialLoad(false);
-          }
+        if (!signal.aborted) {
+          controller.abort();
           toast.error(
             t("requestTimeout") || "Request timed out. Please try again."
           );
         }
       }, 30000);
 
-      const calculatedOffset = page;
-      const userId = parseInt(user.userId.toString());
-      const companyId = parseInt(user.companyId.toString());
-
       try {
-        let response;
+        // Early return if userId or companyId are undefined
+        if (userId === undefined || companyId === undefined) {
+          return;
+        }
 
-        if (filterData) {
-          const isSimpleStatusFilter =
-            filterData.status &&
-            filterData.status.length === 1 &&
-            !filterData.quoteId &&
-            !filterData.quoteName &&
-            !filterData.quotedDateStart &&
-            !filterData.quotedDateEnd &&
-            !filterData.lastUpdatedDateStart &&
-            !filterData.lastUpdatedDateEnd &&
-            !filterData.subtotalStart &&
-            !filterData.subtotalEnd &&
-            !filterData.taxableStart &&
-            !filterData.taxableEnd &&
-            !filterData.totalStart &&
-            !filterData.totalEnd;
+        const offset = page;
+        let response: any;
 
-          if (isSimpleStatusFilter) {
-            const status = filterData.status?.[0];
-            if (status) {
-              response = await ordersFilterService.getOrdersByStatus(
-                userId,
-                companyId,
-                status,
-                calculatedOffset,
-                rowPerPage
-              );
-            } else {
-              throw new Error("Status is undefined");
-            }
-          } else {
-            const filter = createFilterFromData(filterData, calculatedOffset);
-            response = await ordersFilterService.getOrdersWithCustomFilters(
-              userId,
-              companyId,
-              filter
-            );
-          }
-        } else {
+        // SIMPLE STATUS FILTER
+        const isSimpleStatus =
+          filterData &&
+          filterData.status?.length === 1 &&
+          (Object.keys(filterData) as Array<keyof typeof filterData>).every(
+            k => k === "status" || !filterData[k] // all others undefined/falsy
+          );
+
+        if (!filterData) {
           response = await ordersFilterService.getAllOrders(
             userId,
             companyId,
-            calculatedOffset,
+            offset,
             rowPerPage
+          );
+        } else if (
+          isSimpleStatus &&
+          filterData.status &&
+          filterData.status.length > 0
+        ) {
+          const statusValue = Array.isArray(filterData.status)
+            ? filterData.status[0]
+            : filterData.status;
+          if (statusValue) {
+            response = await ordersFilterService.getOrdersByStatus(
+              userId,
+              companyId,
+              statusValue,
+              offset,
+              rowPerPage
+            );
+          }
+        } else {
+          const filter = createFilterFromData(filterData, offset);
+          response = await ordersFilterService.getOrdersWithCustomFilters(
+            userId,
+            companyId,
+            filter
           );
         }
 
-        const apiResponse = response as {
-          data?: {
-            ordersResponse?: Order[];
-            orders?: Order[];
-            totalOrderCount?: number;
-            totalCount?: number;
-          };
-          ordersResponse?: Order[];
-          orders?: Order[];
-          totalOrderCount?: number;
-          totalCount?: number;
-        };
+        if (signal.aborted) return;
 
-        const ordersData =
-          apiResponse.data?.ordersResponse ||
-          apiResponse.data?.orders ||
-          apiResponse.ordersResponse ||
-          apiResponse.orders ||
-          [];
-        const totalCountData =
-          apiResponse.data?.totalOrderCount ||
-          apiResponse.data?.totalCount ||
-          apiResponse.totalOrderCount ||
-          apiResponse.totalCount ||
-          0;
+        const res = (response as any)?.data || response;
 
-        // Only update state if request wasn't aborted
-        if (!signal.aborted) {
-          setOrders(ordersData);
-          setTotalCount(totalCountData);
-          onTotalCountChange?.(totalCountData);
-        }
-      } catch (error: any) {
-        // Don't show error if request was aborted
-        if (error?.name === "AbortError" || signal.aborted) {
-          // Still reset state even for aborted requests
-          // Check if this is still the current request
-          if (abortControllerRef.current?.signal === signal) {
-            isFetchingRef.current = false;
-            setLoading(false);
-            if (initialLoad) {
-              setInitialLoad(false);
-            }
-          }
-          return;
-        }
+        const ordersList = res?.ordersResponse || res?.orders || [];
+
+        const total = res?.totalOrderCount || res?.totalCount || 0;
+
+        setOrders(ordersList);
+        setTotalCount(total);
+        onTotalCountChange?.(total);
+      } catch (err: any) {
+        if (err?.name === "AbortError") return;
+
         toast.error(t("failedToFetch"));
-        if (!signal.aborted) {
-          setOrders([]);
-          setTotalCount(0);
-          onTotalCountChange?.(0);
-        }
+        setOrders([]);
+        setTotalCount(0);
+        onTotalCountChange?.(0);
       } finally {
-        // Clear timeout
         clearTimeout(timeoutId);
 
-        // Always reset loading state and fetching ref
-        // Check if this is still the current request to avoid race conditions
-        if (abortControllerRef.current?.signal === signal || !signal.aborted) {
-          setLoading(false);
-          if (initialLoad) {
-            setInitialLoad(false);
-          }
+        if (abortControllerRef.current?.signal === signal) {
           isFetchingRef.current = false;
+          setLoading(false);
+          if (initialLoad) setInitialLoad(false);
         }
       }
-    }, fetchKey); // Close deduplicate call
+    }, fetchKey);
   }, [
-    user?.userId,
-    user?.companyId,
+    userId,
+    companyId,
     page,
     rowPerPage,
     filterData,
     createFilterFromData,
-    initialLoad,
-    t,
     deduplicate,
+    t,
     onTotalCountChange,
+    initialLoad,
   ]);
+  // Store fetchOrders in a ref to avoid dependency issues
+  const fetchOrdersRef = useRef(fetchOrders);
+  useEffect(() => {
+    fetchOrdersRef.current = fetchOrders;
+  }, [fetchOrders]);
 
+  useEffect(() => {
+    if (userId !== undefined && companyId !== undefined) {
+      fetchOrdersRef.current();
+    }
+  }, [userId, companyId]);
+  useEffect(() => {
+    if (userId && companyId && hasInitialFetchedRef.current) {
+      fetchOrdersRef.current();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [page, rowPerPage]);
+  useEffect(() => {
+    if (userId && companyId && hasInitialFetchedRef.current) {
+      setPage(0); // Reset to first page when filter changes
+      fetchOrdersRef.current();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [filterData]);
   // Export functionality
   const handleExport = useCallback(async () => {
     if (orders.length === 0) {
@@ -736,14 +696,12 @@ function OrdersLandingTable({
 
   const handleSaveFilter = useCallback(
     async (filterData: QuoteFilterFormData) => {
-      if (!user?.userId || !user?.companyId) {
+      if (!userId || !companyId) {
         toast.error(t("userInfoNotAvailable"));
         return;
       }
 
       try {
-        const userId = parseInt(user.userId.toString());
-        const companyId = parseInt(user.companyId.toString());
         const filter = createFilterFromData(filterData, 0);
 
         await ordersFilterService.saveCustomOrderFilter(
@@ -756,7 +714,7 @@ function OrdersLandingTable({
         toast.error(t("filterSaveFailed"));
       }
     },
-    [user?.userId, user?.companyId, createFilterFromData, t]
+    [userId, companyId, createFilterFromData, t]
   );
 
   // Effects
@@ -768,20 +726,14 @@ function OrdersLandingTable({
     setExportCallback?.(() => handleExport);
   }, [handleExport, setExportCallback]);
 
-  // Store fetchOrders in a ref to avoid dependency issues
-  const fetchOrdersRef = useRef(fetchOrders);
-  useEffect(() => {
-    fetchOrdersRef.current = fetchOrders;
-  }, [fetchOrders]);
-
   // Fetch orders after navigation completes - ensures instant navigation
   // This is the primary fetch mechanism - it handles both initial load and navigation
   usePostNavigationFetch(() => {
-    if (user?.userId && user?.companyId && !hasInitialFetchedRef.current) {
+    if (userId && companyId && !hasInitialFetchedRef.current) {
       hasInitialFetchedRef.current = true;
       fetchOrdersRef.current();
     }
-  }, [user?.userId, user?.companyId]); // Removed fetchOrders from deps to prevent re-triggers
+  }, [userId, companyId]); // Removed fetchOrders from deps to prevent re-triggers
 
   // Fallback useEffect to ensure fetch happens on page reload when user data becomes available
   // This handles the case where usePostNavigationFetch doesn't trigger on reload
@@ -800,30 +752,8 @@ function OrdersLandingTable({
   }, [user?.userId, user?.companyId]);
 
   // Trigger fetch when page or rowPerPage changes (only after initial load)
-  useEffect(() => {
-    if (
-      user?.userId &&
-      user?.companyId &&
-      !initialLoad &&
-      hasInitialFetchedRef.current
-    ) {
-      fetchOrders();
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [page, rowPerPage]);
 
   // Trigger fetch when filterData changes (only after initial load)
-  useEffect(() => {
-    if (
-      user?.userId &&
-      user?.companyId &&
-      !initialLoad &&
-      hasInitialFetchedRef.current
-    ) {
-      fetchOrders();
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [filterData]);
 
   // Cleanup on unmount to prevent stuck loading states
   useEffect(() => {
@@ -837,14 +767,11 @@ function OrdersLandingTable({
       isFetchingRef.current = false;
     };
   }, []);
-
   useEffect(() => {
-    if (refreshTrigger && refreshTrigger > 0) {
-      fetchOrders();
-      toast.success(t("ordersRefreshed"));
+    if (userId && companyId) {
+      hasInitialFetchedRef.current = true;
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [refreshTrigger, t]);
+  }, [userId, companyId]);
 
   // Cleanup: abort any in-flight requests on unmount
   useEffect(() => {
@@ -901,8 +828,8 @@ function OrdersLandingTable({
         title={t("orderFilters")}
         filterType="Order"
         activeTab="all"
-        userId={user?.userId}
-        companyId={user?.companyId}
+        userId={userId}
+        companyId={companyId}
         module="order"
         initialFilterData={undefined}
         mode="filter"

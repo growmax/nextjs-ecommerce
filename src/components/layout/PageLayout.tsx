@@ -31,7 +31,7 @@ export function PageLayout({
           className={cn(
             "pb-5",
             // Use responsive padding instead of hardcoded values
-            isSidebarCollapsed ? "px-6 md:px-8" : "px-4 md:px-6"
+            isSidebarCollapsed ? "px-2 md:px-8" : "px-2 md:px-6"
           )}
         >
           {children}

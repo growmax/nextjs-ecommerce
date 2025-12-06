@@ -3,7 +3,7 @@
 import AddMoreProducts from "@/components/Global/Products/AddMoreProducts";
 import { CartProceedButton, MultipleSellerCards } from "@/components/cart";
 import CartProductCard from "@/components/cart/CartProductCard";
-import CartPriceDetails from "@/components/sales/CartPriceDetails";
+import { OrderPriceDetails } from "@/components/sales";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import {
@@ -45,7 +45,7 @@ import {
 import { assign_pricelist_discounts_data_to_products } from "@/utils/functionalUtils";
 import { MoreVertical, ShoppingCart, Trash2 } from "lucide-react";
 import { useTranslations } from "next-intl";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { toast } from "sonner";
 
 export default function CartPageClient() {
@@ -68,6 +68,7 @@ export default function CartPageClient() {
     Record<number, string | false>
   >({});
   const [showClearCartDialog, setShowClearCartDialog] = useState(false);
+  const [addingProductId, setAddingProductId] = useState<number | null>(null);
 
   // Access control
   const { hasQuotePermission, hasOrderPermission } = useAccessControl();
@@ -95,13 +96,14 @@ export default function CartPageClient() {
   // This hook already fetches discount data, applies it, and calculates pricing
   // Use selectedSellerId state to sync with accordion selection
   const {
+    selectedSellerItems,
     hasMultipleSellers,
     selectedSellerId: selectedSeller,
     selectedSellerPricing,
     isPricingLoading: isMultiSellerPricingLoading,
   } = useSelectedSellerCart(cart, selectedSellerId);
 
- 
+
 
   // Use useCartPrice for single-seller scenarios to ensure discount calculation is applied
   // This follows the buyer-fe pattern: fetch discounts -> apply to items -> calculate totals
@@ -145,6 +147,33 @@ export default function CartPageClient() {
   // Pricing loads in background and shows loaders at product/cart level
   const isLoading = userLoading || isCartLoading;
 
+  // Monitor cart changes to clear adding state when product is added
+  useEffect(() => {
+    if (addingProductId && cart) {
+      // Check if the product is now in the cart
+      const productInCart = cart.some(
+        item => Number(item.productId) === addingProductId
+      );
+
+      if (productInCart) {
+        // Product added successfully, clear adding state
+        setAddingProductId(null);
+      }
+    }
+  }, [cart, addingProductId]);
+
+  // Fallback timeout to clear adding state after 15 seconds
+  useEffect(() => {
+    if (addingProductId) {
+      const timeout = setTimeout(() => {
+        setAddingProductId(null);
+      }, 15000); // 15 seconds timeout
+
+      return () => clearTimeout(timeout);
+    }
+    return undefined;
+  }, [addingProductId]);
+  console.log(cartCalculationResult);
   // Show skeleton loader when any loading state is active
   if (isLoading) {
     return (
@@ -182,16 +211,10 @@ export default function CartPageClient() {
                       </div>
                     </div>
 
-                    {/* Right Section - Quantity Controls and Delete */}
+                    {/* Right Section - Delete Button Only (No skeleton for quantity controls or total price) */}
                     <div className="flex flex-col items-end gap-3">
                       {/* Delete Button */}
                       <Skeleton className="h-8 w-8 rounded-md" />
-                      {/* Quantity Controls */}
-                      <div className="flex items-center gap-2">
-                        <Skeleton className="h-8 w-8 rounded-md" />
-                        <Skeleton className="h-5 w-8" />
-                        <Skeleton className="h-8 w-8 rounded-md" />
-                      </div>
                     </div>
                   </div>
                 </CardContent>
@@ -243,21 +266,6 @@ export default function CartPageClient() {
     );
   }
 
-  // If cart is empty, show empty state
-  if (!cart || cart.length === 0) {
-    return (
-      <Card>
-        <CardContent className="p-8 text-center">
-          <ShoppingCart className="h-12 w-12 mx-auto text-gray-400 mb-4" />
-          <h2 className="text-xl font-semibold mb-2">{t("empty")}</h2>
-          <p className="text-gray-600 mb-4">{t("emptyDescription")}</p>
-          <Button onClick={() => router.push("/products")}>
-            {t("continueShopping")}
-          </Button>
-        </CardContent>
-      </Card>
-    );
-  }
 
   // Update quantity handler using useCart hook
   const updateQuantity = async (item: CartItem, newQuantity: number) => {
@@ -361,7 +369,7 @@ export default function CartPageClient() {
 
       // Redirect to login if not authenticated
       if (validation.errorMessage?.includes("login")) {
-        router.push(`/auth/login?from=Cart&back=${window.history.length}`);
+        router.push(`/login?from=Cart&back=${window.history.length}`);
       }
 
       return;
@@ -415,7 +423,7 @@ export default function CartPageClient() {
 
       // Redirect to login if not authenticated
       if (validation.errorMessage?.includes("login")) {
-        router.push(`/auth/login?from=Cart&back=${window.history.length}`);
+        router.push(`/login?from=Cart&back=${window.history.length}`);
       }
 
       return;
@@ -446,6 +454,10 @@ export default function CartPageClient() {
       return;
     }
 
+    // Track product being added
+    const productId = Number(product.productId);
+    setAddingProductId(productId);
+
     try {
       // Get elastic index from tenant data
       const elasticIndex = tenantData?.tenant?.elasticCode
@@ -455,6 +467,7 @@ export default function CartPageClient() {
       // Get product using productIndexName via GET request (following buyer-fe pattern)
       // Payload: { Elasticindex, ElasticBody: productIndexName, ElasticType: "pgproduct", queryType: "get" }
       if (!product.productIndexName) {
+        setAddingProductId(null);
         toast.error("Product index name is missing");
         return;
       }
@@ -467,7 +480,7 @@ export default function CartPageClient() {
       );
       console.log(elasticProduct);
       if (!elasticProduct) {
-    
+        setAddingProductId(null);
         toast.error("Product not found");
         return;
       }
@@ -487,6 +500,7 @@ export default function CartPageClient() {
         : [formattedData];
 
       if (!formattedDataArray || formattedDataArray.length === 0) {
+        setAddingProductId(null);
         toast.error("Failed to process product data");
         return;
       }
@@ -496,6 +510,7 @@ export default function CartPageClient() {
       // Check for replacement/alternative products
       if (newcartdata?.replacement || newcartdata?.alternativeProduct) {
         // TODO: Handle replacement/alternative product dialog
+        setAddingProductId(null);
         toast.info("Product has replacement/alternative options");
         return;
       }
@@ -612,12 +627,145 @@ export default function CartPageClient() {
         false
       );
 
-      toast.success("Product added to cart");
     } catch (error) {
       console.error("Error adding product to cart:", error);
+      setAddingProductId(null);
       toast.error("Failed to add product to cart");
     }
   };
+  
+  // If cart is empty, show empty state with heading and search bar
+  // OR show skeleton loaders if product is being added
+  if (!cart || cart.length === 0) {
+    // Show skeleton loaders when adding a product
+    if (addingProductId) {
+      return (
+        <>
+          <div className="mb-8">
+            <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 sm:gap-6">
+              <div className="flex-shrink-0">
+                <h1 className="text-3xl font-bold mb-2">{t("title")}</h1>
+                <p className="text-muted-foreground text-sm">
+                  {t("itemsInCart", { count: cartCount })}
+                </p>
+              </div>
+              {user?.companyId && !isCartLoading && (
+                <div className="w-full sm:w-auto sm:flex-1 sm:max-w-2xl flex items-center gap-2">
+                  <AddMoreProducts
+                    handleCallback={handleAddMoreCallback}
+                    popWidth="100%"
+                  />
+                </div>
+              )}
+            </div>
+          </div>
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            {/* Cart Items Skeleton */}
+            <div className="lg:col-span-2 space-y-4">
+              <Card>
+                <CardContent className="p-4">
+                  <div className="flex gap-6 relative">
+                    {/* Product Image Skeleton */}
+                    <Skeleton className="w-24 h-24 rounded-lg flex-shrink-0" />
+
+                    {/* Product Info - Center */}
+                    <div className="flex-1 min-w-0">
+                      {/* Title */}
+                      <Skeleton className="h-5 w-3/4 mb-1" />
+                      {/* Brand Name and Product ID */}
+                      <div className="flex items-center gap-2 mb-2">
+                        <Skeleton className="h-4 w-32" />
+                      </div>
+                      {/* Seller (optional) */}
+                      <Skeleton className="h-4 w-40 mb-2" />
+                      {/* Price Display */}
+                      <div className="flex flex-col gap-1 mb-2">
+                        <Skeleton className="h-5 w-24" />
+                      </div>
+                      {/* Quantity, Pack of, and MOQ */}
+                      <div className="flex items-center gap-2 mb-1">
+                        <Skeleton className="h-4 w-20" />
+                      </div>
+                    </div>
+
+                    {/* Right Section - Delete Button Only (No skeleton for quantity controls or total price) */}
+                    <div className="flex flex-col items-end gap-3">
+                      {/* Delete Button */}
+                      <Skeleton className="h-8 w-8 rounded-md" />
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+
+            {/* Price Details Skeleton */}
+            <div>
+              <div className="sticky top-4 space-y-4">
+                <div className="border rounded-lg p-6">
+                  <Skeleton className="h-6 w-32 mb-4" />
+                  <div className="space-y-3">
+                    <div className="flex justify-between">
+                      <Skeleton className="h-4 w-20" />
+                      <Skeleton className="h-4 w-16" />
+                    </div>
+                    <div className="flex justify-between">
+                      <Skeleton className="h-4 w-16" />
+                      <Skeleton className="h-4 w-20" />
+                    </div>
+                    <div className="h-px bg-gray-200 my-2"></div>
+                    <div className="flex justify-between">
+                      <Skeleton className="h-5 w-12" />
+                      <Skeleton className="h-5 w-24" />
+                    </div>
+                    <div className="flex justify-between pt-2">
+                      <Skeleton className="h-6 w-16" />
+                      <Skeleton className="h-6 w-28" />
+                    </div>
+                  </div>
+                </div>
+                {/* CartProceedButton Skeleton */}
+                <div className="space-y-2">
+                  <Skeleton className="h-12 w-full rounded" />
+                  <Skeleton className="h-12 w-full rounded" />
+                </div>
+              </div>
+            </div>
+          </div>
+        </>
+      );
+    }
+
+    // Show empty cart state when not adding a product
+    return (
+      <>
+        <div className="mb-8">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 sm:gap-6">
+            <div className="flex-shrink-0">
+              <h1 className="text-3xl font-bold mb-2">{t("title")}</h1>
+              <p className="text-muted-foreground text-sm">
+                {t("itemsInCart", { count: cartCount })}
+              </p>
+            </div>
+            {user?.companyId && !isCartLoading && (
+              <div className="w-full sm:w-auto sm:flex-1 sm:max-w-2xl flex items-center gap-2">
+                <AddMoreProducts
+                  handleCallback={handleAddMoreCallback}
+                  popWidth="100%"
+                />
+              </div>
+            )}
+          </div>
+        </div>
+        <Card>
+          <CardContent className="p-8 text-center">
+            <ShoppingCart className="h-12 w-12 mx-auto text-gray-400 mb-4" />
+            <h2 className="text-xl font-semibold mb-2">{t("empty")}</h2>
+            <p className="text-gray-600">{t("emptyDescription")}</p>
+          </CardContent>
+        </Card>
+      </>
+    );
+  }
 
   return (
     <>
@@ -692,6 +840,8 @@ export default function CartPageClient() {
               onSellerSelect={handleSellerSelection}
               handleOrder={handleOrder}
               handleQuote={handleQuote}
+              products={selectedSellerItems}
+              cartCalculationResult={cartCalculationResult}
             />
           ) : (
             /* Single seller or no seller - show all items */
@@ -721,14 +871,36 @@ export default function CartPageClient() {
         {!hasMultipleSellers && (
           <div>
             <div className="sticky top-4 space-y-4">
-              {cartCalculationResult && currency && (
+              {/* {cartCalculationResult && currency && (
                 <CartPriceDetails
                   cartValue={cartCalculationResult}
                   currency={currency}
                   isCart={true}
                   isPricingLoading={isPricingLoading || isCartOperationLoading}
                 />
-              )}
+              )} */}
+              <OrderPriceDetails
+                products={selectedSellerItems}
+                isInter={false}
+                insuranceCharges={cartCalculationResult?.insuranceCharges || 0}
+                loading={isPricingLoading || isCartOperationLoading}
+                precision={2}
+                Settings={{
+                  roundingAdjustment: true,
+                }}
+                isSeller={false}
+                taxExemption={false}
+                currency={currency?.symbol || "INR ₹"}
+                overallShipping={cartCalculationResult?.totalShipping || 0}
+                overallTax={cartCalculationResult?.totalTax || 0}
+                calculatedTotal={cartCalculationResult?.grandTotal || 0}
+                subTotal={cartCalculationResult?.totalValue || 0}
+                taxableAmount={cartCalculationResult?.taxableAmount || 0}
+                totalCashDiscount={cartCalculationResult?.totalCashDiscount || 0}
+                cashDiscountValue={cartCalculationResult?.cashDiscountValue || 0}
+                totalBasicDiscount={cartCalculationResult?.totalBasicDiscount || 0}
+                isCart ={true}
+              />
 
               <CartProceedButton
                 selectedSellerId={selectedSeller}

@@ -3,14 +3,10 @@
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Separator } from "@/components/ui/separator";
-import { Textarea } from "@/components/ui/textarea";
 import { useCurrentUser } from "@/hooks/useCurrentUser";
 import type { UploadProgress } from "@/lib/api/services/UploadServices/UploadServices";
 import UploadServices from "@/lib/api/services/UploadServices/UploadServices";
 import { cn } from "@/lib/utils";
-import { containsXSS } from "@/utils/sanitization/sanitization.utils";
 import axios from "axios";
 import { isEmpty } from "lodash";
 import { Paperclip, Trash2 } from "lucide-react";
@@ -34,7 +30,7 @@ interface AttachmentsProps {
 /**
  * Attachments component for Comments and File Uploads
  * Migrated from buyer-fe/src/components/Summary/Components/Attachments/Attachments.js
- * 
+ *
  * Handles comments textarea and file attachment uploads
  */
 export default function Attachments({
@@ -42,52 +38,21 @@ export default function Attachments({
   showAttachments = true,
   editAttachments = true,
   showComments = false,
-  editComments = true,
   fieldName = "uploadedDocumentDetails",
   folderName = "Quote",
   isContentPage = false,
   isOrder = false,
   readOnly = false,
 }: AttachmentsProps) {
-  const {
-    register,
-    watch,
-    setValue,
-    trigger,
-    formState: { errors },
-    setError,
-    clearErrors,
-  } = useFormContext();
+  const { watch, setValue } = useFormContext();
 
   const { user } = useCurrentUser();
-  const comment = watch("comment");
   const uploadedDocumentDetails = watch(fieldName) || [];
   const uploading = watch("uploading");
 
   const [uploadProgress, setUploadProgress] = useState(0);
   const [uploadingFileName, setUploadingFileName] = useState("");
   const fileInputRef = useRef<HTMLInputElement>(null);
-
-  // Handle comment change with XSS validation
-  const handleCommentChange = async (
-    e: React.ChangeEvent<HTMLTextAreaElement>
-  ) => {
-    const value = e.target.value;
-
-    // Check for XSS content and show snackbar + set manual error
-    if (value && containsXSS(value)) {
-      toast.error("Invalid content detected");
-      setError("comment", {
-        type: "manual",
-        message: "Invalid content",
-      });
-    } else {
-      clearErrors("comment");
-    }
-
-    setValue("comment", value);
-    await trigger("comment");
-  };
 
   // Handle file upload
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -102,7 +67,15 @@ export default function Attachments({
     }
 
     // Validate file type
-    const allowedTypes = [".pdf", ".doc", ".docx", ".jpg", ".jpeg", ".png", ".xlsx"];
+    const allowedTypes = [
+      ".pdf",
+      ".doc",
+      ".docx",
+      ".jpg",
+      ".jpeg",
+      ".png",
+      ".xlsx",
+    ];
     const fileExtension = "." + file.name.split(".").pop()?.toLowerCase();
     if (!allowedTypes.includes(fileExtension)) {
       toast.error("Invalid file type. Allowed: PDF, DOC, DOCX, JPG, PNG, XLSX");
@@ -268,96 +241,56 @@ export default function Attachments({
     <Card className="shadow-sm mt-4">
       {showHeader && (
         <>
-          <CardHeader className="px-6 py-4 bg-gray-50 rounded-t-lg">
-            <CardTitle className="text-xl font-semibold text-gray-900">
-              {showComments && showAttachments
-                ? "Comments & Attachments"
-                : showComments
-                ? "Comments"
-                : "Attachments"}
-            </CardTitle>
+          <CardHeader className="gap-0 flex flex-col bg-gray-50 rounded-t-sm m-0!">
+            <div className="flex flex-row items-center justify-between w-full">
+              <CardTitle className="text-xl font-semibold text-gray-900 leading-none m-0">
+                {showComments && showAttachments
+                  ? "Attachments"
+                  : showComments
+                    ? "Comments"
+                    : "Attachments"}
+              </CardTitle>
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => fileInputRef.current?.click()}
+                disabled={uploading || !editAttachments}
+                className={cn(
+                  "flex items-center gap-2",
+                  (uploading || !editAttachments) &&
+                    "opacity-50 cursor-not-allowed"
+                )}
+              >
+                <Paperclip className="h-4 w-4" />
+                {uploading ? `Uploading... ${uploadProgress}%` : "ATTACH"}
+              </Button>
+            </div>
+            <p className="text-xs text-muted-foreground mt-1">
+              Max 2MB (PDF, DOC, DOCX, JPG, PNG, XLSX)
+            </p>
           </CardHeader>
-          <Separator />
         </>
       )}
-      <CardContent className="px-6 py-4">
-        <div className="space-y-4">
+      <CardContent className="px-6 pt-5 pb-0 mt-0!">
+        <div>
           {/* First Row: Comments and Attachments side by side */}
-          <div className="flex flex-col md:flex-row gap-4 items-start">
-            {/* Comments Section */}
-            {showComments && !isContentPage && (
-              <div
-                className={cn(
-                  "space-y-2 w-full",
-                  showAttachments ? "md:w-[65%]" : "w-full"
-                )}
-                id="comment"
-              >
-                <Label htmlFor="comment" className="text-sm font-medium">
-                  Comments
-                </Label>
-                <Textarea
-                  id="comment"
-                  {...register("comment", {
-                    onChange: handleCommentChange,
-                  })}
-                  placeholder="Type your comments here..."
-                  rows={4}
-                  maxLength={2000}
-                  disabled={!editComments}
-                  className={cn(
-                    errors.comment && "border-red-500",
-                    "resize-none"
-                  )}
-                />
-                {errors.comment && (
-                  <p className="text-sm text-red-500">
-                    {errors.comment.message as string}
-                  </p>
-                )}
-                <p className="text-xs text-muted-foreground">
-                  {(comment as string)?.length || 0}/2000 characters
-                </p>
-              </div>
-            )}
-
+          <div className="flex flex-col md:flex-row items-start">
             {/* Attachments Section */}
             {showAttachments && (
-              <div
-                className={cn(
-                  "space-y-2 w-full",
-                  showComments && !isContentPage ? "md:w-[35%]" : "w-full"
-                )}
-              >
-                <Label className="text-sm font-medium">Attachments</Label>
-                <div className="flex items-center gap-2">
-                  <Input
-                    ref={fileInputRef}
-                    type="file"
-                    id="file-upload"
-                    onChange={handleFileUpload}
-                    disabled={uploading || !editAttachments}
-                    className="hidden"
-                    accept=".pdf,.doc,.docx,.jpg,.jpeg,.png,.xlsx"
-                  />
-                  <Button
-                    type="button"
-                    variant="outline"
-                    onClick={() => fileInputRef.current?.click()}
-                    disabled={uploading || !editAttachments}
-                    className={cn(
-                      "flex items-center gap-2",
-                      (uploading || !editAttachments) &&
-                        "opacity-50 cursor-not-allowed"
-                    )}
-                  >
-                    <Paperclip className="h-4 w-4" />
-                    {uploading ? `Uploading... ${uploadProgress}%` : "ATTACH"}
-                  </Button>
+              <div className={cn("", showComments && !isContentPage)}>
+                <div className="flex items-center justify-between m-0!">
+                  <div className="flex items-center ">
+                    <Input
+                      ref={fileInputRef}
+                      type="file"
+                      id="file-upload"
+                      onChange={handleFileUpload}
+                      disabled={uploading || !editAttachments}
+                      className="hidden"
+                      accept=".pdf,.doc,.docx,.jpg,.jpeg,.png,.xlsx"
+                    />
+                  </div>
                 </div>
-                <p className="text-xs text-muted-foreground">
-                  Max 2MB (PDF, DOC, DOCX, JPG, PNG, XLSX)
-                </p>
 
                 {/* Upload Progress */}
                 {uploading && uploadingFileName && (
@@ -397,13 +330,19 @@ export default function Attachments({
                       if (!isNaN(date.getTime())) {
                         // Format: DD-MM-YYYY
                         const day = String(date.getDate()).padStart(2, "0");
-                        const month = String(date.getMonth() + 1).padStart(2, "0");
+                        const month = String(date.getMonth() + 1).padStart(
+                          2,
+                          "0"
+                        );
                         const year = date.getFullYear();
                         uploadDate = `${day}-${month}-${year}`;
 
                         // Format: HH:MM AM/PM
                         const hours = date.getHours();
-                        const minutes = String(date.getMinutes()).padStart(2, "0");
+                        const minutes = String(date.getMinutes()).padStart(
+                          2,
+                          "0"
+                        );
                         const ampm = hours >= 12 ? "PM" : "AM";
                         const displayHours = hours % 12 || 12;
                         uploadTime = `${String(displayHours).padStart(2, "0")}:${minutes} ${ampm}`;
@@ -443,7 +382,9 @@ export default function Attachments({
                         {(uploadDate || uploaderName) && (
                           <div className="text-xs text-gray-500 leading-tight">
                             Attached By {uploaderName}
-                            {uploadDate && uploadTime && ` · ${uploadDate} · ${uploadTime}`}
+                            {uploadDate &&
+                              uploadTime &&
+                              ` · ${uploadDate} · ${uploadTime}`}
                           </div>
                         )}
                       </div>
@@ -454,7 +395,7 @@ export default function Attachments({
                       <Button
                         variant="ghost"
                         size="icon"
-                        onClick={(e) => {
+                        onClick={e => {
                           e.stopPropagation();
                           handleFileRemove(index);
                         }}
@@ -473,4 +414,3 @@ export default function Attachments({
     </Card>
   );
 }
-

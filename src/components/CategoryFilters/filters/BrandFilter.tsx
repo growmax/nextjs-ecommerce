@@ -44,7 +44,7 @@ export function BrandFilter({ brands, isLoading }: BrandFilterProps) {
       <div className="space-y-2">
         <div className="h-8 bg-muted animate-pulse rounded" />
         <div className="space-y-1.5">
-          {[1, 2, 3, 4].map((i) => (
+          {[1, 2, 3, 4].map(i => (
             <div key={i} className="h-5 bg-muted animate-pulse rounded" />
           ))}
         </div>
@@ -70,7 +70,7 @@ export function BrandFilter({ brands, isLoading }: BrandFilterProps) {
               No brands found
             </div>
           ) : (
-            brands.map((brand) => (
+            brands.map(brand => (
               <div
                 key={brand.value}
                 className="flex items-center space-x-3 py-1 transition-colors hover:bg-accent/20 cursor-pointer rounded-sm px-1"
@@ -80,7 +80,7 @@ export function BrandFilter({ brands, isLoading }: BrandFilterProps) {
                   id={`brand-${brand.value}`}
                   checked={brand.selected ?? false}
                   onCheckedChange={() => handleBrandClick(brand)}
-                  onClick={(e) => e.stopPropagation()}
+                  onClick={e => e.stopPropagation()}
                   className="shrink-0 h-[18px] w-[18px]"
                 />
                 <Label
@@ -102,4 +102,3 @@ export function BrandFilter({ brands, isLoading }: BrandFilterProps) {
     </div>
   );
 }
-

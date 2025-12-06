@@ -5,16 +5,16 @@ import { useTenant } from "@/contexts/TenantContext";
 import { useUserId } from "@/contexts/UserDetailsContext";
 import { useRouter } from "@/i18n/navigation";
 import CartServices, {
-    type AddMultipleItemsRequest,
-    type AddToCartRequest,
-    type DeleteCartRequest,
+  type AddMultipleItemsRequest,
+  type AddToCartRequest,
+  type DeleteCartRequest,
 } from "@/lib/api/CartServices";
 import DiscountService from "@/lib/api/services/DiscountService/DiscountService";
 import { AuthStorage } from "@/lib/auth";
 import {
-    batchCacheSellerInfo,
-    batchGetSellerInfoFromCache,
-    type SellerInfo,
+  batchCacheSellerInfo,
+  batchGetSellerInfoFromCache,
+  type SellerInfo,
 } from "@/lib/cache/sellerInfoCache";
 import { JWTService } from "@/lib/services/JWTService";
 import { useTenantStore } from "@/store/useTenantStore";
@@ -113,7 +113,7 @@ export function useCart() {
   const requireLogin = useCallback((): boolean => {
     if (!userId || !tenantCode) {
       toast.info("Please login to add products to cart");
-      router.push("/auth/login");
+      router.push("/login");
       return false;
     }
     return true;
@@ -150,15 +150,15 @@ export function useCart() {
         productIds.forEach(productId => {
           // Find the product in cart (may have multiple entries with different sellerIds)
           // Use the first match found
-          const cartItem = cartItems.find(item => 
-            item.productId == productId && 
+          const cartItem = cartItems.find(item =>
+            item.productId == productId &&
             (item.sellerId || item.vendorId || item.partnerId)
           );
-          
+
           if (cartItem) {
             const sellerId = cartItem.sellerId || cartItem.vendorId || cartItem.partnerId;
             const sellerName = cartItem.sellerName || cartItem.vendorName || cartItem.partnerName;
-            
+
             if (sellerId && sellerName) {
               result.set(productId, {
                 sellerId,
@@ -213,11 +213,11 @@ export function useCart() {
             companyId,
             ...(user.currency?.currencyCode || sellerCurrency?.currencyCode
               ? {
-                  currencyCode:
-                    user.currency?.currencyCode ||
-                    sellerCurrency?.currencyCode ||
-                    "",
-                }
+                currencyCode:
+                  user.currency?.currencyCode ||
+                  sellerCurrency?.currencyCode ||
+                  "",
+              }
               : {}),
           },
         });
@@ -370,20 +370,20 @@ export function useCart() {
 
       setIsCartLoading(true);
       const isInCart = getIsInCartItem(productId, itemNo, sellerId);
-      
+
       // Get product image
       const productImage =
         productAssetss && Array.isArray(productAssetss)
           ? (
-              find(productAssetss, o => o.isDefault) as
-                | { source: string; isDefault?: boolean }
-                | undefined
-            )?.source ||
-            (
-              productAssetss[0] as
-                | { source: string; isDefault?: boolean }
-                | undefined
-            )?.source
+            find(productAssetss, o => o.isDefault) as
+            | { source: string; isDefault?: boolean }
+            | undefined
+          )?.source ||
+          (
+            productAssetss[0] as
+            | { source: string; isDefault?: boolean }
+            | undefined
+          )?.source
           : img || "";
 
       // Prepare cart item data
@@ -480,7 +480,7 @@ export function useCart() {
         const cartSellerId = isInCart.sellerId || isInCart.vendorId || isInCart.partnerId;
         const cartSellerName = isInCart.sellerName || isInCart.vendorName || isInCart.partnerName;
         const cartSellerLocation = isInCart.sellerLocation || isInCart.vendorLocation;
-        
+
         if (cartSellerId && cartSellerName) {
           finalSellerId = cartSellerId;
           finalSellerName = cartSellerName;
@@ -546,7 +546,7 @@ export function useCart() {
                 body: requestBody,
                 method: isUpdate ? "PUT" : "POST",
               });
-              
+
               const updatedCartData = parseCartResponse(response);
               if (updatedCartData.length > 0) {
                 setCart(updatedCartData);
@@ -644,15 +644,15 @@ export function useCart() {
       const productImage =
         productAssetss && Array.isArray(productAssetss)
           ? (
-              find(productAssetss, o => o.isDefault) as
-                | { source: string; isDefault?: boolean }
-                | undefined
-            )?.source ||
-            (
-              productAssetss[0] as
-                | { source: string; isDefault?: boolean }
-                | undefined
-            )?.source
+            find(productAssetss, o => o.isDefault) as
+            | { source: string; isDefault?: boolean }
+            | undefined
+          )?.source ||
+          (
+            productAssetss[0] as
+            | { source: string; isDefault?: boolean }
+            | undefined
+          )?.source
           : img || "";
 
       // Prepare cart item data
@@ -743,7 +743,7 @@ export function useCart() {
                 body: requestBody,
                 method: "PUT",
               });
-              
+
               const updatedCartData = parseCartResponse(response);
               if (updatedCartData.length > 0) {
                 setCart(updatedCartData);

@@ -7,10 +7,10 @@ import { useEffect, useState } from "react";
 
 /**
  * BlockingLoader Component
- * 
+ *
  * Renders a blocking overlay with loading animation when active.
  * Features ultra-smooth three-dot animation with elastic easing.
- * 
+ *
  * Two modes:
  * - 'global': Fixed full-screen overlay (locks body scroll)
  * - 'scoped': Fixed content area overlay (between sidebar and header, no scroll lock)
@@ -48,7 +48,7 @@ export function BlockingLoader() {
     if (mode === "global" && isActive) {
       const originalOverflow = document.body.style.overflow;
       document.body.style.overflow = "hidden";
-      
+
       return () => {
         document.body.style.overflow = originalOverflow;
       };
@@ -81,25 +81,27 @@ export function BlockingLoader() {
       )}
       style={{
         opacity: isVisible ? 1 : 0,
-        backgroundColor: isVisible ? 'hsl(var(--background) / 0.6)' : 'hsl(var(--background) / 0)',
+        backgroundColor: isVisible
+          ? "hsl(var(--background) / 0.6)"
+          : "hsl(var(--background) / 0)",
       }}
     >
       {/* Smooth Three-Dot Bounce Animation */}
       <div
         className="transition-all duration-300 ease-out"
         style={{
-          transform: isVisible ? 'scale(1)' : 'scale(0.9)',
+          transform: isVisible ? "scale(1)" : "scale(0.9)",
           opacity: isVisible ? 1 : 0,
         }}
       >
         <div className="flex items-center justify-center space-x-3">
-          {[0, 1, 2].map((index) => (
+          {[0, 1, 2].map(index => (
             <div
               key={index}
               className="rounded-full bg-primary/80"
               style={{
-                width: '12px',
-                height: '12px',
+                width: "12px",
+                height: "12px",
                 animation: `bounce 1.4s ease-in-out infinite`,
                 animationDelay: `${index * 0.16}s`,
               }}
@@ -108,7 +110,9 @@ export function BlockingLoader() {
         </div>
         <style jsx>{`
           @keyframes bounce {
-            0%, 60%, 100% {
+            0%,
+            60%,
+            100% {
               transform: translateY(0);
               opacity: 0.8;
             }

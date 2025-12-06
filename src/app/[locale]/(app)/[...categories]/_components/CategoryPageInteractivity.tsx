@@ -220,22 +220,22 @@ export function CategoryPageInteractivity({
             />
           </div>
 
-        {/* Product Grid - Broadcast loading state via context */}
-        <ProductLoadingProvider value={{ isLoading }}>
-          {children}
-        </ProductLoadingProvider>
+          {/* Product Grid - Broadcast loading state via context */}
+          <ProductLoadingProvider value={{ isLoading }}>
+            {children}
+          </ProductLoadingProvider>
 
-        {/* Pagination */}
-        {totalPages > 1 && (
-          <div className="mt-8 flex justify-center">
-            <CategoryPagination
-              currentPage={currentFilters.page}
-              totalPages={totalPages}
-              onPageChange={handlePageChange}
-              disabled={isLoading}
-            />
-          </div>
-        )}
+          {/* Pagination */}
+          {totalPages > 1 && (
+            <div className="mt-8 flex justify-center">
+              <CategoryPagination
+                currentPage={currentFilters.page}
+                totalPages={totalPages}
+                onPageChange={handlePageChange}
+                disabled={isLoading}
+              />
+            </div>
+          )}
         </main>
       </div>
     </>

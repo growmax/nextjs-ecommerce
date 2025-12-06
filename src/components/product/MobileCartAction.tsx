@@ -85,7 +85,7 @@ export default function MobileCartAction({ product }: MobileCartActionProps) {
       const validation = validateBeforeAdd();
       if (validation === "login") {
         toast.info("Please login to add products to cart");
-        router.push("/auth/login");
+        router.push("/login");
         return;
       }
       if (validation === "unavailable") {

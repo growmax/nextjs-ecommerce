@@ -4,8 +4,8 @@ import { ProductViewSwitcher } from "@/components/ProductGrid/ProductViewSwitche
 import { StructuredDataServer } from "@/components/seo/StructuredDataServer";
 import type { RequestContext } from "@/lib/api/client";
 import SearchService, {
-    ElasticSearchQuery,
-    FormattedProduct,
+  ElasticSearchQuery,
+  FormattedProduct,
 } from "@/lib/api/services/SearchService/SearchService";
 import TenantService from "@/lib/api/services/TenantService";
 import CategoryResolutionService from "@/lib/services/CategoryResolutionService";
@@ -324,8 +324,6 @@ export default async function CategoryPage({
         ? false
         : undefined;
 
-
-
   // Parse catalog codes
   const catalogCodes = filters.catalog_code
     ? (Array.isArray(filters.catalog_code)
@@ -371,8 +369,6 @@ export default async function CategoryPage({
     ...(equipmentCodes && equipmentCodes.length > 0 && { equipmentCodes }),
   });
 
-
-
   // Extract base query for aggregations (need the bool object, not the full query)
   const baseQueryForAggs = queryResult.query.query.bool;
 
@@ -396,8 +392,6 @@ export default async function CategoryPage({
         Object.keys(filterState).length > 0 ? filterState : undefined,
         context
       );
-
-
 
       if (aggregationResponse.success) {
         aggregations = aggregationResponse.aggregations as FilterAggregations;
@@ -449,8 +443,6 @@ export default async function CategoryPage({
             elasticIndex,
             query: searchQuery,
           });
-
-
 
           return {
             products: result.data || [],
@@ -516,38 +508,37 @@ export default async function CategoryPage({
         {/* Interactivity Controls - Client component for pagination/sorting/filters */}
         <BlockingLoaderProvider>
           <CategoryPageInteractivity
-          initialFilters={{
-            page,
-            sort: sortBy,
-          }}
-          total={initialProducts.total}
-          categoryPath={categoryPath}
-          aggregations={aggregations}
-          currentCategoryPath={categories}
-          categoryName={lastNode?.name || "Category"}
-        >
-
-        {/* Product Grid - Server-rendered for SEO with Suspense for streaming */}
-        <div className="relative">
-          <Suspense
-            fallback={
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4 md:gap-6">
-                {Array.from({ length: 20 }).map((_, i) => (
-                  <div
-                    key={i}
-                    className="h-[380px] bg-muted animate-pulse rounded-lg"
-                  />
-                ))}
-              </div>
-            }
+            initialFilters={{
+              page,
+              sort: sortBy,
+            }}
+            total={initialProducts.total}
+            categoryPath={categoryPath}
+            aggregations={aggregations}
+            currentCategoryPath={categories}
+            categoryName={lastNode?.name || "Category"}
           >
-            <ProductGridWrapper
-              productsPromise={productsPromise}
-              locale={locale}
-            />
-          </Suspense>
-          </div>
-          <BlockingLoader />
+            {/* Product Grid - Server-rendered for SEO with Suspense for streaming */}
+            <div className="relative">
+              <Suspense
+                fallback={
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4 md:gap-6">
+                    {Array.from({ length: 20 }).map((_, i) => (
+                      <div
+                        key={i}
+                        className="h-[380px] bg-muted animate-pulse rounded-lg"
+                      />
+                    ))}
+                  </div>
+                }
+              >
+                <ProductGridWrapper
+                  productsPromise={productsPromise}
+                  locale={locale}
+                />
+              </Suspense>
+            </div>
+            <BlockingLoader />
           </CategoryPageInteractivity>
         </BlockingLoaderProvider>
       </div>
