@@ -1,17 +1,13 @@
 "use client";
 
+import { useLoading } from "@/hooks/useGlobalLoader";
 import { useNavigationWithLoader } from "@/hooks/useNavigationWithLoader";
-import { Layers } from "lucide-react";
+import { usePageLoader } from "@/hooks/usePageLoader";
 import { useTranslations } from "next-intl";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
-import { usePageLoader } from "@/hooks/usePageLoader";
-import { useLoading } from "@/hooks/useGlobalLoader";
 
-import {
-  VersionsDialog,
-  type Version,
-} from "@/components/dialogs/VersionsDialog";
+import { EditOrderNameDialog } from "@/components/dialogs/EditOrderNameDialog";
 import {
   DetailsSkeleton,
   OrderContactDetails,
@@ -44,13 +40,16 @@ import { useOrderCalculation } from "@/hooks/useOrderCalculation/useOrderCalcula
 import { usePageScroll } from "@/hooks/usePageScroll";
 import { useTenantData } from "@/hooks/useTenantData";
 import type { OrderDetailItem, OrderDetailsResponse } from "@/lib/api";
-import { OrderVersionService } from "@/lib/api";
+import { OrderNameService, OrderVersionService } from "@/lib/api";
 import {
   type SellerBranch,
   type Warehouse,
 } from "@/lib/api/services/SellerWarehouseService/SellerWarehouseService";
 import type { CartItem } from "@/types/calculation/cart";
-import type { SelectedVersion } from "@/types/details/orderdetails/version.types";
+import type {
+  SelectedVersion,
+  Version,
+} from "@/types/details/orderdetails/version.types";
 import { setTaxBreakup } from "@/utils/calculation/tax-breakdown";
 import { orderPaymentDTO } from "@/utils/order/orderPaymentDTO/orderPaymentDTO";
 import { isEmpty } from "lodash";
@@ -165,8 +164,8 @@ export default function EditOrderPage({ params }: EditOrderPageProps) {
   const [cashDiscountTerms, setCashDiscountTerms] = useState<any>(null);
   const [prevPaymentTerms, setPrevPaymentTerms] = useState<any>(null);
   const [confirmDialogOpen, setConfirmDialogOpen] = useState(false);
-  const [versionsDialogOpen, setVersionsDialogOpen] = useState(false);
-  const [selectedVersion, setSelectedVersion] =
+  const [editDialogOpen, setEditDialogOpen] = useState(false);
+  const [selectedVersion, _setSelectedVersion] =
     useState<SelectedVersion | null>(null);
   const [triggerVersionCall, setTriggerVersionCall] = useState(false);
 
@@ -939,6 +938,60 @@ export default function EditOrderPage({ params }: EditOrderPageProps) {
     push(`/details/orderDetails/${orderId}`);
   };
 
+  const handleEditOrder = () => {
+    // Open edit order name dialog when edit icon is clicked
+    setEditDialogOpen(true);
+  };
+
+  const handleSaveOrderName = async (newOrderName: string) => {
+    if (!user || !orderDetails?.data?.orderDetails?.[0]?.orderIdentifier) {
+      throw new Error("Missing required data for updating order name");
+    }
+
+    showLoading("Saving order name...", "edit-order-page");
+    try {
+      await OrderNameService.updateOrderName({
+        userId: user.userId,
+        companyId: user.companyId,
+        orderIdentifier: orderDetails.data.orderDetails[0].orderIdentifier,
+        orderName: newOrderName,
+      });
+
+      // Update local state if orderDetails exists
+      if (orderDetails && orderDetails.data?.orderDetails) {
+        const updatedOrderDetails = {
+          ...orderDetails,
+          data: {
+            ...orderDetails.data,
+            orderDetails: orderDetails.data.orderDetails.map((order, index) =>
+              index === 0 ? { ...order, orderName: newOrderName } : order
+            ),
+          },
+        };
+        setOrderDetails(updatedOrderDetails);
+      } else if (orderDetails?.data) {
+        // Handle case where orderName is at the root level
+        const updatedOrderDetails = {
+          ...orderDetails,
+          data: {
+            ...orderDetails.data,
+            orderName: newOrderName,
+          },
+        };
+        setOrderDetails(updatedOrderDetails);
+      }
+
+      // Refresh the order details
+      if (fetchOrderResponseMutate) {
+        await fetchOrderResponseMutate();
+      }
+    } catch (err) {
+      throw err;
+    } finally {
+      hideLoading("edit-order-page");
+    }
+  };
+
   const handleQuantityChange = (productId: string, quantity: number) => {
     setEditedQuantities(prev => ({
       ...prev,
@@ -1417,39 +1470,6 @@ export default function EditOrderPage({ params }: EditOrderPageProps) {
     }
   };
 
-  // Handle version selection
-  const handleVersionSelect = (version: Version) => {
-    // Close dialog immediately
-    setVersionsDialogOpen(false);
-
-    // If version 1 is selected, reset to original order details
-    if (version.versionNumber === 1) {
-      // Reset to original order details
-      if (orderDetails && fetchOrderResponseMutate) {
-        // Reset processed version ref
-        processedVersionRef.current = null;
-        // Re-fetch original order details
-        setSelectedVersion(null);
-        setTriggerVersionCall(false);
-        fetchOrderResponseMutate();
-      }
-      return;
-    }
-
-    // Reset processed version ref for new version selection
-    processedVersionRef.current = null;
-
-    // Set selected version and trigger fetch
-    setSelectedVersion({
-      versionNumber: version.versionNumber,
-      orderVersion: version.orderVersion || version.versionNumber,
-      ...(version.orderIdentifier && {
-        orderIdentifier: version.orderIdentifier,
-      }),
-    });
-    setTriggerVersionCall(true);
-  };
-
   // Extract data for header
   const orderName =
     displayOrderDetails?.orderDetails?.[0]?.orderName ||
@@ -1470,8 +1490,9 @@ export default function EditOrderPage({ params }: EditOrderPageProps) {
             className: getStatusStyle(status),
           },
         })}
+        onEdit={handleEditOrder}
         onRefresh={handleRefresh}
-        showRefresh={true}
+        showRefresh={false}
         onClose={handleCancel}
         menuOptions={[]}
         buttons={[
@@ -1482,7 +1503,9 @@ export default function EditOrderPage({ params }: EditOrderPageProps) {
             disabled: saving,
           },
         ]}
-        showEditIcon={false}
+        showEditIcon={true}
+        showIdentifier={false}
+        showStatus={false}
         loading={loading}
       />
 
@@ -1918,32 +1941,13 @@ export default function EditOrderPage({ params }: EditOrderPageProps) {
         </div>
       </div>
 
-      {/* Right Sidebar Icons - Positioned just below the SalesHeader component, flush to right edge */}
-      <div className="fixed right-0 top-[118px] z-50 bg-white border-l border-t border-b border-gray-200 shadow-lg rounded-l-lg p-1">
-        <button
-          className={`p-1.5 hover:bg-gray-100 rounded transition-colors ${
-            versionsDialogOpen ? "bg-primary/10" : ""
-          }`}
-          aria-label="Layers"
-          onClick={() => setVersionsDialogOpen(true)}
-        >
-          <Layers
-            className={`w-5 h-5 transition-colors ${
-              versionsDialogOpen ? "text-primary" : "text-gray-700"
-            }`}
-          />
-        </button>
-      </div>
-
-      {/* Versions Dialog */}
-      <VersionsDialog
-        open={versionsDialogOpen}
-        onOpenChange={setVersionsDialogOpen}
-        versions={orderVersions}
-        orderId={orderId}
+      {/* Edit Order Name Dialog */}
+      <EditOrderNameDialog
+        open={editDialogOpen}
+        onOpenChange={setEditDialogOpen}
+        currentOrderName={orderName || ""}
+        onSave={handleSaveOrderName}
         loading={loading}
-        currentVersionNumber={selectedVersion?.versionNumber || 1}
-        onVersionSelect={handleVersionSelect}
       />
 
       {/* Place Order Confirmation Dialog */}
