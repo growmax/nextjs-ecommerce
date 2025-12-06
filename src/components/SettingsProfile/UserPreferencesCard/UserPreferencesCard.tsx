@@ -2,13 +2,10 @@
 
 import SectionCard from "@/components/custom/SectionCard";
 import { AutoCompleteField } from "@/components/forms/AutoCompleteField/AutoCompleteField";
-import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
-import { CompanyService } from "@/lib/api";
 import { Calendar, Clock, Globe } from "lucide-react";
 import { useTranslations } from "next-intl";
-import { useEffect, useRef, useState } from "react";
-import { toast } from "sonner";
+import { useState } from "react";
 
 interface UserPreferencesData {
   timeZone: string;
@@ -29,10 +26,6 @@ interface UserPreferencesCardProps {
   timeFormatOptions: PreferenceOption[];
   isLoading?: boolean;
   dataLoading?: boolean;
-  userId?: number;
-  tenantId?: string | number;
-  preferenceId?: number;
-  onSaveSuccess?: () => void | Promise<void>;
 }
 
 export function UserPreferencesCard({
@@ -43,90 +36,12 @@ export function UserPreferencesCard({
   timeFormatOptions,
   isLoading = false,
   dataLoading = false,
-  userId,
-  tenantId,
-  preferenceId,
-  onSaveSuccess,
 }: UserPreferencesCardProps) {
   const t = useTranslations("profileSettings");
-  // Simple validation state - no react-hook-form needed
+  // Simple validation state
   const [errors, setErrors] = useState<
     Partial<Record<keyof UserPreferencesData, string>>
   >({});
-
-  // Track original preferences and changes
-  const [originalPreferences, setOriginalPreferences] =
-    useState<UserPreferencesData | null>(null);
-  const [hasChanges, setHasChanges] = useState(false);
-  const [isSaving, setIsSaving] = useState(false);
-  const isCancellingRef = useRef(false);
-
-  // Local state that mirrors preferences - allows instant reset without waiting for parent
-  const [localPreferences, setLocalPreferences] = useState<UserPreferencesData>(
-    () => preferences
-  );
-
-  // Sync localPreferences with preferences prop (but not during cancel)
-  useEffect(() => {
-    if (
-      preferences.timeZone &&
-      preferences.dateFormat &&
-      preferences.timeFormat
-    ) {
-      // Only update local if we're not cancelling (to prevent reset from being overwritten)
-      if (!isCancellingRef.current) {
-        setLocalPreferences(prev => {
-          // Only update if there's an actual difference
-          const hasDiff =
-            preferences.timeZone !== prev.timeZone ||
-            preferences.dateFormat !== prev.dateFormat ||
-            preferences.timeFormat !== prev.timeFormat;
-
-          return hasDiff ? { ...preferences } : prev;
-        });
-      }
-    }
-  }, [preferences]);
-
-  // Initialize original preferences when data loads
-  useEffect(() => {
-    if (
-      localPreferences.timeZone &&
-      localPreferences.dateFormat &&
-      localPreferences.timeFormat &&
-      !originalPreferences
-    ) {
-      setOriginalPreferences({ ...localPreferences });
-      setErrors({});
-      setHasChanges(false);
-    }
-  }, [localPreferences, originalPreferences]);
-
-  // Detect changes - skip detection during cancel operation
-  useEffect(() => {
-    if (!originalPreferences) return;
-
-    const allMatch =
-      localPreferences.timeZone === originalPreferences.timeZone &&
-      localPreferences.dateFormat === originalPreferences.dateFormat &&
-      localPreferences.timeFormat === originalPreferences.timeFormat;
-
-    // If we're canceling and all values now match, clear the canceling flag
-    if (isCancellingRef.current && allMatch) {
-      isCancellingRef.current = false;
-      setHasChanges(false);
-      return;
-    }
-
-    // Skip change detection if we're in the middle of canceling (values still don't match)
-    if (isCancellingRef.current) {
-      return;
-    }
-
-    // Normal change detection
-    const changed = !allMatch;
-    setHasChanges(changed);
-  }, [localPreferences, originalPreferences]);
 
   // Validate field on change
   const handleFieldChange = (
@@ -148,9 +63,6 @@ export function UserPreferencesCard({
       }));
     }
 
-    // Update local state immediately for instant UI update
-    setLocalPreferences(prev => ({ ...prev, [field]: value }));
-
     // Call parent onChange to sync with parent state
     onChange(field, value);
   };
@@ -165,100 +77,13 @@ export function UserPreferencesCard({
     return labels[field];
   };
 
-  // Handle save
-  const handleSave = async () => {
-    if (!hasChanges) return;
-    if (!userId) {
-      toast.error(t("userIdRequired"));
-      return;
-    }
-
-    // Validate required fields
-    if (
-      !localPreferences.timeZone ||
-      !localPreferences.dateFormat ||
-      !localPreferences.timeFormat
-    ) {
-      toast.error(t("selectAnOption"));
-      return;
-    }
-
-    setIsSaving(true);
-    try {
-      const payload = {
-        dateFormat: localPreferences.dateFormat,
-        timeFormat: localPreferences.timeFormat,
-        timeZone: localPreferences.timeZone,
-        userId: { id: userId },
-        ...(preferenceId && { id: preferenceId }),
-        ...(tenantId && {
-          tenantId:
-            typeof tenantId === "string" ? parseInt(tenantId) || 0 : tenantId,
-        }),
-        vendorId: null,
-      };
-
-      await CompanyService.saveUserPreferences(payload);
-
-      // Update original preferences after successful save
-      setOriginalPreferences({ ...localPreferences });
-      setHasChanges(false);
-
-      // Reload preferences after successful save
-      if (onSaveSuccess) {
-        try {
-          await onSaveSuccess();
-        } catch (reloadError) {
-          console.error("Error during reload:", reloadError);
-        }
-      }
-
-      // Show success message - ensure it's called after all operations
-      toast.success(t("preferencesUpdatedSuccessfully"), {
-        duration: 3000,
-      });
-    } catch (error) {
-      console.error("Failed to save preferences:", error);
-      toast.error(t("failedToUpdatePreferences"));
-    } finally {
-      setIsSaving(false);
-    }
-  };
-
-  // Handle cancel
-  const handleCancel = () => {
-    if (!originalPreferences) return;
-
-    // Set flag to prevent change detection during reset
-    isCancellingRef.current = true;
-
-    // Clear errors and immediately hide buttons
-    setErrors({});
-    setHasChanges(false);
-
-    // Reset local preferences immediately - UI updates instantly
-    setLocalPreferences({ ...originalPreferences });
-
-    // Sync with parent state - update all three values
-    onChange("timeZone", originalPreferences.timeZone);
-    onChange("dateFormat", originalPreferences.dateFormat);
-    onChange("timeFormat", originalPreferences.timeFormat);
-
-    // Clear canceling flag after a brief delay to allow parent state to update
-    setTimeout(() => {
-      isCancellingRef.current = false;
-    }, 100);
-
-    toast.info(t("preferencesChangesCancelled"));
-  };
-
   // Show skeleton when loading or data is not available
   if (
     dataLoading ||
-    !localPreferences ||
-    !localPreferences.timeZone ||
-    !localPreferences.dateFormat ||
-    !localPreferences.timeFormat
+    !preferences ||
+    !preferences.timeZone ||
+    !preferences.dateFormat ||
+    !preferences.timeFormat
   ) {
     return (
       <SectionCard title={t("userPreferences")} className="w-full">
@@ -295,33 +120,12 @@ export function UserPreferencesCard({
     <SectionCard
       title={t("userPreferences")}
       className="w-full py-2.5"
-      headerActions={
-        hasChanges ? (
-          <div className="flex items-center gap-2">
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={handleCancel}
-              disabled={isSaving || isLoading}
-            >
-              {t("cancel")}
-            </Button>
-            <Button
-              size="sm"
-              onClick={handleSave}
-              disabled={isSaving || isLoading}
-            >
-              {isSaving ? "saving" : "save"}
-            </Button>
-          </div>
-        ) : undefined
-      }
     >
       <div className="space-y-4">
         {/* Time Zone */}
         <AutoCompleteField
           label={t("timeZone")}
-          value={localPreferences.timeZone}
+          value={preferences.timeZone}
           onChange={value => handleFieldChange("timeZone", value)}
           options={timeZoneOptions}
           placeholder={t("selectTimezone")}
@@ -333,7 +137,7 @@ export function UserPreferencesCard({
         {/* Date Format */}
         <AutoCompleteField
           label={t("dateDisplayFormat")}
-          value={localPreferences.dateFormat}
+          value={preferences.dateFormat}
           onChange={value => handleFieldChange("dateFormat", value)}
           options={dateFormatOptions}
           placeholder={t("selectDateFormat")}
@@ -345,7 +149,7 @@ export function UserPreferencesCard({
         {/* Time Format */}
         <AutoCompleteField
           label={t("timeFormat")}
-          value={localPreferences.timeFormat}
+          value={preferences.timeFormat}
           onChange={value => handleFieldChange("timeFormat", value)}
           options={timeFormatOptions}
           placeholder={t("selectTimeFormat")}
@@ -363,12 +167,12 @@ export function UserPreferencesCard({
           <div className="text-sm text-muted-foreground space-y-1">
             <p className="flex items-center gap-2">
               <Globe className="h-3 w-3" />
-              {t("timezone")} {localPreferences.timeZone || t("notSelected")}
+              {t("timezone")} {preferences.timeZone || t("notSelected")}
             </p>
             <DateTimePreview
-              dateFormat={localPreferences.dateFormat}
-              timeFormat={localPreferences.timeFormat}
-              timeZone={localPreferences.timeZone}
+              dateFormat={preferences.dateFormat}
+              timeFormat={preferences.timeFormat}
+              timeZone={preferences.timeZone}
             />
           </div>
         </div>
