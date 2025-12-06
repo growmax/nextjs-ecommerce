@@ -1,4 +1,10 @@
-import { render, screen, fireEvent, waitFor, act } from "@testing-library/react";
+import {
+  render,
+  screen,
+  fireEvent,
+  waitFor,
+  act,
+} from "@testing-library/react";
 import { useForm, FormProvider } from "react-hook-form";
 import Attachments from "./Attachments";
 import {
@@ -53,32 +59,51 @@ jest.mock("@/components/ui/card", () => {
   const React = jest.requireActual<typeof import("react")>("react");
   return {
     Card: ({ children, className }: any) =>
-      React.createElement("div", { "data-testid": "card", className }, children),
+      React.createElement(
+        "div",
+        { "data-testid": "card", className },
+        children
+      ),
     CardHeader: ({ children, className }: any) =>
-      React.createElement("div", { "data-testid": "card-header", className }, children),
+      React.createElement(
+        "div",
+        { "data-testid": "card-header", className },
+        children
+      ),
     CardTitle: ({ children, className }: any) =>
-      React.createElement("h2", { "data-testid": "card-title", className }, children),
+      React.createElement(
+        "h2",
+        { "data-testid": "card-title", className },
+        children
+      ),
     CardContent: ({ children, className }: any) =>
-      React.createElement("div", { "data-testid": "card-content", className }, children),
+      React.createElement(
+        "div",
+        { "data-testid": "card-content", className },
+        children
+      ),
   };
 });
 
 jest.mock("@/components/ui/input", () => {
   const React = jest.requireActual<typeof import("react")>("react");
   const Input = React.forwardRef(
-      ({ onChange, className, id, type, accept, disabled, ...props }: any, ref: any) =>
-        React.createElement("input", {
-          ref,
-          id,
-          type,
-          onChange,
-          className,
-          accept,
-          disabled,
-          "data-testid": id,
-          ...props,
-        })
-    );
+    (
+      { onChange, className, id, type, accept, disabled, ...props }: any,
+      ref: any
+    ) =>
+      React.createElement("input", {
+        ref,
+        id,
+        type,
+        onChange,
+        className,
+        accept,
+        disabled,
+        "data-testid": id,
+        ...props,
+      })
+  );
   Input.displayName = "Input";
   return {
     Input,
@@ -88,7 +113,11 @@ jest.mock("@/components/ui/input", () => {
 jest.mock("@/components/ui/label", () => {
   const React = jest.requireActual<typeof import("react")>("react");
   const Label = ({ children, htmlFor, className }: any) =>
-    React.createElement("label", { htmlFor, className, "data-testid": `label-${htmlFor || "label"}` }, children);
+    React.createElement(
+      "label",
+      { htmlFor, className, "data-testid": `label-${htmlFor || "label"}` },
+      children
+    );
   Label.displayName = "Label";
   return {
     Label,
@@ -97,7 +126,8 @@ jest.mock("@/components/ui/label", () => {
 
 jest.mock("@/components/ui/separator", () => {
   const React = jest.requireActual<typeof import("react")>("react");
-  const Separator = () => React.createElement("hr", { "data-testid": "separator" });
+  const Separator = () =>
+    React.createElement("hr", { "data-testid": "separator" });
   Separator.displayName = "Separator";
   return {
     Separator,
@@ -107,20 +137,32 @@ jest.mock("@/components/ui/separator", () => {
 jest.mock("@/components/ui/textarea", () => {
   const React = jest.requireActual<typeof import("react")>("react");
   const Textarea = React.forwardRef(
-      ({ onChange, className, id, placeholder, rows, maxLength, disabled, ...props }: any, ref: any) =>
-        React.createElement("textarea", {
-          ref,
-          id,
-          onChange,
-          className,
-          placeholder,
-          rows,
-          maxLength,
-          disabled,
-          "data-testid": id,
-          ...props,
-        })
-    );
+    (
+      {
+        onChange,
+        className,
+        id,
+        placeholder,
+        rows,
+        maxLength,
+        disabled,
+        ...props
+      }: any,
+      ref: any
+    ) =>
+      React.createElement("textarea", {
+        ref,
+        id,
+        onChange,
+        className,
+        placeholder,
+        rows,
+        maxLength,
+        disabled,
+        "data-testid": id,
+        ...props,
+      })
+  );
   Textarea.displayName = "Textarea";
   return {
     Textarea,
@@ -129,7 +171,20 @@ jest.mock("@/components/ui/textarea", () => {
 
 jest.mock("@/components/ui/button", () => {
   const React = jest.requireActual<typeof import("react")>("react");
-  const Button = React.forwardRef(({ children, onClick, className, type, variant: _variant, size: _size, disabled, ...props }: any, ref: any) =>
+  const Button = React.forwardRef(
+    (
+      {
+        children,
+        onClick,
+        className,
+        type,
+        variant: _variant,
+        size: _size,
+        disabled,
+        ...props
+      }: any,
+      ref: any
+    ) =>
       React.createElement(
         "button",
         {
@@ -143,7 +198,7 @@ jest.mock("@/components/ui/button", () => {
         },
         children
       )
-    );
+  );
   Button.displayName = "Button";
   return {
     Button,
@@ -152,15 +207,27 @@ jest.mock("@/components/ui/button", () => {
 
 jest.mock("lucide-react", () => {
   const React = jest.requireActual<typeof import("react")>("react");
-  const FileText = () => React.createElement("span", { "data-testid": "file-icon" }, "📄");
+  const FileText = () =>
+    React.createElement("span", { "data-testid": "file-icon" }, "📄");
   FileText.displayName = "FileText";
-  const Upload = () => React.createElement("span", { "data-testid": "upload-icon" }, "⬆");
+  const Upload = () =>
+    React.createElement("span", { "data-testid": "upload-icon" }, "⬆");
   Upload.displayName = "Upload";
   const X = () => React.createElement("span", { "data-testid": "x-icon" }, "×");
   X.displayName = "X";
-  const Paperclip = ({ className }: any) => React.createElement("span", { "data-testid": "paperclip-icon", className }, "📎");
+  const Paperclip = ({ className }: any) =>
+    React.createElement(
+      "span",
+      { "data-testid": "paperclip-icon", className },
+      "📎"
+    );
   Paperclip.displayName = "Paperclip";
-  const Trash2 = ({ className }: any) => React.createElement("span", { "data-testid": "trash-icon", className }, "🗑️");
+  const Trash2 = ({ className }: any) =>
+    React.createElement(
+      "span",
+      { "data-testid": "trash-icon", className },
+      "🗑️"
+    );
   Trash2.displayName = "Trash2";
   return {
     FileText,
@@ -177,9 +244,13 @@ import { toast } from "sonner";
 import { containsXSS } from "@/utils/sanitization/sanitization.utils";
 
 describe("Attachments", () => {
-  const mockPostUpload = UploadServices.postUpload as jest.MockedFunction<typeof UploadServices.postUpload>;
+  const mockPostUpload = UploadServices.postUpload as jest.MockedFunction<
+    typeof UploadServices.postUpload
+  >;
   const mockAxiosPost = axios.post as jest.MockedFunction<typeof axios.post>;
-  const mockContainsXSS = containsXSS as jest.MockedFunction<typeof containsXSS>;
+  const mockContainsXSS = containsXSS as jest.MockedFunction<
+    typeof containsXSS
+  >;
 
   beforeEach(() => {
     jest.clearAllMocks();
@@ -199,7 +270,9 @@ describe("Attachments", () => {
       );
 
       expect(screen.getByTestId("card")).toBeInTheDocument();
-      expect(screen.getByTestId("card-title")).toHaveTextContent("Attachments");
+      expect(
+        screen.getByRole("heading", { name: "Attachments" })
+      ).toBeInTheDocument();
       expect(screen.getByTestId("file-upload")).toBeInTheDocument();
     });
 
@@ -211,7 +284,9 @@ describe("Attachments", () => {
         </Wrapper>
       );
 
-      expect(screen.getByTestId("card-title")).toHaveTextContent("Comments");
+      expect(
+        screen.getByRole("heading", { name: "Comments" })
+      ).toBeInTheDocument();
       // Comment textarea is not rendered in the component
       expect(screen.getByTestId("card")).toBeInTheDocument();
     });
@@ -225,7 +300,9 @@ describe("Attachments", () => {
       );
 
       // When both are shown, title shows "Attachments" (not "Comments & Attachments")
-      expect(screen.getByTestId("card-title")).toHaveTextContent("Attachments");
+      expect(
+        screen.getByRole("heading", { name: "Attachments" })
+      ).toBeInTheDocument();
       // Comment textarea is not rendered in the component
       expect(screen.getByTestId("file-upload")).toBeInTheDocument();
     });
@@ -281,7 +358,9 @@ describe("Attachments", () => {
       );
 
       // Comment textarea and character count are not rendered in the component
-      expect(screen.getByTestId("card-title")).toHaveTextContent("Comments");
+      expect(
+        screen.getByRole("heading", { name: "Comments" })
+      ).toBeInTheDocument();
     });
   });
 
@@ -296,7 +375,9 @@ describe("Attachments", () => {
 
       // Comment textarea is not rendered in the component
       // Verify that the component renders successfully
-      expect(screen.getByTestId("card-title")).toHaveTextContent("Comments");
+      expect(
+        screen.getByRole("heading", { name: "Comments" })
+      ).toBeInTheDocument();
     });
 
     it("should show error for XSS content in comments", async () => {
@@ -310,7 +391,9 @@ describe("Attachments", () => {
 
       // Comment textarea is not rendered in the component
       // Verify that the component renders successfully
-      expect(screen.getByTestId("card-title")).toHaveTextContent("Comments");
+      expect(
+        screen.getByRole("heading", { name: "Comments" })
+      ).toBeInTheDocument();
     });
 
     it("should disable comments when editComments is false", () => {
@@ -356,7 +439,9 @@ describe("Attachments", () => {
 
       await waitFor(() => {
         expect(UploadServices.postUpload).toHaveBeenCalled();
-        expect(toast.success).toHaveBeenCalledWith("Attachments Uploaded successfully");
+        expect(toast.success).toHaveBeenCalledWith(
+          "Attachments Uploaded successfully"
+        );
       });
     });
 
@@ -376,7 +461,9 @@ describe("Attachments", () => {
       });
 
       await waitFor(() => {
-        expect(toast.error).toHaveBeenCalledWith("Maximum file size of 2MB allowed");
+        expect(toast.error).toHaveBeenCalledWith(
+          "Maximum file size of 2MB allowed"
+        );
         expect(UploadServices.postUpload).not.toHaveBeenCalled();
       });
     });
@@ -397,7 +484,9 @@ describe("Attachments", () => {
       });
 
       await waitFor(() => {
-        expect(toast.error).toHaveBeenCalledWith("Invalid file type. Allowed: PDF, DOC, DOCX, JPG, PNG, XLSX");
+        expect(toast.error).toHaveBeenCalledWith(
+          "Invalid file type. Allowed: PDF, DOC, DOCX, JPG, PNG, XLSX"
+        );
         expect(UploadServices.postUpload).not.toHaveBeenCalled();
       });
     });
@@ -405,20 +494,26 @@ describe("Attachments", () => {
     it("should show upload progress", async () => {
       // Create a promise that we can control to delay resolution
       let resolveUpload: (value: any) => void;
-      const uploadPromise = new Promise((resolve) => {
+      const uploadPromise = new Promise(resolve => {
         resolveUpload = resolve;
       });
 
-      mockPostUpload.mockImplementation((_file: File, _options: any, onProgress?: any) => {
-        // Call progress callback immediately to update progress state
-        if (onProgress) {
-          // Use setTimeout to ensure React has processed the state update
-          setTimeout(() => {
-            onProgress({ loaded: 50, total: 100 });
-          }, 0);
+      mockPostUpload.mockImplementation(
+        (_file: File, _options: any, onProgress?: any) => {
+          // Call progress callback immediately to update progress state
+          if (onProgress) {
+            // Use setTimeout to ensure React has processed the state update
+            setTimeout(() => {
+              onProgress({ loaded: 50, total: 100 });
+            }, 0);
+          }
+          return uploadPromise as Promise<{
+            Location: string;
+            url: string;
+            key: string;
+          }>;
         }
-        return uploadPromise as Promise<{ Location: string; url: string; key: string }>;
-      });
+      );
 
       const Wrapper = createFormWrapper();
       render(
@@ -436,14 +531,17 @@ describe("Attachments", () => {
 
       // The component sets uploading=true and uploadingFileName immediately
       // Check for "Uploading..." text in the button
-      await waitFor(() => {
-        const button = screen.getByText(/Uploading/);
-        expect(button).toBeInTheDocument();
-      }, { timeout: 1000 });
+      await waitFor(
+        () => {
+          const button = screen.getByText(/Uploading/);
+          expect(button).toBeInTheDocument();
+        },
+        { timeout: 1000 }
+      );
 
       // Resolve the upload to complete the test
       resolveUpload!(mockUploadResult);
-      
+
       // Wait for upload to complete
       await waitFor(() => {
         expect(UploadServices.postUpload).toHaveBeenCalled();
@@ -541,7 +639,11 @@ describe("Attachments", () => {
 
       render(
         <Wrapper>
-          <Attachments showAttachments={true} isContentPage={true} isOrder={true} />
+          <Attachments
+            showAttachments={true}
+            isContentPage={true}
+            isOrder={true}
+          />
         </Wrapper>
       );
 
@@ -586,7 +688,7 @@ describe("Attachments", () => {
       const trashIcon = screen.getByTestId("trash-icon");
       const removeButton = trashIcon.closest("button");
       expect(removeButton).toBeInTheDocument();
-      
+
       await act(async () => {
         fireEvent.click(removeButton!);
       });
@@ -613,7 +715,7 @@ describe("Attachments", () => {
       const trashIcon = screen.getByTestId("trash-icon");
       const removeButton = trashIcon.closest("button");
       expect(removeButton).toBeInTheDocument();
-      
+
       await act(async () => {
         fireEvent.click(removeButton!);
       });
@@ -667,19 +769,21 @@ describe("Attachments", () => {
           },
           mode: "onChange",
         });
-        
+
         // Override setValue to throw for uploadedDocumentDetails
         const originalSetValue = methods.setValue;
-        (methods as any).setValue = jest.fn((name: any, value: any, options?: any) => {
-          if (name === "uploadedDocumentDetails") {
-            throw new Error("SetValue failed");
+        (methods as any).setValue = jest.fn(
+          (name: any, value: any, options?: any) => {
+            if (name === "uploadedDocumentDetails") {
+              throw new Error("SetValue failed");
+            }
+            return originalSetValue(name, value, options);
           }
-          return originalSetValue(name, value, options);
-        });
-        
+        );
+
         return <FormProvider {...methods}>{children}</FormProvider>;
       };
-      
+
       render(
         <ErrorWrapper>
           <Attachments showAttachments={true} />
@@ -690,7 +794,7 @@ describe("Attachments", () => {
       const trashIcon = screen.getByTestId("trash-icon");
       const removeButton = trashIcon.closest("button");
       expect(removeButton).toBeInTheDocument();
-      
+
       await act(async () => {
         fireEvent.click(removeButton!);
       });
@@ -847,4 +951,3 @@ describe("Attachments", () => {
     });
   });
 });
-
