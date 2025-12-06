@@ -147,23 +147,27 @@ export default function OrderProductsTable({
         {t("products")} {displayCount > 0  &&`(${displayCount})`}
       </CardTitle>
 
-      {/* Right section - Search or Export */}
-      <div className="flex items-center">
-        {onProductAdd ? (
-          <div className="w-[26rem]">
-            <ProductSearchInput
-              onProductSelect={onProductAdd}
-              placeholder={t("searchAndAddProducts")}
-              elasticIndex={elasticIndex}
-            />
+      {loading ? ( <div className="flex items-center">
+        <Skeleton className="h-4 w-20 mb-2" />
+        </div>) : (
+            <div className="flex items-center">
+            {onProductAdd ? (
+              <div className="w-[26rem]">
+                <ProductSearchInput
+                  onProductSelect={onProductAdd}
+                  placeholder={t("searchAndAddProducts")}
+                  elasticIndex={elasticIndex}
+                />
+              </div>
+            ) : onExport ? (
+              <Button variant="outline" size="sm" onClick={onExport} className="h-7 px-3 text-xs font-medium">
+                <Download className="h-3.5 w-3.5 mr-1.5" />
+                {t("export")}
+              </Button>
+            ) : null}
           </div>
-        ) : onExport ? (
-          <Button variant="outline" size="sm" onClick={onExport} className="h-7 px-3 text-xs font-medium">
-            <Download className="h-3.5 w-3.5 mr-1.5" />
-            {t("export")}
-          </Button>
-        ) : null}
-      </div>
+        )}
+    
     </div>
 
 </CardHeader>
@@ -380,12 +384,7 @@ export default function OrderProductsTable({
 
                     // Get product image
                     const productImage = getProductImage(product);
-                    const firstLetter =
-                      itemName && itemName !== "-"
-                        ? itemName.charAt(0).toUpperCase()
-                        : itemCode
-                          ? itemCode.charAt(0).toUpperCase()
-                          : "?";
+                  
 
                     return (
                       <TableRow
