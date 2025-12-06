@@ -92,14 +92,14 @@ function OrdersLandingTable({
     () => [
       {
         accessorKey: "orderIdentifier",
-        header: () => <span className="pl-2">{t("orderId")}</span>,
+        header: () => <span className="pl-4">{t("orderId")}</span>,
         size: 150,
         meta: {
           sticky: true,
         },
         cell: ({ row }) => (
           <div
-            className="pl-2 break-words whitespace-normal"
+            className="pl-4 break-words whitespace-normal"
             style={{
               wordBreak: "break-all",
               overflowWrap: "anywhere",
@@ -112,11 +112,11 @@ function OrdersLandingTable({
       },
       {
         accessorKey: "orderName",
-        header: () => <span className="pl-2">{t("orderName")}</span>,
+        header: () => <span className="pl-4">{t("orderName")}</span>,
         size: 200,
         cell: ({ row }) => (
           <div
-            className="max-w-[200px] truncate pl-2"
+            className="max-w-[200px] truncate pl-4"
             title={row.original.orderName || "-"}
           >
             {row.original.orderName || "-"}
@@ -125,12 +125,12 @@ function OrdersLandingTable({
       },
       {
         accessorKey: "status",
-        header: () => <span className="pl-[30px]">{t("status")}</span>,
+        header: () => <span className="text-center w-full block">{t("status")}</span>,
         size: 200,
         cell: ({ row }) => {
           const status = row.original.updatedBuyerStatus;
           if (!status)
-            return <span className="text-muted-foreground pl-[30px]">-</span>;
+            return <span className="text-muted-foreground pl-4">-</span>;
           const color = statusColor(status.toUpperCase());
           const titleCaseStatus = status
             .split(" ")
@@ -139,7 +139,7 @@ function OrdersLandingTable({
             )
             .join(" ");
           return (
-            <div className="pl-[30px]">
+            <div className="flex justify-center">
               <span
                 className="px-2 py-1 rounded text-xs font-medium text-primary-foreground whitespace-nowrap border border-border/30"
                 style={{ backgroundColor: color }}
@@ -152,17 +152,17 @@ function OrdersLandingTable({
       },
       {
         accessorKey: "orderDate",
-        header: t("orderDate"),
+        header: () => <span className="pl-4">{t("orderDate")}</span>,
         size: 150,
         cell: ({ row }) => formatDate(row.original.createdDate),
       },
       {
         accessorKey: "accountName",
-        header: t("accountName"),
+        header: () => <span className="pl-4">{t("accountName")}</span>,
         size: 300,
         cell: ({ row }) => (
           <div
-            className="max-w-[300px]"
+            className="max-w-[300px] pl-4"
             title={row.original.sellerCompanyName || "-"}
           >
             {row.original.sellerCompanyName || "-"}
@@ -194,45 +194,49 @@ function OrdersLandingTable({
       },
       {
         accessorKey: "subTotal",
-        header: t("subtotal"),
+        header: () => <span className="pr-4">{t("subtotal")}</span>,
         size: 150,
         meta: {
           alignRight: true,
         },
         cell: ({ row }) => (
-          <PricingFormat
-            {...(row.original.currencySymbol && {
-              buyerCurrency: row.original.currencySymbol,
-            })}
-            value={row.original.subTotal || 0}
-          />
+          <span className="pr-4">
+            <PricingFormat
+              {...(row.original.currencySymbol && {
+                buyerCurrency: row.original.currencySymbol,
+              })}
+              value={row.original.subTotal || 0}
+            />
+          </span>
         ),
       },
       {
         accessorKey: "taxableAmount",
-        header: t("taxableAmount"),
+        header: () => <span className="pr-4">{t("taxableAmount")}</span>,
         size: 150,
         meta: {
           alignRight: true,
         },
         cell: ({ row }) => (
-          <PricingFormat
-            {...(row.original.currencySymbol && {
-              buyerCurrency: row.original.currencySymbol,
-            })}
-            value={row.original.taxableAmount || 0}
-          />
+          <span className="pr-4">
+            <PricingFormat
+              {...(row.original.currencySymbol && {
+                buyerCurrency: row.original.currencySymbol,
+              })}
+              value={row.original.taxableAmount || 0}
+            />
+          </span>
         ),
       },
       {
         accessorKey: "grandTotal",
-        header: t("total"),
+        header: () => <span className="pr-4">{t("total")}</span>,
         size: 150,
         meta: {
           alignRight: true,
         },
         cell: ({ row }) => (
-          <span className="font-semibold">
+          <span className="pr-4">
             <PricingFormat
               {...(row.original.currencySymbol && {
                 buyerCurrency: row.original.currencySymbol,
