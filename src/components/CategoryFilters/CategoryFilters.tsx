@@ -1,17 +1,18 @@
 "use client";
 
 import { CollapsibleSection } from "@/components/ui/collapsible";
-import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
 import { useCategoryFilters } from "@/hooks/useCategoryFilters";
+import { useBlockingLoader } from "@/providers/BlockingLoaderProvider";
 import type {
-    BrandFilterOption,
-    CategoryFilterOption,
-    FilterOption,
-    ProductSpecificationGroup,
-    VariantAttributeGroup,
+  BrandFilterOption,
+  CategoryFilterOption,
+  FilterOption,
+  ProductSpecificationGroup,
+  VariantAttributeGroup,
 } from "@/types/category-filters";
 import { Filter } from "lucide-react";
+import { useEffect } from "react";
 import { ActiveFilters } from "./ActiveFilters";
 import { BrandFilter } from "./filters/BrandFilter";
 import { CatalogCodeFilter } from "./filters/CatalogCodeFilter";
@@ -20,7 +21,6 @@ import { EquipmentCodeFilter } from "./filters/EquipmentCodeFilter";
 import { ProductSpecificationFilter } from "./filters/ProductSpecificationFilter";
 import { StockFilter } from "./filters/StockFilter";
 import { VariantAttributeFilter } from "./filters/VariantAttributeFilter";
-import { usePageScopedLoader } from "@/hooks/usePageScopedLoader";
 
 interface CategoryFiltersProps {
   brands: BrandFilterOption[];
@@ -65,20 +65,28 @@ export function CategoryFilters({
     isPending,
   } = useCategoryFilters();
 
-  // Auto-trigger scoped loader when filters change
-  usePageScopedLoader(isPending);
+  const { showLoader, hideLoader } = useBlockingLoader();
+
+  // Show/hide blocking loader when filter state changes
+  useEffect(() => {
+    if (isPending) {
+      showLoader({ message: "Applying filters..." });
+    } else {
+      hideLoader();
+    }
+  }, [isPending, showLoader, hideLoader]);
 
   const handleRemoveStockFilter = () => {
     setStockFilter(undefined);
   };
 
   return (
-    <div className="flex h-full flex-col bg-background shadow-sm">
-      {/* Sticky Header */}
-      <div className="sticky top-0 z-10 flex items-center justify-between border-b border-border/50 bg-background/95 backdrop-blur-sm p-3">
+    <div className="flex flex-col bg-background border rounded-lg shadow-sm">
+      {/* Filter Header - Static (no sticky to prevent overlap) */}
+      <div className="flex items-center justify-between border-b bg-background py-4 px-4 rounded-t-lg">
         <div className="flex items-center gap-2">
-          <Filter className="h-4 w-4 text-primary" />
-          <h2 className="text-base font-semibold tracking-tight">Filters</h2>
+          <Filter className="h-5 w-5 text-foreground" />
+          <h2 className="text-lg font-semibold tracking-tight">Filters</h2>
           {activeFilterCount > 0 && (
             <span className="inline-flex items-center justify-center rounded-full bg-primary px-1.5 py-0.5 text-xs font-medium text-primary-foreground">
               {activeFilterCount}
@@ -87,122 +95,119 @@ export function CategoryFilters({
         </div>
       </div>
 
-      {/* Scrollable Filter Content */}
-      <ScrollArea className="flex-1">
-        <div className="space-y-3 p-3">
-          {/* Active Filters */}
-          <ActiveFilters
-            filters={filters}
-            onRemoveVariantAttribute={removeVariantAttribute}
-            onRemoveProductSpecification={removeProductSpecification}
-            onRemoveStockFilter={handleRemoveStockFilter}
-            onClearAll={clearAllFilters}
-          />
+      {/* Filter Content */}
+      <div className="px-4">
+        {/* Active Filters */}
+        <ActiveFilters
+          filters={filters}
+          onRemoveVariantAttribute={removeVariantAttribute}
+          onRemoveProductSpecification={removeProductSpecification}
+          onRemoveStockFilter={handleRemoveStockFilter}
+          onClearAll={clearAllFilters}
+        />
 
-          {activeFilterCount > 0 && <Separator className="my-3" />}
+        {activeFilterCount > 0 && <Separator className="my-3" />}
 
-          {/* Brands */}
-          {!hideBrandFilter && brands.length > 0 && (
-            <CollapsibleSection
-              title="Brands"
-              defaultOpen={true}
-              badge={brands.length}
-            >
-              <BrandFilter brands={brands} isLoading={isLoading} />
-            </CollapsibleSection>
-          )}
+        {/* Brands */}
+        {!hideBrandFilter && brands.length > 0 && (
+          <CollapsibleSection
+            title="Brands"
+            defaultOpen={true}
+            badge={brands.length}
+          >
+            <BrandFilter brands={brands} isLoading={isLoading} />
+          </CollapsibleSection>
+        )}
 
-          {/* Categories */}
-          {(childCategories.length > 0 || siblingCategories.length > 0) && (
-            <CollapsibleSection
-              title="Categories"
-              defaultOpen={true}
-              badge={childCategories.length + siblingCategories.length}
-            >
-              <CategoryFilter
-                childCategories={childCategories}
-                siblingCategories={siblingCategories}
-                currentCategoryPath={currentCategoryPath}
-                isLoading={isLoading}
-              />
-            </CollapsibleSection>
-          )}
-
-          {/* Variant Attributes */}
-          {variantAttributeGroups.length > 0 && (
-            <CollapsibleSection
-              title="Attributes"
-              defaultOpen={true}
-              badge={variantAttributeGroups.length}
-            >
-              <VariantAttributeFilter
-                attributeGroups={variantAttributeGroups}
-                selectedAttributes={filters.variantAttributes}
-                onToggle={toggleVariantAttribute}
-                isLoading={isLoading}
-              />
-            </CollapsibleSection>
-          )}
-
-          {/* Product Specifications */}
-          {productSpecificationGroups.length > 0 && (
-            <CollapsibleSection
-              title="Specifications"
-              defaultOpen={false}
-              badge={productSpecificationGroups.length}
-            >
-              <ProductSpecificationFilter
-                specificationGroups={productSpecificationGroups}
-                selectedSpecifications={filters.productSpecifications}
-                onToggle={toggleProductSpecification}
-                isLoading={isLoading}
-              />
-            </CollapsibleSection>
-          )}
-
-          {/* Catalog Codes */}
-          {catalogCodes.length > 0 && (
-            <CollapsibleSection
-              title="Catalog Codes"
-              defaultOpen={false}
-              badge={catalogCodes.length}
-            >
-              <CatalogCodeFilter
-                options={catalogCodes}
-                selectedCodes={filters.catalogCodes || []}
-                onToggle={toggleCatalogCode}
-                isLoading={isLoading}
-              />
-            </CollapsibleSection>
-          )}
-
-          {/* Equipment Codes */}
-          {equipmentCodes.length > 0 && (
-            <CollapsibleSection
-              title="Equipment Codes"
-              defaultOpen={false}
-              badge={equipmentCodes.length}
-            >
-              <EquipmentCodeFilter
-                options={equipmentCodes}
-                selectedCodes={filters.equipmentCodes || []}
-                onToggle={toggleEquipmentCode}
-                isLoading={isLoading}
-              />
-            </CollapsibleSection>
-          )}
-
-          {/* Stock Status */}
-          <CollapsibleSection title="Stock" defaultOpen={false}>
-            <StockFilter
-              inStock={filters.inStock}
-              onChange={setStockFilter}
+        {/* Categories */}
+        {(childCategories.length > 0 || siblingCategories.length > 0) && (
+          <CollapsibleSection
+            title="Categories"
+            defaultOpen={true}
+            badge={childCategories.length + siblingCategories.length}
+          >
+            <CategoryFilter
+              childCategories={childCategories}
+              siblingCategories={siblingCategories}
+              currentCategoryPath={currentCategoryPath}
               isLoading={isLoading}
             />
           </CollapsibleSection>
-        </div>
-      </ScrollArea>
+        )}
+
+        {/* Variant Attributes */}
+        {variantAttributeGroups.length > 0 && (
+          <CollapsibleSection
+            title="Attributes"
+            defaultOpen={true}
+            badge={variantAttributeGroups.length}
+          >
+            <VariantAttributeFilter
+              attributeGroups={variantAttributeGroups}
+              selectedAttributes={filters.variantAttributes}
+              onToggle={toggleVariantAttribute}
+              isLoading={isLoading}
+            />
+          </CollapsibleSection>
+        )}
+
+        {/* Product Specifications */}
+        {productSpecificationGroups.length > 0 && (
+          <CollapsibleSection
+            title="Specifications"
+            defaultOpen={false}
+            badge={productSpecificationGroups.length}
+          >
+            <ProductSpecificationFilter
+              specificationGroups={productSpecificationGroups}
+              selectedSpecifications={filters.productSpecifications}
+              onToggle={toggleProductSpecification}
+              isLoading={isLoading}
+            />
+          </CollapsibleSection>
+        )}
+
+        {/* Catalog Codes */}
+        {catalogCodes.length > 0 && (
+          <CollapsibleSection
+            title="Catalog Codes"
+            defaultOpen={false}
+            badge={catalogCodes.length}
+          >
+            <CatalogCodeFilter
+              options={catalogCodes}
+              selectedCodes={filters.catalogCodes || []}
+              onToggle={toggleCatalogCode}
+              isLoading={isLoading}
+            />
+          </CollapsibleSection>
+        )}
+
+        {/* Equipment Codes */}
+        {equipmentCodes.length > 0 && (
+          <CollapsibleSection
+            title="Equipment Codes"
+            defaultOpen={false}
+            badge={equipmentCodes.length}
+          >
+            <EquipmentCodeFilter
+              options={equipmentCodes}
+              selectedCodes={filters.equipmentCodes || []}
+              onToggle={toggleEquipmentCode}
+              isLoading={isLoading}
+            />
+          </CollapsibleSection>
+        )}
+
+        {/* Stock Status */}
+        <CollapsibleSection title="Stock" defaultOpen={false}>
+          <StockFilter
+            inStock={filters.inStock}
+            onChange={setStockFilter}
+            isLoading={isLoading}
+          />
+        </CollapsibleSection>
+      </div>
     </div>
   );
 }
-

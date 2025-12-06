@@ -2,15 +2,7 @@
 
 import { FileText, Layers } from "lucide-react";
 import { useTranslations } from "next-intl";
-import dynamic from "next/dynamic";
-import {
-  Suspense,
-  useCallback,
-  useEffect,
-  useMemo,
-  useRef,
-  useState,
-} from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
 
 import { EditOrderNameDialog } from "@/components/dialogs/EditOrderNameDialog";
@@ -21,13 +13,13 @@ import {
 import PricingFormat from "@/components/PricingFormat";
 import {
   CustomerInfoCard,
-  DetailsSkeleton,
   OrderContactDetails,
+  OrderPriceDetails,
+  OrderProductsTable,
   OrderTermsCard,
-  SalesHeader,
+  SalesHeader
 } from "@/components/sales";
 import { Label } from "@/components/ui/label";
-import { Skeleton } from "@/components/ui/skeleton";
 import { useQuoteDetails } from "@/hooks/details/quotedetails/useQuoteDetails";
 import { useCurrentUser } from "@/hooks/useCurrentUser";
 import { useGetVersionDetails } from "@/hooks/useGetVersionDetails/useGetVersionDetails";
@@ -44,22 +36,6 @@ import type { SelectedVersion } from "@/types/details/orderdetails/version.types
 import { getStatusStyle } from "@/utils/details/orderdetails";
 import { decodeUnicode } from "@/utils/General/general";
 
-// Dynamic imports for heavy components
-// No loading prop to avoid double loaders - main DetailsSkeleton handles all loading states
-const OrderProductsTable = dynamic(
-  () => import("@/components/sales").then(mod => mod.OrderProductsTable),
-  {
-    ssr: false,
-  }
-);
-
-const OrderPriceDetails = dynamic(
-  () => import("@/components/sales").then(mod => mod.OrderPriceDetails),
-  {
-    ssr: false,
-  }
-);
-
 interface QuoteDetailsClientProps {
   params: Promise<{ quoteId: string }>;
 }
@@ -75,7 +51,6 @@ export default function QuoteDetailsClient({
   const [quoteDetails, setQuoteDetails] =
     useState<QuotationDetailsResponse | null>(null);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
   const [editDialogOpen, setEditDialogOpen] = useState(false);
   const [versionsDialogOpen, setVersionsDialogOpen] = useState(false);
   const [selectedVersion, setSelectedVersion] =
@@ -126,7 +101,6 @@ export default function QuoteDetailsClient({
 
     try {
       setLoading(true);
-      setError(null);
 
       const response = await QuotationDetailsService.fetchQuotationDetails({
         userId,
@@ -144,7 +118,6 @@ export default function QuoteDetailsClient({
     } catch (err) {
       const errorMessage =
         err instanceof Error ? err.message : t("failedToFetchQuoteDetails");
-      setError(errorMessage);
       toast.error(errorMessage);
       // Ensure loading is set to false even on error
       setLoading(false);
@@ -546,41 +519,31 @@ export default function QuoteDetailsClient({
 
       {/* Quote Details Content - Scrollable area */}
       <div className="flex-1 overflow-y-auto overflow-x-hidden relative z-0">
-        <div className="container mx-auto px-2 sm:px-3 md:px-4 py-2 sm:py-3">
-          {loading ? (
-            <DetailsSkeleton
-              showStatusTracker={false}
-              leftWidth="lg:w-[65%]"
-              rightWidth="lg:w-[33%]"
-            />
-          ) : (
+      
             <div className="flex flex-col lg:flex-row gap-2 sm:gap-3 md:gap-4">
               {/* Left Side - Products Table, Contact & Terms - 65% */}
               <div className="w-full lg:w-[65%] space-y-2 sm:space-y-3">
-                {/* Products Table */}
-                {!loading && !error && quoteDetails && (
+              
                   <div className="mt-[55px]">
-                    <Suspense fallback={<Skeleton className="h-64 w-full" />}>
-                      <OrderProductsTable
-                        products={products}
-                        {...(products.length && {
-                          totalCount: products.length,
-                        })}
-                        showInvoicedQty={false}
-                        onExport={() => {
-                          const filename = `Quote_${quoteIdentifier}_Products.csv`;
-                          exportProductsToCsv(
-                            products as ProductCsvRow[],
-                            filename
-                          );
-                        }}
-                      />
-                    </Suspense>
+                    <OrderProductsTable
+                      products={products}
+                      {...(products.length && {
+                        totalCount: products.length,
+                      })}
+                      showInvoicedQty={false}
+                      onExport={() => {
+                        const filename = `Quote_${quoteIdentifier}_Products.csv`;
+                        exportProductsToCsv(
+                          products as ProductCsvRow[],
+                          filename
+                        );
+                      }}
+                      loading={loading}
+                    />
                   </div>
-                )}
+              
 
-                {/* Contact Details and Terms Cards - Side by Side */}
-                {!loading && !error && quoteDetails && (
+             
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-2 sm:gap-3">
                     {/* Contact Details Card */}
                     <OrderContactDetails
@@ -663,12 +626,14 @@ export default function QuoteDetailsClient({
                         (quoteDetails?.data?.buyerReferenceNumber as string) ||
                         "-"
                       }
+                      loading={loading}
                     />
 
                     {/* Terms Card */}
                     <OrderTermsCard
                       orderTerms={
                         {
+                          loading: loading,
                           ...(quoteDetailData?.quoteTerms as unknown as Record<
                             string,
                             unknown
@@ -680,158 +645,150 @@ export default function QuoteDetailsClient({
                       }
                     />
                   </div>
-                )}
+                
               </div>
 
-              {/* Right Side - Price Details - 33% */}
-              {!loading && !error && quoteDetails && (
+            
                 <div className="w-full lg:w-[33%] mt-[55px]">
-                  <Suspense fallback={<Skeleton className="h-96 w-full" />}>
-                    <OrderPriceDetails
-                      products={products}
-                      isInter={(() => {
-                        // Determine if inter-state based on product taxes (IGST = inter-state, SGST/CGST = intra-state)
-                        if (products.length > 0 && products[0]) {
-                          const firstProduct = products[0] as Record<
-                            string,
-                            unknown
-                          >;
-                          if (
-                            firstProduct.productTaxes &&
-                            Array.isArray(firstProduct.productTaxes)
-                          ) {
-                            const hasIGST = firstProduct.productTaxes.some(
-                              (t: Record<string, unknown>) =>
-                                t.taxName === "IGST"
-                            );
-                            return hasIGST;
-                          }
+                  <OrderPriceDetails
+                    products={products}
+                    isInter={(() => {
+                      // Determine if inter-state based on product taxes (IGST = inter-state, SGST/CGST = intra-state)
+                      if (products.length > 0 && products[0]) {
+                        const firstProduct = products[0] as Record<
+                          string,
+                          unknown
+                        >;
+                        if (
+                          firstProduct.productTaxes &&
+                          Array.isArray(firstProduct.productTaxes)
+                        ) {
+                          const hasIGST = firstProduct.productTaxes.some(
+                            (t: Record<string, unknown>) => t.taxName === "IGST"
+                          );
+                          return hasIGST;
                         }
-                        return false;
-                      })()}
-                      insuranceCharges={
-                        Number(quoteDetailData?.insuranceCharges) || 0
                       }
-                      precision={2}
-                      Settings={{
-                        roundingAdjustment:
-                          quoteDetailData?.roundingAdjustmentEnabled || false,
-                      }}
-                      isSeller={
-                        (user as { isSeller?: boolean })?.isSeller || false
-                      }
-                      taxExemption={
-                        (user as { taxExemption?: boolean })?.taxExemption ||
-                        false
-                      }
-                      currency={buyerCurrencySymbol?.symbol || "INR ₹"}
-                      overallShipping={Number(
-                        quoteDetailData?.overallShipping || 0
-                      )}
-                      overallTax={Number(quoteDetailData?.overallTax || 0)}
-                      calculatedTotal={Number(
-                        quoteDetailData?.calculatedTotal ||
-                          quoteDetailData?.grandTotal ||
-                          0
-                      )}
-                      subTotal={Number(quoteDetailData?.subTotal || 0)}
-                      taxableAmount={Number(
-                        quoteDetailData?.taxableAmount || 0
-                      )}
-                    />
-                  </Suspense>
+                      return false;
+                    })()}
+                    insuranceCharges={
+                      Number(quoteDetailData?.insuranceCharges) || 0
+                    }
+                    precision={2}
+                    Settings={{
+                      roundingAdjustment:
+                        quoteDetailData?.roundingAdjustmentEnabled || false,
+                    }}
+                    isSeller={
+                      (user as { isSeller?: boolean })?.isSeller || false
+                    }
+                    taxExemption={
+                      (user as { taxExemption?: boolean })?.taxExemption ||
+                      false
+                    }
+                    currency={buyerCurrencySymbol?.symbol || "INR ₹"}
+                    overallShipping={Number(
+                      quoteDetailData?.overallShipping || 0
+                    )}
+                    overallTax={Number(quoteDetailData?.overallTax || 0)}
+                    calculatedTotal={Number(
+                      quoteDetailData?.calculatedTotal ||
+                        quoteDetailData?.grandTotal ||
+                        0
+                    )}
+                    subTotal={Number(quoteDetailData?.subTotal || 0)}
+                    taxableAmount={Number(quoteDetailData?.taxableAmount || 0)}
+                    loading={loading}
+                  />
 
                   {/* Target Discount Card - Display only on detail page */}
                   {showTargetDiscount && (
                     <div className="mt-4">
-                      <Suspense fallback={null}>
-                        <div className="bg-white rounded-lg border border-gray-200 shadow-sm">
-                          <div className="px-6 py-4 bg-gray-50 rounded-t-lg border-b">
-                            <h3 className="text-xl font-semibold text-gray-900">
-                              Target Discount
-                            </h3>
-                          </div>
-                          <div className="px-6 py-4">
-                            <div className="space-y-4">
-                              {/* Target Discount Display */}
-                              <div className="flex justify-between items-center py-2">
-                                <Label className="text-sm font-normal text-gray-900 w-1/2">
-                                  Total Discount
-                                </Label>
-                                <div className="text-sm font-semibold text-gray-900 w-1/2 text-right">
-                                  {(
-                                    sprDetails?.sprRequestedDiscount || 0
-                                  ).toFixed(2)}
-                                  %
-                                </div>
+                      <div className="bg-white rounded-lg border border-gray-200 shadow-sm">
+                        <div className="px-6 py-4 bg-gray-50 rounded-t-lg border-b">
+                          <h3 className="text-xl font-semibold text-gray-900">
+                            Target Discount
+                          </h3>
+                        </div>
+                        <div className="px-6 py-4">
+                          <div className="space-y-4">
+                            {/* Target Discount Display */}
+                            <div className="flex justify-between items-center py-2">
+                              <Label className="text-sm font-normal text-gray-900 w-1/2">
+                                Total Discount
+                              </Label>
+                              <div className="text-sm font-semibold text-gray-900 w-1/2 text-right">
+                                {(
+                                  sprDetails?.sprRequestedDiscount || 0
+                                ).toFixed(2)}
+                                %
                               </div>
-                              {/* Target Price Display */}
-                              <div className="flex justify-between items-center py-2">
-                                <Label className="text-sm font-normal text-gray-900 w-1/2">
-                                  Target Price (Excl. taxes)
-                                </Label>
-                                <div className="text-sm font-semibold text-gray-900 w-1/2 text-right">
-                                  <PricingFormat
-                                    value={sprDetails?.targetPrice || 0}
-                                  />
-                                </div>
+                            </div>
+                            {/* Target Price Display */}
+                            <div className="flex justify-between items-center py-2">
+                              <Label className="text-sm font-normal text-gray-900 w-1/2">
+                                Target Price (Excl. taxes)
+                              </Label>
+                              <div className="text-sm font-semibold text-gray-900 w-1/2 text-right">
+                                <PricingFormat
+                                  value={sprDetails?.targetPrice || 0}
+                                />
                               </div>
                             </div>
                           </div>
                         </div>
-                      </Suspense>
+                      </div>
                     </div>
                   )}
 
                   {/* Customer Information Card */}
                   <div className="mt-4">
-                    <Suspense fallback={null}>
-                      <CustomerInfoCard
-                        quoteValidity={{
-                          from:
-                            ((displayQuoteDetails?.validityFrom ||
-                              quoteDetails?.data?.validityFrom) as string) ||
-                            undefined,
-                          till:
-                            ((displayQuoteDetails?.validityTill ||
-                              quoteDetails?.data?.validityTill) as string) ||
-                            undefined,
-                        }}
-                        contractEnabled={
-                          ((displayQuoteDetails?.purchaseOrder ||
-                            quoteDetails?.data?.purchaseOrder) as boolean) ||
-                          false
-                        }
-                        endCustomerName={
-                          (
-                            quoteDetailData?.sprDetails as
-                              | { companyName?: string }
-                              | undefined
-                          )?.companyName || undefined
-                        }
-                        projectName={
-                          (
-                            quoteDetailData?.sprDetails as
-                              | { projectName?: string }
-                              | undefined
-                          )?.projectName || undefined
-                        }
-                        competitorNames={
-                          (
-                            quoteDetailData?.sprDetails as
-                              | { competitorNames?: string[] }
-                              | undefined
-                          )?.competitorNames || []
-                        }
-                        priceJustification={
-                          (
-                            quoteDetailData?.sprDetails as
-                              | { priceJustification?: string }
-                              | undefined
-                          )?.priceJustification || undefined
-                        }
-                      />
-                    </Suspense>
+                    <CustomerInfoCard
+                      quoteValidity={{
+                        from:
+                          ((displayQuoteDetails?.validityFrom ||
+                            quoteDetails?.data?.validityFrom) as string) ||
+                          undefined,
+                        till:
+                          ((displayQuoteDetails?.validityTill ||
+                            quoteDetails?.data?.validityTill) as string) ||
+                          undefined,
+                      }}
+                      contractEnabled={
+                        ((displayQuoteDetails?.purchaseOrder ||
+                          quoteDetails?.data?.purchaseOrder) as boolean) ||
+                        false
+                      }
+                      endCustomerName={
+                        (
+                          quoteDetailData?.sprDetails as
+                            | { companyName?: string }
+                            | undefined
+                        )?.companyName || undefined
+                      }
+                      projectName={
+                        (
+                          quoteDetailData?.sprDetails as
+                            | { projectName?: string }
+                            | undefined
+                        )?.projectName || undefined
+                      }
+                      competitorNames={
+                        (
+                          quoteDetailData?.sprDetails as
+                            | { competitorNames?: string[] }
+                            | undefined
+                        )?.competitorNames || []
+                      }
+                      priceJustification={
+                        (
+                          quoteDetailData?.sprDetails as
+                            | { priceJustification?: string }
+                            | undefined
+                        )?.priceJustification || undefined
+                      }
+                      loading={loading}
+                    />
                   </div>
 
                   {/* Attachments Card */}
@@ -848,81 +805,78 @@ export default function QuoteDetailsClient({
                     );
                   })() && (
                     <div className="mt-4">
-                      <Suspense fallback={null}>
-                        <div className="bg-white rounded-lg border border-gray-200 shadow-sm">
-                          <div className="px-6 py-4 bg-gray-50 rounded-t-lg border-b">
-                            <h3 className="text-xl font-semibold text-gray-900">
-                              Attachments
-                            </h3>
-                          </div>
-                          <div className="px-6 py-4">
-                            <div className="space-y-2">
-                              {(
-                                (displayQuoteDetails?.uploadedDocumentDetails ||
-                                  quoteDetails?.data?.uploadedDocumentDetails ||
-                                  []) as any[]
-                              ).map((attachment: any, index: number) => {
-                                const fileUrl =
-                                  attachment.source ||
-                                  attachment.filePath ||
-                                  attachment.attachment;
-                                const fileName =
-                                  attachment.name || `File ${index + 1}`;
-                                const attachedBy =
-                                  attachment.width?.split(",")[0] || "Unknown";
-                                const attachedDate = attachment.width?.split(
-                                  ","
-                                )[1]
-                                  ? new Date(
-                                      attachment.width.split(",")[1]
-                                    ).toLocaleString("en-IN", {
-                                      day: "2-digit",
-                                      month: "2-digit",
-                                      year: "numeric",
-                                      hour: "2-digit",
-                                      minute: "2-digit",
-                                      hour12: true,
-                                    })
-                                  : null;
+                      <div className="bg-white rounded-lg border border-gray-200 shadow-sm">
+                        <div className="px-6 py-4 bg-gray-50 rounded-t-lg border-b">
+                          <h3 className="text-xl font-semibold text-gray-900">
+                            Attachments
+                          </h3>
+                        </div>
+                        <div className="px-6 py-4">
+                          <div className="space-y-2">
+                            {(
+                              (displayQuoteDetails?.uploadedDocumentDetails ||
+                                quoteDetails?.data?.uploadedDocumentDetails ||
+                                []) as any[]
+                            ).map((attachment: any, index: number) => {
+                              const fileUrl =
+                                attachment.source ||
+                                attachment.filePath ||
+                                attachment.attachment;
+                              const fileName =
+                                attachment.name || `File ${index + 1}`;
+                              const attachedBy =
+                                attachment.width?.split(",")[0] || "Unknown";
+                              const attachedDate = attachment.width?.split(
+                                ","
+                              )[1]
+                                ? new Date(
+                                    attachment.width.split(",")[1]
+                                  ).toLocaleString("en-IN", {
+                                    day: "2-digit",
+                                    month: "2-digit",
+                                    year: "numeric",
+                                    hour: "2-digit",
+                                    minute: "2-digit",
+                                    hour12: true,
+                                  })
+                                : null;
 
-                                return (
-                                  <div
-                                    key={index}
-                                    className="flex items-center justify-between p-3 border rounded-md bg-gray-50 hover:bg-gray-100 transition-colors cursor-pointer"
-                                    onClick={() => {
-                                      if (fileUrl) {
-                                        window.open(fileUrl, "_blank");
-                                      }
-                                    }}
-                                  >
-                                    <div className="flex items-center gap-3 flex-1 min-w-0">
-                                      <FileText className="h-5 w-5 text-muted-foreground flex-shrink-0" />
-                                      <div className="flex-1 min-w-0">
-                                        <p className="text-sm font-medium text-gray-900 truncate">
-                                          {fileName}
+                              return (
+                                <div
+                                  key={index}
+                                  className="flex items-center justify-between p-3 border rounded-md bg-gray-50 hover:bg-gray-100 transition-colors cursor-pointer"
+                                  onClick={() => {
+                                    if (fileUrl) {
+                                      window.open(fileUrl, "_blank");
+                                    }
+                                  }}
+                                >
+                                  <div className="flex items-center gap-3 flex-1 min-w-0">
+                                    <FileText className="h-5 w-5 text-muted-foreground flex-shrink-0" />
+                                    <div className="flex-1 min-w-0">
+                                      <p className="text-sm font-medium text-gray-900 truncate">
+                                        {fileName}
+                                      </p>
+                                      {attachedBy && attachedDate && (
+                                        <p className="text-xs text-muted-foreground">
+                                          Attached By {attachedBy}{" "}
+                                          {attachedDate}
                                         </p>
-                                        {attachedBy && attachedDate && (
-                                          <p className="text-xs text-muted-foreground">
-                                            Attached By {attachedBy}{" "}
-                                            {attachedDate}
-                                          </p>
-                                        )}
-                                      </div>
+                                      )}
                                     </div>
                                   </div>
-                                );
-                              })}
-                            </div>
+                                </div>
+                              );
+                            })}
                           </div>
                         </div>
-                      </Suspense>
+                      </div>
                     </div>
                   )}
                 </div>
-              )}
+            
             </div>
-          )}
-        </div>
+          
       </div>
 
       {/* Right Sidebar Icons - Positioned just below the SalesHeader component, flush to right edge */}

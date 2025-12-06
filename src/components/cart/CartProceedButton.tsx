@@ -3,7 +3,7 @@
 import { Button } from "@/components/ui/button";
 import { useCurrentUser } from "@/hooks/useCurrentUser";
 import { useNavigationWithLoader } from "@/hooks/useNavigationWithLoader";
-import { ShoppingCart } from "lucide-react";
+import { FileText, ShoppingCart } from "lucide-react";
 import { useTranslations } from "next-intl";
 
 interface CartProceedButtonProps {
@@ -68,7 +68,7 @@ export default function CartProceedButton({
         <Button
           className="w-full"
           size="lg"
-          onClick={() => router.push("/auth/login")}
+          onClick={() => router.push("/login")}
           disabled={disabled || isLoading}
         >
           {t("loginToContinue")}
@@ -86,6 +86,7 @@ export default function CartProceedButton({
         onClick={handleRequestQuote}
         disabled={disabled || isLoading}
       >
+        <FileText className="mr-2 h-5 w-5" />
         {t("requestQuote")}
       </Button>
       <Button

@@ -1,7 +1,6 @@
 "use client";
 
 import PricingFormat from "@/components/PricingFormat";
-import CartPriceDetails from "@/components/sales/CartPriceDetails";
 import {
   Accordion,
   AccordionContent,
@@ -27,6 +26,7 @@ import type { CartItem } from "@/types/calculation/cart";
 import { Trash2 } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useEffect, useMemo, useState } from "react";
+import { OrderPriceDetails } from "../sales";
 import CartProceedButton from "./CartProceedButton";
 import CartProductCard from "./CartProductCard";
 
@@ -41,6 +41,9 @@ interface MultipleSellerCardsProps {
   handleOrder?: (sellerId: string | number) => void;
   handleQuote?: (sellerId: string | number) => void;
   onSellerSelect: (sellerId: string) => void;
+  products: CartItem[];
+  
+  cartCalculationResult: any;
 }
 
 export default function MultipleSellerCards({
@@ -50,6 +53,9 @@ export default function MultipleSellerCards({
   onSellerSelect,
   handleOrder,
   handleQuote,
+  products,
+
+  cartCalculationResult,
 }: MultipleSellerCardsProps) {
   const { cart, isLoading: cartLoading } = useCartContext();
   const { user } = useCurrentUser();
@@ -83,7 +89,7 @@ export default function MultipleSellerCards({
     sellerIds,
     isPricingLoading: pricingLoadingFromHook,
   } = useMultipleSellerCart(cart, calculationParams);
-
+ 
   // Determine default expanded seller (first seller when multiple sellers exist)
   // Calculate this before early returns so we can use it in useEffect
   const defaultSellerId = useMemo(() => {
@@ -240,14 +246,14 @@ export default function MultipleSellerCards({
                             key={`${item.productId}-${item.itemNo}-${itemIndex}`}
                             item={item}
                             isPricingLoading={isPricingLoadingState}
-                            onUpdate={quantity => {
+                            onUpdate={async (quantity) => {
                               if (onItemUpdate) {
-                                onItemUpdate(item, quantity);
+                                await onItemUpdate(item, quantity);
                               }
                             }}
-                            onDelete={() => {
+                            onDelete={async () => {
                               if (onItemDelete) {
-                                onItemDelete(
+                                await onItemDelete(
                                   Number(item.productId),
                                   item.itemNo || "",
                                   item.sellerId
@@ -263,12 +269,28 @@ export default function MultipleSellerCards({
                     <div className="lg:col-span-1 order-2 lg:order-2">
                       <div className="lg:sticky lg:top-4 space-y-4">
                         {sellerCart.pricing && currency && (
-                          <CartPriceDetails
-                            cartValue={sellerCart.pricing}
-                            currency={currency}
-                            isCart={true}
-                            isPricingLoading={isPricingLoadingState}
-                          />
+                        <OrderPriceDetails
+                        products={products}
+                        isInter={false}
+                        insuranceCharges={cartCalculationResult?.insuranceCharges || 0}
+                        loading={isPricingLoading}
+                        precision={2}
+                        Settings={{
+                          roundingAdjustment: true,
+                        }}
+                        isSeller={false}
+                        taxExemption={false}
+                        currency={currency?.symbol || "INR ₹"}
+                        overallShipping={cartCalculationResult?.totalShipping || 0}
+                        overallTax={cartCalculationResult?.totalTax || 0}
+                        calculatedTotal={cartCalculationResult?.grandTotal || 0}
+                        subTotal={cartCalculationResult?.totalValue || 0}
+                        taxableAmount={cartCalculationResult?.taxableAmount || 0}
+                        totalCashDiscount={cartCalculationResult?.totalCashDiscount || 0}
+                        cashDiscountValue={cartCalculationResult?.cashDiscountValue || 0}
+                        totalBasicDiscount={cartCalculationResult?.totalBasicDiscount || 0}
+                        isCart ={true}
+                      />
                         )}
 
                         <CartProceedButton

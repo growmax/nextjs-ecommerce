@@ -2,6 +2,7 @@
 
 import { useUserDetails } from "@/contexts/UserDetailsContext";
 import { Link, useRouter } from "@/i18n/navigation";
+import { AuthStorage } from "@/lib/auth";
 import { Map, PieChart, Settings2, SquareTerminal } from "lucide-react";
 import { useTranslations } from "next-intl";
 import * as React from "react";
@@ -10,22 +11,47 @@ import { startTransition } from "react";
 import { NavMain } from "@/components/nav-main";
 import { NavUser } from "@/components/nav-user";
 import {
-    Sidebar,
-    SidebarContent,
-    SidebarFooter,
-    SidebarHeader,
-    SidebarMenu,
-    SidebarMenuButton,
-    SidebarMenuItem,
-    SidebarRail,
-    useSidebar,
+  Sidebar,
+  SidebarContent,
+  SidebarFooter,
+  SidebarHeader,
+  SidebarMenu,
+  SidebarMenuButton,
+  SidebarMenuItem,
+  SidebarRail,
+  useSidebar,
 } from "@/components/ui/sidebar";
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const { isMobile, setOpenMobile } = useSidebar();
-  const { isAuthenticated } = useUserDetails();
+  const { isAuthenticated: contextIsAuthenticated, isLoading: isAuthLoading } =
+    useUserDetails();
   const router = useRouter();
   const t = useTranslations("navigation");
+
+  // Use the same logic as AppHeader to prevent login UI flash during reloads/navigation
+  // Strategy: Always prioritize storage check when it says authenticated
+  // Wrap in try-catch to handle any storage access errors gracefully
+  let storageAuthState = false;
+  try {
+    storageAuthState = AuthStorage.isAuthenticated();
+  } catch (error) {
+    // If storage check fails, fall back to context state
+    // This prevents errors from causing UI issues
+    if (process.env.NODE_ENV !== "test") {
+      console.warn("AuthStorage check failed, using context state:", error);
+    }
+    storageAuthState = contextIsAuthenticated;
+  }
+
+  // Determine authenticated state with storage as primary source during transitions
+  // Priority: storage (if authenticated) > context > storage (if not authenticated)
+  // This ensures we never show non-authenticated UI if storage indicates user is authenticated
+  const isAuthenticated = storageAuthState
+    ? true // If storage says authenticated, always trust it (prevents flash during reloads)
+    : isAuthLoading
+      ? storageAuthState // During loading, use storage
+      : contextIsAuthenticated || storageAuthState; // Trust context or storage
 
   // This is the real navigation data for your ecommerce application
   const data = {
@@ -46,13 +72,14 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         icon: SquareTerminal,
         items: [
           {
-            title: t("orders"),
-            url: "/landing/orderslanding",
-          },
-          {
             title: t("quotes"),
             url: "/landing/quoteslanding",
           },
+          {
+            title: t("orders"),
+            url: "/landing/orderslanding",
+          },
+      
         ],
       },
       {

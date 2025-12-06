@@ -147,8 +147,8 @@ describe("AppSidebar", () => {
       expect(settingsItem).toBeDefined();
       // The component uses translation keys which return the keys with our mock
       expect(salesItem.items.map((i: { title: string }) => i.title)).toEqual([
-        "orders",
         "quotes",
+        "orders",
       ]);
       expect(settingsItem.items.map((i: { title: string }) => i.title)).toEqual(
         ["company", "profile"]

@@ -1,4 +1,5 @@
 import { CategoryBreadcrumbServer } from "@/components/Breadcrumb/CategoryBreadcrumbServer";
+import { BlockingLoader } from "@/components/GlobalLoader/BlockingLoader";
 import { ProductViewSwitcher } from "@/components/ProductGrid/ProductViewSwitcher";
 import { StructuredDataServer } from "@/components/seo/StructuredDataServer";
 import type { RequestContext } from "@/lib/api/client";
@@ -8,6 +9,7 @@ import SearchService, {
 } from "@/lib/api/services/SearchService/SearchService";
 import TenantService from "@/lib/api/services/TenantService";
 import CategoryResolutionService from "@/lib/services/CategoryResolutionService";
+import { BlockingLoaderProvider } from "@/providers/BlockingLoaderProvider";
 import { FilterAggregations } from "@/types/category-filters";
 import { Metadata } from "next";
 import { headers } from "next/headers";
@@ -322,8 +324,6 @@ export default async function CategoryPage({
         ? false
         : undefined;
 
-
-
   // Parse catalog codes
   const catalogCodes = filters.catalog_code
     ? (Array.isArray(filters.catalog_code)
@@ -369,8 +369,6 @@ export default async function CategoryPage({
     ...(equipmentCodes && equipmentCodes.length > 0 && { equipmentCodes }),
   });
 
-
-
   // Extract base query for aggregations (need the bool object, not the full query)
   const baseQueryForAggs = queryResult.query.query.bool;
 
@@ -394,8 +392,6 @@ export default async function CategoryPage({
         Object.keys(filterState).length > 0 ? filterState : undefined,
         context
       );
-
-
 
       if (aggregationResponse.success) {
         aggregations = aggregationResponse.aggregations as FilterAggregations;
@@ -447,8 +443,6 @@ export default async function CategoryPage({
             elasticIndex,
             query: searchQuery,
           });
-
-
 
           return {
             products: result.data || [],
@@ -511,46 +505,42 @@ export default async function CategoryPage({
         {/* Breadcrumbs - Server-rendered */}
         <CategoryBreadcrumbServer breadcrumbs={breadcrumbs} />
 
-        {/* Category Header - Server-rendered */}
-        <div className="mb-4 sm:mb-6">
-          <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-slate-800 dark:text-slate-100 mb-2 break-words">
-            {lastNode?.name || "Category"}
-          </h1>
-        </div>
-
         {/* Interactivity Controls - Client component for pagination/sorting/filters */}
-        <CategoryPageInteractivity
-        initialFilters={{
-          page,
-          sort: sortBy,
-        }}
-        total={initialProducts.total}
-        categoryPath={categoryPath}
-        aggregations={aggregations}
-        currentCategoryPath={categories}
-      >
-
-      {/* Product Grid - Server-rendered for SEO with Suspense for streaming */}
-      <div className="relative">
-        <Suspense
-          fallback={
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 md:gap-6">
-              {Array.from({ length: 20 }).map((_, i) => (
-                <div
-                  key={i}
-                  className="h-[380px] bg-muted animate-pulse rounded-lg"
+        <BlockingLoaderProvider>
+          <CategoryPageInteractivity
+            initialFilters={{
+              page,
+              sort: sortBy,
+            }}
+            total={initialProducts.total}
+            categoryPath={categoryPath}
+            aggregations={aggregations}
+            currentCategoryPath={categories}
+            categoryName={lastNode?.name || "Category"}
+          >
+            {/* Product Grid - Server-rendered for SEO with Suspense for streaming */}
+            <div className="relative">
+              <Suspense
+                fallback={
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4 md:gap-6">
+                    {Array.from({ length: 20 }).map((_, i) => (
+                      <div
+                        key={i}
+                        className="h-[380px] bg-muted animate-pulse rounded-lg"
+                      />
+                    ))}
+                  </div>
+                }
+              >
+                <ProductGridWrapper
+                  productsPromise={productsPromise}
+                  locale={locale}
                 />
-              ))}
+              </Suspense>
             </div>
-          }
-        >
-          <ProductGridWrapper
-            productsPromise={productsPromise}
-            locale={locale}
-          />
-        </Suspense>
-        </div>
-        </CategoryPageInteractivity>
+            <BlockingLoader />
+          </CategoryPageInteractivity>
+        </BlockingLoaderProvider>
       </div>
     </>
   );

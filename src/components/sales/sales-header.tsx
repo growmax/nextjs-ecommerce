@@ -53,6 +53,7 @@ export interface SalesHeaderProps {
   showClose?: boolean;
   className?: string;
   loading?: boolean;
+  hideAppHeader?: boolean;
 }
 
 export default function SalesHeader({
@@ -71,6 +72,7 @@ export default function SalesHeader({
   showClose = true,
   className,
   loading = false,
+  hideAppHeader = false,
 }: SalesHeaderProps) {
   const { state, isMobile } = useSidebar();
   const leftOffset = isMobile
@@ -82,7 +84,7 @@ export default function SalesHeader({
   return (
     <div
       className={cn(
-        "fixed top-14 left-0 right-0 z-40 flex flex-col md:flex-row md:items-center justify-between gap-2 md:gap-4 px-3 md:px-4 py-2 md:py-3 bg-white border-b shadow-sm transition-all duration-200",
+        hideAppHeader ? "fixed top-0 left-0 right-0 z-[90] flex  md:items-center justify-between gap-2 md:gap-4 px-3 md:px-4 py-4 bg-white border-b shadow-sm transition-all duration-200" : "fixed top-14 left-0 right-0 z-[90] flex  md:items-center justify-between gap-2 md:gap-4 px-3 md:px-4 py-4 bg-white border-b shadow-sm transition-all duration-200",
         className
       )}
       style={{ left: leftOffset }}
@@ -90,7 +92,7 @@ export default function SalesHeader({
       {/* Left Section - Title, Identifier, and Status */}
       <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-3 flex-1 min-w-0">
         {/* Title with Edit Icon */}
-        <div className="flex items-center justify-center sm:justify-start gap-2 min-w-0">
+        <div className="flex items-center justify-start gap-2 min-w-0">
           {loading ? (
             <Skeleton className="h-6 w-48" />
           ) : (
@@ -113,19 +115,14 @@ export default function SalesHeader({
         {/* Identifier and Status Container */}
         <div className="flex items-center justify-center sm:justify-start gap-2 sm:gap-3 flex-wrap">
           {/* Identifier */}
-          {loading ? (
-            <Skeleton className="h-4 w-24" />
-          ) : (
+         
             <span className="text-xs md:text-sm font-medium text-gray-600 truncate">
               {identifier}
             </span>
-          )}
+        
 
-          {/* Status Badge */}
-          {loading ? (
-            <Skeleton className="h-6 w-20" />
-          ) : (
-            status && (
+       
+            {status && (
               <span
                 className="px-3 py-1 rounded-full text-sm font-medium text-white whitespace-nowrap shrink-0"
                 style={{
@@ -135,7 +132,7 @@ export default function SalesHeader({
                 {status.label}
               </span>
             )
-          )}
+          }
         </div>
       </div>
 
@@ -145,7 +142,7 @@ export default function SalesHeader({
         {loading ? (
           <>
             <Skeleton className="h-8 w-20 md:w-24" />
-            <Skeleton className="h-8 w-20 md:w-24" />
+           
           </>
         ) : (
           buttons.map(button => (

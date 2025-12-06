@@ -1,13 +1,14 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { Pencil, Check, X } from "lucide-react";
-import { containsXSS } from "@/utils/sanitization/sanitization.utils";
-import { toast } from "sonner";
+import { Input } from "@/components/ui/input";
+import { Skeleton } from "@/components/ui/skeleton"; // 🔥 Missing import added
 import { cn } from "@/lib/utils";
+import { containsXSS } from "@/utils/sanitization/sanitization.utils";
+import { Check, Pencil, X } from "lucide-react";
+import { useEffect, useState } from "react";
+import { toast } from "sonner";
 
 interface SummaryNameCardProps {
   name: string;
@@ -18,17 +19,6 @@ interface SummaryNameCardProps {
   maxLength?: number;
 }
 
-/**
- * Component for editing quote/order name
- * Migrated from buyer-fe/src/components/Summary/Components/NameCard/NameCard.js
- *
- * @param name - Current name value
- * @param onNameChange - Callback when name changes
- * @param title - Title label (e.g., "Quote Name", "Order Name")
- * @param loading - Loading state
- * @param className - Additional CSS classes
- * @param maxLength - Maximum character length (default: 250)
- */
 export default function SummaryNameCard({
   name,
   onNameChange,
@@ -48,16 +38,9 @@ export default function SummaryNameCard({
   const handleTempNameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const tempVal = e.target.value;
 
-    if (tempVal.length > maxLength) {
+    if (tempVal.length > maxLength || containsXSS(tempVal)) {
       setError("Invalid content");
-      setTempName(name); // Reset to original safe value
-      toast.error("Invalid content detected");
-      return;
-    }
-
-    if (containsXSS(tempVal)) {
-      setError("Invalid content");
-      setTempName(name); // Reset to original safe value
+      setTempName(name);
       toast.error("Invalid content detected");
       return;
     }
@@ -67,9 +50,7 @@ export default function SummaryNameCard({
   };
 
   const handleSave = () => {
-    if (error) {
-      return;
-    }
+    if (error) return;
 
     if (tempName.trim() !== name.trim()) {
       onNameChange(tempName.trim());
@@ -84,23 +65,28 @@ export default function SummaryNameCard({
   };
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
-    if (e.key === "Enter") {
-      handleSave();
-    } else if (e.key === "Escape") {
-      handleCancel();
-    }
+    if (e.key === "Enter") handleSave();
+    else if (e.key === "Escape") handleCancel();
   };
 
+  // 🔥 Only one loading UI — no JSX syntax error
   if (loading) {
     return (
-      <Card className={cn("animate-pulse", className)}>
+      <Card className={cn("shadow-sm", className)}>
         <CardContent className="p-4">
-          <div className="h-8 bg-muted rounded w-3/4" />
+          <div className="flex items-center justify-between gap-4">
+            <div className="flex-1">
+              <Skeleton className="h-4 w-20 mb-2" />
+              <Skeleton className="h-7 w-3/4" />
+            </div>
+            <Skeleton className="h-8 w-8 rounded-md" />
+          </div>
         </CardContent>
       </Card>
     );
   }
 
+  // 🔥 Clean return — fixed broken JSX
   return (
     <Card className={cn("shadow-sm", className)}>
       <CardContent className="p-4">
@@ -116,11 +102,12 @@ export default function SummaryNameCard({
                   {name || `Enter ${title.toLowerCase()}`}
                 </h2>
               </div>
+
               <Button
                 variant="ghost"
                 size="icon"
                 className="ml-2 flex-shrink-0"
-                onClick={e => {
+                onClick={(e) => {
                   e.stopPropagation();
                   setIsEditing(true);
                 }}
@@ -134,16 +121,17 @@ export default function SummaryNameCard({
                 <label className="text-sm text-muted-foreground mb-1 block">
                   {title}
                 </label>
+
                 <Input
                   autoFocus
                   value={tempName}
                   onChange={handleTempNameChange}
                   onKeyDown={handleKeyDown}
                   onBlur={handleSave}
-                  maxLength={300} // Allow slightly more for input, but validate at maxLength
+                  maxLength={300}
                   className={cn(error && "border-destructive")}
-                  aria-invalid={!!error}
                 />
+
                 {error ? (
                   <p className="text-xs text-destructive mt-1">{error}</p>
                 ) : (
@@ -152,6 +140,7 @@ export default function SummaryNameCard({
                   </p>
                 )}
               </div>
+
               <div className="flex gap-2">
                 <Button
                   size="sm"
@@ -162,6 +151,7 @@ export default function SummaryNameCard({
                   <Check className="h-4 w-4 mr-1" />
                   Save
                 </Button>
+
                 <Button
                   size="sm"
                   variant="outline"
@@ -179,3 +169,4 @@ export default function SummaryNameCard({
     </Card>
   );
 }
+

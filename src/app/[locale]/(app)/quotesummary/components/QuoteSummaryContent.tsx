@@ -3,7 +3,7 @@
 import { yupResolver } from "@hookform/resolvers/yup";
 import { addDays } from "date-fns";
 import { forEach, isEmpty, map, some, words } from "lodash";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { Suspense, useEffect, useMemo, useRef, useState } from "react";
 import { FormProvider, useForm } from "react-hook-form";
 import { toast } from "sonner";
@@ -22,9 +22,10 @@ import useModuleSettings from "@/hooks/useModuleSettings";
 import useUser from "@/hooks/useUser";
 
 // Components
+import { ConfirmationDialog } from "@/components/dialogs/common";
+import { EditOrderNameDialog } from "@/components/dialogs/EditOrderNameDialog";
 import { ApplicationLayout, PageLayout } from "@/components/layout";
 import {
-  DetailsSkeleton,
   OrderContactDetails,
   OrderPriceDetails,
   OrderProductsTable,
@@ -35,11 +36,7 @@ import CashDiscountCard from "@/components/sales/CashDiscountCard";
 import ApplyVolumeDiscountBtn from "@/components/summary/ApplyVolumeDiscountBtn";
 import Attachments from "@/components/summary/Attachments";
 import SPRForm from "@/components/summary/SPRForm";
-import SummaryNameCard from "@/components/summary/SummaryNameCard";
 import TargetDiscountCard from "@/components/summary/TargetDiscountCard";
-import { Checkbox } from "@/components/ui/checkbox";
-import { ConfirmationDialog } from "@/components/dialogs/common";
-import { Label } from "@/components/ui/label";
 import { FileText } from "lucide-react";
 
 // Utils
@@ -80,7 +77,8 @@ export default function QuoteSummaryContent() {
   const { quoteSettings } = useModuleSettings(user);
   const { hasQuotePermission } = useAccessControl();
   const { hideLoading } = useGlobalLoader();
-
+  const searchParams = useSearchParams();
+  const sellerCompanyIdFromUrl = searchParams?.get("sellerId");
   const isSummary = true;
   const isOrder = false; // This is a quote summary page, not an order
   const { initialValues, isLoading } = useSummaryDefault(isOrder, isSummary);
@@ -115,7 +113,6 @@ export default function QuoteSummaryContent() {
   }, [products, initialValues?.cartValue]);
 
   // Use more lenient loading check - only show loader if critical data is not available
-  const shouldShowLoader = isLoading && !hasCriticalData;
 
   // Hide global navigation loader when critical data is available
   useEffect(() => {
@@ -147,6 +144,9 @@ export default function QuoteSummaryContent() {
   );
   const [openCreateRfqConfirmationDialog, setOpenCreateRfqConfirmationDialog] =
     useState(false);
+
+  // State for edit name dialog
+  const [isEditNameDialogOpen, setIsEditNameDialogOpen] = useState(false);
 
   const { division } = useGetDivision(products);
   const { channel } = useGetChannel();
@@ -786,8 +786,12 @@ export default function QuoteSummaryContent() {
     }
   };
 
-  const handleNameChange = (val: string) => {
-    setQuoteName(val);
+  // Handler for saving quote name from dialog
+  const handleSaveQuoteName = async (newQuoteName: string) => {
+    // Update local state - no API call needed since quote isn't created yet
+    setQuoteName(newQuoteName);
+    // Also update in form for when quote is created
+    setValue("quoteName" as any, newQuoteName);
   };
 
   // Get watched values for cash discount - match reference implementation
@@ -1062,6 +1066,7 @@ export default function QuoteSummaryContent() {
 
       // Update quantity in products array - match productId using multiple possible fields
       // OrderProductsTable uses: brandProductId || itemCode || orderIdentifier
+      // IMPORTANT: Preserve all cash discount related fields when updating quantity
       const updatedProducts = currentProducts.map((product: any) => {
         const productIdToMatch =
           product.brandProductId ||
@@ -1076,6 +1081,10 @@ export default function QuoteSummaryContent() {
             askedQuantity: quantity,
             quantity: quantity,
             unitQuantity: quantity, // Also update unitQuantity for consistency
+            // Preserve cash discount fields - these are critical for correct calculation
+            cashdiscountValue: product.cashdiscountValue || 0,
+            unitListPrice: product.unitListPrice, // Preserve list price for cash discount calculation
+            originalUnitPrice: product.originalUnitPrice || product.unitPrice, // Preserve original price
           };
         }
         return product;
@@ -1113,14 +1122,14 @@ export default function QuoteSummaryContent() {
         });
       }
 
-      // Update products with calculated values, preserving the user's quantity
+      // Update products with calculated values, preserving the user's quantity and cash discount fields
       if (
         calculationResult?.products &&
         calculationResult.products.length > 0
       ) {
         const finalProducts = calculationResult.products.map(
           (calculatedProduct: any) => {
-            // Find the corresponding product from updatedProducts to preserve quantity
+            // Find the corresponding product from updatedProducts to preserve quantity and cash discount fields
             // Match using the same logic as OrderProductsTable: brandProductId || itemCode || orderIdentifier || productId
             const calculatedProductId =
               calculatedProduct.brandProductId ||
@@ -1140,12 +1149,23 @@ export default function QuoteSummaryContent() {
             });
 
             if (userProduct) {
-              // Preserve the quantity the user just typed
+              // Preserve the quantity the user just typed AND cash discount related fields
+              // These fields are critical for cash discount calculation to work correctly
               return {
                 ...calculatedProduct,
                 quantity: userProduct.quantity,
                 askedQuantity: userProduct.askedQuantity,
                 unitQuantity: userProduct.quantity, // Also preserve unitQuantity
+                // Preserve cash discount fields from original product
+                cashdiscountValue:
+                  userProduct.cashdiscountValue ||
+                  calculatedProduct.cashdiscountValue ||
+                  0,
+                unitListPrice:
+                  userProduct.unitListPrice || calculatedProduct.unitListPrice,
+                originalUnitPrice:
+                  userProduct.originalUnitPrice ||
+                  calculatedProduct.originalUnitPrice,
               };
             }
             return calculatedProduct;
@@ -1178,7 +1198,50 @@ export default function QuoteSummaryContent() {
   };
 
   const setSellerAddress = watch("setSellerAddress");
-  const sellerCompanyId = (setSellerAddress as any)?.companyId?.id;
+  // Extract sellerCompanyId from URL params or seller address
+  const sellerCompanyIdFromAddress = (setSellerAddress as any)?.companyId?.id;
+  const sellerCompanyId = sellerCompanyIdFromUrl
+    ? parseInt(sellerCompanyIdFromUrl, 10) || undefined
+    : sellerCompanyIdFromAddress;
+
+  // Extract sellerCompanyName using the same logic as requestQuote function (lines 726-729)
+  // and useSummarySubmission (lines 289-307) for comprehensive fallback
+  const sellerCompanyName = useMemo(() => {
+    const sellerAddr = setSellerAddress as any;
+
+    // Priority 1: sellerAddr.companyId.name (primary source)
+    if (
+      sellerAddr?.companyId &&
+      typeof sellerAddr.companyId === "object" &&
+      sellerAddr.companyId.name
+    ) {
+      return sellerAddr.companyId.name;
+    }
+
+    // Priority 2: sellerAddr.companyId.companyName
+    if (
+      sellerAddr?.companyId &&
+      typeof sellerAddr.companyId === "object" &&
+      sellerAddr.companyId.companyName
+    ) {
+      return sellerAddr.companyId.companyName;
+    }
+
+    // Priority 3: sellerAddr.sellerCompanyName (direct property)
+    if (sellerAddr?.sellerCompanyName) {
+      return sellerAddr.sellerCompanyName;
+    }
+
+    // Priority 4: From first product's sellerName (fallback from useSummarySubmission)
+    if (products && products.length > 0) {
+      const firstProduct = products[0] as any;
+      if (firstProduct?.sellerName) {
+        return firstProduct.sellerName;
+      }
+    }
+
+    return undefined;
+  }, [setSellerAddress, products]);
 
   // Watch form values for pricing context (these are reactive and will trigger re-renders)
   // Note: cartValue uses || {} fallback which creates new object references, but this is intentional
@@ -1207,12 +1270,12 @@ export default function QuoteSummaryContent() {
     preferencesForPricing?.insuranceId?.insuranceValue,
     cartValue,
   ]);
-
+  console.log(isLoading);
   return (
     <FormProvider {...methods}>
       <ApplicationLayout>
         {/* Sales Header - Fixed at top */}
-        <div className="flex-shrink-0 sticky top-0 z-50 bg-gray-50">
+        <div className="flex-shrink-0  z-[90] bg-gray-50">
           <SalesHeader
             title={quoteName}
             identifier=""
@@ -1263,199 +1326,186 @@ export default function QuoteSummaryContent() {
                 disabled: formState.isSubmitting || !hasQuotePermission,
               },
             ]}
-            loading={shouldShowLoader}
+            onEdit={() => setIsEditNameDialogOpen(true)}
+            showEditIcon={true}
+            loading={isLoading}
+            hideAppHeader={!!sellerCompanyIdFromUrl}
           />
         </div>
 
         {/* Quote Summary Content - Scrollable area */}
         <div className="flex-1 w-full">
           <PageLayout variant="content">
-            {shouldShowLoader ? (
-              <DetailsSkeleton
-                showStatusTracker={false}
-                leftWidth="lg:w-[65%]"
-                rightWidth="lg:w-[33%]"
-              />
-            ) : (
-              <div className="flex flex-col lg:flex-row gap-2 sm:gap-3 md:gap-4 w-full">
-                {/* Left Side - Products Table, Address & Terms - 65% */}
-                <div className="w-full lg:w-[65%] space-y-2 sm:space-y-3 mt-[80px]">
-                  {/* Quote Name Card */}
-                  <SummaryNameCard
-                    name={quoteName}
-                    onNameChange={handleNameChange}
-                    title="Name"
-                    loading={shouldShowLoader}
+            <div className="flex flex-col lg:flex-row gap-2 sm:gap-3 md:gap-4 w-full px-0.5">
+              {/* Left Side - Products Table, Address & Terms - 65% */}
+              <div className={sellerCompanyIdFromUrl ? "w-full lg:w-[65%] space-y-2 sm:space-y-3 mt-[16px]" : "w-full lg:w-[65%] space-y-2 sm:space-y-3 mt-[80px]"}>
+                {/* Products Table */}
+
+                <OrderProductsTable
+                  products={products}
+                  isEditable={true}
+                  onQuantityChange={handleQuantityChange}
+                  editedQuantities={{}}
+                  showInvoicedQty={false}
+                  itemsPerPage={5}
+                  loading={isLoading}
+                />
+
+                {/* Contact Details and Terms Cards - Side by Side */}
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-2 sm:gap-3 md:gap-4 mt-4">
+                  {/* Contact Details Card */}
+                  <OrderContactDetails
+                    loading={isLoading}
+                    billingAddress={
+                      (watch("setBillingAddress" as any) as any) || null
+                    }
+                    shippingAddress={
+                      (watch("setShippingAddress" as any) as any) || null
+                    }
+                    registerAddress={
+                      (watch("setRegisterAddress" as any) as any) || null
+                    }
+                    sellerAddress={
+                      (watch("setSellerAddress" as any) as any) || null
+                    }
+                    warehouseName={
+                      (watch("setWarehouseAddress" as any) as any)
+                        ?.wareHouseName || undefined
+                    }
+                    warehouseAddress={
+                      (watch("setWarehouseAddress" as any) as any)?.addressId ||
+                      undefined
+                    }
+                    salesBranch={
+                      (watch("setSellerAddress" as any) as any)?.name ||
+                      undefined
+                    }
+                    sellerCompanyName={sellerCompanyName}
+                    requiredDate={
+                      (watch("customerRequiredDate" as any) as string) ||
+                      undefined
+                    }
+                    referenceNumber={
+                      (watch("buyerReferenceNumber" as any) as string) || "-"
+                    }
+                    isEditable={true}
+                    userId={user?.userId?.toString()}
+                    buyerBranchId={
+                      (watch("setBillingAddress" as any) as any)?.id ||
+                      undefined
+                    }
+                    buyerCompanyId={user?.companyId}
+                    productIds={products?.map((p: any) => p.productId) || []}
+                    sellerCompanyId={
+                      sellerCompanyId !== null && sellerCompanyId !== undefined
+                        ? typeof sellerCompanyId === "string"
+                          ? parseInt(sellerCompanyId, 10) || undefined
+                          : sellerCompanyId
+                        : undefined
+                    }
+                    onRequiredDateChange={(date: string) => {
+                      setValue("customerRequiredDate" as any, date);
+                    }}
+                    onReferenceNumberChange={(ref: string) => {
+                      setValue("buyerReferenceNumber" as any, ref);
+                    }}
+                    onBillingAddressChange={(address: any) => {
+                      // OrderContactDetails now includes the id field in the address
+                      setValue("setBillingAddress" as any, address);
+                    }}
+                    onShippingAddressChange={(address: any) => {
+                      setValue("setShippingAddress" as any, address);
+                    }}
+                    onSellerBranchChange={(sellerBranch: any) => {
+                      if (sellerBranch) {
+                        // Update seller address with the seller branch data
+                        // Ensure companyId is an object with id and name (matching summaryReqDTO structure)
+                        // Reference: summaryReqDTO.ts expects setSellerAddress.companyId.id and setSellerAddress.companyId.name
+                        const companyIdObj = sellerBranch.companyId
+                          ? typeof sellerBranch.companyId === "object"
+                            ? sellerBranch.companyId
+                            : {
+                                id: sellerBranch.companyId,
+                                name:
+                                  sellerBranch.companyName ||
+                                  sellerBranch.companyId?.name ||
+                                  null,
+                              }
+                          : null;
+
+                        setValue("setSellerAddress" as any, {
+                          id: sellerBranch.id,
+                          name: sellerBranch.name,
+                          branchId: sellerBranch.branchId,
+                          companyId: companyIdObj,
+                          salesBranchCode: sellerBranch.salesBranchCode || null,
+                        });
+                      }
+                    }}
+                    onWarehouseChange={(warehouse: any) => {
+                      if (warehouse) {
+                        // Update warehouse address with the warehouse data
+                        // Reference: buyer-fe SummaryBody.js line 118 - setValue("deliveryPlace", response?.data?.addressId?.city)
+                        setValue("setWarehouseAddress" as any, {
+                          id: warehouse.id,
+                          wareHouseName:
+                            warehouse.wareHouseName || warehouse.name,
+                          name: warehouse.name,
+                          addressId: warehouse.addressId, // Preserve addressId for city access
+                          ...(warehouse.wareHousecode && {
+                            wareHousecode: warehouse.wareHousecode,
+                          }),
+                        });
+
+                        // Update deliveryPlace from warehouse city
+                        // Reference: buyer-fe SummaryBody.js line 118
+                        if (warehouse.addressId?.city) {
+                          setValue(
+                            "deliveryPlace" as any,
+                            warehouse.addressId.city
+                          );
+                        }
+                      }
+                    }}
                   />
 
-                  {/* Products Table */}
-                  {!shouldShowLoader && products && products.length > 0 && (
-                    <Suspense fallback={null}>
-                      <OrderProductsTable
-                        products={products}
-                        isEditable={true}
-                        onQuantityChange={handleQuantityChange}
-                        editedQuantities={{}}
-                        showInvoicedQty={false}
-                        itemsPerPage={5}
-                      />
-                    </Suspense>
-                  )}
+                  {/* Terms Card */}
+                  <OrderTermsCard
+                    orderTerms={{
+                      loading: isLoading,
+                      // Map preference structure to match buyer-fe TermsCard format
+                      // Reference: buyer-fe TermsCard.js lines 66-154
+                      deliveryTerms: preferences?.deliveryTermsId?.description,
+                      deliveryTermsCode:
+                        preferences?.deliveryTermsId?.deliveryTermsCode,
+                      deliveryTermsCode2:
+                        (watch("deliveryPlace" as any) as string) || "", // Delivery Place
+                      paymentTerms: preferences?.paymentTermsId?.description,
+                      paymentTermsCode:
+                        preferences?.paymentTermsId?.paymentTermsCode,
+                      packageForwarding: preferences?.pkgFwdId?.description,
+                      packageForwardingCode:
+                        preferences?.pkgFwdId?.packageForwardingCode,
+                      dispatchInstructions:
+                        preferences?.dispatchInstructionsId?.description,
+                      dispatchInstructionsCode:
+                        preferences?.dispatchInstructionsId
+                          ?.dispatchInstructionsCode,
+                      freight: preferences?.freightId?.description,
+                      freightCode: preferences?.freightId?.freightCode,
+                      insurance: preferences?.insuranceId?.description,
+                      insuranceCode: preferences?.insuranceId?.insuranceCode,
+                      warranty: preferences?.warrantyId?.description,
+                      warrantyCode: preferences?.warrantyId?.warrantyCode,
+                      additionalTerms:
+                        (watch("additionalTerms") as string) || "",
+                    }}
+                  />
+                </div>
 
-                  {/* Contact Details and Terms Cards - Side by Side */}
-                  {!shouldShowLoader && (
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-2 sm:gap-3 md:gap-4 mt-4">
-                      {/* Contact Details Card */}
-                      <OrderContactDetails
-                        billingAddress={
-                          (watch("setBillingAddress" as any) as any) || null
-                        }
-                        shippingAddress={
-                          (watch("setShippingAddress" as any) as any) || null
-                        }
-                        registerAddress={
-                          (watch("setRegisterAddress" as any) as any) || null
-                        }
-                        sellerAddress={
-                          (watch("setSellerAddress" as any) as any) || null
-                        }
-                        warehouseName={
-                          (watch("setWarehouseAddress" as any) as any)
-                            ?.wareHouseName || undefined
-                        }
-                        warehouseAddress={
-                          (watch("setWarehouseAddress" as any) as any)
-                            ?.addressId || undefined
-                        }
-                        salesBranch={
-                          (watch("setSellerAddress" as any) as any)?.name ||
-                          undefined
-                        }
-                        requiredDate={
-                          (watch("customerRequiredDate" as any) as string) ||
-                          undefined
-                        }
-                        referenceNumber={
-                          (watch("buyerReferenceNumber" as any) as string) ||
-                          "-"
-                        }
-                        isEditable={true}
-                        userId={user?.userId?.toString()}
-                        buyerBranchId={
-                          (watch("setBillingAddress" as any) as any)?.id ||
-                          undefined
-                        }
-                        buyerCompanyId={user?.companyId}
-                        productIds={
-                          products?.map((p: any) => p.productId) || []
-                        }
-                        sellerCompanyId={sellerCompanyId}
-                        onRequiredDateChange={(date: string) => {
-                          setValue("customerRequiredDate" as any, date);
-                        }}
-                        onReferenceNumberChange={(ref: string) => {
-                          setValue("buyerReferenceNumber" as any, ref);
-                        }}
-                        onBillingAddressChange={(address: any) => {
-                          // OrderContactDetails now includes the id field in the address
-                          setValue("setBillingAddress" as any, address);
-                        }}
-                        onShippingAddressChange={(address: any) => {
-                          setValue("setShippingAddress" as any, address);
-                        }}
-                        onSellerBranchChange={(sellerBranch: any) => {
-                          if (sellerBranch) {
-                            // Update seller address with the seller branch data
-                            // Ensure companyId is an object with id and name (matching summaryReqDTO structure)
-                            // Reference: summaryReqDTO.ts expects setSellerAddress.companyId.id and setSellerAddress.companyId.name
-                            const companyIdObj = sellerBranch.companyId
-                              ? typeof sellerBranch.companyId === "object"
-                                ? sellerBranch.companyId
-                                : {
-                                    id: sellerBranch.companyId,
-                                    name:
-                                      sellerBranch.companyName ||
-                                      sellerBranch.companyId?.name ||
-                                      null,
-                                  }
-                              : null;
-
-                            setValue("setSellerAddress" as any, {
-                              id: sellerBranch.id,
-                              name: sellerBranch.name,
-                              branchId: sellerBranch.branchId,
-                              companyId: companyIdObj,
-                              salesBranchCode:
-                                sellerBranch.salesBranchCode || null,
-                            });
-                          }
-                        }}
-                        onWarehouseChange={(warehouse: any) => {
-                          if (warehouse) {
-                            // Update warehouse address with the warehouse data
-                            // Reference: buyer-fe SummaryBody.js line 118 - setValue("deliveryPlace", response?.data?.addressId?.city)
-                            setValue("setWarehouseAddress" as any, {
-                              id: warehouse.id,
-                              wareHouseName:
-                                warehouse.wareHouseName || warehouse.name,
-                              name: warehouse.name,
-                              addressId: warehouse.addressId, // Preserve addressId for city access
-                              ...(warehouse.wareHousecode && {
-                                wareHousecode: warehouse.wareHousecode,
-                              }),
-                            });
-
-                            // Update deliveryPlace from warehouse city
-                            // Reference: buyer-fe SummaryBody.js line 118
-                            if (warehouse.addressId?.city) {
-                              setValue(
-                                "deliveryPlace" as any,
-                                warehouse.addressId.city
-                              );
-                            }
-                          }
-                        }}
-                      />
-
-                      {/* Terms Card */}
-                      <OrderTermsCard
-                        orderTerms={{
-                          // Map preference structure to match buyer-fe TermsCard format
-                          // Reference: buyer-fe TermsCard.js lines 66-154
-                          deliveryTerms:
-                            preferences?.deliveryTermsId?.description,
-                          deliveryTermsCode:
-                            preferences?.deliveryTermsId?.deliveryTermsCode,
-                          deliveryTermsCode2:
-                            (watch("deliveryPlace" as any) as string) || "", // Delivery Place
-                          paymentTerms:
-                            preferences?.paymentTermsId?.description,
-                          paymentTermsCode:
-                            preferences?.paymentTermsId?.paymentTermsCode,
-                          packageForwarding: preferences?.pkgFwdId?.description,
-                          packageForwardingCode:
-                            preferences?.pkgFwdId?.packageForwardingCode,
-                          dispatchInstructions:
-                            preferences?.dispatchInstructionsId?.description,
-                          dispatchInstructionsCode:
-                            preferences?.dispatchInstructionsId
-                              ?.dispatchInstructionsCode,
-                          freight: preferences?.freightId?.description,
-                          freightCode: preferences?.freightId?.freightCode,
-                          insurance: preferences?.insuranceId?.description,
-                          insuranceCode:
-                            preferences?.insuranceId?.insuranceCode,
-                          warranty: preferences?.warrantyId?.description,
-                          warrantyCode: preferences?.warrantyId?.warrantyCode,
-                          additionalTerms:
-                            (watch("additionalTerms") as string) || "",
-                        }}
-                      />
-                    </div>
-                  )}
-
-                  {/* End Customer Info - Required Date and Buyer Reference Number */}
-                  {/* {!isLoading && (
+                {/* End Customer Info - Required Date and Buyer Reference Number */}
+                {/* {!isLoading && (
                     <EndCustomerInfo
                       isSummaryPage={true}
                       isOrder={false}
@@ -1464,125 +1514,111 @@ export default function QuoteSummaryContent() {
                       isLoading={isLoading}
                     />
                   )} */}
-                </div>
+              </div>
 
-                {/* Right Side - Price Details, Customer Information, and Attachments - 33% */}
-                {!shouldShowLoader && (
-                  <div className="w-full lg:w-[33%] mt-[80px]">
-                    <div className="space-y-4">
-                      <ApplyVolumeDiscountBtn
-                        uploading={formState.isSubmitting}
-                        isSummary={true}
-                        isLoading={shouldShowLoader}
-                      />
-                      {/* Show cash discount card if cash discount is enabled in settings */}
-                      {/* The card component itself handles visibility based on cashDiscountValue and isSummaryPage */}
-                      {quoteSettings?.showCashDiscount && (
-                        <CashDiscountCard
-                          handleCDApply={handleCDApply}
-                          handleRemoveCD={handleRemoveCD}
-                          {...(latestPaymentTerms && {
-                            latestpaymentTerms: latestPaymentTerms,
-                          })}
-                          isCashDiscountApplied={isCashDiscountApplied}
-                          isSummaryPage={true}
-                          cashDiscountValue={cashDiscountValue}
-                          islatestTermAvailable={
-                            !!latestPaymentTerms && !latestPaymentTermsLoading
-                          }
-                          prevPaymentTerms={paymentTermsId}
-                          isOrder={false}
-                        />
-                      )}
+              {/* Right Side - Price Details, Customer Information, and Attachments - 33% */}
 
-                      <Suspense fallback={null}>
-                        <OrderPriceDetails
-                          products={products}
-                          isInter={pricingContext.isInter}
-                          insuranceCharges={pricingContext.insuranceCharges}
-                          precision={2}
-                          Settings={{
-                            roundingAdjustment: true,
-                          }}
-                          isSeller={false}
-                          taxExemption={pricingContext.taxExemption}
-                          currency={
-                            (watch("currency" as any) as any)?.symbol || "INR ₹"
-                          }
-                          overallShipping={
-                            (watch("overallShipping" as any) as number) || 0
-                          }
-                          overallTax={pricingContext.cartValue?.totalTax || 0}
-                          calculatedTotal={
-                            pricingContext.cartValue?.calculatedTotal ||
-                            pricingContext.cartValue?.grandTotal ||
-                            0
-                          }
-                          subTotal={pricingContext.cartValue?.totalValue || 0}
-                          taxableAmount={
-                            pricingContext.cartValue?.taxableAmount || 0
-                          }
-                          totalCashDiscount={
-                            pricingContext.cartValue?.totalCashDiscount
-                          }
-                          cashDiscountValue={
-                            pricingContext.cartValue?.cashDiscountValue
-                          }
-                          hidePfRate={true}
-                        />
-                      </Suspense>
-
-                      {/* Target Discount Card - Only show for quotes, not orders */}
-                      {/* Reference: buyer-fe SalesBody.js lines 370-377 - placed after CartPriceDetails */}
-                      {!isOrder && (
-                        <div className="mt-4">
-                          <TargetDiscountCard
-                            isContentPage={false}
-                            isSummaryPage={true}
-                          />
-                        </div>
-                      )}
-
-                      {/* SPR Form Section - Customer Information (End Customer Name, Project Name, Competitors, Price Justification) */}
-                      <div className="mt-4 space-y-4" id="sprDetails">
-                        <div className="flex items-center space-x-2">
-                          <Checkbox
-                            id="spr-toggle"
-                            checked={sprEnabled || false}
-                            onCheckedChange={checked => {
-                              setValue("sprDetails.spr", checked === true);
-                              trigger("sprDetails");
-                            }}
-                          />
-                          <Label
-                            htmlFor="spr-toggle"
-                            className="text-sm font-medium cursor-pointer"
-                          >
-                            Request Special Price (SPR)
-                          </Label>
-                        </div>
-
-                        <SPRForm isContentPage={false} isSummaryPage={true} />
-                      </div>
-
-                      {/* Attachments - Comments and File Uploads */}
-                      <Attachments
-                        showHeader={true}
-                        showAttachments={true}
-                        editAttachments={true}
-                        showComments={true}
-                        editComments={true}
-                        fieldName="uploadedDocumentDetails"
-                        folderName="Quote"
-                        isContentPage={false}
+              <div className={sellerCompanyIdFromUrl ? "w-full lg:w-[33%] mt-[16px]" : "w-full lg:w-[33%] mt-[80px]"}>
+                <div className="space-y-4">
+                  <ApplyVolumeDiscountBtn
+                    uploading={formState.isSubmitting}
+                    isSummary={true}
+                  />
+                  {/* Show cash discount card if cash discount is enabled in settings */}
+                  {/* The card component itself handles visibility based on cashDiscountValue and isSummaryPage */}
+                  {quoteSettings?.showCashDiscount && (
+                    <div className="-mt-[10px]">
+                      <CashDiscountCard
+                        handleCDApply={handleCDApply}
+                        handleRemoveCD={handleRemoveCD}
+                        {...(latestPaymentTerms && {
+                          latestpaymentTerms: latestPaymentTerms,
+                        })}
+                        isCashDiscountApplied={isCashDiscountApplied}
+                        isSummaryPage={true}
+                        cashDiscountValue={cashDiscountValue}
+                        islatestTermAvailable={
+                          !!latestPaymentTerms && !latestPaymentTermsLoading
+                        }
+                        prevPaymentTerms={paymentTermsId}
                         isOrder={false}
-                        readOnly={false}
                       />
                     </div>
+                  )}
+
+                  <Suspense fallback={null}>
+                    <OrderPriceDetails
+                      products={products}
+                      isInter={pricingContext.isInter}
+                      insuranceCharges={pricingContext.insuranceCharges}
+                      precision={2}
+                      Settings={{
+                        roundingAdjustment: true,
+                      }}
+                      isSeller={false}
+                      taxExemption={pricingContext.taxExemption}
+                      currency={
+                        (watch("currency" as any) as any)?.symbol || "INR ₹"
+                      }
+                      overallShipping={
+                        (watch("overallShipping" as any) as number) || 0
+                      }
+                      overallTax={pricingContext.cartValue?.totalTax || 0}
+                      calculatedTotal={
+                        pricingContext.cartValue?.calculatedTotal ||
+                        pricingContext.cartValue?.grandTotal ||
+                        0
+                      }
+                      subTotal={pricingContext.cartValue?.totalValue || 0}
+                      taxableAmount={
+                        pricingContext.cartValue?.taxableAmount || 0
+                      }
+                      totalCashDiscount={
+                        pricingContext.cartValue?.totalCashDiscount
+                      }
+                      cashDiscountValue={
+                        pricingContext.cartValue?.cashDiscountValue
+                      }
+                      hidePfRate={true}
+                      loading={isLoading}
+                    />
+                  </Suspense>
+
+                  {/* Target Discount Card - Only show for quotes, not orders */}
+                  {/* Reference: buyer-fe SalesBody.js lines 370-377 - placed after CartPriceDetails */}
+                  {!isOrder && (
+                    <div className="mt-4">
+                      <TargetDiscountCard
+                        isContentPage={false}
+                        isSummaryPage={true}
+                        loading={isLoading}
+                      />
+                    </div>
+                  )}
+
+                  {/* SPR Form Section - Customer Information (End Customer Name, Project Name, Competitors, Price Justification) */}
+                  <div className="mt-4 space-y-4" id="sprDetails">
+                   
+
+                    <SPRForm isContentPage={false} isSummaryPage={true} />
                   </div>
-                )}
+
+                  {/* Attachments - Comments and File Uploads */}
+                  <Attachments
+                    showHeader={true}
+                    showAttachments={true}
+                    editAttachments={true}
+                    showComments={true}
+                    editComments={true}
+                    fieldName="uploadedDocumentDetails"
+                    folderName="Quote"
+                    isContentPage={false}
+                    isOrder={false}
+                    readOnly={false}
+                  />
+                </div>
               </div>
-            )}
+            </div>
           </PageLayout>
         </div>
 
@@ -1597,6 +1633,20 @@ export default function QuoteSummaryContent() {
           cancelText="Cancel"
           isLoading={formState.isSubmitting}
           icon={<FileText className="h-5 w-5 text-primary" />}
+        />
+
+        {/* Edit Quote Name Dialog */}
+        <EditOrderNameDialog
+          open={isEditNameDialogOpen}
+          onOpenChange={setIsEditNameDialogOpen}
+          currentOrderName={quoteName}
+          onSave={handleSaveQuoteName}
+          loading={isLoading}
+          title="Edit Quote Name"
+          label="Quote Name"
+          placeholder="Enter quote name"
+          successMessage="Quote name updated successfully"
+          errorMessage="Failed to update quote name"
         />
       </ApplicationLayout>
     </FormProvider>
