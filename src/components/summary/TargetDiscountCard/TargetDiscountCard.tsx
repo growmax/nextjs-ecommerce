@@ -1,7 +1,9 @@
 "use client";
 
 import PricingFormat from "@/components/PricingFormat";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import SectionCardDetail, {
+  InfoRow,
+} from "@/components/custom/SectionCardDetail";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import useModuleSettings from "@/hooks/useModuleSettings";
@@ -289,75 +291,64 @@ export default function TargetDiscountCard({
   const targetPriceError = sprDetailsErrors?.targetPrice;
 
   return (
-    <Card className="shadow-sm pb-0 py-0 gap-0">
-    <CardHeader className="px-6 py-2 bg-muted rounded-t-lg items-end gap-0">
-      <CardTitle className="text-xl font-semibold text-gray-900 m-0!">
-          Target Discount
-        </CardTitle>
-      </CardHeader>
-      <CardContent className="px-6 py-4">
+    <SectionCardDetail
+      title="Target Discount"
+      headerColor="muted"
+      shadow="sm"
+      showSeparator={false}
+    >
+      {isContentPage ? (
+        <div className="divide-y divide-gray-100">
+          <InfoRow
+            label="Total Discount"
+            value={`${sprRequestedDiscount.toFixed(roundOff)}%`}
+          />
+          <InfoRow
+            label="Target Price (Excl. taxes)"
+            value={<PricingFormat value={targetPrice || 0} />}
+          />
+        </div>
+      ) : (
         <div className="space-y-4">
           {/* Target Discount Input */}
-          {isContentPage ? (
-            <div className="flex justify-between items-center py-2">
-              <Label className="text-sm font-normal text-gray-900 w-1/2">
-                Total Discount
-              </Label>
-              <div className="text-sm font-semibold text-gray-900 w-1/2 text-right">
-                {sprRequestedDiscount.toFixed(roundOff)}%
-              </div>
-            </div>
-          ) : (
-            <div className="space-y-2">
-              <Label htmlFor="targetDiscount" className="text-sm font-medium">
-                Target Discount
-              </Label>
-              <Input
-                id="targetDiscount"
-                type="number"
-                value={loading ? 0 : sprRequestedDiscount || 0}
-                onChange={handleTargetDiscountChange}
-                className={targetDiscountError ? "border-red-500" : ""}
-              />
-              {targetDiscountError && (
-                <p className="text-sm text-red-500">
-                  {targetDiscountError.message as string}
-                </p>
-              )}
-            </div>
-          )}
+          <div className="space-y-2">
+            <Label htmlFor="targetDiscount" className="text-sm font-medium">
+              Target Discount
+            </Label>
+            <Input
+              id="targetDiscount"
+              type="number"
+              value={loading ? 0 : sprRequestedDiscount || 0}
+              onChange={handleTargetDiscountChange}
+              className={targetDiscountError ? "border-red-500" : ""}
+            />
+            {targetDiscountError && (
+              <p className="text-sm text-red-500">
+                {targetDiscountError.message as string}
+              </p>
+            )}
+          </div>
 
           {/* Target Price Input */}
-          {isContentPage ? (
-            <div className="flex justify-between items-center py-2">
-              <Label className="text-sm font-normal text-gray-900 w-1/2">
-                Target Price (Excl. taxes)
-              </Label>
-              <div className="text-sm font-semibold text-gray-900 w-1/2 text-right">
-                <PricingFormat value={targetPrice || 0} />
-              </div>
-            </div>
-          ) : (
-            <div className="space-y-2">
-              <Label htmlFor="targetPrice" className="text-sm font-medium">
-                Target Price (Excl. taxes)
-              </Label>
-              <Input
-                id="targetPrice"
-                type="number"
-                value={loading ? 0 : targetPrice || ""}
-                onChange={handleTargetPriceChange}
-                className={targetPriceError ? "border-red-500" : ""}
-              />
-              {targetPriceError && (
-                <p className="text-sm text-red-500">
-                  {targetPriceError.message as string}
-                </p>
-              )}
-            </div>
-          )}
+          <div className="space-y-2">
+            <Label htmlFor="targetPrice" className="text-sm font-medium">
+              Target Price (Excl. taxes)
+            </Label>
+            <Input
+              id="targetPrice"
+              type="number"
+              value={loading ? 0 : targetPrice || ""}
+              onChange={handleTargetPriceChange}
+              className={targetPriceError ? "border-red-500" : ""}
+            />
+            {targetPriceError && (
+              <p className="text-sm text-red-500">
+                {targetPriceError.message as string}
+              </p>
+            )}
+          </div>
         </div>
-      </CardContent>
-    </Card>
+      )}
+    </SectionCardDetail>
   );
 }

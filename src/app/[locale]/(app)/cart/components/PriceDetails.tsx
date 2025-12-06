@@ -1,10 +1,12 @@
 "use client";
 
 import PricingFormat from "@/components/PricingFormat";
-import { Card, CardContent, CardHeader } from "@/components/ui/card";
+import SectionCardDetail, {
+  InfoRow,
+  SkeletonRow,
+} from "@/components/custom/SectionCardDetail";
 import { Separator } from "@/components/ui/separator";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Subtitle, TypographyMuted } from "@/components/ui/typography";
 import { useCurrentUser } from "@/hooks/useCurrentUser";
 import { useTranslations } from "next-intl";
 
@@ -47,106 +49,107 @@ export default function PriceDetails({
   const showDiscount = showListPrice && DISCOUNT > 0;
 
   return (
-    <Card className="shadow-lg bg-white gap-2">
-      <CardHeader>
-        <Subtitle>{t("priceDetails")}</Subtitle>
-      </CardHeader>
-      <CardContent className="space-y-3">
-        {/* Total Items */}
-        <div className="flex justify-between items-center">
-          <TypographyMuted>{t("totalItems")}</TypographyMuted>
-          {isPricingLoading ? (
-            <Skeleton className="h-4 w-12" />
-          ) : (
-            <TypographyMuted>{cartValue?.totalItems || 0}</TypographyMuted>
-          )}
-        </div>
+    <SectionCardDetail
+      title={t("priceDetails")}
+      headerColor="muted"
+      shadow="sm"
+      contentClassName="px-6 space-y-3 pt-2"
+    >
+      {/* Total Items */}
+      {isPricingLoading ? (
+        <SkeletonRow />
+      ) : (
+        <InfoRow
+          label={t("totalItems")}
+          value={String(cartValue?.totalItems || 0)}
+        />
+      )}
 
-        {/* Total LP (List Price) - Optional */}
-        {showListPrice && (
-          <div className="flex justify-between items-center">
-            <span className="text-sm text-gray-600">{t("totalLP")}</span>
-            {isPricingLoading ? (
-              <Skeleton className="h-4 w-20" />
-            ) : (
-              <span className="text-sm font-medium">
-                <PricingFormat
-                  {...(currency && { buyerCurrency: currency })}
-                  value={cartValue?.totalLP || 0}
-                />
-              </span>
-            )}
-          </div>
-        )}
+      {/* Total LP (List Price) - Optional */}
+      {showListPrice &&
+        (isPricingLoading ? (
+          <SkeletonRow />
+        ) : (
+          <InfoRow
+            label={t("totalLP")}
+            value={
+              <PricingFormat
+                {...(currency && { buyerCurrency: currency })}
+                value={cartValue?.totalLP || 0}
+              />
+            }
+          />
+        ))}
 
-        {/* Discount - Optional */}
-        {showDiscount && (
-          <div className="flex justify-between items-center">
-            <span className="text-sm text-green-600">{t("discount")}</span>
-            {isPricingLoading ? (
-              <Skeleton className="h-4 w-20" />
-            ) : (
-              <span className="text-sm font-medium text-green-600">
+      {/* Discount - Optional */}
+      {showDiscount &&
+        (isPricingLoading ? (
+          <SkeletonRow />
+        ) : (
+          <div className="grid grid-cols-2 gap-4 py-1.5">
+            <div>
+              <p className="text-sm font-normal text-green-600">
+                {t("discount")}
+              </p>
+            </div>
+            <div>
+              <span className="text-sm font-semibold text-green-600">
                 -
                 <PricingFormat
                   {...(currency && { buyerCurrency: currency })}
                   value={DISCOUNT}
                 />
               </span>
-            )}
+            </div>
           </div>
-        )}
+        ))}
 
-        {/* Subtotal */}
-        <div className="flex justify-between items-center">
-          <span className="text-sm font-semibold text-black">
-            {t("subtotal")}
+      {/* Subtotal */}
+      {isPricingLoading ? (
+        <SkeletonRow />
+      ) : (
+        <InfoRow
+          label={t("subtotal")}
+          value={
+            <PricingFormat
+              {...(currency && { buyerCurrency: currency })}
+              value={cartValue?.totalValue || 0}
+            />
+          }
+        />
+      )}
+
+      {/* Tax */}
+      {isPricingLoading ? (
+        <SkeletonRow />
+      ) : (
+        <InfoRow
+          label={t("tax")}
+          value={
+            <PricingFormat
+              {...(currency && { buyerCurrency: currency })}
+              value={cartValue?.totalTax || 0}
+            />
+          }
+        />
+      )}
+
+      <Separator className="my-2" />
+
+      {/* Total */}
+      <div className="flex justify-between items-center pt-2">
+        <span className="text-base font-bold text-black">{t("total")}</span>
+        {isPricingLoading ? (
+          <Skeleton className="h-5 w-28" />
+        ) : (
+          <span className="text-base font-bold text-black">
+            <PricingFormat
+              {...(currency && { buyerCurrency: currency })}
+              value={cartValue?.grandTotal || 0}
+            />
           </span>
-          {isPricingLoading ? (
-            <Skeleton className="h-4 w-24" />
-          ) : (
-            <span className="text-sm font-semibold text-black">
-              <PricingFormat
-                {...(currency && { buyerCurrency: currency })}
-                value={cartValue?.totalValue || 0}
-              />
-            </span>
-          )}
-        </div>
-
-        {/* Tax */}
-        <div className="flex justify-between items-center">
-          <TypographyMuted>{t("tax")}</TypographyMuted>
-
-          {isPricingLoading ? (
-            <Skeleton className="h-4 w-24" />
-          ) : (
-            <TypographyMuted>
-              <PricingFormat
-                {...(currency && { buyerCurrency: currency })}
-                value={cartValue?.totalTax || 0}
-              />
-            </TypographyMuted>
-          )}
-        </div>
-
-        <Separator className="my-2" />
-
-        {/* Total */}
-        <div className="flex justify-between items-center pt-2">
-          <span className="text-base font-bold text-black">{t("total")}</span>
-          {isPricingLoading ? (
-            <Skeleton className="h-5 w-28" />
-          ) : (
-            <span className="text-base font-bold text-black">
-              <PricingFormat
-                {...(currency && { buyerCurrency: currency })}
-                value={cartValue?.grandTotal || 0}
-              />
-            </span>
-          )}
-        </div>
-      </CardContent>
-    </Card>
+        )}
+      </div>
+    </SectionCardDetail>
   );
 }
