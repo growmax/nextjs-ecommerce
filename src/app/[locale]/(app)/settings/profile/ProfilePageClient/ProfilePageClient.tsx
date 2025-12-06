@@ -77,7 +77,7 @@ export default function ProfilePageClient() {
   // Unified change tracking
   const [hasChanges, setHasChanges] = useState(false);
   const [changedSections, setChangedSections] = useState<
-    Set<"profile">
+    Set<"profile" | "preferences">
   >(new Set());
 
   // Validation errors state
@@ -90,6 +90,7 @@ export default function ProfilePageClient() {
 
   // Original values for reset functionality
   const [originalProfile, setOriginalProfile] = useState(profile);
+  const [originalPreferences, setOriginalPreferences] = useState(preferences);
 
 
   // Update originals when data loads - using useEffect to avoid render issues
@@ -99,10 +100,15 @@ export default function ProfilePageClient() {
     }
   }, [profile, originalProfile]);
 
+  useEffect(() => {
+    if (preferences?.timeZone && preferences?.dateFormat && preferences?.timeFormat && !originalPreferences?.timeZone) {
+      setOriginalPreferences(preferences);
+    }
+  }, [preferences, originalPreferences]);
 
-  // Unified change tracking helper
+
   // Unified change tracking helper: add or remove a section from the changed set
-  const setSectionDirty = (section: "profile", isDirty: boolean) => {
+  const setSectionDirty = (section: "profile" | "preferences", isDirty: boolean) => {
     setChangedSections(prev => {
       const newSet = new Set(prev);
       if (isDirty) newSet.add(section);
@@ -161,17 +167,24 @@ export default function ProfilePageClient() {
     field: keyof typeof preferences,
     value: string
   ) => {
-    // Just update local state - no dirty tracking
-    // UserPreferencesCard handles its own save/cancel
+    // Update local state
     const updatedPreferences = { ...preferences, [field]: value };
     setPreferences(updatedPreferences);
+
+    // Track dirty state for preferences
+    const isDirty = JSON.stringify(updatedPreferences) !== JSON.stringify(originalPreferences || {});
+    setSectionDirty("preferences", isDirty);
   };
 
   // Reset all changes helper - restore original values
   const resetAllChanges = () => {
-    // Only reset profile section (preferences has its own reset)
+    // Reset profile section if dirty
     if (changedSections.has("profile") && originalProfile) {
       setProfile(originalProfile);
+    }
+    // Reset preferences section if dirty
+    if (changedSections.has("preferences") && originalPreferences) {
+      setPreferences(originalPreferences);
     }
     // Clear validation errors when canceling
     setValidationErrors({});
@@ -299,6 +312,33 @@ export default function ProfilePageClient() {
         );
       }
 
+      // Save preferences if changed
+      if (changedSections.has("preferences")) {
+        if (!userId) {
+          toast.error(t("userIdRequired"));
+          setIsSaving(false);
+          return;
+        }
+        const preferencesPayload = {
+          dateFormat: preferences.dateFormat,
+          timeFormat: preferences.timeFormat,
+          timeZone: preferences.timeZone,
+          userId: { id: userId },
+          ...((preferences as any)?.id && { id: parseInt((preferences as any).id) }),
+          ...(tenantId && {
+            tenantId: typeof tenantId === "string" ? parseInt(tenantId) || 0 : tenantId,
+          }),
+          vendorId: null,
+        };
+        promises.push(
+          CompanyService.saveUserPreferences(preferencesPayload)
+            .then(() => true)
+            .catch(error => {
+              console.error("Failed to save preferences:", error);
+              return false;
+            })
+        );
+      }
 
       // If no promises to execute, return early
       if (promises.length === 0) {
@@ -314,12 +354,16 @@ export default function ProfilePageClient() {
         // Reload profile data after successful save
         if (changedSections.has("profile")) {
           await loadProfile(true); // Force reload
-          // toast.success("Changes saved successfully!");
           setOriginalProfile(profile);
           // Clear uploaded picture URL after successful save
           setUploadedPictureUrl(null);
         }
 
+        // Reload preferences data after successful save
+        if (changedSections.has("preferences")) {
+          await loadPreferences(true); // Force reload
+          setOriginalPreferences(preferences);
+        }
 
         // Clear change tracking
         setChangedSections(new Set());
@@ -478,14 +522,6 @@ export default function ProfilePageClient() {
               timeFormatOptions={preferenceOptions.timeFormatOptions}
               isLoading={isSaving}
               dataLoading={dataLoading}
-              onSaveSuccess={async () => {
-                await loadPreferences(true);
-              }}
-              {...(userId && { userId })}
-              {...(tenantId && { tenantId })}
-              {...((preferences as any)?.id && {
-                preferenceId: parseInt((preferences as any).id),
-              })}
             />
           </div>
         </div>
