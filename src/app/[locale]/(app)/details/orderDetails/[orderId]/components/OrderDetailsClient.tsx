@@ -616,6 +616,7 @@ export default function OrderDetailsClient({
         ]}
         buttons={headerButtons}
         showEditIcon={true}
+        showIdentifier={false}
         loading={orderLoading}
       />
 

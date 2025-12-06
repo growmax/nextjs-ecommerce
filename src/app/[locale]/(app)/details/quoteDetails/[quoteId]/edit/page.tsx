@@ -1,14 +1,10 @@
 "use client";
 
-import { Layers } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
 
-import {
-  VersionsDialog,
-  type Version,
-} from "@/components/dialogs/VersionsDialog";
+import { EditOrderNameDialog } from "@/components/dialogs/EditOrderNameDialog";
 import {
   DetailsSkeleton,
   OrderContactDetails,
@@ -50,12 +46,16 @@ import {
   QuotationDetailsService,
   quoteSubmitDTO,
 } from "@/lib/api";
+import QuotationNameService from "@/lib/api/services/QuotationNameService/QuotationNameService";
 import {
   type SellerBranch,
   type Warehouse,
 } from "@/lib/api/services/SellerWarehouseService/SellerWarehouseService";
 import type { CartItem } from "@/types/calculation/cart";
-import type { SelectedVersion } from "@/types/details/orderdetails/version.types";
+import type {
+  SelectedVersion,
+  Version,
+} from "@/types/details/orderdetails/version.types";
 import { getStatusStyle } from "@/utils/details/orderdetails";
 import { decodeUnicode } from "@/utils/General/general";
 import { prepareQuoteSubmissionDTO } from "@/utils/quote/quoteSubmissionDTO/quoteSubmissionDTO";
@@ -153,8 +153,8 @@ export default function EditQuotePage({ params }: EditQuotePageProps) {
   const [cashDiscountTerms, setCashDiscountTerms] = useState<any>(null);
   const [prevPaymentTerms, setPrevPaymentTerms] = useState<any>(null);
   const [confirmDialogOpen, setConfirmDialogOpen] = useState(false);
-  const [versionsDialogOpen, setVersionsDialogOpen] = useState(false);
-  const [selectedVersion, setSelectedVersion] =
+  const [editDialogOpen, setEditDialogOpen] = useState(false);
+  const [selectedVersion, _setSelectedVersion] =
     useState<SelectedVersion | null>(null);
   const [triggerVersionCall, setTriggerVersionCall] = useState(false);
 
@@ -859,6 +859,55 @@ export default function EditQuotePage({ params }: EditQuotePageProps) {
     push(`/details/quoteDetails/${quoteIdentifier}`);
   };
 
+  const handleEditQuoteName = () => {
+    setEditDialogOpen(true);
+  };
+
+  const handleSaveQuoteName = async (newQuoteName: string) => {
+    if (!user || !quoteIdentifier) {
+      throw new Error(
+        t("missingRequiredDataForUpdatingQuoteName") ||
+          "Missing required data for updating quote name"
+      );
+    }
+
+    try {
+      await QuotationNameService.updateQuotationName({
+        userId: user.userId,
+        companyId: user.companyId,
+        quotationIdentifier: quoteIdentifier,
+        quotationName: newQuoteName,
+      });
+
+      // Update local state if quoteDetails exists
+      if (quoteDetails && quoteDetails.data?.quotationDetails) {
+        const updatedQuoteDetails = {
+          ...quoteDetails,
+          data: {
+            ...quoteDetails.data,
+            quotationDetails: quoteDetails.data.quotationDetails.map(
+              (quote, index) =>
+                index === 0 ? { ...quote, quoteName: newQuoteName } : quote
+            ),
+          },
+        };
+        setQuoteDetails(updatedQuoteDetails);
+      } else if (quoteDetails?.data) {
+        // Handle case where quoteName is at the root level
+        const updatedQuoteDetails = {
+          ...quoteDetails,
+          data: {
+            ...quoteDetails.data,
+            quoteName: newQuoteName,
+          },
+        };
+        setQuoteDetails(updatedQuoteDetails);
+      }
+    } catch (err) {
+      throw err;
+    }
+  };
+
   const handleQuantityChange = (productId: string, quantity: number) => {
     setEditedQuantities(prev => ({
       ...prev,
@@ -1264,57 +1313,6 @@ export default function EditQuotePage({ params }: EditQuotePageProps) {
     }
   };
 
-  // Handle version selection
-  const handleVersionSelect = (version: Version) => {
-    // Close dialog immediately
-    setVersionsDialogOpen(false);
-
-    // If version 1 is selected, reset to original quote details
-    if (version.versionNumber === 1) {
-      // Reset to original quote details
-      if (quoteDetails) {
-        // Reset processed version ref
-        processedVersionRef.current = null;
-        // Re-fetch original quote details
-        setSelectedVersion(null);
-        setTriggerVersionCall(false);
-        // Re-fetch quote details
-        const fetchQuoteDetails = async () => {
-          if (!quoteIdentifier || !user?.userId || !user?.companyId) return;
-          try {
-            setLoading(true);
-            const response =
-              await QuotationDetailsService.fetchQuotationDetails({
-                userId: user.userId,
-                companyId: user.companyId,
-                quotationIdentifier: quoteIdentifier,
-              });
-            setQuoteDetails(response);
-          } catch {
-            toast.error("Failed to refresh quote details");
-          } finally {
-            setLoading(false);
-          }
-        };
-        fetchQuoteDetails();
-      }
-      return;
-    }
-
-    // Reset processed version ref for new version selection
-    processedVersionRef.current = null;
-
-    // Set selected version and trigger fetch
-    setSelectedVersion({
-      versionNumber: version.versionNumber,
-      orderVersion: version.orderVersion || version.versionNumber,
-      ...(version.orderIdentifier && {
-        orderIdentifier: version.orderIdentifier,
-      }),
-    });
-    setTriggerVersionCall(true);
-  };
-
   // Extract data for header
   const quoteDetailsArray = Array.isArray(displayQuoteDetails?.quotationDetails)
     ? displayQuoteDetails.quotationDetails
@@ -1340,6 +1338,7 @@ export default function EditQuotePage({ params }: EditQuotePageProps) {
             className: getStatusStyle(status),
           },
         })}
+        onEdit={handleEditQuoteName}
         onRefresh={handleRefresh}
         onClose={handleCancel}
         menuOptions={[]}
@@ -1353,7 +1352,10 @@ export default function EditQuotePage({ params }: EditQuotePageProps) {
             disabled: saving || isSubmitting,
           },
         ]}
-        showEditIcon={false}
+        showEditIcon={true}
+        showIdentifier={false}
+        showStatus={false}
+        showRefresh={false}
         loading={loading}
       />
 
@@ -1902,32 +1904,21 @@ export default function EditQuotePage({ params }: EditQuotePageProps) {
         </div>
       </div>
 
-      {/* Right Sidebar Icons - Positioned just below the SalesHeader component, flush to right edge */}
-      <div className="fixed right-0 top-[118px] z-50 bg-white border-l border-t border-b border-gray-200 shadow-lg rounded-l-lg p-1">
-        <button
-          className={`p-1.5 hover:bg-gray-100 rounded transition-colors ${
-            versionsDialogOpen ? "bg-primary/10" : ""
-          }`}
-          aria-label="Layers"
-          onClick={() => setVersionsDialogOpen(true)}
-        >
-          <Layers
-            className={`w-5 h-5 transition-colors ${
-              versionsDialogOpen ? "text-primary" : "text-gray-700"
-            }`}
-          />
-        </button>
-      </div>
-
-      {/* Versions Dialog */}
-      <VersionsDialog
-        open={versionsDialogOpen}
-        onOpenChange={setVersionsDialogOpen}
-        versions={quoteVersions}
-        orderId={quoteIdentifier}
+      {/* Edit Quote Name Dialog */}
+      <EditOrderNameDialog
+        open={editDialogOpen}
+        onOpenChange={setEditDialogOpen}
+        currentOrderName={quoteName || ""}
+        onSave={handleSaveQuoteName}
         loading={loading}
-        currentVersionNumber={selectedVersion?.versionNumber || 1}
-        onVersionSelect={handleVersionSelect}
+        title="Edit Quote Name"
+        label={t("quoteName") || "Quote Name"}
+        placeholder={t("enterQuoteName") || "Enter quote name"}
+        successMessage="Quote name updated successfully"
+        errorMessage={
+          t("failedToUpdateQuoteName") || "Failed to update quote name"
+        }
+        nameType="Quote"
       />
 
       <Dialog open={confirmDialogOpen} onOpenChange={setConfirmDialogOpen}>

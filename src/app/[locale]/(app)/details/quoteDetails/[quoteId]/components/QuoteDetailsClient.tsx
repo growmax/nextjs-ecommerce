@@ -516,6 +516,7 @@ export default function QuoteDetailsClient({
         ]}
         buttons={headerButtons}
         showEditIcon={true}
+        showIdentifier={false}
         loading={loading}
       />
 
@@ -854,13 +855,14 @@ export default function QuoteDetailsClient({
         currentOrderName={quoteName || ""}
         onSave={handleSaveQuoteName}
         loading={loading}
-        title={t("editQuoteName") || "Edit Quote Name"}
+        title="Edit Quote Name"
         label={t("quoteName") || "Quote Name"}
         placeholder={t("enterQuoteName") || "Enter quote name"}
         successMessage="Quote name updated successfully"
         errorMessage={
           t("failedToUpdateQuoteName") || "Failed to update quote name"
         }
+        nameType="Quote"
       />
 
       {/* Versions Dialog */}
