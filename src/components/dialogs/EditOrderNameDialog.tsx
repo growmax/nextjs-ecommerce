@@ -10,20 +10,23 @@ import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { z } from "zod";
 
-// Validation schema for order name
-const orderNameSchema = z.object({
-  orderName: z
-    .string()
-    .min(1, "Order name is required")
-    .min(3, "Order name must be at least 3 characters")
-    .max(100, "Order name must be less than 100 characters")
-    .regex(
-      /^[a-zA-Z0-9\s\-_.,()&']+$/,
-      "Order name contains invalid characters"
-    ),
-});
+// Helper function to create validation schema with custom messages
+const createOrderNameSchema = (nameType: string = "Order") => {
+  return z.object({
+    orderName: z
+      .string()
+      .min(1, `${nameType} name is required`)
+      .min(3, `${nameType} name must be at least 3 characters`)
+      .max(100, `${nameType} name must be less than 100 characters`)
+      .regex(
+        /^[a-zA-Z0-9\s\-_.,()&']+$/,
+        `${nameType} name contains invalid characters`
+      ),
+  });
+};
 
-type OrderNameFormData = z.infer<typeof orderNameSchema>;
+// Type for form data
+type OrderNameFormData = z.infer<ReturnType<typeof createOrderNameSchema>>;
 
 export interface EditOrderNameDialogProps
   extends Omit<BaseDialogProps, "title" | "description"> {
@@ -35,6 +38,8 @@ export interface EditOrderNameDialogProps
   placeholder?: string;
   successMessage?: string;
   errorMessage?: string;
+  nameType?: string; // "Order" or "Quote" - used for validation messages
+  showLabel?: boolean; // Whether to show the label above the input
 }
 
 export function EditOrderNameDialog({
@@ -43,21 +48,38 @@ export function EditOrderNameDialog({
   currentOrderName,
   onSave,
   loading = false,
-  title = "Edit Order Name",
+  title,
   label = "Order Name",
   placeholder = "Enter order name",
   successMessage = "Order name updated successfully",
   errorMessage = "Failed to update order name",
+  nameType = "Order",
+  showLabel = false,
 }: EditOrderNameDialogProps) {
+  // Auto-generate title based on nameType if not provided
+  // Ensure title is always a plain string, not a translation key
+  const dialogTitle = React.useMemo(() => {
+    if (title) {
+      // If title is provided, use it directly (should be a plain string like "Edit Quote Name")
+      return title;
+    }
+    // Otherwise, generate from nameType
+    return `Edit ${nameType} Name`;
+  }, [title, nameType]);
   const [isSubmitting, setIsSubmitting] = React.useState(false);
   const [inputValue, setInputValue] = React.useState(currentOrderName);
   const prevOpenRef = React.useRef(open);
   const orderNameOnOpenRef = React.useRef(currentOrderName);
 
+  // Create schema with custom name type
+  const orderNameSchema = React.useMemo(
+    () => createOrderNameSchema(nameType),
+    [nameType]
+  );
+
   const {
     handleSubmit,
-    formState: { errors, isValid },
-    watch,
+    formState: { errors },
     setValue,
     trigger,
   } = useForm<OrderNameFormData>({
@@ -67,9 +89,6 @@ export function EditOrderNameDialog({
       orderName: currentOrderName,
     },
   });
-
-  // Watch the current form value to compare with original
-  const currentFormValue = watch("orderName");
 
   // Ref for input element to prevent auto-focus and auto-select
   const inputRef = React.useRef<HTMLInputElement>(null);
@@ -119,7 +138,14 @@ export function EditOrderNameDialog({
   }, [open]);
 
   const onSubmit = async (data: OrderNameFormData) => {
-    if (data.orderName === currentOrderName) {
+    // Validate that the name is not empty
+    if (!data.orderName || data.orderName.trim().length === 0) {
+      // Validation error will be shown by the form, don't submit
+      return;
+    }
+
+    // If no changes, just close silently without showing any message
+    if (data.orderName.trim() === currentOrderName.trim()) {
       onOpenChange(false);
       return;
     }
@@ -174,6 +200,8 @@ export function EditOrderNameDialog({
 
   const handleFormSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
+    // handleSubmit will only call onSubmit if validation passes
+    // If validation fails, it will update the errors state and prevent submission
     await handleSubmit(onSubmit)(e);
   };
 
@@ -181,7 +209,7 @@ export function EditOrderNameDialog({
     <FormDialog
       open={open}
       onOpenChange={handleOpenChange}
-      title={title}
+      title={dialogTitle}
       onSubmit={handleFormSubmit}
       isLoading={loading || isSubmitting}
       submitText="Save"
@@ -189,20 +217,18 @@ export function EditOrderNameDialog({
       size="sm"
       showCloseButton={false}
       onCancel={handleCancel}
-      disabled={
-        !isValid ||
-        !currentFormValue ||
-        currentFormValue.trim() === orderNameOnOpenRef.current.trim()
-      }
+      disabled={false}
       onOpenAutoFocus={e => {
         // Prevent auto-focus on dialog open
         e.preventDefault();
       }}
     >
       <div className="space-y-2">
-        <Label htmlFor="orderName" className="text-sm font-medium">
-          {label}
-        </Label>
+        {showLabel && (
+          <Label htmlFor="orderName" className="text-sm font-medium">
+            {label}
+          </Label>
+        )}
         <Input
           ref={inputRef}
           id="orderName"
