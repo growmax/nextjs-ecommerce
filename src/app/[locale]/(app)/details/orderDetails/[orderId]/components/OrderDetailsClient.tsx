@@ -1,5 +1,4 @@
 "use client";
-import { Toaster } from "@/components/ui/sonner";
 import { FileText, Layers } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useEffect, useMemo, useRef, useState } from "react";
@@ -1058,19 +1057,6 @@ export default function OrderDetailsClient({
         loading={orderLoading || versionLoading}
         currentVersionNumber={selectedVersion?.versionNumber || 1}
         onVersionSelect={handleVersionSelect}
-      />
-
-      {/* Toaster for toast notifications - positioned bottom-left with smaller size */}
-      <Toaster
-        position="bottom-left"
-        richColors
-        toastOptions={{
-          style: {
-            fontSize: "0.875rem", // text-sm
-            padding: "0.5rem 0.75rem", // smaller padding
-          },
-          className: "text-sm px-3 py-2",
-        }}
       />
     </div>
   );
