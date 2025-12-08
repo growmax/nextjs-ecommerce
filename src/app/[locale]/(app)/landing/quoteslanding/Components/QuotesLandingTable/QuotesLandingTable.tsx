@@ -6,13 +6,6 @@ import SideDrawer from "@/components/custom/sidedrawer";
 import { statusColor } from "@/components/custom/statuscolors";
 import FilterDrawer from "@/components/sales/FilterDrawer";
 import { QuoteFilterFormData } from "@/components/sales/QuoteFilterForm";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useCurrentUser } from "@/hooks/useCurrentUser";
 import { useNavigationWithLoader } from "@/hooks/useNavigationWithLoader";
@@ -62,9 +55,6 @@ function QuotesLandingTable({
   );
   const [filterPreferences] = useState<any>(null);
   const [isAddDrawerOpen, setIsAddDrawerOpen] = useState(false);
-  const [isItemsDialogOpen, setIsItemsDialogOpen] = useState(false);
-  const [selectedQuoteItems, setSelectedQuoteItems] =
-    useState<QuoteItem | null>(null);
 
   // Refs to prevent duplicate API calls
   const isFetchingRef = useRef(false);
@@ -161,16 +151,9 @@ function QuotesLandingTable({
         cell: ({ row }) => {
           const items = row.original.itemCount || 0;
           return (
-            <button
-              onClick={e => {
-                e.stopPropagation();
-                setSelectedQuoteItems(row.original);
-                setIsItemsDialogOpen(true);
-              }}
-              className="text-blue-600 hover:text-blue-800 hover:underline font-medium transition-colors cursor-pointer"
-            >
+            <span className="text-foreground">
               {items}
-            </button>
+            </span>
           );
         },
       },
@@ -1125,28 +1108,6 @@ function QuotesLandingTable({
           </div>
         </div>
       </div>
-
-      {/* Items Dialog */}
-      <Dialog open={isItemsDialogOpen} onOpenChange={setIsItemsDialogOpen}>
-        <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle>{t("quoteItems")}</DialogTitle>
-            <DialogDescription>
-              {selectedQuoteItems &&
-                t("quoteItemsDescription", {
-                  quoteId: selectedQuoteItems.quotationIdentifier,
-                  quoteName: selectedQuoteItems.quoteName,
-                })}
-            </DialogDescription>
-          </DialogHeader>
-
-          <div className="py-2">
-            <div className="text-center text-muted-foreground py-8">
-              {t("quoteItemsDetails")}
-            </div>
-          </div>
-        </DialogContent>
-      </Dialog>
     </>
   );
 }

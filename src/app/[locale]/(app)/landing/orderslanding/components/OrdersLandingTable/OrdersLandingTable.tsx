@@ -10,14 +10,8 @@ import DashboardTable from "@/components/custom/DashBoardTable";
 import SideDrawer from "@/components/custom/sidedrawer";
 import FilterDrawer from "@/components/sales/FilterDrawer";
 import { QuoteFilterFormData } from "@/components/sales/QuoteFilterForm";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
 import { Skeleton } from "@/components/ui/skeleton";
+import { OrderItemsPopover } from "./OrderItemsPopover";
 
 import { statusColor } from "@/components/custom/statuscolors";
 import { useCurrentUser } from "@/hooks/useCurrentUser";
@@ -81,10 +75,6 @@ function OrdersLandingTable({
     null
   );
   const [isAddDrawerOpen, setIsAddDrawerOpen] = useState(false);
-  const [isItemsDialogOpen, setIsItemsDialogOpen] = useState(false);
-  const [selectedOrderItems, setSelectedOrderItems] = useState<Order | null>(
-    null
-  );
 
   // Define table columns first (needed for skeleton)
   // Define table columns first (needed for skeleton)
@@ -154,7 +144,14 @@ function OrdersLandingTable({
         accessorKey: "orderDate",
         header: () => <span className="pl-4">{t("orderDate")}</span>,
         size: 150,
-        cell: ({ row }) => formatDate(row.original.createdDate),
+        cell: ({ row }) => (
+          <div
+            className="max-w-[300px] pl-4"
+            title={formatDate(row.original.createdDate) || "-"}
+          >
+            {formatDate(row.original.createdDate) || "-"}
+          </div>
+        ),
       },
       {
         accessorKey: "accountName",
@@ -179,16 +176,10 @@ function OrdersLandingTable({
         cell: ({ row }) => {
           const items = row.original.itemcount || 0;
           return (
-            <button
-              onClick={e => {
-                e.stopPropagation();
-                setSelectedOrderItems(row.original);
-                setIsItemsDialogOpen(true);
-              }}
-              className="text-blue-600 hover:text-blue-800 hover:underline font-medium transition-colors cursor-pointer"
-            >
-              {items}
-            </button>
+            <OrderItemsPopover
+              orderIdentifier={row.original.orderIdentifier}
+              itemCount={items}
+            />
           );
         },
       },
@@ -893,26 +884,6 @@ function OrdersLandingTable({
           </div>
         </div>
       </div>
-
-      <Dialog open={isItemsDialogOpen} onOpenChange={setIsItemsDialogOpen}>
-        <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle>{t("orderItems")}</DialogTitle>
-            <DialogDescription>
-              {selectedOrderItems &&
-                t("orderItemsDescription", {
-                  orderId: selectedOrderItems.orderIdentifier,
-                  orderName: selectedOrderItems.orderName,
-                })}
-            </DialogDescription>
-          </DialogHeader>
-          <div className="py-4">
-            <div className="text-center text-muted-foreground py-8">
-              {t("noItemsToDisplay")}
-            </div>
-          </div>
-        </DialogContent>
-      </Dialog>
     </>
   );
 }
