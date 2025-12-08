@@ -2,9 +2,9 @@
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
+import type { PaymentTerm } from "@/lib/api";
 import { Sparkles } from "lucide-react";
 import { useTranslations } from "next-intl";
-import type { PaymentTerm } from "@/lib/api";
 
 interface CashDiscountCardProps {
   handleCDApply: (
@@ -74,10 +74,10 @@ export default function CashDiscountCard({
 
   return (
     <Card className="rounded-lg bg-green-100 border-green-200 mt-2">
-      <CardContent className="p-3">
+      <CardContent className="px-1.5,py-0.5">
         <div className="flex items-center justify-between">
           <div className="flex-1">
-            <h4 className="text-sm font-semibold text-gray-800 mb-1">
+            <h4 className="text-lg font-semibold text-gray-800 mb-1">
               {getTitle()}
             </h4>
             <p className="text-xs text-gray-600">{getMessage()}</p>

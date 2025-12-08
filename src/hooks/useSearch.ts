@@ -52,9 +52,17 @@ export default function useSearch(
     const elasticQuery = buildProductSearchQuery(searchText);
     return {
       ...elasticQuery,
+      from: 0, // Add pagination offset
       _source: elasticQuery._source
         ? [...elasticQuery._source]
         : elasticQuery._source,
+      query: {
+        ...elasticQuery.query,
+        bool: {
+          ...elasticQuery.query.bool,
+          must: [...(elasticQuery.query.bool.must || [])], // Ensure mutable array
+        },
+      },
     };
   }, [searchText]);
 

@@ -13,11 +13,12 @@ import ImageWithFallback from "../ImageWithFallback";
 export interface ProductSearchResult {
   productId: number;
   id: string;
+  productIndexName?: string;
   brandProductId?: string;
   productName?: string;
   productShortDescription?: string;
   brandsName?: string;
-  productAssetss?: Array<{ source: string; isDefault?: boolean }>;
+  productAssetss?: Array<{ source: string; isDefault?: boolean | number }>;
   [key: string]: unknown;
 }
 
@@ -78,7 +79,7 @@ export default function ProductSearchInput({
   }, [searchResults]);
 
   // Fetch product assets for the search results
-  const { data: productAssets } = useQuery({
+  const { data: _productAssets } = useQuery({
     queryKey: ["product-assets-search", productIds.sort().join(",")],
     queryFn: async () => {
       if (productIds.length === 0) {
@@ -120,80 +121,7 @@ export default function ProductSearchInput({
   });
 
   // Helper to get product image
-  const getProductImage = useCallback(
-    (product: ProductSearchResult): string | null => {
-      if (!product.productId || !productAssets) {
-        // Try to get image from productAssetss if available
-        if (product.productAssetss && product.productAssetss.length > 0) {
-          const defaultImage = product.productAssetss.find(asset => {
-            const isDefault = asset.isDefault;
-            if (typeof isDefault === "boolean") {
-              return isDefault === true;
-            }
-            if (typeof isDefault === "number") {
-              return isDefault === 1;
-            }
-            if (typeof isDefault === "string") {
-              return isDefault === "1" || isDefault === "true";
-            }
-            return false;
-          });
-          return (
-            defaultImage?.source || product.productAssetss[0]?.source || null
-          );
-        }
-        return null;
-      }
-
-      // Find assets for this product ID
-      const productAssetsForProduct = productAssets.filter(
-        asset => asset.productId?.id === product.productId
-      );
-
-      if (productAssetsForProduct.length > 0) {
-        // Find default image
-        const defaultImage = productAssetsForProduct.find(asset => {
-          const isDefault = asset.isDefault;
-          if (typeof isDefault === "boolean") {
-            return isDefault === true;
-          }
-          if (typeof isDefault === "number") {
-            return isDefault === 1;
-          }
-          if (typeof isDefault === "string") {
-            return isDefault === "1" || isDefault === "true";
-          }
-          return false;
-        });
-        return (
-          defaultImage?.source || productAssetsForProduct[0]?.source || null
-        );
-      }
-
-      // Fallback to productAssetss if available
-      if (product.productAssetss && product.productAssetss.length > 0) {
-        const defaultImage = product.productAssetss.find(asset => {
-          const isDefault = asset.isDefault;
-          if (typeof isDefault === "boolean") {
-            return isDefault === true;
-          }
-          if (typeof isDefault === "number") {
-            return isDefault === 1;
-          }
-          if (typeof isDefault === "string") {
-            return isDefault === "1" || isDefault === "true";
-          }
-          return false;
-        });
-        return (
-          defaultImage?.source || product.productAssetss[0]?.source || null
-        );
-      }
-
-      return null;
-    },
-    [productAssets]
-  );
+ 
 
   // Handle product selection
   const handleProductSelect = useCallback(
@@ -258,7 +186,7 @@ export default function ProductSearchInput({
           }}
           placeholder={placeholder}
           disabled={disabled}
-          className={cn("pr-10", showDropdown && "rounded-b-none border-b-0")}
+          className={cn("pr-10 ")}
         />
         <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none">
           {loading ? (
@@ -269,58 +197,111 @@ export default function ProductSearchInput({
         </div>
       </div>
 
-      {/* Dropdown */}
       {showDropdown && (
         <div
+          className="absolute z-[1400] mt-2 ml-8 rounded-lg bg-white shadow-2xl border"
           ref={dropdownRef}
-          className="absolute z-50 w-full mt-0 bg-white dark:bg-gray-950 border border-t-0 rounded-b-lg shadow-lg max-h-[400px] overflow-y-auto"
+          style={{
+            width: "430px",
+            height: "410px",
+            right: 0,
+          }}
         >
-          {searchResults.map(product => {
-            const productImage = getProductImage(product);
-            const productName =
-              product.productShortDescription ||
-              product.productName ||
-              product.brandProductId ||
-              "Unknown Product";
-            const productId = product.brandProductId || product.id || "";
-
-            return (
-              <div
-                key={product.id || product.productId}
-                onClick={() => handleProductSelect(product)}
-                className="flex items-center gap-3 p-3 hover:bg-muted/50 cursor-pointer transition-colors border-b last:border-b-0"
-              >
-                {/* Product Image */}
-                <div className="shrink-0 w-12 h-12 rounded-lg overflow-hidden flex items-center justify-center bg-gray-100 dark:bg-gray-800">
-                  {productImage ? (
-                    <ImageWithFallback
-                      src={productImage}
-                      alt={productName}
-                      width={48}
-                      height={48}
-                      className="w-full h-full object-cover rounded-lg"
-                    />
-                  ) : (
-                    <div className="w-full h-full flex items-center justify-center bg-gray-300 dark:bg-gray-700">
-                      <span className="text-white font-semibold text-sm">
-                        {productName.charAt(0).toUpperCase()}
-                      </span>
-                    </div>
-                  )}
-                </div>
-
-                {/* Product Info */}
-                <div className="flex-1 min-w-0">
-                  <div className="font-semibold text-sm truncate">
-                    {productId}
+          <div
+            style={{
+              position: "relative",
+              overflow: "hidden",
+              width: "100%",
+              height: "100%",
+            }}
+          >
+            <div
+              style={{
+                position: "absolute",
+                inset: 0,
+                overflow: "scroll",
+                marginRight: "-15px",
+                marginBottom: "-15px",
+              }}
+            >
+              <ul className="list-none p-2 m-0">
+                {loading ? (
+                  <div className="flex items-center justify-center py-8">
+                    <Loader2 className="h-6 w-6 animate-spin text-gray-400" />
                   </div>
-                  <div className="text-xs text-muted-foreground truncate">
-                    {productName}
+                ) : searchResults.length > 0 ? (
+                  searchResults.map(product => {
+                   
+                    // Match SearchDialogBox image logic
+                    const defaultImage = product.productAssetss?.find(
+                      asset => asset.isDefault
+                    );
+                    const imageUrl =
+                      defaultImage?.source ||
+                      product.productAssetss?.[0]?.source;
+
+                    return (
+                      <div
+                        key={
+                          String(product.productIndexName ||
+                          product.productId ||
+                          product.id)
+                        }
+                        className="flex items-center gap-3 px-4 py-3 cursor-pointer hover:bg-gray-50 transition-colors rounded-md"
+                        onClick={() => handleProductSelect(product)}
+                        role="button"
+                        tabIndex={0}
+                      >
+                        <div className="relative size-12 shrink-0 overflow-hidden rounded border">
+                          <ImageWithFallback
+                            src={imageUrl || "/asset/default-placeholder.png"}
+                            alt={
+                              product.productShortDescription || "product image"
+                            }
+                            className="object-cover"
+                            width={48}
+                            height={48}
+                            fallbackSrc="/asset/default-placeholder.png"
+                            unoptimized
+                          />
+                        </div>
+                        <div className="flex flex-1 flex-col gap-0.5 overflow-hidden">
+                          <span className="truncate font-medium text-sm">
+                            {product.productShortDescription ||
+                              product.productName ||
+                              "Unknown Product"}
+                          </span>
+                          <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                            {product.brandsName && (
+                              <>
+                                <span className="truncate">
+                                  {product.brandsName}
+                                </span>
+                                {product.brandProductId && <span>•</span>}
+                              </>
+                            )}
+                            {product.brandProductId && (
+                              <span className="truncate">
+                                {product.brandProductId}
+                              </span>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })
+                ) : searchText.length < 2 ? (
+                  <div className="px-4 py-3 text-sm text-gray-500 text-center">
+                    Type at least 2 characters to search
                   </div>
-                </div>
-              </div>
-            );
-          })}
+                ) : (
+                  <div className="px-4 py-3 text-sm text-gray-500 text-center">
+                    No products found
+                  </div>
+                )}
+              </ul>
+            </div>
+          </div>
         </div>
       )}
     </div>

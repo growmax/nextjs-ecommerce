@@ -14,14 +14,15 @@ import {
   DrawerHeader,
   DrawerTitle,
 } from "@/components/ui/drawer";
-import type { BaseDialogProps } from "@/types/dialog";
+import { useMediaQuery } from "@/hooks/use-media-query";
 import { useCurrentUser } from "@/hooks/useCurrentUser";
 import { BillingBranchService, type BillingAddress } from "@/lib/api";
 import ShippingBranchService from "@/lib/api/services/ShippingBranchService/ShippingBranchService";
-import { useMediaQuery } from "@/hooks/use-media-query";
+import type { BaseDialogProps } from "@/types/dialog";
 import { Loader2, MapPin } from "lucide-react";
 import * as React from "react";
 import { toast } from "sonner";
+import { RadioGroup, RadioGroupItem } from "../ui/radio-group";
 
 export interface AddressDetailsDialogProps
   extends Omit<BaseDialogProps, "title" | "description"> {
@@ -38,13 +39,26 @@ export function AddressDetailsDialog({
   mode = "billing",
 }: AddressDetailsDialogProps) {
   const [addresses, setAddresses] = React.useState<BillingAddress[]>([]);
-  const [selectedAddressId, setSelectedAddressId] = React.useState<
-    string | null
-  >(currentAddress?.id || null);
+  const [selectedAddressId, setSelectedAddressId] = React.useState<string | null>(null);
   const [loading, setLoading] = React.useState(false);
   const [error, setError] = React.useState<string | null>(null);
-
+ 
   const { user } = useCurrentUser();
+
+  // Derived selected ID that handles all cases
+  const effectiveSelectedId = React.useMemo(() => {
+    // Priority 1: User's current selection (if any)
+    if (selectedAddressId) return selectedAddressId;
+    
+    // Priority 2: Provided currentAddress that exists in fetched addresses
+    if (addresses.length > 0 && currentAddress?.id) {
+      const addressExists = addresses.some(addr => addr.id === currentAddress.id);
+      if (addressExists) return currentAddress.id;
+    }
+    
+    // Priority 3: First address if available
+    return addresses[0]?.id || null;
+  }, [selectedAddressId, addresses, currentAddress?.id]);
 
   const fetchAddresses = React.useCallback(async () => {
     if (!user?.userId) {
@@ -61,19 +75,38 @@ export function AddressDetailsDialog({
     setError(null);
 
     try {
+      let fetchedAddresses: BillingAddress[] = [];
+      
       if (mode === "shipping") {
-        const shippingAddresses =
+        fetchedAddresses =
           (await ShippingBranchService.getShippingAddresses(
             user.userId.toString(),
             user.companyId.toString()
           )) as unknown as BillingAddress[];
-        setAddresses(shippingAddresses);
       } else {
-        const billingAddresses = await BillingBranchService.getBillingAddresses(
+        fetchedAddresses = await BillingBranchService.getBillingAddresses(
           user.userId.toString(),
           user.companyId.toString()
         );
-        setAddresses(billingAddresses);
+      }
+      
+      setAddresses(fetchedAddresses);
+      
+      // If we have addresses but no selection yet, auto-select based on priority
+      if (fetchedAddresses.length > 0 && !selectedAddressId) {
+        // Check if currentAddress exists in fetched addresses
+        if (currentAddress?.id) {
+          const exists = fetchedAddresses.some(addr => addr.id === currentAddress.id);
+          if (exists) {
+            setSelectedAddressId(currentAddress.id);
+          } else {
+            // Current address not found, select first one
+            setSelectedAddressId(fetchedAddresses[0]?.id || null);
+          }
+        } else {
+          // No currentAddress provided, select first one
+          setSelectedAddressId(fetchedAddresses[0]?.id || null);
+        }
       }
     } catch (err) {
       setError(
@@ -87,17 +120,17 @@ export function AddressDetailsDialog({
     } finally {
       setLoading(false);
     }
-  }, [user?.userId, user?.companyId, mode]);
+  }, [user?.userId, user?.companyId, mode, selectedAddressId, currentAddress?.id]);
 
   // Reset state when dialog closes
   React.useEffect(() => {
     if (!open) {
       setAddresses([]);
-      setSelectedAddressId(currentAddress?.id || null);
       setError(null);
       setLoading(false);
+      // Keep selectedAddressId so it persists when dialog reopens
     }
-  }, [open, currentAddress?.id]);
+  }, [open]);
 
   // Fetch addresses when dialog opens
   React.useEffect(() => {
@@ -111,11 +144,7 @@ export function AddressDetailsDialog({
     }
   }, [open, user?.userId, user?.companyId, fetchAddresses]);
 
-  const handleAddressSelect = (address: BillingAddress) => {
-    setSelectedAddressId(address.id);
-    onAddressSelect(address);
-    onOpenChange(false);
-  };
+
 
   const formatAddress = (address: BillingAddress) => {
     const { addressId } = address;
@@ -177,69 +206,65 @@ export function AddressDetailsDialog({
                   <span>No addresses found</span>
                 </div>
               ) : (
-                addresses.map(address => (
-                  <div
-                    key={address.id}
-                    className={`p-4 border rounded-lg cursor-pointer transition-colors ${
-                      selectedAddressId === address.id
-                        ? "bg-primary/5 border-primary/20"
-                        : "bg-white border-gray-200 hover:bg-gray-50"
-                    }`}
-                    onClick={() => handleAddressSelect(address)}
-                  >
-                    <div className="flex items-start space-x-3">
-                      {/* Radio Button */}
-                      <div className="shrink-0 mt-1">
-                        <div
-                          className={`w-4 h-4 rounded-full border-2 ${
-                            selectedAddressId === address.id
-                              ? "border-primary bg-primary"
-                              : "border-gray-300"
-                          }`}
-                        >
-                          {selectedAddressId === address.id && (
-                            <div className="w-2 h-2 bg-white rounded-full m-0.5" />
-                          )}
-                        </div>
-                      </div>
-
-                      {/* Address Details */}
-                      <div className="flex-1 min-w-0">
-                        {/* Branch Name - Main Title */}
-                        <div className="font-semibold text-gray-900 mb-1">
-                          {address.name}
-                        </div>
-
-                        {/* Address Details - Multi-line format */}
-                        {(() => {
-                          const addressLines = formatAddress(address);
-                          return addressLines.map((line, index) => (
-                            <div
-                              key={`${address.id}-${line.substring(0, 10)}-${index}`}
-                              className="text-sm text-gray-700 mb-1"
-                            >
+                <RadioGroup
+                  value={effectiveSelectedId || ""}
+                  onValueChange={(value) => {
+                    const selected = addresses.find((a) => a.id === value);
+                    if (selected) {
+                      setSelectedAddressId(selected.id);
+                      onAddressSelect(selected);
+                      onOpenChange(false);
+                    }
+                  }}
+                  className="space-y-2"
+                >
+                  {addresses.map((address) => (
+                    <div
+                      key={address.id}
+                      className={`p-4 border rounded-lg cursor-pointer transition-colors ${
+                      
+                          "bg-white border-gray-200 hover:bg-gray-50"
+                      }`}
+                      onClick={() => {
+                        setSelectedAddressId(address.id);
+                        onAddressSelect(address);
+                        onOpenChange(false);
+                      }}
+                    >
+                      <div className="flex items-start space-x-3">
+                        <RadioGroupItem
+                          value={address.id}
+                          id={`radio-${address.id}`}
+                          className="mt-1"
+                        />
+                
+                        <label htmlFor={`radio-${address.id}`} className="flex-1 min-w-0">
+                          <div className="font-semibold text-gray-900 mb-1">
+                            {address.name}
+                          </div>
+                
+                          {formatAddress(address).map((line, index) => (
+                            <div key={index} className="text-sm text-gray-700 mb-1">
                               {line}
                             </div>
-                          ));
-                        })()}
-
-                        {/* Code - BillTo or ShipTo depending on mode */}
-                        {mode === "shipping" &&
-                          address.addressId.shipToCode && (
+                          ))}
+                
+                          {mode === "shipping" && address.addressId.shipToCode && (
                             <div className="text-xs text-gray-500 mt-1">
                               Ship to Code: {address.addressId.shipToCode}
                             </div>
                           )}
-                        {mode !== "shipping" &&
-                          address.addressId.billToCode && (
+                
+                          {mode !== "shipping" && address.addressId.billToCode && (
                             <div className="text-xs text-gray-500 mt-1">
                               Bill to Code: {address.addressId.billToCode}
                             </div>
                           )}
+                        </label>
                       </div>
                     </div>
-                  </div>
-                ))
+                  ))}
+                </RadioGroup>
               )}
             </div>
           </div>
@@ -281,31 +306,39 @@ export function AddressDetailsDialog({
                 <span>No addresses found</span>
               </div>
             ) : (
-              addresses.map(address => (
+              <RadioGroup
+              value={effectiveSelectedId || ""}
+              onValueChange={(value) => {
+                const selected = addresses.find((a) => a.id === value);
+                if (selected) {
+                  setSelectedAddressId(selected.id);
+                  onAddressSelect(selected);
+                  onOpenChange(false);
+                }
+              }}
+              className="space-y-2"
+            >
+              {addresses.map(address => (
                 <div
                   key={address.id}
                   className={`p-4 border rounded-lg cursor-pointer transition-colors ${
-                    selectedAddressId === address.id
+                    effectiveSelectedId === address.id
                       ? "bg-primary/5 border-primary/20"
                       : "bg-white border-gray-200 hover:bg-gray-50"
                   }`}
-                  onClick={() => handleAddressSelect(address)}
+                  onClick={() => {
+                    setSelectedAddressId(address.id);
+                    onAddressSelect(address);
+                    onOpenChange(false);
+                  }}
                 >
                   <div className="flex items-start space-x-3">
                     {/* Radio Button */}
-                    <div className="shrink-0 mt-1">
-                      <div
-                        className={`w-4 h-4 rounded-full border-2 ${
-                          selectedAddressId === address.id
-                            ? "border-primary bg-primary"
-                            : "border-gray-300"
-                        }`}
-                      >
-                        {selectedAddressId === address.id && (
-                          <div className="w-2 h-2 bg-white rounded-full m-0.5" />
-                        )}
-                      </div>
-                    </div>
+                    <RadioGroupItem
+                          value={address.id}
+                          id={`radio-${address.id}`}
+                          className="mt-1"
+                        />
 
                     {/* Address Details */}
                     <div className="flex-1 min-w-0">
@@ -341,7 +374,8 @@ export function AddressDetailsDialog({
                     </div>
                   </div>
                 </div>
-              ))
+              ))}
+              </RadioGroup>
             )}
           </div>
         </div>
