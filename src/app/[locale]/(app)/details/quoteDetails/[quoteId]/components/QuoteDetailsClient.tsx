@@ -228,9 +228,7 @@ export default function QuoteDetailsClient({
       quoteDetails?.data?.validityTill) as string | undefined;
 
     if (updatedBuyerStatus === "CANCELLED") {
-      toast.info(t("quoteCancelledAlready"), {
-        position: "bottom-left",
-      });
+      toast.info(t("quoteCancelledAlready"));
       return;
     }
 
@@ -255,25 +253,19 @@ export default function QuoteDetailsClient({
       endOfValidityDay.setHours(23, 59, 59, 999);
 
       if (new Date() > endOfValidityDay) {
-        toast.info(t("contractValidityExpired"), {
-          position: "bottom-left",
-        });
+        toast.info(t("contractValidityExpired"));
         return;
       }
     }
 
     // Check if order placed
     if (updatedBuyerStatus === "ORDER PLACED") {
-      toast.info(t("quoteConvertedToOrderAlready"), {
-        position: "bottom-left",
-      });
+      toast.info(t("quoteConvertedToOrderAlready"));
       return;
     }
 
     // Default message for other statuses
-    toast.info(t("quoteOwnerWorkingOnQuote"), {
-      position: "bottom-left",
-    });
+    toast.info(t("quoteOwnerWorkingOnQuote"));
   };
 
   const handleEditQuoteName = () => {
@@ -356,9 +348,7 @@ export default function QuoteDetailsClient({
       quoteDetails?.data?.validityTill) as string | undefined;
 
     if (updatedBuyerStatus === "CANCELLED") {
-      toast.info(t("quoteCancelledAlready"), {
-        position: "bottom-left",
-      });
+      toast.info(t("quoteCancelledAlready"));
       return;
     }
 
@@ -368,25 +358,19 @@ export default function QuoteDetailsClient({
       endOfValidityDay.setHours(23, 59, 59, 999);
 
       if (new Date() > endOfValidityDay) {
-        toast.info(t("contractValidityExpired"), {
-          position: "bottom-left",
-        });
+        toast.info(t("contractValidityExpired"));
         return;
       }
     }
 
     // Check if quote is in OPEN status
     if (updatedBuyerStatus === "OPEN") {
-      toast.info(t("quoteOwnerWorkingWaitForResponse"), {
-        position: "bottom-left",
-      });
+      toast.info(t("quoteOwnerWorkingWaitForResponse"));
       return;
     }
 
     if (updatedBuyerStatus === "ORDER PLACED") {
-      toast.info(t("quoteConvertedToOrderAlready"), {
-        position: "bottom-left",
-      });
+      toast.info(t("quoteConvertedToOrderAlready"));
       return;
     }
 
@@ -406,9 +390,7 @@ export default function QuoteDetailsClient({
     }
 
     // Default message for other statuses
-    toast.info(t("quoteOwnerWorkingOnQuote"), {
-      position: "bottom-left",
-    });
+    toast.info(t("quoteOwnerWorkingOnQuote"));
   };
 
   const handleVersionSelect = (version: Version) => {

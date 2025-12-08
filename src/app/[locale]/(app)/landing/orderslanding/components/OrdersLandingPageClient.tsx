@@ -2,7 +2,6 @@
 
 import { DashboardToolbar } from "@/components/custom/dashboard-toolbar";
 import { LandingLayout, PageLayout } from "@/components/layout";
-import { Toaster } from "@/components/ui/sonner";
 
 import { Download } from "lucide-react";
 import { useTranslations } from "next-intl";
@@ -53,8 +52,6 @@ export default function OrdersLandingPageClient() {
           onTotalCountChange={setTotalCount}
         />
       </PageLayout>
-
-      <Toaster richColors />
     </LandingLayout>
   );
 }
