@@ -208,7 +208,12 @@
     "reasonForCancellation": "Reason for cancellation",
     "productAddedSuccessfully": "Product added successfully",
     "failedToAddProductToOrder": "Failed to add product to order",
-    "unknownProduct": "Unknown Product"
+    "unknownProduct": "Unknown Product",
+    "productId": "Product ID",
+    "askedQty": "Asked Qty",
+    "invoicedQty": "Invoiced Qty",
+    "pendingQty": "Pending Qty",
+    "failedToLoadItems": "Failed to load items"
   },
   "quotes": {
     "title": "Quotes",

@@ -6,13 +6,6 @@ import SideDrawer from "@/components/custom/sidedrawer";
 import { statusColor } from "@/components/custom/statuscolors";
 import FilterDrawer from "@/components/sales/FilterDrawer";
 import { QuoteFilterFormData } from "@/components/sales/QuoteFilterForm";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useCurrentUser } from "@/hooks/useCurrentUser";
 import { useNavigationWithLoader } from "@/hooks/useNavigationWithLoader";
@@ -62,9 +55,6 @@ function QuotesLandingTable({
   );
   const [filterPreferences] = useState<any>(null);
   const [isAddDrawerOpen, setIsAddDrawerOpen] = useState(false);
-  const [isItemsDialogOpen, setIsItemsDialogOpen] = useState(false);
-  const [selectedQuoteItems, setSelectedQuoteItems] =
-    useState<QuoteItem | null>(null);
 
   // Refs to prevent duplicate API calls
   const isFetchingRef = useRef(false);
@@ -80,14 +70,14 @@ function QuotesLandingTable({
     () => [
       {
         accessorKey: "quotationIdentifier",
-        header: () => <span className="pl-2">{t("quoteId")}</span>,
+        header: () => <span className="pl-4">{t("quoteId")}</span>,
         size: 150,
         meta: {
           sticky: true,
         },
         cell: ({ row }) => (
           <div
-            className="pl-2 break-words whitespace-normal"
+            className="pl-4 break-words whitespace-normal"
             style={{
               wordBreak: "break-all",
               overflowWrap: "anywhere",
@@ -100,11 +90,11 @@ function QuotesLandingTable({
       },
       {
         accessorKey: "quoteName",
-        header: () => <span className="pl-2">{t("quoteName")}</span>,
+        header: () => <span className="pl-4">{t("quoteName")}</span>,
         size: 200,
         cell: ({ row }) => (
           <div
-            className="max-w-[200px] truncate pl-2"
+            className="max-w-[200px] truncate pl-4"
             title={row.original.quoteName || "-"}
           >
             {row.original.quoteName || "-"}
@@ -113,12 +103,12 @@ function QuotesLandingTable({
       },
       {
         accessorKey: "updatedBuyerStatus",
-        header: () => <span className="pl-[30px]">{t("status")}</span>,
+        header: () => <span className="text-center w-full block">{t("status")}</span>,
         size: 200,
         cell: ({ row }) => {
           const status = row.original.updatedBuyerStatus;
           if (!status)
-            return <span className="text-muted-foreground pl-[30px]">-</span>;
+            return <span className="text-muted-foreground pl-4">-</span>;
           const color = statusColor(status.toUpperCase());
           const titleCaseStatus = status
             .split(" ")
@@ -127,7 +117,7 @@ function QuotesLandingTable({
             )
             .join(" ");
           return (
-            <div className="pl-[30px]">
+            <div className="flex justify-center">
               <span
                 className="px-2 py-1 rounded text-xs font-medium text-primary-foreground whitespace-nowrap border border-border/30"
                 style={{ backgroundColor: color }}
@@ -140,11 +130,11 @@ function QuotesLandingTable({
       },
       {
         accessorKey: "sellerCompanyName",
-        header: t("accountName"),
+        header: () => <span className="pl-4">{t("accountName")}</span>,
         size: 300,
         cell: ({ row }) => (
           <div
-            className="max-w-[300px]"
+            className="max-w-[300px] pl-4"
             title={row.original.sellerCompanyName || "-"}
           >
             {row.original.sellerCompanyName || "-"}
@@ -161,60 +151,57 @@ function QuotesLandingTable({
         cell: ({ row }) => {
           const items = row.original.itemCount || 0;
           return (
-            <button
-              onClick={e => {
-                e.stopPropagation();
-                setSelectedQuoteItems(row.original);
-                setIsItemsDialogOpen(true);
-              }}
-              className="text-blue-600 hover:text-blue-800 hover:underline font-medium transition-colors cursor-pointer"
-            >
+            <span className="text-foreground">
               {items}
-            </button>
+            </span>
           );
         },
       },
       {
         accessorKey: "subTotal",
-        header: t("subtotal"),
+        header: () => <span className="pr-4">{t("subtotal")}</span>,
         size: 150,
         meta: {
           alignRight: true,
         },
         cell: ({ row }) => (
-          <PricingFormat
-            {...(row.original.curencySymbol && {
-              buyerCurrency: row.original.curencySymbol,
-            })}
-            value={row.original.subTotal || row.original.grandTotal || 0}
-          />
+          <span className="pr-4">
+            <PricingFormat
+              {...(row.original.curencySymbol && {
+                buyerCurrency: row.original.curencySymbol,
+              })}
+              value={row.original.subTotal || row.original.grandTotal || 0}
+            />
+          </span>
         ),
       },
       {
         accessorKey: "taxableAmount",
-        header: t("taxableAmount"),
+        header: () => <span className="pr-4">{t("taxableAmount")}</span>,
         size: 150,
         meta: {
           alignRight: true,
         },
         cell: ({ row }) => (
-          <PricingFormat
-            {...(row.original.curencySymbol && {
-              buyerCurrency: row.original.curencySymbol,
-            })}
-            value={row.original.taxableAmount || 0}
-          />
+          <span className="pr-4">
+            <PricingFormat
+              {...(row.original.curencySymbol && {
+                buyerCurrency: row.original.curencySymbol,
+              })}
+              value={row.original.taxableAmount || 0}
+            />
+          </span>
         ),
       },
       {
         accessorKey: "grandTotal",
-        header: t("total"),
+        header: () => <span className="pr-4">{t("total")}</span>,
         size: 150,
         meta: {
           alignRight: true,
         },
         cell: ({ row }) => (
-          <span className="font-semibold">
+          <span className="pr-4">
             <PricingFormat
               {...(row.original.curencySymbol && {
                 buyerCurrency: row.original.curencySymbol,
@@ -1121,28 +1108,6 @@ function QuotesLandingTable({
           </div>
         </div>
       </div>
-
-      {/* Items Dialog */}
-      <Dialog open={isItemsDialogOpen} onOpenChange={setIsItemsDialogOpen}>
-        <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle>{t("quoteItems")}</DialogTitle>
-            <DialogDescription>
-              {selectedQuoteItems &&
-                t("quoteItemsDescription", {
-                  quoteId: selectedQuoteItems.quotationIdentifier,
-                  quoteName: selectedQuoteItems.quoteName,
-                })}
-            </DialogDescription>
-          </DialogHeader>
-
-          <div className="py-2">
-            <div className="text-center text-muted-foreground py-8">
-              {t("quoteItemsDetails")}
-            </div>
-          </div>
-        </DialogContent>
-      </Dialog>
     </>
   );
 }
