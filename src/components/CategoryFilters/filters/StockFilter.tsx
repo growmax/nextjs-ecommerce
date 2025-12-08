@@ -2,7 +2,6 @@
 
 import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import { Package } from "lucide-react";
 
 interface StockFilterProps {
   inStock?: boolean | undefined;
@@ -31,11 +30,6 @@ export function StockFilter({
 
   return (
     <div className="space-y-2">
-      <h4 className="text-xs font-semibold flex items-center gap-1.5">
-        <Package className="h-3.5 w-3.5" />
-        Stock Status
-      </h4>
-
       <RadioGroup
         value={
           inStock === true

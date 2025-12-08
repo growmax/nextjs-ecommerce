@@ -1,7 +1,7 @@
 "use client";
 
-import { DiscountItem } from "@/lib/api/services/DiscountService/DiscountService";
 import { Skeleton } from "@/components/ui/skeleton";
+import { DiscountItem } from "@/lib/api/services/DiscountService/DiscountService";
 import { useMemo } from "react";
 
 interface ProductPriceProps {

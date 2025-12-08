@@ -254,7 +254,7 @@ export function ProductListPageClient({
           <select
             value={sortBy.sortBy}
             onChange={e => handleSortChange(parseInt(e.target.value, 10))}
-            className="px-4 py-2 bg-white border border-gray-300 rounded-md text-sm font-medium"
+            className="h-10 min-w-[180px] px-3 py-2 bg-white border border-gray-300 rounded-md text-sm font-medium"
           >
             <option value={1}>Relevance</option>
             <option value={2}>Price: Low to High</option>

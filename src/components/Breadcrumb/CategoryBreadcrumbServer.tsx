@@ -1,6 +1,5 @@
 import { Link } from "@/i18n/navigation";
 import { BreadcrumbItem } from "@/lib/services/CategoryResolutionService";
-import { Home } from "lucide-react";
 
 interface CategoryBreadcrumbServerProps {
   breadcrumbs: BreadcrumbItem[];
@@ -18,19 +17,19 @@ export function CategoryBreadcrumbServer({
   }
 
   return (
-    <nav aria-label="Breadcrumb" className="mb-3">
-      <ol className="flex items-center space-x-2 text-sm">
+    <nav aria-label="Breadcrumb" className="mb-4">
+      <ol className="flex items-center flex-wrap gap-1.5 text-sm">
         {breadcrumbs.map((crumb, index) => {
           const isLast = index === breadcrumbs.length - 1;
 
           return (
             <li key={crumb.href} className="flex items-center">
               {index > 0 && (
-                <span className="mx-2 text-muted-foreground">/</span>
+                <span className="mx-1.5 text-muted-foreground/60">/</span>
               )}
               {isLast ? (
                 <span
-                  className="text-foreground font-medium"
+                  className="text-foreground font-semibold"
                   aria-current="page"
                 >
                   {crumb.label}
@@ -39,9 +38,8 @@ export function CategoryBreadcrumbServer({
                 <Link
                   href={crumb.href}
                   prefetch={true}
-                  className="text-muted-foreground hover:text-foreground transition-colors"
+                  className="text-muted-foreground hover:text-foreground transition-colors duration-200 hover:underline underline-offset-2"
                 >
-                  {index === 0 && <Home className="h-4 w-4 mr-1 inline" />}
                   {crumb.label}
                 </Link>
               )}

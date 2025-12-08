@@ -1,9 +1,9 @@
+import { Link } from "@/i18n/navigation";
 import type { RequestContext } from "@/lib/api/client";
 import CatalogService from "@/lib/api/services/CatalogService";
 import TenantService from "@/lib/api/services/TenantService";
 import { Metadata } from "next";
 import { headers } from "next/headers";
-import Link from "next/link";
 
 interface PageProps {
   params: Promise<{
@@ -47,7 +47,7 @@ function generateSlug(name: string): string {
  * Displays all categories in a grid layout
  */
 export default async function AllCategoriesPage({ params }: PageProps) {
-  const { locale } = await params;
+  await params; // params required for route matching, but locale handled by i18n Link
 
   // Get tenant data from headers
   const headersList = await headers();
@@ -98,8 +98,8 @@ export default async function AllCategoriesPage({ params }: PageProps) {
   }
 
   return (
-    <div className="container mx-auto px-4 py-8">
-      <div className="mb-8">
+    <div className="max-w-screen-2xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
+      <div className="mb-6">
         <h1 className="text-3xl font-bold mb-2">All Categories</h1>
         <p className="text-muted-foreground">
           Browse all available categories in our store
@@ -120,8 +120,8 @@ export default async function AllCategoriesPage({ params }: PageProps) {
           {categories.map((category) => {
             // Use category slug if available, otherwise generate from name
             const slug = category.slug || generateSlug(category.name);
-            // Category route uses [...categories] catch-all, so just use the slug
-            const categoryUrl = `/${locale}/${slug}`;
+            // Note: href doesn't include locale prefix because Link from @/i18n/navigation auto-adds it
+            const categoryUrl = `/${slug}`;
 
             return (
               <Link

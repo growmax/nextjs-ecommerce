@@ -14,7 +14,10 @@
     "quotes": "Cotizaciones",
     "company": "Empresa",
     "profile": "Perfil",
-    "companySettings": "Configuración de Empresa"
+    "companySettings": "Configuración de Empresa",
+    "shop": "Tienda",
+    "categories": "Categorías",
+    "brands": "Marcas"
   },
   "auth": {
     "login": "Iniciar Sesión",

@@ -1,9 +1,7 @@
-import { CategoryBreadcrumbServer } from "@/components/Breadcrumb/CategoryBreadcrumbServer";
 import { Link } from "@/i18n/navigation";
 import type { RequestContext } from "@/lib/api/client";
 import BrandsService from "@/lib/api/services/BrandsService";
 import TenantService from "@/lib/api/services/TenantService";
-import { BreadcrumbItem } from "@/lib/services/CategoryResolutionService";
 import { Metadata } from "next";
 import { headers } from "next/headers";
 
@@ -96,19 +94,9 @@ export default async function AllBrandsPage({ params }: PageProps) {
 
   console.log("brands", brands);
 
-  // Generate breadcrumbs for All Brands page
-  // Note: hrefs don't include locale prefix because Link from @/i18n/navigation auto-adds it
-  const breadcrumbs: BreadcrumbItem[] = [
-    { label: "Home", href: `/` },
-    { label: "Brands", href: `/brands/All` },
-  ];
-
   return (
-    <div className="container mx-auto px-4 py-8">
-      {/* Breadcrumbs - Server-rendered */}
-      <CategoryBreadcrumbServer breadcrumbs={breadcrumbs} />
-
-      <div className="mb-8">
+    <div className="max-w-screen-2xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
+      <div className="mb-6">
         <h1 className="text-3xl font-bold mb-2">All Brands</h1>
         <p className="text-muted-foreground">
           Browse all available brands in our store

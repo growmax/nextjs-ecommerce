@@ -5,17 +5,17 @@ import { StructuredDataServer } from "@/components/seo/StructuredDataServer";
 import { Card, CardContent } from "@/components/ui/card";
 import type { RequestContext } from "@/lib/api/client";
 import SearchService, {
-  ElasticSearchQuery,
-  FormattedProduct,
+    ElasticSearchQuery,
+    FormattedProduct,
 } from "@/lib/api/services/SearchService/SearchService";
 import TenantService from "@/lib/api/services/TenantService";
 import BrandResolutionService from "@/lib/services/BrandResolutionService";
 import { BlockingLoaderProvider } from "@/providers/BlockingLoaderProvider";
 import type { FilterAggregations } from "@/types/category-filters";
 import {
-  buildBrandFilter,
-  buildBrandQuery,
-  getBaseQuery,
+    buildBrandFilter,
+    buildBrandQuery,
+    getBaseQuery,
 } from "@/utils/opensearch/browse-queries";
 import { Package } from "lucide-react";
 import { Metadata } from "next";
@@ -313,7 +313,7 @@ export default async function BrandPage({ params, searchParams }: PageProps) {
       <StructuredDataServer data={structuredData} />
 
       {/* Responsive Container Wrapper */}
-      <div className="max-w-screen-2xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div className="max-w-screen-2xl mx-auto px-4 sm:px-6 lg:px-8 py-2">
         {/* Breadcrumbs - Server-rendered */}
         <CategoryBreadcrumbServer breadcrumbs={breadcrumbs} />
 
@@ -329,6 +329,7 @@ export default async function BrandPage({ params, searchParams }: PageProps) {
             brandName={brand.name}
             currentCategoryPath={[]}
             displayName={brand.name}
+            locale={locale}
           >
             {/* Product Grid - Server-rendered for SEO with Suspense for streaming */}
             <div className="relative">

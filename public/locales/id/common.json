@@ -14,7 +14,10 @@
     "quotes": "Penawaran",
     "company": "Perusahaan",
     "profile": "Profil",
-    "companySettings": "Pengaturan Perusahaan"
+    "companySettings": "Pengaturan Perusahaan",
+    "shop": "Toko",
+    "categories": "Kategori",
+    "brands": "Merek"
   },
   "auth": {
     "login": "Masuk",

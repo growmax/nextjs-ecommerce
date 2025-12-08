@@ -4,7 +4,6 @@ import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { useBlockingLoader } from "@/providers/BlockingLoaderProvider";
 import type { CategoryFilterOption } from "@/types/category-filters";
-import { FolderTree } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useEffect, useTransition } from "react";
 
@@ -94,10 +93,6 @@ export function CategoryFilter({
       {/* Child Categories */}
       {hasChildCategories && (
         <div className="space-y-2">
-          <h4 className="text-xs font-semibold text-muted-foreground flex items-center gap-1.5">
-            <FolderTree className="h-3.5 w-3.5" />
-            Child Categories
-          </h4>
           <ScrollArea className="h-[140px]">
             <div className="space-y-0.5 pr-4">
               {childCategories.map(category => (
@@ -123,10 +118,6 @@ export function CategoryFilter({
       {/* Sibling Categories */}
       {hasSiblingCategories && (
         <div className="space-y-2">
-          <h4 className="text-xs font-semibold text-muted-foreground flex items-center gap-1.5">
-            <FolderTree className="h-3.5 w-3.5" />
-            Related Categories
-          </h4>
           <ScrollArea className="h-[140px]">
             <div className="space-y-0.5 pr-4">
               {siblingCategories.map(category => (
