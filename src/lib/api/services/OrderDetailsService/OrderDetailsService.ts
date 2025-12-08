@@ -175,6 +175,53 @@ export class OrderDetailsService extends BaseService<OrderDetailsService> {
       }
     ) as Promise<OrderDetailsResponse | null>;
   }
+
+  /**
+   * 🚀 SIMPLIFIED: Get product overview for an order (auto-context)
+   * 
+   * Endpoint: GET /orders/getProductOverview
+   * 
+   * @param params - orderIdentifier, userId, companyId
+   * @returns Product overview data
+   * 
+   * Usage: OrderDetailsService.getProductOverview({ orderIdentifier, userId, companyId })
+   */
+  async getProductOverview(params: {
+    orderIdentifier: string;
+    userId: number;
+    companyId: number;
+  }): Promise<OrderDetailsResponse> {
+    const { orderIdentifier, userId, companyId } = params;
+
+    const queryString = `orderIdentifier=${orderIdentifier}&userId=${userId}&companyId=${companyId}`;
+
+    return this.call(
+      `/orders/getProductOverview?${queryString}`,
+      {},
+      "GET"
+    ) as Promise<OrderDetailsResponse>;
+  }
+
+  /**
+   * 🛡️ SIMPLIFIED: Server-side version of getProductOverview (auto-context + error handling)
+   * 
+   * Usage: OrderDetailsService.getProductOverviewServerSide({ orderIdentifier, userId, companyId })
+   */
+  async getProductOverviewServerSide(params: {
+    orderIdentifier: string;
+    userId: number;
+    companyId: number;
+  }): Promise<OrderDetailsResponse | null> {
+    const { orderIdentifier, userId, companyId } = params;
+
+    const queryString = `orderIdentifier=${orderIdentifier}&userId=${userId}&companyId=${companyId}`;
+
+    return this.callSafe(
+      `/orders/getProductOverview?${queryString}`,
+      {},
+      "GET"
+    ) as Promise<OrderDetailsResponse | null>;
+  }
 }
 
 export default OrderDetailsService.getInstance();
