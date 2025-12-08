@@ -1,17 +1,26 @@
 "use client";
 
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
 import { useCategoryFilters } from "@/hooks/useCategoryFilters";
 import { cn } from "@/lib/utils";
+import { useBlockingLoader } from "@/providers/BlockingLoaderProvider";
 import { X } from "lucide-react";
+import { useEffect, useTransition } from "react";
+
+interface ActiveFiltersBarProps {
+  selectedBrandName?: string | undefined;
+  onRemoveBrand?: (() => void) | undefined;
+}
 
 /**
  * ActiveFiltersBar Component
  * Displays active filters in a horizontal scrollable bar
  * Similar to TrendingBrands but shows selected filters instead
  */
-export function ActiveFiltersBar() {
+export function ActiveFiltersBar({
+  selectedBrandName,
+  onRemoveBrand,
+}: ActiveFiltersBarProps = {}) {
   const {
     filters,
     removeVariantAttribute,
@@ -19,7 +28,20 @@ export function ActiveFiltersBar() {
     setStockFilter,
     clearAllFilters,
     activeFilterCount,
+    isPending,
   } = useCategoryFilters();
+
+  const [isBrandNavigating, startBrandTransition] = useTransition();
+  const { showLoader, hideLoader } = useBlockingLoader();
+
+  // Show/hide blocking loader when filters are being cleared or brand is being removed
+  useEffect(() => {
+    if (isPending || isBrandNavigating) {
+      showLoader({ message: "Clearing filters..." });
+    } else {
+      hideLoader();
+    }
+  }, [isPending, isBrandNavigating, showLoader, hideLoader]);
 
   // Build active filters array with category names
   const activeFilters: Array<{
@@ -28,6 +50,16 @@ export function ActiveFiltersBar() {
     value: string;
     onRemove: () => void;
   }> = [];
+
+  // Add brand filter if on brand page
+  if (selectedBrandName && onRemoveBrand) {
+    activeFilters.push({
+      id: "brand",
+      category: "Brand",
+      value: selectedBrandName,
+      onRemove: onRemoveBrand,
+    });
+  }
 
   // Add variant attribute filters
   Object.entries(filters.variantAttributes).forEach(([attrName, values]) => {
@@ -63,10 +95,25 @@ export function ActiveFiltersBar() {
     });
   }
 
+  // Calculate total filter count including brand
+  const totalFilterCount = activeFilterCount + (selectedBrandName ? 1 : 0);
+
   // Don't render if no active filters
-  if (activeFilterCount === 0) {
+  if (totalFilterCount === 0) {
     return null;
   }
+
+  const handleClearAll = () => {
+    // Clear all URL-based filters
+    clearAllFilters();
+
+    // Navigate away from brand if on brand page
+    if (onRemoveBrand) {
+      startBrandTransition(() => {
+        onRemoveBrand();
+      });
+    }
+  };
 
   return (
     <div className="flex items-center gap-2 overflow-x-auto scrollbar-thin scrollbar-thumb-muted scrollbar-track-transparent">
@@ -75,15 +122,15 @@ export function ActiveFiltersBar() {
         <span className="text-sm font-medium text-foreground">
           Active Filters
         </span>
-        {activeFilterCount > 0 && (
+        {totalFilterCount > 0 && (
           <span className="inline-flex items-center justify-center rounded-full bg-primary px-1.5 py-0.5 text-xs font-medium text-primary-foreground">
-            {activeFilterCount}
+            {totalFilterCount}
           </span>
         )}
         {/* Clear All Button */}
-        {activeFilterCount > 0 && (
+        {totalFilterCount > 0 && (
           <button
-            onClick={clearAllFilters}
+            onClick={handleClearAll}
             className={cn(
               "text-xs font-medium text-muted-foreground",
               "hover:text-destructive transition-colors",
@@ -111,14 +158,17 @@ export function ActiveFiltersBar() {
           <span className="text-sm font-medium">
             {filter.category}: {filter.value}
           </span>
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={filter.onRemove}
-            className="h-4 w-4 p-0 hover:bg-transparent"
+          <button
+            onClick={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              filter.onRemove();
+            }}
+            className="h-4 w-4 p-0 hover:bg-transparent flex items-center justify-center rounded-sm hover:opacity-70 transition-opacity"
+            aria-label={`Remove ${filter.category} filter`}
           >
             <X className="h-3 w-3" />
-          </Button>
+          </button>
         </Badge>
       ))}
     </div>

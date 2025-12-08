@@ -170,7 +170,7 @@ export function CategoryPageInteractivity({
       </div>
 
       {/* Main Layout - Filters and Products Side by Side */}
-      <div className="flex gap-6">
+      <div className="flex gap-4">
         {/* Filters Sidebar - Desktop */}
         <aside className="hidden lg:block w-64 shrink-0">
           <CategoryFilters

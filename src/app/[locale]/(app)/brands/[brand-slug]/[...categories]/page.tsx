@@ -5,8 +5,8 @@ import { StructuredDataServer } from "@/components/seo/StructuredDataServer";
 import { Card, CardContent } from "@/components/ui/card";
 import type { RequestContext } from "@/lib/api/client";
 import SearchService, {
-  ElasticSearchQuery,
-  FormattedProduct,
+    ElasticSearchQuery,
+    FormattedProduct,
 } from "@/lib/api/services/SearchService/SearchService";
 import TenantService from "@/lib/api/services/TenantService";
 import BrandResolutionService from "@/lib/services/BrandResolutionService";
@@ -14,11 +14,11 @@ import CategoryResolutionService from "@/lib/services/CategoryResolutionService"
 import { BlockingLoaderProvider } from "@/providers/BlockingLoaderProvider";
 import type { FilterAggregations } from "@/types/category-filters";
 import {
-  buildBrandFilter,
-  buildBrandQuery,
-  buildCategoryBrandQuery,
-  buildCategoryFilter,
-  getBaseQuery,
+    buildBrandFilter,
+    buildBrandQuery,
+    buildCategoryBrandQuery,
+    buildCategoryFilter,
+    getBaseQuery,
 } from "@/utils/opensearch/browse-queries";
 import { Package } from "lucide-react";
 import { Metadata } from "next";
@@ -481,6 +481,7 @@ export default async function BrandCategoryPage({
             currentCategoryPath={categories}
             categoryPath={categoryPath}
             displayName={`${brand.name}${categoryName ? ` ${categoryName}` : ""}`}
+            locale={locale}
           >
             {/* Product Grid - Server-rendered for SEO with Suspense for streaming */}
             <div className="relative">

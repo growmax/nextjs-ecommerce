@@ -26,6 +26,7 @@ interface BrandCategoryPageInteractivityProps {
   currentCategoryPath: string[];
   categoryPath?: CategoryPath | null;
   displayName?: string;
+  locale: string;
   children?: React.ReactNode;
 }
 
@@ -47,6 +48,7 @@ export function BrandCategoryPageInteractivity({
   currentCategoryPath,
   categoryPath = null,
   displayName = "Brand",
+  locale,
   children,
 }: BrandCategoryPageInteractivityProps) {
   const router = useRouter();
@@ -168,7 +170,7 @@ export function BrandCategoryPageInteractivity({
       </div>
 
       {/* Main Layout - Filters and Products Side by Side */}
-      <div className="flex gap-6">
+      <div className="flex gap-4">
         {/* Filters Sidebar - Desktop */}
         <aside className="hidden lg:block w-64 shrink-0">
           <CategoryFilters
@@ -197,6 +199,12 @@ export function BrandCategoryPageInteractivity({
                 selectedBrands={[]}
                 onBrandClick={() => {}}
                 isBrandPage={true}
+                brandName={_brandName}
+                brandRemovalPath={
+                  categoryPath && categoryPath.fullPath
+                    ? `/${locale}/${categoryPath.fullPath}`
+                    : `/${locale}/brands/All`
+                }
               />
             </div>
 
