@@ -1092,25 +1092,7 @@ export default function OrderSummaryContent() {
                     isSummary={true}
                   />
                   {/* Show cash discount card if cash discount is enabled in settings */}
-                  {quoteSettings?.showCashDiscount && (
-                    <div className="-mt-[10px]">
-                      <CashDiscountCard
-                        handleCDApply={handleCDApply}
-                        handleRemoveCD={handleRemoveCD}
-                        {...(latestPaymentTerms && {
-                          latestpaymentTerms: latestPaymentTerms,
-                        })}
-                        isCashDiscountApplied={isCashDiscountApplied}
-                        isSummaryPage={true}
-                        cashDiscountValue={cashDiscountValue}
-                        islatestTermAvailable={
-                          !!latestPaymentTerms && !latestPaymentTermsLoading
-                        }
-                        prevPaymentTerms={paymentTermsId}
-                        isOrder={true}
-                      />
-                    </div>
-                  )}
+              
 
                   <Suspense fallback={null}>
                     <OrderPriceDetails
@@ -1149,7 +1131,25 @@ export default function OrderSummaryContent() {
                       loading={isLoading}
                     />
                   </Suspense>
-
+                  {quoteSettings?.showCashDiscount && (
+                    <div className="-mt-[10px]">
+                      <CashDiscountCard
+                        handleCDApply={handleCDApply}
+                        handleRemoveCD={handleRemoveCD}
+                        {...(latestPaymentTerms && {
+                          latestpaymentTerms: latestPaymentTerms,
+                        })}
+                        isCashDiscountApplied={isCashDiscountApplied}
+                        isSummaryPage={true}
+                        cashDiscountValue={cashDiscountValue}
+                        islatestTermAvailable={
+                          !!latestPaymentTerms && !latestPaymentTermsLoading
+                        }
+                        prevPaymentTerms={paymentTermsId}
+                        isOrder={true}
+                      />
+                    </div>
+                  )}
                   {/* Attachments - Comments and File Uploads */}
                   <Attachments
                     showHeader={true}

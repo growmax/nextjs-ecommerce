@@ -5,7 +5,13 @@ import { Input } from "@/components/ui/input";
 import { Separator } from "@/components/ui/separator";
 import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
-import React from "react";
+import { format, isValid, parse } from "date-fns";
+import { CalendarIcon } from "lucide-react";
+import React, { useState } from "react";
+import { Button } from "../ui/button";
+import { Calendar } from "../ui/calendar";
+import { InputGroup, InputGroupAddon, InputGroupInput } from "../ui/input-group";
+import { Popover, PopoverContent, PopoverTrigger } from "../ui/popover";
 
 interface SectionCardDetailProps {
   title: string;
@@ -85,6 +91,114 @@ export function EditableDateRow({
   onChange,
   className,
 }: EditableDateRowProps) {
+  const [open, setOpen] = useState(false);
+  const [inputValue, setInputValue] = useState("");
+
+  // Format date value to dd/mm/yyyy for display
+  const formatDateForDisplay = (dateValue?: string): string => {
+    if (!dateValue) return "";
+    
+    try {
+      // Try parsing as ISO string or Date object
+      const date = new Date(dateValue);
+      if (isValid(date)) {
+        return format(date, "dd/MM/yyyy");
+      }
+      
+      // If already in dd/mm/yyyy format, return as is
+      if (/^\d{2}\/\d{2}\/\d{4}$/.test(dateValue)) {
+        return dateValue;
+      }
+    } catch {
+      // Invalid date, return empty
+    }
+    
+    return "";
+  };
+
+  // Parse user input (dd/mm/yyyy) to Date object
+  const parseDateInput = (input: string): Date | null => {
+    if (!input || !/^\d{2}\/\d{2}\/\d{4}$/.test(input.trim())) {
+      return null;
+    }
+
+    try {
+      // Parse dd/mm/yyyy format
+      const parsed = parse(input.trim(), "dd/MM/yyyy", new Date());
+      if (isValid(parsed)) {
+        return parsed;
+      }
+    } catch {
+      // Invalid date
+    }
+    
+    return null;
+  };
+
+  // Convert Date to ISO string for onChange callback
+  const convertDateToString = (date: Date | undefined): string => {
+    if (!date) return "";
+    return date.toISOString();
+  };
+
+  // Convert string value to Date for Calendar
+  const getDateFromValue = (dateValue?: string): Date | undefined => {
+    if (!dateValue) return undefined;
+    
+    try {
+      const date = new Date(dateValue);
+      if (isValid(date)) {
+        return date;
+      }
+    } catch {
+      // Invalid date
+    }
+    
+    return undefined;
+  };
+
+  // Handle manual typing in input field
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const typedValue = e.target.value;
+    setInputValue(typedValue);
+
+    // If format matches dd/mm/yyyy, parse and call onChange
+    if (/^\d{2}\/\d{2}\/\d{4}$/.test(typedValue.trim())) {
+      const parsedDate = parseDateInput(typedValue);
+      if (parsedDate) {
+        // Convert to ISO string for onChange callback
+        onChange?.(parsedDate.toISOString());
+        // Clear inputValue so it uses the formatted value from prop
+        setInputValue("");
+      }
+    }
+  };
+
+  // Handle input blur - validate and format
+  const handleInputBlur = () => {
+    if (inputValue) {
+      const parsedDate = parseDateInput(inputValue);
+      if (parsedDate) {
+        onChange?.(parsedDate.toISOString());
+      }
+      // Clear inputValue to show formatted value from prop
+      setInputValue("");
+    }
+  };
+
+  // Handle date selection from calendar
+  const handleDateSelect = (date: Date | undefined) => {
+    if (date) {
+      const isoString = convertDateToString(date);
+      onChange?.(isoString);
+      setInputValue(""); // Clear inputValue to show formatted value
+      setOpen(false);
+    }
+  };
+
+  // Get display value - use inputValue if user is typing, otherwise format the prop value
+  const displayValue = inputValue || formatDateForDisplay(value);
+
   return (
     <div
       className={cn("grid grid-cols-2 gap-4 py-1.5 items-center", className)}
@@ -92,14 +206,40 @@ export function EditableDateRow({
       <div>
         <p className="text-sm font-normal text-gray-900">{label}</p>
       </div>
-      <div className="relative">
-        <Input
-          type="date"
-          value={value || ""}
-          onChange={e => onChange?.(e.target.value)}
-          className="text-sm h-9 border-gray-300 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 bg-gray-50 pr-10"
-        />
-      </div>
+      <Popover open={open} onOpenChange={setOpen}>
+  <div className="w-full">
+    <InputGroup className="w-full">
+      <InputGroupInput
+        placeholder="dd/mm/yyyy"
+        value={displayValue}
+        onChange={handleInputChange}
+        onBlur={handleInputBlur}
+        // Remove onFocus handler
+      />
+      <InputGroupAddon align="inline-end">
+        <PopoverTrigger asChild>
+          <Button
+            type="button"
+            variant="ghost"
+            size="icon-sm"
+            className="h-auto w-auto p-0 hover:bg-transparent"
+            onClick={(e) => {
+              e.stopPropagation();
+              setOpen(!open);
+            }}
+          >
+            <CalendarIcon className="size-4" />
+          </Button>
+        </PopoverTrigger>
+      </InputGroupAddon>
+    </InputGroup>
+  </div>
+      
+        <PopoverContent className="w-[280px] p-0">
+          <Calendar mode="single"    selected={getDateFromValue(value)}  onSelect={handleDateSelect} className="w-full"/>
+        </PopoverContent>
+      </Popover>
+
     </div>
   );
 }

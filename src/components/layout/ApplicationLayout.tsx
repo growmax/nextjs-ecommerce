@@ -1,7 +1,7 @@
 "use client";
 
-import React from "react";
 import { cn } from "@/lib/utils";
+import React from "react";
 
 interface ApplicationLayoutProps {
   children: React.ReactNode;
@@ -17,7 +17,7 @@ export function ApplicationLayout({
   className,
 }: ApplicationLayoutProps) {
   return (
-    <div className={cn("flex flex-col min-h-screen bg-gray-50", className)}>
+    <div className={cn("flex flex-col min-h-screen bg-white-50", className)}>
       {children}
     </div>
   );

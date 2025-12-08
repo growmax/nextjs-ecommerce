@@ -2,16 +2,10 @@
 
 import SectionCardDetail, {
   EditableDateRow,
-  EditableTextRow,
   InfoRow,
-  SkeletonRow,
+  SkeletonRow
 } from "@/components/custom/SectionCardDetail";
 import { AddressDetailsDialog } from "@/components/dialogs/AddressDetailsDialog";
-import {
-  HoverCard,
-  HoverCardContent,
-  HoverCardTrigger,
-} from "@/components/ui/hover-card";
 import { type BillingAddress } from "@/lib/api";
 import SellerWarehouseService, {
   type SellerBranch,
@@ -24,6 +18,7 @@ import { Pencil } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useMemo, useState } from "react";
 import { toast } from "sonner";
+import { Tooltip, TooltipContent, TooltipTrigger } from "../ui/tooltip";
 
 interface AddressDetails {
   addressLine?: string | undefined;
@@ -119,14 +114,14 @@ const WarehouseRow = ({
         <p className="text-sm font-normal text-gray-900">{t("warehouse")}</p>
       </div>
       <div>
-        <HoverCard>
-          <HoverCardTrigger asChild>
-            <p className="text-sm font-semibold text-gray-900 cursor-pointer underline">
+      <Tooltip>
+        <TooltipTrigger asChild>
+        <p className="text-sm font-semibold text-gray-900 cursor-pointer underline">
               {warehouseName}
             </p>
-          </HoverCardTrigger>
-          <HoverCardContent className="w-64 bg-gray-800 text-white border-gray-700">
-            <div className="space-y-1">
+        </TooltipTrigger>
+        <TooltipContent  className="w-64 bg-gray-800 text-white border-gray-700">
+        <div className="space-y-1">
               {warehouseAddress.addressLine && (
                 <p className="text-xs">{warehouseAddress.addressLine}</p>
               )}
@@ -150,8 +145,8 @@ const WarehouseRow = ({
                 <p className="text-xs">{warehouseAddress.country}</p>
               )}
             </div>
-          </HoverCardContent>
-        </HoverCard>
+        </TooltipContent>
+      </Tooltip>
       </div>
     </div>
   );
@@ -211,14 +206,14 @@ const AddressRow = ({
         <p className="text-sm font-normal text-gray-900">{label}</p>
       </div>
       <div className="flex items-center gap-2 min-w-0">
-        <HoverCard>
-          <HoverCardTrigger asChild>
-            <p className="text-sm font-semibold text-gray-900 cursor-pointer underline truncate">
+      <Tooltip>
+      <TooltipTrigger asChild>
+      <p className="text-sm font-semibold text-gray-900 cursor-pointer underline truncate">
               {addressName}
             </p>
-          </HoverCardTrigger>
-          <HoverCardContent className="w-64 bg-gray-800 text-white border-gray-700">
-            <div className="space-y-1">
+        </TooltipTrigger>
+        <TooltipContent className="w-64 bg-gray-800 text-white border-gray-700">
+        <div className="space-y-1">
               {addressDetails.branchName && (
                 <p className="text-xs font-semibold">
                   {addressDetails.branchName}
@@ -250,8 +245,9 @@ const AddressRow = ({
                 </>
               )}
             </div>
-          </HoverCardContent>
-        </HoverCard>
+          </TooltipContent>
+        </Tooltip>
+     
         {isEditable && (
           <Pencil
             className="h-4 w-4 text-gray-400 opacity-0 group-hover:opacity-100 transition-opacity duration-200 shrink-0 cursor-pointer hover:text-gray-600"
@@ -275,7 +271,7 @@ export default function OrderContactDetails({
   salesBranch,
   sellerCompanyName,
   requiredDate,
-  referenceNumber,
+ 
   isEditable = false,
   userId,
   buyerBranchId,
@@ -283,7 +279,7 @@ export default function OrderContactDetails({
   productIds,
   sellerCompanyId,
   onRequiredDateChange,
-  onReferenceNumberChange,
+
   onBillingAddressChange,
   onShippingAddressChange,
   onSellerBranchChange,
@@ -293,7 +289,7 @@ export default function OrderContactDetails({
   const t = useTranslations("components");
   const [billingDialogOpen, setBillingDialogOpen] = useState(false);
   const [shippingDialogOpen, setShippingDialogOpen] = useState(false);
-  console.log(sellerCompanyId);
+  
   // Memoize current billing address to prevent unnecessary recreations
   const currentBillingAddress = useMemo(() => {
     if (!billingAddress) return undefined;
@@ -827,23 +823,7 @@ export default function OrderContactDetails({
               />
             )}
 
-            {/* Reference Number */}
-            {isEditable ? (
-              <EditableTextRow
-                label={t("referenceNumber")}
-                value={referenceNumber || ""}
-                {...(onReferenceNumberChange && {
-                  onChange: onReferenceNumberChange,
-                })}
-                placeholder={t("referenceNumber")}
-              />
-            ) : (
-              <DetailRow
-                label={t("referenceNumber")}
-                value={referenceNumber}
-                showEmpty={true}
-              />
-            )}
+       
           </div>
         </SectionCardDetail>
       )}

@@ -1275,7 +1275,7 @@ export default function QuoteSummaryContent() {
     <FormProvider {...methods}>
       <ApplicationLayout>
         {/* Sales Header - Fixed at top */}
-        <div className="flex-shrink-0  z-[90] bg-gray-50">
+        <div className="flex-shrink-0  z-[90] bg-white-50">
           <SalesHeader
             title={quoteName}
             identifier=""
@@ -1526,25 +1526,7 @@ export default function QuoteSummaryContent() {
                   />
                   {/* Show cash discount card if cash discount is enabled in settings */}
                   {/* The card component itself handles visibility based on cashDiscountValue and isSummaryPage */}
-                  {quoteSettings?.showCashDiscount && (
-                    <div className="-mt-[10px]">
-                      <CashDiscountCard
-                        handleCDApply={handleCDApply}
-                        handleRemoveCD={handleRemoveCD}
-                        {...(latestPaymentTerms && {
-                          latestpaymentTerms: latestPaymentTerms,
-                        })}
-                        isCashDiscountApplied={isCashDiscountApplied}
-                        isSummaryPage={true}
-                        cashDiscountValue={cashDiscountValue}
-                        islatestTermAvailable={
-                          !!latestPaymentTerms && !latestPaymentTermsLoading
-                        }
-                        prevPaymentTerms={paymentTermsId}
-                        isOrder={false}
-                      />
-                    </div>
-                  )}
+           
 
                   <Suspense fallback={null}>
                     <OrderPriceDetails
@@ -1583,6 +1565,25 @@ export default function QuoteSummaryContent() {
                       loading={isLoading}
                     />
                   </Suspense>
+                  {quoteSettings?.showCashDiscount && (
+                    <div className="-mt-[10px]">
+                      <CashDiscountCard
+                        handleCDApply={handleCDApply}
+                        handleRemoveCD={handleRemoveCD}
+                        {...(latestPaymentTerms && {
+                          latestpaymentTerms: latestPaymentTerms,
+                        })}
+                        isCashDiscountApplied={isCashDiscountApplied}
+                        isSummaryPage={true}
+                        cashDiscountValue={cashDiscountValue}
+                        islatestTermAvailable={
+                          !!latestPaymentTerms && !latestPaymentTermsLoading
+                        }
+                        prevPaymentTerms={paymentTermsId}
+                        isOrder={false}
+                      />
+                    </div>
+                  )}
 
                   {/* Target Discount Card - Only show for quotes, not orders */}
                   {/* Reference: buyer-fe SalesBody.js lines 370-377 - placed after CartPriceDetails */}
