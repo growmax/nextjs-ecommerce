@@ -1,7 +1,6 @@
 "use client";
 
 import { CollapsibleSection } from "@/components/ui/collapsible";
-import { Separator } from "@/components/ui/separator";
 import { useCategoryFilters } from "@/hooks/useCategoryFilters";
 import { useBlockingLoader } from "@/providers/BlockingLoaderProvider";
 import type {
@@ -13,7 +12,6 @@ import type {
 } from "@/types/category-filters";
 import { Filter } from "lucide-react";
 import { useEffect } from "react";
-import { ActiveFilters } from "./ActiveFilters";
 import { BrandFilter } from "./filters/BrandFilter";
 import { CatalogCodeFilter } from "./filters/CatalogCodeFilter";
 import { CategoryFilter } from "./filters/CategoryFilter";
@@ -58,10 +56,6 @@ export function CategoryFilters({
     setStockFilter,
     toggleCatalogCode,
     toggleEquipmentCode,
-    removeVariantAttribute,
-    removeProductSpecification,
-    clearAllFilters,
-    activeFilterCount,
     isPending,
   } = useCategoryFilters();
 
@@ -76,37 +70,18 @@ export function CategoryFilters({
     }
   }, [isPending, showLoader, hideLoader]);
 
-  const handleRemoveStockFilter = () => {
-    setStockFilter(undefined);
-  };
-
   return (
     <div className="flex flex-col bg-background border rounded-lg shadow-sm">
       {/* Filter Header - Static (no sticky to prevent overlap) */}
       <div className="flex items-center justify-between border-b bg-background py-2.5 px-4 rounded-t-lg">
         <h2 className="text-lg font-semibold tracking-tight">Filters</h2>
         <div className="flex items-center gap-2">
-          {activeFilterCount > 0 && (
-            <span className="inline-flex items-center justify-center rounded-full bg-primary px-1.5 py-0.5 text-xs font-medium text-primary-foreground">
-              {activeFilterCount}
-            </span>
-          )}
           <Filter className="h-5 w-5 text-foreground" />
         </div>
       </div>
 
       {/* Filter Content */}
       <div className="px-4">
-        {/* Active Filters */}
-        <ActiveFilters
-          filters={filters}
-          onRemoveVariantAttribute={removeVariantAttribute}
-          onRemoveProductSpecification={removeProductSpecification}
-          onRemoveStockFilter={handleRemoveStockFilter}
-          onClearAll={clearAllFilters}
-        />
-
-        {activeFilterCount > 0 && <Separator className="my-3" />}
 
         {/* Brands */}
         {!hideBrandFilter && brands.length > 0 && (

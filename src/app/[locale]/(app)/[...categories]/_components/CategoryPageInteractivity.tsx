@@ -4,8 +4,8 @@ import { CategoryFilters } from "@/components/CategoryFilters/CategoryFilters";
 import { CategoryFiltersDrawer } from "@/components/CategoryFilters/CategoryFiltersDrawer";
 import { CategoryPagination } from "@/components/Pagination/CategoryPagination";
 import { ViewToggle } from "@/components/ProductList/ViewToggle";
+import { ProductListTopBar } from "@/components/ProductListTopBar";
 import { SortDropdown } from "@/components/Sort/SortDropdown";
-import { TrendingBrands } from "@/components/TrendingBrands";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ProductLoadingProvider } from "@/contexts/ProductLoadingContext";
 import type { CategoryPath } from "@/lib/services/CategoryResolutionService";
@@ -192,12 +192,13 @@ export function CategoryPageInteractivity({
         <main id="page-main" className="flex-1 min-w-0 relative">
           {/* Trending Brands + Controls Row - Clean Alignment */}
           <div className="h-[49px] flex items-start gap-4">
-            {/* Trending Brands - Scrollable */}
+            {/* Product List Top Bar - Switches between Trending Brands and Active Filters */}
             <div className="flex-1 min-w-0">
-              <TrendingBrands
+              <ProductListTopBar
                 brands={formattedFilters.brands}
                 selectedBrands={[]}
                 onBrandClick={() => {}}
+                isBrandPage={false}
               />
             </div>
 
