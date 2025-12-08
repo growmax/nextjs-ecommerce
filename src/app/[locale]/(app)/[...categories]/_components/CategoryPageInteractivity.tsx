@@ -5,6 +5,7 @@ import { CategoryFiltersDrawer } from "@/components/CategoryFilters/CategoryFilt
 import { CategoryPagination } from "@/components/Pagination/CategoryPagination";
 import { ViewToggle } from "@/components/ProductList/ViewToggle";
 import { SortDropdown } from "@/components/Sort/SortDropdown";
+import { TrendingBrands } from "@/components/TrendingBrands";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ProductLoadingProvider } from "@/contexts/ProductLoadingContext";
 import type { CategoryPath } from "@/lib/services/CategoryResolutionService";
@@ -150,35 +151,21 @@ export function CategoryPageInteractivity({
 
   return (
     <>
-      {/* Header + Controls Bar - All on One Line */}
-      <div className="mb-6 flex flex-col lg:flex-row lg:items-center lg:justify-between gap-3">
-        <div className="flex items-center gap-2 sm:gap-3">
-          <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-slate-800 dark:text-slate-100 break-words">
+      {/* Header Section */}
+      <div className="mb-4">
+        <div className="flex items-baseline gap-3">
+          <h1 className="text-2xl sm:text-3xl font-bold text-foreground">
             {categoryName}
           </h1>
-          <span className="text-xs sm:text-sm text-gray-600 dark:text-gray-400 border-l pl-2 sm:pl-3">
+          <span className="text-sm text-muted-foreground">
             {isLoading ? (
-              <Skeleton className="h-4 w-32" />
+              <Skeleton className="h-4 w-20" />
             ) : (
               <>
-                <span className="hidden sm:inline">
-                  Showing {(currentFilters.page - 1) * 20 + 1} -{" "}
-                  {Math.min(currentFilters.page * 20, total)} of {total}{" "}
-                  products
-                </span>
-                <span className="sm:hidden">{total} products</span>
+                {total} {total === 1 ? "Result" : "Results"}
               </>
             )}
           </span>
-        </div>
-
-        <div className="flex items-center gap-2 sm:gap-3 w-full lg:w-auto justify-between lg:justify-end">
-          <ViewToggle />
-          <SortDropdown
-            value={currentFilters.sort}
-            onChange={handleSortChange}
-            disabled={isLoading}
-          />
         </div>
       </div>
 
@@ -203,6 +190,28 @@ export function CategoryPageInteractivity({
 
         {/* Main Content */}
         <main id="page-main" className="flex-1 min-w-0 relative">
+          {/* Trending Brands + Controls Row - Clean Alignment */}
+          <div className="h-[49px] flex items-start gap-4">
+            {/* Trending Brands - Scrollable */}
+            <div className="flex-1 min-w-0">
+              <TrendingBrands
+                brands={formattedFilters.brands}
+                selectedBrands={[]}
+                onBrandClick={() => {}}
+              />
+            </div>
+
+            {/* View Toggle + Sort - Right Side */}
+            <div className="flex items-center gap-2 shrink-0">
+              <ViewToggle />
+              <SortDropdown
+                value={currentFilters.sort}
+                onChange={handleSortChange}
+                disabled={isLoading}
+              />
+            </div>
+          </div>
+
           {/* Mobile Filter Drawer */}
           <div className="lg:hidden mb-4">
             <CategoryFiltersDrawer

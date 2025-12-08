@@ -63,7 +63,7 @@ export function BlockingLoader() {
   return (
     <div
       className={cn(
-        "z-50 flex items-center justify-center transition-all duration-300 ease-out pointer-events-auto backdrop-blur-sm",
+        "z-50 flex items-center justify-center transition-all duration-300 ease-out",
         mode === "global" 
           ? "fixed inset-0" // Full screen for global mode with fixed positioning
           : cn(
@@ -81,9 +81,8 @@ export function BlockingLoader() {
       )}
       style={{
         opacity: isVisible ? 1 : 0,
-        backgroundColor: isVisible
-          ? "hsl(var(--background) / 0.6)"
-          : "hsl(var(--background) / 0)",
+        // backdropFilter: "contrast(0%)",
+        backgroundColor: "rgba(255, 255, 255, 0.1)",
       }}
     >
       {/* Smooth Three-Dot Bounce Animation */}
@@ -98,12 +97,13 @@ export function BlockingLoader() {
           {[0, 1, 2].map(index => (
             <div
               key={index}
-              className="rounded-full bg-primary/80"
+              className="rounded-full bg-primary shadow-lg"
               style={{
-                width: "12px",
-                height: "12px",
+                width: "14px",
+                height: "14px",
                 animation: `bounce 1.4s ease-in-out infinite`,
                 animationDelay: `${index * 0.16}s`,
+                opacity: 1,
               }}
             />
           ))}

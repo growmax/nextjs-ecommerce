@@ -14,7 +14,10 @@
     "quotes": "Báo giá",
     "company": "Công ty",
     "profile": "Hồ sơ",
-    "companySettings": "Cài đặt công ty"
+    "companySettings": "Cài đặt công ty",
+    "shop": "Cửa hàng",
+    "categories": "Danh mục",
+    "brands": "Thương hiệu"
   },
   "auth": {
     "login": "Đăng nhập",

@@ -14,7 +14,10 @@
     "quotes": "ใบเสนอราคา",
     "company": "บริษัท",
     "profile": "โปรไฟล์",
-    "companySettings": "การตั้งค่าบริษัท"
+    "companySettings": "การตั้งค่าบริษัท",
+    "shop": "ร้านค้า",
+    "categories": "หมวดหมู่",
+    "brands": "แบรนด์"
   },
   "auth": {
     "login": "เข้าสู่ระบบ",

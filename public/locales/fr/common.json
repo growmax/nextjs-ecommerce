@@ -14,7 +14,10 @@
     "quotes": "Devis",
     "company": "Entreprise",
     "profile": "Profil",
-    "companySettings": "Paramètres de l'Entreprise"
+    "companySettings": "Paramètres de l'Entreprise",
+    "shop": "Boutique",
+    "categories": "Catégories",
+    "brands": "Marques"
   },
   "auth": {
     "login": "Connexion",

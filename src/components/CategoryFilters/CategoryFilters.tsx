@@ -5,11 +5,11 @@ import { Separator } from "@/components/ui/separator";
 import { useCategoryFilters } from "@/hooks/useCategoryFilters";
 import { useBlockingLoader } from "@/providers/BlockingLoaderProvider";
 import type {
-  BrandFilterOption,
-  CategoryFilterOption,
-  FilterOption,
-  ProductSpecificationGroup,
-  VariantAttributeGroup,
+    BrandFilterOption,
+    CategoryFilterOption,
+    FilterOption,
+    ProductSpecificationGroup,
+    VariantAttributeGroup,
 } from "@/types/category-filters";
 import { Filter } from "lucide-react";
 import { useEffect } from "react";
@@ -83,15 +83,15 @@ export function CategoryFilters({
   return (
     <div className="flex flex-col bg-background border rounded-lg shadow-sm">
       {/* Filter Header - Static (no sticky to prevent overlap) */}
-      <div className="flex items-center justify-between border-b bg-background py-4 px-4 rounded-t-lg">
+      <div className="flex items-center justify-between border-b bg-background py-2.5 px-4 rounded-t-lg">
+        <h2 className="text-lg font-semibold tracking-tight">Filters</h2>
         <div className="flex items-center gap-2">
-          <Filter className="h-5 w-5 text-foreground" />
-          <h2 className="text-lg font-semibold tracking-tight">Filters</h2>
           {activeFilterCount > 0 && (
             <span className="inline-flex items-center justify-center rounded-full bg-primary px-1.5 py-0.5 text-xs font-medium text-primary-foreground">
               {activeFilterCount}
             </span>
           )}
+          <Filter className="h-5 w-5 text-foreground" />
         </div>
       </div>
 

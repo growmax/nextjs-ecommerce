@@ -3,7 +3,7 @@
 import { useUserDetails } from "@/contexts/UserDetailsContext";
 import { Link, useRouter } from "@/i18n/navigation";
 import { AuthStorage } from "@/lib/auth";
-import { Map, PieChart, Settings2, SquareTerminal } from "lucide-react";
+import { Layers, Map, PieChart, Settings2, SquareTerminal } from "lucide-react";
 import { useTranslations } from "next-intl";
 import * as React from "react";
 import { startTransition } from "react";
@@ -60,6 +60,21 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         title: t("home"),
         url: "/",
         icon: Map,
+      },
+      {
+        title: t("shop"),
+        url: "/categories/All",
+        icon: Layers,
+        items: [
+          {
+            title: t("categories"),
+            url: "/categories/All",
+          },
+          {
+            title: t("brands"),
+            url: "/brands/All",
+          },
+        ],
       },
       {
         title: t("dashboard"),

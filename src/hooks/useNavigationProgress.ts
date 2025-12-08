@@ -184,42 +184,19 @@ export function useNavigationProgress({
       const isProductListingPage = (path: string): boolean => {
         const pathWithoutLocale = getPathWithoutLocale(path);
 
-        // Brand pages: /brands/[slug] or /brands/[slug]/[...categories]
-        if (pathWithoutLocale.startsWith("/brands/")) return true;
+        // Removed: Brand pages check - let brands be handled by knownRoutes logic
+        // This allows navigation loader to show when clicking brand cards
 
         // Category page: /category (legacy route)
         if (pathWithoutLocale.startsWith("/category")) return true;
 
-        // Define all known non-product-listing routes
-        const knownRoutes = [
-          "/",
-          "/dashboard",
-          "/search",
-          "/products",
-          "/quotesummary",
-          "/checkout",
-          "/notification",
-          "/settings",
-          "/landing",
-          "/ordersummary",
-          "/details",
-          "/categories",
-          "/cart",
-        ];
-
         // Exact match for root
         if (pathWithoutLocale === "/") return false;
 
-        // Check if it's a known non-product route
-        const isKnownRoute = knownRoutes.some(
-          route =>
-            pathWithoutLocale === route ||
-            pathWithoutLocale.startsWith(route + "/")
-        );
-
-        // If it's not a known route, it's handled by the catch-all [...categories] route
-        // This includes: /category-name, /brand-name, /category/subcategory, etc.
-        return !isKnownRoute;
+        // Changed: Show loader for catch-all routes (category/brand pages)
+        // Only skip loader for explicitly marked instant-transition routes above
+        // This ensures clicking category/brand cards shows navigation feedback
+        return false;
       };
 
       const currentPathWithoutLocale = getPathWithoutLocale(currentPath);

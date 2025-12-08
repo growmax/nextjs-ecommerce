@@ -14,7 +14,10 @@
     "quotes": "Quotes",
     "company": "Company",
     "profile": "Profile",
-    "companySettings": "Company Settings"
+    "companySettings": "Company Settings",
+    "shop": "Shop",
+    "categories": "Categories",
+    "brands": "Brands"
   },
   "auth": {
     "login": "Login",
