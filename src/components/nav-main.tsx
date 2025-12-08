@@ -74,7 +74,7 @@ function CollapsedMenuItem({
           side="right"
           align="start"
           sideOffset={8}
-          className="w-56 p-2"
+          className="w-56 p-2 z-[101]"
         >
           <div className="flex flex-col gap-1">
             {item.items?.map(subItem => (

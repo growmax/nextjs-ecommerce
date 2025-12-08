@@ -77,18 +77,19 @@ describe("AppSidebar", () => {
       useUserDetailsMock.mockReturnValue(createMockUserDetails(false));
     });
 
-    it('should render only "Home" in the main navigation', () => {
+    it('should render only "Home" and "Shop" in the main navigation', () => {
       render(
         <SidebarProvider>
           <AppSidebar />
         </SidebarProvider>
       );
 
-      // Check that NavMain receives only the "Home" item
+      // Check that NavMain receives only the "Home" and "Shop" items (non-authenticated)
       const navMainProps = NavMainMock.mock.calls[0][0];
-      expect(navMainProps.items).toHaveLength(1);
+      expect(navMainProps.items).toHaveLength(2);
       // The component uses t("home") which returns the key "home" with our mock
       expect(navMainProps.items[0].title).toBe("home");
+      expect(navMainProps.items[1].title).toBe("shop");
     });
 
     it("should not render NavUser when user is not authenticated", () => {
@@ -122,10 +123,11 @@ describe("AppSidebar", () => {
       // The component uses translation keys like t("home"), t("dashboard"), etc.
       // which return the keys "home", "dashboard", etc. with our mock
       expect(titles).toContain("home");
+      expect(titles).toContain("shop");
       expect(titles).toContain("dashboard");
       expect(titles).toContain("sales");
       expect(titles).toContain("settings");
-      expect(navMainProps.items).toHaveLength(4);
+      expect(navMainProps.items).toHaveLength(5);
     });
 
     it("should render sub-items for Sales and Settings", () => {

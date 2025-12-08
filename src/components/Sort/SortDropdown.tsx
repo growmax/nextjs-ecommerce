@@ -1,11 +1,11 @@
 "use client";
 
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
 } from "@/components/ui/select";
 
 interface SortDropdownProps {
@@ -27,7 +27,10 @@ const SORT_OPTIONS = [
 export function SortDropdown({ value, onChange, disabled = false }: SortDropdownProps) {
   return (
     <Select value={value.toString()} onValueChange={(val) => onChange(parseInt(val, 10))} disabled={disabled}>
-      <SelectTrigger className="w-[180px]" disabled={disabled}>
+      <SelectTrigger 
+        className="w-[180px] h-10 border-border bg-background dark:bg-background hover:bg-accent hover:text-accent-foreground transition-colors" 
+        disabled={disabled}
+      >
         <SelectValue placeholder="Sort by" />
       </SelectTrigger>
       <SelectContent>

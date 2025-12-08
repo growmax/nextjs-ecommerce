@@ -14,7 +14,10 @@
     "quotes": "Sebut Harga",
     "company": "Syarikat",
     "profile": "Profil",
-    "companySettings": "Tetapan Syarikat"
+    "companySettings": "Tetapan Syarikat",
+    "shop": "Kedai",
+    "categories": "Kategori",
+    "brands": "Jenama"
   },
   "auth": {
     "login": "Log Masuk",

@@ -105,7 +105,7 @@ export function ProductGridServer({
   }
 
   return (
-    <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3 sm:gap-4 md:gap-6">
+    <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2 sm:gap-3 md:gap-4">
       {products.map(product => {
         const productListItem = transformProduct(product);
         // Generate proper slug with brand name and lowercase product index
@@ -122,62 +122,63 @@ export function ProductGridServer({
         return (
           <div
             key={productListItem.id}
-            className="group transition-shadow hover:shadow-lg overflow-hidden h-full flex flex-col min-h-[320px] sm:min-h-[380px] border rounded-lg"
+            className="group bg-card transition-all duration-200 ease-out hover:shadow-md hover:-translate-y-0.5 overflow-hidden h-full flex flex-col border border-border/60 rounded-lg"
           >
-            <div className="p-0 flex flex-col h-full">
+            <div className="flex flex-col h-full">
               {/* Product Image */}
-              <div className="relative w-full bg-white flex items-center justify-center min-h-[140px] sm:min-h-[180px] md:min-h-[220px] aspect-square rounded-t-lg overflow-hidden">
+              <div className="relative w-full bg-muted/30 flex items-center justify-center aspect-square rounded-t-lg overflow-hidden">
                 <Link href={productUrl} prefetch={true}>
                   <ImageWithFallback
                     src={productListItem.image}
                     alt={productListItem.title}
                     fill
-                    className="object-contain p-2"
-                    sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, (max-width: 1280px) 33vw, 25vw"
+                    className="object-contain p-3 sm:p-4 transition-transform duration-300 group-hover:scale-105"
+                    sizes="(max-width: 640px) 50vw, (max-width: 768px) 33vw, (max-width: 1024px) 25vw, 20vw"
                   />
                 </Link>
                 {productListItem.isNew && (
-                  <span className="absolute top-6 left-2 bg-red-500 text-white text-xs px-2 py-1 rounded">
+                  <span className="absolute top-2 left-2 bg-primary text-primary-foreground text-[10px] sm:text-xs font-medium px-1.5 sm:px-2 py-0.5 sm:py-1 rounded">
                     New
                   </span>
                 )}
               </div>
 
               {/* Product Info */}
-              <div className="flex-1 p-2 sm:p-3 md:p-5 flex flex-col justify-between">
-                <div className="space-y-2 sm:space-y-3">
+              <div className="flex-1 p-2.5 sm:p-3 md:p-4 flex flex-col justify-between">
+                <div className="space-y-1">
                   <Link href={productUrl} prefetch={true}>
-                    <h3 className="line-clamp-2 text-xs sm:text-sm md:text-base font-medium leading-tight hover:text-blue-600">
+                    <h3 className="line-clamp-2 text-xs sm:text-sm font-medium leading-snug text-foreground hover:text-primary transition-colors">
                       {productListItem.title}
                     </h3>
                   </Link>
 
-                  {/* Price */}
-                  <ProductPrice
-                    productId={productListItem.id}
-                    unitListPrice={productListItem.price}
-                    {...(discountData && { discountData })}
-                    discountLoading={discountLoading || false}
-                    {...(discountError && { discountError })}
-                  />
-
-                  <p className="text-xs sm:text-sm text-gray-700 dark:text-gray-300 truncate">
+                  <p className="text-[10px] sm:text-xs text-muted-foreground truncate">
                     {productListItem.brand}
                   </p>
-                  <p className="text-xs sm:text-sm text-gray-700 dark:text-gray-300 truncate hidden sm:block">
+                  <p className="text-[10px] sm:text-xs text-muted-foreground/70 truncate">
                     {productListItem.sku}
                   </p>
 
-                  {/* Stock Status */}
-                  {!productListItem.inStock && (
-                    <span className="text-xs px-1.5 sm:px-2 py-0.5 sm:py-1 rounded bg-red-100 text-red-800 w-fit">
-                      Out of Stock
-                    </span>
-                  )}
+                  {/* Price and Stock Status Row */}
+                  <div className="flex items-center justify-between gap-1.5 pt-1">
+                    <ProductPrice
+                      productId={productListItem.id}
+                      unitListPrice={productListItem.price}
+                      {...(discountData && { discountData })}
+                      discountLoading={discountLoading || false}
+                      {...(discountError && { discountError })}
+                    />
+                    {/* Stock Status */}
+                    {!productListItem.inStock && (
+                      <span className="text-[10px] sm:text-xs px-1.5 py-0.5 rounded-full bg-destructive/10 text-destructive font-medium whitespace-nowrap flex-shrink-0">
+                        Out of Stock
+                      </span>
+                    )}
+                  </div>
                 </div>
 
                 {/* Add to Cart Button */}
-                <div className="pt-3 sm:pt-5 mt-auto">
+                <div className="pt-2.5 sm:pt-3 mt-auto">
                   <AddToCartButton
                     productId={productListItem.id}
                     productTitle={productListItem.title}
