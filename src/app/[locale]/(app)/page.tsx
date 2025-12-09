@@ -18,7 +18,7 @@ export default async function HomePage() {
   const domain =
     headersList.get("x-tenant-domain") ||
     headersList.get("host") ||
-    process.env.DEFAULT_DOMAIN ||
+    process.env.DEFAULT_ORIGIN ||
     "localhost:3000";
 
   // Get access token if available

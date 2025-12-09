@@ -1,6 +1,6 @@
 /**
  * Aggregation Query Builder for OpenSearch
- * 
+ *
  * Builds aggregation queries for filter options based on category context
  */
 
@@ -42,60 +42,76 @@ function buildFilteredAggregation(
 
   // Exclude current variant attribute filters (except the one being aggregated)
   if (currentFilters?.variantAttributes) {
-    Object.entries(currentFilters.variantAttributes).forEach(([attrName, values]) => {
-      if (attrName !== fieldToExclude && values.length > 0) {
-        if (values.length === 1) {
-          must.push({
-            term: {
-              [`productAttributes.${attrName}.keyword`]: values[0],
-            },
-          });
-        } else {
-          must.push({
-            terms: {
-              [`productAttributes.${attrName}.keyword`]: values,
-            },
-          });
+    Object.entries(currentFilters.variantAttributes).forEach(
+      ([attrName, values]) => {
+        if (attrName !== fieldToExclude && values.length > 0) {
+          if (values.length === 1) {
+            must.push({
+              term: {
+                [`productAttributes.${attrName}.keyword`]: values[0],
+              },
+            });
+          } else {
+            must.push({
+              terms: {
+                [`productAttributes.${attrName}.keyword`]: values,
+              },
+            });
+          }
         }
       }
-    });
+    );
   }
 
   // Exclude product specification filters
   if (currentFilters?.productSpecifications) {
-    Object.entries(currentFilters.productSpecifications).forEach(([specKey, values]) => {
-      if (values.length > 0) {
-        if (values.length === 1) {
-          must.push({
-            nested: {
-              path: "productSpecifications",
-              query: {
-                bool: {
-                  must: [
-                    { term: { "productSpecifications.key.keyword": specKey } },
-                    { term: { "productSpecifications.value.keyword": values[0] } },
-                  ],
+    Object.entries(currentFilters.productSpecifications).forEach(
+      ([specKey, values]) => {
+        if (values.length > 0) {
+          if (values.length === 1) {
+            must.push({
+              nested: {
+                path: "productSpecifications",
+                query: {
+                  bool: {
+                    must: [
+                      {
+                        term: { "productSpecifications.key.keyword": specKey },
+                      },
+                      {
+                        term: {
+                          "productSpecifications.value.keyword": values[0],
+                        },
+                      },
+                    ],
+                  },
                 },
               },
-            },
-          });
-        } else {
-          must.push({
-            nested: {
-              path: "productSpecifications",
-              query: {
-                bool: {
-                  must: [
-                    { term: { "productSpecifications.key.keyword": specKey } },
-                    { terms: { "productSpecifications.value.keyword": values } },
-                  ],
+            });
+          } else {
+            must.push({
+              nested: {
+                path: "productSpecifications",
+                query: {
+                  bool: {
+                    must: [
+                      {
+                        term: { "productSpecifications.key.keyword": specKey },
+                      },
+                      {
+                        terms: {
+                          "productSpecifications.value.keyword": values,
+                        },
+                      },
+                    ],
+                  },
                 },
               },
-            },
-          });
+            });
+          }
         }
       }
-    });
+    );
   }
 
   // Exclude stock filter
@@ -126,17 +142,22 @@ export function buildBrandsAggregation(
   } = options;
 
   return {
-    filter: buildFilteredAggregation("brands", baseMust, baseMustNot, currentFilters),
+    filter: buildFilteredAggregation(
+      "brands",
+      baseMust,
+      baseMustNot,
+      currentFilters
+    ),
     aggs: {
       data: {
         terms: {
-          field: "brands_name.keyword",
+          field: "brand_name.keyword",
           size: bucketSize,
         },
       },
       count: {
         cardinality: {
-          field: "brands_name.keyword",
+          field: "brand_name.keyword",
         },
       },
     },
@@ -159,7 +180,12 @@ export function buildCategoriesAggregation(
   } = options;
 
   return {
-    filter: buildFilteredAggregation("categories", baseMust, baseMustNot, currentFilters),
+    filter: buildFilteredAggregation(
+      "categories",
+      baseMust,
+      baseMustNot,
+      currentFilters
+    ),
     aggs: {
       nested_categories: {
         nested: {
@@ -234,7 +260,12 @@ export function buildSubcategoriesAggregation(
   } = options;
 
   return {
-    filter: buildFilteredAggregation("subcategories", baseMust, baseMustNot, currentFilters),
+    filter: buildFilteredAggregation(
+      "subcategories",
+      baseMust,
+      baseMustNot,
+      currentFilters
+    ),
     aggs: {
       nested_subcategories: {
         nested: {
@@ -272,7 +303,12 @@ export function buildMajorCategoriesAggregation(
   } = options;
 
   return {
-    filter: buildFilteredAggregation("majorCategories", baseMust, baseMustNot, currentFilters),
+    filter: buildFilteredAggregation(
+      "majorCategories",
+      baseMust,
+      baseMustNot,
+      currentFilters
+    ),
     aggs: {
       nested_major_categories: {
         nested: {
@@ -299,7 +335,7 @@ export function buildMajorCategoriesAggregation(
 /**
  * Build variant attributes aggregation query
  * First gets all unique attribute names from productAttributes object, then builds aggregations for each
- * 
+ *
  * Note: productAttributes is a flat object like { "Color": ["Red", "Blue"], "Size": ["S", "M"] }
  * Strategy: Use a script-based terms aggregation to extract all unique keys from productAttributes
  * The script returns each key as a separate term, which the terms aggregation collects
@@ -307,11 +343,7 @@ export function buildMajorCategoriesAggregation(
 export function buildVariantAttributesAggregation(
   options: AggregationQueryOptions = {}
 ): Record<string, unknown> {
-  const {
-    baseMust = [],
-    baseMustNot = [],
-    currentFilters,
-  } = options;
+  const { baseMust = [], baseMustNot = [], currentFilters } = options;
 
   // Use a script in terms aggregation to extract keys from productAttributes
   // The script needs to return a single value per document, so we'll use a workaround:
@@ -319,7 +351,12 @@ export function buildVariantAttributesAggregation(
   // However, since terms aggregation with script doesn't easily handle arrays,
   // we'll use a different approach: collect keys from multiple documents
   const attributeNamesAgg = {
-    filter: buildFilteredAggregation("variantAttributes", baseMust, baseMustNot, currentFilters),
+    filter: buildFilteredAggregation(
+      "variantAttributes",
+      baseMust,
+      baseMustNot,
+      currentFilters
+    ),
     aggs: {
       attribute_names: {
         // Use terms aggregation with script
@@ -395,18 +432,14 @@ export function buildVariantAttributeValueAggregation(
 /**
  * Build product specifications aggregation query
  * First gets all unique specification keys from nested productSpecifications
- * 
+ *
  * Note: productSpecifications is a nested object with key and value properties
  * Structure: [{ key: "Weight", value: "1kg" }, { key: "Dimensions", value: "10x10" }]
  */
 export function buildProductSpecificationsAggregation(
   options: AggregationQueryOptions = {}
 ): Record<string, unknown> {
-  const {
-    baseMust = [],
-    baseMustNot = [],
-    currentFilters,
-  } = options;
+  const { baseMust = [], baseMustNot = [], currentFilters } = options;
 
   return {
     filter: buildFilteredAggregation(
@@ -492,14 +525,15 @@ export function buildProductSpecificationValueAggregation(
 export function buildPriceStatsAggregation(
   options: AggregationQueryOptions = {}
 ): Record<string, unknown> {
-  const {
-    baseMust = [],
-    baseMustNot = [],
-    currentFilters,
-  } = options;
+  const { baseMust = [], baseMustNot = [], currentFilters } = options;
 
   return {
-    filter: buildFilteredAggregation("price", baseMust, baseMustNot, currentFilters),
+    filter: buildFilteredAggregation(
+      "price",
+      baseMust,
+      baseMustNot,
+      currentFilters
+    ),
     aggs: {
       price_stats: {
         stats: {
@@ -524,7 +558,12 @@ export function buildStockStatusAggregation(
   } = options;
 
   return {
-    filter: buildFilteredAggregation("stock", baseMust, baseMustNot, currentFilters),
+    filter: buildFilteredAggregation(
+      "stock",
+      baseMust,
+      baseMustNot,
+      currentFilters
+    ),
     aggs: {
       data: {
         terms: {
@@ -555,7 +594,12 @@ export function buildCatalogCodesAggregation(
   } = options;
 
   return {
-    filter: buildFilteredAggregation("catalogCodes", baseMust, baseMustNot, currentFilters),
+    filter: buildFilteredAggregation(
+      "catalogCodes",
+      baseMust,
+      baseMustNot,
+      currentFilters
+    ),
     aggs: {
       data: {
         terms: {
@@ -586,7 +630,12 @@ export function buildEquipmentCodesAggregation(
   } = options;
 
   return {
-    filter: buildFilteredAggregation("equipmentCodes", baseMust, baseMustNot, currentFilters),
+    filter: buildFilteredAggregation(
+      "equipmentCodes",
+      baseMust,
+      baseMustNot,
+      currentFilters
+    ),
     aggs: {
       data: {
         terms: {
@@ -624,4 +673,3 @@ export function buildAllAggregations(
 
   return aggregations;
 }
-

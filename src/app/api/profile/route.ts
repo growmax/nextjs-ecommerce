@@ -14,11 +14,16 @@ export async function GET(request: NextRequest) {
     // Making API call with token
     // Tenant logging removed for production
 
-    const response = await fetch("https://api.myapptino.com/auth/user/me", {
+    // Get the proper origin for the API call
+    const origin =
+      request.headers.get("x-tenant-origin") ||
+      process.env.DEFAULT_ORIGIN ||
+      `https://${process.env.DEFAULT_ORIGIN}`;
+
+    const response = await fetch(`${process.env.AUTH_URL}/user/me`, {
       headers: {
         Authorization: `Bearer ${token}`,
-        "x-tenant": "schwingstetterdemo",
-        origin: "schwingstetter.myapptino.com",
+        Origin: origin,
         "Content-Type": "application/json",
         "User-Agent": "NextJS-App",
       },

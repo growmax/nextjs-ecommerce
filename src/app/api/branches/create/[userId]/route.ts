@@ -34,7 +34,7 @@ export async function POST(
     const body = await request.json();
 
     // Call external API to create branch
-    const apiUrl = `${process.env.API_BASE_URL || "https://api.myapptino.com"}/corecommerce/branches/createBranch/${userId}?companyId=${companyId}`;
+    const apiUrl = `${process.env.API_BASE_URL}/corecommerce/branches/createBranch/${userId}?companyId=${companyId}`;
 
     const response = await fetch(apiUrl, {
       method: "POST",

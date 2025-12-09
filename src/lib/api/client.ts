@@ -9,31 +9,20 @@ import https from "https";
 
 // API Configuration
 const API_CONFIG = {
-  AUTH_URL: process.env.AUTH_URL || "https://api.myapptino.com/auth/",
-  HOME_PAGE_URL:
-    process.env.HOME_PAGE_URL || "https://api.myapptino.com/homepagepublic/",
-  STOREFRONT_URL:
-    process.env.STOREFRONT_URL ||
-    "https://api.myapptino.com/storefront/graphql",
-  CATALOG_URL: process.env.Catalog_URL || "https://api.myapptino.com/catalog",
-  API_BASE_URL: process.env.API_BASE_URL || "https://api.myapptino.com",
-  CORECOMMERCE_URL:
-    process.env.BASE_URL || "https://api.myapptino.com/corecommerce",
-  PREFERENCE_URL: process.env.PREFERENCE_URL || "/api/userpreference",
-  DISCOUNT_URL:
-    process.env.DISCOUNT_URL || "https://api.myapptino.com/discounts/",
-  OPENSEARCH_URL:
-    process.env.OPENSEARCH_URL ||
-    "https://api.myapptino.com/opensearch/invocations",
-  BASE_API_URL:
-    process.env.BASE_API_URL || "https://schwingstetter.myapptino.com/api/",
-  BUCKET_NAME: process.env.NEXT_PUBLIC_S3BUCKET || 'growmax-dev-app-assets',
+  AUTH_URL: process.env.AUTH_URL || "",
+  HOME_PAGE_URL: process.env.HOME_PAGE_URL || "",
+  STOREFRONT_URL: process.env.STOREFRONT_URL || "",
+  CATALOG_URL: process.env.Catalog_URL || "",
+  API_BASE_URL: process.env.API_BASE_URL || "",
+  CORECOMMERCE_URL: process.env.BASE_URL || "",
+  PREFERENCE_URL: process.env.PREFERENCE_URL || "",
+  DISCOUNT_URL: process.env.DISCOUNT_URL || "",
+  OPENSEARCH_URL: process.env.OPENSEARCH_URL || "",
+  BASE_API_URL: process.env.BASE_API_URL || "",
+  BUCKET_NAME: process.env.NEXT_PUBLIC_S3BUCKET || "",
   ACCESS_KEY: process.env.AWS_S3_ACCESS_KEY,
   SECRET_KEY: process.env.AWS_S3_SECRET_KEY,
-  REGION: process.env.AWS_S3_REGION || 'ap-northeast-1',
-  ELASTIC_URL:
-    process.env.ELASTIC_URL ||
-    "https://api.myapptino.com/elasticsearch/invocations",
+  REGION: process.env.AWS_S3_REGION || "",
 } as const;
 
 // Types
@@ -156,7 +145,8 @@ function createApiClient(config: ApiClientConfig = {}): AxiosInstance {
             if (config.httpsAgent instanceof https.Agent) {
               // Create a new agent instance with the correct servername for this request
               // Note: We can't modify the agent directly, so we'll handle this via the request config
-              (config as unknown as { servername?: string }).servername = hostname;
+              (config as unknown as { servername?: string }).servername =
+                hostname;
             }
           }
         } catch {

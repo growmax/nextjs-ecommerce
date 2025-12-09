@@ -16,7 +16,7 @@ export async function GET(request: NextRequest) {
     }
 
     // Call external API
-    const apiUrl = `${process.env.API_BASE_URL || "https://api.myapptino.com"}/homepagepublic/getCountry`;
+    const apiUrl = `${process.env.API_BASE_URL}/homepagepublic/getCountry`;
 
     // Fetching countries from external API
 

@@ -12,8 +12,7 @@ export async function getDomainInfo(): Promise<{
   const env = process.env.NODE_ENV;
 
   if (isServer) {
-    const defaultDomain =
-      process.env.DEFAULT_DOMAIN || "shwingstetter.myapptino.com";
+    const defaultDomain = process.env.DEFAULT_ORIGIN || "";
     const defaultOrigin =
       process.env.DEFAULT_ORIGIN ||
       (env === "production"

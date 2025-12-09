@@ -1,30 +1,13 @@
-/**
- * Utility functions for managing origin headers across services
- */
-
-/**
- * Get the appropriate origin header value based on environment
- *
- * @returns string - Origin domain to use in API calls
- */
 export function getOriginHeader(): string {
   if (typeof window !== "undefined") {
-    // Client-side: use current domain
     return window.location.hostname === "localhost"
-      ? process.env.NEXT_PUBLIC_DEFAULT_DOMAIN || "schwingstetter.myapptino.com"
+      ? process.env.DEFAULT_ORIGIN || ""
       : window.location.hostname;
   }
 
-  // Server-side: use environment variable
-  return process.env.DEFAULT_DOMAIN || "schwingstetter.myapptino.com";
+  return process.env.DEFAULT_ORIGIN || "";
 }
 
-/**
- * Get common headers for API requests
- *
- * @param additionalHeaders - Additional headers to merge
- * @returns Record<string, string> - Common headers with origin
- */
 export function getCommonApiHeaders(
   additionalHeaders: Record<string, string> = {}
 ): Record<string, string> {

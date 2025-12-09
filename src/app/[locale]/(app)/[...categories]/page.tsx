@@ -1,4 +1,5 @@
 import { CategoryBreadcrumbServer } from "@/components/Breadcrumb/CategoryBreadcrumbServer";
+import { getDomain } from "@/lib/domain";
 import { BlockingLoader } from "@/components/GlobalLoader/BlockingLoader";
 import { ProductViewSwitcher } from "@/components/ProductGrid/ProductViewSwitcher";
 import { StructuredDataServer } from "@/components/seo/StructuredDataServer";
@@ -214,11 +215,7 @@ export default async function CategoryPage({
 
   // Fallback logic for missing headers (common on refresh/navigation)
   if (!tenantDomain) {
-    if (host === "localhost:3000" || host === "localhost:3001") {
-      tenantDomain = process.env.DEFAULT_DOMAIN || "sandbox.myapptino.com";
-    } else {
-      tenantDomain = host.replace("www.", "");
-    }
+    tenantDomain = getDomain(host);
   }
 
   if (!tenantOrigin) {

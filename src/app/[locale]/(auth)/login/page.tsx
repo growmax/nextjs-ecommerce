@@ -3,20 +3,20 @@
 import { CenteredLayout } from "@/components/layout/PageContent";
 import { Button } from "@/components/ui/button";
 import {
-    Card,
-    CardContent,
-    CardDescription,
-    CardFooter,
-    CardHeader,
-    CardTitle,
+  Card,
+  CardContent,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle,
 } from "@/components/ui/card";
 import {
-    Form,
-    FormControl,
-    FormField,
-    FormItem,
-    FormLabel,
-    FormMessage,
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { TopProgressBar } from "@/components/ui/top-progress-bar";
@@ -66,6 +66,7 @@ export default function LoginPage() {
   const { isLoading, showLoading, hideLoading } = useGlobalLoader();
   const [showPassword, setShowPassword] = useState(false);
   const [showPasswordField, setShowPasswordField] = useState(false);
+  const [isCheckingUsername, setIsCheckingUsername] = useState(false);
   const [_userInfo, setUserInfo] = useState<UserInfo | null>(null);
   const [currentUsername, setCurrentUsername] = useState("");
   const { login } = useUserDetails();
@@ -114,21 +115,20 @@ export default function LoginPage() {
   }, [showPasswordField]);
 
   const onSubmit = async (data: LoginFormData) => {
-    showLoading();
-
     // Validate password if password field is shown
     if (showPasswordField && !data.password) {
       form.setError("password", {
         type: "manual",
         message: t("auth.passwordRequired"),
       });
-      hideLoading();
       return;
     }
 
     try {
       // Step 1: Check username if we haven't already
       if (!showPasswordField) {
+        setIsCheckingUsername(true);
+
         const response = await fetch("/api/auth/check-username", {
           method: "POST",
           headers: {
@@ -157,6 +157,8 @@ export default function LoginPage() {
         }
       } else {
         // Step 2: Submit with password
+        showLoading();
+
         const loginResponse = await fetch("/api/auth/login", {
           method: "POST",
           headers: {
@@ -283,6 +285,7 @@ export default function LoginPage() {
         duration: 4000,
       });
     } finally {
+      setIsCheckingUsername(false);
       hideLoading();
     }
   };
@@ -331,7 +334,11 @@ export default function LoginPage() {
                             <Input
                               placeholder={t("auth.emailPlaceholder")}
                               {...fieldProps}
-                              disabled={isLoading || showPasswordField}
+                              disabled={
+                                isLoading ||
+                                isCheckingUsername ||
+                                showPasswordField
+                              }
                               readOnly={showPasswordField}
                               autoFocus={!showPasswordField}
                             />
@@ -342,7 +349,7 @@ export default function LoginPage() {
                                 size="sm"
                                 className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent"
                                 onClick={handleChangeEmail}
-                                disabled={isLoading}
+                                disabled={isLoading || isCheckingUsername}
                               >
                                 <Edit className="h-4 w-4" />
                               </Button>
@@ -371,7 +378,7 @@ export default function LoginPage() {
                                 placeholder={t("auth.passwordPlaceholder")}
                                 {...fieldProps}
                                 ref={passwordInputRef}
-                                disabled={isLoading}
+                                disabled={isLoading || isCheckingUsername}
                               />
                               <Button
                                 type="button"
@@ -397,8 +404,12 @@ export default function LoginPage() {
               </CardContent>
 
               <CardFooter className="flex flex-col gap-3 pt-6">
-                <Button type="submit" className="w-full" disabled={isLoading}>
-                  {isLoading
+                <Button
+                  type="submit"
+                  className="w-full"
+                  disabled={isLoading || isCheckingUsername}
+                >
+                  {isLoading || isCheckingUsername
                     ? t("messages.loading")
                     : showPasswordField
                       ? t("auth.signIn")
@@ -409,7 +420,7 @@ export default function LoginPage() {
                     type="button"
                     variant="outline"
                     className="w-full"
-                    disabled={isLoading}
+                    disabled={isLoading || isCheckingUsername}
                   >
                     <Home className="mr-2 h-4 w-4" />
                     {t("navigation.home") || "Home"}

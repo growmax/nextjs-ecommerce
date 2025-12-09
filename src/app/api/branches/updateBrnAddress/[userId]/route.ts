@@ -68,7 +68,7 @@ export async function PUT(
     // Debug logging - API params validated
 
     // Call external API
-    const apiUrl = `${process.env.API_BASE_URL || "https://api.myapptino.com"}/corecommerce/addresses/updateBrnAddress/${resolvedParams.userId}?companyId=${companyId}&addressId=${addressId}`;
+    const apiUrl = `${process.env.API_BASE_URL}/corecommerce/addresses/updateBrnAddress/${resolvedParams.userId}?companyId=${companyId}&addressId=${addressId}`;
 
     // Making external API call
 

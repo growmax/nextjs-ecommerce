@@ -94,7 +94,9 @@ class BrandResolutionService {
     // Fall back to tenantCode if elasticCode is not available
     const elasticCode = context?.elasticCode || context?.tenantCode || "";
     if (!elasticCode) {
-      console.warn("No elasticCode or tenantCode provided for brand aggregation query");
+      console.warn(
+        "No elasticCode or tenantCode provided for brand aggregation query"
+      );
       return [];
     }
 
@@ -130,7 +132,9 @@ class BrandResolutionService {
       // Fall back to tenantCode if elasticCode is not available
       const elasticCode = context?.elasticCode || context?.tenantCode || "";
       if (!elasticCode) {
-        console.warn("No elasticCode or tenantCode provided for brand aggregation query");
+        console.warn(
+          "No elasticCode or tenantCode provided for brand aggregation query"
+        );
         return [];
       }
 
@@ -176,7 +180,7 @@ class BrandResolutionService {
         aggs: {
           brands: {
             terms: {
-              field: "brands_name.keyword",
+              field: "brand_name.keyword",
               size: 10000,
             },
           },
@@ -227,7 +231,9 @@ class BrandResolutionService {
     // Fall back to tenantCode if elasticCode is not available
     const elasticCode = context?.elasticCode || context?.tenantCode || "";
     if (!elasticCode) {
-      console.warn("No elasticCode or tenantCode provided for brand resolution query");
+      console.warn(
+        "No elasticCode or tenantCode provided for brand resolution query"
+      );
       return null;
     }
 
@@ -268,7 +274,9 @@ class BrandResolutionService {
       // Fall back to tenantCode if elasticCode is not available
       const elasticCode = context?.elasticCode || context?.tenantCode || "";
       if (!elasticCode) {
-        console.warn("No elasticCode or tenantCode provided for brand resolution query");
+        console.warn(
+          "No elasticCode or tenantCode provided for brand resolution query"
+        );
         return null;
       }
 
@@ -295,7 +303,7 @@ class BrandResolutionService {
               },
               {
                 match: {
-                  brands_name: brandNamePattern, // Case-insensitive match using analyzer
+                  brand_name: brandNamePattern, // Case-insensitive match using analyzer
                 },
               },
             ],
@@ -318,7 +326,7 @@ class BrandResolutionService {
         aggs: {
           brands: {
             terms: {
-              field: "brands_name.keyword",
+              field: "brand_name.keyword",
               size: 1, // Only need first match since brand names are unique
             },
           },

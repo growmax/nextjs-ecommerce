@@ -1,17 +1,12 @@
 /**
  * OpenSearch Query Verification Script
- * 
+ *
  * This script verifies that all OpenSearch queries are working correctly
  * by testing each query type and checking if they return results.
- * 
+ *
  * Usage:
  *   npx tsx scripts/verify-opensearch-queries.ts
- * 
- * Environment Variables Required:
- *   - OPENSEARCH_URL (default: https://api.myapptino.com/opensearch/invocations)
- *   - ELASTIC_URL (default: https://api.myapptino.com/elasticsearch/invocations)
- *   - ELASTIC_INDEX (e.g., tenantcodepgandproducts)
- *   - ACCESS_TOKEN (optional, for authenticated requests)
+ *
  */
 
 import axios from "axios";
@@ -39,16 +34,14 @@ interface OpenSearchRequest {
 }
 
 const OPENSEARCH_URL =
-  process.env.OPENSEARCH_URL ||
-  process.env.NEXT_PUBLIC_OPENSEARCH_URL ||
-  "https://api.myapptino.com/opensearch/invocations";
+  process.env.OPENSEARCH_URL || process.env.NEXT_PUBLIC_OPENSEARCH_URL || "";
 
 const ELASTIC_URL =
   process.env.OPENSEARCH_URL ||
   process.env.NEXT_PUBLIC_OPENSEARCH_URL ||
   process.env.ELASTIC_URL ||
   process.env.NEXT_PUBLIC_ELASTIC_URL ||
-  "https://api.myapptino.com/opensearch/invocations";
+  "";
 
 const ELASTIC_INDEX = process.env.ELASTIC_INDEX || "";
 const ACCESS_TOKEN = process.env.ACCESS_TOKEN || "";
@@ -88,8 +81,9 @@ async function verifyProductSearch(): Promise<VerificationResult> {
     };
 
     const response = await makeOpenSearchRequest(request, ELASTIC_URL);
-    const hits = (response as { hits?: { hits?: unknown[]; total?: { value?: number } } })
-      .hits;
+    const hits = (
+      response as { hits?: { hits?: unknown[]; total?: { value?: number } } }
+    ).hits;
 
     return {
       testName: "Product Search Query",
@@ -129,8 +123,9 @@ async function verifyCategoryBrowse(): Promise<VerificationResult> {
     };
 
     const response = await makeOpenSearchRequest(request, ELASTIC_URL);
-    const hits = (response as { hits?: { hits?: unknown[]; total?: { value?: number } } })
-      .hits;
+    const hits = (
+      response as { hits?: { hits?: unknown[]; total?: { value?: number } } }
+    ).hits;
 
     return {
       testName: "Browse by Category Query",
@@ -170,8 +165,9 @@ async function verifySubCategoryBrowse(): Promise<VerificationResult> {
     };
 
     const response = await makeOpenSearchRequest(request, ELASTIC_URL);
-    const hits = (response as { hits?: { hits?: unknown[]; total?: { value?: number } } })
-      .hits;
+    const hits = (
+      response as { hits?: { hits?: unknown[]; total?: { value?: number } } }
+    ).hits;
 
     return {
       testName: "Browse by Subcategory Query",
@@ -211,8 +207,9 @@ async function verifyMajorCategoryBrowse(): Promise<VerificationResult> {
     };
 
     const response = await makeOpenSearchRequest(request, ELASTIC_URL);
-    const hits = (response as { hits?: { hits?: unknown[]; total?: { value?: number } } })
-      .hits;
+    const hits = (
+      response as { hits?: { hits?: unknown[]; total?: { value?: number } } }
+    ).hits;
 
     return {
       testName: "Browse by Major Category Query",
@@ -252,8 +249,9 @@ async function verifyBrandBrowse(): Promise<VerificationResult> {
     };
 
     const response = await makeOpenSearchRequest(request, ELASTIC_URL);
-    const hits = (response as { hits?: { hits?: unknown[]; total?: { value?: number } } })
-      .hits;
+    const hits = (
+      response as { hits?: { hits?: unknown[]; total?: { value?: number } } }
+    ).hits;
 
     return {
       testName: "Browse by Brand Query",
@@ -427,7 +425,12 @@ if (require.main === module) {
 }
 
 export {
-  runVerification, verifyBrandBrowse, verifyCategoryBrowse, verifyMajorCategoryBrowse, verifyProductDetailById,
-  verifyProductDetailByIndexName, verifyProductSearch, verifySubCategoryBrowse
+  runVerification,
+  verifyBrandBrowse,
+  verifyCategoryBrowse,
+  verifyMajorCategoryBrowse,
+  verifyProductDetailById,
+  verifyProductDetailByIndexName,
+  verifyProductSearch,
+  verifySubCategoryBrowse,
 };
-

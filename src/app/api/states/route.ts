@@ -21,7 +21,7 @@ export async function GET(request: NextRequest) {
     // Fetching states with parameters
 
     // Call external API
-    const apiUrl = `${process.env.API_BASE_URL || "https://api.myapptino.com"}/homepagepublic/getAllState`;
+    const apiUrl = `${process.env.API_BASE_URL}/homepagepublic/getAllState`;
 
     const response = await fetch(apiUrl, {
       method: "GET",

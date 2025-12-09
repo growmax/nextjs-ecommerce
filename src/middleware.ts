@@ -1,15 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
+import { getDomain } from "@/lib/domain";
 
 // Inline locales to avoid importing from config (reduces bundle size)
 const locales = ["en", "es", "fr", "th", "vi", "id", "ms"] as const;
-
-// Inline getDomain to avoid extra imports
-function getDomain(host: string): string {
-  if (host === "localhost:3000" || host === "localhost:3001") {
-    return process.env.DEFAULT_DOMAIN || "sandbox.myapptino.com";
-  }
-  return host.replace("www.", "");
-}
 
 // Define protected routes that require authentication
 const PROTECTED_ROUTES = [
@@ -119,8 +112,11 @@ export async function middleware(request: NextRequest) {
   if (!currentLocale) {
     // Get locale from Accept-Language header or use default
     const acceptLanguage = request.headers.get("accept-language");
-    const preferredLocale = acceptLanguage?.split(",")[0]?.split("-")[0] || "en";
-    const validLocale = locales.includes(preferredLocale as any) ? preferredLocale : "en";
+    const preferredLocale =
+      acceptLanguage?.split(",")[0]?.split("-")[0] || "en";
+    const validLocale = locales.includes(preferredLocale as any)
+      ? preferredLocale
+      : "en";
 
     // Redirect to path with locale prefix
     const url = new URL(request.url);
@@ -174,6 +170,7 @@ export async function middleware(request: NextRequest) {
     process.env.NODE_ENV === "development"
       ? process.env.DEFAULT_ORIGIN || request.nextUrl.origin
       : request.nextUrl.origin;
+  console.log(tenantOrigin, "tenantOrigin");
   response.headers.set("x-tenant-origin", tenantOrigin);
 
   // Note: x-tenant-code is NOT set here - it will be fetched from API in LayoutDataLoader

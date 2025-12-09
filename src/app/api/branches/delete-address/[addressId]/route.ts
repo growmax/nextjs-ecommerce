@@ -29,7 +29,7 @@ export async function DELETE(
     }
 
     // Call external API to delete branch address
-    const apiUrl = `${process.env.API_BASE_URL || "https://api.myapptino.com"}/corecommerce/addresses/deleteBrnAddress?addressId=${addressId}`;
+    const apiUrl = `${process.env.API_BASE_URL}/corecommerce/addresses/deleteBrnAddress?addressId=${addressId}`;
 
     const response = await fetch(apiUrl, {
       method: "DELETE",

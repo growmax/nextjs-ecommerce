@@ -1,6 +1,6 @@
 import { OpenSearchService, TenantService } from "@/lib/api";
 import { RequestContext } from "@/lib/api/client";
-import { getDomainInfo } from "@/lib/utils/getDomainInfo";
+import { getDomainInfo } from "@/lib/domain";
 import { ProductDetail } from "@/types/product/product-detail";
 import { TenantApiResponse } from "@/types/tenant";
 
@@ -40,7 +40,7 @@ export class ProductPageService {
   ): Promise<ProductDetail | null> {
     const elasticIndex = `${elasticCode}pgandproducts`;
     const context: RequestContext = { origin, tenantCode };
-    
+
     const result = await OpenSearchService.getProductCached(
       productId,
       elasticIndex,
@@ -48,7 +48,7 @@ export class ProductPageService {
       "get",
       context
     );
-    
+
     return result;
   }
 }

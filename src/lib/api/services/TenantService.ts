@@ -24,7 +24,6 @@ export class TenantService extends BaseService<TenantService> {
    */
   extractTenantFromHost(host: string): TenantInfo {
     // Extract subdomain from host
-    // e.g., schwingstetter.myapptino.com → schwingstetter
     const parts = host.split(".");
     const subdomain = parts[0];
 
@@ -32,7 +31,7 @@ export class TenantService extends BaseService<TenantService> {
     if (host.includes("localhost")) {
       // For development, use environment variables
       return {
-        domainUrl: process.env.DEFAULT_DOMAIN!,
+        domainUrl: process.env.DEFAULT_ORIGIN!,
         origin: process.env.DEFAULT_ORIGIN!,
         tenantCode: process.env.DEFAULT_TENANT_CODE!,
       };

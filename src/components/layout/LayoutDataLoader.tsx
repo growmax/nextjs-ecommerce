@@ -1,5 +1,6 @@
 import { TenantProvider } from "@/contexts/TenantContext";
 import { UserDetailsProvider } from "@/contexts/UserDetailsContext";
+import { getDomain } from "@/lib/domain";
 import TenantService from "@/lib/api/services/TenantService";
 import { ServerAuth } from "@/lib/auth-server";
 import { ServerUserService } from "@/lib/services/ServerUserService";
@@ -38,11 +39,7 @@ async function LayoutDataContent({ children }: { children: ReactNode }) {
 
   // Fallback logic for missing headers (common on refresh/navigation)
   if (!tenantDomain) {
-    if (host === "localhost:3000" || host === "localhost:3001") {
-      tenantDomain = process.env.DEFAULT_DOMAIN || "sandbox.myapptino.com";
-    } else {
-      tenantDomain = host.replace("www.", "");
-    }
+    tenantDomain = getDomain(host);
   }
 
   if (!tenantOrigin) {

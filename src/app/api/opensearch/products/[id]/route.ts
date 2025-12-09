@@ -17,9 +17,7 @@ import { NextRequest, NextResponse } from "next/server";
  */
 
 const OPENSEARCH_URL =
-  process.env.OPENSEARCH_URL ||
-  process.env.NEXT_PUBLIC_OPENSEARCH_URL ||
-  "https://api.myapptino.com/opensearch/invocations";
+  process.env.OPENSEARCH_URL || process.env.NEXT_PUBLIC_OPENSEARCH_URL || "";
 
 export async function GET(
   request: NextRequest,

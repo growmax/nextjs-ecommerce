@@ -44,7 +44,7 @@ export async function GET(
     }
 
     // Call external API
-    const apiUrl = `${process.env.API_BASE_URL || "https://api.myapptino.com"}/corecommerce/branches/readBranchwithPagination/${resolvedParams.userId}?companyId=${companyId}&offset=${actualOffset}&limit=${actualLimit}&searchString=${encodeURIComponent(searchString)}`;
+    const apiUrl = `${process.env.API_BASE_URL}/corecommerce/branches/readBranchwithPagination/${resolvedParams.userId}?companyId=${companyId}&offset=${actualOffset}&limit=${actualLimit}&searchString=${encodeURIComponent(searchString)}`;
 
     // Making external API call
 

@@ -1,6 +1,6 @@
 /**
  * Browse Query Builders for OpenSearch
- * 
+ *
  * Builds queries for category, brand, and product group filtering
  * following OpenSearch field naming conventions (snake_case)
  */
@@ -42,6 +42,7 @@ const PRODUCT_SOURCE_FIELDS = [
   "product_short_description",
   "product_assetss",
   "brands_name",
+  "brand_name",
   "product_categories.categoryId",
   "product_categories.categoryName",
   "product_categories.categoryPath",
@@ -126,7 +127,9 @@ function buildSort(
  * Build category filter using nested query on product_categories
  * Accepts array of category IDs for N-level category support
  */
-export function buildCategoryFilter(categoryIds: number[]): Array<Record<string, unknown>> {
+export function buildCategoryFilter(
+  categoryIds: number[]
+): Array<Record<string, unknown>> {
   if (!categoryIds || categoryIds.length === 0) {
     return [];
   }
@@ -168,7 +171,7 @@ export function buildCategoryFilter(categoryIds: number[]): Array<Record<string,
 export function buildBrandFilter(brandName: string): Record<string, unknown> {
   return {
     term: {
-      "brands_name.keyword": brandName,
+      "brand_name.keyword": brandName,
     },
   };
 }
@@ -245,7 +248,10 @@ function buildVariantAttributeFilters(
 function buildProductSpecificationFilters(
   productSpecifications?: Record<string, string[]>
 ): Array<Record<string, unknown>> {
-  if (!productSpecifications || Object.keys(productSpecifications).length === 0) {
+  if (
+    !productSpecifications ||
+    Object.keys(productSpecifications).length === 0
+  ) {
     return [];
   }
 
@@ -651,7 +657,7 @@ export function buildSearchQuery(
       fields: [
         "product_short_description^3", // Boost product description matches
         "brand_product_id^2", // Boost product ID matches
-        "brands_name^1.5", // Boost brand name matches
+        "brand_name^1.5", // Boost brand name matches
         "keywords",
         "ean",
       ],

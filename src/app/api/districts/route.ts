@@ -21,7 +21,7 @@ export async function GET(request: NextRequest) {
     // Fetching districts with parameters
 
     // Call external API
-    const apiUrl = `${process.env.API_BASE_URL || "https://api.myapptino.com"}/homepagepublic/getAllDistrict`;
+    const apiUrl = `${process.env.API_BASE_URL}/ homepagepublic / getAllDistrict`;
 
     const response = await fetch(apiUrl, {
       method: "GET",
@@ -35,7 +35,7 @@ export async function GET(request: NextRequest) {
     if (!response.ok) {
       // Districts API Error occurred
       return NextResponse.json(
-        { error: `Failed to fetch districts: ${response.status}` },
+        { error: `Failed to fetch districts: ${response.status} ` },
         { status: response.status }
       );
     }
