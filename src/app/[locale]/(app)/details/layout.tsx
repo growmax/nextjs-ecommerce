@@ -1,15 +1,13 @@
-import { LandingLayout } from "@/components/layout";
 import React from "react";
 
-export default function LandingLayoutWrapper({
+export default function DetailsLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
   return (
     <div className="bg-gray-50 min-h-screen">
-      <LandingLayout>{children}</LandingLayout>
+      {children}
     </div>
   );
-
 }

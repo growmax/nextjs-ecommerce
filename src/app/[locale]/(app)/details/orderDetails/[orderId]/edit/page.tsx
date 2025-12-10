@@ -9,23 +9,23 @@ import { toast } from "sonner";
 
 import { EditOrderNameDialog } from "@/components/dialogs/EditOrderNameDialog";
 import {
-  DetailsSkeleton,
-  OrderContactDetails,
-  OrderPriceDetails,
-  OrderProductsTable,
-  OrderTermsCard,
-  SalesHeader,
+    DetailsSkeleton,
+    OrderContactDetails,
+    OrderPriceDetails,
+    OrderProductsTable,
+    OrderTermsCard,
+    SalesHeader,
 } from "@/components/sales";
 import CashDiscountCard from "@/components/sales/CashDiscountCard";
 import type { ProductSearchResult } from "@/components/sales/ProductSearchInput";
 import { Button } from "@/components/ui/button";
 import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
+    Dialog,
+    DialogContent,
+    DialogDescription,
+    DialogFooter,
+    DialogHeader,
+    DialogTitle,
 } from "@/components/ui/dialog";
 import { useOrderDetails } from "@/hooks/details/orderdetails/useOrderDetails";
 import useCashDiscountHandlers from "@/hooks/useCashDiscountHandlers/useCashDiscountHandlers";
@@ -42,13 +42,13 @@ import { useTenantData } from "@/hooks/useTenantData";
 import type { OrderDetailItem, OrderDetailsResponse } from "@/lib/api";
 import { OrderNameService, OrderVersionService } from "@/lib/api";
 import {
-  type SellerBranch,
-  type Warehouse,
+    type SellerBranch,
+    type Warehouse,
 } from "@/lib/api/services/SellerWarehouseService/SellerWarehouseService";
 import type { CartItem } from "@/types/calculation/cart";
 import type {
-  SelectedVersion,
-  Version,
+    SelectedVersion,
+    Version,
 } from "@/types/details/orderdetails/version.types";
 import { setTaxBreakup } from "@/utils/calculation/tax-breakdown";
 import { orderPaymentDTO } from "@/utils/order/orderPaymentDTO/orderPaymentDTO";
@@ -1479,7 +1479,7 @@ export default function EditOrderPage({ params }: EditOrderPageProps) {
     orderDetails?.data?.updatedBuyerStatus;
 
   return (
-    <div className="flex flex-col h-full overflow-hidden bg-gray-50">
+    <div className="flex flex-col h-screen overflow-hidden">
       {/* Sales Header - Fixed at top */}
       <SalesHeader
         title={orderName ? decodeUnicode(orderName) : "Edit Order"}

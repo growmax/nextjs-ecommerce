@@ -6,24 +6,24 @@ import { toast } from "sonner";
 
 import { EditOrderNameDialog } from "@/components/dialogs/EditOrderNameDialog";
 import {
-  DetailsSkeleton,
-  OrderContactDetails,
-  OrderPriceDetails,
-  OrderProductsTable,
-  OrderTermsCard,
-  SalesHeader,
-  SPRForm,
+    DetailsSkeleton,
+    OrderContactDetails,
+    OrderPriceDetails,
+    OrderProductsTable,
+    OrderTermsCard,
+    SalesHeader,
+    SPRForm,
 } from "@/components/sales";
 import CashDiscountCard from "@/components/sales/CashDiscountCard";
 import type { ProductSearchResult } from "@/components/sales/ProductSearchInput";
 import { Button } from "@/components/ui/button";
 import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
+    Dialog,
+    DialogContent,
+    DialogDescription,
+    DialogFooter,
+    DialogHeader,
+    DialogTitle,
 } from "@/components/ui/dialog";
 import { useQuoteDetails } from "@/hooks/details/quotedetails/useQuoteDetails";
 import useCashDiscountHandlers from "@/hooks/useCashDiscountHandlers/useCashDiscountHandlers";
@@ -31,39 +31,39 @@ import useCheckVolumeDiscountEnabled from "@/hooks/useCheckVolumeDiscountEnabled
 import { useCurrentUser } from "@/hooks/useCurrentUser";
 import useGetLatestPaymentTerms from "@/hooks/useGetLatestPaymentTerms/useGetLatestPaymentTerms";
 import { useGetVersionDetails } from "@/hooks/useGetVersionDetails/useGetVersionDetails";
+import { useLoading } from "@/hooks/useGlobalLoader";
 import { useLatestOrderProducts } from "@/hooks/useLatestOrderProducts/useLatestOrderProducts";
 import useModuleSettings from "@/hooks/useModuleSettings";
 import { useOrderCalculation } from "@/hooks/useOrderCalculation/useOrderCalculation";
+import { usePageLoader } from "@/hooks/usePageLoader";
 import { usePageScroll } from "@/hooks/usePageScroll";
 import { useQuoteSubmission } from "@/hooks/useQuoteSubmission/useQuoteSubmission";
-import { useLoading } from "@/hooks/useGlobalLoader";
-import { usePageLoader } from "@/hooks/usePageLoader";
 
+import { useNavigationWithLoader } from "@/hooks/useNavigationWithLoader";
 import { useTenantData } from "@/hooks/useTenantData";
 import type { QuotationDetailsResponse } from "@/lib/api";
 import {
-  OrdersService,
-  QuotationDetailsService,
-  quoteSubmitDTO,
+    OrdersService,
+    QuotationDetailsService,
+    quoteSubmitDTO,
 } from "@/lib/api";
 import QuotationNameService from "@/lib/api/services/QuotationNameService/QuotationNameService";
 import {
-  type SellerBranch,
-  type Warehouse,
+    type SellerBranch,
+    type Warehouse,
 } from "@/lib/api/services/SellerWarehouseService/SellerWarehouseService";
 import type { CartItem } from "@/types/calculation/cart";
 import type {
-  SelectedVersion,
-  Version,
+    SelectedVersion,
+    Version,
 } from "@/types/details/orderdetails/version.types";
 import { getStatusStyle } from "@/utils/details/orderdetails";
 import { decodeUnicode } from "@/utils/General/general";
+import getProductIds from "@/utils/getProductIds";
 import { prepareQuoteSubmissionDTO } from "@/utils/quote/quoteSubmissionDTO/quoteSubmissionDTO";
 import { isEmpty } from "lodash";
 import some from "lodash/some";
 import { useSearchParams } from "next/navigation";
-import { useNavigationWithLoader } from "@/hooks/useNavigationWithLoader";
-import getProductIds from "@/utils/getProductIds";
 
 // Import types for proper typing
 interface AddressDetails {
@@ -1327,7 +1327,7 @@ export default function EditQuotePage({ params }: EditQuotePageProps) {
     quoteDetails?.data?.updatedBuyerStatus;
 
   return (
-    <div className="flex flex-col h-full overflow-hidden bg-gray-50">
+    <div className="flex flex-col h-full overflow-hidden">
       {/* Sales Header - Fixed at top */}
       <SalesHeader
         title={quoteName ? decodeUnicode(quoteName) : "Edit Quote"}

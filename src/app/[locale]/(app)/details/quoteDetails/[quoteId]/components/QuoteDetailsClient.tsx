@@ -472,7 +472,7 @@ export default function QuoteDetailsClient({
     (sprDetails?.targetPrice > 0 || sprDetails?.sprRequestedDiscount > 0);
 
   return (
-    <div className="flex flex-col h-full overflow-hidden bg-gray-50">
+    <div className="flex flex-col h-full overflow-hidden">
       {/* Sales Header - Fixed at top */}
       <SalesHeader
         title={quoteName ? decodeUnicode(quoteName) : t("quoteDetails")}

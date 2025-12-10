@@ -589,7 +589,7 @@ export default function OrderDetailsClient({
   const lastDateToPay = getLastDateToPay(paymentDueData, preferences);
 
   return (
-    <div className="flex flex-col h-full overflow-hidden bg-gray-50">
+    <div className="flex flex-col h-full overflow-hidden">
       {/* Sales Header - Fixed at top */}
       <SalesHeader
         title={orderName ? decodeUnicode(orderName) : "Order Details"}
