@@ -62,7 +62,7 @@ export async function getHomepageConfig(
 
     // Use tenant code if available, otherwise use default tenant or domain
     const defaultTenant =
-      process.env.NEXT_PUBLIC_DEFAULT_TENANT || "schwingstetterdemo";
+      process.env.NEXT_PUBLIC_DEFAULT_TENANT || "sandbox";
     const queryDomain = tenantCode || defaultTenant || domain;
 
     // Only create context if we have a token

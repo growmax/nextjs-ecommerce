@@ -4,6 +4,7 @@ import BrandsService from "@/lib/api/services/BrandsService";
 import TenantService from "@/lib/api/services/TenantService";
 import { Metadata } from "next";
 import { headers } from "next/headers";
+import { BrandImage } from "./BrandImage";
 
 interface PageProps {
   params: Promise<{
@@ -68,31 +69,29 @@ export default async function AllBrandsPage({ params }: PageProps) {
     }
   }
 
-  // If no elasticCode, cannot fetch brands - show empty state
+  // Fetch brands (service handles sandbox fallback if no elasticCode)
   let brands: Array<{
     id: number;
     name: string;
     imgUrl?: string;
   }> = [];
 
-  if (elasticCode) {
-    try {
-      // Build RequestContext for service calls
-      const context: RequestContext = {
-        elasticCode,
-        tenantCode,
-        ...(tenantOrigin && { origin: tenantOrigin }),
-      };
+  try {
+    // Build RequestContext for service calls
+    const context: RequestContext = {
+      elasticCode,
+      tenantCode,
+      ...(tenantOrigin && { origin: tenantOrigin }),
+    };
 
-      // Fetch brands from OpenSearch
-      brands = await BrandsService.getAllBrands(context);
-    } catch (error) {
-      console.error("Error fetching brands:", error);
-      // Don't throw error, just show empty state
-    }
+    // Fetch brands from OpenSearch
+    brands = await BrandsService.getAllBrands(context);
+  } catch (error) {
+    console.error("Error fetching brands:", error);
+    // Don't throw error, just show empty state
   }
 
-  console.log("brands", brands);
+
 
   return (
     <div className="max-w-screen-2xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
@@ -127,16 +126,10 @@ export default async function AllBrandsPage({ params }: PageProps) {
               >
                 {brand.imgUrl ? (
                   <div className="w-full aspect-square mb-3 rounded-md overflow-hidden bg-muted">
-                    <img
+                    <BrandImage
                       src={brand.imgUrl}
                       alt={brand.name}
-                      className="w-full h-full object-cover group-hover:scale-105 transition-transform"
-                      onError={(e) => {
-                        // Fallback to placeholder if image fails
-                        (e.target as HTMLImageElement).src =
-                          "https://placehold.co/200x200?text=" +
-                          encodeURIComponent(brand.name);
-                      }}
+                      brandName={brand.name}
                     />
                   </div>
                 ) : (

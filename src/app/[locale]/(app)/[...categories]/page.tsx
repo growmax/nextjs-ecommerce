@@ -13,7 +13,6 @@ import { BlockingLoaderProvider } from "@/providers/BlockingLoaderProvider";
 import { FilterAggregations } from "@/types/category-filters";
 import { Metadata } from "next";
 import { headers } from "next/headers";
-import { notFound } from "next/navigation";
 import { Suspense } from "react";
 import CategoryNotFound from "./_components/CategoryNotFound";
 import { CategoryPageInteractivity } from "./_components/CategoryPageInteractivity";
@@ -245,9 +244,11 @@ export default async function CategoryPage({
     }
   }
 
-  if (!elasticCode) {
+  // Allow sandbox environment (empty elasticCode defaults to sandboxpgandproducts)
+  // The query builders and services handle the fallback internally
+  /* if (!elasticCode) {
     notFound();
-  }
+  } */
 
   // Build RequestContext for service calls
   const context: RequestContext = {
@@ -353,7 +354,7 @@ export default async function CategoryPage({
   );
 
   // Get elastic index from elasticCode
-  const elasticIndex = elasticCode ? `${elasticCode}pgandproducts` : "";
+  const elasticIndex = elasticCode ? `${elasticCode}pgandproducts` : "sandboxpgandproducts";
 
   // Build the base query for aggregations and products
   const queryResult = buildCategoryQuery(categoryIds, {

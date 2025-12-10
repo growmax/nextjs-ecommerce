@@ -48,21 +48,7 @@ export class BrandsService extends BaseService<BrandsService> {
     try {
       // Get elasticCode from context to build elastic index
       const elasticCode = context?.elasticCode || "";
-      if (!elasticCode) {
-        console.warn("No elasticCode provided for brand aggregation query");
-        return [];
-      }
-
-      const elasticIndex = `${elasticCode}pgandproducts`;
-
-      // Validate elasticIndex before making API call
-      if (!elasticIndex || elasticIndex === "pgandproducts") {
-        console.warn(
-          "Invalid elastic index for brand aggregation:",
-          elasticIndex
-        );
-        return [];
-      }
+      const elasticIndex = elasticCode ? `${elasticCode}pgandproducts` : "sandboxpgandproducts";
 
       // Build OpenSearch aggregation query
       const query = {
@@ -102,7 +88,7 @@ export class BrandsService extends BaseService<BrandsService> {
               // Get brand ID
               brand_id: {
                 terms: {
-                  field: "brands_id",
+                  field: "brand_id",
                   size: 1,
                 },
               },
@@ -111,7 +97,7 @@ export class BrandsService extends BaseService<BrandsService> {
                 top_hits: {
                   size: 1,
                   _source: {
-                    includes: ["brand_image", "brandImage", "brands_id"],
+                    includes: ["brand_image", "brandImage", "brand_id"],
                   },
                 },
               },
@@ -137,7 +123,7 @@ export class BrandsService extends BaseService<BrandsService> {
       const brands: Brand[] = buckets.map((bucket: any) => {
         const brandName = bucket.key;
         const brandId = bucket.brand_id?.buckets?.[0]?.key || this.generateBrandId(brandName);
-        
+
         // Try to get brand image from sample product
         let brandImage = "";
         if (bucket.sample_product?.hits?.hits?.[0]?._source) {
@@ -174,18 +160,18 @@ export class BrandsService extends BaseService<BrandsService> {
     try {
       const result = context
         ? await this.callWith(
-            `/brandses?find=ByCompanyId&companyId=${companyId}`,
-            {},
-            {
-              context,
-              method: "GET",
-            }
-          )
+          `/brandses?find=ByCompanyId&companyId=${companyId}`,
+          {},
+          {
+            context,
+            method: "GET",
+          }
+        )
         : await this.call(
-            `/brandses?find=ByCompanyId&companyId=${companyId}`,
-            {},
-            "GET"
-          );
+          `/brandses?find=ByCompanyId&companyId=${companyId}`,
+          {},
+          "GET"
+        );
 
       const response = result as BrandsResponse;
       if (response.data && Array.isArray(response.data)) {

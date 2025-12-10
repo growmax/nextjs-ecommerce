@@ -16,7 +16,7 @@
           },
           {
             "key": "x-tenant",
-            "value": "schwingstetter",
+            "value": "sandbox",
             "description": "Tenant code - change as needed"
           }
         ],
@@ -45,7 +45,7 @@
           },
           {
             "key": "x-tenant",
-            "value": "schwingstetter",
+            "value": "sandbox",
             "description": "Tenant code - change as needed"
           }
         ],
@@ -96,7 +96,7 @@
   "variable": [
     {
       "key": "tenant_code",
-      "value": "schwingstetter",
+      "value": "sandbox",
       "type": "string"
     },
     {
@@ -106,4 +106,3 @@
     }
   ]
 }
-

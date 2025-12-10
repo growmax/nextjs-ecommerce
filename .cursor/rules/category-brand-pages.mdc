@@ -46,7 +46,7 @@ OpenSearch is the **primary data source** for:
 
 **Locations:**
 
-- `src/app/[locale]/(app)/brands/All/page.tsx` - All brands listing
+- `src/app/[locale]/(app)/brands/all/page.tsx` - All brands listing
 - `src/app/[locale]/(app)/brands/[brand-slug]/page.tsx` - Single brand page
 - `src/app/[locale]/(app)/brands/[brand-slug]/[...categories]/page.tsx` - Brand + category page
 
@@ -449,7 +449,7 @@ When implementing a feature or task on category/brand pages:
 **Page Files:**
 
 - `src/app/[locale]/(app)/[...categories]/page.tsx` - Category pages
-- `src/app/[locale]/(app)/brands/All/page.tsx` - All brands page
+- `src/app/[locale]/(app)/brands/all/page.tsx` - All brands page
 - `src/app/[locale]/(app)/brands/[brand-slug]/page.tsx` - Brand page
 - `src/app/[locale]/(app)/brands/[brand-slug]/[...categories]/page.tsx` - Brand + category page
 

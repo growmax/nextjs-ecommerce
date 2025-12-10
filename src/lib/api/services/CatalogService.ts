@@ -51,7 +51,7 @@ export interface ProductSearchOptions {
 export class CatalogService {
   private static instance: CatalogService;
 
-  private constructor() {}
+  private constructor() { }
 
   public static getInstance(): CatalogService {
     if (!CatalogService.instance) {
@@ -312,7 +312,8 @@ export class CatalogService {
   }
 
   /**
-   * Get all categories from OpenSearch
+   * Get all categories from OpenSearch using multi_terms aggregation
+   * Works with sandbox where product_categories is NOT a nested type
    * @param context - Request context with elasticCode and tenantCode
    * @returns List of all categories
    */
@@ -328,25 +329,12 @@ export class CatalogService {
     const SearchService = (await import("./SearchService/SearchService")).default;
 
     try {
-      // Get elasticCode from context to build elastic index
+      // Build elastic index name from elasticCode
       const elasticCode = context?.elasticCode || "";
-      if (!elasticCode) {
-        console.warn("No elasticCode provided for category aggregation query");
-        return [];
-      }
+      const elasticIndex = elasticCode ? `${elasticCode}pgandproducts` : "sandboxpgandproducts";
 
-      const elasticIndex = `${elasticCode}pgandproducts`;
-
-      // Validate elasticIndex before making API call
-      if (!elasticIndex || elasticIndex === "pgandproducts") {
-        console.warn(
-          "Invalid elastic index for category aggregation:",
-          elasticIndex
-        );
-        return [];
-      }
-
-      // Build OpenSearch aggregation query with nested aggregations on product_categories
+      // Build OpenSearch query with multi_terms aggregation
+      // multi_terms correlates categoryId, categoryName, categorySlug together
       const query = {
         size: 0,
         query: {
@@ -375,43 +363,20 @@ export class CatalogService {
           },
         },
         aggs: {
-          product_categories: {
-            nested: {
-              path: "product_categories",
-            },
-            aggs: {
-              categories: {
-                terms: {
-                  field: "product_categories.categoryId",
-                  size: 10000,
-                },
-                aggs: {
-                  category_name: {
-                    terms: {
-                      field: "product_categories.categoryName.keyword",
-                      size: 1,
-                    },
-                  },
-                  category_slug: {
-                    terms: {
-                      field: "product_categories.categorySlug.keyword",
-                      size: 1,
-                    },
-                  },
-                  category_image: {
-                    terms: {
-                      field: "product_categories.categoryImage.keyword",
-                      size: 1,
-                    },
-                  },
-                },
-              },
+          categories: {
+            multi_terms: {
+              terms: [
+                { field: "product_categories.categoryId" },
+                { field: "product_categories.categoryName.keyword" },
+                { field: "product_categories.categorySlug.keyword" },
+              ],
+              size: 100,
             },
           },
         },
       };
 
-      // Fetch categories from OpenSearch using searchProducts with aggregations
+      // Fetch from OpenSearch
       const result = await SearchService.searchProducts({
         elasticIndex,
         query,
@@ -419,73 +384,40 @@ export class CatalogService {
       });
 
       if (!result.success || !result.aggregations) {
-        console.error(
-          "Failed to fetch categories from OpenSearch - no aggregations"
-        );
+        console.error("Failed to fetch categories - no aggregations");
         return [];
       }
 
-      // Transform aggregation results to Category format
-      const categoryMap = new Map<
-        number,
-        {
-          id: number;
-          name: string;
-          imageSource?: string;
-          slug?: string;
-        }
-      >();
+      // Process multi_terms aggregation
+      // Response structure: aggregations.categories.buckets[]
+      // Each bucket: { key: [categoryId, categoryName, categorySlug], doc_count }
+      const categoriesAgg = result.aggregations.categories as unknown as {
+        buckets?: Array<{
+          key: [number, string, string];
+          key_as_string: string;
+          doc_count: number;
+        }>;
+      };
 
-      // Process nested aggregation results
-      // Structure: aggregations.product_categories.categories.buckets
-      const nestedAggs = result.aggregations.product_categories as any;
-
-      // Debug: log aggregation keys to understand structure
-      if (!nestedAggs) {
-        console.error(
-          "No product_categories in aggregations. Available keys:",
-          Object.keys(result.aggregations)
-        );
+      if (!categoriesAgg?.buckets) {
+        console.error("No categories buckets in aggregations");
         return [];
       }
 
-      if (nestedAggs?.categories?.buckets) {
-        nestedAggs.categories.buckets.forEach((bucket: any) => {
-          const categoryId = bucket.key;
-          const categoryName = bucket.category_name?.buckets?.[0]?.key || "";
-          const categorySlug = bucket.category_slug?.buckets?.[0]?.key || "";
-          const categoryImage = bucket.category_image?.buckets?.[0]?.key || "";
+      // Transform to category array
+      const categories = categoriesAgg.buckets.map((bucket) => {
+        const [categoryId, categoryName, categorySlug] = bucket.key;
+        return {
+          id: categoryId,
+          name: categoryName,
+          slug: categorySlug,
+          imageSource: "", // Not available in multi_terms
+          doc_count: bucket.doc_count,
+        };
+      });
 
-          if (categoryId && categoryName) {
-            // Use categoryId as key to avoid duplicates
-            if (!categoryMap.has(categoryId)) {
-              categoryMap.set(categoryId, {
-                id: categoryId,
-                name: categoryName,
-                slug: categorySlug,
-                imageSource: categoryImage,
-              });
-            }
-          }
-        });
-      } else {
-        // Debug: log the actual structure if it doesn't match
-        console.error(
-          "Categories aggregation structure mismatch. Nested aggs:",
-          JSON.stringify(nestedAggs, null, 2)
-        );
-        console.error(
-          "Available keys in nestedAggs:",
-          nestedAggs ? Object.keys(nestedAggs) : "null"
-        );
-      }
 
-      // Convert map to array
-      const categoriesArray = Array.from(categoryMap.values());
-      console.log(
-        `Fetched ${categoriesArray.length} categories from OpenSearch`
-      );
-      return categoriesArray;
+      return categories;
     } catch (error) {
       console.error("Error fetching categories from OpenSearch:", error);
       return [];

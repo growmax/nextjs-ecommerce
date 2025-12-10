@@ -19,7 +19,7 @@ function getDataFromToken(
       companyId: payload.companyId || 8682,
       userId: payload.userId || 1007,
       tenantCode:
-        payload.tenantId || payload.iss || elasticCode || "schwingstetterdemo",
+        payload.tenantId || payload.iss || elasticCode || "sandbox",
     };
   } catch {
     return null;
@@ -56,7 +56,7 @@ export async function GET(request: NextRequest) {
       : tokenData?.companyId || 8682;
     const isMobile = isMobileParam === "true" || false;
     const tenantCode =
-      tenantCodeParam || tokenData?.tenantCode || "schwingstetterdemo";
+      tenantCodeParam || tokenData?.tenantCode || "sandbox";
 
     const context = {
       accessToken: token,

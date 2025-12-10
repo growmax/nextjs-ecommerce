@@ -7,7 +7,7 @@ export async function GET() {
       query: `{
         getAllByPropertyAndDomain(
           property: "test-tweakcn"
-          domain: "schwingstetterdemo"
+          domain: "sandbox"
         ) {
           id
           companyId

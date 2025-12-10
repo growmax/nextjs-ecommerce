@@ -63,7 +63,7 @@ export default function CategoryNotFound({
         </CardContent>
 
         <CardFooter className="flex flex-col sm:flex-row gap-3">
-          <Link href="/categories/All" prefetch={true} className="flex-1">
+          <Link href="/categories/all" prefetch={true} className="flex-1">
             <Button variant="default" className="w-full">
               <Grid3x3 className="mr-2 h-4 w-4" />
               Browse Categories

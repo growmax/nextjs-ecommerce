@@ -38,9 +38,10 @@ export class ProductPageService {
     tenantCode: string,
     origin: string
   ): Promise<ProductDetail | null> {
-    const elasticIndex = `${elasticCode}pgandproducts`;
+    // Build elastic index from elasticCode or fallback to sandbox default
+    const elasticIndex = elasticCode ? `${elasticCode}pgandproducts` : "sandboxpgandproducts";
     const context: RequestContext = { origin, tenantCode };
-    
+
     const result = await OpenSearchService.getProductCached(
       productId,
       elasticIndex,
@@ -48,7 +49,7 @@ export class ProductPageService {
       "get",
       context
     );
-    
+
     return result;
   }
 }

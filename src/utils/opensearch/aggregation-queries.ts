@@ -161,59 +161,17 @@ export function buildCategoriesAggregation(
   return {
     filter: buildFilteredAggregation("categories", baseMust, baseMustNot, currentFilters),
     aggs: {
-      nested_categories: {
-        nested: {
-          path: "product_categories",
-        },
-        aggs: {
-          data: {
-            terms: {
-              field: "product_categories.categoryName.keyword",
-              size: bucketSize,
-            },
-            aggs: {
-              // Extract category ID
-              category_id: {
-                terms: {
-                  field: "product_categories.categoryId",
-                  size: 1,
-                },
-              },
-              // Extract category slug
-              category_slug: {
-                terms: {
-                  field: "product_categories.categorySlug.keyword",
-                  size: 1,
-                },
-              },
-              // Extract category path
-              category_path: {
-                terms: {
-                  field: "product_categories.categoryPath.keyword",
-                  size: 1,
-                },
-              },
-              // Extract category level
-              category_level: {
-                terms: {
-                  field: "product_categories.categoryLevel",
-                  size: 1,
-                },
-              },
-              // Extract ancestor IDs (array)
-              ancestor_ids: {
-                terms: {
-                  field: "product_categories.ancestorIds",
-                  size: 100, // Support up to 100 ancestor IDs
-                },
-              },
-            },
-          },
-          count: {
-            cardinality: {
-              field: "product_categories.categoryName.keyword",
-            },
-          },
+      // Sandbox uses flat product_categories
+      // Use multi_terms to correlate category data together
+      categories: {
+        multi_terms: {
+          terms: [
+            { field: "product_categories.categoryId" },
+            { field: "product_categories.categoryName.keyword" },
+            { field: "product_categories.categorySlug.keyword" },
+            { field: "product_categories.categoryLevel" },
+          ],
+          size: bucketSize,
         },
       },
     },

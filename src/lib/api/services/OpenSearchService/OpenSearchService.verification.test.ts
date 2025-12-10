@@ -10,10 +10,10 @@
 
 import { buildProductSearchQuery } from "@/utils/elasticsearch/search-queries";
 import {
-    buildBrandQuery,
-    buildCategoryQuery,
-    buildMajorCategoryQuery,
-    buildSubCategoryQuery,
+  buildBrandQuery,
+  buildCategoryQuery,
+  buildMajorCategoryQuery,
+  buildSubCategoryQuery,
 } from "@/utils/opensearch/browse-queries";
 
 // Mock the clients to prevent actual API calls
@@ -101,14 +101,11 @@ describe("OpenSearch Query Verification", () => {
       expect(query).toHaveProperty("query");
       expect(query.query.bool.must).toBeDefined();
 
-      // Verify category filter
+      // Verify category filter (flat query for sandbox)
       const mustClauses = query.query.bool.must as Array<Record<string, unknown>>;
       expect(mustClauses).toContainEqual({
-        nested: {
-          path: "product_categories",
-          query: {
-            term: { "product_categories.categoryId": categoryId },
-          },
+        term: {
+          "product_categories.categoryId": categoryId,
         },
       });
     });
@@ -146,11 +143,8 @@ describe("OpenSearch Query Verification", () => {
 
       const mustClauses = query.query.bool.must as Array<Record<string, unknown>>;
       expect(mustClauses).toContainEqual({
-        nested: {
-          path: "product_categories",
-          query: {
-            term: { "product_categories.categoryId": subCategoryId },
-          },
+        term: {
+          "product_categories.categoryId": subCategoryId,
         },
       });
     });
@@ -165,11 +159,8 @@ describe("OpenSearch Query Verification", () => {
 
       const mustClauses = query.query.bool.must as Array<Record<string, unknown>>;
       expect(mustClauses).toContainEqual({
-        nested: {
-          path: "product_categories",
-          query: {
-            term: { "product_categories.categoryId": majorCategoryId },
-          },
+        term: {
+          "product_categories.categoryId": majorCategoryId,
         },
       });
     });

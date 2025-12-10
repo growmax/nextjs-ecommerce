@@ -203,7 +203,7 @@ export function BrandCategoryPageInteractivity({
                 brandRemovalPath={
                   categoryPath && categoryPath.fullPath
                     ? `/${locale}/${categoryPath.fullPath}`
-                    : `/${locale}/brands/All`
+                    : `/${locale}/brands/all`
                 }
               />
             </div>

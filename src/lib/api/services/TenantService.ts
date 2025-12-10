@@ -24,7 +24,7 @@ export class TenantService extends BaseService<TenantService> {
    */
   extractTenantFromHost(host: string): TenantInfo {
     // Extract subdomain from host
-    // e.g., schwingstetter.myapptino.com → schwingstetter
+    // e.g., sandbox.myapptino.com → sandbox
     const parts = host.split(".");
     const subdomain = parts[0];
 

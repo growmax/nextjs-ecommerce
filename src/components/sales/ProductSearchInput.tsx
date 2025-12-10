@@ -44,7 +44,7 @@ export default function ProductSearchInput({
   const dropdownRef = useRef<HTMLDivElement>(null);
   const { tenantData } = useTenantData();
 
-  // Get elastic index
+  // Get elastic index from tenant data or use provided one
   const finalElasticIndex = useMemo(() => {
     if (elasticIndex) {
       return elasticIndex;
@@ -52,7 +52,8 @@ export default function ProductSearchInput({
     if (tenantData?.tenant?.elasticCode) {
       return `${tenantData.tenant.elasticCode}pgandproducts`;
     }
-    return "pgproduct";
+    // Fallback to sandbox default if no elasticCode available
+    return "sandboxpgandproducts";
   }, [elasticIndex, tenantData?.tenant?.elasticCode]);
 
   // Debounce search text

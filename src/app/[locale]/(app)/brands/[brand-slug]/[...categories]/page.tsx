@@ -75,12 +75,8 @@ export async function generateMetadata({
     }
   }
 
-  // If no elasticCode, cannot resolve brand - return not found
-  if (!elasticCode) {
-    return {
-      title: "Brand Not Found | E-Commerce",
-    };
-  }
+
+  // Allow sandbox environment for metadata generation
 
   // Build RequestContext for service calls
   const context: RequestContext = {
@@ -187,10 +183,8 @@ export default async function BrandCategoryPage({
     }
   }
 
-  // If no elasticCode, cannot resolve brand - return 404
-  if (!elasticCode) {
-    notFound();
-  }
+  // Allow sandbox environment (empty elasticCode defaults to sandboxpgandproducts)
+  // The query builders and services handle the fallback internally
 
   // Build RequestContext for service calls
   const context: RequestContext = {
@@ -319,7 +313,7 @@ export default async function BrandCategoryPage({
   }
 
   // Get elastic index from elasticCode
-  const elasticIndex = elasticCode ? `${elasticCode}pgandproducts` : "";
+  const elasticIndex = elasticCode ? `${elasticCode}pgandproducts` : "sandboxpgandproducts";
 
   // Fetch products - will be streamed via Suspense
   const productsPromise = elasticIndex

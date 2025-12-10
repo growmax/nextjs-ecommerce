@@ -70,7 +70,7 @@ export default async function AllCategoriesPage({ params }: PageProps) {
     }
   }
 
-  // If no elasticCode, cannot fetch categories - show empty state
+  // Fetch categories (service handles sandbox fallback if no elasticCode)
   let categories: Array<{
     id: number | string;
     name: string;
@@ -80,21 +80,19 @@ export default async function AllCategoriesPage({ params }: PageProps) {
     slug?: string;
   }> = [];
 
-  if (elasticCode) {
-    try {
-      // Build RequestContext for service calls
-      const context: RequestContext = {
-        elasticCode,
-        tenantCode,
-        ...(tenantOrigin && { origin: tenantOrigin }),
-      };
+  try {
+    // Build RequestContext for service calls
+    const context: RequestContext = {
+      elasticCode,
+      tenantCode,
+      ...(tenantOrigin && { origin: tenantOrigin }),
+    };
 
-      // Fetch categories from OpenSearch
-      categories = await CatalogService.getAllCategories(context);
-    } catch (error) {
-      console.error("Error fetching categories:", error);
-      // Don't throw error, just show empty state
-    }
+    // Fetch categories from OpenSearch
+    categories = await CatalogService.getAllCategories(context);
+  } catch (error) {
+    console.error("Error fetching categories:", error);
+    // Don't throw error, just show empty state
   }
 
   return (

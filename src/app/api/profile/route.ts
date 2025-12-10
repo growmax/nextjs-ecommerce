@@ -17,8 +17,8 @@ export async function GET(request: NextRequest) {
     const response = await fetch("https://api.myapptino.com/auth/user/me", {
       headers: {
         Authorization: `Bearer ${token}`,
-        "x-tenant": "schwingstetterdemo",
-        origin: "schwingstetter.myapptino.com",
+        "x-tenant": "sandbox",
+        origin: "sandbox.myapptino.com",
         "Content-Type": "application/json",
         "User-Agent": "NextJS-App",
       },

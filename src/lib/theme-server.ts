@@ -24,7 +24,7 @@ export class ServerThemeAPI {
         query: `{
           getAllByPropertyAndDomain(
             property: "test-tweakcn"
-            domain: "schwingstetterdemo"
+            domain: "sandbox"
           ) {
             id
             companyId

@@ -1,10 +1,10 @@
 import {
-  Breadcrumb,
-  BreadcrumbItem,
-  BreadcrumbLink,
-  BreadcrumbList,
-  BreadcrumbPage,
-  BreadcrumbSeparator,
+    Breadcrumb,
+    BreadcrumbItem,
+    BreadcrumbLink,
+    BreadcrumbList,
+    BreadcrumbPage,
+    BreadcrumbSeparator,
 } from "@/components/ui/breadcrumb";
 import { Link } from "@/i18n/navigation";
 import { ProductCategory, ProductDetail } from "@/types/product/product-detail";
@@ -31,7 +31,7 @@ function generateBreadcrumbNodes(
 
   // Add Brands link if product has a brand
   if (brandName) {
-    nodes.push({ label: "Brands", href: `/${locale}/brands/All` });
+    nodes.push({ label: "Brands", href: `/${locale}/brands/all` });
 
     // Generate brand slug from brand name
     const brandSlug = brandName

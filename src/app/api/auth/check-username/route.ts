@@ -9,7 +9,7 @@ export async function POST(request: NextRequest) {
       {
         method: "POST",
         headers: {
-          Origin: "schwingstetter.myapptino.com",
+          Origin: "sandbox.myapptino.com",
           "Content-Type": "application/json",
           "Cache-Control": "no-cache, no-store, must-revalidate",
         },

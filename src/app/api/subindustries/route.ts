@@ -1,5 +1,5 @@
 // Temporarily disabled - uncomment when needed
-export {}; // Make this a module
+export { }; // Make this a module
 
 // import { NextRequest, NextResponse } from "next/server";
 // import { cookies } from "next/headers";
@@ -33,7 +33,7 @@ export {}; // Make this a module
 //     const response = await fetch(apiUrl, {
 //       method: "GET",
 //       headers: {
-//         origin: "schwingstetter.myapptino.com",
+//         origin: "sandbox.myapptino.com",
 //         "x-tenant": tenant,
 //         Authorization: `Bearer ${accessToken}`,
 //         "Content-Type": "application/json",

@@ -28,7 +28,7 @@ async function getAllPublishedProducts(): Promise<ProductDetail[]> {
     const tenantCode =
       process.env.TENANT_CODE ||
       process.env.NEXT_PUBLIC_TENANT_CODE ||
-      "schwingstetterdemo";
+      "sandbox";
     const elasticIndex = `${tenantCode.toLowerCase()}pgandproducts`;
 
     const allProducts: ProductDetail[] = [];

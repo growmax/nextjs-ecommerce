@@ -123,7 +123,7 @@ function buildSort(
 }
 
 /**
- * Build category filter using nested query on product_categories
+ * Build category filter for flat product_categories (sandbox)
  * Accepts array of category IDs for N-level category support
  */
 export function buildCategoryFilter(categoryIds: number[]): Array<Record<string, unknown>> {
@@ -131,31 +131,21 @@ export function buildCategoryFilter(categoryIds: number[]): Array<Record<string,
     return [];
   }
 
-  // Always use nested query for product_categories
-  // If single category ID, use term; if multiple, use terms
+  // Sandbox uses flat product_categories (not nested)
+  // Use simple term/terms query instead of nested
   if (categoryIds.length === 1) {
     return [
       {
-        nested: {
-          path: "product_categories",
-          query: {
-            term: {
-              "product_categories.categoryId": categoryIds[0],
-            },
-          },
+        term: {
+          "product_categories.categoryId": categoryIds[0],
         },
       },
     ];
   } else {
     return [
       {
-        nested: {
-          path: "product_categories",
-          query: {
-            terms: {
-              "product_categories.categoryId": categoryIds,
-            },
-          },
+        terms: {
+          "product_categories.categoryId": categoryIds,
         },
       },
     ];

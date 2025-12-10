@@ -41,8 +41,8 @@ export class ProductService {
         return null;
       }
 
-      // Build elastic index name
-      const elasticIndex = `${elasticCode}pgandproducts`;
+      // Build elastic index from elasticCode or fallback to sandbox default
+      const elasticIndex = elasticCode ? `${elasticCode}pgandproducts` : "sandboxpgandproducts";
 
       // Fetch product from OpenSearch
       const product = await OpenSearchService.getProductServerSide(

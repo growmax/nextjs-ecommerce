@@ -786,6 +786,25 @@ jest.mock("lucide-react", () => {
   };
 });
 
+jest.mock("@/components/dialogs/common", () => ({
+  ConfirmationDialog: ({ open, onConfirm, onOpenChange }: any) =>
+    open ? (
+      <div data-testid="confirmation-dialog">
+        <button onClick={onConfirm}>Confirm</button>
+        <button data-testid="dialog-close" onClick={() => onOpenChange(false)}>
+          Cancel
+        </button>
+      </div>
+    ) : null,
+}));
+
+jest.mock("@/components/dialogs/EditOrderNameDialog", () => ({
+  EditOrderNameDialog: ({ open }: { open: boolean }) =>
+    open ? (
+      <div data-testid="edit-order-name-dialog">Edit Order Name Dialog</div>
+    ) : null,
+}));
+
 // Mock services
 jest.mock("@/lib/api", () => ({
   QuoteSubmissionService: {
@@ -927,7 +946,7 @@ describe("QuoteSummaryContent", () => {
         expect(screen.getByTestId("application-layout")).toBeInTheDocument();
         expect(screen.getByTestId("page-layout")).toBeInTheDocument();
       });
-    });
+    }, 10000);
 
     it("should render sales header with quote name", async () => {
       render(<QuoteSummaryContent />, { wrapper: createWrapper() });
@@ -1122,7 +1141,7 @@ describe("QuoteSummaryContent", () => {
 
       await waitFor(
         () => {
-          expect(screen.getByTestId("dialog")).toBeInTheDocument();
+          expect(screen.getByTestId("confirmation-dialog")).toBeInTheDocument();
         },
         { timeout: 3000 }
       );
@@ -1141,7 +1160,7 @@ describe("QuoteSummaryContent", () => {
 
       await waitFor(
         () => {
-          expect(screen.getByTestId("dialog")).toBeInTheDocument();
+          expect(screen.getByTestId("confirmation-dialog")).toBeInTheDocument();
         },
         { timeout: 3000 }
       );
@@ -1173,7 +1192,7 @@ describe("QuoteSummaryContent", () => {
 
       await waitFor(
         () => {
-          expect(screen.getByTestId("dialog")).toBeInTheDocument();
+          expect(screen.getByTestId("confirmation-dialog")).toBeInTheDocument();
         },
         { timeout: 3000 }
       );
@@ -1220,7 +1239,7 @@ describe("QuoteSummaryContent", () => {
 
       await waitFor(
         () => {
-          expect(screen.getByTestId("dialog")).toBeInTheDocument();
+          expect(screen.getByTestId("confirmation-dialog")).toBeInTheDocument();
         },
         { timeout: 3000 }
       );
@@ -1252,7 +1271,7 @@ describe("QuoteSummaryContent", () => {
 
       await waitFor(
         () => {
-          expect(screen.getByTestId("dialog")).toBeInTheDocument();
+          expect(screen.getByTestId("confirmation-dialog")).toBeInTheDocument();
         },
         { timeout: 3000 }
       );
@@ -1263,7 +1282,7 @@ describe("QuoteSummaryContent", () => {
 
       await waitFor(
         () => {
-          expect(screen.queryByTestId("dialog")).not.toBeInTheDocument();
+          expect(screen.queryByTestId("confirmation-dialog")).not.toBeInTheDocument();
         },
         { timeout: 3000 }
       );

@@ -5,17 +5,17 @@ import { StructuredDataServer } from "@/components/seo/StructuredDataServer";
 import { Card, CardContent } from "@/components/ui/card";
 import type { RequestContext } from "@/lib/api/client";
 import SearchService, {
-    ElasticSearchQuery,
-    FormattedProduct,
+  ElasticSearchQuery,
+  FormattedProduct,
 } from "@/lib/api/services/SearchService/SearchService";
 import TenantService from "@/lib/api/services/TenantService";
 import BrandResolutionService from "@/lib/services/BrandResolutionService";
 import { BlockingLoaderProvider } from "@/providers/BlockingLoaderProvider";
 import type { FilterAggregations } from "@/types/category-filters";
 import {
-    buildBrandFilter,
-    buildBrandQuery,
-    getBaseQuery,
+  buildBrandFilter,
+  buildBrandQuery,
+  getBaseQuery,
 } from "@/utils/opensearch/browse-queries";
 import { Package } from "lucide-react";
 import { Metadata } from "next";
@@ -68,12 +68,7 @@ export async function generateMetadata({
     }
   }
 
-  // If no elasticCode, cannot resolve brand - return not found
-  if (!elasticCode) {
-    return {
-      title: "Brand Not Found | E-Commerce",
-    };
-  }
+  // Allow sandbox environment for metadata generation
 
   // Build RequestContext for service calls
   const context: RequestContext = {
@@ -150,10 +145,8 @@ export default async function BrandPage({ params, searchParams }: PageProps) {
     }
   }
 
-  // If no elasticCode, cannot resolve brand - return 404
-  if (!elasticCode) {
-    notFound();
-  }
+  // Allow sandbox environment (empty elasticCode defaults to sandboxpgandproducts)
+  // The query builders and services handle the fallback internally
 
   // Build RequestContext for service calls
   const context: RequestContext = {
@@ -195,7 +188,7 @@ export default async function BrandPage({ params, searchParams }: PageProps) {
   });
 
   // Get elastic index from elasticCode
-  const elasticIndex = elasticCode ? `${elasticCode}pgandproducts` : "";
+  const elasticIndex = elasticCode ? `${elasticCode}pgandproducts` : "sandboxpgandproducts";
 
   // Fetch products - will be streamed via Suspense
   const productsPromise = elasticIndex
@@ -285,8 +278,6 @@ export default async function BrandPage({ params, searchParams }: PageProps) {
       })),
     },
   };
-
-  console.log(initialProducts, "initialProducts");
 
   return (
     <>

@@ -26,7 +26,7 @@ const API_CONFIG = {
     process.env.OPENSEARCH_URL ||
     "https://api.myapptino.com/opensearch/invocations",
   BASE_API_URL:
-    process.env.BASE_API_URL || "https://schwingstetter.myapptino.com/api/",
+    process.env.BASE_API_URL || "https://sandbox.myapptino.com/api/",
   BUCKET_NAME: process.env.NEXT_PUBLIC_S3BUCKET || 'growmax-dev-app-assets',
   ACCESS_KEY: process.env.AWS_S3_ACCESS_KEY,
   SECRET_KEY: process.env.AWS_S3_SECRET_KEY,

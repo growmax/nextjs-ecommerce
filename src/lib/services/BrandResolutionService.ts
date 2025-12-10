@@ -51,7 +51,7 @@ export interface BreadcrumbItem {
 class BrandResolutionService {
   private static instance: BrandResolutionService;
 
-  private constructor() {}
+  private constructor() { }
 
   public static getInstance(): BrandResolutionService {
     if (!BrandResolutionService.instance) {
@@ -91,12 +91,8 @@ class BrandResolutionService {
    */
   async getAllBrands(context?: RequestContext): Promise<Brand[]> {
     // Get elasticCode from context (primary identifier for OpenSearch index)
-    // Fall back to tenantCode if elasticCode is not available
+    // Allow empty elasticCode for sandbox environment
     const elasticCode = context?.elasticCode || context?.tenantCode || "";
-    if (!elasticCode) {
-      console.warn("No elasticCode or tenantCode provided for brand aggregation query");
-      return [];
-    }
 
     const cacheKey = `brands:all:${elasticCode}`;
 
@@ -127,23 +123,11 @@ class BrandResolutionService {
   ): Promise<Brand[]> {
     try {
       // Get elasticCode from context (primary identifier for OpenSearch index)
-      // Fall back to tenantCode if elasticCode is not available
-      const elasticCode = context?.elasticCode || context?.tenantCode || "";
-      if (!elasticCode) {
-        console.warn("No elasticCode or tenantCode provided for brand aggregation query");
-        return [];
-      }
+      // Build elastic index from elasticCode or fallback to sandbox default
+      const elasticCode = context?.elasticCode || "";
+      const elasticIndex = elasticCode ? `${elasticCode}pgandproducts` : "sandboxpgandproducts";
 
-      const elasticIndex = `${elasticCode}pgandproducts`;
-
-      // Validate elasticIndex before making API call
-      if (!elasticIndex || elasticIndex === "pgandproducts") {
-        console.warn(
-          "Invalid elastic index for brand aggregation:",
-          elasticIndex
-        );
-        return [];
-      }
+      // Sandbox fallback enabled
 
       // Build OpenSearch aggregation query
       const query = {
@@ -224,12 +208,8 @@ class BrandResolutionService {
     context?: RequestContext
   ): Promise<Brand | null> {
     // Get elasticCode from context (primary identifier for OpenSearch index)
-    // Fall back to tenantCode if elasticCode is not available
+    // Allow empty elasticCode for sandbox environment
     const elasticCode = context?.elasticCode || context?.tenantCode || "";
-    if (!elasticCode) {
-      console.warn("No elasticCode or tenantCode provided for brand resolution query");
-      return null;
-    }
 
     const cacheKey = `brand:slug:${elasticCode}:${slug}`;
 
@@ -264,21 +244,9 @@ class BrandResolutionService {
       // Since generateSlug() always produces lowercase slugs, we need to normalize the input
       const normalizedSlug = slug.toLowerCase();
 
-      // Get elasticCode from context (primary identifier for OpenSearch index)
-      // Fall back to tenantCode if elasticCode is not available
-      const elasticCode = context?.elasticCode || context?.tenantCode || "";
-      if (!elasticCode) {
-        console.warn("No elasticCode or tenantCode provided for brand resolution query");
-        return null;
-      }
-
-      const elasticIndex = `${elasticCode}pgandproducts`;
-
-      // Validate elasticIndex before making API call
-      if (!elasticIndex || elasticIndex === "pgandproducts") {
-        console.warn("Invalid elastic index for brand lookup:", elasticIndex);
-        return null;
-      }
+      // Build elastic index from elasticCode or fallback to sandbox default
+      const elasticCode = context?.elasticCode || "";
+      const elasticIndex = elasticCode ? `${elasticCode}pgandproducts` : "sandboxpgandproducts";
 
       const brandNamePattern = normalizedSlug.replace(/-/g, " ");
 
@@ -382,7 +350,7 @@ class BrandResolutionService {
     // Note: hrefs don't include locale prefix because Link from @/i18n/navigation auto-adds it
     const breadcrumbs: BreadcrumbItem[] = [
       { label: "Home", href: `/` },
-      { label: "Brands", href: `/brands/All` },
+      { label: "Brands", href: `/brands/all` },
       { label: brand.name, href: `/brands/${brand.slug}` },
     ];
 
@@ -416,27 +384,27 @@ class BrandResolutionService {
     const categorySuffix =
       categoryPath && categoryPath.length > 0
         ? ` ${categoryPath
-            .map(s =>
-              s
-                .split("-")
-                .map(w => w.charAt(0).toUpperCase() + w.slice(1))
-                .join(" ")
-            )
-            .join(" > ")}`
-        : "";
-
-    const title = `${brand.name}${categorySuffix} | Products`;
-    const description = categoryPath
-      ? `Shop ${brand.name} ${categoryPath
           .map(s =>
             s
               .split("-")
               .map(w => w.charAt(0).toUpperCase() + w.slice(1))
               .join(" ")
           )
-          .join(
-            " "
-          )} products. Find the best ${brand.name} products at competitive prices.`
+          .join(" > ")}`
+        : "";
+
+    const title = `${brand.name}${categorySuffix} | Products`;
+    const description = categoryPath
+      ? `Shop ${brand.name} ${categoryPath
+        .map(s =>
+          s
+            .split("-")
+            .map(w => w.charAt(0).toUpperCase() + w.slice(1))
+            .join(" ")
+        )
+        .join(
+          " "
+        )} products. Find the best ${brand.name} products at competitive prices.`
       : `Shop ${brand.name} products. Find the best ${brand.name} products at competitive prices.`;
 
     const pathSegments = [`/${locale}/brands/${brand.slug}`];

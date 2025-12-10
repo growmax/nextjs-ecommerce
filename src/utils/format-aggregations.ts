@@ -112,7 +112,7 @@ export function formatCategoriesAggregation(
     // Some aggregations might have data directly
     data?: {
       buckets?: Array<{
-        key: string;
+        key: string | Array<string | number>;
         doc_count: number;
         category_id?: { buckets?: Array<{ key: number }> };
         category_slug?: { buckets?: Array<{ key: string }> };
@@ -121,24 +121,31 @@ export function formatCategoriesAggregation(
         ancestor_ids?: { buckets?: Array<{ key: number }> };
       }>;
     };
+    // Multi_terms support (sandbox)
+    categories?: {
+      buckets?: Array<{
+        key: Array<string | number>;
+        doc_count: number;
+      }>;
+    };
   };
 
   // Try multiple paths to find the nested categories data
-  // Priority: filter.nested_categories > nested_categories > direct data
+  // Priority: filter.nested_categories > nested_categories > filter.categories > categories > direct data
   let nestedCategories:
     | {
-        data?: {
-          buckets?: Array<{
-            key: string;
-            doc_count: number;
-            category_id?: { buckets?: Array<{ key: number }> };
-            category_slug?: { buckets?: Array<{ key: string }> };
-            category_path?: { buckets?: Array<{ key: string }> };
-            category_level?: { buckets?: Array<{ key: number }> };
-            ancestor_ids?: { buckets?: Array<{ key: number }> };
-          }>;
-        };
-      }
+      data?: {
+        buckets?: Array<{
+          key: string | Array<string | number>;
+          doc_count: number;
+          category_id?: { buckets?: Array<{ key: number }> };
+          category_slug?: { buckets?: Array<{ key: string }> };
+          category_path?: { buckets?: Array<{ key: string }> };
+          category_level?: { buckets?: Array<{ key: number }> };
+          ancestor_ids?: { buckets?: Array<{ key: number }> };
+        }>;
+      };
+    }
     | undefined;
 
   if (nestedAgg?.filter?.nested_categories) {
@@ -147,6 +154,13 @@ export function formatCategoriesAggregation(
   } else if (nestedAgg?.nested_categories) {
     // Direct nested_categories (no filter wrapper)
     nestedCategories = nestedAgg.nested_categories;
+  } else if (nestedAgg?.filter && 'categories' in nestedAgg.filter) {
+    // Multi_terms within filter (sandbox)
+    // Wrap to match expected structure
+    nestedCategories = { data: (nestedAgg.filter as any).categories };
+  } else if ('categories' in nestedAgg) {
+    // Direct multi_terms categories (sandbox)
+    nestedCategories = { data: (nestedAgg as any).categories };
   } else if (nestedAgg?.data) {
     // Direct data structure (unlikely but possible)
     // Wrap it to match expected structure
@@ -195,13 +209,38 @@ export function formatCategoriesAggregation(
   // Process each category bucket
   nestedCategories.data.buckets.forEach(bucket => {
     // Extract metadata
-    const categoryId = bucket.category_id?.buckets?.[0]?.key || 0;
-    const categorySlug =
-      bucket.category_slug?.buckets?.[0]?.key ||
-      bucket.key.toLowerCase().replace(/\s+/g, "-");
-    const categoryPathStr = bucket.category_path?.buckets?.[0]?.key || "";
-    const categoryLevel = bucket.category_level?.buckets?.[0]?.key || 1;
-    const ancestorIds = bucket.ancestor_ids?.buckets?.map(b => b.key) || [];
+    let categoryId: number;
+    let categorySlug: string;
+    let categoryPathStr: string;
+    let categoryLevel: number;
+    let ancestorIds: number[];
+
+    if (Array.isArray(bucket.key)) {
+      // Multi_terms case: [categoryId, categoryName, categorySlug, categoryLevel]
+      categoryId = Number(bucket.key[0]) || 0;
+      // bucket.key[1] is categoryName (used as label)
+      categorySlug = String(bucket.key[2] || "").toLowerCase().replace(/\s+/g, "-");
+      categoryLevel = Number(bucket.key[3]) || 1;
+      // Multi_terms doesn't provide path or ancestors, use defaults
+      categoryPathStr = ""; 
+      ancestorIds = [];
+      
+      // Infer ancestor relationship for sandbox
+      // If we are filtering by a category, and this is a subcategory (level + 1),
+      // we can assume it's a child in the filtered context
+      if (currentCategoryId && categoryLevel === currentCategoryLevel + 1) {
+        ancestorIds = [currentCategoryId];
+      }
+    } else {
+      // Nested aggregation case
+      categoryId = bucket.category_id?.buckets?.[0]?.key || 0;
+      categorySlug =
+        bucket.category_slug?.buckets?.[0]?.key ||
+        bucket.key.toLowerCase().replace(/\s+/g, "-");
+      categoryPathStr = bucket.category_path?.buckets?.[0]?.key || "";
+      categoryLevel = bucket.category_level?.buckets?.[0]?.key || 1;
+      ancestorIds = bucket.ancestor_ids?.buckets?.map(b => b.key) || [];
+    }
 
     // Exclude current category
     if (currentCategoryId && categoryId === currentCategoryId) {
@@ -211,6 +250,9 @@ export function formatCategoriesAggregation(
     // Determine if it's a child or sibling
     let isChild = false;
     let isSibling = false;
+    
+    // Check key for name (multi_terms or nested)
+    const categoryName = Array.isArray(bucket.key) ? String(bucket.key[1]) : bucket.key;
 
     // If no current category (e.g., brand landing page), show all top-level categories
     if (!hasCategoryPath || !currentCategoryId) {
@@ -253,8 +295,8 @@ export function formatCategoriesAggregation(
     // Only add if it's a child or sibling
     if (isChild || isSibling) {
       const categoryOption: CategoryFilterOption = {
-        label: bucket.key,
-        value: bucket.key,
+        label: categoryName,
+        value: categoryName,
         count: bucket.doc_count,
         selected: false,
         categoryId,
@@ -422,14 +464,14 @@ export function formatAllAggregations(
 
     const variantAttributeGroups = formatVariantAttributesAggregation(
       aggregations.variantAttributes as
-        | Record<string, AggregationResult>
-        | undefined
+      | Record<string, AggregationResult>
+      | undefined
     );
 
     const productSpecificationGroups = formatProductSpecificationsAggregation(
       aggregations.productSpecifications as
-        | Record<string, AggregationResult>
-        | undefined
+      | Record<string, AggregationResult>
+      | undefined
     );
 
     const catalogCodes = formatCatalogCodesAggregation(

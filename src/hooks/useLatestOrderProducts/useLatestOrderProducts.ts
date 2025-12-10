@@ -51,7 +51,6 @@ export function useLatestOrderProducts(
   } = params;
 
   // Get elastic index from tenant data or use provided one
-  // Pattern: {elasticCode}pgandproducts (e.g., "schwingstetterpgandproducts")
   const elasticIndex = useMemo(() => {
     if (providedElasticIndex) {
       return providedElasticIndex;
@@ -59,8 +58,8 @@ export function useLatestOrderProducts(
     if (tenantData?.tenant?.elasticCode) {
       return `${tenantData.tenant.elasticCode}pgandproducts`;
     }
-    // Fallback to default if no tenant elasticCode available
-    return "pgproduct";
+    // Fallback to sandbox default if no elasticCode available
+    return "sandboxpgandproducts";
   }, [providedElasticIndex, tenantData?.tenant?.elasticCode]);
 
   // Create query key based on product IDs

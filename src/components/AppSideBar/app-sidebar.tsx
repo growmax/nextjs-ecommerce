@@ -11,15 +11,15 @@ import { startTransition } from "react";
 import { NavMain } from "@/components/nav-main";
 import { NavUser } from "@/components/nav-user";
 import {
-  Sidebar,
-  SidebarContent,
-  SidebarFooter,
-  SidebarHeader,
-  SidebarMenu,
-  SidebarMenuButton,
-  SidebarMenuItem,
-  SidebarRail,
-  useSidebar,
+    Sidebar,
+    SidebarContent,
+    SidebarFooter,
+    SidebarHeader,
+    SidebarMenu,
+    SidebarMenuButton,
+    SidebarMenuItem,
+    SidebarRail,
+    useSidebar,
 } from "@/components/ui/sidebar";
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
@@ -63,16 +63,16 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
       },
       {
         title: t("shop"),
-        url: "/categories/All",
+        url: "/categories/all",
         icon: Layers,
         items: [
           {
             title: t("categories"),
-            url: "/categories/All",
+            url: "/categories/all",
           },
           {
             title: t("brands"),
-            url: "/brands/All",
+            url: "/brands/all",
           },
         ],
       },

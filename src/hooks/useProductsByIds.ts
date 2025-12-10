@@ -1,12 +1,12 @@
 "use client";
 
-import { useQuery, UseQueryResult } from "@tanstack/react-query";
-import SearchService from "@/lib/api/services/SearchService/SearchService";
-import type { FormattedProduct } from "@/lib/api/services/SearchService/SearchService";
-import { useTenantData } from "@/hooks/useTenantData";
 import { useUserDetails } from "@/contexts/UserDetailsContext";
-import { useMemo } from "react";
+import { useTenantData } from "@/hooks/useTenantData";
+import type { FormattedProduct } from "@/lib/api/services/SearchService/SearchService";
+import SearchService from "@/lib/api/services/SearchService/SearchService";
 import { getCatalogSettings } from "@/lib/appconfig";
+import { useQuery, UseQueryResult } from "@tanstack/react-query";
+import { useMemo } from "react";
 
 export interface UseProductsByIdsOptions {
   brandProductIds: (string | number)[];
@@ -33,9 +33,9 @@ export function useProductsByIds(
   const accessToken =
     typeof window !== "undefined"
       ? document.cookie
-          .split("; ")
-          .find(row => row.startsWith("access_token="))
-          ?.split("=")[1] || undefined
+        .split("; ")
+        .find(row => row.startsWith("access_token="))
+        ?.split("=")[1] || undefined
       : undefined;
 
   // Get elastic index from tenant data or use provided one
@@ -46,7 +46,8 @@ export function useProductsByIds(
     if (tenantData?.tenant?.elasticCode) {
       return `${tenantData.tenant.elasticCode}pgandproducts`;
     }
-    return "pgproduct";
+    // Fallback to sandbox default if no elasticCode available
+    return "sandboxpgandproducts";
   }, [providedElasticIndex, tenantData?.tenant?.elasticCode]);
 
   // Fetch catalog settings (optional - only if user is authenticated)
@@ -143,11 +144,11 @@ export function useProductsByIds(
         const context =
           user?.userId && user?.companyId && tenantData?.tenant?.tenantCode
             ? {
-                companyId: user.companyId,
-                userId: user.userId,
-                tenantCode: tenantData.tenant.tenantCode,
-                ...(accessToken && { accessToken }),
-              }
+              companyId: user.companyId,
+              userId: user.userId,
+              tenantCode: tenantData.tenant.tenantCode,
+              ...(accessToken && { accessToken }),
+            }
             : undefined;
 
         const result = await SearchService.searchProducts({

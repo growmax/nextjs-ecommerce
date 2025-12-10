@@ -60,7 +60,7 @@ export interface BreadcrumbItem {
 class CategoryResolutionService {
   private static instance: CategoryResolutionService;
 
-  private constructor() {}
+  private constructor() { }
 
   public static getInstance(): CategoryResolutionService {
     if (!CategoryResolutionService.instance) {
@@ -198,10 +198,10 @@ class CategoryResolutionService {
   async getCategoryTree(context?: RequestContext): Promise<CategoryNode[]> {
     // Get elasticCode from context to build elastic index
     const elasticCode = context?.elasticCode || "";
-    if (!elasticCode) {
+    /* if (!elasticCode) {
       console.warn("No elasticCode provided for category aggregation query");
       return [];
-    }
+    } */
 
     const cacheKey = `category:tree:${elasticCode}`;
 
@@ -232,19 +232,11 @@ class CategoryResolutionService {
   ): Promise<CategoryNode[]> {
     try {
       // Get elasticCode from context to build elastic index
+      // Build elastic index from elasticCode or fallback to sandbox default
       const elasticCode = context?.elasticCode || "";
-      if (!elasticCode) {
-        console.warn("No elasticCode provided for category aggregation query");
-        return [];
-      }
+      const elasticIndex = elasticCode ? `${elasticCode}pgandproducts` : "sandboxpgandproducts";
 
-      const elasticIndex = `${elasticCode}pgandproducts`;
-
-      // Validate elasticIndex before making API call
-      if (!elasticIndex || elasticIndex === "pgandproducts") {
-        console.warn("Invalid elastic index for category tree:", elasticIndex);
-        return [];
-      }
+      console.log("Using elastic index for category tree:", elasticIndex);
 
       // Build OpenSearch aggregation query with nested aggregations on product_categories
       const query = {
@@ -400,12 +392,11 @@ class CategoryResolutionService {
     context?: RequestContext
   ): Promise<CategoryNode | null> {
     try {
+      // Build elastic index from elasticCode or fallback to sandbox default
       const elasticCode = context?.elasticCode || "";
-      if (!elasticCode) {
-        return null;
-      }
+      const elasticIndex = elasticCode ? `${elasticCode}pgandproducts` : "sandboxpgandproducts";
 
-      const elasticIndex = `${elasticCode}pgandproducts`;
+      console.log("Using elastic index for category lookup:", elasticIndex);
       const normalizedSlug = slug.toLowerCase();
 
       // Query with aggregation to get category details directly
@@ -420,13 +411,8 @@ class CategoryResolutionService {
                 },
               },
               {
-                nested: {
-                  path: "product_categories",
-                  query: {
-                    term: {
-                      "product_categories.categorySlug.keyword": normalizedSlug,
-                    },
-                  },
+                term: {
+                  "product_categories.categorySlug.keyword": normalizedSlug,
                 },
               },
             ],
@@ -448,63 +434,16 @@ class CategoryResolutionService {
         },
         aggs: {
           category_info: {
-            nested: {
-              path: "product_categories",
-            },
-            aggs: {
-              filtered: {
-                filter: {
-                  term: {
-                    "product_categories.categorySlug.keyword": normalizedSlug,
-                  },
-                },
-                aggs: {
-                  category_id: {
-                    terms: {
-                      field: "product_categories.categoryId",
-                      size: 1,
-                    },
-                    aggs: {
-                      category_name: {
-                        terms: {
-                          field: "product_categories.categoryName.keyword",
-                          size: 1,
-                        },
-                      },
-                      category_slug: {
-                        terms: {
-                          field: "product_categories.categorySlug.keyword",
-                          size: 1,
-                        },
-                      },
-                      category_path: {
-                        terms: {
-                          field: "product_categories.categoryPath.keyword",
-                          size: 1,
-                        },
-                      },
-                      category_level: {
-                        terms: {
-                          field: "product_categories.categoryLevel",
-                          size: 1,
-                        },
-                      },
-                      ancestor_ids: {
-                        terms: {
-                          field: "product_categories.ancestorIds",
-                          size: 100,
-                        },
-                      },
-                      is_active: {
-                        terms: {
-                          field: "product_categories.isActive",
-                          size: 1,
-                        },
-                      },
-                    },
-                  },
-                },
-              },
+            multi_terms: {
+              terms: [
+                { field: "product_categories.categoryId" },
+                { field: "product_categories.categoryName.keyword" },
+                { field: "product_categories.categorySlug.keyword" },
+                { field: "product_categories.categoryPath.keyword" },
+                { field: "product_categories.categoryLevel" },
+                { field: "product_categories.isActive" },
+              ],
+              size: 1,
             },
           },
         },
@@ -530,21 +469,28 @@ class CategoryResolutionService {
       }
 
       // Extract category from aggregation
+      // Multi_terms returns buckets with key as array: [categoryId, categoryName, categorySlug, categoryPath, categoryLevel, isActive]
       const categoryInfo = result.aggregations.category_info as any;
-      const bucket = categoryInfo?.filtered?.category_id?.buckets?.[0];
+      const buckets = categoryInfo?.buckets;
 
-      if (!bucket) {
+      if (!buckets || buckets.length === 0) {
         return null;
       }
 
-      const categoryId = bucket.key;
-      const categoryName = bucket.category_name?.buckets?.[0]?.key || "";
-      const categorySlug = bucket.category_slug?.buckets?.[0]?.key || "";
-      const categoryPath = bucket.category_path?.buckets?.[0]?.key || "";
-      const categoryLevel = bucket.category_level?.buckets?.[0]?.key || 0;
-      const ancestorIds =
-        bucket.ancestor_ids?.buckets?.map((b: any) => b.key) || [];
-      const isActive = bucket.is_active?.buckets?.[0]?.key !== false;
+      // Get the first bucket (should only be one since we filtered by slug)
+      const bucket = buckets[0];
+
+      // Multi_terms key is an array
+      if (!Array.isArray(bucket.key) || bucket.key.length < 6) {
+        return null;
+      }
+
+      const categoryId = Number(bucket.key[0]);
+      const categoryName = String(bucket.key[1]);
+      const categorySlug = String(bucket.key[2]);
+      const categoryPath = String(bucket.key[3]);
+      const categoryLevel = Number(bucket.key[4]);
+      const isActive = bucket.key[5] !== false;
 
       if (!categoryId || !categoryName || !isActive) {
         return null;
@@ -557,15 +503,15 @@ class CategoryResolutionService {
         categoryId: categoryId,
         categoryLevel: categoryLevel,
         ...(categoryPath && { categoryPath }),
-        ancestorIds: ancestorIds,
-        ...(ancestorIds.length > 0 && {
-          parentId: String(ancestorIds[ancestorIds.length - 1]),
-        }),
+        ancestorIds: [], // Multi_terms doesn't provide ancestors
         isActive: isActive,
         children: [],
       };
     } catch (error) {
-      console.error("Error finding category by slug:", error);
+      console.error(
+        `[CategoryResolutionService] Error finding category by slug "${slug}":`,
+        error
+      );
       return null;
     }
   }
