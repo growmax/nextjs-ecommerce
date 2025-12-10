@@ -63,11 +63,46 @@ export function CategoryPageInteractivity({
   }, [isPending, showLoader, hideLoader]);
 
   // Format aggregations for filter components
-  const formattedFilters = useMemo(
-    () =>
-      formatAllAggregations(aggregations, categoryPath, currentCategoryPath),
-    [aggregations, categoryPath, currentCategoryPath]
-  );
+  const formattedFilters = useMemo(() => {
+    // Extract current brand from pathname if on a brand page
+    // Pattern: /[locale]/brands/[brand-slug]/... or /brands/[brand-slug]/...
+    const pathSegments = pathname.split('/').filter(Boolean);
+    const brandIndex = pathSegments.indexOf('brands');
+    const currentBrand = brandIndex !== -1 && pathSegments[brandIndex + 1] 
+      ? pathSegments[brandIndex + 1] 
+      : undefined;
+
+    return formatAllAggregations(
+      aggregations, 
+      categoryPath, 
+      currentCategoryPath,
+      currentBrand
+    );
+  }, [aggregations, categoryPath, currentCategoryPath, pathname]);
+
+  // Compute brand removal path for unselect functionality
+  const brandRemovalPath = useMemo(() => {
+    const pathSegments = pathname.split('/').filter(Boolean);
+    const brandIndex = pathSegments.indexOf('brands');
+    
+    if (brandIndex === -1) {
+      // Not on a brand page
+      return undefined;
+    }
+
+    // Extract locale (first segment)
+    const locale = pathSegments[0];
+    
+    // Check if there's a category path after the brand
+    if (pathSegments.length > brandIndex + 2) {
+      // Brand + category page: navigate to category without brand
+      const categorySegments = pathSegments.slice(brandIndex + 2);
+      return `/${locale}/${categorySegments.join('/')}`;
+    } else {
+      // Brand landing page: navigate to all brands
+      return `/${locale}/brands/all`;
+    }
+  }, [pathname]);
 
   if (process.env.NODE_ENV === "development") {
     console.log("[CategoryPageInteractivity] Formatted filters:", {
@@ -185,6 +220,7 @@ export function CategoryPageInteractivity({
             catalogCodes={formattedFilters.catalogCodes}
             equipmentCodes={formattedFilters.equipmentCodes}
             isLoading={!aggregations}
+            {...(brandRemovalPath && { brandRemovalPath })}
           />
         </aside>
 
@@ -227,6 +263,7 @@ export function CategoryPageInteractivity({
               catalogCodes={formattedFilters.catalogCodes}
               equipmentCodes={formattedFilters.equipmentCodes}
               isLoading={!aggregations}
+              {...(brandRemovalPath && { brandRemovalPath })}
             />
           </div>
 

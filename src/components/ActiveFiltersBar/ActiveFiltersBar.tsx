@@ -57,7 +57,11 @@ export function ActiveFiltersBar({
       id: "brand",
       category: "Brand",
       value: selectedBrandName,
-      onRemove: onRemoveBrand,
+      onRemove: () => {
+        startBrandTransition(() => {
+          onRemoveBrand();
+        });
+      },
     });
   }
 
@@ -68,7 +72,11 @@ export function ActiveFiltersBar({
         id: `variant-${attrName}-${value}`,
         category: attrName,
         value: value,
-        onRemove: () => removeVariantAttribute(attrName, value),
+        onRemove: () => {
+          startBrandTransition(() => {
+            removeVariantAttribute(attrName, value);
+          });
+        },
       });
     });
   });
@@ -80,7 +88,11 @@ export function ActiveFiltersBar({
         id: `spec-${specKey}-${value}`,
         category: specKey,
         value: value,
-        onRemove: () => removeProductSpecification(specKey, value),
+        onRemove: () => {
+          startBrandTransition(() => {
+            removeProductSpecification(specKey, value);
+          });
+        },
       });
     });
   });
@@ -91,7 +103,11 @@ export function ActiveFiltersBar({
       id: "stock",
       category: "Stock",
       value: filters.inStock ? "In Stock" : "Out of Stock",
-      onRemove: () => setStockFilter(undefined),
+      onRemove: () => {
+        startBrandTransition(() => {
+          setStockFilter(undefined);
+        });
+      },
     });
   }
 

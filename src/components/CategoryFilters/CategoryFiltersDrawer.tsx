@@ -25,6 +25,7 @@ interface CategoryFiltersDrawerProps {
   isLoading?: boolean;
   hideBrandFilter?: boolean;
   trigger?: React.ReactNode;
+  brandRemovalPath?: string;
 }
 
 /**
@@ -43,6 +44,7 @@ export function CategoryFiltersDrawer({
   isLoading = false,
   hideBrandFilter = false,
   trigger,
+  brandRemovalPath,
 }: CategoryFiltersDrawerProps) {
   const [open, setOpen] = useState(false);
 
@@ -71,6 +73,7 @@ export function CategoryFiltersDrawer({
             equipmentCodes={equipmentCodes}
             isLoading={isLoading}
             hideBrandFilter={hideBrandFilter}
+            {...(brandRemovalPath && { brandRemovalPath })}
           />
         </div>
       </SheetContent>

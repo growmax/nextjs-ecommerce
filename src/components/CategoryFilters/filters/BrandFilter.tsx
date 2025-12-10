@@ -11,13 +11,14 @@ import { useEffect, useTransition } from "react";
 interface BrandFilterProps {
   brands: BrandFilterOption[];
   isLoading?: boolean;
+  brandRemovalPath?: string;
 }
 
 /**
  * BrandFilter Component
  * Shows brands with navigation to brand pages when clicked
  */
-export function BrandFilter({ brands, isLoading }: BrandFilterProps) {
+export function BrandFilter({ brands, isLoading, brandRemovalPath }: BrandFilterProps) {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
   const { showLoader, hideLoader } = useBlockingLoader();
@@ -32,11 +33,19 @@ export function BrandFilter({ brands, isLoading }: BrandFilterProps) {
   }, [isPending, showLoader, hideLoader]);
 
   const handleBrandClick = (brand: BrandFilterOption) => {
-    // Navigate to brand page with loading state
-    // The navigationPath already includes locale prefix from formatBrandsAggregation
-    startTransition(() => {
-      router.push(brand.navigationPath);
-    });
+    // Check if brand is selected - if so, navigate to removal path (unselect)
+    if (brand.selected && brandRemovalPath) {
+      // UNSELECT: Navigate away from brand
+      startTransition(() => {
+        router.push(brandRemovalPath);
+      });
+    } else {
+      // SELECT: Navigate to brand page
+      // The navigationPath already includes locale prefix from formatBrandsAggregation
+      startTransition(() => {
+        router.push(brand.navigationPath);
+      });
+    }
   };
 
   if (isLoading) {

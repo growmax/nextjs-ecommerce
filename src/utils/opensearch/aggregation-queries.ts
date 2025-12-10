@@ -155,7 +155,7 @@ export function buildCategoriesAggregation(
     baseMust = [],
     baseMustNot = [],
     currentFilters,
-    bucketSize = 100,
+    bucketSize = 200, // Increased for comprehensive category lists
   } = options;
 
   return {
@@ -170,6 +170,7 @@ export function buildCategoriesAggregation(
             { field: "product_categories.categoryName.keyword" },
             { field: "product_categories.categorySlug.keyword" },
             { field: "product_categories.categoryLevel" },
+            { field: "product_categories.parentId" }, // For direct parent relationship
           ],
           size: bucketSize,
         },

@@ -1,26 +1,27 @@
 "use client";
 
-import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { cn } from "@/lib/utils";
 import { useBlockingLoader } from "@/providers/BlockingLoaderProvider";
 import type { CategoryFilterOption } from "@/types/category-filters";
+import { ChevronRight } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useEffect, useTransition } from "react";
 
 interface CategoryFilterProps {
   childCategories: CategoryFilterOption[];
-  siblingCategories: CategoryFilterOption[];
+  siblingCategories: CategoryFilterOption[]; // Unused but kept for compatibility
   currentCategoryPath: string[];
   isLoading?: boolean;
 }
 
 /**
  * CategoryFilter Component
- * Shows child categories and sibling categories with proper navigation
+ * Displays hierarchical category navigation
+ * Shows only children of current category level
  */
 export function CategoryFilter({
   childCategories,
-  siblingCategories,
   currentCategoryPath,
   isLoading,
 }: CategoryFilterProps) {
@@ -28,7 +29,6 @@ export function CategoryFilter({
   const [isPending, startTransition] = useTransition();
   const { showLoader, hideLoader } = useBlockingLoader();
 
-  // Show/hide blocking loader when transition state changes
   useEffect(() => {
     if (isPending) {
       showLoader({ message: "Loading category..." });
@@ -38,27 +38,9 @@ export function CategoryFilter({
   }, [isPending, showLoader, hideLoader]);
 
   const handleCategoryClick = (category: CategoryFilterOption) => {
-    let targetPath: string;
-
-    if (category.isChild) {
-      // Navigate to full path: /parentCategory/child1/child2/...
-      targetPath = `/${category.categoryPath}`;
-    } else if (category.isSibling) {
-      // Navigate preserving parent path: /parentCategory/clickedCategory
-      // Get parent path from current path (remove last segment)
-      const parentPath =
-        currentCategoryPath.length > 1
-          ? currentCategoryPath.slice(0, -1).join("/")
-          : "";
-      targetPath = parentPath
-        ? `/${parentPath}/${category.categorySlug}`
-        : `/${category.categorySlug}`;
-    } else {
-      // Root category
-      targetPath = `/${category.categorySlug}`;
-    }
-
-    // Wrap navigation in startTransition to trigger loader
+    // Navigate to category using flat URL structure
+    const targetPath = `/${category.categorySlug}`;
+    
     startTransition(() => {
       router.push(targetPath);
     });
@@ -66,79 +48,71 @@ export function CategoryFilter({
 
   if (isLoading) {
     return (
-      <div className="space-y-3">
+      <div className="space-y-2">
         <div className="h-5 bg-muted animate-pulse rounded" />
         <div className="space-y-1.5">
-          {[1, 2, 3].map(i => (
-            <div key={i} className="h-4 bg-muted animate-pulse rounded" />
+          {[1, 2, 3, 4].map(i => (
+            <div key={i} className="h-9 bg-muted animate-pulse rounded" />
           ))}
         </div>
       </div>
     );
   }
 
-  const hasChildCategories = childCategories.length > 0;
-  const hasSiblingCategories = siblingCategories.length > 0;
-
-  if (!hasChildCategories && !hasSiblingCategories) {
+  if (childCategories.length === 0) {
     return (
       <div className="text-sm text-muted-foreground py-2">
-        No categories available
+        No subcategories available
       </div>
     );
   }
 
+  // Determine header text based on current path
+  const headerText = currentCategoryPath.length === 0 
+    ? "ALL CATEGORIES" 
+    : "Subcategories";
+
   return (
-    <div className="space-y-3">
-      {/* Child Categories */}
-      {hasChildCategories && (
-        <div className="space-y-2">
-          <ScrollArea className="h-[140px]">
-            <div className="space-y-0.5 pr-4">
-              {childCategories.map(category => (
-                <Button
-                  key={category.categoryId}
-                  variant="ghost"
-                  className="w-full justify-start text-left font-normal h-auto py-1.5 px-2 text-sm"
-                  onClick={() => handleCategoryClick(category)}
-                >
-                  <span className="flex-1">{category.label}</span>
-                  {category.count > 0 && (
-                    <span className="text-xs text-muted-foreground ml-2">
-                      ({category.count})
-                    </span>
-                  )}
-                </Button>
-              ))}
-            </div>
-          </ScrollArea>
-        </div>
+    <div className="space-y-2">
+      {/* Header */}
+      {currentCategoryPath.length === 0 && (
+        <h3 className="text-sm font-semibold text-foreground">
+          {headerText}
+        </h3>
       )}
 
-      {/* Sibling Categories */}
-      {hasSiblingCategories && (
-        <div className="space-y-2">
-          <ScrollArea className="h-[140px]">
-            <div className="space-y-0.5 pr-4">
-              {siblingCategories.map(category => (
-                <Button
-                  key={category.categoryId}
-                  variant="ghost"
-                  className="w-full justify-start text-left font-normal h-auto py-1.5 px-2 text-sm"
-                  onClick={() => handleCategoryClick(category)}
-                >
-                  <span className="flex-1">{category.label}</span>
-                  {category.count > 0 && (
-                    <span className="text-xs text-muted-foreground ml-2">
-                      ({category.count})
-                    </span>
-                  )}
-                </Button>
-              ))}
-            </div>
-          </ScrollArea>
+      {/* Category List */}
+      <ScrollArea className="h-[280px]">
+        <div className="space-y-1 pr-4">
+          {childCategories.map(category => (
+            <button
+              key={category.categoryId}
+              onClick={() => handleCategoryClick(category)}
+              className={cn(
+                "w-full flex items-center justify-between",
+                "px-3 py-2.5 rounded-md",
+                "text-left text-sm font-normal",
+                "transition-colors duration-150",
+                "hover:bg-accent/50",
+                "focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-1"
+              )}
+            >
+              <span className="flex-1 text-foreground">
+                {category.label}
+              </span>
+              
+              <div className="flex items-center gap-2 shrink-0">
+                {category.count > 0 && (
+                  <span className="text-xs text-muted-foreground">
+                    ({category.count})
+                  </span>
+                )}
+                <ChevronRight className="h-4 w-4 text-muted-foreground" />
+              </div>
+            </button>
+          ))}
         </div>
-      )}
+      </ScrollArea>
     </div>
   );
 }

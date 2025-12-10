@@ -20,7 +20,8 @@ import type {
  */
 export function formatBrandsAggregation(
   aggregation: AggregationResult | undefined,
-  currentCategoryPath: string[]
+  currentCategoryPath: string[],
+  currentBrandSlug?: string
 ): BrandFilterOption[] {
   if (!aggregation?.data?.buckets) {
     return [];
@@ -53,7 +54,7 @@ export function formatBrandsAggregation(
       label: bucket.key,
       value: bucket.key,
       count: bucket.doc_count,
-      selected: false,
+      selected: currentBrandSlug ? bucket.key === currentBrandSlug : false,
       brandName: bucket.key,
       navigationPath,
     };
@@ -61,264 +62,159 @@ export function formatBrandsAggregation(
 }
 
 /**
- * Format categories aggregation (child and sibling categories)
- * Excludes current category and properly identifies category relationships
+ * Format categories for hierarchical display
+ * Shows only children of current category level
  */
 export function formatCategoriesAggregation(
   aggregation: AggregationResult | undefined,
   categoryPath: CategoryPath,
-  currentCategoryPath: string[]
+  _currentCategoryPath: string[]
 ): {
   childCategories: CategoryFilterOption[];
-  siblingCategories: CategoryFilterOption[];
+  siblingCategories: CategoryFilterOption[]; // Empty - kept for backward compatibility
 } {
   const childCategories: CategoryFilterOption[] = [];
-  const siblingCategories: CategoryFilterOption[] = [];
 
-  // Handle nested aggregation structure
-  // OpenSearch returns filter aggregations with this structure:
-  // aggregation.filter.nested_categories.data.buckets
-  // But we also handle direct access for backwards compatibility
-  const nestedAgg = aggregation as {
-    filter?: {
-      nested_categories?: {
-        data?: {
-          buckets?: Array<{
-            key: string;
-            doc_count: number;
-            category_id?: { buckets?: Array<{ key: number }> };
-            category_slug?: { buckets?: Array<{ key: string }> };
-            category_path?: { buckets?: Array<{ key: string }> };
-            category_level?: { buckets?: Array<{ key: number }> };
-            ancestor_ids?: { buckets?: Array<{ key: number }> };
-          }>;
-        };
-      };
-    };
-    // Also check direct nested_categories (for backwards compatibility or different query structures)
-    nested_categories?: {
-      data?: {
-        buckets?: Array<{
-          key: string;
-          doc_count: number;
-          category_id?: { buckets?: Array<{ key: number }> };
-          category_slug?: { buckets?: Array<{ key: string }> };
-          category_path?: { buckets?: Array<{ key: string }> };
-          category_level?: { buckets?: Array<{ key: number }> };
-          ancestor_ids?: { buckets?: Array<{ key: number }> };
-        }>;
-      };
-    };
-    // Some aggregations might have data directly
-    data?: {
-      buckets?: Array<{
-        key: string | Array<string | number>;
-        doc_count: number;
-        category_id?: { buckets?: Array<{ key: number }> };
-        category_slug?: { buckets?: Array<{ key: string }> };
-        category_path?: { buckets?: Array<{ key: string }> };
-        category_level?: { buckets?: Array<{ key: number }> };
-        ancestor_ids?: { buckets?: Array<{ key: number }> };
-      }>;
-    };
-    // Multi_terms support (sandbox)
-    categories?: {
-      buckets?: Array<{
-        key: Array<string | number>;
-        doc_count: number;
-      }>;
-    };
-  };
-
-  // Try multiple paths to find the nested categories data
-  // Priority: filter.nested_categories > nested_categories > filter.categories > categories > direct data
-  let nestedCategories:
-    | {
-      data?: {
-        buckets?: Array<{
-          key: string | Array<string | number>;
-          doc_count: number;
-          category_id?: { buckets?: Array<{ key: number }> };
-          category_slug?: { buckets?: Array<{ key: string }> };
-          category_path?: { buckets?: Array<{ key: string }> };
-          category_level?: { buckets?: Array<{ key: number }> };
-          ancestor_ids?: { buckets?: Array<{ key: number }> };
-        }>;
-      };
-    }
-    | undefined;
-
-  if (nestedAgg?.filter?.nested_categories) {
-    // Most common case: filter wrapper with nested_categories
-    nestedCategories = nestedAgg.filter.nested_categories;
-  } else if (nestedAgg?.nested_categories) {
-    // Direct nested_categories (no filter wrapper)
-    nestedCategories = nestedAgg.nested_categories;
-  } else if (nestedAgg?.filter && 'categories' in nestedAgg.filter) {
-    // Multi_terms within filter (sandbox)
-    // Wrap to match expected structure
-    nestedCategories = { data: (nestedAgg.filter as any).categories };
-  } else if ('categories' in nestedAgg) {
-    // Direct multi_terms categories (sandbox)
-    nestedCategories = { data: (nestedAgg as any).categories };
-  } else if (nestedAgg?.data) {
-    // Direct data structure (unlikely but possible)
-    // Wrap it to match expected structure
-    nestedCategories = { data: nestedAgg.data };
-  }
-
-  // Debug logging in development to help diagnose structure issues
-  if (process.env.NODE_ENV === "development") {
-    if (!nestedCategories?.data?.buckets && aggregation) {
-      console.warn(
-        "[formatCategoriesAggregation] No category buckets found. Aggregation structure:",
-        {
-          hasFilter: !!nestedAgg?.filter,
-          hasNestedCategories: !!nestedAgg?.nested_categories,
-          hasData: !!nestedAgg?.data,
-          aggregationKeys: Object.keys(aggregation || {}),
-          fullAggregation: aggregation, // Log full structure for debugging
-        }
-      );
-    } else if (nestedCategories?.data?.buckets) {
-      console.log("[formatCategoriesAggregation] Found categories:", {
-        bucketCount: nestedCategories.data.buckets.length,
-        firstBucket: nestedCategories.data.buckets[0],
-      });
-    }
-  }
-
-  if (!nestedCategories?.data?.buckets) {
-    return { childCategories, siblingCategories };
+  // Extract buckets from aggregation (handle multiple structures)
+  const buckets = extractCategoryBuckets(aggregation);
+  if (!buckets || buckets.length === 0) {
+    return { childCategories, siblingCategories: [] };
   }
 
   // Get current category information
-  // Handle empty category path (e.g., on brand landing page)
   const hasCategoryPath = categoryPath.nodes && categoryPath.nodes.length > 0;
   const currentCategoryNode = hasCategoryPath
     ? categoryPath.nodes[categoryPath.nodes.length - 1]
     : undefined;
   const currentCategoryId = currentCategoryNode?.categoryId;
-  const currentCategoryLevel = currentCategoryNode?.categoryLevel || 0;
-  const currentCategoryIds = categoryPath.ids?.categoryIds || [];
-  const parentCategoryId =
-    hasCategoryPath && categoryPath.nodes.length > 1
-      ? categoryPath.nodes[categoryPath.nodes.length - 2]?.categoryId
-      : undefined;
+  const currentLevel = currentCategoryNode?.categoryLevel ?? -1; // -1 = root (no category)
+
+  // Debug logging
+  if (process.env.NODE_ENV === "development") {
+    console.log("[formatCategoriesAggregation] Processing categories:", {
+      currentLevel,
+      currentCategoryId,
+      bucketCount: buckets.length,
+    });
+  }
 
   // Process each category bucket
-  nestedCategories.data.buckets.forEach(bucket => {
-    // Extract metadata
-    let categoryId: number;
-    let categorySlug: string;
-    let categoryPathStr: string;
-    let categoryLevel: number;
-    let ancestorIds: number[];
+  buckets.forEach((bucket: any) => {
+    const [categoryId, categoryName, categorySlug, categoryLevel] = extractBucketData(bucket);
 
-    if (Array.isArray(bucket.key)) {
-      // Multi_terms case: [categoryId, categoryName, categorySlug, categoryLevel]
-      categoryId = Number(bucket.key[0]) || 0;
-      // bucket.key[1] is categoryName (used as label)
-      categorySlug = String(bucket.key[2] || "").toLowerCase().replace(/\s+/g, "-");
-      categoryLevel = Number(bucket.key[3]) || 1;
-      // Multi_terms doesn't provide path or ancestors, use defaults
-      categoryPathStr = ""; 
-      ancestorIds = [];
-      
-      // Infer ancestor relationship for sandbox
-      // If we are filtering by a category, and this is a subcategory (level + 1),
-      // we can assume it's a child in the filtered context
-      if (currentCategoryId && categoryLevel === currentCategoryLevel + 1) {
-        ancestorIds = [currentCategoryId];
+    // Skip current category
+    if (categoryId === currentCategoryId) return;
+
+    // ROOT LEVEL: Show only level 0 categories
+    if (currentLevel === -1) {
+      if (categoryLevel === 0) {
+        childCategories.push(buildCategoryOption(bucket, categorySlug));
       }
-    } else {
-      // Nested aggregation case
-      categoryId = bucket.category_id?.buckets?.[0]?.key || 0;
-      categorySlug =
-        bucket.category_slug?.buckets?.[0]?.key ||
-        bucket.key.toLowerCase().replace(/\s+/g, "-");
-      categoryPathStr = bucket.category_path?.buckets?.[0]?.key || "";
-      categoryLevel = bucket.category_level?.buckets?.[0]?.key || 1;
-      ancestorIds = bucket.ancestor_ids?.buckets?.map(b => b.key) || [];
-    }
-
-    // Exclude current category
-    if (currentCategoryId && categoryId === currentCategoryId) {
       return;
     }
 
-    // Determine if it's a child or sibling
-    let isChild = false;
-    let isSibling = false;
-    
-    // Check key for name (multi_terms or nested)
-    const categoryName = Array.isArray(bucket.key) ? String(bucket.key[1]) : bucket.key;
+    // CATEGORY SELECTED: Show direct children (currentLevel + 1)
+    // Check if this category is a child of current category
+    const parentId = extractParentId(bucket);
+    const ancestorIds = extractAncestorIds(bucket);
 
-    // If no current category (e.g., brand landing page), show all top-level categories
-    if (!hasCategoryPath || !currentCategoryId) {
-      // Show top-level categories (level 1) as potential filters
-      if (categoryLevel === 1) {
-        isSibling = true;
-      }
-    } else {
-      // Child category: categoryLevel is currentLevel + 1 AND currentCategoryId is in ancestorIds
-      if (
-        categoryLevel === currentCategoryLevel + 1 &&
-        currentCategoryId !== undefined &&
-        ancestorIds.includes(currentCategoryId)
-      ) {
-        isChild = true;
-      }
-      // Sibling category: same level, different parent, not current category
-      else if (
-        categoryLevel === currentCategoryLevel &&
-        !currentCategoryIds.includes(categoryId)
-      ) {
-        // Check if it has the same parent (or is at root level)
-        if (parentCategoryId) {
-          // If current category has a parent, sibling should also have the same parent
-          if (
-            ancestorIds.includes(parentCategoryId) ||
-            ancestorIds.length === 0
-          ) {
-            isSibling = true;
-          }
-        } else {
-          // Both are root level categories
-          if (categoryLevel === 1) {
-            isSibling = true;
-          }
-        }
-      }
-    }
+    // A category is a direct child if:
+    // 1. Its level is currentLevel + 1, AND
+    // 2. Either its parentId matches currentCategoryId OR currentCategoryId is in ancestorIds
+    const isDirectChild =
+      categoryLevel === currentLevel + 1 &&
+      (parentId === currentCategoryId || ancestorIds.includes(currentCategoryId!));
 
-    // Only add if it's a child or sibling
-    if (isChild || isSibling) {
-      const categoryOption: CategoryFilterOption = {
-        label: categoryName,
-        value: categoryName,
-        count: bucket.doc_count,
-        selected: false,
-        categoryId,
-        categoryPath:
-          categoryPathStr ||
-          (isChild
-            ? `${currentCategoryPath.join("/")}/${categorySlug}`
-            : `/${categorySlug}`),
-        categorySlug,
-        isChild,
-        isSibling,
-      };
-
-      if (isChild) {
-        childCategories.push(categoryOption);
-      } else if (isSibling) {
-        siblingCategories.push(categoryOption);
-      }
+    if (isDirectChild) {
+      childCategories.push(buildCategoryOption(bucket, categorySlug));
     }
   });
 
-  return { childCategories, siblingCategories };
+  return { childCategories, siblingCategories: [] };
+}
+
+/**
+ * Extract category buckets from aggregation (handles multiple structures)
+ */
+function extractCategoryBuckets(aggregation: any) {
+  // Handle nested aggregation structures
+  if (aggregation?.filter?.categories?.buckets) {
+    return aggregation.filter.categories.buckets;
+  }
+  if (aggregation?.categories?.buckets) {
+    return aggregation.categories.buckets;
+  }
+  if (aggregation?.filter?.nested_categories?.data?.buckets) {
+    return aggregation.filter.nested_categories.data.buckets;
+  }
+  if (aggregation?.nested_categories?.data?.buckets) {
+    return aggregation.nested_categories.data.buckets;
+  }
+  return aggregation?.data?.buckets || [];
+}
+
+/**
+ * Extract category data from bucket (handles multi_terms and nested)
+ */
+function extractBucketData(bucket: any): [number, string, string, number] {
+  if (Array.isArray(bucket.key)) {
+    // Multi_terms: [categoryId, categoryName, categorySlug, categoryLevel]
+    return [
+      Number(bucket.key[0]) || 0,
+      String(bucket.key[1]),
+      String(bucket.key[2]),
+      Number(bucket.key[3]) || 0
+    ];
+  }
+  // Nested aggregation (fallback)
+  return [
+    bucket.category_id?.buckets?.[0]?.key || 0,
+    bucket.key,
+    bucket.category_slug?.buckets?.[0]?.key || bucket.key.toLowerCase().replace(/\s+/g, "-"),
+    bucket.category_level?.buckets?.[0]?.key || 0
+  ];
+}
+
+/**
+ * Extract ancestor IDs from bucket
+ */
+function extractAncestorIds(bucket: any): number[] {
+  if (Array.isArray(bucket.key) && bucket.key[5]) {
+    // If ancestorIds is in multi_terms (6th element, after parentId)
+    return Array.isArray(bucket.key[5]) ? bucket.key[5] : [];
+  }
+  return bucket.ancestor_ids?.buckets?.map((b: any) => b.key) || [];
+}
+
+/**
+ * Extract parent ID from bucket
+ */
+function extractParentId(bucket: any): number | undefined {
+  if (Array.isArray(bucket.key) && bucket.key[4] !== undefined) {
+    // Multi_terms: [categoryId, categoryName, categorySlug, categoryLevel, parentId]
+    // parentId is at index 4
+    return bucket.key[4] !== null ? Number(bucket.key[4]) : undefined;
+  }
+  return bucket.parent_id?.buckets?.[0]?.key;
+}
+
+/**
+ * Build category filter option from bucket
+ */
+function buildCategoryOption(bucket: any, categorySlug: string): CategoryFilterOption {
+  const [categoryId, categoryName] = extractBucketData(bucket);
+
+  return {
+    label: categoryName,
+    value: categoryName,
+    count: bucket.doc_count,
+    selected: false,
+    categoryId,
+    categoryPath: `/${categorySlug}`, // Flat URL structure
+    categorySlug,
+    isChild: true,
+    isSibling: false,
+  };
 }
 
 /**
@@ -425,7 +321,8 @@ export function formatEquipmentCodesAggregation(
 export function formatAllAggregations(
   aggregations: FilterAggregations | null,
   categoryPath: CategoryPath,
-  currentCategoryPath: string[]
+  currentCategoryPath: string[],
+  currentBrandSlug?: string
 ): {
   brands: BrandFilterOption[];
   childCategories: CategoryFilterOption[];
@@ -453,7 +350,8 @@ export function formatAllAggregations(
   try {
     const brands = formatBrandsAggregation(
       aggregations.brands,
-      currentCategoryPath
+      currentCategoryPath,
+      currentBrandSlug
     );
 
     const { childCategories, siblingCategories } = formatCategoriesAggregation(
@@ -520,3 +418,4 @@ export function formatAllAggregations(
     };
   }
 }
+

@@ -4,11 +4,11 @@ import { CollapsibleSection } from "@/components/ui/collapsible";
 import { useCategoryFilters } from "@/hooks/useCategoryFilters";
 import { useBlockingLoader } from "@/providers/BlockingLoaderProvider";
 import type {
-    BrandFilterOption,
-    CategoryFilterOption,
-    FilterOption,
-    ProductSpecificationGroup,
-    VariantAttributeGroup,
+  BrandFilterOption,
+  CategoryFilterOption,
+  FilterOption,
+  ProductSpecificationGroup,
+  VariantAttributeGroup,
 } from "@/types/category-filters";
 import { Filter } from "lucide-react";
 import { useEffect } from "react";
@@ -31,6 +31,7 @@ interface CategoryFiltersProps {
   equipmentCodes?: FilterOption[];
   isLoading?: boolean;
   hideBrandFilter?: boolean;
+  brandRemovalPath?: string;
 }
 
 /**
@@ -40,7 +41,7 @@ interface CategoryFiltersProps {
 export function CategoryFilters({
   brands,
   childCategories,
-  siblingCategories,
+  siblingCategories: _siblingCategories,
   currentCategoryPath,
   variantAttributeGroups,
   productSpecificationGroups,
@@ -48,6 +49,7 @@ export function CategoryFilters({
   equipmentCodes = [],
   isLoading = false,
   hideBrandFilter = false,
+  brandRemovalPath,
 }: CategoryFiltersProps) {
   const {
     filters,
@@ -90,20 +92,24 @@ export function CategoryFilters({
             defaultOpen={true}
             badge={brands.length}
           >
-            <BrandFilter brands={brands} isLoading={isLoading} />
+            <BrandFilter 
+              brands={brands} 
+              isLoading={isLoading}
+              {...(brandRemovalPath && { brandRemovalPath })}
+            />
           </CollapsibleSection>
         )}
 
         {/* Categories */}
-        {(childCategories.length > 0 || siblingCategories.length > 0) && (
+        {childCategories.length > 0 && (
           <CollapsibleSection
             title="Categories"
             defaultOpen={true}
-            badge={childCategories.length + siblingCategories.length}
+            badge={childCategories.length}
           >
             <CategoryFilter
               childCategories={childCategories}
-              siblingCategories={siblingCategories}
+              siblingCategories={[]} // Empty for compatibility
               currentCategoryPath={currentCategoryPath}
               isLoading={isLoading}
             />

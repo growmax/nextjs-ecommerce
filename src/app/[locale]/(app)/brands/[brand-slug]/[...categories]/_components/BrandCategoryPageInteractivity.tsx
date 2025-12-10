@@ -79,9 +79,10 @@ export function BrandCategoryPageInteractivity({
     return formatAllAggregations(
       aggregations,
       categoryPathForFormatting,
-      currentCategoryPath
+      currentCategoryPath,
+      _brandName
     );
-  }, [aggregations, categoryPath, currentCategoryPath]);
+  }, [aggregations, categoryPath, currentCategoryPath, _brandName]);
 
   // Parse current filters from URL
   const currentFilters = useMemo(
@@ -185,6 +186,11 @@ export function BrandCategoryPageInteractivity({
             catalogCodes={formattedFilters.catalogCodes}
             equipmentCodes={formattedFilters.equipmentCodes}
             isLoading={!aggregations}
+            brandRemovalPath={
+              categoryPath && categoryPath.slugs && categoryPath.slugs.length > 0
+                ? `/${locale}/${categoryPath.slugs.join("/")}`
+                : `/${locale}/brands/all`
+            }
           />
         </aside>
 
@@ -201,8 +207,8 @@ export function BrandCategoryPageInteractivity({
                 isBrandPage={true}
                 brandName={_brandName}
                 brandRemovalPath={
-                  categoryPath && categoryPath.fullPath
-                    ? `/${locale}/${categoryPath.fullPath}`
+                  categoryPath && categoryPath.slugs && categoryPath.slugs.length > 0
+                    ? `/${locale}/${categoryPath.slugs.join("/")}`
                     : `/${locale}/brands/all`
                 }
               />
@@ -233,6 +239,11 @@ export function BrandCategoryPageInteractivity({
               catalogCodes={formattedFilters.catalogCodes}
               equipmentCodes={formattedFilters.equipmentCodes}
               isLoading={!aggregations}
+              brandRemovalPath={
+                categoryPath && categoryPath.slugs && categoryPath.slugs.length > 0
+                  ? `/${locale}/${categoryPath.slugs.join("/")}`
+                  : `/${locale}/brands/all`
+              }
             />
           </div>
 
