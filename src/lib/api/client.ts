@@ -18,6 +18,12 @@ const API_CONFIG = {
   PREFERENCE_URL: process.env.PREFERENCE_URL || "",
   DISCOUNT_URL: process.env.DISCOUNT_URL || "",
   OPENSEARCH_URL: process.env.OPENSEARCH_URL || "",
+  ELASTIC_URL:
+    process.env.ELASTIC_URL ||
+    process.env.NEXT_PUBLIC_ELASTIC_URL ||
+    process.env.OPENSEARCH_URL ||
+    process.env.NEXT_PUBLIC_OPENSEARCH_URL ||
+    "",
   BASE_API_URL: process.env.BASE_API_URL || "",
   BUCKET_NAME: process.env.NEXT_PUBLIC_S3BUCKET || "",
   ACCESS_KEY: process.env.AWS_S3_ACCESS_KEY,

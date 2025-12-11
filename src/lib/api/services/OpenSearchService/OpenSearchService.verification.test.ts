@@ -1,19 +1,19 @@
 /**
  * OpenSearch Service Verification Tests
- * 
+ *
  * These tests verify that OpenSearch queries are structured correctly
  * and can be executed against the OpenSearch API.
- * 
+ *
  * Note: These are integration-style tests that verify query structure.
  * For actual API calls, use the verification script.
  */
 
 import { buildProductSearchQuery } from "@/utils/elasticsearch/search-queries";
 import {
-    buildBrandQuery,
-    buildCategoryQuery,
-    buildMajorCategoryQuery,
-    buildSubCategoryQuery,
+  buildBrandQuery,
+  buildCategoryQuery,
+  buildMajorCategoryQuery,
+  buildSubCategoryQuery,
 } from "@/utils/opensearch/browse-queries";
 
 // Mock the clients to prevent actual API calls
@@ -59,7 +59,9 @@ describe("OpenSearch Query Verification", () => {
       expect(query.query.bool).toHaveProperty("must_not");
 
       // Verify must clause has is_published filter
-      const mustClauses = query.query.bool.must as Array<Record<string, unknown>>;
+      const mustClauses = query.query.bool.must as Array<
+        Record<string, unknown>
+      >;
       expect(mustClauses).toContainEqual({
         term: { is_published: 1 },
       });
@@ -102,7 +104,9 @@ describe("OpenSearch Query Verification", () => {
       expect(query.query.bool.must).toBeDefined();
 
       // Verify category filter
-      const mustClauses = query.query.bool.must as Array<Record<string, unknown>>;
+      const mustClauses = query.query.bool.must as Array<
+        Record<string, unknown>
+      >;
       expect(mustClauses).toContainEqual({
         nested: {
           path: "product_categories",
@@ -144,7 +148,9 @@ describe("OpenSearch Query Verification", () => {
 
       expect(query.query.bool.must).toBeDefined();
 
-      const mustClauses = query.query.bool.must as Array<Record<string, unknown>>;
+      const mustClauses = query.query.bool.must as Array<
+        Record<string, unknown>
+      >;
       expect(mustClauses).toContainEqual({
         nested: {
           path: "product_categories",
@@ -163,7 +169,9 @@ describe("OpenSearch Query Verification", () => {
 
       expect(query.query.bool.must).toBeDefined();
 
-      const mustClauses = query.query.bool.must as Array<Record<string, unknown>>;
+      const mustClauses = query.query.bool.must as Array<
+        Record<string, unknown>
+      >;
       expect(mustClauses).toContainEqual({
         nested: {
           path: "product_categories",
@@ -182,9 +190,11 @@ describe("OpenSearch Query Verification", () => {
 
       expect(query.query.bool.must).toBeDefined();
 
-      const mustClauses = query.query.bool.must as Array<Record<string, unknown>>;
+      const mustClauses = query.query.bool.must as Array<
+        Record<string, unknown>
+      >;
       expect(mustClauses).toContainEqual({
-        term: { "brands_name.keyword": brandName },
+        term: { "brand_name.keyword": brandName },
       });
     });
   });
@@ -249,9 +259,13 @@ describe("OpenSearch Query Verification", () => {
         catalogCodes: ["CAT001", "CAT002"],
       });
 
-      const mustClauses = query.query.bool.must as Array<Record<string, unknown>>;
+      const mustClauses = query.query.bool.must as Array<
+        Record<string, unknown>
+      >;
       const catalogFilter = mustClauses.find(
-        clause => "terms" in clause && "catalogCode.keyword" in (clause.terms as Record<string, unknown>)
+        clause =>
+          "terms" in clause &&
+          "catalogCode.keyword" in (clause.terms as Record<string, unknown>)
       );
 
       expect(catalogFilter).toBeDefined();
@@ -262,9 +276,13 @@ describe("OpenSearch Query Verification", () => {
         equipmentCodes: ["EQ001"],
       });
 
-      const mustClauses = query.query.bool.must as Array<Record<string, unknown>>;
+      const mustClauses = query.query.bool.must as Array<
+        Record<string, unknown>
+      >;
       const equipmentFilter = mustClauses.find(
-        clause => "terms" in clause && "equipmentCode.keyword" in (clause.terms as Record<string, unknown>)
+        clause =>
+          "terms" in clause &&
+          "equipmentCode.keyword" in (clause.terms as Record<string, unknown>)
       );
 
       expect(equipmentFilter).toBeDefined();
@@ -277,7 +295,9 @@ describe("OpenSearch Query Verification", () => {
         },
       });
 
-      const mustClauses = query.query.bool.must as Array<Record<string, unknown>>;
+      const mustClauses = query.query.bool.must as Array<
+        Record<string, unknown>
+      >;
       expect(mustClauses.length).toBeGreaterThan(1); // Should have category + brand filters
     });
   });
@@ -336,4 +356,3 @@ describe("OpenSearch Query Verification", () => {
     });
   });
 });
-
