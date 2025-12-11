@@ -11,12 +11,12 @@ export function getOriginHeader(): string {
   if (typeof window !== "undefined") {
     // Client-side: use current domain
     return window.location.hostname === "localhost"
-      ? process.env.NEXT_PUBLIC_DEFAULT_DOMAIN || "schwingstetter.myapptino.com"
+      ? process.env.NEXT_PUBLIC_DEFAULT_DOMAIN || "growmax.myapptino.com"
       : window.location.hostname;
   }
 
   // Server-side: use environment variable
-  return process.env.DEFAULT_DOMAIN || "schwingstetter.myapptino.com";
+  return process.env.DEFAULT_DOMAIN || "growmax.myapptino.com";
 }
 
 /**

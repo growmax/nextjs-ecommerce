@@ -4,6 +4,8 @@ import PricingFormat from "@/components/PricingFormat";
 import DashboardTable from "@/components/custom/DashBoardTable";
 import SideDrawer from "@/components/custom/sidedrawer";
 import { statusColor } from "@/components/custom/statuscolors";
+import { MobileLandingCards } from "@/components/landing/MobileLandingCards";
+import { QuoteMobileCard } from "@/components/landing/QuoteMobileCard";
 import FilterDrawer from "@/components/sales/FilterDrawer";
 import { QuoteFilterFormData } from "@/components/sales/QuoteFilterForm";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -26,12 +28,14 @@ interface QuotesLandingTableProps {
   refreshTrigger?: number;
   setExportCallback?: (callback: (() => void) | null) => void;
   onTotalCountChange?: (count: number) => void;
+  onLoadingChange?: (loading: boolean) => void;
 }
 
 function QuotesLandingTable({
   refreshTrigger,
   setExportCallback,
   onTotalCountChange,
+  onLoadingChange,
 }: QuotesLandingTableProps) {
   // Use the page loader hook to ensure navigation spinner is hidden immediately
   usePageLoader();
@@ -166,12 +170,12 @@ function QuotesLandingTable({
         },
         cell: ({ row }) => (
           <span className="pr-4">
-            <PricingFormat
-              {...(row.original.curencySymbol && {
-                buyerCurrency: row.original.curencySymbol,
-              })}
-              value={row.original.subTotal || row.original.grandTotal || 0}
-            />
+          <PricingFormat
+            {...(row.original.curencySymbol && {
+              buyerCurrency: row.original.curencySymbol,
+            })}
+            value={row.original.subTotal || row.original.grandTotal || 0}
+          />
           </span>
         ),
       },
@@ -184,12 +188,12 @@ function QuotesLandingTable({
         },
         cell: ({ row }) => (
           <span className="pr-4">
-            <PricingFormat
-              {...(row.original.curencySymbol && {
-                buyerCurrency: row.original.curencySymbol,
-              })}
-              value={row.original.taxableAmount || 0}
-            />
+          <PricingFormat
+            {...(row.original.curencySymbol && {
+              buyerCurrency: row.original.curencySymbol,
+            })}
+            value={row.original.taxableAmount || 0}
+          />
           </span>
         ),
       },
@@ -862,6 +866,11 @@ function QuotesLandingTable({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [filterData]);
 
+  // Notify parent component of loading state changes
+  useEffect(() => {
+    onLoadingChange?.(loading);
+  }, [loading, onLoadingChange]);
+
   // Cleanup on unmount to prevent stuck loading states
   useEffect(() => {
     return () => {
@@ -1071,12 +1080,79 @@ function QuotesLandingTable({
             className="w-full overflow-x-auto scrollbar-thin-horizontal max-md:overflow-x-visible"
           >
             {loading ? (
+              <>
+                {/* Desktop Skeleton */}
+                <div className="hidden md:block">
               <TableSkeleton rows={rowPerPage} />
+                </div>
+                {/* Mobile Skeleton */}
+                <div className="md:hidden">
+                  <MobileLandingCards
+                    items={[]}
+                    loading={true}
+                    renderCard={() => null}
+                    skeletonCount={rowPerPage}
+                  />
+                   <div className="fixed bottom-0 left-0 right-0 bg-background border-t z-50 md:hidden">
+                      <div className="flex items-center justify-center px-4 py-3">
+                        {/* Pagination Controls */}
+                        <div className="flex items-center gap-2">
+                          <button
+                           
+                            disabled={true}
+                            className="px-3 py-2 text-xs border rounded-md disabled:opacity-50 disabled:cursor-not-allowed hover:bg-muted transition-colors min-h-[44px] flex items-center justify-center"
+                            aria-label="Previous page"
+                          >
+                            <svg
+                              xmlns="http://www.w3.org/2000/svg"
+                              width="16"
+                              height="16"
+                              viewBox="0 0 24 24"
+                              fill="none"
+                              stroke="currentColor"
+                              strokeWidth="2"
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                            >
+                              <path d="m15 18-6-6 6-6" />
+                            </svg>
+                          </button>
+                          <span className="text-xs text-muted-foreground px-2 min-w-[80px] text-center">
+                           <Skeleton className="h-4 w-16" />
+                          </span>
+                          <button
+                          
+                            disabled={true}
+                            className="px-3 py-2 text-xs border rounded-md disabled:opacity-50 disabled:cursor-not-allowed hover:bg-muted transition-colors min-h-[44px] flex items-center justify-center"
+                            aria-label="Next page"
+                          >
+                            <svg
+                              xmlns="http://www.w3.org/2000/svg"
+                              width="16"
+                              height="16"
+                              viewBox="0 0 24 24"
+                              fill="none"
+                              stroke="currentColor"
+                              strokeWidth="2"
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                            >
+                              <path d="m9 18 6-6-6-6" />
+                            </svg>
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                </div>
+              </>
             ) : quotes.length === 0 ? (
               <div className="flex items-center justify-center text-muted-foreground py-8">
                 {t("noQuotes")}
               </div>
             ) : (
+              <>
+                {/* Desktop Table */}
+                <div className="hidden md:block">
               <DashboardTable
                 data={quotes}
                 columns={columns}
@@ -1102,8 +1178,94 @@ function QuotesLandingTable({
                     router.push(`/details/quoteDetails/${quoteId}`);
                   }
                 }}
-                tableHeight="h-[calc(103vh-180px)] max-md:h-[calc(100vh-140px)]"
-              />
+                    tableHeight="h-[calc(103vh-180px)]"
+                  />
+                </div>
+                {/* Mobile Cards */}
+                <div className="md:hidden relative">
+                  {/* Scrollable Cards Area with bottom padding for fixed bar */}
+                  <div className="pb-20">
+                    <MobileLandingCards
+                      items={quotes}
+                      loading={false}
+                      renderCard={(quote) => (
+                        <QuoteMobileCard
+                          quote={quote}
+                          onClick={() => {
+                            if (quote.quotationIdentifier) {
+                              router.push(
+                                `/details/quoteDetails/${quote.quotationIdentifier}`
+                              );
+                            }
+                          }}
+                        />
+                      )}
+                      emptyMessage={t("noQuotes")}
+                      skeletonCount={rowPerPage}
+                    />
+                  </div>
+                  
+                  {/* Fixed Bottom Bar with Pagination Only */}
+                  {totalCount > rowPerPage && (
+                    <div className="fixed bottom-0 left-0 right-0 bg-background border-t z-50 md:hidden">
+                      <div className="flex items-center justify-center px-4 py-3">
+                        {/* Pagination Controls */}
+                        <div className="flex items-center gap-2">
+                          <button
+                            onClick={() => {
+                              handlePrevious();
+                              window.scrollTo({ top: 0, behavior: "smooth" });
+                            }}
+                            disabled={page === 0}
+                            className="px-3 py-2 text-xs border rounded-md disabled:opacity-50 disabled:cursor-not-allowed hover:bg-muted transition-colors min-h-[44px] flex items-center justify-center"
+                            aria-label="Previous page"
+                          >
+                            <svg
+                              xmlns="http://www.w3.org/2000/svg"
+                              width="16"
+                              height="16"
+                              viewBox="0 0 24 24"
+                              fill="none"
+                              stroke="currentColor"
+                              strokeWidth="2"
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                            >
+                              <path d="m15 18-6-6 6-6" />
+                            </svg>
+                          </button>
+                          <span className="text-xs text-muted-foreground px-2 min-w-[80px] text-center">
+                            {page + 1} / {Math.ceil(totalCount / rowPerPage)}
+                          </span>
+                          <button
+                            onClick={() => {
+                              handleNext();
+                              window.scrollTo({ top: 0, behavior: "smooth" });
+                            }}
+                            disabled={(page + 1) * rowPerPage >= totalCount}
+                            className="px-3 py-2 text-xs border rounded-md disabled:opacity-50 disabled:cursor-not-allowed hover:bg-muted transition-colors min-h-[44px] flex items-center justify-center"
+                            aria-label="Next page"
+                          >
+                            <svg
+                              xmlns="http://www.w3.org/2000/svg"
+                              width="16"
+                              height="16"
+                              viewBox="0 0 24 24"
+                              fill="none"
+                              stroke="currentColor"
+                              strokeWidth="2"
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                            >
+                              <path d="m9 18 6-6-6-6" />
+                            </svg>
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </>
             )}
           </div>
         </div>

@@ -6,7 +6,7 @@ const locales = ["en", "es", "fr", "th", "vi", "id", "ms"] as const;
 // Inline getDomain to avoid extra imports
 function getDomain(host: string): string {
   if (host === "localhost:3000" || host === "localhost:3001") {
-    return process.env.DEFAULT_DOMAIN || "sandbox.myapptino.com";
+    return process.env.DEFAULT_DOMAIN || "growmax.myapptino.com";
   }
   return host.replace("www.", "");
 }
