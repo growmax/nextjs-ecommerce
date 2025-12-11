@@ -18,7 +18,7 @@ export async function GET(request: NextRequest) {
       headers: {
         Authorization: `Bearer ${token}`,
         "x-tenant": "schwingstetterdemo",
-        origin: "schwingstetter.myapptino.com",
+        origin: "growmax.myapptino.com",
         "Content-Type": "application/json",
         "User-Agent": "NextJS-App",
       },

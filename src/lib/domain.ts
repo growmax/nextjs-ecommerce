@@ -4,7 +4,7 @@
  */
 
 // Change this for your development domain
-const DEVELOPMENT_DOMAIN = "sandbox.myapptino.com";
+const DEVELOPMENT_DOMAIN = "growmax.myapptino.com";
 
 export function getDomain(host: string): string {
   // For localhost development, use your preferred domain
