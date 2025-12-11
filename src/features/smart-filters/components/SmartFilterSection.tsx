@@ -1,30 +1,21 @@
-/**
- * SmartFilterSection Component
- * 
- * Container component for ALL Smart Filters with collapsible sections.
- * Renders complete filter sidebar with all filter types.
- */
-
 "use client";
 
-import { Button } from "@/components/ui/button";
-import { Checkbox } from "@/components/ui/checkbox";
-import { CollapsibleSection } from "@/components/ui/collapsible";
-import { Input } from "@/components/ui/input";
+import { FilterCheckboxOption, FilterOptionList } from "@/components/ui/filter-option";
+import { FilterCollapsibleSection, FilterSidebar } from "@/components/ui/filter-sidebar";
+import { RadioGroup } from "@/components/ui/radio-group";
 import { Skeleton } from "@/components/ui/skeleton";
-import { cn } from "@/lib/utils";
-import { ChevronRight, Filter, X } from "lucide-react";
 import Link from "next/link";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
-import { useCallback, useMemo, useState, useTransition } from "react";
+import { useCallback, useMemo, useTransition } from "react";
 import type { SmartFilterResponse } from "../types/smart-filter-response.types";
+import { FilterCategoryChildItem, FilterCategoryItem } from "@/components/ui/filter-category-item";
 
 export interface SmartFilterSectionProps {
   /** Complete filter data from server */
   filterData: SmartFilterResponse;
   
   /** Current category ID for highlighting */
-  currentCategoryId?: number;
+  currentCategoryId?: number | undefined;
   
   /** Loading state */
   isLoading?: boolean;
@@ -39,15 +30,16 @@ export interface SmartFilterSectionProps {
 /**
  * SmartFilterSection
  * 
- * Complete filter sidebar with all filter types:
- * - Smart Category Filter (siblings + children)
- * - Brand Filter
- * - Price Range Filter  
+ * Complete filter sidebar with new shadcn-inspired design:
+ * - Categories (hierarchical with siblings + children)
+ * - Brands
  * - Stock Filter
- * - Variant Attributes Filter
- * - Product Specifications Filter
- * - Catalog Codes Filter
- * - Equipment Codes Filter
+ * - Variant Attributes
+ * - Product Specifications
+ * - Catalog Codes
+ * - Equipment Codes
+ * 
+ * Note: Price filter removed as per requirements
  */
 export function SmartFilterSection({
   filterData,
@@ -61,22 +53,13 @@ export function SmartFilterSection({
   const searchParams = useSearchParams();
   const [isPending, startTransition] = useTransition();
 
-  // Price filter local state
-  const [minPrice, setMinPrice] = useState(
-    searchParams.get("min_price") || ""
-  );
-  const [maxPrice, setMaxPrice] = useState(
-    searchParams.get("max_price") || ""
-  );
-
   const { filters } = filterData;
-  const { categories, brands, priceRange, stock, variantAttributes, productSpecifications, catalogCodes, equipmentCodes } = filters;
+  const { categories, brands, stock, variantAttributes, productSpecifications, catalogCodes, equipmentCodes } = filters;
 
-  // Calculate active filter count
+  // Calculate active filter count (excluding price)
   const activeFilterCount = useMemo(() => {
     let count = 0;
     if (searchParams.get("brand")) count++;
-    if (searchParams.get("min_price") || searchParams.get("max_price")) count++;
     if (searchParams.get("in_stock")) count++;
     // Count variant attributes
     searchParams.forEach((_, key) => {
@@ -144,16 +127,6 @@ export function SmartFilterSection({
     [searchParams, updateFilters]
   );
 
-  /**
-   * Apply price filter
-   */
-  const applyPriceFilter = useCallback(() => {
-    updateFilters({
-      min_price: minPrice || null,
-      max_price: maxPrice || null,
-    });
-  }, [minPrice, maxPrice, updateFilters]);
-
   const hasCategories = categories.siblings.length > 0 || categories.children.length > 0;
   const hasBrands = brands.items.length > 0;
   const hasVariantAttributes = variantAttributes.groups.length > 0;
@@ -165,328 +138,227 @@ export function SmartFilterSection({
   const loading = isLoading || isPending;
 
   return (
-    <aside className={cn("hidden lg:block w-64 shrink-0", className)}>
-      <div className="sticky top-4 flex flex-col bg-background border rounded-lg shadow-sm overflow-hidden max-h-[calc(100vh-2rem)]">
-        {/* Filter Header */}
-        <div className="flex items-center justify-between border-b bg-muted/30 py-3 px-4">
-          <div className="flex items-center gap-2">
-            <Filter className="h-4 w-4 text-muted-foreground" />
-            <h2 className="text-sm font-semibold">Filters</h2>
-            {activeFilterCount > 0 && (
-              <span className="inline-flex items-center justify-center px-1.5 py-0.5 text-xs font-medium bg-primary text-primary-foreground rounded-full min-w-[20px]">
-                {activeFilterCount}
-              </span>
-            )}
-          </div>
-          
-          {activeFilterCount > 0 && (
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={clearAllFilters}
-              className="h-7 text-xs px-2"
-              disabled={loading}
-            >
-              <X className="h-3 w-3 mr-1" />
-              Clear
-            </Button>
-          )}
-        </div>
-        
-        {/* Filter Body - Scrollable */}
-        <div className="flex-1 overflow-y-auto">
-          {/* Category Filter */}
-          {hasCategories && (
-            <CollapsibleSection
-              title="Categories"
-              defaultOpen={true}
-              badge={categories.siblings.length + categories.children.length}
-            >
-              <div className="px-3 pb-3 space-y-1">
-                {/* Siblings */}
-                {categories.siblings.map((cat) => (
-                  <Link
-                    key={cat.id}
-                    href={cat.navigationPath || `/${cat.slug}`}
-                    className={cn(
-                      "flex items-center justify-between py-1.5 px-2 text-sm rounded-md transition-colors",
-                      currentCategoryId === cat.id
-                        ? "bg-primary/10 text-primary font-medium"
-                        : "hover:bg-muted"
-                    )}
-                  >
-                    <span className="truncate">{cat.name}</span>
-                    <span className="text-xs text-muted-foreground ml-2">
-                      {cat.docCount}
-                    </span>
-                  </Link>
-                ))}
+    <FilterSidebar
+      className={className}
+      activeFilterCount={activeFilterCount}
+      onClearAll={clearAllFilters}
+      isLoading={loading}
+    >
+      {/* Categories Filter */}
+      {hasCategories && (
+        <FilterCollapsibleSection
+          title="Categories"
+          defaultOpen={true}
+          badge={categories.siblings.length + categories.children.length}
+        >
+          <FilterOptionList maxHeight="300px">
+            <RadioGroup value={currentCategoryId ? String(currentCategoryId) : null}>
+              {/* Render siblings with collapsible children */}
+              {categories.siblings.map((cat) => {
+                // Find children for this specific sibling
+                const childrenForThisCat = categories.children.filter(
+                  child => child.parentId === cat.id
+                );
+                const hasChildren = childrenForThisCat.length > 0;
                 
-                {/* Children header */}
-                {categories.children.length > 0 && categories.siblings.length > 0 && (
-                  <div className="pt-2 pb-1">
-                    <span className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
-                      Subcategories
-                    </span>
-                  </div>
-                )}
-                
-                {/* Children */}
-                {categories.children.map((cat) => (
-                  <Link
+                return (
+                  <FilterCategoryItem
                     key={cat.id}
-                    href={cat.navigationPath || `/${cat.slug}`}
-                    className="flex items-center justify-between py-1.5 px-2 pl-4 text-sm rounded-md hover:bg-muted transition-colors"
-                  >
-                    <div className="flex items-center gap-1 truncate">
-                      <ChevronRight className="h-3 w-3 text-muted-foreground" />
-                      <span className="truncate">{cat.name}</span>
-                    </div>
-                    <span className="text-xs text-muted-foreground ml-2">
-                      {cat.docCount}
-                    </span>
-                  </Link>
-                ))}
-              </div>
-            </CollapsibleSection>
-          )}
-
-          {/* Brand Filter */}
-          {hasBrands && (
-            <CollapsibleSection
-              title="Brand"
-              defaultOpen={true}
-              badge={brands.items.length}
-            >
-              <div className="px-3 pb-3 space-y-1 max-h-48 overflow-y-auto">
-                {brands.items.slice(0, 15).map((brand) => {
-                  const isSelected = searchParams.get("brand") === brand.name;
-                  return (
-                    <button
-                      key={brand.name}
-                      onClick={() => updateFilters({ brand: isSelected ? null : brand.name })}
-                      className={cn(
-                        "flex items-center justify-between w-full py-1.5 px-2 text-sm rounded-md transition-colors text-left",
-                        isSelected
-                          ? "bg-primary/10 text-primary font-medium"
-                          : "hover:bg-muted"
-                      )}
-                      disabled={loading}
-                    >
-                      <span className="truncate">{brand.name}</span>
-                      <span className="text-xs text-muted-foreground ml-2">
-                        {brand.count}
-                      </span>
-                    </button>
-                  );
-                })}
-                {brandRemovalPath && searchParams.get("brand") && (
-                  <Link
-                    href={brandRemovalPath}
-                    className="block text-xs text-primary hover:underline mt-2"
-                  >
-                    View all brands →
-                  </Link>
-                )}
-              </div>
-            </CollapsibleSection>
-          )}
-
-          {/* Price Range Filter */}
-          {priceRange.max > 0 && (
-            <CollapsibleSection title="Price Range" defaultOpen={false}>
-              <div className="px-3 pb-3 space-y-3">
-                <div className="flex items-center gap-2">
-                  <Input
-                    type="number"
-                    placeholder={`Min ($${Math.floor(priceRange.min)})`}
-                    value={minPrice}
-                    onChange={(e) => setMinPrice(e.target.value)}
-                    className="h-8 text-sm"
+                    label={cat.name}
+                    count={cat.docCount}
+                    value={String(cat.id)}
+                    hasChildren={hasChildren}
                     disabled={loading}
-                  />
-                  <span className="text-muted-foreground">-</span>
-                  <Input
-                    type="number"
-                    placeholder={`Max ($${Math.ceil(priceRange.max)})`}
-                    value={maxPrice}
-                    onChange={(e) => setMaxPrice(e.target.value)}
-                    className="h-8 text-sm"
-                    disabled={loading}
-                  />
-                </div>
-                <Button
-                  variant="secondary"
-                  size="sm"
-                  onClick={applyPriceFilter}
-                  className="w-full h-8"
+                    onNavigate={() => {
+                      if (!hasChildren) {
+                        router.push(cat.navigationPath || `/${cat.slug}`);
+                      }
+                    }}
+                  >
+                    {/* Child Categories */}
+                    {childrenForThisCat.map((child) => (
+                      <FilterCategoryChildItem
+                        key={child.id}
+                        label={child.name}
+                        count={child.docCount}
+                        disabled={loading}
+                        onNavigate={() => {
+                          router.push(child.navigationPath || `/${child.slug}`);
+                        }}
+                      />
+                    ))}
+                  </FilterCategoryItem>
+                );
+              })}
+            </RadioGroup>
+          </FilterOptionList>
+        </FilterCollapsibleSection>
+      )}
+
+      {/* Brand Filter */}
+      {hasBrands && (
+        <FilterCollapsibleSection
+          title="Brands"
+          defaultOpen={true}
+          badge={brands.items.length}
+        >
+          <FilterOptionList maxHeight="240px">
+            {brands.items.slice(0, 15).map((brand) => {
+              const selectedBrands = searchParams.getAll("brand");
+              const isChecked = selectedBrands.includes(brand.name);
+              
+              return (
+                <FilterCheckboxOption
+                  key={brand.name}
+                  label={brand.name}
+                  count={brand.count}
+                  checked={isChecked}
+                  onCheckedChange={() => toggleMultiValueFilter("brand", brand.name)}
                   disabled={loading}
-                >
-                  Apply Price
-                </Button>
-              </div>
-            </CollapsibleSection>
-          )}
+                />
+              );
+            })}
+            {brandRemovalPath && searchParams.getAll("brand").length > 0 && (
+              <Link
+                href={brandRemovalPath}
+                className="block text-xs text-primary hover:underline mt-2 px-2"
+              >
+                View all brands →
+              </Link>
+            )}
+          </FilterOptionList>
+        </FilterCollapsibleSection>
+      )}
 
-          {/* Stock Filter */}
-          {showStockFilter && (
-            <CollapsibleSection title="Availability" defaultOpen={false}>
-              <div className="px-3 pb-3 space-y-2">
-                <label className="flex items-center gap-2 cursor-pointer">
-                  <Checkbox
-                    checked={searchParams.get("in_stock") === "true"}
-                    onCheckedChange={(checked) =>
-                      updateFilters({ in_stock: checked ? "true" : null })
-                    }
-                    disabled={loading}
-                  />
-                  <span className="text-sm">In Stock ({stock.inStock})</span>
-                </label>
-              </div>
-            </CollapsibleSection>
-          )}
+      {/* Stock Filter */}
+      {showStockFilter && (
+        <FilterCollapsibleSection title="Availability" defaultOpen={false}>
+          <div className="space-y-1">
+            <FilterCheckboxOption
+              label={`In Stock (${stock.inStock})`}
+              checked={searchParams.get("in_stock") === "true"}
+              onCheckedChange={(checked) =>
+                updateFilters({ in_stock: checked ? "true" : null })
+              }
+              disabled={loading}
+            />
+          </div>
+        </FilterCollapsibleSection>
+      )}
 
-          {/* Variant Attributes */}
-          {hasVariantAttributes && variantAttributes.groups.slice(0, 5).map((group) => (
-            <CollapsibleSection
-              key={group.name}
-              title={group.name}
-              defaultOpen={false}
-              badge={group.values.length}
-            >
-              <div className="px-3 pb-3 space-y-1 max-h-40 overflow-y-auto">
-                {group.values.slice(0, 10).map((val) => {
-                  const paramKey = `va_${group.name}`;
-                  const isSelected = searchParams.getAll(paramKey).includes(val.value);
-                  return (
-                    <label
-                      key={val.value}
-                      className="flex items-center gap-2 py-1 cursor-pointer"
-                    >
-                      <Checkbox
-                        checked={isSelected}
-                        onCheckedChange={() => toggleMultiValueFilter(paramKey, val.value)}
-                        disabled={loading}
-                      />
-                      <span className="text-sm truncate flex-1">{val.value}</span>
-                      <span className="text-xs text-muted-foreground">
-                        {val.count}
-                      </span>
-                    </label>
-                  );
-                })}
-              </div>
-            </CollapsibleSection>
-          ))}
+      {/* Variant Attributes */}
+      {hasVariantAttributes && variantAttributes.groups.slice(0, 5).map((group) => (
+        <FilterCollapsibleSection
+          key={group.name}
+          title={group.name}
+          defaultOpen={false}
+          badge={group.values.length}
+        >
+          <FilterOptionList maxHeight="200px">
+            {group.values.slice(0, 10).map((val) => {
+              const paramKey = `va_${group.name}`;
+              const isSelected = searchParams.getAll(paramKey).includes(val.value);
+              return (
+                <FilterCheckboxOption
+                  key={val.value}
+                  label={val.value}
+                  count={val.count}
+                  checked={isSelected}
+                  onCheckedChange={() => toggleMultiValueFilter(paramKey, val.value)}
+                  disabled={loading}
+                />
+              );
+            })}
+          </FilterOptionList>
+        </FilterCollapsibleSection>
+      ))}
 
-          {/* Product Specifications */}
-          {hasProductSpecs && productSpecifications.groups.slice(0, 3).map((group) => (
-            <CollapsibleSection
-              key={group.groupName}
-              title={group.groupName}
-              defaultOpen={false}
-              badge={group.specs.length}
-            >
-              <div className="px-3 pb-3 space-y-1 max-h-40 overflow-y-auto">
-                {group.specs.slice(0, 10).map((spec, idx) => {
-                  const paramKey = `ps_${spec.name}`;
-                  const isSelected = searchParams.getAll(paramKey).includes(spec.value);
-                  return (
-                    <label
-                      key={`${spec.name}-${spec.value}-${idx}`}
-                      className="flex items-center gap-2 py-1 cursor-pointer"
-                    >
-                      <Checkbox
-                        checked={isSelected}
-                        onCheckedChange={() => toggleMultiValueFilter(paramKey, spec.value)}
-                        disabled={loading}
-                      />
-                      <span className="text-sm truncate flex-1">
-                        {spec.name}: {spec.value}
-                      </span>
-                      <span className="text-xs text-muted-foreground">
-                        {spec.count}
-                      </span>
-                    </label>
-                  );
-                })}
-              </div>
-            </CollapsibleSection>
-          ))}
+      {/* Product Specifications */}
+      {hasProductSpecs && productSpecifications.groups.slice(0, 3).map((group) => (
+        <FilterCollapsibleSection
+          key={group.groupName}
+          title={group.groupName}
+          defaultOpen={false}
+          badge={group.specs.length}
+        >
+          <FilterOptionList maxHeight="200px">
+            {group.specs.slice(0, 10).map((spec, idx) => {
+              const paramKey = `ps_${spec.name}`;
+              const isSelected = searchParams.getAll(paramKey).includes(spec.value);
+              return (
+                <FilterCheckboxOption
+                  key={`${spec.name}-${spec.value}-${idx}`}
+                  label={`${spec.name}: ${spec.value}`}
+                  count={spec.count}
+                  checked={isSelected}
+                  onCheckedChange={() => toggleMultiValueFilter(paramKey, spec.value)}
+                  disabled={loading}
+                />
+              );
+            })}
+          </FilterOptionList>
+        </FilterCollapsibleSection>
+      ))}
 
-          {/* Catalog Codes */}
-          {hasCatalogCodes && (
-            <CollapsibleSection
-              title="Catalog Codes"
-              defaultOpen={false}
-              badge={catalogCodes.items.length}
-            >
-              <div className="px-3 pb-3 space-y-1 max-h-40 overflow-y-auto">
-                {catalogCodes.items.slice(0, 10).map((item) => {
-                  const isSelected = searchParams.getAll("catalog_code").includes(item.code);
-                  return (
-                    <label
-                      key={item.code}
-                      className="flex items-center gap-2 py-1 cursor-pointer"
-                    >
-                      <Checkbox
-                        checked={isSelected}
-                        onCheckedChange={() => toggleMultiValueFilter("catalog_code", item.code)}
-                        disabled={loading}
-                      />
-                      <span className="text-sm truncate flex-1">{item.code}</span>
-                      <span className="text-xs text-muted-foreground">
-                        {item.count}
-                      </span>
-                    </label>
-                  );
-                })}
-              </div>
-            </CollapsibleSection>
-          )}
+      {/* Catalog Codes */}
+      {hasCatalogCodes && (
+        <FilterCollapsibleSection
+          title="Catalog Codes"
+          defaultOpen={false}
+          badge={catalogCodes.items.length}
+        >
+          <FilterOptionList maxHeight="200px">
+            {catalogCodes.items.slice(0, 10).map((item) => {
+              const isSelected = searchParams.getAll("catalog_code").includes(item.code);
+              return (
+                <FilterCheckboxOption
+                  key={item.code}
+                  label={item.code}
+                  count={item.count}
+                  checked={isSelected}
+                  onCheckedChange={() => toggleMultiValueFilter("catalog_code", item.code)}
+                  disabled={loading}
+                />
+              );
+            })}
+          </FilterOptionList>
+        </FilterCollapsibleSection>
+      )}
 
-          {/* Equipment Codes */}
-          {hasEquipmentCodes && (
-            <CollapsibleSection
-              title="Equipment Codes"
-              defaultOpen={false}
-              badge={equipmentCodes.items.length}
-            >
-              <div className="px-3 pb-3 space-y-1 max-h-40 overflow-y-auto">
-                {equipmentCodes.items.slice(0, 10).map((item) => {
-                  const isSelected = searchParams.getAll("equipment_code").includes(item.code);
-                  return (
-                    <label
-                      key={item.code}
-                      className="flex items-center gap-2 py-1 cursor-pointer"
-                    >
-                      <Checkbox
-                        checked={isSelected}
-                        onCheckedChange={() => toggleMultiValueFilter("equipment_code", item.code)}
-                        disabled={loading}
-                      />
-                      <span className="text-sm truncate flex-1">{item.code}</span>
-                      <span className="text-xs text-muted-foreground">
-                        {item.count}
-                      </span>
-                    </label>
-                  );
-                })}
-              </div>
-            </CollapsibleSection>
-          )}
+      {/* Equipment Codes */}
+      {hasEquipmentCodes && (
+        <FilterCollapsibleSection
+          title="Equipment Codes"
+          defaultOpen={false}
+          badge={equipmentCodes.items.length}
+        >
+          <FilterOptionList maxHeight="200px">
+            {equipmentCodes.items.slice(0, 10).map((item) => {
+              const isSelected = searchParams.getAll("equipment_code").includes(item.code);
+              return (
+                <FilterCheckboxOption
+                  key={item.code}
+                  label={item.code}
+                  count={item.count}
+                  checked={isSelected}
+                  onCheckedChange={() => toggleMultiValueFilter("equipment_code", item.code)}
+                  disabled={loading}
+                />
+              );
+            })}
+          </FilterOptionList>
+        </FilterCollapsibleSection>
+      )}
 
-          {/* Loading skeleton */}
-          {loading && (
-            <div className="px-3 py-4 space-y-3">
-              <Skeleton className="h-4 w-24" />
-              <Skeleton className="h-8 w-full" />
-              <Skeleton className="h-8 w-full" />
-              <Skeleton className="h-8 w-full" />
-            </div>
-          )}
+      {/* Loading skeleton */}
+      {loading && (
+        <div className="space-y-3 mt-4">
+          <Skeleton className="h-4 w-24" />
+          <Skeleton className="h-8 w-full" />
+          <Skeleton className="h-8 w-full" />
+          <Skeleton className="h-8 w-full" />
         </div>
-      </div>
-    </aside>
+      )}
+    </FilterSidebar>
   );
 }

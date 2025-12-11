@@ -62,7 +62,7 @@ interface CategoryPageInteractivityProps {
 export function CategoryPageInteractivity({
   initialFilters,
   total,
-  categoryPath: _categoryPath, // Reserved for future use
+  categoryPath,
   smartFilters,
   currentCategoryPath,
   categoryName = "Category",
@@ -76,6 +76,9 @@ export function CategoryPageInteractivity({
 
   // Extract locale from pathname (first segment)
   const locale = pathname.split("/")[1] || "en";
+  
+  // Get current category ID (last one in the path)
+  const currentCategoryId = categoryPath.ids.categoryIds[categoryPath.ids.categoryIds.length - 1] ?? undefined;
 
   // Show/hide blocking loader when transition state changes
   useEffect(() => {
@@ -185,7 +188,7 @@ export function CategoryPageInteractivity({
       {/* Main Layout - Filters and Products Side by Side */}
       <div className="flex gap-4">
         {/* Filters Sidebar - Desktop and Mobile */}
-        {smartFilters && <SmartFilterSection filterData={smartFilters} />}
+        {smartFilters && <SmartFilterSection filterData={smartFilters} currentCategoryId={currentCategoryId} />}
 
         {/* Main Content */}
         <main id="page-main" className="flex-1 min-w-0 relative">

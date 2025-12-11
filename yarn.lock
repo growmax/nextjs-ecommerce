@@ -10676,12 +10676,12 @@ __metadata:
   languageName: node
   linkType: hard
 
-"lucide-react@npm:^0.552.0":
-  version: 0.552.0
-  resolution: "lucide-react@npm:0.552.0"
+"lucide-react@npm:^0.560.0":
+  version: 0.560.0
+  resolution: "lucide-react@npm:0.560.0"
   peerDependencies:
     react: ^16.5.1 || ^17.0.0 || ^18.0.0 || ^19.0.0
-  checksum: 10c0/60ab9ab6f422360344fb5364f7305f2a2f2a81a72fd4e59ed2376a903ea89d9d152288044638e8b144f2fbaa9c1325ba9a18724632d23265470a55419a01d55d
+  checksum: 10c0/1dc1fb09a91816ed4211a6f000903c18763ebf8c1cede0aac00433f068e50e548e9c36e56e99fec68f40df4c808ff7ae0f5c375a9c8d312e2bace6157128136e
   languageName: node
   linkType: hard
 
@@ -11116,7 +11116,7 @@ __metadata:
     libphonenumber-js: "npm:^1.12.27"
     lint-staged: "npm:^16.1.6"
     lodash: "npm:^4.17.21"
-    lucide-react: "npm:^0.552.0"
+    lucide-react: "npm:^0.560.0"
     next: "npm:^15.5.3"
     next-intl: "npm:^4.3.7"
     next-themes: "npm:^0.4.6"
