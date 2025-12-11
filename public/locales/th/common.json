@@ -263,7 +263,7 @@
     "editQuote": "แก้ไขใบเสนอราคา",
     "editQuoteButton": "แก้ไขใบเสนอราคา",
     "placeOrderButton": "สั่งซื้อ",
-    "quoteDetailsRefreshed": "รีเฟรชรายละเอียดใบเสนอราคาสำเร็จแล้ว",
+
     "failedToRefreshQuoteDetails": "รีเฟรชรายละเอียดใบเสนอราคาไม่สำเร็จ",
     "failedToFetchQuoteDetails": "ดึงข้อมูลรายละเอียดใบเสนอราคาไม่สำเร็จ",
     "quoteDetailsNotLoaded": "ไม่ได้โหลดรายละเอียดใบเสนอราคา",

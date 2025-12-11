@@ -263,7 +263,7 @@
     "editQuote": "Chỉnh sửa báo giá",
     "editQuoteButton": "CHỈNH SỬA BÁO GIÁ",
     "placeOrderButton": "ĐẶT HÀNG",
-    "quoteDetailsRefreshed": "Đã làm mới chi tiết báo giá thành công",
+ 
     "failedToRefreshQuoteDetails": "Không thể làm mới chi tiết báo giá",
     "failedToFetchQuoteDetails": "Không thể tải chi tiết báo giá",
     "quoteDetailsNotLoaded": "Chưa tải chi tiết báo giá",

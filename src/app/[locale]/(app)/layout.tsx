@@ -9,7 +9,7 @@ import { LoadingProvider } from "@/hooks/useGlobalLoader";
 import { NextIntlClientProvider } from "next-intl";
 import { getMessages } from "next-intl/server";
 import { headers } from "next/headers";
-import { cache, ReactNode, Suspense } from "react";
+import { cache, ReactNode } from "react";
 
 // Import the AppHeader component
 import LayoutWithHeader from "@/components/LayoutWithHeader";
@@ -49,24 +49,24 @@ const getCachedMessages = cache(async (locale: string) => {
  * No translations needed here - just visual feedback for instant navigation
  * Performance: Renders in <100ms, provides instant visual feedback
  */
-function MinimalLoadingFallback() {
-  return (
-    <div className="min-h-screen bg-background">
-      <div className="flex">
-        {/* Sidebar placeholder */}
-        <div className="w-64 border-r bg-muted/30 animate-pulse" />
+// function MinimalLoadingFallback() {
+//   return (
+//     <div className="min-h-screen bg-background">
+//       <div className="flex">
+//         {/* Sidebar placeholder */}
+//         <div className="w-64 border-r bg-muted/30 animate-pulse" />
 
-        {/* Content area with skeleton */}
-        <div className="flex-1 p-6">
-          <div className="space-y-4">
-            <div className="h-8 w-48 bg-muted animate-pulse rounded" />
-            <div className="h-96 w-full bg-muted animate-pulse rounded" />
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-}
+//         {/* Content area with skeleton */}
+//         <div className="flex-1 p-6">
+//           <div className="space-y-4">
+//             <div className="h-8 w-48 bg-muted animate-pulse rounded" />
+//             <div className="h-96 w-full bg-muted animate-pulse rounded" />
+//           </div>
+//         </div>
+//       </div>
+//     </div>
+//   );
+// }
 
 /**
  * Layout Content - Renders with full messages and all providers
@@ -143,9 +143,10 @@ async function LayoutContent({ children }: { children: ReactNode }) {
  */
 export default function AppLayout({ children }: { children: React.ReactNode }) {
   return (
-    <Suspense fallback={<MinimalLoadingFallback />}>
-      <LayoutContent>{children}</LayoutContent>
-    </Suspense>
+    <>
+    <LayoutContent>{children}</LayoutContent>
+    </>
+  
   );
 }
 

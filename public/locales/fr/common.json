@@ -263,7 +263,7 @@
     "editQuote": "Modifier le Devis",
     "editQuoteButton": "MODIFIER LE DEVIS",
     "placeOrderButton": "PASSER COMMANDE",
-    "quoteDetailsRefreshed": "Détails du devis actualisés avec succès",
+   
     "failedToRefreshQuoteDetails": "Échec de l'actualisation des détails du devis",
     "failedToFetchQuoteDetails": "Échec de la récupération des détails du devis",
     "quoteDetailsNotLoaded": "Détails du devis non chargés",

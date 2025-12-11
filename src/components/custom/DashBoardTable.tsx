@@ -4,7 +4,6 @@ import { useTranslations } from "next-intl";
 import React from "react";
 
 import {
-  Cell,
   ColumnDef,
   ColumnResizeMode,
   Header,
@@ -12,7 +11,7 @@ import {
   Row,
   flexRender,
   getCoreRowModel,
-  useReactTable,
+  useReactTable
 } from "@tanstack/react-table";
 
 import {
@@ -25,6 +24,7 @@ import {
 } from "@/components/ui/table";
 import { cn } from "@/lib/utils";
 import { Button } from "../ui/button";
+import { Skeleton } from "../ui/skeleton";
 
 type TablePagination = {
   pageIndex: number;
@@ -104,7 +104,7 @@ const DashboardTable = <T,>({
         )}
       >
         {/* Loading overlay - covers table content for both initial load and filter changes */}
-        {loading && (
+        {/* {loading && (
           <div className="absolute inset-0 bg-background/80 backdrop-blur-sm z-30 flex items-center justify-center">
             <div
               className="bg-background border shadow-lg p-6 flex flex-col items-center gap-4"
@@ -118,7 +118,7 @@ const DashboardTable = <T,>({
               <p className="text-sm text-muted-foreground">{t("loading")}</p>
             </div>
           </div>
-        )}
+        )} */}
         <Table className="min-w-full table-auto">
           <TableHeader
             className="bg-muted sticky top-0 z-30"
@@ -196,81 +196,99 @@ const DashboardTable = <T,>({
             ))}
           </TableHeader>
           <TableBody>
-            {table.getRowModel().rows.length > 0 ? (
-              table.getRowModel().rows.map((row: Row<T>, _index: number) => (
-                <TableRow
-                  key={row.id}
-                  className={cn(
-                    "group hover:bg-muted cursor-pointer",
-                    _index === table.getRowModel().rows.length - 1 &&
-                      "max-md:border-b-0"
-                  )}
-                  onClick={() => onRowClick?.(row.original)}
-                  onMouseEnter={() => onRowHover?.(row.original)}
-                >
-                  {row
-                    .getVisibleCells()
-                    .map((cell: Cell<T, unknown>, index: number) => {
-                      const isSticky =
-                        (cell.column.columnDef.meta as { sticky?: boolean })
-                          ?.sticky === true;
-                      const alignCenter =
-                        (
-                          cell.column.columnDef.meta as {
-                            alignCenter?: boolean;
-                          }
-                        )?.alignCenter === true;
-                      const alignRight =
-                        (cell.column.columnDef.meta as { alignRight?: boolean })
-                          ?.alignRight === true;
-                      const isLastColumn =
-                        index === row.getVisibleCells().length - 1;
-                      return (
-                        <TableCell
-                          key={cell.id}
-                          className={cn(
-                            "px-1 py-0.25 text-xs sm:text-sm align-middle",
-                            alignCenter
-                              ? "text-center"
-                              : alignRight
-                                ? "text-right"
-                                : "text-left",
-                            isSticky &&
-                              "sticky left-0 z-20 bg-muted border-r border-border group-hover:bg-muted",
-                            !isLastColumn && "border-r border-border",
-                            index === 0 && "max-md:pl-0",
-                            isLastColumn && "max-md:pr-0"
-                          )}
-                          style={{
-                            width: cell.column.getSize(),
-                            maxWidth: cell.column.getSize(),
-                            minWidth: cell.column.getSize(),
-                            wordBreak: "break-word",
-                            lineHeight: "1",
-                            overflow: "hidden",
-                            whiteSpace: "normal",
-                          }}
-                        >
-                          {flexRender(
-                            cell.column.columnDef.cell,
-                            cell.getContext()
-                          )}
-                        </TableCell>
-                      );
-                    })}
-                </TableRow>
-              ))
-            ) : (
-              <TableRow>
-                <TableCell
-                  colSpan={columns.length}
-                  className="text-center py-4 text-xs sm:text-sm text-muted-foreground"
-                >
-                  {t("noDataAvailable")}
-                </TableCell>
-              </TableRow>
-            )}
-          </TableBody>
+  {loading ? (
+    Array.from({ length: rowPerPage }).map((_, index) => (
+      <TableRow key={`skeleton-${index}`} className="hover:bg-muted">
+        {columns.map((column, colIndex) => {
+          const isSticky = (column.meta as { sticky?: boolean })?.sticky;
+          const alignCenter = (column.meta as { alignCenter?: boolean })?.alignCenter;
+          const alignRight = (column.meta as { alignRight?: boolean })?.alignRight;
+          const isLastColumn = colIndex === columns.length - 1;
+
+          return (
+            <TableCell
+              key={`skeleton-cell-${index}-${colIndex}`}
+              className={cn(
+                "px-1 py-0.25 text-xs sm:text-sm align-middle",
+                alignCenter ? "text-center" : alignRight ? "text-right" : "text-left",
+                isSticky && "sticky left-0 z-20 bg-muted border-r border-border",
+                !isLastColumn && "border-r border-border",
+                colIndex === 0 && "max-md:pl-0",
+                isLastColumn && "max-md:pr-0"
+              )}
+              style={{
+                width: column.size || 150,
+                maxWidth: column.size || 150,
+                minWidth: column.size || 150,
+              }}
+            >
+              <Skeleton
+                className={cn(
+                  "h-4 bg-muted animate-pulse",
+                  alignCenter || alignRight ? "w-20 mx-auto" : "w-full max-w-[80%]"
+                )}
+              />
+            </TableCell>
+          );
+        })}
+      </TableRow>
+    ))
+  ) : table.getRowModel().rows.length > 0 ? (
+    table.getRowModel().rows.map((row: Row<T>, _index: number) => (
+      <TableRow
+        key={row.id}
+        className={cn(
+          "group hover:bg-muted cursor-pointer",
+          _index === table.getRowModel().rows.length - 1 && "max-md:border-b-0"
+        )}
+        onClick={() => onRowClick?.(row.original)}
+        onMouseEnter={() => onRowHover?.(row.original)}
+      >
+        {row.getVisibleCells().map((cell, index) => {
+          const isSticky = (cell.column.columnDef.meta as { sticky?: boolean })?.sticky;
+          const alignCenter = (cell.column.columnDef.meta as { alignCenter?: boolean })?.alignCenter;
+          const alignRight = (cell.column.columnDef.meta as { alignRight?: boolean })?.alignRight;
+          const isLastColumn = index === row.getVisibleCells().length - 1;
+
+          return (
+            <TableCell
+              key={cell.id}
+              className={cn(
+                "px-1 py-0.25 text-xs sm:text-sm align-middle",
+                alignCenter ? "text-center" : alignRight ? "text-right" : "text-left",
+                isSticky && "sticky left-0 z-20 bg-muted border-r border-border group-hover:bg-muted",
+                !isLastColumn && "border-r border-border",
+                index === 0 && "max-md:pl-0",
+                isLastColumn && "max-md:pr-0"
+              )}
+              style={{
+                width: cell.column.getSize(),
+                maxWidth: cell.column.getSize(),
+                minWidth: cell.column.getSize(),
+                wordBreak: "break-word",
+                lineHeight: "1",
+                overflow: "hidden",
+                whiteSpace: "normal",
+              }}
+            >
+              {flexRender(cell.column.columnDef.cell, cell.getContext())}
+            </TableCell>
+          );
+        })}
+      </TableRow>
+    ))
+  ) : (
+    <TableRow>
+      <TableCell
+        colSpan={columns.length}
+        className="text-center py-4 text-xs sm:text-sm text-muted-foreground"
+      >
+        {t("noDataAvailable")}
+      </TableCell>
+    </TableRow>
+  )}
+</TableBody>
+
         </Table>
       </div>
       <div className="flex items-center justify-between px-4 py-2 border-t bg-background rounded-b-lg max-md:px-0 max-md:mt-0">

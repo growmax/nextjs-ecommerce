@@ -1083,7 +1083,33 @@ function QuotesLandingTable({
               <>
                 {/* Desktop Skeleton */}
                 <div className="hidden md:block">
-              <TableSkeleton rows={rowPerPage} />
+                <DashboardTable
+                data={[]}
+                columns={columns}
+                loading={true}
+                totalDataCount={totalCount}
+                pagination={pagination}
+                setPagination={handlePaginationChange}
+                setPage={setPage}
+                pageOptions={[20, 50, 75, 100]}
+                handlePrevious={handlePrevious}
+                handleNext={handleNext}
+                page={page}
+                rowPerPage={rowPerPage}
+                setRowPerPage={value => {
+                  const newValue =
+                    typeof value === "string" ? parseInt(value, 10) : value;
+                  setRowPerPage(newValue);
+                  setPage(0);
+                }}
+                onRowClick={row => {
+                  const quoteId = row.quotationIdentifier;
+                  if (quoteId) {
+                    router.push(`/details/quoteDetails/${quoteId}`);
+                  }
+                }}
+                    tableHeight="h-[calc(103vh-180px)]"
+                  />
                 </div>
                 {/* Mobile Skeleton */}
                 <div className="md:hidden">

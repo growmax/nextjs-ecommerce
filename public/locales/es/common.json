@@ -263,7 +263,7 @@
     "editQuote": "Editar Cotización",
     "editQuoteButton": "EDITAR COTIZACIÓN",
     "placeOrderButton": "REALIZAR PEDIDO",
-    "quoteDetailsRefreshed": "Detalles de cotización actualizados exitosamente",
+   
     "failedToRefreshQuoteDetails": "Error al actualizar detalles de cotización",
     "failedToFetchQuoteDetails": "Error al obtener detalles de cotización",
     "quoteDetailsNotLoaded": "Detalles de cotización no cargados",

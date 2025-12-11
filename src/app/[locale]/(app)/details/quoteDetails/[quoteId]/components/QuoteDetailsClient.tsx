@@ -316,7 +316,7 @@ export default function QuoteDetailsClient({
         quotationIdentifier: quoteIdentifier,
       });
       setQuoteDetails(response);
-      toast.success(t("quoteDetailsRefreshed"));
+     
     } catch (err) {
       const errorMessage =
         err instanceof Error ? err.message : t("failedToRefreshQuoteDetails");

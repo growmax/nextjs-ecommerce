@@ -263,7 +263,7 @@
     "editQuote": "Edit Penawaran",
     "editQuoteButton": "EDIT PENAWARAN",
     "placeOrderButton": "BUAT PESANAN",
-    "quoteDetailsRefreshed": "Detail penawaran berhasil diperbarui",
+  
     "failedToRefreshQuoteDetails": "Gagal memperbarui detail penawaran",
     "failedToFetchQuoteDetails": "Gagal mengambil detail penawaran",
     "quoteDetailsNotLoaded": "Detail penawaran tidak dimuat",

@@ -21,9 +21,28 @@ import { useEffect } from "react";
 import { useFormContext } from "react-hook-form";
 import { toast } from "sonner";
 
+// Helper hook to safely use FormContext
+function useFormContextSafe() {
+  try {
+    return useFormContext();
+  } catch {
+    return null;
+  }
+}
+
 interface SPRFormProps {
   isContentPage?: boolean;
   isSummaryPage?: boolean;
+  // Optional props for when FormProvider is not available (fallback mode)
+  sellerCompanyId?: number;
+  customerName?: string;
+  projectName?: string;
+  competitors?: string[];
+  priceJustification?: string;
+  onCustomerNameChange?: (value: string) => void;
+  onProjectNameChange?: (value: string) => void;
+  onCompetitorsChange?: (value: string[]) => void;
+  onPriceJustificationChange?: (value: string) => void;
 }
 
 /**
@@ -32,26 +51,45 @@ interface SPRFormProps {
  * 
  * Displays Customer Information fields (End Customer Name, Project Name, Competitors, Price Justification)
  * when SPR (Special Price Request) is enabled
+ * 
+ * Supports two modes:
+ * 1. FormProvider mode (for QuoteSummary): Uses react-hook-form context
+ * 2. Props mode (for QuoteEdit): Uses direct props when FormProvider is not available
+ * 
+ * Auto-detects read-only vs editable:
+ * - If values exist and isContentPage=true: Read-only display
+ * - If values don't exist or isContentPage=false: Editable inputs
  */
 export default function SPRForm({
   isContentPage = false,
   isSummaryPage = true,
+  // Props mode fallback
+  sellerCompanyId: propSellerCompanyId,
+  customerName: propCustomerName,
+  projectName: propProjectName,
+  competitors: propCompetitors,
+  priceJustification: propPriceJustification,
+  onCustomerNameChange,
+  onProjectNameChange,
+  onCompetitorsChange,
+  onPriceJustificationChange,
 }: SPRFormProps) {
   useModuleSettings();
-  const {
-    getValues,
-    register,
-    setValue,
-    watch,
-    trigger,
-    formState: { errors },
-  } = useFormContext();
+  
+  // Try to use FormContext, fallback to null if not available
+  const formContext = useFormContextSafe();
+  const useFormContextMode = formContext !== null;
+  
+  // Get form methods - use formContext if available, otherwise use fallback
+  const register = useFormContextMode && formContext ? formContext.register : () => ({});
+  const errors = useFormContextMode && formContext ? formContext.formState.errors : {};
 
   const searchParams = useSearchParams();
-  const sellerCompanyId = searchParams?.get("sellerId");
+  const sellerCompanyIdFromUrl = searchParams?.get("sellerId");
+  const sellerCompanyId = propSellerCompanyId || (sellerCompanyIdFromUrl ? Number(sellerCompanyIdFromUrl) : undefined);
 
   const { competitors, competitorsLoading } = useGetManufacturerCompetitors(
-    sellerCompanyId || undefined,
+    sellerCompanyId,
     !!sellerCompanyId
   );
 
@@ -64,21 +102,52 @@ export default function SPRForm({
   }, [competitors]);
 
 
-  const isSPR = getValues(
-    isSummaryPage ? "sprDetails.spr" : "quotationDetails.0.sprDetails.spr"
-  );
+  // Get SPR details - from form context or props
+  let sprDetailsFromForm: any = null;
+  if (useFormContextMode && formContext) {
+    sprDetailsFromForm = formContext.watch(
+      isSummaryPage ? "sprDetails" : "quotationDetails.0.sprDetails"
+    );
+  }
 
-  const sprDetails = watch(
-    isSummaryPage ? "sprDetails" : "quotationDetails.0.sprDetails"
-  );
+  const sprDetailsFromProps = useFormContextMode
+    ? null
+    : {
+        companyName: propCustomerName || "",
+        projectName: propProjectName || "",
+        competitorNames: propCompetitors || [],
+        priceJustification: propPriceJustification || "",
+        spr: false, // Not used in props mode
+      };
 
-  // Set up SPR checkbox value to trigger validation
+  const sprDetails = sprDetailsFromForm || sprDetailsFromProps || {};
+
+  // Check if SPR is enabled (only in form context mode)
+  let isSPR = false;
+  if (useFormContextMode && formContext) {
+    isSPR = formContext.getValues(
+      isSummaryPage ? "sprDetails.spr" : "quotationDetails.0.sprDetails.spr"
+    ) || false;
+  }
+
+  // Auto-detect if we should show read-only: if values exist and isContentPage is true
+  const hasValues =
+    sprDetails?.companyName ||
+    sprDetails?.projectName ||
+    (Array.isArray(sprDetails?.competitorNames) &&
+      sprDetails.competitorNames.length > 0) ||
+    sprDetails?.priceJustification;
+
+  // Determine if should be read-only: isContentPage=true AND values exist
+  const shouldBeReadOnly = isContentPage && hasValues;
+
+  // Set up SPR checkbox value to trigger validation (only in form context mode)
   useEffect(() => {
-    if (isSummaryPage) {
-      setValue("sprDetails.spr", isSPR || false);
+    if (useFormContextMode && isSummaryPage && formContext) {
+      formContext.setValue("sprDetails.spr", isSPR || false);
       // Trigger validation when SPR status changes
       if (isSPR) {
-        trigger("sprDetails");
+        formContext.trigger("sprDetails");
         // Also ensure required fields are marked
         const fieldNames = [
           "sprDetails.companyName",
@@ -86,10 +155,10 @@ export default function SPRForm({
           "sprDetails.competitorNames",
           "sprDetails.priceJustification",
         ];
-        fieldNames.forEach((field) => trigger(field));
+        fieldNames.forEach((field) => formContext.trigger(field));
       }
     }
-  }, [isSPR, isSummaryPage, setValue, trigger]);
+  }, [isSPR, isSummaryPage, useFormContextMode, formContext]);
 
   // Handle field changes with XSS validation
   const handleFieldChange = async (
@@ -106,8 +175,21 @@ export default function SPRForm({
       return;
     }
 
-    setValue(fieldName as any, value);
-    await trigger(fieldName as any);
+    if (useFormContextMode && formContext) {
+      formContext.setValue(fieldName as any, value);
+      await formContext.trigger(fieldName as any);
+    } else {
+      // Props mode - call the appropriate callback
+      if (fieldName.includes("companyName")) {
+        onCustomerNameChange?.(value as string);
+      } else if (fieldName.includes("projectName")) {
+        onProjectNameChange?.(value as string);
+      } else if (fieldName.includes("competitorNames")) {
+        onCompetitorsChange?.(value as string[]);
+      } else if (fieldName.includes("priceJustification")) {
+        onPriceJustificationChange?.(value as string);
+      }
+    }
   };
 
   // Handle competitor selection
@@ -152,7 +234,7 @@ export default function SPRForm({
       </CardHeader>
       <CardContent className="px-0 py-0" id="sprDetails">
         {/* End Customer Name */}
-        {isContentPage ? (
+        {shouldBeReadOnly ? (
           <div className="flex justify-between items-center py-2 px-4">
             <Label className="text-sm font-normal text-gray-900 w-1/2">
               End Customer Name
@@ -165,20 +247,26 @@ export default function SPRForm({
           <div className="py-2 px-4">
             <Input
               id="sprDetails.companyName"
-              {...register(
-                isSummaryPage
-                  ? "sprDetails.companyName"
-                  : "quotationDetails[0].sprDetails.companyName",
-                {
-                  onChange: async (ev) => {
-                    const value = ev.target.value;
-                    const fieldName = isSummaryPage
+              {...(useFormContextMode
+                ? register(
+                    isSummaryPage
                       ? "sprDetails.companyName"
-                      : "quotationDetails[0].sprDetails.companyName";
-                    await handleFieldChange(fieldName, value);
-                  },
-                }
-              )}
+                      : "quotationDetails[0].sprDetails.companyName",
+                    {
+                      onChange: async (ev: React.ChangeEvent<HTMLInputElement>) => {
+                        const value = ev.target.value;
+                        const fieldName = isSummaryPage
+                          ? "sprDetails.companyName"
+                          : "quotationDetails[0].sprDetails.companyName";
+                        await handleFieldChange(fieldName, value);
+                      },
+                    }
+                  )
+                : {
+                    value: sprDetails?.companyName || "",
+                    onChange: (e) =>
+                      handleFieldChange("companyName", e.target.value),
+                  })}
               placeholder="End Customer Name"
               required={isSPR}
               className={
@@ -194,7 +282,7 @@ export default function SPRForm({
         )}
 
         {/* Project Name */}
-        {isContentPage ? (
+        {shouldBeReadOnly ? (
           <div className="flex justify-between items-center py-2 px-4">
             <Label className="text-sm font-normal text-gray-900 w-1/2">
               Project Name
@@ -207,20 +295,26 @@ export default function SPRForm({
           <div className="py-2 px-4">
             <Input
               id="sprDetails.projectName"
-              {...register(
-                isSummaryPage
-                  ? "sprDetails.projectName"
-                  : "quotationDetails[0].sprDetails.projectName",
-                {
-                  onChange: async (ev) => {
-                    const value = ev.target.value;
-                    const fieldName = isSummaryPage
+              {...(useFormContextMode
+                ? register(
+                    isSummaryPage
                       ? "sprDetails.projectName"
-                      : "quotationDetails[0].sprDetails.projectName";
-                    await handleFieldChange(fieldName, value);
-                  },
-                }
-              )}
+                      : "quotationDetails[0].sprDetails.projectName",
+                    {
+                      onChange: async (ev: React.ChangeEvent<HTMLInputElement>) => {
+                        const value = ev.target.value;
+                        const fieldName = isSummaryPage
+                          ? "sprDetails.projectName"
+                          : "quotationDetails[0].sprDetails.projectName";
+                        await handleFieldChange(fieldName, value);
+                      },
+                    }
+                  )
+                : {
+                    value: sprDetails?.projectName || "",
+                    onChange: (e) =>
+                      handleFieldChange("projectName", e.target.value),
+                  })}
               placeholder="Project Name"
               required={isSPR}
               className={
@@ -236,7 +330,7 @@ export default function SPRForm({
         )}
 
         {/* Competitors */}
-        {isContentPage ? (
+        {shouldBeReadOnly ? (
           <div className="flex justify-between items-center py-2 px-4">
             <Label className="text-sm font-normal text-gray-900 w-1/2">
               Competitors
@@ -325,7 +419,7 @@ export default function SPRForm({
         )}
 
         {/* Price Justification */}
-        {isContentPage ? (
+        {shouldBeReadOnly ? (
           <div className="flex justify-between items-center py-2 px-4">
             <Label className="text-sm font-normal text-gray-900 w-1/2">
               Price Justification
@@ -338,20 +432,26 @@ export default function SPRForm({
           <div className="py-2 px-4 pb-4">
             <Textarea
               id="sprDetails.priceJustification"
-              {...register(
-                isSummaryPage
-                  ? "sprDetails.priceJustification"
-                  : "quotationDetails[0].sprDetails.priceJustification",
-                {
-                  onChange: async (ev) => {
-                    const value = ev.target.value;
-                    const fieldName = isSummaryPage
+              {...(useFormContextMode
+                ? register(
+                    isSummaryPage
                       ? "sprDetails.priceJustification"
-                      : "quotationDetails[0].sprDetails.priceJustification";
-                    await handleFieldChange(fieldName, value);
-                  },
-                }
-              )}
+                      : "quotationDetails[0].sprDetails.priceJustification",
+                    {
+                      onChange: async (ev: React.ChangeEvent<HTMLTextAreaElement>) => {
+                        const value = ev.target.value;
+                        const fieldName = isSummaryPage
+                          ? "sprDetails.priceJustification"
+                          : "quotationDetails[0].sprDetails.priceJustification";
+                        await handleFieldChange(fieldName, value);
+                      },
+                    }
+                  )
+                : {
+                    value: sprDetails?.priceJustification || "",
+                    onChange: (e) =>
+                      handleFieldChange("priceJustification", e.target.value),
+                  })}
               placeholder="Price Justification"
               required={isSPR}
               rows={4}

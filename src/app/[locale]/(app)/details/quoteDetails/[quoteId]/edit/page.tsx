@@ -12,10 +12,10 @@ import {
   OrderProductsTable,
   OrderTermsCard,
   SalesHeader,
-  SPRForm,
 } from "@/components/sales";
 import CashDiscountCard from "@/components/sales/CashDiscountCard";
 import type { ProductSearchResult } from "@/components/sales/ProductSearchInput";
+import SPRForm from "@/components/summary/SPRForm";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -31,14 +31,15 @@ import useCheckVolumeDiscountEnabled from "@/hooks/useCheckVolumeDiscountEnabled
 import { useCurrentUser } from "@/hooks/useCurrentUser";
 import useGetLatestPaymentTerms from "@/hooks/useGetLatestPaymentTerms/useGetLatestPaymentTerms";
 import { useGetVersionDetails } from "@/hooks/useGetVersionDetails/useGetVersionDetails";
+import { useLoading } from "@/hooks/useGlobalLoader";
 import { useLatestOrderProducts } from "@/hooks/useLatestOrderProducts/useLatestOrderProducts";
 import useModuleSettings from "@/hooks/useModuleSettings";
 import { useOrderCalculation } from "@/hooks/useOrderCalculation/useOrderCalculation";
+import { usePageLoader } from "@/hooks/usePageLoader";
 import { usePageScroll } from "@/hooks/usePageScroll";
 import { useQuoteSubmission } from "@/hooks/useQuoteSubmission/useQuoteSubmission";
-import { useLoading } from "@/hooks/useGlobalLoader";
-import { usePageLoader } from "@/hooks/usePageLoader";
 
+import { useNavigationWithLoader } from "@/hooks/useNavigationWithLoader";
 import { useTenantData } from "@/hooks/useTenantData";
 import type { QuotationDetailsResponse } from "@/lib/api";
 import {
@@ -58,12 +59,11 @@ import type {
 } from "@/types/details/orderdetails/version.types";
 import { getStatusStyle } from "@/utils/details/orderdetails";
 import { decodeUnicode } from "@/utils/General/general";
+import getProductIds from "@/utils/getProductIds";
 import { prepareQuoteSubmissionDTO } from "@/utils/quote/quoteSubmissionDTO/quoteSubmissionDTO";
 import { isEmpty } from "lodash";
 import some from "lodash/some";
 import { useSearchParams } from "next/navigation";
-import { useNavigationWithLoader } from "@/hooks/useNavigationWithLoader";
-import getProductIds from "@/utils/getProductIds";
 
 // Import types for proper typing
 interface AddressDetails {
@@ -847,7 +847,7 @@ export default function EditQuotePage({ params }: EditQuotePageProps) {
         quotationIdentifier: quoteIdentifier,
       });
       setQuoteDetails(response);
-      toast.success(t("quoteDetailsRefreshed"));
+ 
     } catch {
       toast.error(t("failedToRefreshQuoteDetails"));
     } finally {
@@ -1884,6 +1884,8 @@ export default function EditQuotePage({ params }: EditQuotePageProps) {
                   />
 
                   <SPRForm
+                    isContentPage={false}
+                    isSummaryPage={false}
                     sellerCompanyId={
                       quoteDetails.data?.quotationDetails?.[0]
                         ?.sellerCompanyId as number

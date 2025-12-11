@@ -76,7 +76,7 @@ export default function OrderDetailsClient({
   const { user } = useCurrentUser();
   const { tenantData } = useTenantData();
   const { showLoading, hideLoading } = useLoading();
-
+  const [refreshLoading,setRefreshLoading]=useState(false);
   const preferences = getUserPreferences();
   const userId = user?.userId;
   const companyId = user?.companyId;
@@ -287,8 +287,8 @@ export default function OrderDetailsClient({
     if (!orderId || !user || !tenantData?.tenant) return;
 
     // Show loading progress bar (use same ID to prevent multiple loaders)
-    showLoading("Refreshing order details...", "order-details-page");
-
+    // showLoading("Refreshing order details...", "order-details-page");
+    setRefreshLoading(true);
     try {
       // Refetch all three queries in parallel using React Query
       await Promise.all([
@@ -297,14 +297,15 @@ export default function OrderDetailsClient({
         refetchPaymentDue(),
       ]);
     } finally {
+      setRefreshLoading(false)
       // Hide loading progress bar
-      hideLoading("order-details-page");
+      // hideLoading("order-details-page");
     }
   };
 
   const handleClose = () => {
     push("/landing/orderslanding");
-    push("/landing/orderslanding");
+    // push("/landing/orderslanding");
   };
 
   const handleEditQuote = () => {
@@ -587,7 +588,7 @@ export default function OrderDetailsClient({
       ];
 
   const lastDateToPay = getLastDateToPay(paymentDueData, preferences);
-
+  const isLoading = orderLoading || refreshLoading;
   return (
     <div className="flex flex-col h-full overflow-hidden bg-gray-50">
       {/* Sales Header - Fixed at top */}
@@ -616,7 +617,7 @@ export default function OrderDetailsClient({
         buttons={headerButtons}
         showEditIcon={true}
         showIdentifier={false}
-        loading={orderLoading}
+        loading={isLoading}
       />
 
       {/* Order Details Content - Scrollable area */}
@@ -628,7 +629,7 @@ export default function OrderDetailsClient({
               {/* Cancellation Card */}
               {cancelled &&
                 cancelMsg &&
-                !orderLoading &&
+                !isLoading &&
                 (orderDetails || displayOrderDetails) && (
                   <div className="bg-gray-50 rounded-lg p-3 sm:p-4 border border-gray-200 shadow-sm">
                     <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
@@ -690,7 +691,7 @@ export default function OrderDetailsClient({
                   })}
                   {...(paymentHistory && { paymentHistory })}
                   {...(lastDateToPay && { lastDateToPay })}
-                  loading={orderLoading}
+                  loading={isLoading}
                 />
               </div>
 
@@ -719,7 +720,7 @@ export default function OrderDetailsClient({
                   const filename = `Order_${orderId}_Products.csv`;
                   exportProductsToCsv(products as ProductCsvRow[], filename);
                 }}
-                loading={orderLoading}
+                loading={isLoading}
               />
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-2 sm:gap-3">
@@ -813,14 +814,14 @@ export default function OrderDetailsClient({
                       orderDetails?.data?.buyerReferenceNumber) as string) ||
                     "-"
                   }
-                  loading={orderLoading}
+                  loading={isLoading}
                 />
 
                 {/* Terms Card */}
                 <OrderTermsCard
                   orderTerms={
                     {
-                      loading: orderLoading,
+                      loading:isLoading,
                       ...(displayOrderDetails?.orderDetails?.[0]?.orderTerms ||
                         orderDetails?.data?.orderDetails?.[0]?.orderTerms ||
                         {}),
@@ -924,7 +925,7 @@ export default function OrderDetailsClient({
                       ),
                     }
                   : {})}
-                loading={orderLoading}
+                loading={isLoading}
               />
 
               {/* Attachments Card */}
@@ -1038,14 +1039,14 @@ export default function OrderDetailsClient({
         onOpenChange={setEditDialogOpen}
         currentOrderName={orderName || ""}
         onSave={handleSaveOrderName}
-        loading={orderLoading}
+        loading={isLoading}
       />
 
       <RequestEditDialog
         open={requestEditDialogOpen}
         onOpenChange={setRequestEditDialogOpen}
         onConfirm={handleConfirmRequestEdit}
-        loading={orderLoading}
+        loading={isLoading}
       />
 
       {/* Versions Dialog */}
@@ -1054,7 +1055,7 @@ export default function OrderDetailsClient({
         onOpenChange={setVersionsDialogOpen}
         versions={orderVersions}
         orderId={orderId}
-        loading={orderLoading || versionLoading}
+        loading={isLoading || versionLoading}
         currentVersionNumber={selectedVersion?.versionNumber || 1}
         onVersionSelect={handleVersionSelect}
       />
