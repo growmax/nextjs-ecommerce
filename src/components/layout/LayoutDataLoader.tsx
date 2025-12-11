@@ -39,7 +39,7 @@ async function LayoutDataContent({ children }: { children: ReactNode }) {
   // Fallback logic for missing headers (common on refresh/navigation)
   if (!tenantDomain) {
     if (host === "localhost:3000" || host === "localhost:3001") {
-      tenantDomain = process.env.DEFAULT_DOMAIN || "sandbox.myapptino.com";
+      tenantDomain = process.env.DEFAULT_DOMAIN || "growmax.myapptino.com";
     } else {
       tenantDomain = host.replace("www.", "");
     }

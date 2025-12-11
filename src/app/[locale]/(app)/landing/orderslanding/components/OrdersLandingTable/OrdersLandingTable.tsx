@@ -8,6 +8,8 @@ import { toast } from "sonner";
 import PricingFormat from "@/components/PricingFormat";
 import DashboardTable from "@/components/custom/DashBoardTable";
 import SideDrawer from "@/components/custom/sidedrawer";
+import { MobileLandingCards } from "@/components/landing/MobileLandingCards";
+import { OrderMobileCard } from "@/components/landing/OrderMobileCard";
 import FilterDrawer from "@/components/sales/FilterDrawer";
 import { QuoteFilterFormData } from "@/components/sales/QuoteFilterForm";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -43,6 +45,7 @@ const convertDateToString = (
 function OrdersLandingTable({
   setExportCallback,
   onTotalCountChange,
+  onLoadingChange,
 }: OrdersLandingTableProps) {
   // Use the page loader hook to ensure navigation spinner is hidden immediately
   usePageLoader();
@@ -750,6 +753,11 @@ function OrdersLandingTable({
 
   // Trigger fetch when filterData changes (only after initial load)
 
+  // Notify parent component of loading state changes
+  useEffect(() => {
+    onLoadingChange?.(loading);
+  }, [loading, onLoadingChange]);
+
   // Cleanup on unmount to prevent stuck loading states
   useEffect(() => {
     return () => {
@@ -847,39 +855,190 @@ function OrdersLandingTable({
             className="w-full overflow-x-auto scrollbar-thin-horizontal"
           >
             {loading ? (
-              <TableSkeleton rows={rowPerPage} />
+              <>
+                {/* Desktop Skeleton */}
+                <div className="hidden md:block">
+                  <TableSkeleton rows={rowPerPage} />
+                </div>
+                {/* Mobile Skeleton */}
+                <div className="md:hidden">
+                  <MobileLandingCards
+                    items={[]}
+                    loading={true}
+                    renderCard={() => null}
+                    skeletonCount={rowPerPage}
+                  />
+                  <div className="fixed bottom-0 left-0 right-0 bg-background border-t z-50 md:hidden">
+                    <div className="flex items-center justify-center px-4 py-3">
+                      {/* Pagination Controls */}
+                      <div className="flex items-center gap-2">
+                        <button
+                          disabled={true}
+                          className="px-3 py-2 text-xs border rounded-md disabled:opacity-50 disabled:cursor-not-allowed hover:bg-muted transition-colors min-h-[44px] flex items-center justify-center"
+                          aria-label="Previous page"
+                        >
+                          <svg
+                            xmlns="http://www.w3.org/2000/svg"
+                            width="16"
+                            height="16"
+                            viewBox="0 0 24 24"
+                            fill="none"
+                            stroke="currentColor"
+                            strokeWidth="2"
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                          >
+                            <path d="m15 18-6-6 6-6" />
+                          </svg>
+                        </button>
+                        <span className="text-xs text-muted-foreground px-2 min-w-[80px] text-center">
+                          <Skeleton className="h-4 w-16" />
+                        </span>
+                        <button
+                          disabled={true}
+                          className="px-3 py-2 text-xs border rounded-md disabled:opacity-50 disabled:cursor-not-allowed hover:bg-muted transition-colors min-h-[44px] flex items-center justify-center"
+                          aria-label="Next page"
+                        >
+                          <svg
+                            xmlns="http://www.w3.org/2000/svg"
+                            width="16"
+                            height="16"
+                            viewBox="0 0 24 24"
+                            fill="none"
+                            stroke="currentColor"
+                            strokeWidth="2"
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                          >
+                            <path d="m9 18 6-6-6-6" />
+                          </svg>
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </>
             ) : orders.length === 0 ? (
               <div className="flex items-center justify-center text-muted-foreground py-8">
                 {t("noOrders")}
               </div>
             ) : (
-              <DashboardTable
-                data={orders}
-                columns={columns}
-                loading={false}
-                totalDataCount={totalCount}
-                pagination={pagination}
-                setPagination={handlePaginationChange}
-                setPage={setPage}
-                pageOptions={[20, 50, 75, 100]}
-                handlePrevious={handlePrevious}
-                handleNext={handleNext}
-                page={page}
-                rowPerPage={rowPerPage}
-                setRowPerPage={value => {
-                  const newValue =
-                    typeof value === "string" ? parseInt(value, 10) : value;
-                  setRowPerPage(newValue);
-                  setPage(0);
-                }}
-                onRowClick={row => {
-                  const orderId = row.orderIdentifier;
-                  if (orderId) {
-                    router.push(`/details/orderDetails/${orderId}`);
-                  }
-                }}
-                tableHeight="h-[calc(103vh-180px)]"
-              />
+              <>
+                {/* Desktop Table */}
+                <div className="hidden md:block">
+                  <DashboardTable
+                    data={orders}
+                    columns={columns}
+                    loading={false}
+                    totalDataCount={totalCount}
+                    pagination={pagination}
+                    setPagination={handlePaginationChange}
+                    setPage={setPage}
+                    pageOptions={[20, 50, 75, 100]}
+                    handlePrevious={handlePrevious}
+                    handleNext={handleNext}
+                    page={page}
+                    rowPerPage={rowPerPage}
+                    setRowPerPage={value => {
+                      const newValue =
+                        typeof value === "string" ? parseInt(value, 10) : value;
+                      setRowPerPage(newValue);
+                      setPage(0);
+                    }}
+                    onRowClick={row => {
+                      const orderId = row.orderIdentifier;
+                      if (orderId) {
+                        router.push(`/details/orderDetails/${orderId}`);
+                      }
+                    }}
+                    tableHeight="h-[calc(103vh-180px)]"
+                  />
+                </div>
+                {/* Mobile Cards */}
+                <div className="md:hidden relative">
+                  {/* Scrollable Cards Area with bottom padding for fixed bar */}
+                  <div className="pb-20">
+                    <MobileLandingCards
+                      items={orders}
+                      loading={false}
+                      renderCard={(order) => (
+                        <OrderMobileCard
+                          order={order}
+                          onClick={() => {
+                            if (order.orderIdentifier) {
+                              router.push(
+                                `/details/orderDetails/${order.orderIdentifier}`
+                              );
+                            }
+                          }}
+                        />
+                      )}
+                      emptyMessage={t("noOrders")}
+                      skeletonCount={rowPerPage}
+                    />
+                  </div>
+                  
+                  {/* Fixed Bottom Bar with Pagination Only */}
+                  {totalCount > rowPerPage && (
+                    <div className="fixed bottom-0 left-0 right-0 bg-background border-t z-50 md:hidden">
+                      <div className="flex items-center justify-center px-4 py-3">
+                        {/* Pagination Controls */}
+                        <div className="flex items-center gap-2">
+                          <button
+                            onClick={() => {
+                              handlePrevious();
+                              window.scrollTo({ top: 0, behavior: "smooth" });
+                            }}
+                            disabled={page === 0}
+                            className="px-3 py-2 text-xs border rounded-md disabled:opacity-50 disabled:cursor-not-allowed hover:bg-muted transition-colors min-h-[44px] flex items-center justify-center"
+                            aria-label="Previous page"
+                          >
+                            <svg
+                              xmlns="http://www.w3.org/2000/svg"
+                              width="16"
+                              height="16"
+                              viewBox="0 0 24 24"
+                              fill="none"
+                              stroke="currentColor"
+                              strokeWidth="2"
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                            >
+                              <path d="m15 18-6-6 6-6" />
+                            </svg>
+                          </button>
+                          <span className="text-xs text-muted-foreground px-2 min-w-[80px] text-center">
+                            {page + 1} / {Math.ceil(totalCount / rowPerPage)}
+                          </span>
+                          <button
+                            onClick={() => {
+                              handleNext();
+                              window.scrollTo({ top: 0, behavior: "smooth" });
+                            }}
+                            disabled={(page + 1) * rowPerPage >= totalCount}
+                            className="px-3 py-2 text-xs border rounded-md disabled:opacity-50 disabled:cursor-not-allowed hover:bg-muted transition-colors min-h-[44px] flex items-center justify-center"
+                            aria-label="Next page"
+                          >
+                            <svg
+                              xmlns="http://www.w3.org/2000/svg"
+                              width="16"
+                              height="16"
+                              viewBox="0 0 24 24"
+                              fill="none"
+                              stroke="currentColor"
+                              strokeWidth="2"
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                            >
+                              <path d="m9 18 6-6-6-6" />
+                            </svg>
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </>
             )}
           </div>
         </div>
