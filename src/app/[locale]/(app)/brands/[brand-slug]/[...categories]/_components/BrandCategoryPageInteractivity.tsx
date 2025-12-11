@@ -1,19 +1,40 @@
 "use client";
 
-import { CategoryFilters } from "@/components/CategoryFilters/CategoryFilters";
-import { CategoryFiltersDrawer } from "@/components/CategoryFilters/CategoryFiltersDrawer";
 import { CategoryPagination } from "@/components/Pagination/CategoryPagination";
 import { ViewToggle } from "@/components/ProductList/ViewToggle";
 import { ProductListTopBar } from "@/components/ProductListTopBar";
 import { SortDropdown } from "@/components/Sort/SortDropdown";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ProductLoadingProvider } from "@/contexts/ProductLoadingContext";
+import { SmartFilterSection } from "@/features/smart-filters/components/SmartFilterSection";
+import type { BrandFilterOption as SmartBrandOption, SmartFilterResponse } from "@/features/smart-filters/types/smart-filter-response.types";
 import type { CategoryPath } from "@/lib/services/CategoryResolutionService";
 import { useBlockingLoader } from "@/providers/BlockingLoaderProvider";
-import type { FilterAggregations } from "@/types/category-filters";
-import { formatAllAggregations } from "@/utils/format-aggregations";
+import type { BrandFilterOption } from "@/types/category-filters";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useCallback, useEffect, useMemo, useTransition } from "react";
+
+/**
+ * Map smart filter brand items to the legacy BrandFilterOption format
+ * used by ProductListTopBar and TrendingBrands components
+ */
+function mapToLegacyBrandOptions(
+  brands: SmartBrandOption[],
+  locale: string,
+  categoryPath: string[]
+): BrandFilterOption[] {
+  return brands.map((brand) => ({
+    label: brand.name,
+    value: brand.slug,
+    count: brand.count,
+    selected: brand.isSelected ?? false,
+    brandName: brand.slug,
+    // Build navigation path: /locale/brands/brand-slug/category-path
+    navigationPath: categoryPath.length > 0
+      ? `/${locale}/brands/${brand.slug}/${categoryPath.join("/")}`
+      : `/${locale}/brands/${brand.slug}`,
+  }));
+}
 
 interface BrandCategoryPageInteractivityProps {
   initialFilters: {
@@ -21,7 +42,7 @@ interface BrandCategoryPageInteractivityProps {
     sort: number;
   };
   total: number;
-  aggregations?: FilterAggregations | null;
+  smartFilters?: SmartFilterResponse | null;
   brandName: string;
   currentCategoryPath: string[];
   categoryPath?: CategoryPath | null;
@@ -43,7 +64,7 @@ interface BrandCategoryPageInteractivityProps {
 export function BrandCategoryPageInteractivity({
   initialFilters,
   total,
-  aggregations = null,
+  smartFilters = null,
   brandName: _brandName,
   currentCategoryPath,
   categoryPath = null,
@@ -66,24 +87,6 @@ export function BrandCategoryPageInteractivity({
     }
   }, [isPending, showLoader, hideLoader]);
 
-  // Format aggregations for filter components
-  const formattedFilters = useMemo(() => {
-    // Use empty CategoryPath if categoryPath is null (for brand landing page)
-    const categoryPathForFormatting: CategoryPath = categoryPath || {
-      nodes: [],
-      ids: { categoryIds: [] },
-      slugs: [],
-      fullPath: "",
-    };
-
-    return formatAllAggregations(
-      aggregations,
-      categoryPathForFormatting,
-      currentCategoryPath,
-      _brandName
-    );
-  }, [aggregations, categoryPath, currentCategoryPath, _brandName]);
-
   // Parse current filters from URL
   const currentFilters = useMemo(
     () => ({
@@ -98,6 +101,16 @@ export function BrandCategoryPageInteractivity({
     }),
     [searchParams, initialFilters.page, initialFilters.sort]
   );
+
+  // Map smart filter brands to legacy format for ProductListTopBar
+  const legacyBrands = useMemo(() => {
+    if (!smartFilters?.filters.brands.items) return [];
+    return mapToLegacyBrandOptions(
+      smartFilters.filters.brands.items,
+      locale,
+      currentCategoryPath
+    );
+  }, [smartFilters?.filters.brands.items, locale, currentCategoryPath]);
 
   /**
    * Update URL without page reload
@@ -172,27 +185,17 @@ export function BrandCategoryPageInteractivity({
 
       {/* Main Layout - Filters and Products Side by Side */}
       <div className="flex gap-4">
-        {/* Filters Sidebar - Desktop */}
-        <aside className="hidden lg:block w-64 shrink-0">
-          <CategoryFilters
-            brands={formattedFilters.brands}
-            childCategories={formattedFilters.childCategories}
-            siblingCategories={formattedFilters.siblingCategories}
-            currentCategoryPath={currentCategoryPath}
-            variantAttributeGroups={formattedFilters.variantAttributeGroups}
-            productSpecificationGroups={
-              formattedFilters.productSpecificationGroups
-            }
-            catalogCodes={formattedFilters.catalogCodes}
-            equipmentCodes={formattedFilters.equipmentCodes}
-            isLoading={!aggregations}
+        {/* Filters Sidebar - Desktop and Mobile */}
+        {smartFilters && (
+          <SmartFilterSection 
+            filterData={smartFilters}
             brandRemovalPath={
               categoryPath && categoryPath.slugs && categoryPath.slugs.length > 0
                 ? `/${locale}/${categoryPath.slugs.join("/")}`
                 : `/${locale}/brands/all`
             }
           />
-        </aside>
+        )}
 
         {/* Main Content */}
         <main id="page-main" className="flex-1 min-w-0 relative">
@@ -201,7 +204,7 @@ export function BrandCategoryPageInteractivity({
             {/* Product List Top Bar - Switches between Trending Brands and Active Filters */}
             <div className="flex-1 min-w-0">
               <ProductListTopBar
-                brands={formattedFilters.brands}
+                brands={legacyBrands}
                 selectedBrands={[]}
                 onBrandClick={() => {}}
                 isBrandPage={true}
@@ -223,28 +226,6 @@ export function BrandCategoryPageInteractivity({
                 disabled={isLoading}
               />
             </div>
-          </div>
-
-          {/* Mobile Filter Drawer */}
-          <div className="lg:hidden mb-4">
-            <CategoryFiltersDrawer
-              brands={formattedFilters.brands}
-              childCategories={formattedFilters.childCategories}
-              siblingCategories={formattedFilters.siblingCategories}
-              currentCategoryPath={currentCategoryPath}
-              variantAttributeGroups={formattedFilters.variantAttributeGroups}
-              productSpecificationGroups={
-                formattedFilters.productSpecificationGroups
-              }
-              catalogCodes={formattedFilters.catalogCodes}
-              equipmentCodes={formattedFilters.equipmentCodes}
-              isLoading={!aggregations}
-              brandRemovalPath={
-                categoryPath && categoryPath.slugs && categoryPath.slugs.length > 0
-                  ? `/${locale}/${categoryPath.slugs.join("/")}`
-                  : `/${locale}/brands/all`
-              }
-            />
           </div>
 
           {/* Product Grid - Broadcast loading state via context */}

@@ -100,7 +100,7 @@ export function formatCategoriesAggregation(
 
   // Process each category bucket
   buckets.forEach((bucket: any) => {
-    const [categoryId, categoryName, categorySlug, categoryLevel] = extractBucketData(bucket);
+    const [categoryId, _categoryName, categorySlug, categoryLevel] = extractBucketData(bucket);
 
     // Skip current category
     if (categoryId === currentCategoryId) return;

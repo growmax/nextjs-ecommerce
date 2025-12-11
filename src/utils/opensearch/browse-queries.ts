@@ -13,6 +13,7 @@ export interface BrowseQueryOptions {
     sortByField?: string; // Field name for custom sorting (when sortBy is 4 or 5)
   };
   filters?: Record<string, string[]>; // Additional filters
+  brandName?: string; // Brand name for filtering
   catalogCodes?: string[]; // Catalog codes for filtering
   equipmentCodes?: string[]; // Equipment codes for filtering
   variantAttributes?: Record<string, string[]>; // Variant attribute filters { "Color": ["Red", "Blue"] }
@@ -363,6 +364,12 @@ export function buildCategoryQuery(
 
   const baseQuery = getBaseQuery();
   const categoryFilters = buildCategoryFilter(categoryIds);
+
+  // Apply brand filter if provided
+  const brandFilters = options.brandName
+    ? [buildBrandFilter(options.brandName)]
+    : [];
+
   const additionalFilters = buildAdditionalFilters(options.filters);
   const catalogFilters = buildCatalogFilters(
     options.catalogCodes,
@@ -386,6 +393,7 @@ export function buildCategoryQuery(
           must: [
             ...baseQuery.must,
             ...categoryFilters,
+            ...brandFilters,
             ...additionalFilters,
             ...catalogFilters,
             ...variantAttributeFilters,

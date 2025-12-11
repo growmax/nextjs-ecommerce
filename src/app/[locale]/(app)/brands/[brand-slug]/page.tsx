@@ -10,12 +10,10 @@ import SearchService, {
 } from "@/lib/api/services/SearchService/SearchService";
 import TenantService from "@/lib/api/services/TenantService";
 import BrandResolutionService from "@/lib/services/BrandResolutionService";
+import SmartFiltersPageAdapter from "@/lib/services/SmartFiltersPageAdapter";
 import { BlockingLoaderProvider } from "@/providers/BlockingLoaderProvider";
-import type { FilterAggregations } from "@/types/category-filters";
 import {
-  buildBrandFilter,
   buildBrandQuery,
-  getBaseQuery,
 } from "@/utils/opensearch/browse-queries";
 import { Package } from "lucide-react";
 import { Metadata } from "next";
@@ -225,33 +223,13 @@ export default async function BrandPage({ params, searchParams }: PageProps) {
   // Await products for total count (needed for pagination)
   const initialProducts = await productsPromise;
 
-  // Build base query for aggregations (with brand filter)
-  const baseQuery = getBaseQuery();
-  const brandFilter = buildBrandFilter(brand.name);
-  const baseQueryForAggs = {
-    must: [...baseQuery.must, brandFilter],
-    must_not: baseQuery.must_not,
-  };
-
-  // Fetch aggregations server-side for filters
-  let aggregations: FilterAggregations | null = null;
-  if (elasticIndex) {
-    try {
-      const aggregationResponse = await SearchService.getFilterAggregations(
-        elasticIndex,
-        baseQueryForAggs,
-        undefined, // No current filters on brand landing page
-        context
-      );
-
-      if (aggregationResponse.success) {
-        aggregations = aggregationResponse.aggregations as FilterAggregations;
-      }
-    } catch (error) {
-      console.error("Error fetching aggregations for brand page:", error);
-      // Continue without aggregations - filters will show loading state
-    }
-  }
+  // Fetch Smart Filters server-side
+  const smartFilters = await SmartFiltersPageAdapter.getFiltersForPageServerSide({
+    brandSlug,
+    searchParams: filters,
+    elasticIndex,
+    context,
+  });
 
   // Get breadcrumbs
   const breadcrumbs = BrandResolutionService.getBrandBreadcrumbs(
@@ -316,7 +294,7 @@ export default async function BrandPage({ params, searchParams }: PageProps) {
               sort: sortBy,
             }}
             total={initialProducts.total}
-            aggregations={aggregations}
+            smartFilters={smartFilters}
             brandName={brand.name}
             currentCategoryPath={[]}
             displayName={brand.name}

@@ -1,19 +1,40 @@
 "use client";
 
-import { CategoryFilters } from "@/components/CategoryFilters/CategoryFilters";
-import { CategoryFiltersDrawer } from "@/components/CategoryFilters/CategoryFiltersDrawer";
 import { CategoryPagination } from "@/components/Pagination/CategoryPagination";
 import { ViewToggle } from "@/components/ProductList/ViewToggle";
 import { ProductListTopBar } from "@/components/ProductListTopBar";
 import { SortDropdown } from "@/components/Sort/SortDropdown";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ProductLoadingProvider } from "@/contexts/ProductLoadingContext";
+import { SmartFilterSection } from "@/features/smart-filters/components/SmartFilterSection";
+import type { BrandFilterOption as SmartBrandOption, SmartFilterResponse } from "@/features/smart-filters/types/smart-filter-response.types";
 import type { CategoryPath } from "@/lib/services/CategoryResolutionService";
 import { useBlockingLoader } from "@/providers/BlockingLoaderProvider";
-import type { FilterAggregations } from "@/types/category-filters";
-import { formatAllAggregations } from "@/utils/format-aggregations";
+import type { BrandFilterOption } from "@/types/category-filters";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useCallback, useEffect, useMemo, useTransition } from "react";
+
+/**
+ * Map smart filter brand items to the legacy BrandFilterOption format
+ * used by ProductListTopBar and TrendingBrands components
+ */
+function mapToLegacyBrandOptions(
+  brands: SmartBrandOption[],
+  locale: string,
+  categoryPath: string[]
+): BrandFilterOption[] {
+  return brands.map((brand) => ({
+    label: brand.name,
+    value: brand.slug,
+    count: brand.count,
+    selected: brand.isSelected ?? false,
+    brandName: brand.slug,
+    // Build navigation path: /locale/brands/brand-slug/category-path
+    navigationPath: categoryPath.length > 0
+      ? `/${locale}/brands/${brand.slug}/${categoryPath.join("/")}`
+      : `/${locale}/brands/${brand.slug}`,
+  }));
+}
 
 interface CategoryPageInteractivityProps {
   initialFilters: {
@@ -22,7 +43,7 @@ interface CategoryPageInteractivityProps {
   };
   total: number;
   categoryPath: CategoryPath;
-  aggregations: FilterAggregations | null;
+  smartFilters: SmartFilterResponse | null;
   currentCategoryPath: string[];
   categoryName?: string;
   children?: React.ReactNode; // Product grid will be passed as children
@@ -41,8 +62,8 @@ interface CategoryPageInteractivityProps {
 export function CategoryPageInteractivity({
   initialFilters,
   total,
-  categoryPath,
-  aggregations,
+  categoryPath: _categoryPath, // Reserved for future use
+  smartFilters,
   currentCategoryPath,
   categoryName = "Category",
   children,
@@ -53,6 +74,9 @@ export function CategoryPageInteractivity({
   const [isPending, startTransition] = useTransition();
   const { showLoader, hideLoader } = useBlockingLoader();
 
+  // Extract locale from pathname (first segment)
+  const locale = pathname.split("/")[1] || "en";
+
   // Show/hide blocking loader when transition state changes
   useEffect(() => {
     if (isPending) {
@@ -61,62 +85,6 @@ export function CategoryPageInteractivity({
       hideLoader();
     }
   }, [isPending, showLoader, hideLoader]);
-
-  // Format aggregations for filter components
-  const formattedFilters = useMemo(() => {
-    // Extract current brand from pathname if on a brand page
-    // Pattern: /[locale]/brands/[brand-slug]/... or /brands/[brand-slug]/...
-    const pathSegments = pathname.split('/').filter(Boolean);
-    const brandIndex = pathSegments.indexOf('brands');
-    const currentBrand = brandIndex !== -1 && pathSegments[brandIndex + 1] 
-      ? pathSegments[brandIndex + 1] 
-      : undefined;
-
-    return formatAllAggregations(
-      aggregations, 
-      categoryPath, 
-      currentCategoryPath,
-      currentBrand
-    );
-  }, [aggregations, categoryPath, currentCategoryPath, pathname]);
-
-  // Compute brand removal path for unselect functionality
-  const brandRemovalPath = useMemo(() => {
-    const pathSegments = pathname.split('/').filter(Boolean);
-    const brandIndex = pathSegments.indexOf('brands');
-    
-    if (brandIndex === -1) {
-      // Not on a brand page
-      return undefined;
-    }
-
-    // Extract locale (first segment)
-    const locale = pathSegments[0];
-    
-    // Check if there's a category path after the brand
-    if (pathSegments.length > brandIndex + 2) {
-      // Brand + category page: navigate to category without brand
-      const categorySegments = pathSegments.slice(brandIndex + 2);
-      return `/${locale}/${categorySegments.join('/')}`;
-    } else {
-      // Brand landing page: navigate to all brands
-      return `/${locale}/brands/all`;
-    }
-  }, [pathname]);
-
-  if (process.env.NODE_ENV === "development") {
-    console.log("[CategoryPageInteractivity] Formatted filters:", {
-      brandsCount: formattedFilters.brands.length,
-      childCategoriesCount: formattedFilters.childCategories.length,
-      siblingCategoriesCount: formattedFilters.siblingCategories.length,
-      variantAttributeGroupsCount:
-        formattedFilters.variantAttributeGroups.length,
-      productSpecificationGroupsCount:
-        formattedFilters.productSpecificationGroups.length,
-      catalogCodesCount: formattedFilters.catalogCodes.length,
-      equipmentCodesCount: formattedFilters.equipmentCodes.length,
-    });
-  }
 
   // Parse current filters from URL
   const currentFilters = useMemo(
@@ -132,6 +100,16 @@ export function CategoryPageInteractivity({
     }),
     [searchParams, initialFilters.page, initialFilters.sort]
   );
+
+  // Map smart filter brands to legacy format for ProductListTopBar
+  const legacyBrands = useMemo(() => {
+    if (!smartFilters?.filters.brands.items) return [];
+    return mapToLegacyBrandOptions(
+      smartFilters.filters.brands.items,
+      locale,
+      currentCategoryPath
+    );
+  }, [smartFilters?.filters.brands.items, locale, currentCategoryPath]);
 
   /**
    * Update URL without page reload
@@ -206,23 +184,8 @@ export function CategoryPageInteractivity({
 
       {/* Main Layout - Filters and Products Side by Side */}
       <div className="flex gap-4">
-        {/* Filters Sidebar - Desktop */}
-        <aside className="hidden lg:block w-64 shrink-0">
-          <CategoryFilters
-            brands={formattedFilters.brands}
-            childCategories={formattedFilters.childCategories}
-            siblingCategories={formattedFilters.siblingCategories}
-            currentCategoryPath={currentCategoryPath}
-            variantAttributeGroups={formattedFilters.variantAttributeGroups}
-            productSpecificationGroups={
-              formattedFilters.productSpecificationGroups
-            }
-            catalogCodes={formattedFilters.catalogCodes}
-            equipmentCodes={formattedFilters.equipmentCodes}
-            isLoading={!aggregations}
-            {...(brandRemovalPath && { brandRemovalPath })}
-          />
-        </aside>
+        {/* Filters Sidebar - Desktop and Mobile */}
+        {smartFilters && <SmartFilterSection filterData={smartFilters} />}
 
         {/* Main Content */}
         <main id="page-main" className="flex-1 min-w-0 relative">
@@ -231,7 +194,7 @@ export function CategoryPageInteractivity({
             {/* Product List Top Bar - Switches between Trending Brands and Active Filters */}
             <div className="flex-1 min-w-0">
               <ProductListTopBar
-                brands={formattedFilters.brands}
+                brands={legacyBrands}
                 selectedBrands={[]}
                 onBrandClick={() => {}}
                 isBrandPage={false}
@@ -247,24 +210,6 @@ export function CategoryPageInteractivity({
                 disabled={isLoading}
               />
             </div>
-          </div>
-
-          {/* Mobile Filter Drawer */}
-          <div className="lg:hidden mb-4">
-            <CategoryFiltersDrawer
-              brands={formattedFilters.brands}
-              childCategories={formattedFilters.childCategories}
-              siblingCategories={formattedFilters.siblingCategories}
-              currentCategoryPath={currentCategoryPath}
-              variantAttributeGroups={formattedFilters.variantAttributeGroups}
-              productSpecificationGroups={
-                formattedFilters.productSpecificationGroups
-              }
-              catalogCodes={formattedFilters.catalogCodes}
-              equipmentCodes={formattedFilters.equipmentCodes}
-              isLoading={!aggregations}
-              {...(brandRemovalPath && { brandRemovalPath })}
-            />
           </div>
 
           {/* Product Grid - Broadcast loading state via context */}

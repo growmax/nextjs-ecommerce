@@ -4,13 +4,13 @@ import { ProductViewSwitcher } from "@/components/ProductGrid/ProductViewSwitche
 import { StructuredDataServer } from "@/components/seo/StructuredDataServer";
 import type { RequestContext } from "@/lib/api/client";
 import SearchService, {
-  ElasticSearchQuery,
-  FormattedProduct,
+    ElasticSearchQuery,
+    FormattedProduct,
 } from "@/lib/api/services/SearchService/SearchService";
 import TenantService from "@/lib/api/services/TenantService";
 import CategoryResolutionService from "@/lib/services/CategoryResolutionService";
+import { SmartFiltersPageAdapter } from "@/lib/services/SmartFiltersPageAdapter";
 import { BlockingLoaderProvider } from "@/providers/BlockingLoaderProvider";
-import { FilterAggregations } from "@/types/category-filters";
 import { Metadata } from "next";
 import { headers } from "next/headers";
 import { Suspense } from "react";
@@ -281,12 +281,16 @@ export default async function CategoryPage({
   const page = parseInt(filters.page || "1", 10);
   const sortBy = parseInt(filters.sort || "1", 10);
 
+  // Parse brand filter
+  const brandName = typeof filters.brand === 'string' ? filters.brand : undefined;
+
   // Parse variant attributes from URL (any key that's not a known filter key)
   const variantAttributes: Record<string, string[]> = {};
   const productSpecifications: Record<string, string[]> = {};
   const knownKeys = new Set([
     "page",
     "sort",
+    "brand",
     "in_stock",
     "catalog_code",
     "equipment_code",
@@ -361,6 +365,7 @@ export default async function CategoryPage({
     page,
     pageSize: 20,
     sortBy: { sortBy },
+    ...(brandName && { brandName }),
     ...(Object.keys(variantAttributes).length > 0 && { variantAttributes }),
     ...(Object.keys(productSpecifications).length > 0 && {
       productSpecifications,
@@ -370,62 +375,13 @@ export default async function CategoryPage({
     ...(equipmentCodes && equipmentCodes.length > 0 && { equipmentCodes }),
   });
 
-  // Extract base query for aggregations (need the bool object, not the full query)
-  const baseQueryForAggs = queryResult.query.query.bool;
-
-  // Fetch aggregations server-side
-  let aggregations: FilterAggregations | null = null;
-  if (elasticIndex) {
-    try {
-      const filterState = {
-        ...(Object.keys(variantAttributes).length > 0 && { variantAttributes }),
-        ...(Object.keys(productSpecifications).length > 0 && {
-          productSpecifications,
-        }),
-        ...(inStock !== undefined && { inStock }),
-        ...(catalogCodes && catalogCodes.length > 0 && { catalogCodes }),
-        ...(equipmentCodes && equipmentCodes.length > 0 && { equipmentCodes }),
-      };
-
-      const aggregationResponse = await SearchService.getFilterAggregations(
-        elasticIndex,
-        baseQueryForAggs,
-        Object.keys(filterState).length > 0 ? filterState : undefined,
-        context
-      );
-
-      if (aggregationResponse.success) {
-        aggregations = aggregationResponse.aggregations as FilterAggregations;
-
-        // Debug logging in development
-        if (process.env.NODE_ENV === "development") {
-          console.log("[CategoryPage] Aggregations received:", {
-            hasBrands: !!aggregations.brands,
-            hasCategories: !!aggregations.categories,
-            hasVariantAttributes: !!aggregations.variantAttributes,
-            variantAttributesKeys: aggregations.variantAttributes
-              ? Object.keys(aggregations.variantAttributes)
-              : [],
-            hasProductSpecifications: !!aggregations.productSpecifications,
-            productSpecificationsKeys: aggregations.productSpecifications
-              ? Object.keys(aggregations.productSpecifications)
-              : [],
-            rawAggregations: aggregations,
-          });
-        }
-      } else {
-        if (process.env.NODE_ENV === "development") {
-          console.warn(
-            "[CategoryPage] Aggregation fetch failed:",
-            aggregationResponse
-          );
-        }
-      }
-    } catch (error) {
-      console.error("Error fetching aggregations:", error);
-      // Continue without aggregations - client will handle
-    }
-  }
+  // Fetch Smart Filters server-side
+  const smartFilters = await SmartFiltersPageAdapter.getFiltersForPageServerSide({
+    categorySlugs: categories,
+    searchParams: filters,
+    elasticIndex,
+    context,
+  });
 
   // Create products promise for streaming
   const productsPromise = elasticIndex
@@ -515,7 +471,7 @@ export default async function CategoryPage({
             }}
             total={initialProducts.total}
             categoryPath={categoryPath}
-            aggregations={aggregations}
+            smartFilters={smartFilters}
             currentCategoryPath={categories}
             categoryName={lastNode?.name || "Category"}
           >

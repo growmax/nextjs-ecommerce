@@ -340,6 +340,7 @@ class CategoryResolutionService {
       // Process nested aggregation results
       // Structure: aggregations.product_categories.categories.buckets
       const nestedAggs = result.aggregations.product_categories as any;
+      
       if (nestedAggs?.categories?.buckets) {
         nestedAggs.categories.buckets.forEach((bucket: any) => {
           const categoryId = bucket.key;
@@ -349,6 +350,25 @@ class CategoryResolutionService {
           const categoryLevel = bucket.category_level?.buckets?.[0]?.key || 1;
           const ancestorIds =
             bucket.ancestor_ids?.buckets?.map((b: any) => b.key) || [];
+          
+          // Derive parentId from ancestorIds: the last ancestor is the direct parent
+          // For categories with no ancestors, parentId is null (root categories)
+          const parentId = ancestorIds.length > 0 
+            ? ancestorIds[ancestorIds.length - 1] 
+            : null;
+          
+          if (process.env.NODE_ENV === "development" && categoryId === 28) {
+            console.log("[CategoryResolutionService] Power Tools (28) - Raw bucket data:", {
+              categoryId,
+              categoryName,
+              categoryLevel,
+              ancestorIdsFromBucket: bucket.ancestor_ids,
+              ancestorIdsProcessed: ancestorIds,
+              derivedParentId: parentId,
+              bucketKeys: Object.keys(bucket),
+            });
+          }
+          
           const isActive = bucket.is_active?.buckets?.[0]?.key !== false;
 
           if (categoryId && categoryName && isActive) {
@@ -360,12 +380,16 @@ class CategoryResolutionService {
               categoryLevel: categoryLevel,
               ...(categoryPath && { categoryPath }),
               ancestorIds: ancestorIds,
-              ...(ancestorIds.length > 0 && {
-                parentId: String(ancestorIds[ancestorIds.length - 1]),
+              ...(parentId !== null && {
+                parentId: String(parentId),
               }),
               isActive: isActive,
               children: [],
             };
+
+            if (process.env.NODE_ENV === "development" && categoryId === 28) {
+              console.log("[CategoryResolutionService] Created Power Tools node:", node);
+            }
 
             categoryMap.set(categoryId, node);
             categories.push(node);
@@ -445,6 +469,14 @@ class CategoryResolutionService {
               ],
               size: 1,
             },
+            aggs: {
+              ancestor_ids: {
+                terms: {
+                  field: "product_categories.ancestorIds",
+                  size: 100,
+                },
+              },
+            },
           },
         },
       };
@@ -491,9 +523,25 @@ class CategoryResolutionService {
       const categoryPath = String(bucket.key[3]);
       const categoryLevel = Number(bucket.key[4]);
       const isActive = bucket.key[5] !== false;
+      
+      // Extract ancestorIds from nested aggregation
+      const ancestorIds = (bucket.ancestor_ids?.buckets || []).map((b: any) => Number(b.key));
+      
+      // Derive parentId: last ancestor is direct parent
+      const parentId = ancestorIds.length > 0 ? ancestorIds[ancestorIds.length - 1] : null;
 
       if (!categoryId || !categoryName || !isActive) {
         return null;
+      }
+
+      if (process.env.NODE_ENV === "development" && categoryId === 28) {
+        console.log("[CategoryResolutionService.findCategoryBySlugDirect] Power Tools (28):", {
+          categoryId,
+          categoryName,
+          categoryLevel,
+          ancestorIds,
+          parentId,
+        });
       }
 
       return {
@@ -503,7 +551,8 @@ class CategoryResolutionService {
         categoryId: categoryId,
         categoryLevel: categoryLevel,
         ...(categoryPath && { categoryPath }),
-        ancestorIds: [], // Multi_terms doesn't provide ancestors
+        ancestorIds: ancestorIds,
+        ...(parentId !== null && { parentId: String(parentId) }),
         isActive: isActive,
         children: [],
       };
