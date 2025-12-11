@@ -30,11 +30,8 @@ export function getTenantApiHeaders(
   tenantCode?: string,
   additionalHeaders: Record<string, string> = {}
 ): Record<string, string> {
-  const defaultTenant =
-    process.env.NEXT_PUBLIC_DEFAULT_TENANT || "schwingstetterdemo";
-
   return getCommonApiHeaders({
-    "x-tenant": tenantCode || defaultTenant,
+    "x-tenant": tenantCode || "",
     ...additionalHeaders,
   });
 }

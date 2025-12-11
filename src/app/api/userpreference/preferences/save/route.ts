@@ -8,18 +8,8 @@ function getDataFromToken(
     const parts = token.split(".");
     if (parts.length !== 3) return null;
     const payload = JSON.parse(atob(parts[1]!));
-
-    // Type-safe way to access elasticCode if it exists
-    const elasticCode =
-      "elasticCode" in payload
-        ? ((payload as Record<string, unknown>).elasticCode as string)
-        : "";
-
     return {
-      companyId: payload.companyId || 8682,
-      userId: payload.userId || 1007,
-      tenantCode:
-        payload.tenantId || payload.iss || elasticCode || "schwingstetterdemo",
+      ...payload,
     };
   } catch {
     return null;
@@ -56,8 +46,7 @@ export async function POST(request: NextRequest) {
       ? parseInt(companyIdParam)
       : tokenData?.companyId || 8682;
     const isMobile = isMobileParam === "true" || false;
-    const tenantCode =
-      tenantCodeParam || tokenData?.tenantCode || "schwingstetterdemo";
+    const tenantCode = tenantCodeParam || tokenData?.tenantCode || "";
 
     const context = {
       accessToken: token,

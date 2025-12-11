@@ -26,9 +26,7 @@ const BATCH_SIZE = 1000; // Fetch products in batches
 async function getAllPublishedProducts(): Promise<ProductDetail[]> {
   try {
     const tenantCode =
-      process.env.TENANT_CODE ||
-      process.env.NEXT_PUBLIC_TENANT_CODE ||
-      "schwingstetterdemo";
+      process.env.TENANT_CODE || process.env.NEXT_PUBLIC_TENANT_CODE || "";
     const elasticIndex = `${tenantCode.toLowerCase()}pgandproducts`;
 
     const allProducts: ProductDetail[] = [];
