@@ -33,6 +33,7 @@ import { useNavigationWithLoader } from "@/hooks/useNavigationWithLoader";
 import useSelectedSellerCart from "@/hooks/useSelectedSellerCart";
 import DiscountService from "@/lib/api/services/DiscountService/DiscountService";
 import OpenElasticSearchService from "@/lib/api/services/ElacticQueryService/openElasticSearch/openElasticSearch";
+import { AuthStorage } from "@/lib/auth";
 import type { CartItem } from "@/types/calculation/cart";
 import { cartCalculation } from "@/utils/calculation/cartCalculation";
 import {
@@ -69,6 +70,7 @@ export default function CartPageClient() {
   >({});
   const [showClearCartDialog, setShowClearCartDialog] = useState(false);
   const [addingProductId, setAddingProductId] = useState<number | null>(null);
+  const [hasCheckedCart, setHasCheckedCart] = useState(false);
 
   // Access control
   const { hasQuotePermission, hasOrderPermission } = useAccessControl();
@@ -147,6 +149,23 @@ export default function CartPageClient() {
   // Pricing loads in background and shows loaders at product/cart level
   const isLoading = userLoading || isCartLoading;
 
+  // Check authentication state early to use in loading section
+  const isAuthenticated = typeof window !== "undefined" 
+    ? AuthStorage.isAuthenticated() 
+    : false;
+
+  // Mark that cart has been checked after initial load completes
+  useEffect(() => {
+    if (!isCartLoading && !userLoading) {
+      // Small delay to ensure cart data has time to populate
+      const timer = setTimeout(() => {
+        setHasCheckedCart(true);
+      }, 100);
+      return () => clearTimeout(timer);
+    }
+    return undefined;
+  }, [isCartLoading, userLoading]);
+
   // Monitor cart changes to clear adding state when product is added
   useEffect(() => {
     if (addingProductId && cart) {
@@ -175,12 +194,33 @@ export default function CartPageClient() {
   }, [addingProductId]);
   console.log(cartCalculationResult);
   // Show skeleton loader when any loading state is active
+  // But always show Shopping Cart title and AddMoreProducts search bar for stable UI
   if (isLoading) {
     return (
-      <>
+      <div className="min-h-screen">
         <div className="mb-8">
-          <Skeleton className="h-9 w-48 mb-2" />
-          <Skeleton className="h-5 w-32" />
+          <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 sm:gap-6">
+            <div className="flex-shrink-0">
+              <h1 className="text-3xl font-bold mb-2">{t("title")}</h1>
+              <p className="text-muted-foreground text-sm">
+                {t("itemsInCart", { count: cartCount })}
+              </p>
+            </div>
+            {/* Show AddMoreProducts during loading if user is authenticated */}
+            {/* Note: handleAddMoreCallback will be available after component fully loads */}
+            {isAuthenticated && (
+              <div className="w-full sm:w-auto sm:flex-1 sm:max-w-2xl flex items-center gap-2">
+                <AddMoreProducts
+                  handleCallback={async () => {
+                    // During loading, this is a placeholder
+                    // The actual callback will work once component fully loads
+                    toast.info("Please wait for page to finish loading");
+                  }}
+                  popWidth="100%"
+                />
+              </div>
+            )}
+          </div>
         </div>
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           <div className="lg:col-span-2 space-y-4">
@@ -249,12 +289,14 @@ export default function CartPageClient() {
             </div>
           </div>
         </div>
-      </>
+      </div>
     );
   }
 
   // Only show "log in" message after user loading completes and user is confirmed null
-  if (!userLoading && !user) {
+  // Also check AuthStorage to prevent flash during page refresh when user is authenticated
+  // but user data is still loading
+  if (!userLoading && !user && !isLoading && !isAuthenticated) {
     return (
       <Card>
         <CardContent className="p-8 text-center">
@@ -636,7 +678,11 @@ export default function CartPageClient() {
   
   // If cart is empty, show empty state with heading and search bar
   // OR show skeleton loaders if product is being added
-  if (!cart || cart.length === 0) {
+  // Don't show empty state if cart is still loading or hasn't been checked yet to prevent flash on page refresh
+  // Only show empty state after cart has been checked (for authenticated users) or if user is not authenticated
+  const shouldShowEmptyCart = (!cart || cart.length === 0) && !isCartLoading && (hasCheckedCart || !isAuthenticated);
+  
+  if (shouldShowEmptyCart) {
     // Show skeleton loaders when adding a product
     if (addingProductId) {
       return (
@@ -746,7 +792,8 @@ export default function CartPageClient() {
                 {t("itemsInCart", { count: cartCount })}
               </p>
             </div>
-            {user?.companyId && !isCartLoading && (
+            {/* Show AddMoreProducts if user is authenticated (check AuthStorage as fallback) or has companyId */}
+            {(user?.companyId || isAuthenticated) && (
               <div className="w-full sm:w-auto sm:flex-1 sm:max-w-2xl flex items-center gap-2">
                 <AddMoreProducts
                   handleCallback={handleAddMoreCallback}
@@ -768,7 +815,7 @@ export default function CartPageClient() {
   }
 
   return (
-    <>
+    <div className="min-h-screen">
       <div className="mb-8">
         <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 sm:gap-6">
           <div className="flex-shrink-0">
@@ -777,7 +824,8 @@ export default function CartPageClient() {
               {t("itemsInCart", { count: cartCount })}
             </p>
           </div>
-          {user?.companyId && !isCartLoading && (
+          {/* Show AddMoreProducts if user is authenticated (check AuthStorage as fallback) or has companyId */}
+          {(user?.companyId || isAuthenticated) && (
             <div className="w-full sm:w-auto sm:flex-1 sm:max-w-2xl flex items-center gap-2">
               <AddMoreProducts
                 handleCallback={handleAddMoreCallback}
@@ -868,7 +916,9 @@ export default function CartPageClient() {
         </div>
 
         {/* Order Summary - Only show for single seller */}
-        {!hasMultipleSellers && (
+        {/* Only show OrderPriceDetails after loading is completely finished to prevent flashing */}
+        {/* Wait for initial loading to complete and ensure cart has been checked */}
+        {!hasMultipleSellers && !isLoading && hasCheckedCart && cartCalculationResult && (
           <div>
             <div className="sticky top-4 space-y-4">
               {/* {cartCalculationResult && currency && (
@@ -947,6 +997,6 @@ export default function CartPageClient() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
-    </>
+    </div>
   );
 }

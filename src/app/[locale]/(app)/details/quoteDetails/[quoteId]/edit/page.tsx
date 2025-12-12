@@ -5,13 +5,13 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
 
 import { EditOrderNameDialog } from "@/components/dialogs/EditOrderNameDialog";
+import { PageLayout } from "@/components/layout";
 import {
-  DetailsSkeleton,
   OrderContactDetails,
   OrderPriceDetails,
   OrderProductsTable,
   OrderTermsCard,
-  SalesHeader,
+  SalesHeader
 } from "@/components/sales";
 import CashDiscountCard from "@/components/sales/CashDiscountCard";
 import type { ProductSearchResult } from "@/components/sales/ProductSearchInput";
@@ -129,7 +129,7 @@ export default function EditQuotePage({ params }: EditQuotePageProps) {
   const [quoteDetails, setQuoteDetails] =
     useState<QuotationDetailsResponse | null>(null);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const [_error, setError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
 
   const [editedQuantities, setEditedQuantities] = useState<
@@ -1330,7 +1330,7 @@ export default function EditQuotePage({ params }: EditQuotePageProps) {
     <div className="flex flex-col h-full overflow-hidden bg-gray-50">
       {/* Sales Header - Fixed at top */}
       <SalesHeader
-        title={quoteName ? decodeUnicode(quoteName) : "Edit Quote"}
+        title={quoteName ? decodeUnicode(quoteName) : ""}
         identifier={quoteIdentifier || "..."}
         {...(status && {
           status: {
@@ -1361,24 +1361,18 @@ export default function EditQuotePage({ params }: EditQuotePageProps) {
 
       {/* Quote Details Content - Scrollable area */}
       <div className="flex-1 overflow-y-auto overflow-x-hidden relative z-0">
-        <div className="container mx-auto px-2 sm:px-3 md:px-4 py-2 sm:py-3">
-          {loading ? (
-            <DetailsSkeleton
-              showStatusTracker={false}
-              leftWidth="lg:w-[70%]"
-              rightWidth="lg:w-[30%]"
-            />
-          ) : (
-            <div className="flex flex-col lg:flex-row gap-2 sm:gap-3 md:gap-4">
+        <PageLayout variant="content">
+       
+            <div className="flex flex-col lg:flex-row gap-2 sm:gap-3 md:gap-4 w-full px-0.5">
               {/* Left Side - Products Table and Contact/Terms Cards - 70% */}
               <div className="w-full lg:w-[70%] space-y-2 sm:space-y-3 mt-[60px]">
-                {!loading && !error && quoteDetails && (
+            
                   <OrderProductsTable
                     products={effectiveProducts as any}
-                    {...(quoteDetails.data?.quotationDetails?.[0]
+                    {...(quoteDetails?.data?.quotationDetails?.[0]
                       ?.dbProductDetails?.length && {
                       totalCount:
-                        quoteDetails.data.quotationDetails[0].dbProductDetails
+                        quoteDetails?.data.quotationDetails[0].dbProductDetails
                           .length,
                     })}
                     isEditable={true}
@@ -1387,49 +1381,51 @@ export default function EditQuotePage({ params }: EditQuotePageProps) {
                     editedQuantities={editedQuantities}
                     onProductAdd={handleProductAdd}
                     elasticIndex={elasticIndex}
+                    loading={loading}
                   />
-                )}
+                
 
-                {!loading && !error && quoteDetails && (
+               
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-2 sm:gap-3 md:gap-4 mt-4">
                     <OrderContactDetails
+                      loading={loading}
                       billingAddress={
                         editedBillingAddress ||
-                        (quoteDetails.data?.quotationDetails?.[0]
+                        (quoteDetails?.data?.quotationDetails?.[0]
                           ?.billingAddressDetails as unknown as AddressDetails)
                       }
                       shippingAddress={
                         editedShippingAddress ||
-                        (quoteDetails.data?.quotationDetails?.[0]
+                        (quoteDetails?.data?.quotationDetails?.[0]
                           ?.shippingAddressDetails as unknown as AddressDetails)
                       }
                       registerAddress={
-                        quoteDetails.data?.quotationDetails?.[0]
+                        quoteDetails?.data?.quotationDetails?.[0]
                           ?.registerAddressDetails as unknown as AddressDetails
                       }
                       sellerAddress={
-                        quoteDetails.data?.quotationDetails?.[0]
+                        quoteDetails?.data?.quotationDetails?.[0]
                           ?.sellerAddressDetail as unknown as AddressDetails
                       }
                       buyerCompanyName={
-                        quoteDetails.data?.quotationDetails?.[0]
+                        quoteDetails?.data?.quotationDetails?.[0]
                           ?.buyerCompanyName as unknown as string
                       }
                       buyerBranchName={
-                        quoteDetails.data?.quotationDetails?.[0]
+                        quoteDetails?.data?.quotationDetails?.[0]
                           ?.buyerBranchName as unknown as string
                       }
                       warehouseName={
                         editedWarehouse?.name ||
                         (((
-                          quoteDetails.data?.quotationDetails?.[0]
+                          quoteDetails?.data?.quotationDetails?.[0]
                             ?.dbProductDetails?.[0] as unknown as Record<
                             string,
                             Record<string, string>
                           >
                         )?.wareHouse?.wareHouseName ||
                           (
-                            quoteDetails.data?.quotationDetails?.[0]
+                            quoteDetails?.data?.quotationDetails?.[0]
                               ?.dbProductDetails?.[0] as unknown as Record<
                               string,
                               string
@@ -1439,7 +1435,7 @@ export default function EditQuotePage({ params }: EditQuotePageProps) {
                       warehouseAddress={
                         editedWarehouse?.addressId ||
                         ((
-                          quoteDetails.data?.quotationDetails?.[0]
+                          quoteDetails?.data?.quotationDetails?.[0]
                             ?.dbProductDetails?.[0] as unknown as Record<
                             string,
                             Record<string, Record<string, string>>
@@ -1455,7 +1451,7 @@ export default function EditQuotePage({ params }: EditQuotePageProps) {
                       }
                       salesBranch={
                         editedSellerBranch?.name ||
-                        (quoteDetails.data?.quotationDetails?.[0]
+                        (quoteDetails?.data?.quotationDetails?.[0]
                           ?.sellerBranchName as unknown as string | undefined)
                       }
                       requiredDate={editedRequiredDate}
@@ -1481,48 +1477,52 @@ export default function EditQuotePage({ params }: EditQuotePageProps) {
                       onWarehouseChange={handleWarehouseChange}
                       userId={user?.userId?.toString()}
                       buyerBranchId={
-                        quoteDetails.data?.quotationDetails?.[0]
+                        quoteDetails?.data?.quotationDetails?.[0]
                           ?.buyerBranchId as number
                       }
                       buyerCompanyId={user?.companyId}
                       productIds={getProductIds(
-                        quoteDetails.data?.quotationDetails?.[0]
+                        quoteDetails?.data?.quotationDetails?.[0]
                           ?.dbProductDetails as
                           | Array<Record<string, unknown>>
                           | undefined
                       )}
                       sellerCompanyId={
-                        quoteDetails.data?.quotationDetails?.[0]
+                        quoteDetails?.data?.quotationDetails?.[0]
                           ?.sellerCompanyId as number
                       }
                     />
 
                     <OrderTermsCard
                       orderTerms={
+                
                         {
-                          ...(quoteDetails.data?.quotationDetails?.[0]
+                          loading: loading,
+                          ...(quoteDetails?.data?.quotationDetails?.[0]
                             ?.quoteTerms || {}),
-                          additionalTerms: quoteDetails.data
+                          additionalTerms: quoteDetails?.data
                             ?.quotationDetails?.[0]?.additionalTerms as
                             | string
                             | undefined,
                         } as QuoteTerms
+
                       }
+                     
                     />
                   </div>
-                )}
+                
               </div>
 
-              {/* Right Side - Price Details - 30% */}
-              {!loading && !error && quoteDetails && (
+             
                 <div className="w-full lg:w-[30%] mt-[60px] space-y-3">
                   <OrderPriceDetails
+                    loading={loading}
                     products={effectiveProducts}
                     isInter={(() => {
                       // Determine if inter-state based on product taxes (IGST = inter-state, SGST/CGST = intra-state)
                       const firstProduct =
                         productsWithEditedQuantities[0] ||
-                        quoteDetails.data?.quotationDetails?.[0]
+                        quoteDetails?.data?.quotationDetails?.[0]
                           ?.dbProductDetails?.[0];
                       if (
                         firstProduct &&
@@ -1544,7 +1544,7 @@ export default function EditQuotePage({ params }: EditQuotePageProps) {
                     }}
                     currency={
                       (
-                        quoteDetails.data?.buyerCurrencySymbol as {
+                        quoteDetails?.data?.buyerCurrencySymbol as {
                           symbol?: string;
                         }
                       )?.symbol || "INR ₹"
@@ -1555,12 +1555,12 @@ export default function EditQuotePage({ params }: EditQuotePageProps) {
                       cashDiscountApplied
                         ? (calculatedData?.cartValue?.totalShipping ??
                           (Number(
-                            quoteDetails.data?.quotationDetails?.[0]
+                            quoteDetails?.data?.quotationDetails?.[0]
                               ?.overallShipping
                           ) ||
                             0))
                         : Number(
-                            quoteDetails.data?.quotationDetails?.[0]
+                            quoteDetails?.data?.quotationDetails?.[0]
                               ?.overallShipping
                           ) || 0
                     }
@@ -1620,14 +1620,14 @@ export default function EditQuotePage({ params }: EditQuotePageProps) {
                               totalTax ||
                               (calculatedData?.cartValue?.totalTax ??
                                 (Number(
-                                  quoteDetails.data?.quotationDetails?.[0]
+                                  quoteDetails?.data?.quotationDetails?.[0]
                                     ?.overallTax
                                 ) ||
                                   0))
                             );
                           })()
                         : Number(
-                            quoteDetails.data?.quotationDetails?.[0]?.overallTax
+                            quoteDetails?.data?.quotationDetails?.[0]?.overallTax
                           ) || 0
                     }
                     calculatedTotal={
@@ -1701,18 +1701,18 @@ export default function EditQuotePage({ params }: EditQuotePageProps) {
                             return (
                               calculatedTotal ||
                               Number(
-                                quoteDetails.data?.quotationDetails?.[0]
+                                quoteDetails?.data?.quotationDetails?.[0]
                                   ?.calculatedTotal ||
-                                  quoteDetails.data?.quotationDetails?.[0]
+                                  quoteDetails?.data?.quotationDetails?.[0]
                                     ?.grandTotal
                               ) ||
                               0
                             );
                           })()
                         : Number(
-                            quoteDetails.data?.quotationDetails?.[0]
+                            quoteDetails?.data?.quotationDetails?.[0]
                               ?.calculatedTotal ||
-                              quoteDetails.data?.quotationDetails?.[0]
+                              quoteDetails?.data?.quotationDetails?.[0]
                                 ?.grandTotal
                           ) || 0
                     }
@@ -1747,14 +1747,14 @@ export default function EditQuotePage({ params }: EditQuotePageProps) {
                             return (
                               subtotal ||
                               Number(
-                                quoteDetails.data?.quotationDetails?.[0]
+                                quoteDetails?.data?.quotationDetails?.[0]
                                   ?.subTotal
                               ) ||
                               0
                             );
                           })()
                         : Number(
-                            quoteDetails.data?.quotationDetails?.[0]?.subTotal
+                            quoteDetails?.data?.quotationDetails?.[0]?.subTotal
                           ) || 0
                     }
                     taxableAmount={
@@ -1788,14 +1788,14 @@ export default function EditQuotePage({ params }: EditQuotePageProps) {
                             return (
                               subtotal ||
                               Number(
-                                quoteDetails.data?.quotationDetails?.[0]
+                                quoteDetails?.data?.quotationDetails?.[0]
                                   ?.taxableAmount
                               ) ||
                               0
                             );
                           })()
                         : Number(
-                            quoteDetails.data?.quotationDetails?.[0]
+                            quoteDetails?.data?.quotationDetails?.[0]
                               ?.taxableAmount
                           ) || 0
                     }
@@ -1882,12 +1882,13 @@ export default function EditQuotePage({ params }: EditQuotePageProps) {
                     isQuoteToOrder={false}
                     cashdiscount={cashDiscountApplied}
                   />
-
+            {(sprCustomerName || sprProjectName || sprCompetitors || sprPriceJustification) && (
                   <SPRForm
+
                     isContentPage={false}
                     isSummaryPage={false}
                     sellerCompanyId={
-                      quoteDetails.data?.quotationDetails?.[0]
+                      quoteDetails?.data?.quotationDetails?.[0]
                         ?.sellerCompanyId as number
                     }
                     customerName={sprCustomerName}
@@ -1899,11 +1900,12 @@ export default function EditQuotePage({ params }: EditQuotePageProps) {
                     onCompetitorsChange={setSprCompetitors}
                     onPriceJustificationChange={setSprPriceJustification}
                   />
+            )}
                 </div>
-              )}
+                  
             </div>
-          )}
-        </div>
+          
+        </PageLayout>
       </div>
 
       {/* Edit Quote Name Dialog */}

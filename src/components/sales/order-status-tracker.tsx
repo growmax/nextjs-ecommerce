@@ -184,17 +184,32 @@ export default function OrderStatusTracker({
         )}
 
         {/* Financial Summary - Right side */}
-        {(total !== undefined || paid !== undefined || toPay !== undefined) && (
+        {loading ? (
+          <div className="flex flex-wrap gap-2 sm:gap-4 text-[10px] sm:text-xs">
+            <div className="flex flex-col min-w-[70px]">
+              <Skeleton className="h-3 w-10 mb-1" />
+              <Skeleton className="h-3 w-16" />
+            </div>
+            <div className="flex flex-col min-w-[70px]">
+              <Skeleton className="h-3 w-10 mb-1" />
+              <Skeleton className="h-3 w-16" />
+            </div>
+            <div className="flex flex-col min-w-[70px]">
+              <Skeleton className="h-3 w-12 mb-1" />
+              <Skeleton className="h-3 w-16" />
+            </div>
+            <div className="flex flex-col min-w-[90px]">
+              <Skeleton className="h-3 w-16 mb-1" />
+              <Skeleton className="h-3 w-20" />
+            </div>
+          </div>
+        ) : (total !== undefined || paid !== undefined || toPay !== undefined) && (
           <div className="flex flex-wrap gap-2 sm:gap-4 text-[10px] sm:text-xs">
             {total !== undefined && (
               <div className="flex flex-col min-w-[70px]">
                 <span className="text-gray-600 font-medium">{t("total")}</span>
                 <span className="text-gray-900 font-semibold">
-                  {loading ? (
-                    <Skeleton className="h-3 w-12 mb-1" />
-                  ) : (
                   <PricingFormat value={total} />
-                  )}
                 </span>
               </div>
             )}
@@ -202,101 +217,92 @@ export default function OrderStatusTracker({
               <div className="flex flex-col min-w-[70px]">
                 <span className="text-gray-600 font-medium inline-flex items-center gap-1">
                   {t("paid")}
-                  {!loading && (
-                       <Popover>
-                       <PopoverTrigger asChild>
-                         <Info
-                           className="h-3 w-3 text-gray-400 cursor-pointer"
-                           aria-hidden="true"
-                         />
-                       </PopoverTrigger>
-                       <PopoverContent className="w-[300px] sm:w-[360px] p-3">
-                         <div className="text-sm font-semibold mb-2">
-                           {t("paymentDetails")}
-                         </div>
-                         {Array.isArray(paymentHistory) &&
-                         paymentHistory.length > 0 ? (
-                           <div className="space-y-2 max-h-48 overflow-auto pr-1">
-                             {paymentHistory.map(
-                               (p: PaymentHistoryItem, idx: number) => (
-                                 <div
-                                   key={`payment-${p.referenceNumber || p.paymentDate || idx}`}
-                                   className="grid grid-cols-[100px_1fr] gap-x-2 text-xs"
-                                 >
-                                   <div className="text-gray-600">
-                                     {t("amount")}
-                                   </div>
-                                   <div className="text-gray-900 font-medium">
-                                     <PricingFormat
-                                       value={p.amountReceived || 0}
-                                     />
-                                   </div>
-   
-                                   <div className="text-gray-600">
-                                     {t("gateway")}
-                                   </div>
-                                   <div className="text-gray-900">
-                                     {p.gatewayName || "-"}
-                                   </div>
-   
-                                   <div className="text-gray-600">
-                                     {t("method")}
-                                   </div>
-                                   <div className="text-gray-900">
-                                     {p.paymentMode || "-"}
-                                   </div>
-   
-                                   <div className="text-gray-600">{t("date")}</div>
-                                   <div className="text-gray-900">
-                                     {p.paymentDate
-                                       ? zoneDateTimeCalculator(
-                                           p.paymentDate,
-                                           preferences.timeZone,
-                                           preferences.dateFormat,
-                                           preferences.timeFormat,
-                                           true
-                                         ) || "-"
-                                       : "-"}
-                                   </div>
-   
-                                   <div className="text-gray-600">
-                                     {t("referenceId")}
-                                   </div>
-                                   <div className="text-gray-900 break-all">
-                                     {p.referenceNumber || "-"}
-                                   </div>
-                                 </div>
-                               )
-                             )}
-                           </div>
-                         ) : (
-                           <div className="text-xs text-gray-600">
-                             {t("noPaymentsYet")}
-                           </div>
-                         )}
-                       </PopoverContent>
-                     </Popover>
-                  )}
-               
+                  <Popover>
+                    <PopoverTrigger asChild>
+                      <Info
+                        className="h-3 w-3 text-gray-400 cursor-pointer"
+                        aria-hidden="true"
+                      />
+                    </PopoverTrigger>
+                    <PopoverContent className="w-[300px] sm:w-[360px] p-3">
+                      <div className="text-sm font-semibold mb-2">
+                        {t("paymentDetails")}
+                      </div>
+                      {Array.isArray(paymentHistory) &&
+                      paymentHistory.length > 0 ? (
+                        <div className="space-y-2 max-h-48 overflow-auto pr-1">
+                          {paymentHistory.map(
+                            (p: PaymentHistoryItem, idx: number) => (
+                              <div
+                                key={`payment-${p.referenceNumber || p.paymentDate || idx}`}
+                                className="grid grid-cols-[100px_1fr] gap-x-2 text-xs"
+                              >
+                                <div className="text-gray-600">
+                                  {t("amount")}
+                                </div>
+                                <div className="text-gray-900 font-medium">
+                                  <PricingFormat
+                                    value={p.amountReceived || 0}
+                                  />
+                                </div>
+    
+                                <div className="text-gray-600">
+                                  {t("gateway")}
+                                </div>
+                                <div className="text-gray-900">
+                                  {p.gatewayName || "-"}
+                                </div>
+    
+                                <div className="text-gray-600">
+                                  {t("method")}
+                                </div>
+                                <div className="text-gray-900">
+                                  {p.paymentMode || "-"}
+                                </div>
+    
+                                <div className="text-gray-600">{t("date")}</div>
+                                <div className="text-gray-900">
+                                  {p.paymentDate
+                                    ? zoneDateTimeCalculator(
+                                        p.paymentDate,
+                                        preferences.timeZone,
+                                        preferences.dateFormat,
+                                        preferences.timeFormat,
+                                        true
+                                      ) || "-"
+                                    : "-"}
+                                </div>
+    
+                                <div className="text-gray-600">
+                                  {t("referenceId")}
+                                </div>
+                                <div className="text-gray-900 break-all">
+                                  {p.referenceNumber || "-"}
+                                </div>
+                              </div>
+                            )
+                          )}
+                        </div>
+                      ) : (
+                        <div className="text-xs text-gray-600">
+                          {t("noPaymentsYet")}
+                        </div>
+                      )}
+                    </PopoverContent>
+                  </Popover>
                 </span>
                 <span className="text-gray-900 font-semibold">
-                  {loading ? (
-                    <Skeleton className="h-3 w-12 mb-1" />
-                  ) : (
                   <PricingFormat value={paid} />
-                  )}
                 </span>
               </div>
             )}
             {computedToPay !== undefined && (
               <div className="flex flex-col min-w-[70px]">
-                <span className="text-gray-600 font-medium">{t("toPay")}</span>
+                <span className="text-gray-600 font-medium">
+                  {t("toPay")}
+                </span>
                 <span className="text-red-600 font-semibold">
-                  {loading ? (
-                    <Skeleton className="h-3 w-12 mb-1" />
-                  ) : (
                   <PricingFormat value={computedToPay || 0} />
-                  )}
                 </span>
               </div>
             )}
@@ -305,26 +311,23 @@ export default function OrderStatusTracker({
                 {t("lastDate")}
               </span>
               <span className="text-red-600 font-semibold text-[10px] sm:text-xs">
-  {loading ? (
-    <Skeleton className="h-3 w-12 mb-1" />
-  ) : lastDateToPay ? (
-    // Check if string is already formatted
-    lastDateToPay.startsWith("Overdue") || lastDateToPay.startsWith("-") ? (
-      lastDateToPay
-    ) : (
-      zoneDateTimeCalculator(
-        lastDateToPay,
-        preferences.timeZone,
-        preferences.dateFormat,
-        preferences.timeFormat,
-        false
-      ) || t("noDue")
-    )
-  ) : (
-    t("noDue")
-  )}
-</span>
-
+                {lastDateToPay ? (
+                  // Check if string is already formatted
+                  lastDateToPay.startsWith("Overdue") || lastDateToPay.startsWith("-") ? (
+                    lastDateToPay
+                  ) : (
+                    zoneDateTimeCalculator(
+                      lastDateToPay,
+                      preferences.timeZone,
+                      preferences.dateFormat,
+                      preferences.timeFormat,
+                      false
+                    ) || t("noDue")
+                  )
+                ) : (
+                  t("noDue")
+                )}
+              </span>
             </div>
           </div>
         )}
@@ -332,47 +335,65 @@ export default function OrderStatusTracker({
 
       {/* Steps Container */}
       <div className="hidden sm:flex items-center gap-0 overflow-hidden rounded-lg shadow-sm">
-        {ORDER_STATUS_STEPS.map((step, index) => {
-          const isActive = currentStepOrder >= step.order;
-          const isLast = index === ORDER_STATUS_STEPS.length - 1;
-          const label = getStatusLabel(step.key);
+        {loading ? (
+          <>
+            {Array.from({ length: ORDER_STATUS_STEPS.length }).map((_, index) => (
+              <div
+                key={`skeleton-step-${index}`}
+                className={cn(
+                  "flex-1 h-7 sm:h-8 flex items-center justify-center bg-gray-100",
+                  index === 0 && "rounded-l-lg",
+                  index === ORDER_STATUS_STEPS.length - 1 && "rounded-r-lg",
+                  index < ORDER_STATUS_STEPS.length - 1 && "border-r border-gray-300/50"
+                )}
+              >
+                <Skeleton className="h-3 w-12 sm:w-16" />
+              </div>
+            ))}
+          </>
+        ) : (
+          ORDER_STATUS_STEPS.map((step, index) => {
+            const isActive = currentStepOrder >= step.order;
+            const isLast = index === ORDER_STATUS_STEPS.length - 1;
+            const label = getStatusLabel(step.key);
 
-          return (
-            <HoverCard key={step.key}>
-              <HoverCardTrigger asChild>
-                <div
-                  className={cn(
-                    "flex-1 h-7 sm:h-8 flex items-center justify-center font-medium transition-all duration-300 ease-in-out relative cursor-pointer group",
-                    isActive
-                      ? "bg-primary text-primary-foreground shadow-sm hover:bg-primary/90 hover:shadow-md"
-                      : "bg-gray-100 text-gray-600 hover:bg-gray-200 hover:shadow-sm hover:scale-[1.02] hover:text-gray-800",
-                    // First item - rounded left
-                    index === 0 && "rounded-l-lg",
-                    // Last item - rounded right
-                    isLast && "rounded-r-lg",
-                    // Add subtle border between items
-                    !isLast && "border-r border-gray-300/50"
-                  )}
-                >
-                  <span className="text-[10px] sm:text-xs px-1 sm:px-2 text-center font-semibold tracking-wide transition-all duration-300 ease-in-out group-hover:scale-105">
-                    {label}
-                  </span>
-                  {/* Add a subtle inner shadow for depth */}
-                  {isActive && (
-                    <div className="absolute inset-0 rounded-inherit bg-linear-to-b from-white/10 to-transparent pointer-events-none group-hover:from-white/20" />
-                  )}
-                  {/* Add hover effect for inactive states */}
-                  {!isActive && (
-                    <div className="absolute inset-0 rounded-inherit bg-linear-to-b from-white/0 to-white/5 pointer-events-none opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-                  )}
-                </div>
-              </HoverCardTrigger>
-              <HoverCardContent className="w-auto p-2">
-                <div className="text-sm font-medium text-center">{label}</div>
-              </HoverCardContent>
-            </HoverCard>
-          );
-        })}
+            return (
+              <HoverCard key={step.key}>
+                <HoverCardTrigger asChild>
+                  <div
+                    className={cn(
+                      "flex-1 h-7 sm:h-8 flex items-center justify-center font-medium transition-all duration-300 ease-in-out relative cursor-pointer group",
+                      isActive
+                        ? "bg-primary text-primary-foreground shadow-sm hover:bg-primary/90 hover:shadow-md"
+                        : "bg-gray-100 text-gray-600 hover:bg-gray-200 hover:shadow-sm hover:scale-[1.02] hover:text-gray-800",
+                      // First item - rounded left
+                      index === 0 && "rounded-l-lg",
+                      // Last item - rounded right
+                      isLast && "rounded-r-lg",
+                      // Add subtle border between items
+                      !isLast && "border-r border-gray-300/50"
+                    )}
+                  >
+                    <span className="text-[10px] sm:text-xs px-1 sm:px-2 text-center font-semibold tracking-wide transition-all duration-300 ease-in-out group-hover:scale-105">
+                      {label}
+                    </span>
+                    {/* Add a subtle inner shadow for depth */}
+                    {isActive && (
+                      <div className="absolute inset-0 rounded-inherit bg-linear-to-b from-white/10 to-transparent pointer-events-none group-hover:from-white/20" />
+                    )}
+                    {/* Add hover effect for inactive states */}
+                    {!isActive && (
+                      <div className="absolute inset-0 rounded-inherit bg-linear-to-b from-white/0 to-white/5 pointer-events-none opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+                    )}
+                  </div>
+                </HoverCardTrigger>
+                <HoverCardContent className="w-auto p-2">
+                  <div className="text-sm font-medium text-center">{label}</div>
+                </HoverCardContent>
+              </HoverCard>
+            );
+          })
+        )}
       </div>
     </Card>
   );

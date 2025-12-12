@@ -317,97 +317,41 @@ export default function CartProductCard({
             )}
 
             {/* Price Display - Reduced font size on mobile */}
-            <div className="flex flex-col gap-1 mb-2.5 sm:mb-2">
-              {pricingResult && (
-                <>
-                  <div className="text-xs sm:text-base">
-                    <ProductPricing
-                      pricingResult={{
-                        final_Price: pricingResult.final_Price,
-                        final_listing_price: pricingResult.final_listing_price,
-                        ...(pricingResult.discounted_Price !== undefined && {
-                          discounted_Price: pricingResult.discounted_Price,
-                        }),
-                        ...(pricingResult.discount_Percentage !== undefined && {
-                          discount_Percentage: pricingResult.discount_Percentage,
-                        }),
-                        ...(pricingResult.isPriceNotAvailable !== undefined && {
-                          isPriceNotAvailable: pricingResult.isPriceNotAvailable,
-                        }),
-                      }}
-                      pricingConditions={pricingConditions}
-                      loading={isPricingLoading}
-                      variant="default"
-                      showDiscountBadge={false}
-                      showMRPLabel={true}
-                      {...(item.discount || item.discountPercentage
-                        ? {
-                            discountPercentage:
-                              item.discount ?? item.discountPercentage ?? 0,
-                          }
-                        : {})}
-                    />
-                  </div>
-                  {/* Tax Inclusive Note */}
-                  {!taxExempted && item.taxInclusive && (
-                    <span className="text-[10px] sm:text-xs text-blue-600">
-                      {t("inclusiveOfAllTaxes")}
-                    </span>
-                  )}
-                </>
+            <div className="flex flex-col gap-1 mb-2.5 sm:mb-2 min-h-[24px] sm:min-h-[28px]">
+              <div className="min-h-[24px] sm:min-h-[28px] flex items-center">
+                <ProductPricing
+                  pricingResult={pricingResult ? {
+                    final_Price: pricingResult.final_Price,
+                    final_listing_price: pricingResult.final_listing_price,
+                    ...(pricingResult.discounted_Price !== undefined && {
+                      discounted_Price: pricingResult.discounted_Price,
+                    }),
+                    ...(pricingResult.discount_Percentage !== undefined && {
+                      discount_Percentage: pricingResult.discount_Percentage,
+                    }),
+                    ...(pricingResult.isPriceNotAvailable !== undefined && {
+                      isPriceNotAvailable: pricingResult.isPriceNotAvailable,
+                    }),
+                  } : null}
+                  pricingConditions={pricingConditions}
+                  loading={isPricingLoading}
+                  variant="default"
+                  showDiscountBadge={false}
+                  showMRPLabel={true}
+                  {...(item.discount || item.discountPercentage
+                    ? {
+                        discountPercentage:
+                          item.discount ?? item.discountPercentage ?? 0,
+                      }
+                    : {})}
+                />
+              </div>
+              {/* Tax Inclusive Note */}
+              {!taxExempted && item.taxInclusive && !isPricingLoading && pricingResult && (
+                <span className="text-[10px] sm:text-xs text-blue-600">
+                  {t("inclusiveOfAllTaxes")}
+                </span>
               )}
-              {!pricingResult &&
-                // Fallback: show pricing with original price and discount if available
-                (() => {
-                  const unitPrice = item.unitPrice || item.discountedPrice || 0;
-                  const originalPrice = item.unitListPrice || item.MasterPrice || 0;
-                  const discount = item.discount || item.discountPercentage || 0;
-                  const showOriginalPrice = originalPrice > 0 && originalPrice !== unitPrice && unitPrice > 0;
-                  const showDiscount = discount > 0;
-
-                  if (unitPrice > 0) {
-                    return (
-                      <div className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-2">
-                        {/* Current Price - Reduced size on mobile */}
-                        <span className="font-bold text-xs sm:text-base">
-                          <PricingFormat value={unitPrice} />
-                        </span>
-                        {/* Original Price (Struck Through) */}
-                        {showOriginalPrice && (
-                          <div className="flex items-center gap-1.5 flex-wrap">
-                            <span className="text-gray-500 line-through text-[10px] sm:text-sm">
-                              <PricingFormat value={originalPrice} />
-                            </span>
-                            {/* Discount Percentage */}
-                            {showDiscount && (
-                              <span className="font-semibold text-green-600 text-[10px] sm:text-sm">
-                                {Math.round(discount)}% OFF
-                              </span>
-                            )}
-                          </div>
-                        )}
-                        {/* Discount Badge (if no original price shown) */}
-                        {!showOriginalPrice && showDiscount && (
-                          <span className="font-semibold text-green-600 text-[10px] sm:text-sm">
-                            {Math.round(discount)}% OFF
-                          </span>
-                        )}
-                      </div>
-                    );
-                  } else if (originalPrice > 0) {
-                    return (
-                      <span className="font-bold text-xs sm:text-base">
-                        <PricingFormat value={originalPrice} />
-                      </span>
-                    );
-                  } else {
-                    return (
-                      <span className="font-bold text-xs sm:text-base">
-                        {t("requestPrice")}
-                      </span>
-                    );
-                  }
-                })()}
             </div>
 
             {/* Quantity Controls - Mobile: At bottom of price detail */}
@@ -508,6 +452,11 @@ export default function CartProductCard({
                 <Trash2 className="h-4 w-4 sm:h-4 sm:w-4" />
               </Button>
               {/* Total Price (Price × Quantity) - Hidden on mobile, no skeleton */}
+              {isPricingLoading && (
+                 <div className="hidden sm:block text-right">
+                   <Skeleton className="h-4 w-20" />
+                 </div>
+              )}
               {!isPricingLoading && (() => {
                 const unitPrice = pricingResult
                   ? pricingResult.final_listing_price

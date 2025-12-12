@@ -5,11 +5,11 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import useGetManufacturerCompetitors from "@/hooks/useGetManufacturerCompetitors/useGetManufacturerCompetitors";
@@ -17,7 +17,7 @@ import useModuleSettings from "@/hooks/useModuleSettings";
 import { containsXSS } from "@/utils/sanitization/sanitization.utils";
 import { X } from "lucide-react";
 import { useSearchParams } from "next/navigation";
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 import { useFormContext } from "react-hook-form";
 import { toast } from "sonner";
 
@@ -141,24 +141,59 @@ export default function SPRForm({
   // Determine if should be read-only: isContentPage=true AND values exist
   const shouldBeReadOnly = isContentPage && hasValues;
 
-  // Set up SPR checkbox value to trigger validation (only in form context mode)
+  // Use refs to track previous SPR state and store stable form methods to prevent infinite loops
+  const previousIsSPRRef = useRef<boolean | undefined>(undefined);
+  const hasTriggeredValidationRef = useRef(false);
+  const setValueRef = useRef(formContext?.setValue);
+  const triggerRef = useRef(formContext?.trigger);
+
+  // Update refs when formContext methods change (these are stable from react-hook-form)
+  // We use formContext directly but store methods in refs to avoid infinite loops
   useEffect(() => {
-    if (useFormContextMode && isSummaryPage && formContext) {
-      formContext.setValue("sprDetails.spr", isSPR || false);
-      // Trigger validation when SPR status changes
-      if (isSPR) {
-        formContext.trigger("sprDetails");
-        // Also ensure required fields are marked
-        const fieldNames = [
-          "sprDetails.companyName",
-          "sprDetails.projectName",
-          "sprDetails.competitorNames",
-          "sprDetails.priceJustification",
-        ];
-        fieldNames.forEach((field) => formContext.trigger(field));
+    if (formContext) {
+      setValueRef.current = formContext.setValue;
+      triggerRef.current = formContext.trigger;
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [formContext?.setValue, formContext?.trigger]);
+
+  // Set up SPR checkbox value to trigger validation (only in form context mode)
+  // Only run when isSPR actually changes, not on every render
+  useEffect(() => {
+    if (useFormContextMode && isSummaryPage && setValueRef.current && triggerRef.current) {
+      const currentIsSPR = isSPR || false;
+      
+      // Only proceed if isSPR actually changed or this is the first run
+      if (previousIsSPRRef.current !== currentIsSPR || !hasTriggeredValidationRef.current) {
+        // Set the SPR value
+        setValueRef.current("sprDetails.spr", currentIsSPR, { shouldValidate: false });
+        
+        // Only trigger validation when SPR is enabled AND it's a new change
+        if (currentIsSPR && previousIsSPRRef.current !== currentIsSPR) {
+          // Use setTimeout to batch the validation triggers and prevent infinite loops
+          setTimeout(() => {
+            if (triggerRef.current) {
+              triggerRef.current("sprDetails");
+              // Also ensure required fields are marked
+              const fieldNames = [
+                "sprDetails.companyName",
+                "sprDetails.projectName",
+                "sprDetails.competitorNames",
+                "sprDetails.priceJustification",
+              ];
+              fieldNames.forEach((field) => {
+                triggerRef.current?.(field);
+              });
+            }
+          }, 0);
+        }
+        
+        previousIsSPRRef.current = currentIsSPR;
+        hasTriggeredValidationRef.current = true;
       }
     }
-  }, [isSPR, isSummaryPage, useFormContextMode, formContext]);
+     
+  }, [isSPR, isSummaryPage, useFormContextMode]);
 
   // Handle field changes with XSS validation
   const handleFieldChange = async (

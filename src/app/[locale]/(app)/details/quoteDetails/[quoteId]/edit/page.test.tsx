@@ -24,9 +24,26 @@ jest.mock("@/hooks/usePageScroll", () => ({
   usePageScroll: jest.fn(),
 }));
 
+jest.mock("@/hooks/useGlobalLoader", () => {
+  const React = jest.requireActual<typeof import("react")>("react");
+  return {
+    useLoading: () => ({
+      showLoading: jest.fn(),
+      hideLoading: jest.fn(),
+    }),
+    LoadingProvider: ({ children }: { children: React.ReactNode }) =>
+      React.createElement(React.Fragment, null, children),
+  };
+});
+
+jest.mock("@/hooks/usePageLoader", () => ({
+  usePageLoader: jest.fn(),
+}));
+
 jest.mock("@/hooks/useNavigationWithLoader", () => ({
   useNavigationWithLoader: () => ({
-    handleNavigation: jest.fn(),
+    push: jest.fn(),
+    replace: jest.fn(),
     isNavigating: false,
   }),
 }));
@@ -310,6 +327,28 @@ jest.mock("@/lib/api", () => ({
   })),
 }));
 
+jest.mock("@/lib/api/services/QuotationNameService/QuotationNameService", () => ({
+  __esModule: true,
+  default: {
+    updateQuotationName: jest.fn().mockResolvedValue({ success: true }),
+  },
+}));
+
+jest.mock("@/lib/api/services/ElacticQueryService/openElasticSearch/openElasticSearch", () => ({
+  __esModule: true,
+  default: {
+    getProduct: jest.fn().mockResolvedValue(null),
+  },
+}));
+
+jest.mock("@/utils/getProductIds", () => {
+  const mockGetProductIds = jest.fn(() => [1, 2, 3]);
+  return {
+    __esModule: true,
+    default: mockGetProductIds,
+  };
+});
+
 // Mock utils
 jest.mock("@/utils/quote/quoteSubmissionDTO/quoteSubmissionDTO", () => ({
   prepareQuoteSubmissionDTO: jest.fn((data1, data2) => ({
@@ -345,17 +384,27 @@ jest.mock("sonner", () => ({
 // Mock components
 jest.mock("@/components/ui/button", () => {
   const React = jest.requireActual<typeof import("react")>("react");
-  const MockButton = ({ children, onClick, disabled, variant }: any) =>
-    React.createElement(
+  const MockButton = ({ children, onClick, disabled, variant, asChild, ...props }: any) => {
+    if (asChild && React.isValidElement(children)) {
+      return React.cloneElement(children, {
+        ...props,
+        onClick,
+        disabled,
+        "data-variant": variant,
+      });
+    }
+    return React.createElement(
       "button",
       {
         "data-testid": "button",
         onClick,
         disabled,
         "data-variant": variant,
+        ...props,
       },
       children
     );
+  };
   MockButton.displayName = "MockButton";
   return {
     Button: MockButton,
@@ -404,6 +453,44 @@ jest.mock("@/components/ui/dialog", () => {
   };
 });
 
+jest.mock("@/components/ui/dropdown-menu", () => {
+  const React = jest.requireActual<typeof import("react")>("react");
+  const MockDropdownMenu = ({ children }: any) =>
+    React.createElement("div", { "data-testid": "dropdown-menu" }, children);
+  MockDropdownMenu.displayName = "MockDropdownMenu";
+
+  const MockDropdownMenuTrigger = ({ children, asChild, ...props }: any) => {
+    if (asChild && React.isValidElement(children)) {
+      return React.cloneElement(children, props);
+    }
+    return React.createElement("div", { "data-testid": "dropdown-trigger" }, children);
+  };
+  MockDropdownMenuTrigger.displayName = "MockDropdownMenuTrigger";
+
+  const MockDropdownMenuContent = ({ children }: any) =>
+    React.createElement("div", { "data-testid": "dropdown-content" }, children);
+  MockDropdownMenuContent.displayName = "MockDropdownMenuContent";
+
+  const MockDropdownMenuItem = ({ children, onClick, disabled }: any) =>
+    React.createElement(
+      "div",
+      {
+        "data-testid": "dropdown-menu-item",
+        onClick: disabled ? undefined : onClick,
+        style: { cursor: disabled ? "not-allowed" : "pointer" },
+      },
+      children
+    );
+  MockDropdownMenuItem.displayName = "MockDropdownMenuItem";
+
+  return {
+    DropdownMenu: MockDropdownMenu,
+    DropdownMenuTrigger: MockDropdownMenuTrigger,
+    DropdownMenuContent: MockDropdownMenuContent,
+    DropdownMenuItem: MockDropdownMenuItem,
+  };
+});
+
 jest.mock("@/components/dialogs/VersionsDialog", () => {
   const React = jest.requireActual<typeof import("react")>("react");
   const MockVersionsDialog = ({ open }: any) =>
@@ -436,15 +523,35 @@ jest.mock("@/components/sales", () => {
   const MockSalesHeader = ({
     title,
     identifier,
+    loading,
+    buttons,
   }: {
     title: string;
     identifier: string;
+    loading?: boolean;
+    buttons?: any[];
   }) =>
     React.createElement(
       "div",
       { "data-testid": "sales-header" },
-      React.createElement("h1", null, title),
-      React.createElement("span", null, identifier)
+      loading
+        ? React.createElement("div", { "data-testid": "loading-skeleton" }, "Loading...")
+        : React.createElement("h1", null, title || ""),
+      React.createElement("span", null, identifier),
+      buttons && buttons.length > 0
+        ? buttons.map((btn: any, idx: number) =>
+            React.createElement(
+              "button",
+              {
+                key: idx,
+                onClick: btn.onClick,
+                disabled: btn.disabled,
+                "data-testid": "button",
+              },
+              btn.label
+            )
+          )
+        : null
     );
   MockSalesHeader.displayName = "MockSalesHeader";
 
@@ -488,10 +595,6 @@ jest.mock("@/components/sales", () => {
     );
   MockDetailsSkeleton.displayName = "MockDetailsSkeleton";
 
-  const MockSPRForm = () =>
-    React.createElement("div", { "data-testid": "spr-form" }, "SPR Form");
-  MockSPRForm.displayName = "MockSPRForm";
-
   return {
     SalesHeader: MockSalesHeader,
     OrderProductsTable: MockOrderProductsTable,
@@ -499,7 +602,6 @@ jest.mock("@/components/sales", () => {
     OrderTermsCard: MockOrderTermsCard,
     OrderPriceDetails: MockOrderPriceDetails,
     DetailsSkeleton: MockDetailsSkeleton,
-    SPRForm: MockSPRForm,
   };
 });
 
@@ -518,12 +620,39 @@ jest.mock("@/components/sales/CashDiscountCard", () => {
   };
 });
 
+jest.mock("@/components/summary/SPRForm", () => {
+  const React = jest.requireActual<typeof import("react")>("react");
+  const MockSPRForm = () =>
+    React.createElement("div", { "data-testid": "spr-form" }, "SPR Form");
+  MockSPRForm.displayName = "MockSPRForm";
+  return {
+    __esModule: true,
+    default: MockSPRForm,
+  };
+});
+
+jest.mock("@/components/dialogs/EditOrderNameDialog", () => {
+  const React = jest.requireActual<typeof import("react")>("react");
+  const MockEditOrderNameDialog = ({ open, children }: any) =>
+    open
+      ? React.createElement(
+          "div",
+          { "data-testid": "edit-order-name-dialog" },
+          children
+        )
+      : null;
+  MockEditOrderNameDialog.displayName = "MockEditOrderNameDialog";
+  return {
+    EditOrderNameDialog: MockEditOrderNameDialog,
+  };
+});
+
+import { LoadingProvider } from "@/hooks/useGlobalLoader";
 import { OrdersService, QuotationDetailsService } from "@/lib/api";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { render, screen, waitFor } from "@testing-library/react";
 import React, { ReactNode } from "react";
 import { toast } from "sonner";
-import { LoadingProvider } from "@/hooks/useGlobalLoader";
 import EditQuotePage from "./page";
 
 const mockFetchQuoteDetails =
@@ -599,7 +728,13 @@ describe("EditQuotePage", () => {
       { timeout: 3000 }
     );
 
-    expect(screen.getByText("Edit Quote")).toBeInTheDocument();
+    // Wait for quote details to load and check for quote name
+    await waitFor(
+      () => {
+        expect(screen.getByText("Test Quote")).toBeInTheDocument();
+      },
+      { timeout: 5000 }
+    );
   });
 
   it("should fetch quote details on mount", async () => {
@@ -756,6 +891,14 @@ describe("EditQuotePage", () => {
         expect(screen.getByTestId("sales-header")).toBeInTheDocument();
       },
       { timeout: 3000 }
+    );
+
+    // Wait for quote name to load
+    await waitFor(
+      () => {
+        expect(screen.getByText("Test Quote")).toBeInTheDocument();
+      },
+      { timeout: 5000 }
     );
   });
 

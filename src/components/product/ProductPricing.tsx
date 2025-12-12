@@ -59,7 +59,10 @@ export default function ProductPricing({
   };
 
   if (loading) {
-    return <Skeleton className={`h-5 w-20 ${className}`} />;
+    // Match skeleton size to actual text size for variant
+    const skeletonHeight = variant === "large" ? "h-8" : variant === "compact" ? "h-5" : "h-6";
+    const skeletonWidth = variant === "large" ? "w-32" : variant === "compact" ? "w-20" : "w-24";
+    return <Skeleton className={`${skeletonHeight} ${skeletonWidth} ${className}`} />;
   }
 
   // Show Request Price

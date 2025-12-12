@@ -17,7 +17,6 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { Skeleton } from "@/components/ui/skeleton";
 import { useCart as useCartContext } from "@/contexts/CartContext";
 import { useCart } from "@/hooks/useCart";
 import { useCurrentUser } from "@/hooks/useCurrentUser";
@@ -57,7 +56,7 @@ export default function MultipleSellerCards({
 
   cartCalculationResult,
 }: MultipleSellerCardsProps) {
-  const { cart, isLoading: cartLoading } = useCartContext();
+  const { cart } = useCartContext();
   const { user } = useCurrentUser();
   const { emptyCartBySeller, isCartLoading } = useCart();
   const t = useTranslations("cart");
@@ -109,15 +108,15 @@ export default function MultipleSellerCards({
   // Use prop value if provided, otherwise use hook's loading state
   const isPricingLoadingState = isPricingLoading ?? pricingLoadingFromHook;
 
-  if (cartLoading || isPricingLoadingState) {
-    return (
-      <div className="space-y-4">
-        <Skeleton className="h-12 w-full" />
-        <Skeleton className="h-64 w-full" />
-        <Skeleton className="h-64 w-full" />
-      </div>
-    );
-  }
+  // if (cartLoading || isPricingLoadingState) {
+  //   return (
+  //     <div className="space-y-4">
+  //       <Skeleton className="h-12 w-full" />
+  //       <Skeleton className="h-64 w-full" />
+  //       <Skeleton className="h-64 w-full" />
+  //     </div>
+  //   );
+  // }
 
   if (!sellerCarts || Object.keys(sellerCarts).length === 0) {
     return null;

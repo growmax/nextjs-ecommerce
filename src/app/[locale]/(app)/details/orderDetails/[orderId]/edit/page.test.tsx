@@ -323,29 +323,35 @@ jest.mock("@/components/sales", () => {
   const MockSalesHeader = ({
     title,
     identifier,
+    loading,
     buttons,
   }: {
     title: string;
     identifier: string;
+    loading?: boolean;
     buttons?: any[];
   }) =>
     React.createElement(
       "div",
       { "data-testid": "sales-header" },
-      React.createElement("h1", null, title),
+      loading
+        ? React.createElement("div", { "data-testid": "loading-skeleton" }, "Loading...")
+        : React.createElement("h1", null, title || ""),
       React.createElement("span", null, identifier),
-      buttons?.map((btn: any, idx: number) =>
-        React.createElement(
-          "button",
-          {
-            key: idx,
-            onClick: btn.onClick,
-            disabled: btn.disabled,
-            "data-testid": "button",
-          },
-          btn.label
-        )
-      )
+      buttons && buttons.length > 0
+        ? buttons.map((btn: any, idx: number) =>
+            React.createElement(
+              "button",
+              {
+                key: idx,
+                onClick: btn.onClick,
+                disabled: btn.disabled,
+                "data-testid": "button",
+              },
+              btn.label
+            )
+          )
+        : null
     );
   MockSalesHeader.displayName = "MockSalesHeader";
 
@@ -531,7 +537,13 @@ describe("EditOrderPage", () => {
       expect(screen.getByTestId("sales-header")).toBeInTheDocument();
     });
 
-    expect(screen.getByText("Edit Order")).toBeInTheDocument();
+    // Wait for order details to load and check for order name
+    await waitFor(
+      () => {
+        expect(screen.getByText("Test Order")).toBeInTheDocument();
+      },
+      { timeout: 5000 }
+    );
   });
 
   it("should display order name when available", async () => {

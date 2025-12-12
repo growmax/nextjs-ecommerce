@@ -106,8 +106,14 @@ export default function SalesHeader({
               {title}
             </h1>
           )}
-          {showEditIcon && onEdit && !loading && (
-            <Button
+          {loading ? (
+            <div>
+                <Skeleton className="h-7 w-7 md:h-8 md:w-8 rounded" />
+            </div>
+          
+          ) : (
+            showEditIcon && onEdit && !loading &&(
+              <Button
               variant="ghost"
               size="icon"
               onClick={onEdit}
@@ -115,7 +121,9 @@ export default function SalesHeader({
             >
               <Pencil className="size-3.5 md:size-4" />
             </Button>
+            )
           )}
+        
         </div>
 
         {/* Identifier and Status Container */}

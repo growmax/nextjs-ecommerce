@@ -13,6 +13,7 @@ import {
   VersionsDialog,
   type Version,
 } from "@/components/dialogs/VersionsDialog";
+import { PageLayout } from "@/components/layout";
 import PricingFormat from "@/components/PricingFormat";
 import {
   CustomerInfoCard,
@@ -29,6 +30,7 @@ import { useNavigationWithLoader } from "@/hooks/useNavigationWithLoader";
 import { usePageLoader } from "@/hooks/usePageLoader";
 import { usePostNavigationFetch } from "@/hooks/usePostNavigationFetch";
 import { useTenantData } from "@/hooks/useTenantData";
+import { useRouter } from "@/i18n/navigation";
 import type { QuotationDetailsResponse } from "@/lib/api";
 import { QuotationDetailsService } from "@/lib/api";
 import QuotationNameService from "@/lib/api/services/QuotationNameService/QuotationNameService";
@@ -37,7 +39,6 @@ import { exportProductsToCsv } from "@/lib/export-csv";
 import type { SelectedVersion } from "@/types/details/orderdetails/version.types";
 import { getStatusStyle } from "@/utils/details/orderdetails";
 import { decodeUnicode } from "@/utils/General/general";
-
 interface QuoteDetailsClientProps {
   params: Promise<{ quoteId: string }>;
 }
@@ -49,7 +50,7 @@ export default function QuoteDetailsClient({
   const [paramsLoaded, setParamsLoaded] = useState(false);
   const t = useTranslations("quotes");
   const tDetails = useTranslations("details");
-
+  const router = useRouter();
   const [quoteDetails, setQuoteDetails] =
     useState<QuotationDetailsResponse | null>(null);
   const [loading, setLoading] = useState(true);
@@ -238,11 +239,11 @@ export default function QuoteDetailsClient({
     ) {
       // Non-blocking navigation
       if (quoteIdentifier) {
-        push(`/details/quoteDetails/${quoteIdentifier}/edit`);
+        router.push(`/details/quoteDetails/${quoteIdentifier}/edit`);
       }
       // Non-blocking navigation
       if (quoteIdentifier) {
-        push(`/details/quoteDetails/${quoteIdentifier}/edit`);
+        router.push(`/details/quoteDetails/${quoteIdentifier}/edit`);
       }
       return;
     }
@@ -475,7 +476,7 @@ export default function QuoteDetailsClient({
     <div className="flex flex-col h-full overflow-hidden bg-gray-50">
       {/* Sales Header - Fixed at top */}
       <SalesHeader
-        title={quoteName ? decodeUnicode(quoteName) : t("quoteDetails")}
+        title={quoteName ? decodeUnicode(quoteName) : ""}
         identifier={displayQuoteId}
         {...(status && {
           status: {
@@ -504,10 +505,10 @@ export default function QuoteDetailsClient({
 
       {/* Quote Details Content - Scrollable area */}
       <div className="flex-1 overflow-y-auto overflow-x-hidden relative z-0">
-        <div className="flex flex-col lg:flex-row gap-2 sm:gap-3 md:gap-4">
-          {/* Left Side - Products Table, Contact & Terms - 65% */}
-          <div className="w-full lg:w-[65%] space-y-2 sm:space-y-3">
-            <div className="mt-[55px]">
+        <PageLayout variant="content">
+          <div className="flex flex-col lg:flex-row gap-2 sm:gap-3 md:gap-4 w-full px-0.5">
+            {/* Left Side - Products Table, Contact & Terms - 65% */}
+            <div className="w-full lg:w-[65%] space-y-2 sm:space-y-3 mt-[60px]">
               <OrderProductsTable
                 products={products}
                 {...(products.length && {
@@ -520,9 +521,8 @@ export default function QuoteDetailsClient({
                 }}
                 loading={loading}
               />
-            </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-2 sm:gap-3">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-2 sm:gap-3 md:gap-4 mt-4">
               {/* Contact Details Card */}
               <OrderContactDetails
                 billingAddress={
@@ -617,10 +617,10 @@ export default function QuoteDetailsClient({
                   } as unknown as Record<string, unknown>
                 }
               />
+              </div>
             </div>
-          </div>
 
-          <div className="w-full lg:w-[33%] mt-[55px]">
+            <div className="w-full lg:w-[33%] mt-[60px]">
             <OrderPriceDetails
               products={products}
               isInter={(() => {
@@ -809,8 +809,9 @@ export default function QuoteDetailsClient({
                 </SectionCardDetail>
               </div>
             )}
+            </div>
           </div>
-        </div>
+        </PageLayout>
       </div>
 
       {/* Right Sidebar Icons - Positioned just below the SalesHeader component, flush to right edge */}
